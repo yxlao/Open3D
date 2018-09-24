@@ -14,3 +14,6 @@ src/Sandbox/
 src/Visualization/Shader/Shader.h
 _build/
 .vs/
+.idea/
+cmake-build-debug/
+cmake-build-release/
