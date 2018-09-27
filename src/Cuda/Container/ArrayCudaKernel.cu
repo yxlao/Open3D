@@ -1,0 +1,28 @@
+/**
+ * Created by wei on 18-4-2.
+ */
+
+#include "ArrayCuda.cuh"
+
+#include <cassert>
+
+namespace three {
+
+template<typename T>
+__global__
+void FillArrayKernel(ArrayCudaServer<T> server, T val) {
+	const int i = blockDim.x * blockIdx.x + threadIdx.x;
+	if (i < server.max_capacity_) {
+		server.get(i) = val;
+	}
+}
+
+template
+__global__
+void FillArrayKernel<int>(ArrayCudaServer<int>, int val);
+
+template
+__global__
+void FillArrayKernel<float>(ArrayCudaServer<float>, float val);
+
+}
