@@ -42,6 +42,12 @@ public:
 	friend class ImageCuda<T>;
 };
 
+enum GaussianKernelOptions {
+	Gaussian3x3 = 0,
+	Gaussian5x5 = 1,
+	Gaussian7x7 = 2
+};
+
 template<typename T>
 class ImageCuda {
 private:
@@ -60,6 +66,10 @@ public:
 	void CopyTo(ImageCuda<T> &other);
 
 	ImageCuda<T> Downsample();
+	ImageCuda<T> Gaussian(GaussianKernelOptions kernel);
+	std::tuple<ImageCuda<typename T::VecTypef>,
+	    ImageCuda<typename T::VecTypef>> Gradient();
+	ImageCuda<typename T::VecTypef> ToFloat(float scale, float offset);
 
 	int Upload(cv::Mat &m);
 	cv::Mat Download();
@@ -81,6 +91,25 @@ public:
 template<typename T>
 __GLOBAL__
 void DownsampleImageKernel(ImageCudaServer<T> src, ImageCudaServer<T> dst);
+
+template<typename T>
+__GLOBAL__
+void GaussianImageKernel(ImageCudaServer<T> src, ImageCudaServer<T> dst,
+	const int kernel_idx);
+
+template<typename T>
+__GLOBAL__
+void ToFloatImageKernel(
+	ImageCudaServer<T> src,
+	ImageCudaServer<typename T::VecTypef> dst,
+	float scale, float offset);
+
+template<typename T>
+__GLOBAL__
+void GradientImageKernel(
+	ImageCudaServer<T> src,
+	ImageCudaServer<typename T::VecTypef> dx,
+	ImageCudaServer<typename T::VecTypef> dy);
 }
 
 #endif //OPEN3D_IMAGECUDA_H

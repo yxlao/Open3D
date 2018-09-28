@@ -26,6 +26,7 @@ public:
 	T v[N];
 
 public:
+	typedef T ValType;
 	typedef Vector<T, N> VecType;
 	typedef Vector<float, N> VecTypef;
 
@@ -60,8 +61,18 @@ public:
 			v[i] = T(0);
 		}
 	}
+
+	/**
+	 * WARNING! This initializer is special !!!
+	 * @param v0
+	 */
 	__HOSTDEVICE__ Vector(T v0) {
-		v[0] = v0;
+#ifdef __CUDACC__
+#pragma unroll 1
+#endif
+		for (int i = 0; i < N; ++i) {
+			v[i] = v0;
+		}
 	}
 	__HOSTDEVICE__ Vector(T v0, T v1) {
 		assert(N > 1);
@@ -100,6 +111,7 @@ public:
 		for (int i = 0; i < N; ++i) {
 			ret.v[i] = v[i] + other.v[i];
 		}
+		return ret;
 	}
 	__HOSTDEVICE__ void operator += (const VecType &other) {
 #ifdef __CUDACC__
@@ -117,6 +129,7 @@ public:
 		for (int i = 0; i < N; ++i) {
 			ret.v[i] = v[i] - other.v[i];
 		}
+		return ret;
 	}
 	__HOSTDEVICE__ void operator -= (const VecType &other)  {
 #ifdef __CUDACC__
@@ -135,6 +148,7 @@ public:
 		for (int i = 0; i < N; ++i) {
 			ret.v[i] = v[i] * other.v[i];
 		}
+		return ret;
 	}
 
 	__HOSTDEVICE__ VecType operator * (const float other) const {
@@ -174,6 +188,7 @@ public:
 		for (int i = 0; i < N; ++i) {
 			ret.v[i] = v[i] / other.v[i];
 		}
+		return ret;
 	}
 
 	__HOSTDEVICE__ VecType operator / (const float other) const {
@@ -184,6 +199,7 @@ public:
 		for (int i = 0; i < N; ++i) {
 			ret.v[i] = v[i] / other;
 		}
+		return ret;
 	}
 
 	__HOSTDEVICE__ void operator /= (const VecType &other) {

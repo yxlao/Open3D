@@ -172,5 +172,59 @@ ImageCuda<T> ImageCuda<T>::Downsample() {
 
 	return dst;
 }
+
+template<typename T>
+ImageCuda<T> ImageCuda<T>::Gaussian(GaussianKernelOptions kernel) {
+	ImageCuda<T> dst;
+	dst.Init(width_, height_);
+
+	const dim3 blocks(
+		UPPER_ALIGN(dst.width(), THREAD_2D_UNIT),
+		UPPER_ALIGN(dst.height(), THREAD_2D_UNIT));
+	const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+	GaussianImageKernel<<<blocks, threads>>>(
+		server_, dst.server(), (int)kernel);
+	CheckCuda(cudaDeviceSynchronize());
+	CheckCuda(cudaGetLastError());
+
+	return dst;
+}
+
+template<typename T>
+ImageCuda<typename T::VecTypef> ImageCuda<T>::ToFloat(
+	float scale, float offset) {
+	ImageCuda<typename T::VecTypef> dst;
+	dst.Init(width_, height_);
+
+	const dim3 blocks(
+		UPPER_ALIGN(dst.width(), THREAD_2D_UNIT),
+		UPPER_ALIGN(dst.height(), THREAD_2D_UNIT));
+	const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+	ToFloatImageKernel<<<blocks, threads>>>(
+		server_, dst.server(), scale, offset);
+	CheckCuda(cudaDeviceSynchronize());
+	CheckCuda(cudaGetLastError());
+
+	return dst;
+}
+
+template<typename T>
+std::tuple<ImageCuda<typename T::VecTypef>,
+    ImageCuda<typename T::VecTypef>> ImageCuda<T>::Gradient() {
+	ImageCuda<typename T::VecTypef> dx;
+	ImageCuda<typename T::VecTypef> dy;
+	dx.Init(width_, height_);
+	dy.Init(width_, height_);
+
+	const dim3 blocks(UPPER_ALIGN(width_, THREAD_2D_UNIT),
+		UPPER_ALIGN(height_, THREAD_2D_UNIT));
+	const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+	GradientImageKernel<<<blocks, threads>>>(
+		server_, dx.server(), dy.server());
+	CheckCuda(cudaDeviceSynchronize());
+	CheckCuda(cudaGetLastError());
+
+	return std::make_tuple(dx, dy);
+}
 }
 #endif
