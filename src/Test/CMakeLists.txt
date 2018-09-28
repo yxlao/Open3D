@@ -4,7 +4,7 @@ set_target_properties(TestPointCloud PROPERTIES
 		FOLDER "Test"
 		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Test")
 
-add_executable(TestCameraPoseTrajectory TestCameraPoseTrajectory TestCudaContainer.cpp)
+add_executable(TestCameraPoseTrajectory TestCameraPoseTrajectory TestCudaContainer.cpp TestCudaImage.cpp)
 target_link_libraries(TestCameraPoseTrajectory Visualization IO Core)
 set_target_properties(TestCameraPoseTrajectory PROPERTIES
 		FOLDER "Test"
@@ -99,6 +99,12 @@ set_target_properties(TestRegistrationRANSAC PROPERTIES
 add_executable(TestCudaContainer TestCudaContainer.cpp)
 target_link_libraries(TestCudaContainer Core Cuda)
 set_target_properties(TestCudaContainer PROPERTIES
+		FOLDER "Test"
+		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Test")
+
+add_executable(TestCudaIntegration TestCudaImage.cpp)
+target_link_libraries(TestCudaIntegration Core Cuda)
+set_target_properties(TestCudaIntegration PROPERTIES
 		FOLDER "Test"
 		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Test")
 

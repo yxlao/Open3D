@@ -50,6 +50,8 @@ inline uchar safe_mul(float a, uchar b) {
 	return uchar(fminf(a * b, 255));
 }
 
+/* @TODO: make this part modern, using enum, const, etc. */
+
 /* Default values */
 #define EMPTY_ENTRY (-1)
 #define NULL_PTR (-1)

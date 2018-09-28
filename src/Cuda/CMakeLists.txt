@@ -1,4 +1,5 @@
 find_package(CUDA 8.0 REQUIRED)
+find_package(OpenCV REQUIRED)
 
 file(GLOB CUDA_ALL_HEADER_FILES '*.h')
 file(GLOB CUDA_ALL_SOURCE_FILES '*.cpp')
@@ -23,6 +24,15 @@ source_group("Header Files\\Container" FILES ${CUDA_CONTAINER_CUDA_HEADER_FILES}
 file(GLOB CUDA_CONTAINER_CUDA_SOURCE_FILES "Container/*.cu")
 source_group("Source Files\\Container" FILES ${CUDA_CONTAINER_CUDA_SOURCE_FILES})
 
+file(GLOB CUDA_GEOMETRY_HEADER_FILES "Geometry/*.h")
+source_group("Header Files\\Geometry" FILES ${CUDA_GEOMETRY_HEADER_FILES})
+file(GLOB CUDA_GEOMETRY_SOURCE_FILES "Geometry/*.cpp")
+source_group("Source Files\\Container" FILES ${CUDA_GEOMETRY_SOURCE_FILES})
+file(GLOB CUDA_GEOMETRY_CUDA_HEADER_FILES "Geometry/*.cuh")
+source_group("Header Files\\Container" FILES ${CUDA_GEOMETRY_CUDA_HEADER_FILES})
+file(GLOB CUDA_GEOMETRY_CUDA_SOURCE_FILES "Geometry/*.cu")
+source_group("Source Files\\Container" FILES ${CUDA_GEOMETRY_CUDA_SOURCE_FILES})
+
 set(CUDA_NVCC_FLAGS
 		-gencode=arch=compute_50,code=sm_60
 		-gencode=arch=compute_50,code=sm_50 # simple test for multiple targets
@@ -31,9 +41,11 @@ set(CUDA_NVCC_FLAGS
 cuda_add_library(Cuda ${Open3D_LIB_TYPE}
 		${CUDA_CONTAINER_CUDA_HEADER_FILES}
 		${CUDA_CONTAINER_CUDA_SOURCE_FILES}
+		${CUDA_GEOMETRY_CUDA_HEADER_FILES}
+		${CUDA_GEOMETRY_CUDA_SOURCE_FILES}
 		${CUDA_COMMON_CUDA_HEADER_FILES}
-		${CUDA_COMMON_CUDA_SOURCE_FILES}
-)
+		${CUDA_COMMON_CUDA_SOURCE_FILES})
+target_link_libraries(Cuda ${OpenCV_LIBS})
 
 install(TARGETS
 		RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin

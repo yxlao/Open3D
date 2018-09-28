@@ -70,17 +70,17 @@ void MemoryHeapCuda<T>::Init(int max_capacity) {
 	max_capacity_ = max_capacity;
 
 	server_.max_capacity_ = max_capacity;
-	CudaMalloc((void**)&server_.heap_counter_, sizeof(int));
-	CudaMalloc((void**)&server_.heap_, sizeof(int) * max_capacity);
-	CudaMalloc((void**)&server_.data_, sizeof(T) * max_capacity);
+	CheckCuda(cudaMalloc((void**)&server_.heap_counter_, sizeof(int)));
+	CheckCuda(cudaMalloc((void**)&server_.heap_, sizeof(int) * max_capacity));
+	CheckCuda(cudaMalloc((void**)&server_.data_, sizeof(T) * max_capacity));
 	Reset();
 }
 
 template<typename T>
 void MemoryHeapCuda<T>::Destroy() {
-	CudaFree(server_.heap_counter_);
-	CudaFree(server_.heap_);
-	CudaFree(server_.data_);
+	CheckCuda(cudaFree(server_.heap_counter_));
+	CheckCuda(cudaFree(server_.heap_));
+	CheckCuda(cudaFree(server_.data_));
 }
 
 template<typename T>
@@ -89,11 +89,11 @@ void MemoryHeapCuda<T>::Reset() {
 	const int blocks = UPPER_ALIGN(max_capacity_, THREAD_1D_UNIT);
 
 	ResetMemoryHeapKernel<<<blocks, threads>>>(server_);
-	CudaSynchronize();
+	CheckCuda(cudaDeviceSynchronize());
 
 	int heap_counter = max_capacity_ - 1;
-	CudaMemcpy(server_.heap_counter_, &heap_counter,
-		sizeof(int), HostToDevice);
+	CheckCuda(cudaMemcpy(server_.heap_counter_, &heap_counter,
+		sizeof(int), cudaMemcpyHostToDevice));
 }
 
 template<typename T>
@@ -101,8 +101,8 @@ std::vector<int> MemoryHeapCuda<T>::DownloadHeap() {
 	std::vector<int> ret;
 	ret.resize(max_capacity_);
 
-	CudaMemcpy(ret.data(), server_.heap_,
-		sizeof(int) * max_capacity_, DeviceToHost);
+	CheckCuda(cudaMemcpy(ret.data(), server_.heap_,
+		sizeof(int) * max_capacity_, cudaMemcpyDeviceToHost));
 	return ret;
 }
 
@@ -111,8 +111,8 @@ std::vector<T> MemoryHeapCuda<T>::DownloadValue() {
 	std::vector<T> ret;
 	ret.resize(max_capacity_);
 
-	CudaMemcpy(ret.data(), server_.data_,
-		sizeof(T) * max_capacity_, DeviceToHost);
+	CheckCuda(cudaMemcpy(ret.data(), server_.data_,
+		sizeof(T) * max_capacity_, cudaMemcpyDeviceToHost));
 
 	return ret;
 }
@@ -121,8 +121,8 @@ template<typename T>
 int MemoryHeapCuda<T>::HeapCounter(){
 	int heap_counter;
 
-	CudaMemcpy(&heap_counter, server_.heap_counter_,
-		sizeof(int), DeviceToHost);
+	CheckCuda(cudaMemcpy(&heap_counter, server_.heap_counter_,
+		sizeof(int), cudaMemcpyDeviceToHost));
 
 	return heap_counter;
 }

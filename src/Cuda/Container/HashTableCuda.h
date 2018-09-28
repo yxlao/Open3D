@@ -32,7 +32,7 @@ public:
 		const int p1 = 19349669;
 		const int p2 = 83492791;
 
-		int r = ((key(0) * p0) ^ (key(1) * p1) ^ (key(2) * p2)) % bucket_count_;
+		int r = ((key[0] * p0) ^ (key[1] * p1) ^ (key[2] * p2)) % bucket_count_;
 		if (r < 0) r += bucket_count_;
 		return (size_t) r;
 	}

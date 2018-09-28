@@ -5,7 +5,7 @@
 #ifndef _MEMORY_HEAP_CUDA_H_
 #define _MEMORY_HEAP_CUDA_H_
 
-#include "Containers.h"
+#include "ContainerClasses.h"
 #include <Cuda/Common/Common.h>
 
 #include <vector>

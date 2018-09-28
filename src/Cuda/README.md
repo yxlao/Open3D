@@ -61,3 +61,9 @@ corresponding `.cuh` file, or in a `.cu` file that includes the `.cuh`.
 
 One CPU class should hold only one `server` class, which can be nested with 
 other `server` classes.
+
+## TODO
+- Add reference-count for the servers?
+- Add swap for the containers? (That will be really complicated for HashTable)
+- Actually maybe we can enable the constructors and destructors for the 
+client side...

@@ -5,7 +5,7 @@
 #ifndef _LINKED_LIST_CUDA_H_
 #define _LINKED_LIST_CUDA_H_
 
-#include "Containers.h"
+#include "ContainerClasses.h"
 #include "MemoryHeapCuda.h"
 
 #include <Cuda/Common/Common.h>

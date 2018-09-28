@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 3.0.0)
 
 if (NOT CMAKE_VERSION VERSION_LESS "3.0")
-    cmake_policy(SET CMP0054 OLD)
+    # cmake_policy(SET CMP0054 OLD)
+	# cmake_policy(SET CMP0072 NEW)
 endif()
+
 
 project(Open3D)
 
@@ -112,6 +114,7 @@ link_directories(${JSONCPP_LIBRARY_DIRS})
 add_subdirectory(Core)
 add_subdirectory(Cuda)
 include_directories(${CUDA_TOOLKIT_INCLUDE})
+include_directories(${OpenCV_INCLUDE_DIRS})
 
 add_subdirectory(Tools)
 add_subdirectory(IO)

@@ -52,7 +52,7 @@ void LinkedListCudaServer<T>::Insert(T value) {
  * It is more intuitive to directly allocate it in kernel with malloc(),
  * but it fails with not too many number of operations
  * @TODO check why.
- * A way around is to pre-allocate it on the host side using cudaMalloc(),
+ * A way around is to pre-allocate it on the host side using CheckCuda(cudaMalloc(),
  * and assign these space directly to the pointers.
  * @tparam T
  * @param memory_heap_server
@@ -191,66 +191,66 @@ void LinkedListCuda<T>::Init(int max_capacity,
 	server_.max_capacity_ = max_capacity;
 
 	server_.memory_heap_ = memory_heap.server(); /* Copy constructor! */
-	CudaMalloc((void**)&server_.head_node_ptr_, sizeof(int));
-	CudaMemset(server_.head_node_ptr_, NULL_PTR, sizeof(int));
+	CheckCuda(cudaMalloc((void**)&server_.head_node_ptr_, sizeof(int)));
+	CheckCuda(cudaMemset(server_.head_node_ptr_, NULL_PTR, sizeof(int)));
 
-	CudaMalloc((void**)&server_.size_, sizeof(int));
-	CudaMemset(server_.size_, 0, sizeof(int));
+	CheckCuda(cudaMalloc((void**)&server_.size_, sizeof(int)));
+	CheckCuda(cudaMemset(server_.size_, 0, sizeof(int)));
 }
 
 template<typename T>
 void LinkedListCuda<T>::Destroy() {
 	ClearLinkedListKernel<<<1, 1>>>(server_);
-	CudaSynchronize();
+	CheckCuda(cudaDeviceSynchronize());
 }
 
 template<typename T>
 int LinkedListCuda<T>::size() {
 	int ret;
-	CudaMemcpy(&ret, server_.size_, sizeof(int), DeviceToHost);
+	CheckCuda(cudaMemcpy(&ret, server_.size_, sizeof(int), cudaMemcpyDeviceToHost));
 	return ret;
 }
 
 template<typename T>
 void LinkedListCuda<T>::Insert(std::vector<int> &data) {
 	T* data_packages;
-	CudaMalloc((void**)&data_packages, sizeof(T) * data.size());
-	CudaMemcpy(data_packages, data.data(),
-		sizeof(T) * data.size(), HostToDevice);
+	CheckCuda(cudaMalloc((void**)&data_packages, sizeof(T) * data.size()));
+	CheckCuda(cudaMemcpy(data_packages, data.data(),
+		sizeof(T) * data.size(), cudaMemcpyHostToDevice));
 
 	InsertLinkedListKernel<<<1, 1>>>(
 		server_, data_packages, data.size());
-	CudaSynchronize();
+	CheckCuda(cudaDeviceSynchronize());
 
-	CudaFree(data_packages);
+	CheckCuda(cudaFree(data_packages));
 }
 
 template<typename T>
 void LinkedListCuda<T>::Find(std::vector<int> &query) {
 	T* data_packages;
-	CudaMalloc((void**)&data_packages, sizeof(T) * query.size());
-	CudaMemcpy(data_packages, query.data(),
-		sizeof(T) * query.size(), HostToDevice);
+	CheckCuda(cudaMalloc((void**)&data_packages, sizeof(T) * query.size()));
+	CheckCuda(cudaMemcpy(data_packages, query.data(),
+		sizeof(T) * query.size(), cudaMemcpyHostToDevice));
 
 	FindLinkedListKernel<<<1, 1>>>(
 		server_, data_packages, query.size());
-	CudaSynchronize();
+	CheckCuda(cudaDeviceSynchronize());
 
-	CudaFree(data_packages);
+	CheckCuda(cudaFree(data_packages));
 }
 
 template<typename T>
 void LinkedListCuda<T>::Delete(std::vector<int> &query) {
 	T* data_packages;
-	CudaMalloc((void**)&data_packages, sizeof(T) * query.size());
-	CudaMemcpy(data_packages, query.data(),
-		sizeof(T) * query.size(), HostToDevice);
+	CheckCuda(cudaMalloc((void**)&data_packages, sizeof(T) * query.size()));
+	CheckCuda(cudaMemcpy(data_packages, query.data(),
+		sizeof(T) * query.size(), cudaMemcpyHostToDevice));
 
 	DeleteLinkedListKernel<<<1, 1>>>(
 		server_, data_packages, query.size());
-	CudaSynchronize();
+	CheckCuda(cudaDeviceSynchronize());
 
-	CudaFree(data_packages);
+	CheckCuda(cudaFree(data_packages));
 }
 
 template<typename T>
@@ -262,15 +262,15 @@ std::vector<T> LinkedListCuda<T>::Download() {
 	ret.resize(linked_list_size);
 
 	T* data_packages;
-	CudaMalloc((void**)&data_packages, sizeof(T) * linked_list_size);
+	CheckCuda(cudaMalloc((void**)&data_packages, sizeof(T) * linked_list_size));
 
 	DownloadLinkedListKernel<<<1, 1>>>(
 		server_, data_packages, linked_list_size);
-	CudaSynchronize();
+	CheckCuda(cudaDeviceSynchronize());
 
-	CudaMemcpy(ret.data(), data_packages,
-		sizeof(T) * linked_list_size, DeviceToHost);
-	CudaFree(data_packages);
+	CheckCuda(cudaMemcpy(ret.data(), data_packages,
+		sizeof(T) * linked_list_size, cudaMemcpyDeviceToHost));
+	CheckCuda(cudaFree(data_packages));
 
 	return ret;
 }

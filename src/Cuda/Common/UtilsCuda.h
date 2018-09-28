@@ -8,25 +8,11 @@
 #include "Common.h"
 #include "HelperCuda.h"
 #include <cstdlib>
+#include <driver_types.h>
 
 namespace three {
 
-enum MemcpyKind {
-	HostToHost,
-	HostToDevice,
-	DeviceToDevice,
-	DeviceToHost
-};
-
-void CudaMalloc(void** ptr, size_t size);
-
-void CudaFree(void* ptr);
-
-void CudaMemcpy(void *dst, const void *src, size_t size, enum MemcpyKind kind);
-
-void CudaMemset(void *ptr, int value, size_t size);
-
-void CudaSynchronize();
+#define CheckCuda(val)  check ( (val), #val, __FILE__, __LINE__ )
 
 }
 

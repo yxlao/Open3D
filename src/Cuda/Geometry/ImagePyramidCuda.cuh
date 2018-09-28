@@ -1,0 +1,8 @@
+//
+// Created by wei on 9/27/18.
+//
+
+#ifndef OPEN3D_IMAGEPYRAMIDCUDA_CUH
+#define OPEN3D_IMAGEPYRAMIDCUDA_CUH
+
+#endif //OPEN3D_IMAGEPYRAMIDCUDA_CUH

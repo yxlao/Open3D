@@ -184,15 +184,15 @@ void HashTableCuda<Key, Value, Hasher>::Init(
 	server_.lock_array_ = lock_array_.server();
 	server_.assigned_entry_array_ = assigned_entry_array_.server();
 
-	CudaMalloc((void**)&server_.entry_list_head_node_ptrs_,
-		sizeof(int) * bucket_count);
-	CudaMalloc((void**)&server_.entry_list_size_ptrs_,
-		sizeof(int) * bucket_count);
+	CheckCuda(cudaMalloc((void**)&server_.entry_list_head_node_ptrs_,
+		sizeof(int) * bucket_count));
+	CheckCuda(cudaMalloc((void**)&server_.entry_list_size_ptrs_,
+		sizeof(int) * bucket_count));
 
 	const int threads = THREAD_1D_UNIT;
 	const int blocks = UPPER_ALIGN(bucket_count, THREAD_1D_UNIT);
 	InitHashTableEntriesKernel<<<blocks, threads>>>(server_);
-	CudaSynchronize();
+	CheckCuda(cudaDeviceSynchronize());
 }
 
 template<typename Key, typename Value, typename Hasher>
@@ -203,7 +203,7 @@ void HashTableCuda<Key, Value, Hasher>::Destroy() {
 	const int threads = THREAD_1D_UNIT;
 	const int blocks = UPPER_ALIGN(bucket_count_, THREAD_1D_UNIT);
 	DestroyHashTableEntriesKernel<<<blocks, threads>>>(server_);
-	CudaSynchronize();
+	CheckCuda(cudaDeviceSynchronize());
 
 	entry_array_.Destroy();
 	entry_list_array_.Destroy();
@@ -212,8 +212,8 @@ void HashTableCuda<Key, Value, Hasher>::Destroy() {
 
 	memory_heap_entry_list_node_.Destroy();
 	memory_heap_value_.Destroy();
-	CudaFree(server_.entry_list_head_node_ptrs_);
-	CudaFree(server_.entry_list_size_ptrs_);
+	CheckCuda(cudaFree(server_.entry_list_head_node_ptrs_));
+	CheckCuda(cudaFree(server_.entry_list_size_ptrs_));
 }
 
 template<typename Key, typename Value, typename Hasher>
@@ -229,7 +229,7 @@ void HashTableCuda<Key, Value, Hasher>::ResetEntries() {
 	const int threads = THREAD_1D_UNIT;
 	const int blocks = UPPER_ALIGN(bucket_count_, THREAD_1D_UNIT);
 	ResetHashTableEntriesKernel<<<blocks, threads>>>(server_);
-	CudaSynchronize();
+	CheckCuda(cudaDeviceSynchronize());
 }
 
 template<typename Key, typename Value, typename Hasher>
@@ -245,7 +245,7 @@ void HashTableCuda<Key, Value, Hasher>::GetAssignedEntries() {
 	const int threads = THREAD_1D_UNIT;
 	const int blocks = UPPER_ALIGN(bucket_count_, THREAD_1D_UNIT);
 	GetHashTableAssignedEntriesKernel<<< blocks, threads>>>(server_);
-	CudaSynchronize();
+	CheckCuda(cudaDeviceSynchronize());
 }
 
 template<typename Key, typename Value, typename Hasher>
@@ -253,21 +253,22 @@ void HashTableCuda<Key, Value, Hasher>
     ::New(std::vector<Key> &keys, std::vector<Value> &values) {
     Key *keys_packets;
     Value *values_packets;
-    CudaMalloc((void**)&keys_packets, sizeof(Key) * keys.size());
-    CudaMemcpy(keys_packets, keys.data(),
-    	sizeof(Key) * keys.size(), HostToDevice);
-    CudaMalloc((void**)&values_packets, sizeof(Value) * values.size());
-    CudaMemcpy(values_packets, values.data(),
-    	sizeof(Value) * values.size(), HostToDevice);
+    CheckCuda(cudaMalloc((void**)&keys_packets, sizeof(Key) * keys.size()));
+    CheckCuda(cudaMemcpy(keys_packets, keys.data(),
+    	sizeof(Key) * keys.size(), cudaMemcpyHostToDevice));
+    CheckCuda(cudaMalloc((void**)&values_packets,
+    	sizeof(Value) * values.size()));
+    CheckCuda(cudaMemcpy(values_packets, values.data(),
+    	sizeof(Value) * values.size(), cudaMemcpyHostToDevice));
 
 	const int threads = THREAD_1D_UNIT;
 	const int blocks = UPPER_ALIGN(bucket_count_, THREAD_1D_UNIT);
 	InsertHashTableEntriesKernel<<<blocks, threads>>>(
 		server_, keys_packets, values_packets, keys.size());
-	CudaSynchronize();
+	CheckCuda(cudaDeviceSynchronize());
 
-	CudaFree(keys_packets);
-	CudaFree(values_packets);
+	CheckCuda(cudaFree(keys_packets));
+	CheckCuda(cudaFree(values_packets));
 }
 
 template<typename Key, typename Value, typename Hasher>
@@ -275,17 +276,17 @@ void HashTableCuda<Key, Value, Hasher>
     ::Delete(std::vector<Key> &keys) {
 
    	Key *keys_packets;
-	CudaMalloc((void**)&keys_packets, sizeof(Key) * keys.size());
-	CudaMemcpy(keys_packets, keys.data(),
-		sizeof(Key) * keys.size(), HostToDevice);
+	CheckCuda(cudaMalloc((void**)&keys_packets, sizeof(Key) * keys.size()));
+	CheckCuda(cudaMemcpy(keys_packets, keys.data(),
+		sizeof(Key) * keys.size(), cudaMemcpyHostToDevice));
 
 	const int threads = THREAD_1D_UNIT;
 	const int blocks = UPPER_ALIGN(bucket_count_, THREAD_1D_UNIT);
 	DeleteHashTableEntriesKernel<<<blocks, threads>>>(
 		server_, keys_packets, keys.size());
-	CudaSynchronize();
+	CheckCuda(cudaDeviceSynchronize());
 
-	CudaFree(keys_packets);
+	CheckCuda(cudaFree(keys_packets));
 }
 
 template<typename Key, typename Value, typename Hasher>
@@ -336,21 +337,23 @@ std::tuple<std::vector<int>, std::vector<int>>
 
 	int *array_entry_count_packets;
 	int *list_entry_count_packets;
-	CudaMalloc((void**)&array_entry_count_packets, sizeof(int) * bucket_count_);
-	CudaMalloc((void**)&list_entry_count_packets, sizeof(int) * bucket_count_);
+	CheckCuda(cudaMalloc((void**)&array_entry_count_packets,
+		sizeof(int) * bucket_count_));
+	CheckCuda(cudaMalloc((void**)&list_entry_count_packets,
+		sizeof(int) * bucket_count_));
 
 	const int threads = THREAD_1D_UNIT;
 	const int blocks = UPPER_ALIGN(bucket_count_, THREAD_1D_UNIT);
 	ProfileHashTableKernel<<<blocks, threads>>>(
 		server_, array_entry_count_packets, list_entry_count_packets);
-	CudaSynchronize();
+	CheckCuda(cudaDeviceSynchronize());
 
-	CudaMemcpy(array_entry_count.data(), array_entry_count_packets,
-		sizeof(int) * bucket_count_, DeviceToHost);
-	CudaMemcpy(list_entry_count.data(), list_entry_count_packets,
-		sizeof(int) * bucket_count_, DeviceToHost);
-	CudaFree(array_entry_count_packets);
-	CudaFree(list_entry_count_packets);
+	CheckCuda(cudaMemcpy(array_entry_count.data(), array_entry_count_packets,
+		sizeof(int) * bucket_count_, cudaMemcpyDeviceToHost));
+	CheckCuda(cudaMemcpy(list_entry_count.data(), list_entry_count_packets,
+		sizeof(int) * bucket_count_, cudaMemcpyDeviceToHost));
+	CheckCuda(cudaFree(array_entry_count_packets));
+	CheckCuda(cudaFree(list_entry_count_packets));
 
 	return std::make_tuple(array_entry_count, list_entry_count);
 }
