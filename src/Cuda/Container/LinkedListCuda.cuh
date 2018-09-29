@@ -48,7 +48,7 @@ void LinkedListCudaServer<T>::Insert(T value) {
 }
 
 /**
- * Cuda version of initialization.
+ * Cuda version of Createialization.
  * It is more intuitive to directly allocate it in kernel with malloc(),
  * but it fails with not too many number of operations
  * @TODO check why.
@@ -62,7 +62,7 @@ void LinkedListCudaServer<T>::Insert(T value) {
  */
 template<typename T>
 __device__
-void LinkedListCudaServer<T>::Init(
+void LinkedListCudaServer<T>::Create(
 	LinkedListCudaServer<T>::MemoryHeapLinkedListNodeCudaServer &memory_heap_server,
 	int* head_node_ptr,
 	int* size_ptr) {
@@ -77,7 +77,7 @@ void LinkedListCudaServer<T>::Init(
 /* Release the assigned pointers externally */
 template<typename T>
 __device__
-void LinkedListCudaServer<T>::Destroy() {}
+void LinkedListCudaServer<T>::Release() {}
 
 template<typename T>
 __device__
@@ -183,7 +183,7 @@ int LinkedListCudaServer<T>::FindAndDelete(T value) {
  * Client end
  */
 template<typename T>
-void LinkedListCuda<T>::Init(int max_capacity,
+void LinkedListCuda<T>::Create(int max_capacity,
 	MemoryHeapCuda<LinkedListNodeCuda<T>> &memory_heap) {
 	assert(max_capacity < memory_heap.server().max_capacity_);
 
@@ -199,7 +199,7 @@ void LinkedListCuda<T>::Init(int max_capacity,
 }
 
 template<typename T>
-void LinkedListCuda<T>::Destroy() {
+void LinkedListCuda<T>::Release() {
 	ClearLinkedListKernel<<<1, 1>>>(server_);
 	CheckCuda(cudaDeviceSynchronize());
 }

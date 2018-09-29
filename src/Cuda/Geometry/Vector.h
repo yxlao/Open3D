@@ -63,7 +63,7 @@ public:
 	}
 
 	/**
-	 * WARNING! This initializer is special !!!
+	 * WARNING! This Createializer is special !!!
 	 * @param v0
 	 */
 	__HOSTDEVICE__ Vector(T v0) {

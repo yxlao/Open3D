@@ -42,8 +42,8 @@ public:
 	~ArrayCuda() = default;
 	ArrayCuda(int max_capacity);
 
-	void Init(int max_capacity);
-	void Destroy();
+	void Create(int max_capacity);
+	void Release();
 
 	void Upload(std::vector<T> &data);
 	/* Download valid parts (GPU push_back operations) */

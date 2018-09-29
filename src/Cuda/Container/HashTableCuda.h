@@ -169,8 +169,8 @@ public:
 	HashTableCuda() {}
 	~HashTableCuda() {};
 
-	void Init(int bucket_count, int value_capacity);
-	void Destroy();
+	void Create(int bucket_count, int value_capacity);
+	void Release();
 
 	void Reset();
 	void ResetEntries();
@@ -209,12 +209,12 @@ void DeleteHashTableEntriesKernel(
 
 template<typename Key, typename Value, typename Hasher>
 __GLOBAL__
-void InitHashTableEntriesKernel(
+void CreateHashTableEntriesKernel(
 	HashTableCudaServer<Key, Value, Hasher> server);
 
 template<typename Key, typename Value, typename Hasher>
 __GLOBAL__
-void DestroyHashTableEntriesKernel(
+void ReleaseHashTableEntriesKernel(
 	HashTableCudaServer<Key, Value, Hasher> server);
 
 template<typename Key, typename Value, typename Hasher>

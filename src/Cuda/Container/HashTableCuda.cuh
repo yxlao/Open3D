@@ -157,7 +157,7 @@ int HashTableCudaServer<Key, Value, Hasher>::Delete(const Key &key) {
  * Client end
  */
 template<typename Key, typename Value, typename Hasher>
-void HashTableCuda<Key, Value, Hasher>::Init(
+void HashTableCuda<Key, Value, Hasher>::Create(
 	int bucket_count, int value_capacity) {
 	bucket_count_ = bucket_count; /* (* BUCKET_SIZE), 2D array */
 	hasher_ = Hasher(bucket_count);
@@ -165,13 +165,13 @@ void HashTableCuda<Key, Value, Hasher>::Init(
 	value_max_capacity_ = value_capacity;
 	linked_list_node_max_capacity_ = bucket_count * BUCKET_SIZE;
 
-	memory_heap_entry_list_node_.Init(linked_list_node_max_capacity_);
-	memory_heap_value_.Init(value_max_capacity_);
+	memory_heap_entry_list_node_.Create(linked_list_node_max_capacity_);
+	memory_heap_value_.Create(value_max_capacity_);
 
-	entry_array_.Init(bucket_count * BUCKET_SIZE);
-	entry_list_array_.Init(bucket_count);
-	lock_array_.Init(bucket_count);
-	assigned_entry_array_.Init(
+	entry_array_.Create(bucket_count * BUCKET_SIZE);
+	entry_list_array_.Create(bucket_count);
+	lock_array_.Create(bucket_count);
+	assigned_entry_array_.Create(
 		bucket_count * BUCKET_SIZE + linked_list_node_max_capacity_);
 
 	server_.hasher_ = hasher_;
@@ -191,27 +191,27 @@ void HashTableCuda<Key, Value, Hasher>::Init(
 
 	const int threads = THREAD_1D_UNIT;
 	const int blocks = UPPER_ALIGN(bucket_count, THREAD_1D_UNIT);
-	InitHashTableEntriesKernel<<<blocks, threads>>>(server_);
+	CreateHashTableEntriesKernel<<<blocks, threads>>>(server_);
 	CheckCuda(cudaDeviceSynchronize());
 }
 
 template<typename Key, typename Value, typename Hasher>
-void HashTableCuda<Key, Value, Hasher>::Destroy() {
-	/** Since we Destroy, we don't care about the content of the linked list
-	 * array. They are stored in the memory_heap and will be destroyed anyway.
+void HashTableCuda<Key, Value, Hasher>::Release() {
+	/** Since we Release, we don't care about the content of the linked list
+	 * array. They are stored in the memory_heap and will be Releaseed anyway.
 	 */
 	const int threads = THREAD_1D_UNIT;
 	const int blocks = UPPER_ALIGN(bucket_count_, THREAD_1D_UNIT);
-	DestroyHashTableEntriesKernel<<<blocks, threads>>>(server_);
+	ReleaseHashTableEntriesKernel<<<blocks, threads>>>(server_);
 	CheckCuda(cudaDeviceSynchronize());
 
-	entry_array_.Destroy();
-	entry_list_array_.Destroy();
-	lock_array_.Destroy();
-	assigned_entry_array_.Destroy();
+	entry_array_.Release();
+	entry_list_array_.Release();
+	lock_array_.Release();
+	assigned_entry_array_.Release();
 
-	memory_heap_entry_list_node_.Destroy();
-	memory_heap_value_.Destroy();
+	memory_heap_entry_list_node_.Release();
+	memory_heap_value_.Release();
 	CheckCuda(cudaFree(server_.entry_list_head_node_ptrs_));
 	CheckCuda(cudaFree(server_.entry_list_size_ptrs_));
 }

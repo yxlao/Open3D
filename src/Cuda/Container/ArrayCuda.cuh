@@ -36,11 +36,11 @@ T &ArrayCudaServer<T>::get(int index) {
  */
 template<typename T>
 ArrayCuda<T>::ArrayCuda(int max_capacity) {
-	Init(max_capacity);
+	Create(max_capacity);
 }
 
 template<typename T>
-void ArrayCuda<T>::Init(int max_capacity) {
+void ArrayCuda<T>::Create(int max_capacity) {
   max_capacity_ = max_capacity;
 
   server_.max_capacity_ = max_capacity;
@@ -51,7 +51,7 @@ void ArrayCuda<T>::Init(int max_capacity) {
 }
 
 template<typename T>
-void ArrayCuda<T>::Destroy() {
+void ArrayCuda<T>::Release() {
 	CheckCuda(cudaFree(server_.data_));
 	CheckCuda(cudaFree(server_.iterator_));
 }

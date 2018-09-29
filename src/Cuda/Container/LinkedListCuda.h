@@ -44,18 +44,18 @@ public:
 
 public:
 	/**
-	 * WARNING!!! USE ONLY ONE VERSION OF INIT AND DESTROY!!!
+	 * WARNING!!! USE ONLY ONE VERSION OF Create AND Release!!!
 	 * As a generic container, you can instantiate the class on CPU, and call
 	 * server functions.
 	 * For our HashTable, we have to instantiate the class ON GPU, therefore
 	 * we need a GPU version.
-	 * Choose the correct version of Init and Destroy depending on where you
+	 * Choose the correct version of Create and Release depending on where you
 	 * instantiate it.
 	 */
-	__DEVICE__ void Init(
+	__DEVICE__ void Create(
 		MemoryHeapLinkedListNodeCudaServer &memory_heap,
 		int *head_node_ptr, int * size_ptr);
-	__DEVICE__ void Destroy();
+	__DEVICE__ void Release();
 
 	__DEVICE__ void Insert(T value);
 	__DEVICE__ int Delete(int node_ptr);
@@ -91,9 +91,9 @@ public:
 	LinkedListCuda() { max_capacity_ = -1; }
 	~LinkedListCuda() = default;
 
-	void Init(int max_capacity,
+	void Create(int max_capacity,
 		MemoryHeapCuda<LinkedListNodeCuda<T>> &memory_heap);
-	void Destroy();
+	void Release();
 
 	/* Mainly for test usages. Only launched with 1 thread. */
 	void Insert(std::vector<int> &data);

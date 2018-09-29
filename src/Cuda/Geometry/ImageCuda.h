@@ -12,6 +12,8 @@
 #include <vector_types.h>
 #include <opencv2/opencv.hpp>
 
+//#define __TRACE_LIFE_CYCLE__
+
 namespace three {
 
 /**
@@ -29,9 +31,17 @@ public:
 	int pitch_;
 
 public:
+	/** This is a CPU pointer for shared reference counting.
+	 *  How many ImageCuda clients are using this server?
+	 */
+	int* ref_count_ = nullptr;
+
+public:
 	inline __DEVICE__ T& get(int x, int y);
 	/** Cuda Texture is NOT helpful,
-	  * especially when we want to do non-trivial interpolation for depth images
+	  * especially when we want to do non-trivial interpolation
+	  * for depth images.
+	  * Write our own.
 	  */
 	inline __DEVICE__ T get_interp(float x, float y);
 
@@ -57,12 +67,16 @@ private:
 	int pitch_;
 
 public:
+	ImageCuda();
+	/** The semantic of our copy constructor (and also operator =)
+	 *  is memory efficient. No moving semantic is needed.
+	 */
+	ImageCuda(const ImageCuda<T> &other);
+	~ImageCuda();
+	ImageCuda<T>& operator = (const ImageCuda<T>& other);
 
-	ImageCuda() { width_ = -1; height_=  -1; }
-	~ImageCuda() = default;
-
-	int Init(int width, int height);
-	void Destroy();
+	int Create(int width, int height);
+	void Release();
 	void CopyTo(ImageCuda<T> &other);
 
 	ImageCuda<T> Downsample();
@@ -74,16 +88,19 @@ public:
 	int Upload(cv::Mat &m);
 	cv::Mat Download();
 
-	int width() {
+	int width() const {
 		return width_;
 	}
-	int height() {
+	int height() const {
 		return height_;
 	}
-	int pitch() {
+	int pitch() const {
 		return pitch_;
 	}
 	ImageCudaServer<T>& server() {
+		return server_;
+	}
+	const ImageCudaServer<T>& server() const {
 		return server_;
 	}
 };

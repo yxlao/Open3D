@@ -44,9 +44,6 @@ void CheckUploadAndDownloadConsistency(std::string path) {
 		}
 	}
 	PrintInfo("Consistency check passed.\n");
-
-	image_cuda.Destroy();
-	image_cuda_copy.Destroy();
 }
 
 template<typename T>
@@ -65,9 +62,6 @@ void CheckDownsampling(std::string path) {
 	cv::Mat downloaded = image_cuda_low.Download();
 	cv::imshow("downsampled", downloaded);
 	cv::waitKey(-1);
-
-	image_cuda.Destroy();
-	image_cuda_low.Destroy();
 }
 
 template<typename T>
@@ -75,18 +69,17 @@ void CheckGaussian(std::string path) {
 	using namespace three;
 	cv::Mat image = cv::imread(path, cv::IMREAD_UNCHANGED);
 
-	ImageCuda<T> image_cuda, image_cuda_blurred;
+	ImageCuda<T> image_cuda;
 	PrintInfo("Uploading ...\n");
 	image_cuda.Upload(image);
 
 	PrintInfo("Gaussian ...\n");
-	image_cuda_blurred = image_cuda.Gaussian(Gaussian3x3);
+	ImageCuda<T> image_cuda_blurred = image_cuda.Gaussian(Gaussian3x3);
 
 	PrintInfo("Downloading ...\n");
 	cv::Mat downloaded = image_cuda_blurred.Download();
 	cv::imshow("Gaussian3x3", downloaded);
 	cv::waitKey(-1);
-	image_cuda_blurred.Destroy();
 
 	PrintInfo("Gaussian ...\n");
 	image_cuda_blurred = image_cuda.Gaussian(Gaussian5x5);
@@ -94,7 +87,6 @@ void CheckGaussian(std::string path) {
 	downloaded = image_cuda_blurred.Download();
 	cv::imshow("Gaussian5x5", downloaded);
 	cv::waitKey(-1);
-	image_cuda_blurred.Destroy();
 
 	PrintInfo("Gaussian ...\n");
 	image_cuda_blurred = image_cuda.Gaussian(Gaussian7x7);
@@ -102,10 +94,6 @@ void CheckGaussian(std::string path) {
 	downloaded = image_cuda_blurred.Download();
 	cv::imshow("Gaussian7x7", downloaded);
 	cv::waitKey(-1);
-	image_cuda_blurred.Destroy();
-
-	image_cuda.Destroy();
-
 }
 
 template<typename T>
@@ -147,8 +135,6 @@ void CheckToFloatConversion(std::string path, float scale, float offset) {
 
 	cv::imshow("converted", downloaded);
 	cv::waitKey(-1);
-	image_cuda.Destroy();
-	imagef_cuda.Destroy();
 }
 
 template<typename T>
@@ -171,45 +157,49 @@ void CheckGradient(std::string path) {
 	cv::imshow("dx", downloaded_dx / 255.0f);
 	cv::imshow("dy", downloaded_dy / 255.0f);
 	cv::waitKey(-1);
-
-	image_cuda.Destroy();
-	dx.Destroy();
-	dy.Destroy();
 }
 
 int main(int argc, char** argv) {
 	using namespace three;
 
 	PrintInfo("#1 Checking depth.\n");
-	CheckUploadAndDownloadConsistency<Vector1s>(
-		"../../../Test/TestData/RGBD/other_formats/TUM_depth.png");
-	CheckDownsampling<Vector1s>(
-		"../../../Test/TestData/RGBD/other_formats/TUM_depth.png");
-	CheckToFloatConversion<Vector1s>(
-		"../../../Test/TestData/RGBD/other_formats/TUM_depth.png",
-		1.0f / 5000.0f, 0.0f);
-	CheckGradient<Vector1s>(
-		"../../../Test/TestData/RGBD/other_formats/TUM_depth.png");
-	CheckGaussian<Vector1s>(
-		"../../../Test/TestData/RGBD/other_formats/TUM_depth.png");
+	std::string depth_path =
+		"../../../Test/TestData/RGBD/other_formats/TUM_depth.png";
+
+	CheckUploadAndDownloadConsistency<Vector1s>(depth_path);
+	PrintInfo("------\n");
+	CheckDownsampling<Vector1s>(depth_path);
+	PrintInfo("------\n");
+	CheckToFloatConversion<Vector1s>(depth_path, 1.0f / 5000.0f, 0.0f);
+	PrintInfo("------\n");
+	CheckGradient<Vector1s>(depth_path);
+	PrintInfo("------\n");
+	CheckGaussian<Vector1s>(depth_path);
+	PrintInfo("------\n");
 
 	PrintInfo("#2 Checking color.\n");
-	CheckUploadAndDownloadConsistency<Vector3b>(
-		"../../../Test/TestData/RGBD/other_formats/TUM_color.png");
-	CheckDownsampling<Vector3b>(
-		"../../../Test/TestData/RGBD/other_formats/TUM_color.png");
-	CheckToFloatConversion<Vector3b>(
-		"../../../Test/TestData/RGBD/other_formats/TUM_color.png",
-		1.0f / 255.0f, 0.0f);
-	CheckGradient<Vector3b>(
-		"../../../Test/TestData/RGBD/other_formats/TUM_color.png");
-	CheckGaussian<Vector3b>(
-		"../../../Test/TestData/RGBD/other_formats/TUM_color.png");
+	std::string color_path =
+		"../../../Test/TestData/RGBD/other_formats/TUM_color.png";
 
-	CheckGradient<Vector1b>(
-		"../../../Test/TestData/lena_gray.jpg");
-	CheckGaussian<Vector1b>(
-		"../../../Test/TestData/lena_gray.jpg");
+	CheckUploadAndDownloadConsistency<Vector3b>(color_path);
+	PrintInfo("------\n");
+	CheckDownsampling<Vector3b>(color_path);
+	PrintInfo("------\n");
+	CheckToFloatConversion<Vector3b>(color_path, 1.0f / 255.0f, 0.0f);
+	PrintInfo("------\n");
+	CheckGradient<Vector3b>(color_path);
+	PrintInfo("------\n");
+	CheckGaussian<Vector3b>(color_path);
+	PrintInfo("------\n");
+
+	PrintInfo("#3 Checking grayscale.\n");
+	std::string grayscale_path = "../../../Test/TestData/lena_gray.jpg";
+	CheckDownsampling<Vector1b>(grayscale_path);
+	PrintInfo("------\n");
+	CheckGradient<Vector1b>(grayscale_path);
+	PrintInfo("------\n");
+	CheckGaussian<Vector1b>(grayscale_path);
+	PrintInfo("------\n");
 
 	return 0;
 }

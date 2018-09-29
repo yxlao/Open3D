@@ -66,7 +66,7 @@ void MemoryHeapCudaServer<T>::Free(int addr) {
  * Client end
  */
 template<typename T>
-void MemoryHeapCuda<T>::Init(int max_capacity) {
+void MemoryHeapCuda<T>::Create(int max_capacity) {
 	max_capacity_ = max_capacity;
 
 	server_.max_capacity_ = max_capacity;
@@ -77,7 +77,7 @@ void MemoryHeapCuda<T>::Init(int max_capacity) {
 }
 
 template<typename T>
-void MemoryHeapCuda<T>::Destroy() {
+void MemoryHeapCuda<T>::Release() {
 	CheckCuda(cudaFree(server_.heap_counter_));
 	CheckCuda(cudaFree(server_.heap_));
 	CheckCuda(cudaFree(server_.data_));

@@ -67,8 +67,8 @@ public:
 	MemoryHeapCuda() { max_capacity_ = -1; };
 	~MemoryHeapCuda() = default;
 
-	void Init(int max_capacity);
-	void Destroy();
+	void Create(int max_capacity);
+	void Release();
 	void Reset();
 
 	/* Hopefully this is only used for debugging. */

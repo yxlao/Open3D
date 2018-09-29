@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
 		const int kMaxCapacity = 1000000;
 		const int kFilledValue = 1203;
 
-		array.Init(kMaxCapacity);
+		array.Create(kMaxCapacity);
 		array.Fill(kFilledValue);
 		std::vector<int> downloaded = array.DownloadAll();
 		for (auto &val : downloaded) {
@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
 		timer.Stop();
 		PrintInfo("ArrayCuda.Fill() passed in %.2f seconds.\n",
 				  timer.GetDuration() * 0.001f);
-		array.Destroy();
+		array.Release();
 	}
 
 	/**
@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
 
 		ArrayCuda<int> array;
 		const int kMaxCapacity = 1000000;
-		array.Init(kMaxCapacity);
+		array.Create(kMaxCapacity);
 
 		std::vector<int> random_vec;
 		random_vec.resize(kMaxCapacity / 2);
@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
 		PrintInfo("ArrayCuda.Upload() and ArrayCuda.Download() "
 				  "passed in %.2f seconds.\n",
 				  timer.GetDuration() * 0.001f);
-		array.Destroy();
+		array.Release();
 	}
 
 	/**
@@ -93,11 +93,11 @@ int main(int argc, char **argv) {
 		MemoryHeapCuda<LinkedListNodeCuda<int>> memory_heap;
 		const int kMaxCapacity = 1000000;
 
-		memory_heap.Init(kMaxCapacity);
+		memory_heap.Create(kMaxCapacity);
 
 		LinkedListCuda<int> linked_list1, linked_list2;
-		linked_list1.Init(kMaxCapacity / 2, memory_heap);
-		linked_list2.Init(kMaxCapacity / 2, memory_heap);
+		linked_list1.Create(kMaxCapacity / 2, memory_heap);
+		linked_list2.Create(kMaxCapacity / 2, memory_heap);
 
 		int num_samples = kMaxCapacity / 4;
 		std::vector<int> values;
@@ -146,9 +146,9 @@ int main(int argc, char **argv) {
 		PrintInfo("LinkedListCuda.Insert() and LinkedListCuda.Download() "
 			"passed in %.2f seconds.\n", timer.GetDuration() * 0.001f);
 
-		linked_list1.Destroy();
-		linked_list2.Destroy();
-		memory_heap.Destroy();
+		linked_list1.Release();
+		linked_list2.Release();
+		memory_heap.Release();
 	}
 
 	{
@@ -158,11 +158,11 @@ int main(int argc, char **argv) {
 		MemoryHeapCuda<LinkedListNodeCuda<int>> memory_heap;
 		const int kMaxCapacity = 1000000;
 
-		memory_heap.Init(kMaxCapacity);
+		memory_heap.Create(kMaxCapacity);
 
 		LinkedListCuda<int> linked_list1, linked_list2;
-		linked_list1.Init(kMaxCapacity / 2, memory_heap);
-		linked_list2.Init(kMaxCapacity / 2, memory_heap);
+		linked_list1.Create(kMaxCapacity / 2, memory_heap);
+		linked_list2.Create(kMaxCapacity / 2, memory_heap);
 
 		std::vector<int> insert_values[2];
 		std::vector<int> insert_and_delete_values[2];
@@ -326,7 +326,7 @@ int main(int argc, char **argv) {
 	 */
 	{
 		HashTableCuda<Vector3i, int, SpatialHasher> table;
-		table.Init(15, 300);
+		table.Create(15, 300);
 
 		int num_pairs = 300;
 		std::vector<Vector3i> keys;
@@ -401,13 +401,13 @@ int main(int argc, char **argv) {
 			PrintInfo("%d %d\n", array_entry_count[i], list_entry_count[i]);
 		}
 
-		table.Destroy();
+		table.Release();
 	}
 
 	{
 		HashTableCuda<Vector3i, int, SpatialHasher> table;
 		const int bucket_count = 400000;
-		table.Init(bucket_count, 2000000);
+		table.Create(bucket_count, 2000000);
 
 		int num_pairs = 2000000;
 		std::vector<Vector3i> keys;
@@ -488,7 +488,7 @@ int main(int argc, char **argv) {
 				  array_entry_cnt / (float)bucket_count,
 				  list_entry_cnt / (float)bucket_count
 		);
-		table.Destroy();
+		table.Release();
 	}
 	return 0;
 }

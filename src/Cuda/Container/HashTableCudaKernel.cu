@@ -14,7 +14,7 @@
 namespace three {
 template<typename Key, typename Value, typename Hasher>
 __global__
-void InitHashTableEntriesKernel(
+void CreateHashTableEntriesKernel(
 	HashTableCudaServer<Key, Value, Hasher> server) {
 	const int bucket_idx = blockIdx.x * blockDim.x + threadIdx.x;
 	if (bucket_idx >= server.bucket_count_) return;
@@ -22,12 +22,12 @@ void InitHashTableEntriesKernel(
 	int bucket_base_idx = bucket_idx * BUCKET_SIZE;
 #pragma unroll 1
 	for (int i = 0; i < BUCKET_SIZE; ++i) {
-		server.entry_array().get(bucket_base_idx + i).Clear(); /* Clear == Init */
+		server.entry_array().get(bucket_base_idx + i).Clear(); /* Clear == Create */
 	}
 
 	int *head_node_ptr = &(server.entry_list_head_node_ptrs()[bucket_idx]);
 	int *size_ptr = &(server.entry_list_size_ptrs()[bucket_idx]);
-	server.entry_list_array().get(bucket_idx).Init(
+	server.entry_list_array().get(bucket_idx).Create(
 		server.memory_heap_entry_list_node(),
 		head_node_ptr,
 		size_ptr);
@@ -35,12 +35,12 @@ void InitHashTableEntriesKernel(
 
 template<typename Key, typename Value, typename Hasher>
 __global__
-void DestroyHashTableEntriesKernel(
+void ReleaseHashTableEntriesKernel(
 	HashTableCudaServer<Key, Value, Hasher> server) {
 	const int bucket_idx = blockIdx.x * blockDim.x + threadIdx.x;
 	if (bucket_idx >= server.bucket_count_) return;
 
-	server.entry_list_array().get(bucket_idx).Destroy();
+	server.entry_list_array().get(bucket_idx).Release();
 }
 
 template<typename Key, typename Value, typename Hasher>
@@ -146,18 +146,19 @@ void ProfileHashTableKernel(
 		node_ptr = linked_list_node.next_node_ptr;
 	}
 
+	assert(linked_list.size() == linked_list_entry_cnt);
 	array_entry_count[bucket_idx] = array_entry_cnt;
 	linked_list_entry_count[bucket_idx] = linked_list_entry_cnt;
 }
 
 template
 __global__
-void InitHashTableEntriesKernel<Vector3i, int, SpatialHasher>
+void CreateHashTableEntriesKernel<Vector3i, int, SpatialHasher>
 	(HashTableCudaServer<Vector3i, int, SpatialHasher> server);
 
 template
 __global__
-void DestroyHashTableEntriesKernel<Vector3i, int, SpatialHasher>
+void ReleaseHashTableEntriesKernel<Vector3i, int, SpatialHasher>
 	(HashTableCudaServer<Vector3i, int, SpatialHasher> server);
 
 template

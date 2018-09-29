@@ -62,8 +62,10 @@ corresponding `.cuh` file, or in a `.cu` file that includes the `.cuh`.
 One CPU class should hold only one `server` class, which can be nested with 
 other `server` classes.
 
+**Don't** use inheritance for `server`. It is not supported by CUDA -- there 
+will be problems transforming *vtable* to kernels.
+
 ## TODO
-- Add reference-count for the servers?
-- Add swap for the containers? (That will be really complicated for HashTable)
-- Actually maybe we can enable the constructors and destructors for the 
-client side...
+- Add reference-count for the servers? Actually maybe we can enable the 
+constructors and destructors for the client side... (works well for ImageCuda).
+- Add swap for the containers? (That will be really complicated for HashTable).

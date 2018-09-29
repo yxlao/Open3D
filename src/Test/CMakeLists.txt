@@ -102,9 +102,9 @@ set_target_properties(TestCudaContainer PROPERTIES
 		FOLDER "Test"
 		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Test")
 
-add_executable(TestCudaIntegration TestCudaImage.cpp)
-target_link_libraries(TestCudaIntegration Core Cuda)
-set_target_properties(TestCudaIntegration PROPERTIES
+add_executable(TestCudaImage TestCudaImage.cpp)
+target_link_libraries(TestCudaImage Core Cuda)
+set_target_properties(TestCudaImage PROPERTIES
 		FOLDER "Test"
 		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Test")
 
