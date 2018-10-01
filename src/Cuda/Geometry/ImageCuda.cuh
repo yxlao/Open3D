@@ -117,6 +117,10 @@ int ImageCuda<T>::Create(int width, int height) {
 	height_ = height;
 	pitch_ = 0;
 
+#ifdef __TRACE_LIFE_CYCLE__
+	PrintInfo("Creating.\n");
+#endif
+
 	server_.ref_count_ = new int(1);
 	size_t pitch_size_t = 0;
 	CheckCuda(cudaMallocPitch((void **) (&server_.data_), &pitch_size_t,
@@ -147,7 +151,7 @@ void ImageCuda<T>::Release() {
 
 
 template<typename T>
-void ImageCuda<T>::CopyTo(ImageCuda<T> &other) {
+void ImageCuda<T>::CopyTo(ImageCuda<T> &other) const {
 	if (this == &other) return;
 
 	if (other.server().ref_count_ == nullptr) {
@@ -249,6 +253,24 @@ ImageCuda<T> ImageCuda<T>::Downsample() {
 	CheckCuda(cudaGetLastError());
 
 	return dst;
+}
+
+template<typename T>
+void ImageCuda<T>::Downsample(ImageCuda<T> &image) {
+	if (image.server().ref_count_ == nullptr
+	|| image.width() != width_ / 2
+	|| image.width() != height_ / 2) {
+		image = Downsample();
+		return;
+	}
+
+	const dim3 blocks(
+		UPPER_ALIGN(image.width(), THREAD_2D_UNIT),
+		UPPER_ALIGN(image.height(), THREAD_2D_UNIT));
+	const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+	DownsampleImageKernel<<<blocks, threads>>>(server_, image.server());
+	CheckCuda(cudaDeviceSynchronize());
+	CheckCuda(cudaGetLastError());
 }
 
 template<typename T>

@@ -4,6 +4,7 @@
 
 #include <Core/Core.h>
 #include <Cuda/Geometry/ImageCuda.h>
+#include <Cuda/Geometry/ImagePyramidCuda.h>
 #include <Cuda/Geometry/Vector.h>
 #include <opencv2/opencv.hpp>
 
@@ -159,6 +160,33 @@ void CheckGradient(std::string path) {
 	cv::waitKey(-1);
 }
 
+template<typename T, size_t N>
+void CheckPyramid(std::string path) {
+	using namespace three;
+	cv::Mat image = cv::imread(path, cv::IMREAD_UNCHANGED);
+
+	ImagePyramidCuda<T, N> pyramid;
+	PrintInfo("Building ...\n");
+	pyramid.Build(image);
+	PrintInfo("> pass 1\n");
+
+	/* Test memory-use */
+	pyramid.Build(image);
+	PrintInfo("> pass 2\n");
+
+	pyramid.Build(image);
+	PrintInfo("> pass 3\n");
+
+	std::vector<cv::Mat> downloaded_images = pyramid.Download();
+	std::stringstream ss;
+	for (int level = 0; level < N; ++level) {
+		ss.str("");
+		ss << "level-" << level;
+		cv::imshow(ss.str(), downloaded_images[level]);
+	}
+	cv::waitKey(-1);
+}
+
 int main(int argc, char** argv) {
 	using namespace three;
 
@@ -199,6 +227,14 @@ int main(int argc, char** argv) {
 	CheckGradient<Vector1b>(grayscale_path);
 	PrintInfo("------\n");
 	CheckGaussian<Vector1b>(grayscale_path);
+	PrintInfo("------\n");
+
+	PrintInfo("#4 Checking ImagePyramid.\n");
+	CheckPyramid<Vector1s, 4>(depth_path);
+	PrintInfo("------\n");
+	CheckPyramid<Vector3b, 4>(color_path);
+	PrintInfo("------\n");
+	CheckPyramid<Vector1b, 4>(grayscale_path);
 	PrintInfo("------\n");
 
 	return 0;

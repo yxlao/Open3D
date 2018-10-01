@@ -166,8 +166,8 @@ public:
 	int linked_list_node_max_capacity_;
 
 public:
-	HashTableCuda() {}
-	~HashTableCuda() {};
+	HashTableCuda() { bucket_count_ = -1; }
+	~HashTableCuda() = default;
 
 	void Create(int bucket_count, int value_capacity);
 	void Release();

@@ -12,7 +12,7 @@
 #include <vector_types.h>
 #include <opencv2/opencv.hpp>
 
-//#define __TRACE_LIFE_CYCLE__
+#define __TRACE_LIFE_CYCLE__
 
 namespace three {
 
@@ -77,9 +77,13 @@ public:
 
 	int Create(int width, int height);
 	void Release();
-	void CopyTo(ImageCuda<T> &other);
+	void CopyTo(ImageCuda<T> &other) const;
 
 	ImageCuda<T> Downsample();
+	/** In-place version of downsample, defined for ImagePyramid
+	 * other methods can be rewritten if needed. */
+	void Downsample(ImageCuda<T> &image);
+
 	ImageCuda<T> Gaussian(GaussianKernelOptions kernel);
 	std::tuple<ImageCuda<typename T::VecTypef>,
 	    ImageCuda<typename T::VecTypef>> Gradient();

@@ -22,9 +22,6 @@ public:
 	int max_capacity_;
 
 public:
-	ArrayCudaServer() {};
-	~ArrayCudaServer() {};
-
 	__DEVICE__ void push_back(T value);
 	__DEVICE__ T& get(int index);
 

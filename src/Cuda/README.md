@@ -69,3 +69,4 @@ will be problems transforming *vtable* to kernels.
 - Add reference-count for the servers? Actually maybe we can enable the 
 constructors and destructors for the client side... (works well for ImageCuda).
 - Add swap for the containers? (That will be really complicated for HashTable).
+- Organize some error codes for functions to return.
