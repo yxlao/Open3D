@@ -16,14 +16,28 @@
 
 namespace three {
 
+enum GaussianKernelSize {
+	Gaussian3x3 = 0,
+	Gaussian5x5 = 1,
+	Gaussian7x7 = 2,
+};
+
+enum DownsampleMethod {
+	BoxFilter = 0, /* Naive 2x2 */
+	BoxFilterWithHoles = 1,
+	GaussianFilter = 2, /* 5x5, suggested by OpenCV */
+	GaussianFilterWithHoles = 3
+
+};
+
 /**
- * @tparam T: uchar, uchar3, uchar4, float, float3, float4.
+ * @tparam VecType: uchar, uchar3, uchar4, float, float3, float4.
  * Other templates are regarded as incompatible.
  */
-template<typename T>
+template<typename VecType>
 class ImageCudaServer {
 private:
-	T* data_;
+	VecType *data_;
 
 public:
 	int width_;
@@ -34,34 +48,47 @@ public:
 	/** This is a CPU pointer for shared reference counting.
 	 *  How many ImageCuda clients are using this server?
 	 */
-	int* ref_count_ = nullptr;
+	int *ref_count_ = nullptr;
 
 public:
-	inline __DEVICE__ T& get(int x, int y);
-	/** Cuda Texture is NOT helpful,
-	  * especially when we want to do non-trivial interpolation
-	  * for depth images.
-	  * Write our own.
-	  */
-	inline __DEVICE__ T get_interp(float x, float y);
+	inline __DEVICE__ VecType &get(int x, int y);
+	inline __DEVICE__ VecType &operator()(int x, int y);
+	inline __DEVICE__ VecType get_interp(float x, float y);
 
-	T* &data() {
+	inline __DEVICE__
+	VecType BoxFilter2x2(int x, int y);
+	inline __DEVICE__
+	VecType BoxFilter2x2WithHoles(int x, int y);
+	inline __DEVICE__
+	VecType GaussianFilter(int x, int y, int kernel_idx);
+	inline __DEVICE__
+	VecType GaussianFilterWithHoles(int x, int y, int kernel_idx);
+	inline __DEVICE__
+	VecType BilateralFilter(int x, int y, int kernel_idx, float val_sigma);
+	inline __DEVICE__
+	VecType BilateralFilterWithHoles(int x,
+									 int y,
+									 int kernel_idx,
+									 float val_sigma);
+
+	/** Wish I could use std::pair here... **/
+	struct Grad {
+		typename VecType::VecTypef dx;
+		typename VecType::VecTypef dy;
+	};
+	inline __DEVICE__ Grad Sobel(int x, int y);
+
+	VecType *&data() {
 		return data_;
 	}
 
-	friend class ImageCuda<T>;
+	friend class ImageCuda<VecType>;
 };
 
-enum GaussianKernelOptions {
-	Gaussian3x3 = 0,
-	Gaussian5x5 = 1,
-	Gaussian7x7 = 2
-};
-
-template<typename T>
+template<typename VecType>
 class ImageCuda {
 private:
-	ImageCudaServer<T> server_;
+	ImageCudaServer<VecType> server_;
 	int width_;
 	int height_;
 	int pitch_;
@@ -71,23 +98,41 @@ public:
 	/** The semantic of our copy constructor (and also operator =)
 	 *  is memory efficient. No moving semantic is needed.
 	 */
-	ImageCuda(const ImageCuda<T> &other);
+	ImageCuda(const ImageCuda<VecType> &other);
 	~ImageCuda();
-	ImageCuda<T>& operator = (const ImageCuda<T>& other);
+	ImageCuda<VecType> &operator=(const ImageCuda<VecType> &other);
 
 	int Create(int width, int height);
+	int Resize(int width, int height);
 	void Release();
-	void CopyTo(ImageCuda<T> &other) const;
+	void CopyTo(ImageCuda<VecType> &other) const;
 
-	ImageCuda<T> Downsample();
-	/** In-place version of downsample, defined for ImagePyramid
-	 * other methods can be rewritten if needed. */
-	void Downsample(ImageCuda<T> &image);
+	/** 'switch' code in kernel can be slow, manually expand it if needed. **/
+	ImageCuda<VecType> Downsample(DownsampleMethod method = GaussianFilter);
+	void Downsample(ImageCuda<VecType> &image,
+					DownsampleMethod method = GaussianFilter);
 
-	ImageCuda<T> Gaussian(GaussianKernelOptions kernel);
-	std::tuple<ImageCuda<typename T::VecTypef>,
-	    ImageCuda<typename T::VecTypef>> Gradient();
-	ImageCuda<typename T::VecTypef> ToFloat(float scale, float offset);
+	std::tuple<ImageCuda<typename VecType::VecTypef>,
+			   ImageCuda<typename VecType::VecTypef>> Sobel();
+	void Sobel(ImageCuda<typename VecType::VecTypef> &dx,
+			   ImageCuda<typename VecType::VecTypef> &dy);
+
+	ImageCuda<VecType> Gaussian(GaussianKernelSize option,
+								bool with_holess = true);
+	void Gaussian(ImageCuda<VecType> &image, GaussianKernelSize option,
+				  bool with_holes = true);
+
+	ImageCuda<VecType> Bilateral(GaussianKernelSize option = Gaussian5x5,
+								 float val_sigma = 20.0f,
+								 bool with_holes = true);
+	void Bilateral(ImageCuda<VecType> &image,
+				   GaussianKernelSize option = Gaussian5x5,
+				   float val_sigma = 20.0f,
+				   bool with_holes = true);
+
+	ImageCuda<typename VecType::VecTypef> ToFloat(float scale, float offset);
+	void ToFloat(ImageCuda<typename VecType::VecTypef> &image,
+				 float scale, float offset);
 
 	int Upload(cv::Mat &m);
 	cv::Mat Download();
@@ -101,36 +146,46 @@ public:
 	int pitch() const {
 		return pitch_;
 	}
-	ImageCudaServer<T>& server() {
+	ImageCudaServer<VecType> &server() {
 		return server_;
 	}
-	const ImageCudaServer<T>& server() const {
+	const ImageCudaServer<VecType> &server() const {
 		return server_;
 	}
 };
 
-template<typename T>
+template<typename VecType>
 __GLOBAL__
-void DownsampleImageKernel(ImageCudaServer<T> src, ImageCudaServer<T> dst);
+void DownsampleImageKernel(ImageCudaServer<VecType> src,
+						   ImageCudaServer<VecType> dst,
+						   DownsampleMethod method);
 
-template<typename T>
+template<typename VecType>
 __GLOBAL__
-void GaussianImageKernel(ImageCudaServer<T> src, ImageCudaServer<T> dst,
-	const int kernel_idx);
+void GaussianImageKernel(ImageCudaServer<VecType> src,
+						 ImageCudaServer<VecType> dst,
+						 const int kernel_idx,
+						 bool with_holes);
 
-template<typename T>
+template<typename VecType>
 __GLOBAL__
-void ToFloatImageKernel(
-	ImageCudaServer<T> src,
-	ImageCudaServer<typename T::VecTypef> dst,
-	float scale, float offset);
+void BilateralImageKernel(ImageCudaServer<VecType> src,
+						  ImageCudaServer<VecType> dst,
+						  const int kernel_idx,
+						  float val_sigma,
+						  bool with_holes);
 
-template<typename T>
+template<typename VecType>
 __GLOBAL__
-void GradientImageKernel(
-	ImageCudaServer<T> src,
-	ImageCudaServer<typename T::VecTypef> dx,
-	ImageCudaServer<typename T::VecTypef> dy);
+void SobelImageKernel(ImageCudaServer<VecType> src,
+					  ImageCudaServer<typename VecType::VecTypef> dx,
+					  ImageCudaServer<typename VecType::VecTypef> dy);
+
+template<typename VecType>
+__GLOBAL__
+void ToFloatImageKernel(ImageCudaServer<VecType> src,
+						ImageCudaServer<typename VecType::VecTypef> dst,
+						float scale, float offset);
 }
 
 #endif //OPEN3D_IMAGECUDA_H

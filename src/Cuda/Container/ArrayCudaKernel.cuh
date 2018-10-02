@@ -16,13 +16,4 @@ void FillArrayKernel(ArrayCudaServer<T> server, T val) {
 		server.get(i) = val;
 	}
 }
-
-template
-__global__
-void FillArrayKernel<int>(ArrayCudaServer<int>, int val);
-
-template
-__global__
-void FillArrayKernel<float>(ArrayCudaServer<float>, float val);
-
 }

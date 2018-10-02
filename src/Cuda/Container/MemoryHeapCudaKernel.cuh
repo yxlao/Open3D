@@ -17,22 +17,4 @@ void ResetMemoryHeapKernel(MemoryHeapCudaServer<T> server) {
 		server.get_heap(i) = server.max_capacity_ - i - 1;
 	}
 }
-
-template
-__global__
-void ResetMemoryHeapKernel<int>(MemoryHeapCudaServer<int> server);
-
-template
-__global__
-void ResetMemoryHeapKernel<float>(MemoryHeapCudaServer<float> server);
-
-template
-__global__
-void ResetMemoryHeapKernel<LinkedListNodeCuda<int>>
-(MemoryHeapCudaServer<LinkedListNodeCuda<int>> server);
-
-template
-__global__
-void ResetMemoryHeapKernel<LinkedListNodeCuda<SpatialEntry>>
-(MemoryHeapCudaServer<LinkedListNodeCuda<SpatialEntry>> server);
 }

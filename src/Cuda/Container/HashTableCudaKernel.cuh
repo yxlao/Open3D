@@ -150,42 +150,4 @@ void ProfileHashTableKernel(
 	array_entry_count[bucket_idx] = array_entry_cnt;
 	linked_list_entry_count[bucket_idx] = linked_list_entry_cnt;
 }
-
-template
-__global__
-void CreateHashTableEntriesKernel<Vector3i, int, SpatialHasher>
-	(HashTableCudaServer<Vector3i, int, SpatialHasher> server);
-
-template
-__global__
-void ReleaseHashTableEntriesKernel<Vector3i, int, SpatialHasher>
-	(HashTableCudaServer<Vector3i, int, SpatialHasher> server);
-
-template
-__global__
-void ResetHashTableEntriesKernel<Vector3i, int, SpatialHasher>
-	(HashTableCudaServer<Vector3i, int, SpatialHasher> server);
-
-template
-__global__
-void GetHashTableAssignedEntriesKernel<Vector3i, int, SpatialHasher>
-	(HashTableCudaServer<Vector3i, int, SpatialHasher> server);
-
-template
-__global__
-void InsertHashTableEntriesKernel<Vector3i, int, SpatialHasher>
-	(HashTableCudaServer<Vector3i, int, SpatialHasher> server,
-		Vector3i* keys, int *values, const int num_pairs);
-
-template
-__global__
-void DeleteHashTableEntriesKernel<Vector3i, int, SpatialHasher>
-	(HashTableCudaServer<Vector3i, int, SpatialHasher> server,
-	 Vector3i* keys, const int num_pairs);
-
-template
-__global__
-void ProfileHashTableKernel<Vector3i, int, SpatialHasher>
-	(HashTableCudaServer<Vector3i, int, SpatialHasher> server,
-	 int *array_entry_count, int *list_entry_count);
 }

@@ -34,24 +34,24 @@ void ImagePyramidCuda<T, N>::Release() {
 	}
 }
 
-template<typename T, size_t N>
-void ImagePyramidCuda<T, N>::Build(cv::Mat &m) {
+template<typename VecType, size_t N>
+void ImagePyramidCuda<VecType, N>::Build(cv::Mat &m) {
 	images_[0].Upload(m);
 	for (size_t level = 1; level < N; ++level) {
 		images_[level - 1].Downsample(images_[level]);
 	}
 }
 
-template<typename T, size_t N>
-void ImagePyramidCuda<T, N>::Build(const ImageCuda<T> &image) {
+template<typename VecType, size_t N>
+void ImagePyramidCuda<VecType, N>::Build(const ImageCuda<VecType> &image) {
 	image.CopyTo(images_[0]);
 	for (size_t level = 1; level < N; ++level) {
 		images_[level - 1].Downsample(images_[level]);
 	}
 }
 
-template<typename T, size_t N>
-std::vector<cv::Mat> ImagePyramidCuda<T, N>::Download() {
+template<typename VecType, size_t N>
+std::vector<cv::Mat> ImagePyramidCuda<VecType, N>::Download() {
 	std::vector<cv::Mat> result;
 	for (size_t level = 0; level < N; ++level) {
 		result.emplace_back(images_[level].Download());

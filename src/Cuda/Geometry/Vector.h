@@ -31,10 +31,10 @@ public:
 	typedef Vector<float, N> VecTypef;
 
 	/** Conversions **/
-	__HOSTDEVICE__ static VecTypef Vectorf() {
+	inline __HOSTDEVICE__ static VecTypef Vectorf() {
 		return VecTypef();
 	}
-	__HOSTDEVICE__ VecTypef ToVectorf() {
+	inline __HOSTDEVICE__ VecTypef ToVectorf() {
 		VecTypef ret;
 #ifdef __CUDACC__
 #pragma unroll 1
@@ -44,7 +44,7 @@ public:
 		}
 		return ret;
 	}
-	__HOSTDEVICE__ void FromVectorf(const VecTypef &other) {
+	inline __HOSTDEVICE__ void FromVectorf(const VecTypef &other) {
 #ifdef __CUDACC__
 #pragma unroll 1
 #endif
@@ -53,7 +53,16 @@ public:
 		}
 	}
 
-	__HOSTDEVICE__ Vector() {
+	inline __HOSTDEVICE__ Vector(const VecTypef &other) {
+#ifdef __CUDACC__
+#pragma unroll 1
+#endif
+		for (int i = 0; i < N; ++i) {
+			v[i] = T(other.v[i]);
+		}
+	}
+
+	inline __HOSTDEVICE__ Vector() {
 #ifdef __CUDACC__
 #pragma unroll 1
 #endif
@@ -66,7 +75,7 @@ public:
 	 * WARNING! This Createializer is special !!!
 	 * @param v0
 	 */
-	__HOSTDEVICE__ Vector(T v0) {
+	inline __HOSTDEVICE__ Vector(T v0) {
 #ifdef __CUDACC__
 #pragma unroll 1
 #endif
@@ -74,27 +83,27 @@ public:
 			v[i] = v0;
 		}
 	}
-	__HOSTDEVICE__ Vector(T v0, T v1) {
+	inline __HOSTDEVICE__ Vector(T v0, T v1) {
 		assert(N > 1);
 		v[0] = v0, v[1] = v1;
 	}
-	__HOSTDEVICE__ Vector(T v0, T v1, T v2) {
+	inline __HOSTDEVICE__ Vector(T v0, T v1, T v2) {
 		assert(N > 2);
 		v[0] = v0, v[1] = v1, v[2] = v2;
 	}
-	__HOSTDEVICE__ Vector(T v0, T v1, T v2, T v3) {
+	inline __HOSTDEVICE__ Vector(T v0, T v1, T v2, T v3) {
 		assert(N > 3);
 		v[0] = v0, v[1] = v1, v[2] = v2, v[3] = v3;
 	}
-	__HOSTDEVICE__ inline T& operator[] (size_t i) {
+	inline __HOSTDEVICE__ T& operator[] (size_t i) {
 		assert(i < N);
 		return v[i];
 	}
-	__HOSTDEVICE__ inline const T &operator[] (size_t i) const {
+	inline __HOSTDEVICE__ const T &operator[] (size_t i) const {
 		assert(i < N);
 		return v[i];
 	}
-	__HOSTDEVICE__ bool operator == (const VecType &other) const {
+	inline __HOSTDEVICE__ bool operator == (const VecType &other) const {
 #ifdef __CUDACC__
 #pragma unroll 1
 #endif
@@ -103,7 +112,10 @@ public:
 		}
 		return true;
 	}
-	__HOSTDEVICE__ VecType operator + (const VecType &other) const {
+	inline __HOSTDEVICE__ bool operator != (const VecType &other) const {
+		return ! ((*this) == other);
+	}
+	inline __HOSTDEVICE__ VecType operator + (const VecType &other) const {
 		VecType ret;
 #ifdef __CUDACC__
 #pragma unroll 1
@@ -113,7 +125,7 @@ public:
 		}
 		return ret;
 	}
-	__HOSTDEVICE__ void operator += (const VecType &other) {
+	inline __HOSTDEVICE__ void operator += (const VecType &other) {
 #ifdef __CUDACC__
 #pragma unroll 1
 #endif
@@ -121,7 +133,7 @@ public:
 			v[i] += other.v[i];
 		}
 	}
-	__HOSTDEVICE__ VecType operator - (const VecType &other) const {
+	inline __HOSTDEVICE__ VecType operator - (const VecType &other) const {
 		VecType ret;
 #ifdef __CUDACC__
 #pragma unroll 1
@@ -131,7 +143,7 @@ public:
 		}
 		return ret;
 	}
-	__HOSTDEVICE__ void operator -= (const VecType &other)  {
+	inline __HOSTDEVICE__ void operator -= (const VecType &other)  {
 #ifdef __CUDACC__
 #pragma unroll 1
 #endif
@@ -140,7 +152,7 @@ public:
 		}
 	}
 
-	__HOSTDEVICE__ VecType operator * (const VecType &other) const {
+	inline __HOSTDEVICE__ VecType operator * (const VecType &other) const {
 		VecType ret;
 #ifdef __CUDACC__
 #pragma unroll 1
@@ -151,7 +163,7 @@ public:
 		return ret;
 	}
 
-	__HOSTDEVICE__ VecType operator * (const float other) const {
+	inline __HOSTDEVICE__ VecType operator * (const float other) const {
 		VecType ret;
 #ifdef __CUDACC__
 #pragma unroll 1
@@ -162,7 +174,7 @@ public:
 		return ret;
 	}
 
-	__HOSTDEVICE__ void operator *= (const VecType &other) {
+	inline __HOSTDEVICE__ void operator *= (const VecType &other) {
 #ifdef __CUDACC__
 #pragma unroll 1
 #endif
@@ -171,7 +183,7 @@ public:
 		}
 	}
 
-	__HOSTDEVICE__ void operator *= (const float other) {
+	inline __HOSTDEVICE__ void operator *= (const float other) {
 #ifdef __CUDACC__
 #pragma unroll 1
 #endif
@@ -180,7 +192,7 @@ public:
 		}
 	}
 
-	__HOSTDEVICE__ VecType operator / (const VecType &other) const {
+	inline __HOSTDEVICE__ VecType operator / (const VecType &other) const {
 		VecType ret;
 #ifdef __CUDACC__
 #pragma unroll 1
@@ -191,7 +203,7 @@ public:
 		return ret;
 	}
 
-	__HOSTDEVICE__ VecType operator / (const float other) const {
+	inline __HOSTDEVICE__ VecType operator / (const float other) const {
 		VecType ret;
 #ifdef __CUDACC__
 #pragma unroll 1
@@ -202,7 +214,7 @@ public:
 		return ret;
 	}
 
-	__HOSTDEVICE__ void operator /= (const VecType &other) {
+	inline __HOSTDEVICE__ void operator /= (const VecType &other) {
 #ifdef __CUDACC__
 #pragma unroll 1
 #endif
@@ -211,7 +223,7 @@ public:
 		}
 	}
 
-	__HOSTDEVICE__ void operator /= (const float other) {
+	inline __HOSTDEVICE__ void operator /= (const float other) {
 #ifdef __CUDACC__
 #pragma unroll 1
 #endif
@@ -220,7 +232,7 @@ public:
 		}
 	}
 
-	__HOSTDEVICE__ Vector<T, N+1> homogeneous() {
+	inline __HOSTDEVICE__ Vector<T, N+1> homogeneous() {
 		Vector<T, N+1> ret;
 #ifdef __CUDACC__
 #pragma unroll 1
@@ -232,7 +244,7 @@ public:
 		return ret;
 	}
 
-	__HOSTDEVICE__ Vector<T, N-1> hnormalized() {
+	inline __HOSTDEVICE__ Vector<T, N-1> hnormalized() {
 		assert(typeid(T) == typeid(float) && N > 1);
 		Vector<T, N-1> ret;
 #ifdef __CUDACC__
@@ -242,6 +254,21 @@ public:
 			ret.v[i] = v[i] / v[N-1];
 		}
 		return ret;
+	}
+
+	inline __HOSTDEVICE__ float dot(const VecType &other) {
+		float sum = 0;
+#ifdef __CUDACC__
+#pragma unroll 1
+#endif
+		for (int i = 0; i < N; ++i) {
+			sum += float(v[i]) * float(other.v[i]);
+		}
+		return sum;
+	}
+
+	inline __HOSTDEVICE__ float norm() {
+		return sqrtf(dot(*this));
 	}
 };
 

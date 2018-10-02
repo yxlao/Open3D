@@ -55,28 +55,4 @@ void DownloadLinkedListKernel(LinkedListCudaServer<T> server, T* data, const int
 
 	assert(cnt == N);
 }
-
-template
-__global__
-void InsertLinkedListKernel<int>
-    (LinkedListCudaServer<int> server, int *data, const int N);
-
-template
-__global__
-void ClearLinkedListKernel<int>(LinkedListCudaServer<int> server);
-
-template
-__global__
-void FindLinkedListKernel<int>
-	(LinkedListCudaServer<int> server, int *query, const int N);
-
-template
-__global__
-void DeleteLinkedListKernel<int>
-	(LinkedListCudaServer<int> server, int *query, const int N);
-
-template
-__global__
-void DownloadLinkedListKernel<int>
-	(LinkedListCudaServer<int> server, int *data, const int N);
 }

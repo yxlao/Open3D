@@ -9,29 +9,29 @@
 #include "ImageCuda.h"
 
 namespace three {
-template<typename T, size_t N>
+template<typename VecType, size_t N>
 class ImagePyramidCudaServer {
 	/** (perhaps) We don't need reference count here,
 	 * as long as ImageCudaServer are be handled properly ... **/
 private:
-	ImageCudaServer<T> images_[N];
+	ImageCudaServer<VecType> images_[N];
 
 public:
-	__HOSTDEVICE__ ImageCudaServer<T>& get(size_t level) {
+	__HOSTDEVICE__ ImageCudaServer<VecType>& get(size_t level) {
 		assert(level < N);
 		return images_[level];
 	}
 
-	friend class ImagePyramidCuda<T, N>;
+	friend class ImagePyramidCuda<VecType, N>;
 };
 
-template<typename T, size_t N>
+template<typename VecType, size_t N>
 class ImagePyramidCuda {
 private:
-	ImagePyramidCudaServer<T, N> server_;
+	ImagePyramidCudaServer<VecType, N> server_;
 
 private:
-	ImageCuda<T> images_[N];
+	ImageCuda<VecType> images_[N];
 
 public:
 	ImagePyramidCuda() {}
@@ -40,7 +40,7 @@ public:
 	void Create(int width, int height);
 	void Release();
 
-	void Build(const ImageCuda<T> &image);
+	void Build(const ImageCuda<VecType> &image);
 	void Build(cv::Mat &m);
 	std::vector<cv::Mat> Download();
 
@@ -54,10 +54,10 @@ public:
 		return images_[level].pitch();
 	}
 
-	const ImagePyramidCudaServer<T, N>& server() const {
+	const ImagePyramidCudaServer<VecType, N>& server() const {
 		return server_;
 	}
-	ImagePyramidCudaServer<T, N>& server() {
+	ImagePyramidCudaServer<VecType, N>& server() {
 		return server_;
 	}
 };
