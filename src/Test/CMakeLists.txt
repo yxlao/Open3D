@@ -108,5 +108,12 @@ set_target_properties(TestCudaImage PROPERTIES
 		FOLDER "Test"
 		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Test")
 
+add_executable(TestCudaReduction2D TestCudaReduction2D.cpp)
+target_link_libraries(TestCudaReduction2D Core Cuda)
+set_target_properties(TestCudaReduction2D PROPERTIES
+		FOLDER "Test"
+		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Test")
+
+
 #file(GLOB TEST_DATA_FILES "TestData/*.*")
 #file(COPY ${TEST_DATA_FILES} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/TestData)

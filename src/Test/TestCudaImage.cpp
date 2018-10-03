@@ -69,7 +69,7 @@ void CheckDownsampling(std::string path) {
 	PrintInfo("Upload finished in %.3f milliseconds...\n", timer.GetDuration());
 
 	timer.Start();
-	image_cuda_low = image_cuda.Downsample();
+	image_cuda_low = image_cuda.Downsample(BoxFilterWithHoles);
 	timer.Stop();
 	PrintInfo("Downsample finished in %.3f milliseconds...\n", timer.GetDuration());
 

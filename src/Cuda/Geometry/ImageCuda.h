@@ -12,7 +12,7 @@
 #include <vector_types.h>
 #include <opencv2/opencv.hpp>
 
-#define __TRACE_LIFE_CYCLE__
+//#define __TRACE_LIFE_CYCLE__
 
 namespace three {
 
@@ -27,7 +27,6 @@ enum DownsampleMethod {
 	BoxFilterWithHoles = 1,
 	GaussianFilter = 2, /* 5x5, suggested by OpenCV */
 	GaussianFilterWithHoles = 3
-
 };
 
 /**
@@ -66,10 +65,7 @@ public:
 	inline __DEVICE__
 	VecType BilateralFilter(int x, int y, int kernel_idx, float val_sigma);
 	inline __DEVICE__
-	VecType BilateralFilterWithHoles(int x,
-									 int y,
-									 int kernel_idx,
-									 float val_sigma);
+	VecType BilateralFilterWithHoles(int x, int y, int kernel_idx, float val_sigma);
 
 	/** Wish I could use std::pair here... **/
 	struct Grad {
@@ -130,7 +126,8 @@ public:
 				   float val_sigma = 20.0f,
 				   bool with_holes = true);
 
-	ImageCuda<typename VecType::VecTypef> ToFloat(float scale, float offset);
+	ImageCuda<typename VecType::VecTypef> ToFloat(
+		float scale = 1.0f, float offset = 0.0f);
 	void ToFloat(ImageCuda<typename VecType::VecTypef> &image,
 				 float scale, float offset);
 

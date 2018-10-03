@@ -27,11 +27,20 @@ source_group("Source Files\\Container" FILES ${CUDA_CONTAINER_CUDA_SOURCE_FILES}
 file(GLOB CUDA_GEOMETRY_HEADER_FILES "Geometry/*.h")
 source_group("Header Files\\Geometry" FILES ${CUDA_GEOMETRY_HEADER_FILES})
 file(GLOB CUDA_GEOMETRY_SOURCE_FILES "Geometry/*.cpp")
-source_group("Source Files\\Container" FILES ${CUDA_GEOMETRY_SOURCE_FILES})
+source_group("Source Files\\Geometry" FILES ${CUDA_GEOMETRY_SOURCE_FILES})
 file(GLOB CUDA_GEOMETRY_CUDA_HEADER_FILES "Geometry/*.cuh")
-source_group("Header Files\\Container" FILES ${CUDA_GEOMETRY_CUDA_HEADER_FILES})
+source_group("Header Files\\Geometry" FILES ${CUDA_GEOMETRY_CUDA_HEADER_FILES})
 file(GLOB CUDA_GEOMETRY_CUDA_SOURCE_FILES "Geometry/*.cu")
-source_group("Source Files\\Container" FILES ${CUDA_GEOMETRY_CUDA_SOURCE_FILES})
+source_group("Source Files\\Geometry" FILES ${CUDA_GEOMETRY_CUDA_SOURCE_FILES})
+
+file(GLOB CUDA_ODOMETRY_HEADER_FILES "Odometry/*.h")
+source_group("Header Files\\Odometry" FILES ${CUDA_ODOMETRY_HEADER_FILES})
+file(GLOB CUDA_ODOMETRY_SOURCE_FILES "Odometry/*.cpp")
+source_group("Source Files\\Odometry" FILES ${CUDA_ODOMETRY_SOURCE_FILES})
+file(GLOB CUDA_ODOMETRY_CUDA_HEADER_FILES "Odometry/*.cuh")
+source_group("Header Files\\Odometry" FILES ${CUDA_ODOMETRY_CUDA_HEADER_FILES})
+file(GLOB CUDA_ODOMETRY_CUDA_SOURCE_FILES "Odometry/*.cu")
+source_group("Source Files\\Odometry" FILES ${CUDA_ODOMETRY_CUDA_SOURCE_FILES})
 
 set(CUDA_NVCC_FLAGS
 		-gencode=arch=compute_50,code=sm_60
@@ -43,6 +52,8 @@ cuda_add_library(Cuda ${Open3D_LIB_TYPE}
 		${CUDA_CONTAINER_CUDA_SOURCE_FILES}
 		${CUDA_GEOMETRY_CUDA_HEADER_FILES}
 		${CUDA_GEOMETRY_CUDA_SOURCE_FILES}
+		${CUDA_ODOMETRY_CUDA_HEADER_FILES}
+		${CUDA_ODOMETRY_CUDA_SOURCE_FILES}
 		${CUDA_COMMON_CUDA_HEADER_FILES}
 		${CUDA_COMMON_CUDA_SOURCE_FILES})
 target_link_libraries(Cuda ${OpenCV_LIBS})
