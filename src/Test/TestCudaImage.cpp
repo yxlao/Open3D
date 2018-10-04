@@ -5,7 +5,7 @@
 #include <Core/Core.h>
 #include <Cuda/Geometry/ImageCuda.h>
 #include <Cuda/Geometry/ImagePyramidCuda.h>
-#include <Cuda/Geometry/Vector.h>
+#include <Cuda/Geometry/VectorCuda.h>
 #include <opencv2/opencv.hpp>
 
 template<typename T>

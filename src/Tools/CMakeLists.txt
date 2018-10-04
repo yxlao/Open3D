@@ -7,7 +7,7 @@ add_executable(MergeMesh MergeMesh.cpp)
 target_link_libraries(MergeMesh IO Core)
 set_target_properties(MergeMesh PROPERTIES FOLDER "Tools")
 
-add_executable(ConvertPointCloud ConvertPointCloud.cpp ../Cuda/Common/HelperCuda.h ../Cuda/Container/ContainerClasses.h ../Cuda/Common/HelperMath.h ../Cuda/Common/UtilsCuda.h ../Cuda/Geometry/Vector.h ../Cuda/Integration/SubmapCuda.h ../Cuda/Geometry/ImageCuda.h ../Cuda/Geometry/GeometryClasses.h ../Cuda/Geometry/ImagePyramidCuda.h ../Cuda/Geometry/ImagePyramidCuda.cuh)
+add_executable(ConvertPointCloud ConvertPointCloud.cpp ../Cuda/Common/HelperCuda.h ../Cuda/Container/ContainerClasses.h ../Cuda/Common/HelperMath.h ../Cuda/Common/UtilsCuda.h ../Cuda/Geometry/VectorCuda.h ../Cuda/Integration/SubmapCuda.h ../Cuda/Geometry/ImageCuda.h ../Cuda/Geometry/GeometryClasses.h ../Cuda/Geometry/ImagePyramidCuda.h ../Cuda/Geometry/ImagePyramidCuda.cuh)
 target_link_libraries(ConvertPointCloud IO Core)
 set_target_properties(ConvertPointCloud PROPERTIES FOLDER "Tools")
 

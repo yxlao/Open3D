@@ -11,7 +11,7 @@
 #include "HashTableCuda.cuh"
 #include "HashTableCudaKernel.cuh"
 
-#include <Cuda/Geometry/Vector.h>
+#include <Cuda/Geometry/VectorCuda.h>
 
 namespace three {
 template

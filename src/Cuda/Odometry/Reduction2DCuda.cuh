@@ -5,7 +5,7 @@
 #ifndef OPEN3D_REDUCTION2DCUDA_CUH_H
 #define OPEN3D_REDUCTION2DCUDA_CUH_H
 
-#include "Reduction2DCudaKernel.h"
+#include "Reduction2DCuda.h"
 
 namespace three {
 
@@ -22,6 +22,16 @@ inline void WarpReduceSum(volatile T *local_sum, const int tid) {
 	local_sum[tid] += local_sum[tid + 4];
 	local_sum[tid] += local_sum[tid + 2];
 	local_sum[tid] += local_sum[tid + 1];
+}
+
+template<typename T>
+__device__
+inline void BlockReduceSum(volatile T *local_sum, const int tid) {
+	if (tid < 128) local_sum[tid] += local_sum[tid + 128];
+	__syncthreads();
+	if (tid < 64) local_sum[tid] += local_sum[tid + 64];
+	__syncthreads();
+	if (tid < 32) WarpReduceSum<T>(local_sum, tid);
 }
 
 template<typename T>

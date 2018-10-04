@@ -16,29 +16,23 @@ void ReduceSum2DKernel(ImageCudaServer<VecType> src, T *sum) {
 	const int y = threadIdx.y + blockIdx.y * blockDim.y;
 	const int tid = threadIdx.x + threadIdx.y * blockDim.x;
 
-	/** MUST Guarantee this is 0, even if it is not in an image **/
 	for (int i = 0; i < TEST_ARRAY_SIZE; ++i) {
 		__syncthreads();
 		bool flag = (x >= src.width_ || y >= src.height_);
-		{
-			local_sum[tid] = flag ? 0 : T(src.get(x, y)[0]);
-			__syncthreads();
 
-			/** In our case, THREAD_2D_UNIT is fixed **/
-			if (tid < 128) local_sum[tid] += local_sum[tid + 128];
-			__syncthreads();
-			if (tid < 64) local_sum[tid] += local_sum[tid + 64];
-			__syncthreads();
-			if (tid < 32) WarpReduceSum<T>(local_sum, tid);
+		/** Proper initialization **/
+		/** MUST guarantee this is 0, even if it is not in an image **/
+		local_sum[tid] = flag ? 0 : T(src.get(x, y)(0));
+		__syncthreads();
 
-			if (tid == 0) atomicAdd(sum, local_sum[0]);
-		}
+		BlockReduceSum<T>(local_sum, tid);
+		if (tid == 0) atomicAdd(sum, local_sum[0]);
 	}
 }
 
 template<typename T>
 __device__
-inline T BlockReduceSum(T sum) {
+inline T blockReduceSumShuffle(T sum) {
 	/** How many warps do we have? THREAD_2D_UNIT^2 / WAR_SIZE **/
 	static __shared__ T warp_sum[THREAD_2D_UNIT * THREAD_2D_UNIT / WARP_SIZE];
 
@@ -72,9 +66,9 @@ void ReduceSum2DShuffleKernel(ImageCudaServer<VecType> src, T *sum_total) {
 
 	for (int i = 0; i < TEST_ARRAY_SIZE; ++i) {
 		T sum =
-			(x >= src.width_ || y >= src.height_) ? 0 : T(src.get(x, y)[0]);
+			(x >= src.width_ || y >= src.height_) ? 0 : T(src.get(x, y)(0));
 		__syncthreads();
-		sum = BlockReduceSum(sum);
+		sum = blockReduceSumShuffle(sum);
 		if (threadIdx.x == 0) atomicAdd(sum_total, sum);
 	}
 }
@@ -89,7 +83,7 @@ void AtomicSumKernel(ImageCudaServer<VecType> src, T *sum_total) {
 
 	for (int i = 0; i < TEST_ARRAY_SIZE; ++i) {
 		T sum =
-			(x >= src.width_ || y >= src.height_) ? 0 : T(src.get(x, y)[0]);
+			(x >= src.width_ || y >= src.height_) ? 0 : T(src.get(x, y)(0));
 		__syncthreads();
 		atomicAdd(sum_total, sum);
 	}

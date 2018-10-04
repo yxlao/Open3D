@@ -1,7 +1,7 @@
 #include "ImageCuda.cuh"
 #include "ImagePyramidCuda.cuh"
 #include "ImageCudaKernel.cuh"
-#include "Vector.h"
+#include "VectorCuda.h"
 #include <Cuda/Common/Common.h>
 
 namespace three {
@@ -68,6 +68,17 @@ class ImagePyramidCuda<Vector1f, 3>;
 
 template
 class ImagePyramidCuda<Vector1f, 4>;
+
+/** Vector **/
+template
+Vector4f operator * <float, 4>(float s, const Vector4f &vec);
+
+template
+Vector3f operator * <float, 3>(float s, const Vector3f &vec);
+
+template
+Vector1f operator * <float, 1>(float s, const Vector1f &vec);
+
 
 /** Downsample **/
 template

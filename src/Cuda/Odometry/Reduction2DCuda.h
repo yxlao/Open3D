@@ -7,7 +7,7 @@
 
 #include <Cuda/Common/UtilsCuda.h>
 #include <Cuda/Geometry/ImageCuda.h>
-#include <Cuda/Geometry/Vector.h>
+#include <Cuda/Geometry/VectorCuda.h>
 
 /**
  * Reduction is a PER-BLOCK operation.
@@ -23,6 +23,10 @@ namespace three {
 template<typename T>
 __DEVICE__
 inline void WarpReduceSum(volatile T *local_sum, const int tid);
+
+template<typename T>
+__DEVICE__
+inline void BlockReduceSum(volatile T *local_sum, const int tid);
 
 template<typename T>
 __DEVICE__

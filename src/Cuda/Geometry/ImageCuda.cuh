@@ -6,7 +6,7 @@
 #define _IMAGE_CUDA_CUH_
 
 #include "ImageCuda.h"
-#include "Vector.h"
+#include "VectorCuda.h"
 #include <iostream>
 #include <driver_types.h>
 #include <Cuda/Common/UtilsCuda.h>
@@ -44,6 +44,23 @@ VecType ImageCudaServer<VecType>::get_interp(float x, float y) {
 
 	int x0 = (int) floor(x), y0 = (int) floor(y);
 	float a = x - x0, b = y - y0;
+	return VecType(
+		(1 - a) * (1 - b) * get(x0, y0).ToVectorf()
+		+ (1 - a) * b * get(x0, y0 + 1).ToVectorf()
+		+ a * b * get(x0 + 1, y0 + 1).ToVectorf()
+		+ a * (1 - b) * get(x0 + 1, y0).ToVectorf()
+	);
+}
+
+template<typename VecType>
+__device__
+VecType ImageCudaServer<VecType>::get_interp_with_holes(float x, float y) {
+	assert(x >= 0 && x <= width_ - 2);
+	assert(y >= 0 && y <= height_ - 2);
+
+	int x0 = (int) floor(x), y0 = (int) floor(y);
+	float a = x - x0, b = y - y0;
+
 	return (1 - a) * (1 - b) * get(x0, y0)
 		+ (1 - a) * b * get(x0, y0 + 1)
 		+ a * b * get(x0 + 1, y0 + 1)
@@ -108,7 +125,6 @@ VecType ImageCudaServer<VecType>::GaussianFilter(int x, int y, int kernel_idx) {
 
 	int x_min = max(0, x - kernel_size_2);
 	int y_min = max(0, y - kernel_size_2);
-
 	int x_max = min(width_ - 1, x + kernel_size_2);
 	int y_max = min(height_ - 1, y + kernel_size_2);
 
@@ -149,7 +165,6 @@ VecType ImageCudaServer<VecType>::GaussianFilterWithHoles(
 
 	int x_min = max(0, x - kernel_size_2);
 	int y_min = max(0, y - kernel_size_2);
-
 	int x_max = min(width_ - 1, x + kernel_size_2);
 	int y_max = min(height_ - 1, y + kernel_size_2);
 
@@ -189,7 +204,6 @@ VecType ImageCudaServer<VecType>::BilateralFilter(
 
 	int x_min = max(0, x - kernel_size_2);
 	int y_min = max(0, y - kernel_size_2);
-
 	int x_max = min(width_ - 1, x + kernel_size_2);
 	int y_max = min(height_ - 1, y + kernel_size_2);
 
@@ -233,7 +247,6 @@ VecType ImageCudaServer<VecType>::BilateralFilterWithHoles(
 
 	int x_min = max(0, x - kernel_size_2);
 	int y_min = max(0, y - kernel_size_2);
-
 	int x_max = min(width_ - 1, x + kernel_size_2);
 	int y_max = min(height_ - 1, y + kernel_size_2);
 

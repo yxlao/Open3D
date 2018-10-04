@@ -53,6 +53,7 @@ public:
 	inline __DEVICE__ VecType &get(int x, int y);
 	inline __DEVICE__ VecType &operator()(int x, int y);
 	inline __DEVICE__ VecType get_interp(float x, float y);
+	inline __DEVICE__ VecType get_interp_with_holes(float x, float y);
 
 	inline __DEVICE__
 	VecType BoxFilter2x2(int x, int y);

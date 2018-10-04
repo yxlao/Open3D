@@ -2,7 +2,7 @@
 // Created by wei on 10/2/18.
 //
 
-#include <Cuda/Odometry/Reduction2DCudaKernel.h>
+#include <Cuda/Odometry/Reduction2DCuda.h>
 #include <Cuda/Geometry/ImageCuda.h>
 #include <Core/Core.h>
 #include <opencv2/opencv.hpp>
