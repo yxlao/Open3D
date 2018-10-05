@@ -16,13 +16,18 @@ void ReduceSum2DKernel(ImageCudaServer<VecType> src, T *sum) {
 	const int y = threadIdx.y + blockIdx.y * blockDim.y;
 	const int tid = threadIdx.x + threadIdx.y * blockDim.x;
 
+	/** Proper initialization **/
+	/** MUST guarantee this is 0, even if it is not in an image **/
+	local_sum[tid] = 0;
+
+	/** We are SAFE to return after initialization,
+	 * as long as the reduction strides are times of THREAD_2D_UNIT **/
+	if (x >= src.width_ || y >= src.height_) return;
+
 	for (int i = 0; i < TEST_ARRAY_SIZE; ++i) {
 		__syncthreads();
-		bool flag = (x >= src.width_ || y >= src.height_);
 
-		/** Proper initialization **/
-		/** MUST guarantee this is 0, even if it is not in an image **/
-		local_sum[tid] = flag ? 0 : T(src.get(x, y)(0));
+		local_sum[tid] = T(src.get(x, y)(0));
 		__syncthreads();
 
 		BlockReduceSum<T>(local_sum, tid);
@@ -81,30 +86,10 @@ void AtomicSumKernel(ImageCudaServer<VecType> src, T *sum_total) {
 	const int x = threadIdx.x + blockIdx.x * blockDim.x;
 	const int y = threadIdx.y + blockIdx.y * blockDim.y;
 
+	if (x >= src.width_ || y >= src.height_) return;
 	for (int i = 0; i < TEST_ARRAY_SIZE; ++i) {
-		T sum =
-			(x >= src.width_ || y >= src.height_) ? 0 : T(src.get(x, y)(0));
-		__syncthreads();
+		T sum = T(src.get(x, y)(0));
 		atomicAdd(sum_total, sum);
 	}
 }
-
-
-template
-float ReduceSum2D<Vector1f, float>(ImageCuda<Vector1f> &src);
-
-template
-float ReduceSum2DShuffle<Vector1f, float>(ImageCuda<Vector1f> &src);
-
-template
-float AtomicSum<Vector1f, float>(ImageCuda<Vector1f> &src);
-
-template
-int ReduceSum2D<Vector1b, int>(ImageCuda<Vector1b> &src);
-
-template
-int ReduceSum2DShuffle<Vector1b, int>(ImageCuda<Vector1b> &src);
-
-template
-int AtomicSum<Vector1b, int>(ImageCuda<Vector1b> &src);
 }

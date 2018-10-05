@@ -233,35 +233,42 @@ template
 __global__
 void SobelImageKernel<Vector1s>(
 	ImageCudaServer<Vector1s> src,
-	ImageCudaServer<Vector1f> dx, ImageCudaServer<Vector1f> dy);
+	ImageCudaServer<Vector1f> dx, ImageCudaServer<Vector1f> dy,
+	bool with_holes);
 template
 __global__
 void SobelImageKernel<Vector4b>(
 	ImageCudaServer<Vector4b> src,
-	ImageCudaServer<Vector4f> dx, ImageCudaServer<Vector4f> dy);
+	ImageCudaServer<Vector4f> dx, ImageCudaServer<Vector4f> dy,
+	bool with_holes);
 template
 __global__
 void SobelImageKernel<Vector3b>(
 	ImageCudaServer<Vector3b> src,
-	ImageCudaServer<Vector3f> dx, ImageCudaServer<Vector3f> dy);
+	ImageCudaServer<Vector3f> dx, ImageCudaServer<Vector3f> dy,
+	bool with_holes);
 template
 __global__
 void SobelImageKernel<Vector1b>(
 	ImageCudaServer<Vector1b> src,
-	ImageCudaServer<Vector1f> dx, ImageCudaServer<Vector1f> dy);
+	ImageCudaServer<Vector1f> dx, ImageCudaServer<Vector1f> dy,
+	bool with_holes);
 template
 __global__
 void SobelImageKernel<Vector4f>(
 	ImageCudaServer<Vector4f> src,
-	ImageCudaServer<Vector4f> dx, ImageCudaServer<Vector4f> dy);
+	ImageCudaServer<Vector4f> dx, ImageCudaServer<Vector4f> dy,
+	bool with_holes);
 template
 __global__
 void SobelImageKernel<Vector3f>(
 	ImageCudaServer<Vector3f> src,
-	ImageCudaServer<Vector3f> dx, ImageCudaServer<Vector3f> dy);
+	ImageCudaServer<Vector3f> dx, ImageCudaServer<Vector3f> dy,
+	bool with_holes);
 template
 __global__
 void SobelImageKernel<Vector1f>(
 	ImageCudaServer<Vector1f> src,
-	ImageCudaServer<Vector1f> dx, ImageCudaServer<Vector1f> dy);
+	ImageCudaServer<Vector1f> dx, ImageCudaServer<Vector1f> dy,
+	bool with_holes);
 }

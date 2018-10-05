@@ -26,8 +26,8 @@ void ArrayCudaServer<T>::push_back(T value) {
 
 template<typename T>
 __device__
-T &ArrayCudaServer<T>::get(int index) {
-	assert(index >= 0 && index < max_capacity_);
+T &ArrayCudaServer<T>::get(size_t index) {
+	assert(index < max_capacity_);
 	return data_[index];
 }
 

@@ -288,7 +288,8 @@ public:
 };
 
 template<typename T, size_t N>
-inline VectorCuda<T, N> operator * (float s, const VectorCuda<T, N> &vec) {
+inline __HOSTDEVICE__
+VectorCuda<T, N> operator * (float s, const VectorCuda<T, N> &vec) {
 	return vec * s;
 }
 
@@ -305,6 +306,7 @@ typedef VectorCuda<float, 1> Vector1f;
 typedef VectorCuda<float, 2> Vector2f;
 typedef VectorCuda<float, 3> Vector3f;
 typedef VectorCuda<float, 4> Vector4f;
+typedef VectorCuda<float, 6> Vector6f;
 
 }
 #endif //OPEN3D_VECTOR_H

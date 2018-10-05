@@ -210,7 +210,7 @@ void CheckGradient(std::string path) {
 	PrintInfo("Upload finished in %.3f milliseconds...\n", timer.GetDuration());
 
 	timer.Start();
-	auto gradients = image_cuda.Sobel();
+	auto gradients = image_cuda.Sobel(false);
 	timer.Stop();
 	PrintInfo("Gradient finished in %.3f milliseconds...\n", timer.GetDuration());
 	auto dx = std::get<0>(gradients);

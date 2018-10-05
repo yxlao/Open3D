@@ -44,6 +44,11 @@ public:
 	void Build(cv::Mat &m);
 	std::vector<cv::Mat> Download();
 
+
+	ImageCuda<VecType> & get(size_t level) {
+		assert(level < N);
+		return images_[level];
+	}
 	int width(int level = 0) const {
 		return images_[level].width();
 	}

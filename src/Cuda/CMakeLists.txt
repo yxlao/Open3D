@@ -1,5 +1,6 @@
 find_package(CUDA 8.0 REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(Sophus REQUIRED)
 
 file(GLOB CUDA_ALL_HEADER_FILES '*.h')
 file(GLOB CUDA_ALL_SOURCE_FILES '*.cpp')

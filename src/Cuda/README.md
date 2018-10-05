@@ -70,3 +70,9 @@ will be problems transforming *vtable* to kernels.
 constructors and destructors for the client side... (works well for ImageCuda).
 - Add swap for the containers? (That will be really complicated for HashTable).
 - Organize some error codes for functions to return.
+
+## Notes
+- Eigen has something wrong in their code. I believe not every functions 
+are correctly prefixed with EIGEN_DEVICE_FUNC. Even if I don't call Eigen 
+function in CUDA, as long as I compile with nvcc, the annoying warnings will 
+come out. Work around: UNCOMMENT EIGEN_DEVICE_FUNC. 

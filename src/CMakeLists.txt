@@ -115,6 +115,7 @@ add_subdirectory(Core)
 add_subdirectory(Cuda)
 include_directories(${CUDA_TOOLKIT_INCLUDE})
 include_directories(${OpenCV_INCLUDE_DIRS})
+include_directories(${Sophus_INCLUDE_DIRS})
 
 add_subdirectory(Tools)
 add_subdirectory(IO)

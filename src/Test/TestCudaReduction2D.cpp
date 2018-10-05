@@ -12,8 +12,9 @@ int main() {
 
 	cv::Mat im = cv::imread(
 		//"../../../Test/TestData/RGBD/other_formats/TUM_depth.png",
-		"../../../Test/TestData/lena_gray.jpg",
+		"../../../Test/TestData/lena_gray_resized.jpg",
 		cv::IMREAD_UNCHANGED);
+	cv::cvtColor(im, im, cv::COLOR_BGR2GRAY);
 
 	ImageCuda<Vector1b> im_cuda;
 	ImageCuda<Vector1f> imf_cuda;

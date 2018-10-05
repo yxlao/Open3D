@@ -100,14 +100,14 @@ void ToFloatImageKernel(
 
 /**
  * Gradient, using Sobel operator
- * https://en.wikipedia.org/wiki/Sobel_operator
  */
 template<typename VecType>
 __global__
 void SobelImageKernel(
 	ImageCudaServer<VecType> src,
 	ImageCudaServer<typename VecType::VecTypef> dx,
-	ImageCudaServer<typename VecType::VecTypef> dy) {
+	ImageCudaServer<typename VecType::VecTypef> dy,
+	bool with_holes) {
 
 	int u = blockIdx.x * blockDim.x + threadIdx.x;
 	int v = blockIdx.y * blockDim.y + threadIdx.y;
@@ -119,7 +119,12 @@ void SobelImageKernel(
 		return;
 	}
 
-	typename ImageCudaServer<VecType>::Grad grad = src.Sobel(u, v);
+	typename ImageCudaServer<VecType>::Grad grad;
+	if (with_holes) {
+		grad = src.SobelWithHoles(u, v);
+	} else {
+		grad = src.Sobel(u, v);
+	}
 	dx(u, v) = grad.dx;
 	dy(u, v) = grad.dy;
 }

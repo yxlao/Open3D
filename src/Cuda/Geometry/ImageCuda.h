@@ -74,6 +74,7 @@ public:
 		typename VecType::VecTypef dy;
 	};
 	inline __DEVICE__ Grad Sobel(int x, int y);
+	inline __DEVICE__ Grad SobelWithHoles(int x, int y);
 
 	VecType *&data() {
 		return data_;
@@ -110,9 +111,11 @@ public:
 					DownsampleMethod method = GaussianFilter);
 
 	std::tuple<ImageCuda<typename VecType::VecTypef>,
-			   ImageCuda<typename VecType::VecTypef>> Sobel();
+			   ImageCuda<typename VecType::VecTypef>> Sobel
+			   (bool with_holes = true);
 	void Sobel(ImageCuda<typename VecType::VecTypef> &dx,
-			   ImageCuda<typename VecType::VecTypef> &dy);
+			   ImageCuda<typename VecType::VecTypef> &dy,
+			   bool with_holes = true);
 
 	ImageCuda<VecType> Gaussian(GaussianKernelSize option,
 								bool with_holess = true);
@@ -177,7 +180,8 @@ template<typename VecType>
 __GLOBAL__
 void SobelImageKernel(ImageCudaServer<VecType> src,
 					  ImageCudaServer<typename VecType::VecTypef> dx,
-					  ImageCudaServer<typename VecType::VecTypef> dy);
+					  ImageCudaServer<typename VecType::VecTypef> dy,
+					  bool with_holes);
 
 template<typename VecType>
 __GLOBAL__

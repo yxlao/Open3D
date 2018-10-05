@@ -9,6 +9,7 @@
 int main() {
 	using namespace three;
 
+
 	for (int i = 0; i < 1000; ++i) {
 		/* Generate random R & t */
 		Eigen::Vector3f w = Eigen::Vector3f::Random();
@@ -40,6 +41,9 @@ int main() {
 			(transform_cuda * v_cuda).ToEigen()).norm();
 		assert(vector_norm < 1e-6);
 	}
-
 	PrintInfo("Transform tests passed\n");
+
+	Vector1f v;
+	v(0) = 1.0f;
+	v = 1 * v;
 }

@@ -6,14 +6,16 @@
 #define OPEN3D_RGBDODOMETRY_H
 
 #include "OdometryClasses.h"
+#include "JacobianCuda.h"
 #include <Cuda/Container/ArrayCuda.h>
 #include <Cuda/Geometry/ImagePyramidCuda.h>
 #include <Cuda/Geometry/VectorCuda.h>
+#include <Cuda/Geometry/TransformCuda.h>
+#include <Cuda/Geometry/PinholeCameraCuda.h>
 #include <Cuda/Common/UtilsCuda.h>
 #include <Eigen/Eigen>
 
 namespace three {
-
 /**
  * We assume that the
  * - depths are **converted** from short
@@ -25,32 +27,43 @@ namespace three {
  * We minimize
  * E(\xi) =
  * \sum_{p}
- *   (1 - sigma) ||I_{source}[g(s(h(p, D_{target}), \xi))] - I_{target}[p]||^2
- * + sigma ||D_{source}[g(s(h(p, D_{target}), \xi))] - s(h(p, D_{target})).z||^2
+ *   (1 - sigma) ||I_{target}[g(s(h(p, D_{source}), \xi))] - I_{source}[p]||^2
+ * + sigma ||D_{target}[g(s(h(p, D_{source}), \xi))] - s(h(p, D_{source})).z||^2
  *
- * Usually @source frame should be a keyframe, or N-1 frame
+ * Usually @target frame should be a keyframe, or N-1 frame
  *                 it should hold more precomputed information,
  *                 including gradients.
- *         @target frame should be a current frame.
- *         We warp the @target frame to the @source frame.
+ *         @source frame should be a current frame.
+ *         We warp the @source frame to the @target frame.
  */
 template<size_t N>
 class RGBDOdometryCudaServer {
 private:
-	ImagePyramidCudaServer<Vector1f, N> source_depth_;
-	ImagePyramidCudaServer<Vector1f, N> source_depth_dx_;
-	ImagePyramidCudaServer<Vector1f, N> source_depth_dy_;
+	ImagePyramidCudaServer<Vector1f, N> target_depth_;
+	ImagePyramidCudaServer<Vector1f, N> target_depth_dx_;
+	ImagePyramidCudaServer<Vector1f, N> target_depth_dy_;
 
-	ImagePyramidCudaServer<Vector1f, N> source_intensity_;
-	ImagePyramidCudaServer<Vector1f, N> source_intensity_dx_;
-	ImagePyramidCudaServer<Vector1f, N> source_intensity_dy_;
+	ImagePyramidCudaServer<Vector1f, N> target_intensity_;
+	ImagePyramidCudaServer<Vector1f, N> target_intensity_dx_;
+	ImagePyramidCudaServer<Vector1f, N> target_intensity_dy_;
 	/* ImagePyramidCudaServer<Vector3f, N> source_normal_; */
 
-	ImagePyramidCudaServer<Vector1f, N> target_depth_;
-	ImagePyramidCudaServer<Vector1f, N> target_intensity_;
+	ImagePyramidCudaServer<Vector1f, N> source_depth_;
+	ImagePyramidCudaServer<Vector1f, N> source_intensity_;
 	/* ImagePyramidCudaServer<Vector3f, N> target_normal_; */
 
-	ArrayCuda<float> results_;
+	ArrayCudaServer<float> results_;
+
+public:
+	PinholeCameraCuda<N> pinhole_camera_intrinsics_;
+	TransformCuda transform_source_to_target_;
+
+public:
+	/** (1-sigma) * JtJ_I + sigma * JtJ_D **/
+	/** To compute JtJ, we use \sqrt(1-sigma) J_I and \sqrt(sigma) J_D **/
+	float sigma_;
+	float sqrt_coeff_I_;
+	float sqrt_coeff_D_;
 
 public:
 	float depth_near_threshold_;
@@ -66,30 +79,51 @@ public:
 	}
 
 public:
-	__HOSTDEVICE__ ImageCudaServer<Vector1f>& get_source_depth(size_t level) {
-		return source_depth_.get(level);
-	}
-	__HOSTDEVICE__ ImageCudaServer<Vector1f>& get_source_depth_dx(size_t level) {
-		return source_depth_dx_.get(level);
-	}
-	__HOSTDEVICE__ ImageCudaServer<Vector1f>& get_source_depth_dy(size_t level) {
-		return source_depth_dy_.get(level);
-	}
-	__HOSTDEVICE__ ImageCudaServer<Vector1f>& get_source_intensity(size_t level) {
-		return source_intensity_.get(level);
-	}
-	__HOSTDEVICE__ ImageCudaServer<Vector1f>& get_source_intensity_dx(size_t level) {
-		return source_intensity_dx_.get(level);
-	}
-	__HOSTDEVICE__ ImageCudaServer<Vector1f>& get_source_intensity_dy(size_t level) {
-		return source_intensity_dy_.get(level);
-	}
+	inline __DEVICE__ bool ComputePixelwiseJacobiansAndResiduals(
+		int x, int y, size_t level,
+		JacobianCuda<6> &jacobian_I, JacobianCuda<6> &jacobian_D,
+		float &residual_I, float &residual_D);
+	inline __DEVICE__ bool ComputePixelwiseJtJAndJtr(
+		JacobianCuda<6> &jacobian_I, JacobianCuda<6> &jacobian_D,
+		float &residual_I, float &residual_D,
+		HessianCuda<6> &JtJ, Vector6f &Jtr);
 
-	__HOSTDEVICE__ ImageCudaServer<Vector1f>& get_target_depth(size_t level) {
+public:
+	inline __HOSTDEVICE__ ImageCudaServer<Vector1f> &target_depth(
+		size_t level) {
 		return target_depth_.get(level);
 	}
-	__HOSTDEVICE__ ImageCudaServer<Vector1f>& get_target_intensity(size_t level) {
+	inline __HOSTDEVICE__ ImageCudaServer<Vector1f> &target_depth_dx(
+		size_t level) {
+		return target_depth_dx_.get(level);
+	}
+	inline __HOSTDEVICE__ ImageCudaServer<Vector1f> &target_depth_dy(
+		size_t level) {
+		return target_depth_dy_.get(level);
+	}
+	inline __HOSTDEVICE__ ImageCudaServer<Vector1f> &target_intensity(
+		size_t level) {
 		return target_intensity_.get(level);
+	}
+	inline __HOSTDEVICE__ ImageCudaServer<Vector1f> &target_intensity_dx(
+		size_t level) {
+		return target_intensity_dx_.get(level);
+	}
+	inline __HOSTDEVICE__ ImageCudaServer<Vector1f> &target_intensity_dy(
+		size_t level) {
+		return target_intensity_dy_.get(level);
+	}
+
+	inline __HOSTDEVICE__ ImageCudaServer<Vector1f> &source_depth(
+		size_t level) {
+		return source_depth_.get(level);
+	}
+	inline __HOSTDEVICE__ ImageCudaServer<Vector1f> &source_intensity(
+		size_t level) {
+		return source_intensity_.get(level);
+	}
+	inline __HOSTDEVICE__ ArrayCudaServer<float> &results() {
+		return results_;
 	}
 
 	friend class RGBDOdometryCuda<N>;
@@ -100,36 +134,52 @@ class RGBDOdometryCuda {
 private:
 	RGBDOdometryCudaServer<N> server_;
 
+	ImagePyramidCuda<Vector1f, N> target_depth_;
+	ImagePyramidCuda<Vector1f, N> target_depth_dx_;
+	ImagePyramidCuda<Vector1f, N> target_depth_dy_;
+
+	ImagePyramidCuda<Vector1f, N> target_intensity_;
+	ImagePyramidCuda<Vector1f, N> target_intensity_dx_;
+	ImagePyramidCuda<Vector1f, N> target_intensity_dy_;
+
 	ImagePyramidCuda<Vector1f, N> source_depth_;
 	ImagePyramidCuda<Vector1f, N> source_intensity_;
-	ImagePyramidCuda<Vector1f, N> target_depth_;
-	ImagePyramidCuda<Vector1f, N> target_intensity_;
 
 	ArrayCuda<float> results_;
 
+	Eigen::Matrix4f transform_source_to_target_;
+
 public:
-	void Create();
+	typedef Eigen::Matrix<float, 6, 6> Matrix6f;
+	typedef Eigen::Matrix<float, 6, 1> Vector6f;
+	typedef Eigen::Matrix<double, 6, 1> Vector6d;
+
+	RGBDOdometryCuda();
+	~RGBDOdometryCuda();
+	void Create(int width, int height);
 	void Release();
 
-	void Apply(cv::Mat &source, cv::Mat &target);
-	void Apply(ImageCuda<Vector1f>& source_depth,
-			   ImageCuda<Vector1f>& source_intensity,
-			   ImageCuda<Vector1f>& target_depth,
-			   ImageCuda<Vector1f>& target_intensity);
+	__host__ void Apply(ImageCuda<Vector1f> &source_depth,
+						ImageCuda<Vector1f> &source_intensity,
+						ImageCuda<Vector1f> &target_depth,
+						ImageCuda<Vector1f> &target_intensity);
 
-	RGBDOdometryCudaServer<N>& server() {
+	void ExtractResults(std::vector<float> &results,
+						Matrix6f &JtJ, Vector6f &Jtr,
+						float &residual, float &inliers);
+
+	RGBDOdometryCudaServer<N> &server() {
 		return server_;
 	}
-	const RGBDOdometryCudaServer<N>& server() const {
+	const RGBDOdometryCudaServer<N> &server() const {
 		return server_;
 	}
 };
 
 template<size_t N>
 __GLOBAL__
-void RGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry,
-						const size_t level,
-						ArrayCudaServer<float> result);
+void ApplyRGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry,
+							 size_t level);
 
 }
 #endif //OPEN3D_RGBDODOMETRY_H

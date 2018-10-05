@@ -39,32 +39,54 @@ VecType &ImageCudaServer<VecType>::operator()(int x, int y) {
 template<typename VecType>
 __device__
 VecType ImageCudaServer<VecType>::get_interp(float x, float y) {
-	assert(x >= 0 && x <= width_ - 2);
-	assert(y >= 0 && y <= height_ - 2);
+	assert(x >= 0 && x < width_ - 1);
+	assert(y >= 0 && y < height_ - 1);
 
 	int x0 = (int) floor(x), y0 = (int) floor(y);
 	float a = x - x0, b = y - y0;
 	return VecType(
 		(1 - a) * (1 - b) * get(x0, y0).ToVectorf()
-		+ (1 - a) * b * get(x0, y0 + 1).ToVectorf()
-		+ a * b * get(x0 + 1, y0 + 1).ToVectorf()
-		+ a * (1 - b) * get(x0 + 1, y0).ToVectorf()
+			+ (1 - a) * b * get(x0, y0 + 1).ToVectorf()
+			+ a * b * get(x0 + 1, y0 + 1).ToVectorf()
+			+ a * (1 - b) * get(x0 + 1, y0).ToVectorf()
 	);
 }
 
+/** SO many if. If it is slow, fall back to get **/
 template<typename VecType>
 __device__
 VecType ImageCudaServer<VecType>::get_interp_with_holes(float x, float y) {
-	assert(x >= 0 && x <= width_ - 2);
-	assert(y >= 0 && y <= height_ - 2);
+	assert(x >= 0 && x < width_ - 1);
+	assert(y >= 0 && y < height_ - 1);
 
 	int x0 = (int) floor(x), y0 = (int) floor(y);
 	float a = x - x0, b = y - y0;
 
-	return (1 - a) * (1 - b) * get(x0, y0)
-		+ (1 - a) * b * get(x0, y0 + 1)
-		+ a * b * get(x0 + 1, y0 + 1)
-		+ a * (1 - b) * get(x0 + 1, y0);
+	float sum_w = 0;
+	auto sum_val = VecType::VecTypef(0);
+	auto zero = VecType::VecTypef(0);
+
+	auto val = get(x0, y0).ToVectorf();
+	float w = (1 - a) * (1 - b);
+	sum_val += w * val;
+	sum_w += (val == zero) ? 0 : w;
+
+	val = get(x0, y0 + 1).ToVectorf();
+	w = (1 - a) * b;
+	sum_val += w * val;
+	sum_w += (val == zero) ? 0 : w;
+
+	val = get(x0 + 1, y0 + 1).ToVectorf();
+	w = a * b;
+	sum_val += w * val;
+	sum_w += (val == zero) ? 0 : w;
+
+	val = get(x0 + 1, y0).ToVectorf();
+	w = a * (1 - b);
+	sum_val += w * val;
+	sum_w += (val == zero) ? 0 : w;
+
+	return sum_w == 0 ? zero : VecType(sum_val / sum_w);
 }
 
 template<typename VecType>
@@ -95,18 +117,22 @@ VecType ImageCudaServer<VecType>::BoxFilter2x2WithHoles(int x, int y) {
 	VecType zero = VecType(0);
 
 	val = get(x, y);
-	if (val != zero) { sum_val += val.ToVectorf(); cnt += 1.0f; }
+	sum_val += val.ToVectorf();
+	cnt += (val == zero) ? 0.0f : 1.0f;
+
 	val = get(x, yp1);
-	if (val != zero) { sum_val += val.ToVectorf(); cnt += 1.0f; }
+	sum_val += val.ToVectorf();
+	cnt += (val == zero) ? 0.0f : 1.0f;
+
 	val = get(xp1, y);
-	if (val != zero) { sum_val += val.ToVectorf(); cnt += 1.0f; }
+	sum_val += val.ToVectorf();
+	cnt += (val == zero) ? 0.0f : 1.0f;
+
 	val = get(xp1, yp1);
-	if (val != zero) { sum_val += val.ToVectorf(); cnt += 1.0f; }
+	sum_val += val.ToVectorf();
+	cnt += (val == zero) ? 0.0f : 1.0f;
 
-	if (cnt == 0.0f) return zero;
-
-	sum_val /= cnt;
-	return VecType(sum_val);
+	return cnt == 0 ? VecType(0) : VecType(sum_val / cnt);
 }
 
 template<typename VecType>
@@ -174,15 +200,14 @@ VecType ImageCudaServer<VecType>::GaussianFilterWithHoles(
 	for (int xx = x_min; xx <= x_max; ++xx) {
 		for (int yy = y_min; yy <= y_max; ++yy) {
 			VecType val = get(xx, yy);
-			if (val == zero) continue;
 			auto valf = val.ToVectorf();
 			float weight = kernel[abs(xx - x)] * kernel[abs(yy - y)];
 			sum_val += valf * weight;
-			sum_weight += weight;
+			sum_weight += (val == zero) ? 0 : weight;
 		}
 	}
 
-	if (sum_weight == 0) return zero;
+	/** Center is not zero, so sum_weight > 0 **/
 	sum_val /= sum_weight;
 	return VecType(sum_val);
 }
@@ -216,7 +241,7 @@ VecType ImageCudaServer<VecType>::BilateralFilter(
 			auto val = get(xx, yy).ToVectorf();
 			float weight = kernel[abs(xx - x)] * kernel[abs(yy - y)];
 			float value_diff = (val - center_val).norm() / val_sigma;
-			weight *= expf(- value_diff);
+			weight *= expf(-value_diff);
 
 			sum_val += val * weight;
 			sum_weight += weight;
@@ -257,22 +282,19 @@ VecType ImageCudaServer<VecType>::BilateralFilterWithHoles(
 	for (int xx = x_min; xx <= x_max; ++xx) {
 		for (int yy = y_min; yy <= y_max; ++yy) {
 			auto val = get(xx, yy);
-			if (val == zero) continue;
-
 			auto valf = val.ToVectorf();
 			float weight = kernel[abs(xx - x)] * kernel[abs(yy - y)];
 			float value_diff = (valf - center_valf).norm() / val_sigma;
-			weight *= expf(- value_diff * value_diff);
+			weight *= expf(-value_diff * value_diff);
 
 			sum_val += valf * weight;
-			sum_weight += weight;
+			sum_weight += (val == zero) ? 0 : weight;
 		}
 	}
 
 	sum_val /= sum_weight;
 	return VecType(sum_val);
 }
-
 
 template<typename VecType>
 __device__
@@ -290,6 +312,37 @@ ImageCudaServer<VecType>::Sobel(int x, int y) {
 	return {
 		(Iupvm - Iumvm) + (Iupv0 - Iumv0) * 2 + (Iupvp - Iumvp),
 		(Iumvp - Iumvm) + (Iu0vp - Iu0vm) * 2 + (Iupvp - Iupvm)
+	};
+}
+
+/**
+ * It is a little bit strict ...
+ * It will filter out all the (geometric) edges.
+ * If it does not work, fall back to Sobel
+ */
+template<typename VecType>
+__device__
+ImageCudaServer<VecType>::Grad
+ImageCudaServer<VecType>::SobelWithHoles(int x, int y) {
+	auto zero = VecType::VecTypef(0);
+	auto Iumvm = get(x - 1, y - 1).ToVectorf();
+	auto Iumv0 = get(x - 1, y).ToVectorf();
+	auto Iumvp = get(x - 1, y + 1).ToVectorf();
+	auto Iu0vm = get(x, y - 1).ToVectorf();
+	auto Iu0vp = get(x, y + 1).ToVectorf();
+	auto Iupvm = get(x + 1, y - 1).ToVectorf();
+	auto Iupv0 = get(x + 1, y).ToVectorf();
+	auto Iupvp = get(x + 1, y + 1).ToVectorf();
+
+	bool mask_corner = (Iumvm != zero) && (Iumvp != zero)
+		&& (Iupvm != zero) && (Iupvp != zero);
+	bool mask_dx = mask_corner && (Iupv0 != zero) && (Iumv0 != zero);
+	bool mask_dy = mask_corner && (Iu0vp != zero) && (Iu0vm != zero);
+	return {
+		mask_dx ?
+		(Iupvm - Iumvm) + (Iupv0 - Iumv0) * 2 + (Iupvp - Iumvp) : zero,
+		mask_dy ?
+		(Iumvp - Iumvm) + (Iu0vp - Iu0vm) * 2 + (Iupvp - Iupvm) : zero
 	};
 }
 
@@ -528,18 +581,20 @@ void ImageCuda<VecType>::Downsample(ImageCuda<VecType> &image,
 
 template<typename VecType>
 std::tuple<ImageCuda<typename VecType::VecTypef>,
-		   ImageCuda<typename VecType::VecTypef>> ImageCuda<VecType>::Sobel() {
+		   ImageCuda<typename VecType::VecTypef>> ImageCuda<VecType>::Sobel(
+		   	bool with_holes) {
 	ImageCuda<typename VecType::VecTypef> dx;
 	ImageCuda<typename VecType::VecTypef> dy;
 	dx.Create(width_, height_);
 	dy.Create(width_, height_);
-	Sobel(dx, dy);
+	Sobel(dx, dy, with_holes);
 	return std::make_tuple(dx, dy);
 }
 
 template<typename VecType>
 void ImageCuda<VecType>::Sobel(ImageCuda<typename VecType::VecTypef> &dx,
-							   ImageCuda<typename VecType::VecTypef> &dy) {
+							   ImageCuda<typename VecType::VecTypef> &dy,
+							   bool with_holes) {
 	if (dx.server().ref_count_ == nullptr
 		|| dx.width() != width_ || dx.height() != height_
 		|| dy.server().ref_count_ == nullptr
@@ -552,7 +607,7 @@ void ImageCuda<VecType>::Sobel(ImageCuda<typename VecType::VecTypef> &dx,
 					  UPPER_ALIGN(height_, THREAD_2D_UNIT));
 	const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
 	SobelImageKernel << < blocks, threads >> > (
-		server_, dx.server(), dy.server());
+		server_, dx.server(), dy.server(), with_holes);
 	CheckCuda(cudaDeviceSynchronize());
 	CheckCuda(cudaGetLastError());
 
@@ -609,7 +664,7 @@ void ImageCuda<VecType>::Bilateral(ImageCuda<VecType> &image,
 	const dim3 blocks(UPPER_ALIGN(width_, THREAD_2D_UNIT),
 					  UPPER_ALIGN(height_, THREAD_2D_UNIT));
 	const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
-	BilateralImageKernel<< < blocks, threads >> > (
+	BilateralImageKernel << < blocks, threads >> > (
 		server_, image.server(), (int) kernel, val_sigma, with_holes);
 	CheckCuda(cudaDeviceSynchronize());
 	CheckCuda(cudaGetLastError());

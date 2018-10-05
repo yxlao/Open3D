@@ -6,7 +6,7 @@
 
 #include "ContainerClasses.h"
 #include <Cuda/Common/Common.h>
-
+#include <cstdlib>
 #include <vector>
 
 namespace three {
@@ -23,7 +23,7 @@ public:
 
 public:
 	__DEVICE__ void push_back(T value);
-	__DEVICE__ T& get(int index);
+	__DEVICE__ T& get(size_t index);
 
 	friend class ArrayCuda<T>;
 };
