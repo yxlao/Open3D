@@ -50,6 +50,10 @@ public:
 	int *ref_count_ = nullptr;
 
 public:
+	VecType *&data() {
+		return data_;
+	}
+
 	inline __DEVICE__ VecType &get(int x, int y);
 	inline __DEVICE__ VecType &operator()(int x, int y);
 	inline __DEVICE__ VecType get_interp(float x, float y);
@@ -75,10 +79,6 @@ public:
 	};
 	inline __DEVICE__ Grad Sobel(int x, int y);
 	inline __DEVICE__ Grad SobelWithHoles(int x, int y);
-
-	VecType *&data() {
-		return data_;
-	}
 
 	friend class ImageCuda<VecType>;
 };
@@ -116,6 +116,10 @@ public:
 	void Sobel(ImageCuda<typename VecType::VecTypef> &dx,
 			   ImageCuda<typename VecType::VecTypef> &dy,
 			   bool with_holes = true);
+
+	ImageCuda<VecType> Shift(float dx, float dy, bool with_holes = true);
+	void Shift(ImageCuda<VecType> &image, float dx, float dy,
+		bool with_holes = true);
 
 	ImageCuda<VecType> Gaussian(GaussianKernelSize option,
 								bool with_holess = true);
@@ -160,6 +164,13 @@ __GLOBAL__
 void DownsampleImageKernel(ImageCudaServer<VecType> src,
 						   ImageCudaServer<VecType> dst,
 						   DownsampleMethod method);
+
+template<typename VecType>
+__GLOBAL__
+void ShiftImageKernel(ImageCudaServer<VecType> src,
+					  ImageCudaServer<VecType> dst,
+					  float dx, float dy,
+					  bool with_holes);
 
 template<typename VecType>
 __GLOBAL__

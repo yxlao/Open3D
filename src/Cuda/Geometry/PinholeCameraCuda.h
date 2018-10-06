@@ -25,21 +25,24 @@ public:
 	float cy_[N];
 
 public:
+	inline __HOSTDEVICE__ int width(size_t level = 0) {return width_[level]; }
+	inline __HOSTDEVICE__ int height(size_t level = 0) {return height_[level]; }
 	inline __HOSTDEVICE__ float fx(size_t level = 0) { return fx_[level]; }
 	inline __HOSTDEVICE__ float fy(size_t level = 0) { return fy_[level]; }
 	inline __HOSTDEVICE__ float cx(size_t level = 0) { return cx_[level]; }
 	inline __HOSTDEVICE__ float cy(size_t level = 0) { return cy_[level]; }
 
-	inline __HOSTDEVICE__ void Set(int width, int height,
-								   float fx, float fy, float cx, float cy) {
+	inline __HOSTDEVICE__ void Set(int in_width, int in_height,
+								   float in_fx, float in_fy,
+								   float in_cx, float in_cy) {
 		for (int i = 0; i < N; ++i) {
-			float factor = 1.0f / float(1 >> i);
-			width_[i] = width >> i;
-			height_[i] = height >> i;
-			fx_[i] = fx * factor;
-			fy_[i] = fy * factor;
-			cx_[i] = cx * factor;
-			cy_[i] = cy * factor;
+			float factor = 1.0f / (1 << i);
+			width_[i] = in_width >> i;
+			height_[i] = in_height >> i;
+			fx_[i] = in_fx * factor;
+			fy_[i] = in_fy * factor;
+			cx_[i] = in_cx * factor;
+			cy_[i] = in_cy * factor;
 		}
 	}
 

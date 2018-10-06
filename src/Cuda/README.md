@@ -70,6 +70,7 @@ will be problems transforming *vtable* to kernels.
 constructors and destructors for the client side... (works well for ImageCuda).
 - Add swap for the containers? (That will be really complicated for HashTable).
 - Organize some error codes for functions to return.
+- See if we should replace servers instances with pointers?
 
 ## Notes
 - Eigen has something wrong in their code. I believe not every functions 

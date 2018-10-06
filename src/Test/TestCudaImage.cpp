@@ -224,6 +224,29 @@ void CheckGradient(std::string path) {
 	cv::destroyAllWindows();
 }
 
+template<typename T>
+void CheckShift(std::string path) {
+	using namespace three;
+	cv::Mat image = cv::imread(path, cv::IMREAD_UNCHANGED);
+
+	Timer timer;
+	ImageCuda<T> image_cuda;
+	timer.Start();
+	image_cuda.Upload(image);
+	timer.Stop();
+	PrintInfo("Upload finished in %.3f milliseconds...\n", timer.GetDuration());
+
+	timer.Start();
+	ImageCuda<T> shifted_image = image_cuda.Shift(-120.2f, 135.8f);
+	timer.Stop();
+	PrintInfo("Shifting finished in %.3f milliseconds...\n", timer.GetDuration());
+
+	cv::Mat downloaded = shifted_image.Download();
+	cv::imshow("shifted", downloaded);
+	cv::waitKey(-1);
+	cv::destroyAllWindows();
+}
+
 template<typename T, size_t N>
 void CheckPyramid(std::string path) {
 	using namespace three;
@@ -313,12 +336,20 @@ int main(int argc, char** argv) {
 	CheckPyramid<Vector1b, 4>(grayscale_path);
 	PrintInfo("------\n");
 
-	PrintInfo("#4 Checking Bilateral.\n");
+	PrintInfo("#5 Checking Bilateral.\n");
 	CheckBilateral<Vector1s>(depth_path);
 	PrintInfo("------\n");
 	CheckBilateral<Vector3b>(color_path);
 	PrintInfo("------\n");
 	CheckBilateral<Vector1b>(grayscale_path);
+
+	PrintInfo("#6 Checking Shift.\n");
+	CheckShift<Vector1s>(depth_path);
+	PrintInfo("------\n");
+	CheckShift<Vector3b>(color_path);
+	PrintInfo("------\n");
+	CheckShift<Vector1b>(grayscale_path);
+
 
 	return 0;
 }

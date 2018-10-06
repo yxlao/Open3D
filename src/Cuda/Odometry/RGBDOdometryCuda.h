@@ -39,6 +39,8 @@ namespace three {
 template<size_t N>
 class RGBDOdometryCudaServer {
 private:
+	ImagePyramidCudaServer<Vector1f, N> target_on_source_;
+
 	ImagePyramidCudaServer<Vector1f, N> target_depth_;
 	ImagePyramidCudaServer<Vector1f, N> target_depth_dx_;
 	ImagePyramidCudaServer<Vector1f, N> target_depth_dy_;
@@ -89,6 +91,10 @@ public:
 		HessianCuda<6> &JtJ, Vector6f &Jtr);
 
 public:
+	inline __HOSTDEVICE__ ImageCudaServer<Vector1f> &target_on_source(
+		size_t level) {
+		return target_on_source_.get(level);
+	}
 	inline __HOSTDEVICE__ ImageCudaServer<Vector1f> &target_depth(
 		size_t level) {
 		return target_depth_.get(level);
@@ -134,6 +140,8 @@ class RGBDOdometryCuda {
 private:
 	RGBDOdometryCudaServer<N> server_;
 
+	ImagePyramidCuda<Vector1f, N> target_on_source_;
+
 	ImagePyramidCuda<Vector1f, N> target_depth_;
 	ImagePyramidCuda<Vector1f, N> target_depth_dx_;
 	ImagePyramidCuda<Vector1f, N> target_depth_dy_;
@@ -147,26 +155,28 @@ private:
 
 	ArrayCuda<float> results_;
 
-	Eigen::Matrix4f transform_source_to_target_;
+public:
+	typedef Eigen::Matrix<float, 4, 4, Eigen::DontAlign> Matrix4f;
+	typedef Eigen::Matrix<float, 6, 6, Eigen::DontAlign> Matrix6f;
+	typedef Eigen::Matrix<float, 6, 1, Eigen::DontAlign> Vector6f;
+	typedef Eigen::Matrix<double, 6, 1, Eigen::DontAlign> Vector6d;
 
 public:
-	typedef Eigen::Matrix<float, 6, 6> Matrix6f;
-	typedef Eigen::Matrix<float, 6, 1> Vector6f;
-	typedef Eigen::Matrix<double, 6, 1> Vector6d;
+	Matrix4f transform_source_to_target_;
 
 	RGBDOdometryCuda();
 	~RGBDOdometryCuda();
 	void Create(int width, int height);
 	void Release();
 
-	__host__ void Apply(ImageCuda<Vector1f> &source_depth,
+	void Apply(ImageCuda<Vector1f> &source_depth,
 						ImageCuda<Vector1f> &source_intensity,
 						ImageCuda<Vector1f> &target_depth,
 						ImageCuda<Vector1f> &target_intensity);
 
 	void ExtractResults(std::vector<float> &results,
 						Matrix6f &JtJ, Vector6f &Jtr,
-						float &residual, float &inliers);
+						float &error, float &inliers);
 
 	RGBDOdometryCudaServer<N> &server() {
 		return server_;

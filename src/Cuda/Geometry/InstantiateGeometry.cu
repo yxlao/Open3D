@@ -117,6 +117,43 @@ void DownsampleImageKernel<Vector1f>(
 	ImageCudaServer<Vector1f> src, ImageCudaServer<Vector1f> dst,
 	DownsampleMethod method);
 
+/** Shift **/
+template
+__global__
+void ShiftImageKernel<Vector1s>(
+	ImageCudaServer<Vector1s> src, ImageCudaServer<Vector1s> dst,
+	float dx, float dy, bool with_holes);
+template
+__global__
+void ShiftImageKernel<Vector4b>(
+	ImageCudaServer<Vector4b> src, ImageCudaServer<Vector4b> dst,
+	float dx, float dy, bool with_holes);
+template
+__global__
+void ShiftImageKernel<Vector3b>(
+	ImageCudaServer<Vector3b> src, ImageCudaServer<Vector3b> dst,
+	float dx, float dy, bool with_holes);
+template
+__global__
+void ShiftImageKernel<Vector1b>(
+	ImageCudaServer<Vector1b> src, ImageCudaServer<Vector1b> dst,
+	float dx, float dy, bool with_holes);
+template
+__global__
+void ShiftImageKernel<Vector4f>(
+	ImageCudaServer<Vector4f> src, ImageCudaServer<Vector4f> dst,
+	float dx, float dy, bool with_holes);
+template
+__global__
+void ShiftImageKernel<Vector3f>(
+	ImageCudaServer<Vector3f> src, ImageCudaServer<Vector3f> dst,
+	float dx, float dy, bool with_holes);
+template
+__global__
+void ShiftImageKernel<Vector1f>(
+	ImageCudaServer<Vector1f> src, ImageCudaServer<Vector1f> dst,
+	float dx, float dy, bool with_holes);
+
 /** Gaussian **/
 template
 __global__

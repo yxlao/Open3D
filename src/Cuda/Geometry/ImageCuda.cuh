@@ -423,7 +423,7 @@ int ImageCuda<VecType>::Create(int width, int height) {
 	assert(width > 0 && height > 0);
 
 	if (server_.ref_count_ != nullptr) {
-		PrintWarning("Already created, re-creating!\n");
+		PrintWarning("Already created, stop re-creating!\n");
 		return -1;
 	}
 
@@ -612,6 +612,32 @@ void ImageCuda<VecType>::Sobel(ImageCuda<typename VecType::VecTypef> &dx,
 	CheckCuda(cudaGetLastError());
 
 	return;
+}
+
+template<typename VecType>
+ImageCuda<VecType> ImageCuda<VecType>::Shift(float dx, float dy,
+											 bool with_holes) {
+	ImageCuda<VecType> dst;
+	dst.Create(width_, height_);
+	Shift(dst, dx, dy, with_holes);
+	return dst;
+}
+
+template<typename VecType>
+void ImageCuda<VecType>::Shift(ImageCuda<VecType> &image, float dx, float dy,
+							   bool with_holes) {
+	if (image.server().ref_count_ == nullptr
+	|| image.width() != width_ || image.height() != height_) {
+		image.Resize(width_, height_);
+	}
+
+	const dim3 blocks(UPPER_ALIGN(width_, THREAD_2D_UNIT),
+					  UPPER_ALIGN(height_, THREAD_2D_UNIT));
+	const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+	ShiftImageKernel << < blocks, threads >> > (
+		server_, image.server(), dx, dy, with_holes);
+	CheckCuda(cudaDeviceSynchronize());
+	CheckCuda(cudaGetLastError());
 }
 
 template<typename VecType>

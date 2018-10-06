@@ -31,7 +31,7 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
 
 	/** Check 2: reprojected point in image? **/
 	Vector3f
-	X = transform_source_to_target_
+		X = transform_source_to_target_
 		* pinhole_camera_intrinsics_.InverseProjection(x, y, d_source, level);
 
 	Vector2f p_warped = pinhole_camera_intrinsics_.Projection(X, level);
@@ -81,8 +81,8 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
 	jacobian_I(4) = sqrt_coeff_I_ * (X(2) * c0 - X(0) * c2);
 	jacobian_I(5) = sqrt_coeff_I_ * (-X(1) * c0 + X(0) * c1);
 	residual_I = sqrt_coeff_I_ *
-		source_intensity(level).get_interp(p_warped(0), p_warped(1))(0)
-		- target_intensity(level).get(x, y)(0);
+		(target_intensity(level).get_interp(p_warped(0), p_warped(1))(0)
+		- source_intensity(level).get(x, y)(0));
 
 	float d0 = dx_D * fx_on_Z;
 	float d1 = dy_D * fy_on_Z;
@@ -93,7 +93,7 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
 	jacobian_D(3) = sqrt_coeff_D_ * ((-X(2) * d1 + X(1) * d2) - X(1));
 	jacobian_D(4) = sqrt_coeff_D_ * ((X(2) * d0 - X(0) * d2) + X(0));
 	jacobian_D(5) = sqrt_coeff_D_ * (-X(1) * d0 + X(0) * d1);
-	residual_D = sqrt_coeff_D_ * (d_source - X(2));
+	residual_D = sqrt_coeff_D_ * (d_target - X(2));
 
 	return true;
 }
@@ -134,7 +134,7 @@ void RGBDOdometryCuda<N>::Create(int width, int height) {
 	source_depth_.Create(width, height);
 	source_intensity_.Create(width, height);
 
-	results_.Create(28);
+	results_.Create(29);
 }
 
 template<size_t N>
@@ -149,13 +149,15 @@ void RGBDOdometryCuda<N>::Release() {
 
 	source_depth_.Release();
 	source_intensity_.Release();
+
+	results_.Release();
 }
 
 template<size_t N>
 void RGBDOdometryCuda<N>::ExtractResults(std::vector<float> &results,
-										 Eigen::Matrix<float, 6, 6> &JtJ,
-										 Eigen::Matrix<float, 6, 1> &Jtr,
-										 float &residual,
+										 Matrix6f &JtJ,
+										 Vector6f &Jtr,
+										 float &error,
 										 float &inliers) {
 	int cnt = 0;
 	for (int i = 0; i < 6; ++i) {
@@ -168,13 +170,12 @@ void RGBDOdometryCuda<N>::ExtractResults(std::vector<float> &results,
 		Jtr(i) = results[cnt];
 		++cnt;
 	}
-	residual = results[cnt];
+	error = results[cnt];
 	++cnt;
 	inliers = results[cnt];
 }
 
 template<size_t N>
-__host__
 void RGBDOdometryCuda<N>::Apply(ImageCuda<Vector1f> &source_depth,
 								ImageCuda<Vector1f> &source_intensity,
 								ImageCuda<Vector1f> &target_depth,
@@ -182,51 +183,76 @@ void RGBDOdometryCuda<N>::Apply(ImageCuda<Vector1f> &source_depth,
 	source_depth_.Build(source_depth);
 	server_.source_depth_ = source_depth_.server();
 
-	source_intensity_.Build(source_depth);
+	source_intensity_.Build(source_intensity);
 	server_.source_intensity_ = source_intensity_.server();
 
 	target_depth_.Build(target_depth);
 	server_.target_depth_ = target_depth_.server();
 
-	target_intensity_.Build(target_depth);
+	target_intensity_.Build(target_intensity);
 	server_.target_intensity_ = target_intensity_.server();
 
 	for (size_t level = 0; level < N; ++level) {
-		target_depth_.get(level).Sobel(
-			target_depth_dx_.get(level),
-			target_depth_dy_.get(level));
-		target_intensity_.get(level).Sobel(
-			target_intensity_dx_.get(level),
-			target_intensity_dy_.get(level));
-	}
+		target_depth_.get(level).Sobel(target_depth_dx_.get(level),
+									   target_depth_dy_.get(level),
+									   false);
+		target_depth_dx_.server().get(level) = target_depth_dx_.get(level).server();
+		target_depth_dy_.server().get(level) = target_depth_dy_.get(level).server();
 
-	/** TODO: add reference count for Array **/
+		target_intensity_.get(level).Sobel(target_intensity_dx_.get(level),
+										   target_intensity_dy_.get(level),
+										   false);
+		target_intensity_dx_.server().get(level) = target_intensity_dx_.get(level).server();
+		target_intensity_dy_.server().get(level) = target_intensity_dy_.get(level).server();
+	}
+	server_.target_depth_dx_ = target_depth_dx_.server();
+	server_.target_depth_dy_ = target_depth_dy_.server();
+	server_.target_intensity_dx_ = target_intensity_dx_.server();
+	server_.target_intensity_dy_ = target_intensity_dy_.server();
+
 	results_.Create(29);
-
+	const int kIterations[] = {3, 5, 10};
 	for (int level = N - 1; level >= 0; --level) {
-		server_.transform_source_to_target_.FromEigen(
-			transform_source_to_target_);
+		for (int iter = 0; iter < kIterations[level]; ++iter) {
+			results_.Fill(0);
+			server_.results() = results_.server();
 
-		const dim3 blocks(
-			UPPER_ALIGN(source_depth_.width(level), THREAD_2D_UNIT),
-			UPPER_ALIGN(source_depth_.height(level), THREAD_2D_UNIT));
-		const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
-		ApplyRGBDOdometryKernel << <blocks, threads>>>(server_, level);
-		CheckCuda(cudaDeviceSynchronize());
-		CheckCuda(cudaGetLastError());
+			server_.transform_source_to_target_.FromEigen(
+				transform_source_to_target_);
 
-		std::vector<float> results = results_.DownloadAll();
-		Matrix6f JtJ;
-		Vector6f Jtr;
-		float residuals;
-		float inliers;
-		ExtractResults(results, JtJ, Jtr, residuals, inliers);
+			target_intensity_.get(level).CopyTo(target_on_source_.get(level));
+			target_on_source_.server().get(level) = target_on_source_.get(level).server();
+			server_.target_on_source_ = target_on_source_.server();
+			const dim3 blocks(
+				UPPER_ALIGN(source_depth_.width(level), THREAD_2D_UNIT),
+				UPPER_ALIGN(source_depth_.height(level), THREAD_2D_UNIT));
+			const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+			ApplyRGBDOdometryKernel << < blocks, threads >> > (server_, level);
+			CheckCuda(cudaDeviceSynchronize());
+			CheckCuda(cudaGetLastError());
 
-		Vector6d dxi = JtJ.cast<double>().ldlt().solve(-Jtr.cast<double>());
-		transform_source_to_target_ =
-			Sophus::SE3d::exp(dxi).matrix().cast<float>() *
-				transform_source_to_target_;
+			target_on_source_.get(level).server() = server_.target_on_source_.get(level);
+			results_.server() = server_.results();
+			std::vector<float> results = results_.DownloadAll();
+			Matrix6f JtJ;
+			Vector6f Jtr;
+			float error;
+			float inliers;
+			ExtractResults(results, JtJ, Jtr, error, inliers);
+
+			PrintInfo("> Level %d, iter %d: error = %f, avg_error = %f, "
+			 "inliers = %.0f\n",
+			 level, iter, error, error / inliers, inliers);
+
+			Vector6d dxi = JtJ.cast<double>().ldlt().solve(-Jtr.cast<double>());
+			transform_source_to_target_ =
+				Sophus::SE3d::exp(dxi).matrix().cast<float>() *
+					transform_source_to_target_;
+
+		}
 	}
+	std::cout << transform_source_to_target_ << std::endl;
+	std::cout << (transform_source_to_target_).inverse() << std::endl;
 }
 }
 #endif //OPEN3D_RGBDODOMETRYCUDA_C_H

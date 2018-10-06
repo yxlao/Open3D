@@ -35,6 +35,33 @@ void DownsampleImageKernel(ImageCudaServer<VecType> src,
 }
 
 /**
+ * Shift
+ */
+template<typename VecType>
+__global__
+void ShiftImageKernel(
+	ImageCudaServer<VecType> src,
+	ImageCudaServer<VecType> dst,
+	float dx, float dy, bool with_holes) {
+	int u = blockIdx.x * blockDim.x + threadIdx.x;
+	int v = blockIdx.y * blockDim.y + threadIdx.y;
+
+	dst.get(u, v) = 0;
+	if (u >= dst.width_ || v >= dst.height_)
+		return;
+
+	if (u + dx < 0 || u + dx >= src.width_ - 1
+	|| v + dy < 0 || v + dy >= src.height_ - 1)
+		return;
+
+	if (with_holes) {
+		dst.get(u, v) = src.get_interp_with_holes(u + dx, v + dy);
+	} else {
+		dst.get(u, v) = src.get_interp(u + dx, v + dy);
+	}
+}
+
+/**
  * Gaussian
  */
 template<typename VecType>

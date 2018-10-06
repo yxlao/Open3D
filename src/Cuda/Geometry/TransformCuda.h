@@ -15,6 +15,8 @@ private:
 	float m_[3][4];
 
 public:
+	typedef Eigen::Matrix<float, 4, 4, Eigen::DontAlign> Matrix4f;
+
 	inline __HOSTDEVICE__ float &operator() (size_t i, size_t j) {
 		assert(i < 3 && j < 4);
 		return m_[i][j];
@@ -76,7 +78,7 @@ public:
 		}
 	}
 
-	inline void FromEigen(Eigen::Matrix4f &T) {
+	inline void FromEigen(Matrix4f &T) {
 		for (size_t i = 0; i < 3; ++i) {
 			for (size_t j = 0; j < 4; ++j) {
 				m_[i][j] = T(i, j);
@@ -84,8 +86,8 @@ public:
 		}
 	}
 
-	inline Eigen::Matrix4f ToEigen() {
-		Eigen::Matrix4f T = Eigen::Matrix4f::Identity();
+	inline Matrix4f ToEigen() {
+		Matrix4f T = Matrix4f::Identity();
 		for (size_t i = 0; i < 3; ++i) {
 			for (size_t j = 0; j < 4; ++j) {
 				T(i, j) = m_[i][j];

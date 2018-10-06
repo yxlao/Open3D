@@ -37,16 +37,20 @@ void ImagePyramidCuda<T, N>::Release() {
 template<typename VecType, size_t N>
 void ImagePyramidCuda<VecType, N>::Build(cv::Mat &m) {
 	images_[0].Upload(m);
+	server_.get(0) = images_[0].server();
 	for (size_t level = 1; level < N; ++level) {
 		images_[level - 1].Downsample(images_[level]);
+		server_.get(level) = images_[level].server();
 	}
 }
 
 template<typename VecType, size_t N>
 void ImagePyramidCuda<VecType, N>::Build(const ImageCuda<VecType> &image) {
 	image.CopyTo(images_[0]);
+	server_.get(0) = images_[0].server();
 	for (size_t level = 1; level < N; ++level) {
 		images_[level - 1].Downsample(images_[level]);
+		server_.get(level) = images_[level].server();
 	}
 }
 
