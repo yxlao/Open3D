@@ -26,7 +26,6 @@ public:
 	/** This is a CPU pointer for shared reference counting.
 	 *  How many ArrayCuda clients are using this server?
 	 */
-	int *ref_count_ = nullptr;
 
 public:
 	__HOSTDEVICE__ T* &data() { return data_; }
@@ -39,7 +38,7 @@ public:
 template<typename T>
 class ArrayCuda {
 private:
-	ArrayCudaServer<T> server_;
+	std::shared_ptr<ArrayCudaServer<T>> server_ = nullptr;
 	int max_capacity_;
 
 public:
@@ -72,10 +71,10 @@ public:
 		return max_capacity_;
 	}
 
-	ArrayCudaServer<T> &server() {
+	std::shared_ptr<ArrayCudaServer<T>> &server() {
 		return server_;
 	}
-	const ArrayCudaServer<T> &server() const {
+	const std::shared_ptr<ArrayCudaServer<T>> &server() const {
 		return server_;
 	}
 };

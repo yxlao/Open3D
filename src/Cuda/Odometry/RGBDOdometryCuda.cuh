@@ -192,7 +192,7 @@ void RGBDOdometryCuda<N>::ConnectSubServers() {
 
 	server_->target_on_source() = *target_on_source_.server();
 
-	server_->results() = results_.server();
+	server_->results() = *results_.server();
 }
 
 template<size_t N>
@@ -261,7 +261,7 @@ void RGBDOdometryCuda<N>::Apply(ImageCuda<Vector1f> &source_depth,
 	for (int level = (int) N - 1; level >= 0; --level) {
 		for (int iter = 0; iter < kIterations[level]; ++iter) {
 			results_.Fill(0);
-			server_->results() = results_.server();
+			server_->results() = *results_.server();
 
 			server_->transform_source_to_target_.FromEigen(
 				transform_source_to_target_);

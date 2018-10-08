@@ -449,6 +449,7 @@ void ImageCuda<VecType>::Release() {
 		PrintInfo("ref count before releasing: %d\n", server_.use_count());
 	}
 #endif
+
 	if (server_ != nullptr && server_.use_count() == 1) {
 		CheckCuda(cudaFree(server_->data_));
 	}
@@ -560,9 +561,11 @@ ImageCuda<VecType> ImageCuda<VecType>::Downsample(DownsampleMethod method) {
 template<typename VecType>
 void ImageCuda<VecType>::Downsample(ImageCuda<VecType> &image,
 									DownsampleMethod method) {
-	if (image.server() == nullptr
-		|| image.width() != width_ / 2 || image.height() != height_ / 2) {
-		image.Resize(width_ / 2, height_ / 2);
+	if (image.server() == nullptr) {
+		image.Create(width_ / 2, height_ / 2);
+	} else if (image.width() != width_ / 2 || image.height() != height_ / 2) {
+		PrintError("Incompatible image size!\n");
+		return;
 	}
 
 	const dim3 blocks(UPPER_ALIGN(image.width(), THREAD_2D_UNIT),
@@ -590,12 +593,18 @@ template<typename VecType>
 void ImageCuda<VecType>::Sobel(ImageCuda<typename VecType::VecTypef> &dx,
 							   ImageCuda<typename VecType::VecTypef> &dy,
 							   bool with_holes) {
-	if (dx.server() == nullptr
-		|| dx.width() != width_ || dx.height() != height_
-		|| dy.server() == nullptr
-		|| dy.width() != width_ || dy.height() != height_) {
-		dx.Resize(width_, height_);
-		dy.Resize(width_, height_);
+	if (dx.server() == nullptr) {
+		dx.Create(width_, height_);
+	} else if (dx.width() != width_ || dx.height() != height_) {
+		PrintError("Incompatible image size!\n");
+		return;
+	}
+
+	if (dy.server() == nullptr) {
+		dy.Create(width_, height_);
+	} else if (dy.width() != width_ || dy.height() != height_) {
+		PrintError("Incompatible image size!\n");
+		return;
 	}
 
 	const dim3 blocks(UPPER_ALIGN(width_, THREAD_2D_UNIT),
@@ -621,9 +630,11 @@ ImageCuda<VecType> ImageCuda<VecType>::Shift(float dx, float dy,
 template<typename VecType>
 void ImageCuda<VecType>::Shift(ImageCuda<VecType> &image, float dx, float dy,
 							   bool with_holes) {
-	if (image.server() == nullptr
-		|| image.width() != width_ || image.height() != height_) {
-		image.Resize(width_, height_);
+	if (image.server() == nullptr) {
+		image.Create(width_, height_);
+	} else if (image.width() != width_ || image.height() != height_) {
+		PrintInfo("Incompatible image size!\n");
+		return;
 	}
 
 	const dim3 blocks(UPPER_ALIGN(width_, THREAD_2D_UNIT),
@@ -648,9 +659,11 @@ template<typename VecType>
 void ImageCuda<VecType>::Gaussian(ImageCuda<VecType> &image,
 								  GaussianKernelSize kernel,
 								  bool with_holes) {
-	if (image.server() == nullptr
-		|| image.width() != width_ || image.height() != height_) {
-		image.Resize(width_, height_);
+	if (image.server() == nullptr) {
+		image.Create(width_, height_);
+	} else if (image.width() != width_ || image.height() != height_) {
+		PrintInfo("Incompatible image size!\n");
+		return;
 	}
 
 	const dim3 blocks(UPPER_ALIGN(width_, THREAD_2D_UNIT),
@@ -677,9 +690,11 @@ void ImageCuda<VecType>::Bilateral(ImageCuda<VecType> &image,
 								   GaussianKernelSize kernel,
 								   float val_sigma,
 								   bool with_holes) {
-	if (image.server() == nullptr
-		|| image.width() != width_ || image.height() != height_) {
-		image.Resize(width_, height_);
+	if (image.server() == nullptr) {
+		image.Create(width_, height_);
+	} else if (image.width() != width_ || image.height() != height_) {
+		PrintInfo("Incompatible image size!\n");
+		return;
 	}
 
 	const dim3 blocks(UPPER_ALIGN(width_, THREAD_2D_UNIT),
@@ -703,9 +718,11 @@ ImageCuda<typename VecType::VecTypef> ImageCuda<VecType>::ToFloat(
 template<typename VecType>
 void ImageCuda<VecType>::ToFloat(ImageCuda<typename VecType::VecTypef> &image,
 								 float scale, float offset) {
-	if (image.server() == nullptr
-		|| image.width() != width_ || image.height() != height_) {
-		image = ToFloat(scale, offset);
+	if (image.server() == nullptr) {
+		image.Create(width_, height_);
+	} else if (image.width() != width_ || image.height() != height_) {
+		PrintInfo("Incompatible image size!\n");
+		return;
 	}
 
 	const dim3 blocks(UPPER_ALIGN(width_, THREAD_2D_UNIT),

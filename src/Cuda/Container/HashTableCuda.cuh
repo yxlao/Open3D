@@ -179,10 +179,10 @@ void HashTableCuda<Key, Value, Hasher>::Create(
 	server_.memory_heap_entry_list_node_ =
 		memory_heap_entry_list_node_.server();
 	server_.memory_heap_value_ = memory_heap_value_.server();
-	server_.entry_array_ = entry_array_.server();
-	server_.entry_list_array_ = entry_list_array_.server();
-	server_.lock_array_ = lock_array_.server();
-	server_.assigned_entry_array_ = assigned_entry_array_.server();
+	server_.entry_array_ = *entry_array_.server();
+	server_.entry_list_array_ = *entry_list_array_.server();
+	server_.lock_array_ = *lock_array_.server();
+	server_.assigned_entry_array_ = *assigned_entry_array_.server();
 
 	CheckCuda(cudaMalloc((void**)&server_.entry_list_head_node_ptrs_,
 		sizeof(int) * bucket_count));

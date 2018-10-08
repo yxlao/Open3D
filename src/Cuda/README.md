@@ -65,15 +65,30 @@ other `server` classes.
 **Don't** use inheritance for `server`. It is not supported by CUDA -- there 
 will be problems transforming *vtable* to kernels.
 
+## Logic of creating objects 
+
+For the classes such as ImageCuda, there are some conventions to follow:
+- Create some thing when `Create` is directly called
+- When using functions such as `Upload`, `Downsample`, check if the object 
+exists, i.e., if it is with a `server_`. If not, create for it for sure. If 
+not, then we **CHOOSE TO CHECK SIZE**. If size meets then things are fine. If
+ not, we **ABORT** and print an error. Note this is just a *strategy* or 
+ *convention*. We can also choose to release it and create a new server.
+- Yet functions such as `Resize` should force to release and re-create objects.
+ 
+
 ## TODO
 - Add reference-count for the servers? Actually maybe we can enable the 
 constructors and destructors for the client side... (works well for ImageCuda).
 - Add swap for the containers? (That will be really complicated for HashTable).
 - Organize some error codes for functions to return.
 - See if we should replace servers instances with pointers?
+- Maybe re-introduce built-in types? Some additional utility functions such as 
+make_float(template<T>) may work?
 
 ## Notes
 - Eigen has something wrong in their code. I believe not every functions 
 are correctly prefixed with EIGEN_DEVICE_FUNC. Even if I don't call Eigen 
 function in CUDA, as long as I compile with nvcc, the annoying warnings will 
-come out. Work around: UNCOMMENT EIGEN_DEVICE_FUNC. 
+come out. Work around: UNCOMMENT EIGEN_DEVICE_FUNC.
+

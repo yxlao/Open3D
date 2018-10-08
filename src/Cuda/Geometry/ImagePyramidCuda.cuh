@@ -26,7 +26,7 @@ void ImagePyramidCuda<VecType, N>::Create(int width, int height) {
 			PrintError("Invalid width %d || height %d at level %d!\n", w, h, i);
 			return;
 		}
-		images_[i].Create(width, height);
+		images_[i].Create(w, h);
 	}
 
 	ConnectSubServers();
