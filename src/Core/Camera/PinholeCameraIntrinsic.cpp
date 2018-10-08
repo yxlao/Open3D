@@ -30,19 +30,29 @@
 #include <json/json.h>
 #include <Core/Utility/Console.h>
 
-namespace three{
-
-const PinholeCameraIntrinsic PinholeCameraIntrinsic::PrimeSenseDefault =
-		PinholeCameraIntrinsic(640, 480, 525.0, 525.0, 319.5, 239.5);
+namespace open3d{
 
 PinholeCameraIntrinsic::PinholeCameraIntrinsic()
 {
 }
 
 PinholeCameraIntrinsic::PinholeCameraIntrinsic(int width, int height,
-		double fx, double fy, double cx, double cy)
+        double fx, double fy, double cx, double cy)
 {
-	SetIntrinsics(width, height, fx, fy, cx, cy);
+    SetIntrinsics(width, height, fx, fy, cx, cy);
+}
+
+PinholeCameraIntrinsic::PinholeCameraIntrinsic(
+        PinholeCameraIntrinsicParameters param)
+{
+    if (param == PinholeCameraIntrinsicParameters::PrimeSenseDefault)
+        SetIntrinsics(640, 480, 525.0, 525.0, 319.5, 239.5);
+    else if (param == PinholeCameraIntrinsicParameters::
+            Kinect2DepthCameraDefault)
+        SetIntrinsics(512, 424, 254.878, 205.395, 365.456, 365.456);
+    else if (param == PinholeCameraIntrinsicParameters::
+            Kinect2ColorCameraDefault)
+        SetIntrinsics(1920, 1080, 1059.9718, 1059.9718, 975.7193, 545.9533);
 }
 
 PinholeCameraIntrinsic::~PinholeCameraIntrinsic()
@@ -51,29 +61,29 @@ PinholeCameraIntrinsic::~PinholeCameraIntrinsic()
 
 bool PinholeCameraIntrinsic::ConvertToJsonValue(Json::Value &value) const
 {
-	value["width"] = width_;
-	value["height"] = height_;
-	if (EigenMatrix3dToJsonArray(intrinsic_matrix_,
-			value["intrinsic_matrix"]) == false) {
-		return false;
-	}
-	return true;
+    value["width"] = width_;
+    value["height"] = height_;
+    if (EigenMatrix3dToJsonArray(intrinsic_matrix_,
+            value["intrinsic_matrix"]) == false) {
+        return false;
+    }
+    return true;
 }
 
 bool PinholeCameraIntrinsic::ConvertFromJsonValue(const Json::Value &value)
 {
-	if (value.isObject() == false) {
-		PrintWarning("PinholeCameraParameters read JSON failed: unsupported json format.\n");
-		return false;
-	}
-	width_ = value.get("width", -1).asInt();
-	height_ = value.get("height", -1).asInt();
-	if (EigenMatrix3dFromJsonArray(intrinsic_matrix_,
-			value["intrinsic_matrix"]) == false) {
-		PrintWarning("PinholeCameraParameters read JSON failed: wrong format.\n");
-		return false;
-	}
-	return true;
+    if (value.isObject() == false) {
+        PrintWarning("PinholeCameraParameters read JSON failed: unsupported json format.\n");
+        return false;
+    }
+    width_ = value.get("width", -1).asInt();
+    height_ = value.get("height", -1).asInt();
+    if (EigenMatrix3dFromJsonArray(intrinsic_matrix_,
+            value["intrinsic_matrix"]) == false) {
+        PrintWarning("PinholeCameraParameters read JSON failed: wrong format.\n");
+        return false;
+    }
+    return true;
 }
 
-}	// namespace three
+}    // namespace open3d

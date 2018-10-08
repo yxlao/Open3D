@@ -1,7 +1,7 @@
 # Open3D: A Modern Library for 3D Data Processing
 
 [![Build Status](https://travis-ci.org/IntelVCL/Open3D.svg?branch=master)](https://travis-ci.org/IntelVCL/Open3D)
-[![Build Status](https://ci.appveyor.com/api/projects/status/84l4d7xjkiu7d0tw/branch/master?svg=true)](https://ci.appveyor.com/project/syncle/open3d-7rite)
+[![Build status](https://ci.appveyor.com/api/projects/status/sau3yewsyxaxpkqe?svg=true)](https://ci.appveyor.com/project/syncle/open3d)
 
 ## About this project
 
@@ -30,11 +30,12 @@ Please cite our work if you use Open3D.
 
 * GCC 4.8 and later on Linux
 * XCode 8.0 and later on OS X
-* Visual Studio 2015 and later on Windows
+* Visual Studio 2015 update 3 and later on Windows
 
 ## Resources
 
-* Website: [www.open3d.org](http://www.open3d.org)
+* Website: [open3d.org](http://www.open3d.org)
 * Code: [github.com/IntelVCL/Open3D](https://github.com/IntelVCL/Open3D)
-* Document: [www.open3d.org/docs](http://www.open3d.org/docs)
+* Document: [open3d.org/docs](http://www.open3d.org/docs)
+* Getting started: [open3d.org/docs/getting_started.html](http://open3d.org/docs/getting_started.html)
 * License: [The MIT license](https://opensource.org/licenses/MIT)
