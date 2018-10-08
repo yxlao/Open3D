@@ -25,8 +25,8 @@ void ApplyRGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry, size_t level) {
 	local_sum1[tid] = 0;
 	local_sum2[tid] = 0;
 
-	if (x >= odometry.source_depth(level).width_
-		|| y >= odometry.source_depth(level).height_)
+	if (x >= odometry.source_depth().level(level).width_
+		|| y >= odometry.source_depth().level(level).height_)
 		return;
 
 	/** Compute Jacobian and residual **/
@@ -42,7 +42,7 @@ void ApplyRGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry, size_t level) {
 	odometry.ComputePixelwiseJtJAndJtr(jacobian_I, jacobian_D,
 									   residual_I, residual_D,
 									   JtJ, Jtr);
-	odometry.target_on_source(level)(x, y) = Vector1f(0.0f);
+	odometry.target_on_source().level(level)(x, y) = Vector1f(0.0f);
 
 	/** Reduce Sum JtJ **/
 #pragma unroll 1

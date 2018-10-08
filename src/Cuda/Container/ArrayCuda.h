@@ -8,6 +8,7 @@
 #include <Cuda/Common/Common.h>
 #include <cstdlib>
 #include <vector>
+#include <memory>
 
 namespace three {
 

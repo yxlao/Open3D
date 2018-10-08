@@ -288,45 +288,45 @@ int main(int argc, char** argv) {
 	std::string depth_path =
 		"../../../Test/TestData/RGBD/other_formats/TUM_depth.png";
 
-	CheckUploadAndDownloadConsistency<Vector1s>(depth_path);
-	PrintInfo("------\n");
-	CheckDownsampling<Vector1s>(depth_path);
-	PrintInfo("------\n");
-	CheckToFloatConversion<Vector1s>(depth_path, 1.0f / 5000.0f, 0.0f);
-	PrintInfo("------\n");
-	CheckGradient<Vector1s>(depth_path);
-	PrintInfo("------\n");
-	CheckGaussian<Vector1s>(depth_path);
-	PrintInfo("------\n");
+//	CheckUploadAndDownloadConsistency<Vector1s>(depth_path);
+//	PrintInfo("------\n");
+//	CheckDownsampling<Vector1s>(depth_path);
+//	PrintInfo("------\n");
+//	CheckToFloatConversion<Vector1s>(depth_path, 1.0f / 5000.0f, 0.0f);
+//	PrintInfo("------\n");
+//	CheckGradient<Vector1s>(depth_path);
+//	PrintInfo("------\n");
+//	CheckGaussian<Vector1s>(depth_path);
+//	PrintInfo("------\n");
 
 	PrintInfo("#2 Checking color.\n");
 	std::string color_path =
 		"../../../Test/TestData/RGBD/other_formats/TUM_color.png";
 
-	CheckUploadAndDownloadConsistency<Vector3b>(color_path);
-	PrintInfo("------\n");
-	CheckDownsampling<Vector3b>(color_path);
-	PrintInfo("------\n");
-	CheckToFloatConversion<Vector3b>(color_path, 1.0f / 255.0f, 0.0f);
-	PrintInfo("------\n");
-	CheckGradient<Vector3b>(color_path);
-	PrintInfo("------\n");
-	CheckGaussian<Vector3b>(color_path);
-	PrintInfo("------\n");
+//	CheckUploadAndDownloadConsistency<Vector3b>(color_path);
+//	PrintInfo("------\n");
+//	CheckDownsampling<Vector3b>(color_path);
+//	PrintInfo("------\n");
+//	CheckToFloatConversion<Vector3b>(color_path, 1.0f / 255.0f, 0.0f);
+//	PrintInfo("------\n");
+//	CheckGradient<Vector3b>(color_path);
+//	PrintInfo("------\n");
+//	CheckGaussian<Vector3b>(color_path);
+//	PrintInfo("------\n");
 
 	PrintInfo("#3 Checking grayscale.\n");
 	std::string grayscale_path = "../../../Test/TestData/lena_gray.jpg";
-	cv::Mat a = cv::imread(grayscale_path);
-	cv::cvtColor(a, a, cv::COLOR_BGR2GRAY);
-	cv::imshow("show", a);
-	cv::waitKey(-1);
-	std::cout << a.type() << std::endl;
-	CheckDownsampling<Vector1b>(grayscale_path);
-	PrintInfo("------\n");
-	CheckGradient<Vector1b>(grayscale_path);
-	PrintInfo("------\n");
-	CheckGaussian<Vector1b>(grayscale_path);
-	PrintInfo("------\n");
+//	cv::Mat a = cv::imread(grayscale_path);
+//	cv::cvtColor(a, a, cv::COLOR_BGR2GRAY);
+//	cv::imshow("show", a);
+//	cv::waitKey(-1);
+//	std::cout << a.type() << std::endl;
+//	CheckDownsampling<Vector1b>(grayscale_path);
+//	PrintInfo("------\n");
+//	CheckGradient<Vector1b>(grayscale_path);
+//	PrintInfo("------\n");
+//	CheckGaussian<Vector1b>(grayscale_path);
+//	PrintInfo("------\n");
 
 	PrintInfo("#4 Checking ImagePyramid.\n");
 	CheckPyramid<Vector1s, 4>(depth_path);

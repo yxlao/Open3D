@@ -25,7 +25,7 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
 	float &residual_D) {
 
 	/** Check 1: depth valid in source? **/
-	float d_source = source_depth(level).get(x, y)(0);
+	float d_source = source_depth().level(level).get(x, y)(0);
 	bool mask = IsValidDepth(d_source);
 	if (!mask) return false;
 
@@ -39,7 +39,7 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
 	if (!mask) return false;
 
 	/** Check 3: depth valid in target? Occlusion? **/
-	float d_target = target_depth(level).get_interp_with_holes(
+	float d_target = target_depth().level(level).get_interp_with_holes(
 		p_warped(0), p_warped(1))(0);
 	mask = IsValidDepth(d_target) && IsValidDepthDiff(d_target - X(2));
 	if (!mask) return false;
@@ -57,13 +57,13 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
 	 * J_D = (d D(p_warped) / d p_warped) (d p_warped / d X) (d X / d \xi)
 	 *     - (d X.z / d X) (d X / d \xi)
 	 */
-	float dx_I = target_intensity_dx(level).get_interp(
+	float dx_I = target_intensity_dx().level(level).get_interp(
 		p_warped(0), p_warped(1))(0);
-	float dy_I = target_intensity_dy(level).get_interp(
+	float dy_I = target_intensity_dy().level(level).get_interp(
 		p_warped(0), p_warped(1))(0);
-	float dx_D = target_depth_dx(level).get_interp(
+	float dx_D = target_depth_dx().level(level).get_interp(
 		p_warped(0), p_warped(1))(0);
-	float dy_D = target_depth_dy(level).get_interp(
+	float dy_D = target_depth_dy().level(level).get_interp(
 		p_warped(0), p_warped(1))(0);
 	float fx = pinhole_camera_intrinsics_.fx(level);
 	float fy = pinhole_camera_intrinsics_.fy(level);
@@ -81,8 +81,8 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
 	jacobian_I(4) = sqrt_coeff_I_ * (X(2) * c0 - X(0) * c2);
 	jacobian_I(5) = sqrt_coeff_I_ * (-X(1) * c0 + X(0) * c1);
 	residual_I = sqrt_coeff_I_ *
-		(target_intensity(level).get_interp(p_warped(0), p_warped(1))(0)
-		- source_intensity(level).get(x, y)(0));
+		(target_intensity().level(level).get_interp(p_warped(0), p_warped(1))(0)
+			- source_intensity().level(level).get(x, y)(0));
 
 	float d0 = dx_D * fx_on_Z;
 	float d1 = dy_D * fy_on_Z;
@@ -112,13 +112,31 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJtJAndJtr(
 
 /**
  * Client end
+ * TODO: Think about how do we use server_ ... we don't want copy
+ * constructors for such a large system...
  */
 template<size_t N>
-RGBDOdometryCuda<N>::RGBDOdometryCuda() {}
+RGBDOdometryCuda<N>::RGBDOdometryCuda() {
+	server_ = std::make_shared<RGBDOdometryCudaServer<N>>();
+}
 
 template<size_t N>
 RGBDOdometryCuda<N>::~RGBDOdometryCuda() {
 	Release();
+	server_ = nullptr;
+}
+
+template<size_t N>
+void RGBDOdometryCuda<N>::SetParameters(float sigma,
+										float depth_near_threshold,
+										float depth_far_threshold,
+										float depth_diff_threshold) {
+	server_->sigma_ = sigma;
+	server_->sqrt_coeff_D_ = sqrtf(sigma);
+	server_->sqrt_coeff_I_ = sqrtf(1 - sigma);
+	server_->depth_diff_threshold_ = depth_near_threshold;
+	server_->depth_far_threshold_ = depth_far_threshold;
+	server_->depth_diff_threshold_ = depth_diff_threshold;
 }
 
 template<size_t N>
@@ -134,7 +152,11 @@ void RGBDOdometryCuda<N>::Create(int width, int height) {
 	source_depth_.Create(width, height);
 	source_intensity_.Create(width, height);
 
+	target_on_source_.Create(width, height);
+
 	results_.Create(29);
+
+	ConnectSubServers();
 }
 
 template<size_t N>
@@ -150,15 +172,33 @@ void RGBDOdometryCuda<N>::Release() {
 	source_depth_.Release();
 	source_intensity_.Release();
 
+	target_on_source_.Release();
+
 	results_.Release();
 }
 
 template<size_t N>
+void RGBDOdometryCuda<N>::ConnectSubServers() {
+	server_->target_depth() = *target_depth_.server();
+	server_->target_depth_dx() = *target_depth_dx_.server();
+	server_->target_depth_dy() = *target_depth_dy_.server();
+
+	server_->target_intensity() = *target_intensity_.server();
+	server_->target_intensity_dx() = *target_intensity_dx_.server();
+	server_->target_intensity_dy() = *target_intensity_dy_.server();
+
+	server_->source_depth() = *source_depth_.server();
+	server_->source_intensity() = *source_intensity_.server();
+
+	server_->target_on_source() = *target_on_source_.server();
+
+	server_->results() = results_.server();
+}
+
+template<size_t N>
 void RGBDOdometryCuda<N>::ExtractResults(std::vector<float> &results,
-										 Matrix6f &JtJ,
-										 Vector6f &Jtr,
-										 float &error,
-										 float &inliers) {
+										 Matrix6f &JtJ, Vector6f &Jtr,
+										 float &error, float &inliers) {
 	int cnt = 0;
 	for (int i = 0; i < 6; ++i) {
 		for (int j = i; j < 6; ++j) {
@@ -176,63 +216,63 @@ void RGBDOdometryCuda<N>::ExtractResults(std::vector<float> &results,
 }
 
 template<size_t N>
-void RGBDOdometryCuda<N>::Apply(ImageCuda<Vector1f> &source_depth,
+void RGBDOdometryCuda<N>::Build(ImageCuda<Vector1f> &source_depth,
 								ImageCuda<Vector1f> &source_intensity,
 								ImageCuda<Vector1f> &target_depth,
 								ImageCuda<Vector1f> &target_intensity) {
 	source_depth_.Build(source_depth);
-	server_.source_depth_ = source_depth_.server();
-
 	source_intensity_.Build(source_intensity);
-	server_.source_intensity_ = source_intensity_.server();
-
 	target_depth_.Build(target_depth);
-	server_.target_depth_ = target_depth_.server();
-
 	target_intensity_.Build(target_intensity);
-	server_.target_intensity_ = target_intensity_.server();
+
+	target_depth_dx_.Create(target_depth.width(), target_depth.height());
+	target_depth_dy_.Create(target_depth.width(), target_depth.height());
+	target_intensity_dx_.Create(target_intensity.width(), target_intensity.height());
+	target_intensity_dy_.Create(target_intensity.width(), target_intensity.height());
+	target_on_source_.Create(source_intensity.width(), source_intensity.height());
 
 	for (size_t level = 0; level < N; ++level) {
-		target_depth_.get(level).Sobel(target_depth_dx_.get(level),
-									   target_depth_dy_.get(level),
-									   false);
-		target_depth_dx_.server().get(level) = target_depth_dx_.get(level).server();
-		target_depth_dy_.server().get(level) = target_depth_dy_.get(level).server();
-
-		target_intensity_.get(level).Sobel(target_intensity_dx_.get(level),
-										   target_intensity_dy_.get(level),
-										   false);
-		target_intensity_dx_.server().get(level) = target_intensity_dx_.get(level).server();
-		target_intensity_dy_.server().get(level) = target_intensity_dy_.get(level).server();
+		target_depth_.level(level).Sobel(target_depth_dx_.level(level),
+										 target_depth_dy_.level(level),
+										 false);
+		target_intensity_.level(level).Sobel(target_intensity_dx_.level(level),
+											 target_intensity_dy_.level(level),
+											 false);
+		source_intensity_.level(level).CopyTo(target_on_source_.level(level));
 	}
-	server_.target_depth_dx_ = target_depth_dx_.server();
-	server_.target_depth_dy_ = target_depth_dy_.server();
-	server_.target_intensity_dx_ = target_intensity_dx_.server();
-	server_.target_intensity_dy_ = target_intensity_dy_.server();
+	target_depth_dx_.ConnectSubServers();
+	target_depth_dy_.ConnectSubServers();
+	target_intensity_dx_.ConnectSubServers();
+	target_intensity_dy_.ConnectSubServers();
+	target_on_source_.ConnectSubServers();
 
 	results_.Create(29);
+	ConnectSubServers();
+}
+
+template<size_t N>
+void RGBDOdometryCuda<N>::Apply(ImageCuda<Vector1f> &source_depth,
+								ImageCuda<Vector1f> &source_intensity,
+								ImageCuda<Vector1f> &target_depth,
+								ImageCuda<Vector1f> &target_intensity) {
+	Build(source_depth, source_intensity, target_depth, target_intensity);
+
 	const int kIterations[] = {3, 5, 10};
-	for (int level = N - 1; level >= 0; --level) {
+	for (int level = (int) N - 1; level >= 0; --level) {
 		for (int iter = 0; iter < kIterations[level]; ++iter) {
 			results_.Fill(0);
-			server_.results() = results_.server();
+			server_->results() = results_.server();
 
-			server_.transform_source_to_target_.FromEigen(
+			server_->transform_source_to_target_.FromEigen(
 				transform_source_to_target_);
-
-			target_intensity_.get(level).CopyTo(target_on_source_.get(level));
-			target_on_source_.server().get(level) = target_on_source_.get(level).server();
-			server_.target_on_source_ = target_on_source_.server();
 			const dim3 blocks(
 				UPPER_ALIGN(source_depth_.width(level), THREAD_2D_UNIT),
 				UPPER_ALIGN(source_depth_.height(level), THREAD_2D_UNIT));
 			const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
-			ApplyRGBDOdometryKernel << < blocks, threads >> > (server_, level);
+			ApplyRGBDOdometryKernel << < blocks, threads >> > (*server_, level);
 			CheckCuda(cudaDeviceSynchronize());
 			CheckCuda(cudaGetLastError());
 
-			target_on_source_.get(level).server() = server_.target_on_source_.get(level);
-			results_.server() = server_.results();
 			std::vector<float> results = results_.DownloadAll();
 			Matrix6f JtJ;
 			Vector6f Jtr;
@@ -241,8 +281,8 @@ void RGBDOdometryCuda<N>::Apply(ImageCuda<Vector1f> &source_depth,
 			ExtractResults(results, JtJ, Jtr, error, inliers);
 
 			PrintInfo("> Level %d, iter %d: error = %f, avg_error = %f, "
-			 "inliers = %.0f\n",
-			 level, iter, error, error / inliers, inliers);
+					  "inliers = %.0f\n",
+					  level, iter, error, error / inliers, inliers);
 
 			Vector6d dxi = JtJ.cast<double>().ldlt().solve(-Jtr.cast<double>());
 			transform_source_to_target_ =
@@ -251,8 +291,6 @@ void RGBDOdometryCuda<N>::Apply(ImageCuda<Vector1f> &source_depth,
 
 		}
 	}
-	std::cout << transform_source_to_target_ << std::endl;
-	std::cout << (transform_source_to_target_).inverse() << std::endl;
 }
 }
 #endif //OPEN3D_RGBDODOMETRYCUDA_C_H

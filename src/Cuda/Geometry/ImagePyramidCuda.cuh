@@ -10,55 +10,76 @@
 #include <Core/Core.h>
 
 namespace three {
-template<typename T, size_t N>
-void ImagePyramidCuda<T, N>::Create(int width, int height) {
+template<typename VecType, size_t N>
+void ImagePyramidCuda<VecType, N>::Create(int width, int height) {
+	assert(width > 0 && height > 0);
+	if (server_ != nullptr) {
+		PrintWarning("Already created, stop re-creating!\n");
+		return;
+	}
 
-	for (size_t level = 0; level < N; ++level) {
-		int w = width >> level;
-		int h = height >> level;
+	server_ = std::make_shared<ImagePyramidCudaServer<VecType, N>>();
+	for (size_t i = 0; i < N; ++i) {
+		int w = width >> i;
+		int h = height >> i;
 		if (w == 0 || h == 0) {
-			PrintError("Invalid width %d || height %d at level %d!\n",
-				w, h, level);
+			PrintError("Invalid width %d || height %d at level %d!\n", w, h, i);
 			return;
 		}
-
-		images_[level].Create(width, height);
-		server_.get(level) = images_[level].server();
+		images_[i].Create(width, height);
 	}
+
+	ConnectSubServers();
 }
 
-template<typename T, size_t N>
-void ImagePyramidCuda<T, N>::Release() {
-	for (size_t level = 0; level < N; ++level) {
-		images_[level].Release();
+template<typename VecType, size_t N>
+void ImagePyramidCuda<VecType, N>::Release() {
+	for (size_t i = 0; i < N; ++i) {
+		images_[i].Release();
 	}
+	server_ = nullptr;
 }
 
 template<typename VecType, size_t N>
 void ImagePyramidCuda<VecType, N>::Build(cv::Mat &m) {
-	images_[0].Upload(m);
-	server_.get(0) = images_[0].server();
-	for (size_t level = 1; level < N; ++level) {
-		images_[level - 1].Downsample(images_[level]);
-		server_.get(level) = images_[level].server();
+	if (server_ == nullptr) {
+		server_ = std::make_shared<ImagePyramidCudaServer<VecType, N>>();
 	}
+
+	images_[0].Upload(m);
+	for (size_t i = 1; i < N; ++i) {
+		images_[i - 1].Downsample(images_[i]);
+	}
+
+	ConnectSubServers();
 }
 
 template<typename VecType, size_t N>
 void ImagePyramidCuda<VecType, N>::Build(const ImageCuda<VecType> &image) {
+	if (server_ == nullptr) {
+		server_ = std::make_shared<ImagePyramidCudaServer<VecType, N>>();
+	}
+
 	image.CopyTo(images_[0]);
-	server_.get(0) = images_[0].server();
-	for (size_t level = 1; level < N; ++level) {
-		images_[level - 1].Downsample(images_[level]);
-		server_.get(level) = images_[level].server();
+	for (size_t i = 1; i < N; ++i) {
+		images_[i - 1].Downsample(images_[i]);
+	}
+
+	ConnectSubServers();
+}
+
+template<typename VecType, size_t N>
+void ImagePyramidCuda<VecType, N>::ConnectSubServers() {
+	for (size_t i = 0; i < N; ++i) {
+		server_->level(i) = *images_[i].server();
 	}
 }
 
 template<typename VecType, size_t N>
 std::vector<cv::Mat> ImagePyramidCuda<VecType, N>::Download() {
 	std::vector<cv::Mat> result;
-	for (size_t level = 0; level < N; ++level) {
-		result.emplace_back(images_[level].Download());
+	for (size_t i = 0; i < N; ++i) {
+		result.emplace_back(images_[i].Download());
 	}
 	return result;
 }

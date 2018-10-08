@@ -55,7 +55,7 @@ T ReduceSum2D(ImageCuda<VecType> &src) {
 	T *sum;
 	CheckCuda(cudaMalloc(&sum, sizeof(T)));
 	CheckCuda(cudaMemset(sum, 0, sizeof(T)));
-	ReduceSum2DKernel << < blocks, threads >> > (src.server(), sum);
+	ReduceSum2DKernel << < blocks, threads >> > (*src.server(), sum);
 	CheckCuda(cudaDeviceSynchronize());
 	CheckCuda(cudaGetLastError());
 
@@ -73,7 +73,7 @@ T ReduceSum2DShuffle(ImageCuda<VecType> &src) {
 	T *sum;
 	CheckCuda(cudaMalloc(&sum, sizeof(T)));
 	CheckCuda(cudaMemset(sum, 0, sizeof(T)));
-	ReduceSum2DShuffleKernel << < blocks, threads >> > (src.server(), sum);
+	ReduceSum2DShuffleKernel << < blocks, threads >> > (*src.server(), sum);
 	CheckCuda(cudaDeviceSynchronize());
 	CheckCuda(cudaGetLastError());
 
@@ -91,7 +91,7 @@ T AtomicSum(ImageCuda<VecType> &src) {
 	T *sum;
 	CheckCuda(cudaMalloc(&sum, sizeof(T)));
 	CheckCuda(cudaMemset(sum, 0, sizeof(T)));
-	AtomicSumKernel << < blocks, threads >> > (src.server(), sum);
+	AtomicSumKernel << < blocks, threads >> > (*src.server(), sum);
 	CheckCuda(cudaDeviceSynchronize());
 	CheckCuda(cudaGetLastError());
 

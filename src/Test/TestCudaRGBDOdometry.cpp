@@ -36,16 +36,10 @@ int main() {
 	target_D.Upload(target_depth);
 
 	RGBDOdometryCuda<3> odometry;
-	odometry.server().pinhole_camera_intrinsics_.Set(
+	odometry.server()->pinhole_camera_intrinsics_.Set(
 		640, 480, 525.0, 525.0, 319.5, 239.5);
 	odometry.transform_source_to_target_ = RGBDOdometryCuda<3>::Matrix4f::Identity();
-	odometry.server().sigma_ = 0.2f;
-	odometry.server().sqrt_coeff_I_ = sqrtf(0.5f);
-	odometry.server().sqrt_coeff_D_ = sqrtf(0.5f);
-	odometry.server().depth_near_threshold_ = 0.1f;
-	odometry.server().depth_far_threshold_ = 4.0f;
-	odometry.server().depth_diff_threshold_ = 0.07;
-
+	odometry.SetParameters(0.2f, 0.1f, 4.0f, 0.07f);
 	odometry.Apply(source_D, source_I, target_D, target_I);
 	return 0;
 }

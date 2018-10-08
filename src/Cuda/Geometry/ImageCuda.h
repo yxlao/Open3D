@@ -9,10 +9,11 @@
 #include <Cuda/Common/Common.h>
 
 #include <cstdlib>
+#include <memory>
 #include <vector_types.h>
 #include <opencv2/opencv.hpp>
 
-//#define __TRACE_LIFE_CYCLE__
+#define __TRACE_LIFE_CYCLE__
 
 namespace three {
 
@@ -42,12 +43,6 @@ public:
 	int width_;
 	int height_;
 	int pitch_;
-
-public:
-	/** This is a CPU pointer for shared reference counting.
-	 *  How many ImageCuda clients are using this server?
-	 */
-	int *ref_count_ = nullptr;
 
 public:
 	VecType *&data() {
@@ -86,7 +81,8 @@ public:
 template<typename VecType>
 class ImageCuda {
 private:
-	ImageCudaServer<VecType> server_;
+	std::shared_ptr<ImageCudaServer<VecType>> server_ = nullptr;
+
 	int width_;
 	int height_;
 	int pitch_;
@@ -151,10 +147,10 @@ public:
 	int pitch() const {
 		return pitch_;
 	}
-	ImageCudaServer<VecType> &server() {
+	std::shared_ptr<ImageCudaServer<VecType>> &server() {
 		return server_;
 	}
-	const ImageCudaServer<VecType> &server() const {
+	const std::shared_ptr<ImageCudaServer<VecType>> &server() const {
 		return server_;
 	}
 };
