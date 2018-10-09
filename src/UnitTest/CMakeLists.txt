@@ -6,8 +6,13 @@ include_directories(${GTEST_INCLUDE_DIRS})
 
 include_directories(".")
 
-file(GLOB_RECURSE UNIT_TESTS "*.cpp")
-add_executable(unitTests Cuda/Odometry/TestCudaRGBDOdometry.cpp)
 
-target_link_libraries(unitTests ${GTEST_LIBRARIES} pthread
-        ${CMAKE_PROJECT_NAME})
+add_subdirectory(Cuda)
+
+# > This is too general and lacks scalability
+# > We test our separated files in Cuda/
+#file(GLOB_RECURSE UNIT_TESTS "*.cpp")
+#add_executable(unitTests ${UNIT_TESTS})
+#
+#target_link_libraries(unitTests ${GTEST_LIBRARIES} pthread
+#        ${CMAKE_PROJECT_NAME})

@@ -13,7 +13,7 @@
 #include <vector_types.h>
 #include <opencv2/opencv.hpp>
 
-#define __TRACE_LIFE_CYCLE__
+//#define __TRACE_LIFE_CYCLE__
 
 namespace open3d {
 
