@@ -5,7 +5,7 @@
 #include "RGBDOdometryCuda.cuh"
 #include "Reduction2DCuda.cuh"
 
-namespace three {
+namespace open3d {
 
 template<size_t N>
 __global__

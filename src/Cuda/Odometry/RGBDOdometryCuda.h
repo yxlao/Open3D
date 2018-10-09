@@ -15,7 +15,7 @@
 #include <Cuda/Common/UtilsCuda.h>
 #include <Eigen/Eigen>
 
-namespace three {
+namespace open3d {
 /**
  * We assume that the
  * - depths are **converted** from short

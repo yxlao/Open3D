@@ -1,6 +1,6 @@
 #include "ImageCuda.cuh"
 
-namespace three {
+namespace open3d {
 
 /**
  * Downsampling

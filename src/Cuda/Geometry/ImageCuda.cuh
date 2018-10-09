@@ -13,7 +13,7 @@
 #include <vector_types.h>
 #include <Core/Core.h>
 
-namespace three {
+namespace open3d {
 
 /**
  * Server end

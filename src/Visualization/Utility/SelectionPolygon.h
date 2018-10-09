@@ -32,55 +32,62 @@
 #include <Core/Geometry/Geometry2D.h>
 #include <Core/Geometry/Image.h>
 
-namespace three {
+namespace open3d {
 
 class PointCloud;
+class TriangleMesh;
 class ViewControl;
 class SelectionPolygonVolume;
 
 /// A 2D polygon used for selection on screen
-/// It is an utility class for Visualization
+/// It is a utility class for Visualization
 /// The coordinates in SelectionPolygon are lower-left corner based (the OpenGL
 /// convention).
 class SelectionPolygon : public Geometry2D
 {
 public:
-	enum SectionPolygonType {
-		POLYGON_UNFILLED = 0,
-		POLYGON_RECTANGLE = 1,
-		POLYGON_POLYGON = 2,
-	};
+    enum class SectionPolygonType {
+        Unfilled = 0,
+        Rectangle = 1,
+        Polygon = 2,
+    };
 
 public:
-	SelectionPolygon() : Geometry2D(GEOMETRY_UNSPECIFIED) {}
-	~SelectionPolygon() override {}
+    SelectionPolygon() : Geometry2D(Geometry::GeometryType::Unspecified) {}
+    ~SelectionPolygon() override {}
 
 public:
-	void Clear() override;
-	bool IsEmpty() const override;
-	Eigen::Vector2d GetMinBound() const final;
-	Eigen::Vector2d GetMaxBound() const final;
-	void FillPolygon(int width, int height);
-	std::shared_ptr<PointCloud> CropPointCloud(
-			const PointCloud &input, const ViewControl &view);
-	std::shared_ptr<SelectionPolygonVolume> CreateSelectionPolygonVolume(
-			const ViewControl &view);
+    void Clear() override;
+    bool IsEmpty() const override;
+    Eigen::Vector2d GetMinBound() const final;
+    Eigen::Vector2d GetMaxBound() const final;
+    void FillPolygon(int width, int height);
+    std::shared_ptr<PointCloud> CropPointCloud(
+            const PointCloud &input, const ViewControl &view);
+    std::shared_ptr<TriangleMesh> CropTriangleMesh(
+            const TriangleMesh &input, const ViewControl &view);
+    std::shared_ptr<SelectionPolygonVolume> CreateSelectionPolygonVolume(
+            const ViewControl &view);
 
 private:
-	std::shared_ptr<PointCloud> CropPointCloudInRectangle(
-			const PointCloud &input, const ViewControl &view);
-	std::shared_ptr<PointCloud> CropPointCloudInPolygon(
-			const PointCloud &input, const ViewControl &view);
-	std::vector<size_t> CropInRectangle(
-			const std::vector<Eigen::Vector3d> &input, const ViewControl &view);
-	std::vector<size_t> CropInPolygon(
-			const std::vector<Eigen::Vector3d> &input, const ViewControl &view);
+    std::shared_ptr<PointCloud> CropPointCloudInRectangle(
+            const PointCloud &input, const ViewControl &view);
+    std::shared_ptr<PointCloud> CropPointCloudInPolygon(
+            const PointCloud &input, const ViewControl &view);
+    std::shared_ptr<TriangleMesh> CropTriangleMeshInRectangle(
+            const TriangleMesh &input, const ViewControl &view);
+    std::shared_ptr<TriangleMesh> CropTriangleMeshInPolygon(
+            const TriangleMesh &input, const ViewControl &view);
+    std::vector<size_t> CropInRectangle(
+            const std::vector<Eigen::Vector3d> &input, const ViewControl &view);
+    std::vector<size_t> CropInPolygon(
+            const std::vector<Eigen::Vector3d> &input, const ViewControl &view);
 
 public:
-	std::vector<Eigen::Vector2d> polygon_;
-	bool is_closed_ = false;
-	Image polygon_interior_mask_;
-	SectionPolygonType polygon_type_ = POLYGON_UNFILLED;
+    std::vector<Eigen::Vector2d> polygon_;
+    bool is_closed_ = false;
+    Image polygon_interior_mask_;
+    SectionPolygonType polygon_type_ = SectionPolygonType::Unfilled;
 };
 
-}	// namespace three
+}    // namespace open3d

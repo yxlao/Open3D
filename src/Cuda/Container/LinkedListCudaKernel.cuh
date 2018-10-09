@@ -4,7 +4,7 @@
 
 #include "LinkedListCuda.cuh"
 
-namespace three {
+namespace open3d {
 template<typename T>
 __global__
 void InsertLinkedListKernel(LinkedListCudaServer<T> server, T *data, const int N) {

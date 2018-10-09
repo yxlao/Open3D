@@ -16,7 +16,7 @@
 #include <cassert>
 #include <tuple>
 
-namespace three {
+namespace open3d {
 /**
  * Server end
  */

@@ -12,7 +12,7 @@
 #include <cassert>
 #include <Core/Core.h>
 
-namespace three {
+namespace open3d {
 
 /**
  * Server end
@@ -52,7 +52,7 @@ ArrayCuda<T>::ArrayCuda(const ArrayCuda<T> &other) {
 }
 
 template<typename T>
-ArrayCuda<T> &ArrayCuda<T>::operator=(const three::ArrayCuda<T> &other) {
+ArrayCuda<T> &ArrayCuda<T>::operator=(const ArrayCuda<T> &other) {
 	if (this != &other) {
 		Release();
 

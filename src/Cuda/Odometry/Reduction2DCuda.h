@@ -16,7 +16,7 @@
  * https://developer.download.nvidia.com/assets/cuda/files/reduction.pdf
 */
 
-namespace three {
+namespace open3d {
 
 #define WARP_SIZE 32
 
@@ -30,7 +30,7 @@ inline void BlockReduceSum(volatile T *local_sum, const int tid);
 
 template<typename T>
 __DEVICE__
-inline T WarpReduceSumShuffle(T& sum);
+inline T WarpReduceSumShuffle(T &sum);
 
 /** The rest are for testing **/
 #define TEST_ARRAY_SIZE (6 + 21 + 2)

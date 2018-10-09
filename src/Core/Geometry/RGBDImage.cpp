@@ -26,43 +26,43 @@
 
 #include "RGBDImage.h"
 
-namespace three {
+namespace open3d {
 
-RGBImagePyramid FilterRGBDImagePyramid(
-		const RGBImagePyramid &rgbd_image_pyramid, Image::FilterType type)
+RGBDImagePyramid FilterRGBDImagePyramid(
+        const RGBDImagePyramid &rgbd_image_pyramid, Image::FilterType type)
 {
-	RGBImagePyramid rgbd_image_pyramid_filtered;
-	rgbd_image_pyramid_filtered.clear();
-	int num_of_levels = (int)rgbd_image_pyramid.size();
-	for (int level = 0; level < num_of_levels; level++) {
-		auto color_level = rgbd_image_pyramid[level]->color_;
-		auto depth_level = rgbd_image_pyramid[level]->depth_;
-		auto color_level_filtered = FilterImage(color_level, type);
-		auto depth_level_filtered = FilterImage(depth_level, type);
-		auto rgbd_image_level_filtered = std::make_shared<RGBDImage>
-				(RGBDImage(*color_level_filtered, *depth_level_filtered));
-		rgbd_image_pyramid_filtered.push_back(rgbd_image_level_filtered);
-	}
-	return rgbd_image_pyramid_filtered;
+    RGBDImagePyramid rgbd_image_pyramid_filtered;
+    rgbd_image_pyramid_filtered.clear();
+    int num_of_levels = (int)rgbd_image_pyramid.size();
+    for (int level = 0; level < num_of_levels; level++) {
+        auto color_level = rgbd_image_pyramid[level]->color_;
+        auto depth_level = rgbd_image_pyramid[level]->depth_;
+        auto color_level_filtered = FilterImage(color_level, type);
+        auto depth_level_filtered = FilterImage(depth_level, type);
+        auto rgbd_image_level_filtered = std::make_shared<RGBDImage>
+                (RGBDImage(*color_level_filtered, *depth_level_filtered));
+        rgbd_image_pyramid_filtered.push_back(rgbd_image_level_filtered);
+    }
+    return rgbd_image_pyramid_filtered;
 }
 
-RGBImagePyramid CreateRGBDImagePyramid(const RGBDImage& rgbd_image,
-		size_t num_of_levels,
-		bool with_gaussian_filter_for_color/* = true */,
-		bool with_gaussian_filter_for_depth/* = false */)
+RGBDImagePyramid CreateRGBDImagePyramid(const RGBDImage& rgbd_image,
+        size_t num_of_levels,
+        bool with_gaussian_filter_for_color/* = true */,
+        bool with_gaussian_filter_for_depth/* = false */)
 {
-	ImagePyramid color_pyramid = CreateImagePyramid(rgbd_image.color_,
-			num_of_levels, with_gaussian_filter_for_color);
-	ImagePyramid depth_pyramid = CreateImagePyramid(rgbd_image.depth_,
-			num_of_levels, with_gaussian_filter_for_depth);
-	RGBImagePyramid rgbd_image_pyramid;
-	rgbd_image_pyramid.clear();
-	for (int level = 0; level < num_of_levels; level++) {
-		auto rgbd_image_level = std::make_shared<RGBDImage>
-				(RGBDImage(*color_pyramid[level], *depth_pyramid[level]));
-		rgbd_image_pyramid.push_back(rgbd_image_level);
-	}
-	return rgbd_image_pyramid;
+    ImagePyramid color_pyramid = CreateImagePyramid(rgbd_image.color_,
+            num_of_levels, with_gaussian_filter_for_color);
+    ImagePyramid depth_pyramid = CreateImagePyramid(rgbd_image.depth_,
+            num_of_levels, with_gaussian_filter_for_depth);
+    RGBDImagePyramid rgbd_image_pyramid;
+    rgbd_image_pyramid.clear();
+    for (size_t level = 0; level < num_of_levels; level++) {
+        auto rgbd_image_level = std::make_shared<RGBDImage>
+                (RGBDImage(*color_pyramid[level], *depth_pyramid[level]));
+        rgbd_image_pyramid.push_back(rgbd_image_level);
+    }
+    return rgbd_image_pyramid;
 }
 
-}	// namespace three
+}    // namespace open3d

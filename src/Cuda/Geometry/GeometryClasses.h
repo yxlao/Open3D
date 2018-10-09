@@ -9,7 +9,7 @@
 
 #include <cstdlib>
 
-namespace three {
+namespace open3d {
 
 template<typename T>
 class ImageCudaServer;

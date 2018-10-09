@@ -8,7 +8,7 @@
 #include <Cuda/Geometry/VectorCuda.h>
 #include <cstdlib>
 
-namespace three {
+namespace open3d {
 
 /** Approximated by JtJ in optimization **/
 template<size_t N>

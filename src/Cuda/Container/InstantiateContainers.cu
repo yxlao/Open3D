@@ -13,7 +13,7 @@
 
 #include <Cuda/Geometry/VectorCuda.h>
 
-namespace three {
+namespace open3d {
 template
 class ArrayCuda<int>;
 

@@ -9,7 +9,7 @@
 #include <Cuda/Common/UtilsCuda.h>
 #include <cassert>
 
-namespace three {
+namespace open3d {
 
 /**
  * Server end

@@ -7,7 +7,7 @@
 
 #include <cstdlib>
 
-namespace three {
+namespace open3d {
 
 template<size_t N>
 class RGBDOdometryCudaServer;

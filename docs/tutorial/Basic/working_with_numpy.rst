@@ -6,77 +6,43 @@ Working with NumPy
 Data structure of Open3D is natively compatible with `NumPy <http://www.numpy.org/>`_ buffer.
 The following tutorial generates a variant of sync function using NumPy and visualizes the function using Open3D.
 
-.. code-block:: python
+.. literalinclude:: ../../../examples/Python/Basic/working_with_numpy.py
+   :language: python
+   :lineno-start: 5
+   :lines: 5-
+   :linenos:
 
-    # src/Python/Tutorial/Basic/working_with_numpy.py
-
-    import sys, copy
-    import numpy as np
-    sys.path.append("../..")
-    from py3d import *
-
-    if __name__ == "__main__":
-
-        # generate some neat n times 3 matrix using a variant of sync function
-        x = np.linspace(-3, 3, 401)
-        mesh_x, mesh_y = np.meshgrid(x,x)
-        z = np.sinc((np.power(mesh_x,2)+np.power(mesh_y,2)))
-        xyz = np.zeros((np.size(mesh_x),3))
-        xyz[:,0] = np.reshape(mesh_x,-1)
-        xyz[:,1] = np.reshape(mesh_y,-1)
-        xyz[:,2] = np.reshape(z,-1)
-        print('xyz')
-        print(xyz)
-
-        # Pass xyz to Open3D.PointCloud and visualize
-        pcd = PointCloud()
-        pcd.points = Vector3dVector(xyz)
-        write_point_cloud("../../TestData/sync.ply", pcd)
-
-        # Load saved point cloud and transform it into NumPy array
-        pcd_load = read_point_cloud("../../TestData/sync.ply")
-        xyz_load = np.asarray(pcd_load.points)
-        print('xyz_load')
-        print(xyz_load)
-
-        # visualization
-        draw_geometries([pcd_load])
 
 The first part of the script generates a :math:`n \times 3` matrix ``xyz``.
 Each column has :math:`x, y, z` value of a function :math:`z = \frac{sin (x^2+y^2)}{(x^2+y^2)}`.
+:math:`z_{norm}` is normalized map of :math:`z` for [0,1] range.
 
-.. _from_numpy_to_open3d:
+.. _from_numpy_to_open3d_pointcloud:
 
-From NumPy to Open3D
-=====================================
+From NumPy to open3d.PointCloud
+===============================
 
-.. code-block:: python
+.. literalinclude:: ../../../examples/Python/Basic/working_with_numpy.py
+   :language: python
+   :lineno-start: 25
+   :lines: 25-28
+   :linenos:
 
-    # Pass xyz to Open3D.PointCloud.points and visualize
-    pcd = PointCloud()
-    pcd.points = Vector3dVector(xyz)
-    write_point_cloud("../../TestData/sync.ply", pcd)
+Open3D provides conversion from NumPy matrix to a vector of 3D vectors. By using ``Vector3dVector``, NumPy matrix can be directly assigned for ``open3d.PointCloud.points``.
 
-Open3D provides conversion from NumPy matrix to a vector of 3D vectors. By using ``Vector3dVector``, NumPy matrix can be directly assigned for ``py3d.PointCloud.points``.
-
-In this manner, any similar data structure such as ``py3d.PointCloud.colors`` or ``py3d.PointCloud.normals`` can be assigned or modified using NumPy. The script saves the point cloud as a ply file for the next step.
+In this manner, any similar data structure such as ``open3d.PointCloud.colors`` or ``open3d.PointCloud.normals`` can be assigned or modified using NumPy. The script saves the point cloud as a ply file for the next step.
 
 
-.. _from_open3d_to_numpy:
+.. _from_open3d_pointcloud_to_numpy:
 
-From Open3D to NumPy
-=====================================
+From open3d.PointCloud to NumPy
+===============================
 
-.. code-block:: python
-
-    # Load saved point cloud and transform it into NumPy array
-    pcd_load = read_point_cloud("../../TestData/sync.ply")
-    xyz_load = np.asarray(pcd_load.points)
-    print('xyz_load')
-    print(xyz_load)
-
-    # visualization
-    draw_geometries([pcd_load])
+.. literalinclude:: ../../../examples/Python/Basic/working_with_numpy.py
+   :language: python
+   :lineno-start: 30
+   :lines: 30-37
+   :linenos:
 
 As shown in this example, ``Vector3dVector`` is converted into a NumPy array using ``np.asarray``.
 
@@ -105,5 +71,26 @@ The tutorial script prints two identical matrices
 
 and visualizes the function:
 
-.. image:: ../../_static/Basic/working_with_numpy/sync.png
+.. image:: ../../_static/Basic/working_with_numpy/sync_3d.png
     :width: 400px
+
+
+.. _from_numpy_to_open3d_image:
+
+From NumPy to open3d.Image
+==========================
+
+2D Numpy matrix can be converted image. The following example converts ``z_norm`` into open3d.Image,
+visualize the image using ``draw_geometries``, and save the image as a png format file.
+
+.. literalinclude:: ../../../examples/Python/Basic/working_with_numpy.py
+   :language: python
+   :lineno-start: 39
+   :lines: 39-42
+   :linenos:
+
+.. image:: ../../_static/Basic/working_with_numpy/sync_image.png
+    :width: 400px
+
+.. Note:: The conversion supports ``uint8``, ``uint16``, or ``float32`` with c_type storage (default NumPy behavior),
+          dim=2`` (width * height) or dim=3 (width * height * channel).

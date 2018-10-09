@@ -10,7 +10,7 @@
 #include <Cuda/Container/ArrayCuda.cuh>
 #include <sophus/se3.hpp>
 
-namespace three {
+namespace open3d {
 
 /**
  * Server end
@@ -19,8 +19,8 @@ template<size_t N>
 __device__
 bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
 	int x, int y, size_t level,
-	three::JacobianCuda<6> &jacobian_I,
-	three::JacobianCuda<6> &jacobian_D,
+	JacobianCuda<6> &jacobian_I,
+	JacobianCuda<6> &jacobian_D,
 	float &residual_I,
 	float &residual_D) {
 

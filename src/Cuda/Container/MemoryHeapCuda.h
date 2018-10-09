@@ -10,7 +10,7 @@
 
 #include <vector>
 
-namespace three {
+namespace open3d {
 /**
  * Memory allocation and free are expensive on GPU.
  * (And are easy to overflow, I need to check the the reason.)

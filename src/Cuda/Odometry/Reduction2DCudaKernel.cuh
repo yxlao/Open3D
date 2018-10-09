@@ -5,7 +5,7 @@
 #include "Reduction2DCuda.cuh"
 #include <Cuda/Geometry/ImageCuda.cuh>
 
-namespace three {
+namespace open3d {
 
 template<typename VecType, typename T>
 __global__

@@ -6,7 +6,7 @@
 #include "LinkedListCuda.h"
 #include "HashTableCuda.h"
 
-namespace three {
+namespace open3d {
 
 template<typename T>
 __global__

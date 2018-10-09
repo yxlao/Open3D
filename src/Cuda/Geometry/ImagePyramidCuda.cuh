@@ -9,7 +9,7 @@
 #include <Cuda/Common/UtilsCuda.h>
 #include <Core/Core.h>
 
-namespace three {
+namespace open3d {
 template<typename VecType, size_t N>
 void ImagePyramidCuda<VecType, N>::Create(int width, int height) {
 	assert(width > 0 && height > 0);

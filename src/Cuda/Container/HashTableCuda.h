@@ -12,7 +12,7 @@
 #include <Cuda/Common/Common.h>
 #include <Cuda/Geometry/VectorCuda.h>
 
-namespace three {
+namespace open3d {
 
 /**
  * Taken from Niessner, et al, 2013

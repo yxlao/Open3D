@@ -10,7 +10,7 @@
 
 #include <Cuda/Common/Common.h>
 
-namespace three {
+namespace open3d {
 
 /**
  * It is a basic unit, so we DON'T wrap it with server codes

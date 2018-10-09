@@ -15,7 +15,7 @@
 
 #define __TRACE_LIFE_CYCLE__
 
-namespace three {
+namespace open3d {
 
 enum GaussianKernelSize {
 	Gaussian3x3 = 0,

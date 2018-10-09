@@ -7,7 +7,7 @@
 #include "RGBDOdometryCudaKernel.cuh"
 #include "Reduction2DCudaKernel.cuh"
 
-namespace three {
+namespace open3d {
 
 template
 class RGBDOdometryCudaServer<3>;
@@ -18,8 +18,7 @@ class RGBDOdometryCuda<3>;
 template
 __global__
 void ApplyRGBDOdometryKernel<3>(RGBDOdometryCudaServer<3> odometry,
-								size_t level);
-
+                                size_t level);
 
 template
 float ReduceSum2D<Vector1f, float>(ImageCuda<Vector1f> &src);

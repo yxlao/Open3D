@@ -8,7 +8,7 @@
 #include "VectorCuda.h"
 #include <Eigen/Eigen>
 
-namespace three {
+namespace open3d {
 
 class TransformCuda {
 private:

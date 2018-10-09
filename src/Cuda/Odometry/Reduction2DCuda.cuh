@@ -7,7 +7,7 @@
 
 #include "Reduction2DCuda.h"
 
-namespace three {
+namespace open3d {
 
 /**
  * This is SIMD: each += operation is synchronized over 32 threads at exactly

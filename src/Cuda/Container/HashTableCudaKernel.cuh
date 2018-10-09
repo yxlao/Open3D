@@ -11,7 +11,7 @@
 /**
  * Global code called by Host code
  */
-namespace three {
+namespace open3d {
 template<typename Key, typename Value, typename Hasher>
 __global__
 void CreateHashTableEntriesKernel(

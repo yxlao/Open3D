@@ -4,7 +4,7 @@
 #include "VectorCuda.h"
 #include <Cuda/Common/Common.h>
 
-namespace three {
+namespace open3d {
 
 template
 class ImageCuda<Vector1s>;

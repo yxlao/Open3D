@@ -8,7 +8,7 @@
 #include "GeometryClasses.h"
 #include "ImageCuda.h"
 
-namespace three {
+namespace open3d {
 template<typename VecType, size_t N>
 class ImagePyramidCudaServer {
 private:

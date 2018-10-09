@@ -13,7 +13,7 @@
 #include <cstdio>
 #include <cassert>
 
-namespace three {
+namespace open3d {
 /**
  * Server end
  */

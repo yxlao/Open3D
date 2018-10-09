@@ -10,7 +10,7 @@
 #include <cstdlib>
 #include <driver_types.h>
 
-namespace three {
+namespace open3d {
 
 #define CheckCuda(val)  check ( (val), #val, __FILE__, __LINE__ )
 

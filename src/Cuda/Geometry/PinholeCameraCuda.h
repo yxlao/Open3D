@@ -7,7 +7,7 @@
 
 #include "VectorCuda.h"
 
-namespace three {
+namespace open3d {
 
 /**
  * This class should be passed to server, but as it is a storage class, we

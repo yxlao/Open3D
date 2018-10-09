@@ -29,17 +29,27 @@
 #include <Eigen/Dense>
 #include <Core/Geometry/PointCloud.h>
 
-namespace three{
+namespace open3d{
 
 std::shared_ptr<LineSet> CreateLineSetFromPointCloudCorrespondences(
-		const PointCloud &cloud0, const PointCloud &cloud1,
-		const std::vector<std::pair<int, int>> &correspondences)
+        const PointCloud &cloud0, const PointCloud &cloud1,
+        const std::vector<std::pair<int, int>> &correspondences)
 {
-	auto lineset_ptr = std::make_shared<LineSet>();
-	lineset_ptr->point_set_[0] = cloud0.points_;
-	lineset_ptr->point_set_[1] = cloud1.points_;
-	lineset_ptr->lines_ = correspondences;
-	return lineset_ptr;
+    auto lineset_ptr = std::make_shared<LineSet>();
+    size_t point0_size = cloud0.points_.size();
+    size_t point1_size = cloud1.points_.size();
+    lineset_ptr->points_.resize(point0_size + point1_size);
+    for (size_t i = 0; i < point0_size; i++)
+        lineset_ptr->points_[i] = cloud0.points_[i];
+    for (size_t i = 0; i < point1_size; i++)
+        lineset_ptr->points_[point0_size + i] = cloud1.points_[i];
+    
+    size_t corr_size = correspondences.size();
+    lineset_ptr->lines_.resize(corr_size);
+    for (size_t i = 0; i < corr_size; i++)
+        lineset_ptr->lines_[i] = Eigen::Vector2i(
+            correspondences[i].first, point0_size + correspondences[i].second);
+    return lineset_ptr;
 }
 
-}	// namespace three
+}    // namespace open3d

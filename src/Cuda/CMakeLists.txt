@@ -1,75 +1,44 @@
-find_package(CUDA 8.0 REQUIRED)
-find_package(OpenCV REQUIRED)
-find_package(Sophus REQUIRED)
+# build
+file(GLOB_RECURSE CUDA_ALL_HEADER_FILES "*.h")
+file(GLOB_RECURSE CUDA_ALL_SOURCE_FILES "*.cpp")
+file(GLOB_RECURSE CUDA_ALL_CUDA_HEADER_FILES "*.cuh")
+file(GLOB_RECURSE CUDA_ALL_CUDA_SOURCE_FILES "*.cu")
 
-file(GLOB CUDA_ALL_HEADER_FILES '*.h')
-file(GLOB CUDA_ALL_SOURCE_FILES '*.cpp')
-file(GLOB CUDA_ALL_CUDA_HEADER_FILES '*.cuh')
-file(GLOB CUDA_ALL_CUDA_SOURCE_FILES '*.cu')
-
-file(GLOB CUDA_COMMON_HEADER_FILES "Common/*.h")
-source_group("Header Files\\Common" FILES ${CUDA_COMMON_HEADER_FILES})
-file(GLOB CUDA_COMMON_SOURCE_FILES "Common/*.cpp")
-source_group("Source Files\\Common" FILES ${CUDA_COMMON_SOURCE_FILES})
-file(GLOB CUDA_COMMON_CUDA_HEADER_FILES "Common/*.cuh")
-source_group("Header Files\\Common" FILES ${CUDA_COMMON_CUDA_HEADER_FILES})
-file(GLOB CUDA_COMMON_CUDA_SOURCE_FILES "Common/*.cu")
-source_group("Source Files\\Common" FILES ${CUDA_COMMON_CUDA_SOURCE_FILES})
-
-file(GLOB CUDA_CONTAINER_HEADER_FILES "Container/*.h")
-source_group("Header Files\\Container" FILES ${CUDA_CONTAINER_HEADER_FILES})
-file(GLOB CUDA_CONTAINER_SOURCE_FILES "Container/*.cpp")
-source_group("Source Files\\Container" FILES ${CUDA_CONTAINER_SOURCE_FILES})
-file(GLOB CUDA_CONTAINER_CUDA_HEADER_FILES "Container/*.cuh")
-source_group("Header Files\\Container" FILES ${CUDA_CONTAINER_CUDA_HEADER_FILES})
-file(GLOB CUDA_CONTAINER_CUDA_SOURCE_FILES "Container/*.cu")
-source_group("Source Files\\Container" FILES ${CUDA_CONTAINER_CUDA_SOURCE_FILES})
-
-file(GLOB CUDA_GEOMETRY_HEADER_FILES "Geometry/*.h")
-source_group("Header Files\\Geometry" FILES ${CUDA_GEOMETRY_HEADER_FILES})
-file(GLOB CUDA_GEOMETRY_SOURCE_FILES "Geometry/*.cpp")
-source_group("Source Files\\Geometry" FILES ${CUDA_GEOMETRY_SOURCE_FILES})
-file(GLOB CUDA_GEOMETRY_CUDA_HEADER_FILES "Geometry/*.cuh")
-source_group("Header Files\\Geometry" FILES ${CUDA_GEOMETRY_CUDA_HEADER_FILES})
-file(GLOB CUDA_GEOMETRY_CUDA_SOURCE_FILES "Geometry/*.cu")
-source_group("Source Files\\Geometry" FILES ${CUDA_GEOMETRY_CUDA_SOURCE_FILES})
-
-file(GLOB CUDA_ODOMETRY_HEADER_FILES "Odometry/*.h")
-source_group("Header Files\\Odometry" FILES ${CUDA_ODOMETRY_HEADER_FILES})
-file(GLOB CUDA_ODOMETRY_SOURCE_FILES "Odometry/*.cpp")
-source_group("Source Files\\Odometry" FILES ${CUDA_ODOMETRY_SOURCE_FILES})
-file(GLOB CUDA_ODOMETRY_CUDA_HEADER_FILES "Odometry/*.cuh")
-source_group("Header Files\\Odometry" FILES ${CUDA_ODOMETRY_CUDA_HEADER_FILES})
-file(GLOB CUDA_ODOMETRY_CUDA_SOURCE_FILES "Odometry/*.cu")
-source_group("Source Files\\Odometry" FILES ${CUDA_ODOMETRY_CUDA_SOURCE_FILES})
-
+# (testing) flags for cuda code generation
 set(CUDA_NVCC_FLAGS
 		-gencode=arch=compute_50,code=sm_60
-		-gencode=arch=compute_50,code=sm_50 # simple test for multiple targets
+		-gencode=arch=compute_50,code=sm_50
 		--expt-relaxed-constexpr)
 
-cuda_add_library(Cuda ${Open3D_LIB_TYPE}
-		${CUDA_CONTAINER_HEADER_FILES}
-		${CUDA_CONTAINER_CUDA_HEADER_FILES}
-		${CUDA_CONTAINER_CUDA_SOURCE_FILES}
+# create (should be static) library
+cuda_add_library(Cuda
+		${CUDA_ALL_HEADER_FILES} ${CUDA_ALL_SOURCE_FILES}
+		${CUDA_ALL_CUDA_HEADER_FILES} ${CUDA_ALL_CUDA_SOURCE_FILES})
+target_link_libraries(Cuda Core ${OpenCV_LIBS})
 
-		${CUDA_GEOMETRY_HEADER_FILES}
-		${CUDA_GEOMETRY_CUDA_HEADER_FILES}
-		${CUDA_GEOMETRY_CUDA_SOURCE_FILES}
+# create subgroups
+ADD_SOURCE_GROUP(Common)
+ADD_SOURCE_GROUP(Container)
+ADD_SOURCE_GROUP(Geometry)
+ADD_SOURCE_GROUP(Integration)
+ADD_SOURCE_GROUP(Odometry)
 
-		${CUDA_ODOMETRY_HEADER_FILES}
-		${CUDA_ODOMETRY_CUDA_HEADER_FILES}
-		${CUDA_ODOMETRY_CUDA_SOURCE_FILES}
+# and also for cuda
+ADD_CUDA_SOURCE_GROUP(Common)
+ADD_CUDA_SOURCE_GROUP(Container)
+ADD_CUDA_SOURCE_GROUP(Geometry)
+ADD_CUDA_SOURCE_GROUP(Integration)
+ADD_CUDA_SOURCE_GROUP(Odometry)
 
-		${CUDA_COMMON_CUDA_HEADER_FILES}
-		${CUDA_COMMON_CUDA_SOURCE_FILES})
-target_link_libraries(Cuda ${OpenCV_LIBS})
+Directories(${CMAKE_CURRENT_SOURCE_DIR} CUDA_INCLUDE_DIRS)
+set(CUDA_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS} PARENT_SCOPE)
 
-install(TARGETS
-		RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
-		LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-		ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-		)
+target_include_directories(Cuda PUBLIC ${CUDA_INCLUDE_DIRS})
 
-file(GLOB headers "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
-install(FILES ${headers} DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
+#install headers
+install(DIRECTORY   "${CMAKE_CURRENT_SOURCE_DIR}"
+		DESTINATION "${CMAKE_INSTALL_PREFIX}/include/${CMAKE_PROJECT_NAME}"
+		PATTERN     "*.cpp" EXCLUDE
+		PATTERN     "*.cuh" EXCLUDE
+		PATTERN     "*.cu"  EXCLUDE
+		PATTERN     "*.txt" EXCLUDE)

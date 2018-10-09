@@ -6,7 +6,7 @@
 
 #include <cassert>
 
-namespace three {
+namespace open3d {
 
 template<typename T>
 __global__
