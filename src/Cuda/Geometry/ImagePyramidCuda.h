@@ -35,8 +35,11 @@ private:
 	ImageCuda<VecType> images_[N];
 
 public:
-	ImagePyramidCuda() {}
-	~ImagePyramidCuda() { Release(); }
+	ImagePyramidCuda();
+	~ImagePyramidCuda();
+	ImagePyramidCuda(const ImagePyramidCuda<VecType, N>& other);
+	ImagePyramidCuda<VecType, N>&operator = (
+	    const ImagePyramidCuda<VecType, N>& other);
 
 	void Create(int width, int height);
 	void Release();
@@ -45,12 +48,16 @@ public:
 	void Build(cv::Mat &m);
 	std::vector<cv::Mat> Download();
 
-	void ConnectSubServers();
+	void UpdateServer();
 
 	ImageCuda<VecType> & level(size_t i) {
 		assert(i < N);
 		return images_[i];
 	}
+    const ImageCuda<VecType> & level(size_t i) const {
+        assert(i < N);
+        return images_[i];
+    }
 	int width(size_t i = 0) const {
 		assert(i < N);
 		return images_[i].width();

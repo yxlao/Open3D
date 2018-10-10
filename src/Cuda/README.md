@@ -42,7 +42,7 @@ public:
     void Method();             
     
 private:
-    ACudaServer server_;    
+    std::shared_ptr<ACudaServer> server_ = nullptr;    
 };
 
 /* Pass `server` class BY VALUE */
@@ -60,7 +60,12 @@ Note if the class is templated, we have to instantiate them in the
 corresponding `.cuh` file, or in a `.cu` file that includes the `.cuh`.
 
 One CPU class should hold only one `server` class, which can be nested with 
-other `server` classes.
+other `server` classes. Nested `server` must hold structs instead of their 
+pointers, because otherwise the values cannot be correctly passed to CUDA. 
+- For the classes with a simple `server`, just handle cuda data correctly in 
+`Create` and `Release`.
+- For nested classes, write a function `UpdateServer` that correctly 
+synchronize nested structs (not their ptrs!) 
 
 **Don't** use inheritance for `server`. It is not supported by CUDA -- there 
 will be problems transforming *vtable* to kernels.

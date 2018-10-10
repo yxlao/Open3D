@@ -2,11 +2,11 @@
  * Created by wei on 18-3-29.
  */
 
-#ifndef _MEMORY_HEAP_CUDA_H_
-#define _MEMORY_HEAP_CUDA_H_
+#pragma once
 
 #include "ContainerClasses.h"
 #include <Cuda/Common/Common.h>
+#include <memory>
 
 #include <vector>
 
@@ -37,56 +37,59 @@ class MemoryHeapCuda;
 template<typename T>
 class MemoryHeapCudaServer {
 private:
-	T* data_;   /* [N] */
-	int* heap_; /* [N] */
-	int* heap_counter_; /* [1] */
+    T *data_;   /* [N] */
+    int *heap_; /* [N] */
+    int *heap_counter_; /* [1] */
 
 public:
-	int max_capacity_;
+    int max_capacity_;
 
 public:
-	__DEVICE__ int Malloc();
-	__DEVICE__ void Free(int addr);
+    __DEVICE__ int Malloc();
+    __DEVICE__ void Free(int addr);
 
-	/* heap (at each index) stores addrs
-	 * addrs point to values */
-	__DEVICE__ int& get_heap(int index);
-	__DEVICE__ T& get_value(int addr);
+    /* heap (at each index) stores addrs
+     * addrs point to values */
+    __DEVICE__ int &get_heap(int index);
+    __DEVICE__ T &get_value(int addr);
 
-	friend class MemoryHeapCuda<T>;
+    friend class MemoryHeapCuda<T>;
 };
 
 template<typename T>
 class MemoryHeapCuda {
 private:
-	MemoryHeapCudaServer<T> server_;
-	int max_capacity_;
-	int HeapCounter();
+    std::shared_ptr<MemoryHeapCudaServer<T>> server_ = nullptr;
+    int max_capacity_;
+    int HeapCounter();
 
 public:
-	MemoryHeapCuda() { max_capacity_ = -1; };
-	~MemoryHeapCuda() = default;
+    MemoryHeapCuda();
+    ~MemoryHeapCuda();
+    MemoryHeapCuda(const MemoryHeapCuda<T> &other);
+    MemoryHeapCuda<T> &operator=(const MemoryHeapCuda<T> &other);
 
-	void Create(int max_capacity);
-	void Release();
-	void Reset();
+    void Create(int max_capacity);
+    void Release();
+    void Reset();
 
-	/* Hopefully this is only used for debugging. */
-	std::vector<int> DownloadHeap();
-	std::vector<T> DownloadValue();
+    /* Hopefully this is only used for debugging. */
+    std::vector<int> DownloadHeap();
+    std::vector<T> DownloadValue();
 
-	int max_capacity() {
-		return max_capacity_;
-	}
-	MemoryHeapCudaServer<T>& server() {
-		return server_;
-	}
+    int max_capacity() const {
+        return max_capacity_;
+    }
+    std::shared_ptr<MemoryHeapCudaServer<T>> &server() {
+        return server_;
+    }
+    const std::shared_ptr<MemoryHeapCudaServer<T>> &server() const {
+        return server_;
+    }
 };
-
 
 template<class T>
 __GLOBAL__
 void ResetMemoryHeapKernel(MemoryHeapCudaServer<T> server);
 
 };
-#endif /* _MEMORY_HEAP_CUDA_H_ */

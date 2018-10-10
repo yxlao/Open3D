@@ -35,7 +35,6 @@ TEST(ContainerCuda, ArrayFill) {
     timer.Stop();
     PrintInfo("> ArrayCuda.Fill() passed in %.2f seconds.\n",
               timer.GetDuration() * 0.001f);
-    array.Release();
 }
 
 TEST(ContainerCuda, ArrayUploadAndDownload) {
@@ -68,7 +67,6 @@ TEST(ContainerCuda, ArrayUploadAndDownload) {
     PrintInfo("ArrayCuda.Upload() and ArrayCuda.Download() "
               "passed in %.2f seconds.\n",
               timer.GetDuration() * 0.001f);
-    array.Release();
 }
 
 TEST(ContainerCuda, LinkedListInsertAndDownload) {
@@ -238,6 +236,18 @@ TEST(ContainerCuda, LinkedListInsertAndDelete) {
     }
     PrintInfo("#4 Double Insertion passed\n");
 
+    linked_list2 = linked_list1;
+    downloaded_values = linked_list2.Download();
+    downloaded_value_cnt.clear();
+    for (auto &val : downloaded_values) {
+        downloaded_value_cnt[val] += 1;
+    }
+    EXPECT_EQ(value_cnt.size(), downloaded_value_cnt.size());
+    for (auto &it : value_cnt) {
+        EXPECT_EQ(downloaded_value_cnt[it.first], it.second);
+    }
+    PrintInfo("#5 Assignment passed\n");
+
     linked_list1.Delete(insert_and_delete_values[1]);
     downloaded_values = linked_list1.Download();
     for (auto &val : insert_and_delete_values[1]) {
@@ -255,7 +265,7 @@ TEST(ContainerCuda, LinkedListInsertAndDelete) {
     for (auto &it : value_cnt) {
         EXPECT_EQ(downloaded_value_cnt[it.first], it.second);
     }
-    PrintInfo("#5 Deletion\n");
+    PrintInfo("#6 Deletion\n");
 
     timer.Stop();
     PrintInfo("LinkedListCuda.Insert() and LinkedListCuda.Download() "

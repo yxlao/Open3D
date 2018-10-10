@@ -48,6 +48,11 @@ void CheckUploadAndDownloadConsistency(std::string path) {
                           downloaded_image.at<short>(i, j));
                 EXPECT_EQ(image.at<short>(i, j),
                           downloaded_image_copy.at<short>(i, j));
+            } else if (image.type() == CV_8UC1) {
+                EXPECT_EQ(image.at<uchar>(i, j),
+                          downloaded_image.at<uchar>(i, j));
+                EXPECT_EQ(image.at<uchar>(i, j),
+                          downloaded_image_copy.at<uchar>(i, j));
             } else {
                 PrintInfo("Unsupported image type %d\n", image.type());
             }
@@ -187,6 +192,10 @@ void CheckToFloatConversion(std::string path, float scale, float offset) {
                 EXPECT_NEAR(raw[2] * scale + offset, converted[2], kEpsilon);
             } else if (image.type() == CV_16UC1) {
                 short raw = image.at<short>(i, j);
+                float converted = downloaded.at<float>(i, j);
+                EXPECT_NEAR(raw * scale + offset, converted, kEpsilon);
+            } else if (image.type() == CV_8UC1) {
+                uchar raw = image.at<uchar>(i, j);
                 float converted = downloaded.at<float>(i, j);
                 EXPECT_NEAR(raw * scale + offset, converted, kEpsilon);
             } else {

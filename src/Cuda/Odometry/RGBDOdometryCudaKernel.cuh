@@ -42,7 +42,6 @@ void ApplyRGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry, size_t level) {
 	odometry.ComputePixelwiseJtJAndJtr(jacobian_I, jacobian_D,
 									   residual_I, residual_D,
 									   JtJ, Jtr);
-	odometry.target_on_source().level(level)(x, y) = Vector1f(0.0f);
 
 	/** Reduce Sum JtJ **/
 #pragma unroll 1

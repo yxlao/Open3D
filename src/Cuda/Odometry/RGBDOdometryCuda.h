@@ -39,167 +39,169 @@ namespace open3d {
 template<size_t N>
 class RGBDOdometryCudaServer {
 private:
-	ImagePyramidCudaServer<Vector1f, N> target_on_source_;
+    ImagePyramidCudaServer<Vector1f, N> source_on_target_;
 
-	ImagePyramidCudaServer<Vector1f, N> target_depth_;
-	ImagePyramidCudaServer<Vector1f, N> target_depth_dx_;
-	ImagePyramidCudaServer<Vector1f, N> target_depth_dy_;
+    ImagePyramidCudaServer<Vector1f, N> target_depth_;
+    ImagePyramidCudaServer<Vector1f, N> target_depth_dx_;
+    ImagePyramidCudaServer<Vector1f, N> target_depth_dy_;
 
-	ImagePyramidCudaServer<Vector1f, N> target_intensity_;
-	ImagePyramidCudaServer<Vector1f, N> target_intensity_dx_;
-	ImagePyramidCudaServer<Vector1f, N> target_intensity_dy_;
-	/* ImagePyramidCudaServer<Vector3f, N> source_normal_; */
+    ImagePyramidCudaServer<Vector1f, N> target_intensity_;
+    ImagePyramidCudaServer<Vector1f, N> target_intensity_dx_;
+    ImagePyramidCudaServer<Vector1f, N> target_intensity_dy_;
+    /* ImagePyramidCudaServer<Vector3f, N> source_normal_; */
 
-	ImagePyramidCudaServer<Vector1f, N> source_depth_;
-	ImagePyramidCudaServer<Vector1f, N> source_intensity_;
-	/* ImagePyramidCudaServer<Vector3f, N> target_normal_; */
+    ImagePyramidCudaServer<Vector1f, N> source_depth_;
+    ImagePyramidCudaServer<Vector1f, N> source_intensity_;
+    /* ImagePyramidCudaServer<Vector3f, N> target_normal_; */
 
-	ArrayCudaServer<float> results_;
-
-public:
-	PinholeCameraCuda<N> pinhole_camera_intrinsics_;
-	TransformCuda transform_source_to_target_;
+    ArrayCudaServer<float> results_;
 
 public:
-	/** (1-sigma) * JtJ_I + sigma * JtJ_D **/
-	/** To compute JtJ, we use \sqrt(1-sigma) J_I and \sqrt(sigma) J_D **/
-	float sigma_;
-	float sqrt_coeff_I_;
-	float sqrt_coeff_D_;
+    PinholeCameraCuda<N> pinhole_camera_intrinsics_;
+    TransformCuda transform_source_to_target_;
 
 public:
-	float depth_near_threshold_;
-	float depth_far_threshold_;
-	float depth_diff_threshold_;
+    /** (1-sigma) * JtJ_I + sigma * JtJ_D **/
+    /** To compute JtJ, we use \sqrt(1-sigma) J_I and \sqrt(sigma) J_D **/
+    float sigma_;
+    float sqrt_coeff_I_;
+    float sqrt_coeff_D_;
 
 public:
-	inline __HOSTDEVICE__ bool IsValidDepth(float depth) {
-		return depth_near_threshold_ <= depth && depth <= depth_far_threshold_;
-	}
-	inline __HOSTDEVICE__ bool IsValidDepthDiff(float depth_diff) {
-		return fabsf(depth_diff) <= depth_diff_threshold_;
-	}
+    float depth_near_threshold_;
+    float depth_far_threshold_;
+    float depth_diff_threshold_;
 
 public:
-	inline __DEVICE__ bool ComputePixelwiseJacobiansAndResiduals(
-		int x, int y, size_t level,
-		JacobianCuda<6> &jacobian_I, JacobianCuda<6> &jacobian_D,
-		float &residual_I, float &residual_D);
-	inline __DEVICE__ bool ComputePixelwiseJtJAndJtr(
-		JacobianCuda<6> &jacobian_I, JacobianCuda<6> &jacobian_D,
-		float &residual_I, float &residual_D,
-		HessianCuda<6> &JtJ, Vector6f &Jtr);
+    inline __HOSTDEVICE__ bool IsValidDepth(float depth) {
+        return depth_near_threshold_ <= depth && depth <= depth_far_threshold_;
+    }
+    inline __HOSTDEVICE__ bool IsValidDepthDiff(float depth_diff) {
+        return fabsf(depth_diff) <= depth_diff_threshold_;
+    }
 
 public:
-	inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
-	target_on_source() {
-		return target_on_source_;
-	}
-	inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
-	target_depth() {
-		return target_depth_;
-	}
-	inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
-	target_depth_dx() {
-		return target_depth_dx_;
-	}
-	inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
-	target_depth_dy() {
-		return target_depth_dy_;
-	}
-	inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
-	target_intensity() {
-		return target_intensity_;
-	}
-	inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
-	target_intensity_dx() {
-		return target_intensity_dx_;
-	}
-	inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
-	target_intensity_dy() {
-		return target_intensity_dy_;
-	}
+    inline __DEVICE__ bool ComputePixelwiseJacobiansAndResiduals(
+        int x, int y, size_t level,
+        JacobianCuda<6> &jacobian_I, JacobianCuda<6> &jacobian_D,
+        float &residual_I, float &residual_D);
+    inline __DEVICE__ bool ComputePixelwiseJtJAndJtr(
+        JacobianCuda<6> &jacobian_I, JacobianCuda<6> &jacobian_D,
+        float &residual_I, float &residual_D,
+        HessianCuda<6> &JtJ, Vector6f &Jtr);
 
-	inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
-	source_depth() {
-		return source_depth_;
-	}
-	inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
-	source_intensity() {
-		return source_intensity_;
-	}
+public:
+    inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
+    source_on_target() {
+        return source_on_target_;
+    }
+    inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
+    target_depth() {
+        return target_depth_;
+    }
+    inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
+    target_depth_dx() {
+        return target_depth_dx_;
+    }
+    inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
+    target_depth_dy() {
+        return target_depth_dy_;
+    }
+    inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
+    target_intensity() {
+        return target_intensity_;
+    }
+    inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
+    target_intensity_dx() {
+        return target_intensity_dx_;
+    }
+    inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
+    target_intensity_dy() {
+        return target_intensity_dy_;
+    }
 
-	inline __HOSTDEVICE__ ArrayCudaServer<float> &results() {
-		return results_;
-	}
+    inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
+    source_depth() {
+        return source_depth_;
+    }
+    inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
+    source_intensity() {
+        return source_intensity_;
+    }
 
-	friend class RGBDOdometryCuda<N>;
+    inline __HOSTDEVICE__ ArrayCudaServer<float> &results() {
+        return results_;
+    }
+
+    friend class RGBDOdometryCuda<N>;
 };
 
 template<size_t N>
 class RGBDOdometryCuda {
 private:
-	std::shared_ptr<RGBDOdometryCudaServer<N>> server_ = nullptr;
+    std::shared_ptr<RGBDOdometryCudaServer<N>> server_ = nullptr;
 
-	ImagePyramidCuda<Vector1f, N> target_on_source_;
+    ImagePyramidCuda<Vector1f, N> source_on_target_;
 
-	ImagePyramidCuda<Vector1f, N> target_depth_;
-	ImagePyramidCuda<Vector1f, N> target_depth_dx_;
-	ImagePyramidCuda<Vector1f, N> target_depth_dy_;
+    ImagePyramidCuda<Vector1f, N> target_depth_;
+    ImagePyramidCuda<Vector1f, N> target_depth_dx_;
+    ImagePyramidCuda<Vector1f, N> target_depth_dy_;
 
-	ImagePyramidCuda<Vector1f, N> target_intensity_;
-	ImagePyramidCuda<Vector1f, N> target_intensity_dx_;
-	ImagePyramidCuda<Vector1f, N> target_intensity_dy_;
+    ImagePyramidCuda<Vector1f, N> target_intensity_;
+    ImagePyramidCuda<Vector1f, N> target_intensity_dx_;
+    ImagePyramidCuda<Vector1f, N> target_intensity_dy_;
 
-	ImagePyramidCuda<Vector1f, N> source_depth_;
-	ImagePyramidCuda<Vector1f, N> source_intensity_;
+    ImagePyramidCuda<Vector1f, N> source_depth_;
+    ImagePyramidCuda<Vector1f, N> source_intensity_;
 
-	ArrayCuda<float> results_;
-
-public:
-	typedef Eigen::Matrix<float, 4, 4, Eigen::DontAlign> Matrix4f;
-	typedef Eigen::Matrix<float, 6, 6, Eigen::DontAlign> Matrix6f;
-	typedef Eigen::Matrix<float, 6, 1, Eigen::DontAlign> Vector6f;
-	typedef Eigen::Matrix<double, 6, 1, Eigen::DontAlign> Vector6d;
+    ArrayCuda<float> results_;
 
 public:
-	Matrix4f transform_source_to_target_;
+    typedef Eigen::Matrix<float, 4, 4, Eigen::DontAlign> Matrix4f;
+    typedef Eigen::Matrix<float, 6, 6, Eigen::DontAlign> Matrix6f;
+    typedef Eigen::Matrix<float, 6, 1, Eigen::DontAlign> Vector6f;
+    typedef Eigen::Matrix<double, 6, 1, Eigen::DontAlign> Vector6d;
 
-	RGBDOdometryCuda();
-	~RGBDOdometryCuda();
-	void SetParameters(float sigma,
-		float depth_near_threshold, float depth_far_threshold,
-		float depth_diff_threshold);
+public:
+    Matrix4f transform_source_to_target_;
 
-	void Create(int width, int height);
-	void Release();
-	void ConnectSubServers();
+    /** At current I don't want to add assignments for such a large class **/
+    /** Ideally Create and Release should be only called once **/
+    RGBDOdometryCuda();
+    ~RGBDOdometryCuda();
+    void SetParameters(float sigma,
+                       float depth_near_threshold, float depth_far_threshold,
+                       float depth_diff_threshold);
 
-	void Build(ImageCuda<Vector1f> &source_depth,
-			   ImageCuda<Vector1f> &source_intensity,
-			   ImageCuda<Vector1f> &target_depth,
-			   ImageCuda<Vector1f> &target_intensity);
-	void Apply(ImageCuda<Vector1f> &source_depth,
-			   ImageCuda<Vector1f> &source_intensity,
-			   ImageCuda<Vector1f> &target_depth,
-			   ImageCuda<Vector1f> &target_intensity);
+    void Create(int width, int height);
+    void Release();
+    void UpdateServer();
 
-	void ExtractResults(std::vector<float> &results,
-						Matrix6f &JtJ, Vector6f &Jtr,
-						float &error, float &inliers);
+    void Build(ImageCuda<Vector1f> &source_depth,
+               ImageCuda<Vector1f> &source_intensity,
+               ImageCuda<Vector1f> &target_depth,
+               ImageCuda<Vector1f> &target_intensity);
+    void Apply(ImageCuda<Vector1f> &source_depth,
+               ImageCuda<Vector1f> &source_intensity,
+               ImageCuda<Vector1f> &target_depth,
+               ImageCuda<Vector1f> &target_intensity);
 
-	std::shared_ptr<RGBDOdometryCudaServer<N>> &server() {
-		return server_;
-	}
-	const std::shared_ptr<RGBDOdometryCudaServer<N>> &server() const {
-		return server_;
-	}
+    void ExtractResults(std::vector<float> &results,
+                        Matrix6f &JtJ, Vector6f &Jtr,
+                        float &error, float &inliers);
+
+    std::shared_ptr<RGBDOdometryCudaServer<N>> &server() {
+        return server_;
+    }
+    const std::shared_ptr<RGBDOdometryCudaServer<N>> &server() const {
+        return server_;
+    }
 };
 
 template<size_t N>
 __GLOBAL__
 void ApplyRGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry,
-							 size_t level);
+                             size_t level);
 
 }
 #endif //OPEN3D_RGBDODOMETRY_H
