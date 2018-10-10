@@ -2,8 +2,7 @@
 // Created by wei on 10/3/18.
 //
 
-#ifndef OPEN3D_TRANSFORMCUDA_H
-#define OPEN3D_TRANSFORMCUDA_H
+#pragma once
 
 #include "VectorCuda.h"
 #include <Eigen/Eigen>
@@ -97,5 +96,3 @@ public:
 	}
 };
 }
-
-#endif //OPEN3D_TRANSFORMCUDA_H

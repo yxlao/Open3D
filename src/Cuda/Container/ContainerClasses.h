@@ -2,9 +2,6 @@
 // Created by wei on 9/24/18.
 //
 
-#ifndef OPEN3D_CONTAINERS_H
-#define OPEN3D_CONTAINERS_H
-
 #pragma once
 
 namespace open3d {
@@ -37,5 +34,3 @@ template<typename Key, typename Value, typename Hasher>
 class HashTableCuda;
 
 }
-
-#endif //OPEN3D_CONTAINERS_H

@@ -2,8 +2,7 @@
 // Created by wei on 9/27/18.
 //
 
-#ifndef OPEN3D_VECTOR_H
-#define OPEN3D_VECTOR_H
+#pragma once
 
 #include <Cuda/Common/Common.h>
 #include <Cuda/Common/HelperMath.h>
@@ -309,4 +308,3 @@ typedef VectorCuda<float, 4> Vector4f;
 typedef VectorCuda<float, 6> Vector6f;
 
 }
-#endif //OPEN3D_VECTOR_H

@@ -2,8 +2,7 @@
 // Created by wei on 9/27/18.
 //
 
-#ifndef OPEN3D_IMAGEPYRAMIDCUDA_H
-#define OPEN3D_IMAGEPYRAMIDCUDA_H
+#pragma once
 
 #include "GeometryClasses.h"
 #include "ImageCuda.h"
@@ -80,4 +79,3 @@ public:
 };
 }
 
-#endif //OPEN3D_IMAGEPYRAMIDCUDA_H

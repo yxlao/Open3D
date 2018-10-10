@@ -3,6 +3,7 @@
  */
 
 #pragma once
+
 #include "LinkedListCuda.h"
 #include "MemoryHeapCuda.cuh"
 

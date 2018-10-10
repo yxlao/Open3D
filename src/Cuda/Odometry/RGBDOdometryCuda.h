@@ -2,8 +2,7 @@
 // Created by wei on 10/1/18.
 //
 
-#ifndef OPEN3D_RGBDODOMETRY_H
-#define OPEN3D_RGBDODOMETRY_H
+#pragma once
 
 #include "OdometryClasses.h"
 #include "JacobianCuda.h"
@@ -204,4 +203,3 @@ void ApplyRGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry,
                              size_t level);
 
 }
-#endif //OPEN3D_RGBDODOMETRY_H

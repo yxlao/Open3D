@@ -2,8 +2,7 @@
 // Created by wei on 10/2/18.
 //
 
-#ifndef OPEN3D_REDUCTION2DCUDA_H
-#define OPEN3D_REDUCTION2DCUDA_H
+#pragma once
 
 #include <Cuda/Common/UtilsCuda.h>
 #include <Cuda/Geometry/ImageCuda.h>
@@ -56,5 +55,3 @@ T ReduceSum2DShuffle(ImageCuda<VecType> &src);
 template<typename VecType, typename T>
 T AtomicSum(ImageCuda<VecType> &src);
 }
-
-#endif //OPEN3D_REDUCTION2DCUDA_H

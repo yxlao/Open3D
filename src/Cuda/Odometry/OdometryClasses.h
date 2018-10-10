@@ -2,8 +2,7 @@
 // Created by wei on 10/3/18.
 //
 
-#ifndef OPEN3D_ODOMETRYCLASSES_H
-#define OPEN3D_ODOMETRYCLASSES_H
+#pragma once
 
 #include <cstdlib>
 
@@ -16,5 +15,3 @@ template<size_t N>
 class RGBDOdometryCuda;
 
 };
-
-#endif //OPEN3D_ODOMETRYCLASSES_H

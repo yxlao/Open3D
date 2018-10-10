@@ -2,8 +2,7 @@
 // Created by wei on 10/1/18.
 //
 
-#ifndef OPEN3D_RGBDODOMETRYCUDA_C_H
-#define OPEN3D_RGBDODOMETRYCUDA_C_H
+#pragma once
 
 #include "RGBDOdometryCuda.h"
 #include <Cuda/Geometry/ImageCuda.cuh>
@@ -321,4 +320,3 @@ void RGBDOdometryCuda<N>::Apply(ImageCuda<Vector1f> &source_depth,
     }
 }
 }
-#endif //OPEN3D_RGBDODOMETRYCUDA_C_H

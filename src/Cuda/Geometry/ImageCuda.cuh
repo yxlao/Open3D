@@ -2,8 +2,7 @@
  * Created by wei on 18-4-9.
  */
 
-#ifndef _IMAGE_CUDA_CUH_
-#define _IMAGE_CUDA_CUH_
+#pragma once
 
 #include "ImageCuda.h"
 #include "VectorCuda.h"
@@ -734,4 +733,3 @@ void ImageCuda<VecType>::ToFloat(ImageCuda<typename VecType::VecTypef> &image,
     CheckCuda(cudaGetLastError());
 }
 }
-#endif

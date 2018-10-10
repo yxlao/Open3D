@@ -2,8 +2,7 @@
 // Created by wei on 10/4/18.
 //
 
-#ifndef OPEN3D_JACOBIANCUDA_H
-#define OPEN3D_JACOBIANCUDA_H
+#pragma once
 
 #include <Cuda/Geometry/VectorCuda.h>
 #include <cstdlib>
@@ -103,5 +102,3 @@ public:
     }
 };
 }
-
-#endif //OPEN3D_JACOBIANCUDA_H

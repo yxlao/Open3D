@@ -2,8 +2,7 @@
  * Created by wei on 18-4-2.
  */
 
-#ifndef _LINKED_LIST_CUDA_H_
-#define _LINKED_LIST_CUDA_H_
+#pragma once
 
 #include "ContainerClasses.h"
 #include "MemoryHeapCuda.h"
@@ -153,5 +152,3 @@ void DownloadLinkedListKernel(LinkedListCudaServer<T> server,
                               T *data,
                               const int N);
 }
-
-#endif /* _LINKED_LIST_CUDA_H_ */

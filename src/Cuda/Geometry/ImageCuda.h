@@ -2,8 +2,7 @@
 // Created by wei on 9/27/18.
 //
 
-#ifndef OPEN3D_IMAGECUDA_H
-#define OPEN3D_IMAGECUDA_H
+#pragma once
 
 #include "GeometryClasses.h"
 #include <Cuda/Common/Common.h>
@@ -197,5 +196,3 @@ void ToFloatImageKernel(ImageCudaServer<VecType> src,
                         ImageCudaServer<typename VecType::VecTypef> dst,
                         float scale, float offset);
 }
-
-#endif //OPEN3D_IMAGECUDA_H

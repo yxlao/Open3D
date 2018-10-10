@@ -2,8 +2,7 @@
 // Created by wei on 10/3/18.
 //
 
-#ifndef OPEN3D_CAMERA_H
-#define OPEN3D_CAMERA_H
+#pragma once
 
 #include "VectorCuda.h"
 
@@ -79,4 +78,3 @@ public:
 
 typedef PinholeCameraCuda<1> MonoPinholeCameraCuda;
 }
-#endif //OPEN3D_CAMERA_H

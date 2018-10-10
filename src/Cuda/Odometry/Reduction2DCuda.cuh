@@ -2,8 +2,7 @@
 // Created by wei on 10/3/18.
 //
 
-#ifndef OPEN3D_REDUCTION2DCUDA_CUH_H
-#define OPEN3D_REDUCTION2DCUDA_CUH_H
+#pragma once
 
 #include "Reduction2DCuda.h"
 
@@ -100,5 +99,3 @@ T AtomicSum(ImageCuda<VecType> &src) {
     return ret;
 }
 }
-
-#endif //OPEN3D_REDUCTION2DCUDA_CUH_H
