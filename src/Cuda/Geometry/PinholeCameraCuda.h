@@ -31,9 +31,9 @@ public:
 	inline __HOSTDEVICE__ float cx(size_t level = 0) { return cx_[level]; }
 	inline __HOSTDEVICE__ float cy(size_t level = 0) { return cy_[level]; }
 
-	inline __HOSTDEVICE__ void Set(int in_width, int in_height,
-								   float in_fx, float in_fy,
-								   float in_cx, float in_cy) {
+	inline __HOSTDEVICE__ void SetUp(int in_width = 640, int in_height = 480,
+                                     float in_fx = 525.0f, float in_fy = 525.0f,
+                                     float in_cx = 319.5f, float in_cy = 239.5f) {
 		for (int i = 0; i < N; ++i) {
 			float factor = 1.0f / (1 << i);
 			width_[i] = in_width >> i;

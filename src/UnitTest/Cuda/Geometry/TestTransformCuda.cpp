@@ -32,7 +32,7 @@ TEST(TransformCuda, Transform) {
         TransformCuda transform_cuda;
         transform_cuda.FromEigen(R, t);
         float
-            matrix_norm = (T.inverse() - transform_cuda.inv().ToEigen()).norm();
+            matrix_norm = (T.inverse() - transform_cuda.Inverse().ToEigen()).norm();
         EXPECT_LE(matrix_norm, 1e-6);
 
         Vector3f v_cuda;

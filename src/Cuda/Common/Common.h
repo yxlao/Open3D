@@ -29,7 +29,7 @@
 #define __DEVICE__
 #define __HOSTDEVICE__
 #define __GLOBAL__
-#define __ALIGN__(n) __attribute__((aligned(n)))
+#define __ALIGN__(n) alignas(n)
 #define __int_as_float(n) float(int(n))
 #endif
 
@@ -70,6 +70,7 @@ inline uchar safe_mul(float a, uchar b) {
 #define SQR_BLOCK_SIDE_LENGTH (BLOCK_SIDE_LENGTH * BLOCK_SIDE_LENGTH)
 #define BLOCK_SIZE            (BLOCK_SIDE_LENGTH * BLOCK_SIDE_LENGTH * BLOCK_SIDE_LENGTH)
 
+#define THREAD_3D_UNIT   8
 #define THREAD_2D_UNIT   16
 #define THREAD_1D_UNIT   32
 #define UPPER_ALIGN(a, b) ((a + b - 1) / b)

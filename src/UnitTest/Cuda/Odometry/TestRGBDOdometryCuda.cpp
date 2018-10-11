@@ -37,7 +37,7 @@ TEST(RGBDOdometryCuda, Odometry) {
     target_D.Upload(target_depth);
 
     RGBDOdometryCuda<3> odometry;
-    odometry.server()->pinhole_camera_intrinsics_.Set(
+    odometry.server()->pinhole_camera_intrinsics_.SetUp(
         640, 480, 525.0, 525.0, 319.5, 239.5);
     odometry.transform_source_to_target_ = RGBDOdometryCuda<3>::Matrix4f::Identity();
     odometry.SetParameters(0.2f, 0.1f, 4.0f, 0.07f);

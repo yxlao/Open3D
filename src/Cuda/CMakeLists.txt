@@ -6,14 +6,14 @@ file(GLOB_RECURSE CUDA_ALL_CUDA_SOURCE_FILES "*.cu")
 
 # (testing) flags for cuda code generation
 set(CUDA_NVCC_FLAGS
-		-gencode=arch=compute_50,code=sm_60
-		-gencode=arch=compute_50,code=sm_50
-		--expt-relaxed-constexpr)
+        -gencode=arch=compute_50,code=sm_60
+        -gencode=arch=compute_50,code=sm_50
+        --expt-relaxed-constexpr)
 
 # create (should be static) library
 cuda_add_library(Cuda
-		${CUDA_ALL_HEADER_FILES} ${CUDA_ALL_SOURCE_FILES}
-		${CUDA_ALL_CUDA_HEADER_FILES} ${CUDA_ALL_CUDA_SOURCE_FILES})
+        ${CUDA_ALL_HEADER_FILES} ${CUDA_ALL_SOURCE_FILES}
+        ${CUDA_ALL_CUDA_HEADER_FILES} ${CUDA_ALL_CUDA_SOURCE_FILES})
 target_link_libraries(Cuda Core ${OpenCV_LIBS})
 
 # create subgroups
@@ -36,9 +36,9 @@ set(CUDA_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS} PARENT_SCOPE)
 target_include_directories(Cuda PUBLIC ${CUDA_INCLUDE_DIRS})
 
 #install headers
-install(DIRECTORY   "${CMAKE_CURRENT_SOURCE_DIR}"
-		DESTINATION "${CMAKE_INSTALL_PREFIX}/include/${CMAKE_PROJECT_NAME}"
-		PATTERN     "*.cpp" EXCLUDE
-		PATTERN     "*.cuh" EXCLUDE
-		PATTERN     "*.cu"  EXCLUDE
-		PATTERN     "*.txt" EXCLUDE)
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/include/${CMAKE_PROJECT_NAME}"
+        PATTERN "*.cpp" EXCLUDE
+        PATTERN "*.cuh" EXCLUDE
+        PATTERN "*.cu" EXCLUDE
+        PATTERN "*.txt" EXCLUDE)
