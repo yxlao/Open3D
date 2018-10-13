@@ -83,7 +83,7 @@ public:
      * WARNING! This initializer is special !!!
      * @param v0
      */
-    inline __HOSTDEVICE__ VectorCuda(T v0) {
+    inline __HOSTDEVICE__ explicit VectorCuda(T v0) {
 #ifdef __CUDACC__
 #pragma unroll 1
 #endif
@@ -104,11 +104,9 @@ public:
         v[0] = v0, v[1] = v1, v[2] = v2, v[3] = v3;
     }
     inline __HOSTDEVICE__ T &operator()(size_t i) {
-        assert(i < N);
         return v[i];
     }
     inline __HOSTDEVICE__ const T &operator()(size_t i) const {
-        assert(i < N);
         return v[i];
     }
     inline __HOSTDEVICE__ bool operator==(const VecType &other) const {
@@ -265,7 +263,6 @@ public:
     }
 
     inline __HOSTDEVICE__ VectorCuda<T, N - 1> hnormalized() {
-        assert(typeid(T) == typeid(float) && N > 1);
         VectorCuda<T, N - 1> ret;
 #ifdef __CUDACC__
 #pragma unroll 1
@@ -292,9 +289,6 @@ public:
     }
 
     inline __HOSTDEVICE__ VectorCuda<T, N> normalized() {
-#ifndef __CUDACC__ /** cuda doesn't support typeid ... **/
-        assert(typeid(T) == typeid(float) && N > 1);
-#endif
         float n = norm();
         VectorCuda<T, N> ret;
 #ifdef __CUDACC__
@@ -330,6 +324,7 @@ VectorCuda<T, N> operator*(float s, const VectorCuda<T, N> &vec) {
 
 typedef VectorCuda<int, 2> Vector2i;
 typedef VectorCuda<int, 3> Vector3i;
+typedef VectorCuda<int, 4> Vector4i;
 
 typedef VectorCuda<short, 1> Vector1s;
 

@@ -24,7 +24,7 @@ public:
 
 public:
     __HOSTDEVICE__ T *&data() { return data_; }
-    __DEVICE__ void push_back(T value);
+    __DEVICE__ int push_back(T value);
     __DEVICE__ T &get(size_t index);
 
     friend class ArrayCuda<T>;
@@ -55,8 +55,8 @@ public:
 
     /* Fill is non-trivial assignment to specific values, needs kernel call */
     /* Memset is trivial setting, usually to all zero */
-    void Fill(const T val);
-    void Memset(const int val);
+    void Fill(const T& val);
+    void Memset(int val);
     void Clear();
 
     int size();

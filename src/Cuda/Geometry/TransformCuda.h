@@ -31,11 +31,9 @@ public:
     }
 
     inline __HOSTDEVICE__ float &operator()(size_t i, size_t j) {
-        assert(i < 3 && j < 4);
         return m_[i][j];
     }
     inline __HOSTDEVICE__ const float &operator()(size_t i, size_t j) const {
-        assert(i < 3 && j < 4);
         return m_[i][j];
     }
 

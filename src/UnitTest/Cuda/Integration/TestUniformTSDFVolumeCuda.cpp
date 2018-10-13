@@ -5,6 +5,8 @@
 #include <Cuda/Integration/UniformTSDFVolumeCuda.h>
 #include <Cuda/Geometry/VectorCuda.h>
 #include <Core/Core.h>
+#include <Eigen/Eigen>
+#include <IO/IO.h>
 
 #include "UnitTest.h"
 
@@ -36,12 +38,12 @@ TEST(UniformTSDFVolumeCuda, UploadAndDownload) {
         }
     }
 
-    volume.Upload(tsdf, weight, color);
+    volume.UploadVolume(tsdf, weight, color);
     tsdf.clear();
     weight.clear();
     color.clear();
 
-    auto downloaded = volume.Download();
+    auto downloaded = volume.DownloadVolume();
     tsdf = std::get<0>(downloaded);
     weight = std::get<1>(downloaded);
     color = std::get<2>(downloaded);
@@ -59,32 +61,76 @@ TEST(UniformTSDFVolumeCuda, UploadAndDownload) {
     }
 }
 
-TEST(UniformTSDFVolumeCuda, Integrate) {
+TEST(UniformTSDFVolumeCuda, RayCasting) {
+    using namespace open3d;
     cv::Mat im = cv::imread("../../examples/TestData/RGBD/depth/00000.png",
                             cv::IMREAD_UNCHANGED);
-    open3d::ImageCuda<open3d::Vector1s> imcuda;
+    ImageCuda<open3d::Vector1s> imcuda;
     imcuda.Upload(im);
     auto imcudaf = imcuda.ToFloat(0.001f);
 
-    open3d::MonoPinholeCameraCuda default_camera;
+    MonoPinholeCameraCuda default_camera;
     default_camera.SetUp();
-    open3d::TransformCuda transform = open3d::TransformCuda::Identity();
-    transform.SetTranslation(open3d::Vector3f(-0.04f * 256, -0.04f * 256, -0.04f * 256));
+    TransformCuda transform = TransformCuda::Identity();
 
-    open3d::UniformTSDFVolumeCuda<512> volume(0.04f, 0.12f, transform);
+    const float voxel_length = 0.01f;
+    transform.SetTranslation(Vector3f(-voxel_length * 256));
+    UniformTSDFVolumeCuda<512> volume(voxel_length, voxel_length * 3, transform);
 
-    open3d::TransformCuda extrinsics = open3d::TransformCuda::Identity();
+    TransformCuda extrinsics = TransformCuda::Identity();
     volume.Integrate(imcudaf, default_camera, extrinsics);
 
-    open3d::ImageCuda<open3d::Vector3f> raycaster;
+    ImageCuda<Vector3f> raycaster;
     raycaster.Create(imcuda.width(), imcuda.height());
 
-    volume.RayCasting(raycaster, default_camera, extrinsics);
-
+    Timer timer;
+    int iteration_times = 100;
+    timer.Start();
+    for (int i = 0; i < iteration_times; ++i) {
+        volume.RayCasting(raycaster, default_camera, extrinsics);
+    }
+    timer.Stop();
     cv::Mat imraycaster = raycaster.Download();
     cv::imshow("im", imraycaster);
     cv::waitKey(-1);
 
+    PrintInfo("Average raycasting time: %f milliseconds\n",
+        timer.GetDuration() / iteration_times);
+}
+
+TEST(UniformTSDFVolumeCuda, MarchingCubes) {
+    using namespace open3d;
+    cv::Mat im = cv::imread("../../examples/TestData/RGBD/depth/00000.png",
+                            cv::IMREAD_UNCHANGED);
+    ImageCuda<open3d::Vector1s> imcuda;
+    imcuda.Upload(im);
+    auto imcudaf = imcuda.ToFloat(0.001f);
+
+    MonoPinholeCameraCuda default_camera;
+    default_camera.SetUp();
+    TransformCuda transform = TransformCuda::Identity();
+
+    const float voxel_length = 0.01f;
+    transform.SetTranslation(Vector3f(-voxel_length * 256));
+    UniformTSDFVolumeCuda<512> volume(voxel_length, voxel_length * 3, transform);
+
+    TransformCuda extrinsics = TransformCuda::Identity();
+    volume.Integrate(imcudaf, default_camera, extrinsics);
+
+    Timer timer;
+    timer.Start();
+    volume.MarchingCubes();
+    timer.Stop();
+    PrintInfo("MarchingCubes time: %f milliseconds\n", timer.GetDuration());
+
+    std::shared_ptr<TriangleMesh> mesh = volume.mesh().Download();
+    PrintInfo("triangle.size(): %d\n, vertices.size(): %d\n",
+        mesh->triangles_.size(), mesh->vertices_.size());
+//    for (auto &triangle : mesh->triangles_) {
+//        std::cout << triangle(0) << " " << triangle(1) << " " << triangle(2)
+//        << std::endl;
+//    }
+    WriteTriangleMeshToPLY("test.ply", *mesh, true);
 }
 
 int main(int argc, char **argv) {

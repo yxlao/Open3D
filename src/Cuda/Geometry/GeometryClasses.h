@@ -23,5 +23,14 @@ class ImagePyramidCudaServer;
 template<typename T, size_t N>
 class ImagePyramidCuda;
 
+class TriangleMeshCudaServer;
+
+class TriangleMeshCuda;
+
+class PointCloudCudaServer;
+
+class PointCloudCuda;
+
+
 }
 #endif //OPEN3D_GEOMETRY_H

@@ -18,10 +18,11 @@ namespace open3d {
  */
 template<typename T>
 __device__
-void ArrayCudaServer<T>::push_back(T value) {
+int ArrayCudaServer<T>::push_back(T value) {
     assert(*iterator_ < max_capacity_);
     int addr = atomicAdd(iterator_, 1);
     data_[addr] = value;
+    return addr;
 }
 
 template<typename T>
@@ -148,7 +149,7 @@ std::vector<T> ArrayCuda<T>::DownloadAll() {
 }
 
 template<typename T>
-void ArrayCuda<T>::Fill(const T val) {
+void ArrayCuda<T>::Fill(const T& val) {
     const int threads = THREAD_1D_UNIT;
     const int blocks = UPPER_ALIGN(max_capacity_, THREAD_1D_UNIT);
     FillArrayKernel << < blocks, threads >> > (*server_, val);
@@ -156,7 +157,7 @@ void ArrayCuda<T>::Fill(const T val) {
 }
 
 template<typename T>
-void ArrayCuda<T>::Memset(const int val) {
+void ArrayCuda<T>::Memset(int val) {
     CheckCuda(cudaMemset(server_->data_, val, sizeof(T) * max_capacity_));
 }
 

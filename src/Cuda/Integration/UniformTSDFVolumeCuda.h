@@ -5,10 +5,11 @@
 #pragma once
 
 #include "IntegrationClasses.h"
-#include <Geometry/VectorCuda.h>
-#include <Geometry/ImageCuda.h>
-#include <Geometry/PinholeCameraCuda.h>
-#include <Geometry/TransformCuda.h>
+#include <Cuda/Geometry/VectorCuda.h>
+#include <Cuda/Geometry/ImageCuda.h>
+#include <Cuda/Geometry/PinholeCameraCuda.h>
+#include <Cuda/Geometry/TransformCuda.h>
+#include <Cuda/Geometry/TriangleMeshCuda.h>
 
 #include <cstdlib>
 #include <memory>
@@ -23,6 +24,13 @@ private:
     float *weight_;
     Vector3b *color_;
 
+    /* Embedded vertices */
+    int *table_index_;
+    Vector3i *vertex_indices_;
+    Vector3i *vertex_locks_;
+
+    TriangleMeshCudaServer mesh_;
+
 public:
     /** According to UniformTSDFVolume.cpp,
      * Voxel xyz is at Vector3f(0.5) + [x, y, z]^T * voxel_length_;
@@ -34,11 +42,23 @@ public:
     TransformCuda transform_world_to_volume_;
 
 public:
+    inline __DEVICE__ TriangleMeshCudaServer& mesh() {
+        return mesh_;
+    }
+
     /** Conversions **/
-    inline __DEVICE__ Vector3f world_to_volume(float x, float y, float z);
-    inline __DEVICE__ Vector3f world_to_volume(const Vector3f &X);
-    inline __DEVICE__ Vector3f volume_to_world(float x, float y, float z);
-    inline __DEVICE__ Vector3f volume_to_world(const Vector3f& X);
+    inline __DEVICE__ Vector3f world_to_voxel(float x, float y, float z);
+    inline __DEVICE__ Vector3f world_to_voxel(const Vector3f &X);
+
+    inline __DEVICE__ Vector3f voxel_to_world(float x, float y, float z);
+    inline __DEVICE__ Vector3f voxel_to_world(const Vector3f &X);
+
+    inline __DEVICE__ Vector3f voxel_to_volume(const Vector3f &X);
+    inline __DEVICE__ Vector3f voxel_to_volume(float x, float y, float z);
+
+    inline __DEVICE__ Vector3f volume_to_voxel(const Vector3f &X);
+    inline __DEVICE__ Vector3f volume_to_voxel(float x, float y, float z);
+
     inline __DEVICE__ Vector3i Vectorize(size_t index);
     inline __DEVICE__ int IndexOf(int x, int y, int z);
     inline __DEVICE__ int IndexOf(const Vector3i &X);
@@ -58,6 +78,13 @@ public:
     inline __DEVICE__ float &weight(const Vector3i &X);
     inline __DEVICE__ Vector3b &color(int x, int y, int z);
     inline __DEVICE__ Vector3b &color(const Vector3i &X);
+
+    inline __DEVICE__ Vector3i &vertex_indices(int x, int y, int z);
+    inline __DEVICE__ Vector3i &vertex_indices(const Vector3i &X);
+    inline __DEVICE__ Vector3i &vertex_locks(int x, int y, int z);
+    inline __DEVICE__ Vector3i &vertex_locks(const Vector3i &X);
+    inline __DEVICE__ int &table_index(int x, int y, int z);
+    inline __DEVICE__ int &table_index(const Vector3i &X);
 
     /** Value interpolating **/
     inline __DEVICE__ bool InVolumef(float x, float y, float z);
@@ -81,6 +108,7 @@ template<size_t N>
 class UniformTSDFVolumeCuda {
 private:
     std::shared_ptr<UniformTSDFVolumeCudaServer<N>> server_ = nullptr;
+    TriangleMeshCuda mesh_;
 
 public:
     float voxel_length_;
@@ -101,10 +129,10 @@ public:
 
     void Reset();
 
-    void Upload(std::vector<float> &tsdf, std::vector<float> &weight,
-                std::vector<Vector3b> &color);
+    void UploadVolume(std::vector<float> &tsdf, std::vector<float> &weight,
+                      std::vector<Vector3b> &color);
     std::tuple<std::vector<float>, std::vector<float>, std::vector<Vector3b>>
-    Download();
+    DownloadVolume();
 
     int Integrate(ImageCuda<Vector1f> &depth,
                   MonoPinholeCameraCuda &camera,
@@ -116,6 +144,12 @@ public:
                    TransformCuda &transform_camera_to_world);
 
 public:
+    TriangleMeshCuda &mesh() {
+        return mesh_;
+    }
+    const TriangleMeshCuda &mesh() const {
+        return mesh_;
+    }
     std::shared_ptr<UniformTSDFVolumeCudaServer<N>> &server() {
         return server_;
     }
@@ -137,4 +171,12 @@ void RayCastingKernel(UniformTSDFVolumeCudaServer<N> server,
                       ImageCudaServer<Vector3f> image,
                       MonoPinholeCameraCuda camera,
                       TransformCuda transform_camera_to_world);
+
+template<size_t N>
+__GLOBAL__
+void MarchingCubesVertexExtractionKernel(UniformTSDFVolumeCudaServer<N> server);
+
+template<size_t N>
+__GLOBAL__
+void MarchingCubesTriangleExtractionKernel(UniformTSDFVolumeCudaServer<N> server);
 }

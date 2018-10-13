@@ -41,7 +41,17 @@ TEST(RGBDOdometryCuda, Odometry) {
         640, 480, 525.0, 525.0, 319.5, 239.5);
     odometry.transform_source_to_target_ = RGBDOdometryCuda<3>::Matrix4f::Identity();
     odometry.SetParameters(0.2f, 0.1f, 4.0f, 0.07f);
-    odometry.Apply(source_D, source_I, target_D, target_I);
+
+    Timer timer;
+    const int num_iters = 100;
+    odometry.Build(source_D, source_I, target_D, target_I);
+    timer.Start();
+    for (int i = 0; i < num_iters; ++i) {
+        odometry.Apply(source_D, source_I, target_D, target_I);
+    }
+    timer.Stop();
+    PrintInfo("Average odometry time: %f milliseconds.\n",
+        timer.GetDuration() / num_iters);
 }
 
 int main(int argc, char**argv) {

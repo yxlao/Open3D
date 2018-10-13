@@ -37,13 +37,14 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
     mask = pinhole_camera_intrinsics_.IsValid(p_warped, level);
     if (!mask) return false;
 
-    /** Check 3: depth valid in target? Occlusion? **/
+    /** Check 3: depth valid in target? Occlusion? -> 1ms **/
     float d_target = target_depth().level(level).get_interp_with_holes(
         p_warped(0), p_warped(1))(0);
     mask = IsValidDepth(d_target) && IsValidDepthDiff(d_target - X(2));
     if (!mask) return false;
 
-    /** Checks passed, let's rock!
+    /** Checks passed, let's rock! -> 3ms, can be 2ms faster if we don't use
+     * interpolation
      *  \partial D(p_warped) \partial p_warped: [dx_D, dy_D] at p_warped, 1x2
      *  \partial I(p_warped) \partial p_warped: [dx_I, dy_I] at p_warped, 1x2
      *  \partial X.z \partial X: [0, 0, 1], 1x3
@@ -94,8 +95,10 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
     jacobian_D(5) = sqrt_coeff_D_ * (-X(1) * d0 + X(0) * d1);
     residual_D = sqrt_coeff_D_ * (d_target - X(2));
 
+#ifdef VISUALIZE_ODOMETRY_INLIERS
     source_on_target().level(level).get((int) p_warped(0), (int) p_warped(1))
         = Vector1f(0.0f);
+#endif
 
     return true;
 }
@@ -106,8 +109,17 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJtJAndJtr(
     JacobianCuda<6> &jacobian_I, JacobianCuda<6> &jacobian_D,
     float &residual_I, float &residual_D,
     HessianCuda<6> &JtJ, Vector6f &Jtr) {
-    JtJ = jacobian_I.ComputeJtJ() + jacobian_D.ComputeJtJ();
-    Jtr = jacobian_I.ComputeJtr(residual_I) + jacobian_D.ComputeJtr(residual_D);
+
+    int cnt = 0;
+#pragma unroll 1
+    for (int i = 0; i < 6; ++i) {
+#pragma unroll 1
+        for (int j = i; j < 6; ++j) {
+            JtJ(cnt++) = jacobian_I(i) * jacobian_I(j)
+                + jacobian_D(i) * jacobian_D(j);
+        }
+        Jtr(i) = jacobian_I(i) * residual_I + jacobian_D(i) * residual_D;
+    }
 
     return true;
 }
@@ -275,9 +287,8 @@ void RGBDOdometryCuda<N>::Apply(ImageCuda<Vector1f> &source_depth,
                                 ImageCuda<Vector1f> &source_intensity,
                                 ImageCuda<Vector1f> &target_depth,
                                 ImageCuda<Vector1f> &target_intensity) {
-    Build(source_depth, source_intensity, target_depth, target_intensity);
 
-    const int kIterations[] = {20, 25, 50};
+    const int kIterations[] = {3, 5, 10};
     for (int level = (int) N - 1; level >= 0; --level) {
         for (int iter = 0; iter < kIterations[level]; ++iter) {
             results_.Memset(0);

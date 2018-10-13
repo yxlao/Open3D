@@ -17,11 +17,16 @@ namespace open3d {
 /**
  * Server end
  */
+/**
+ * assert will make these functions super slow
+ */
 template<typename VecType>
 __device__
 VecType &ImageCudaServer<VecType>::get(int x, int y) {
+#ifdef DEBUG_CUDA
     assert(x >= 0 && x < width_);
     assert(y >= 0 && y < height_);
+#endif
     VecType *value = (VecType *) ((char *) data_ + y * pitch_) + x;
     return (*value);
 }
@@ -38,9 +43,10 @@ VecType &ImageCudaServer<VecType>::operator()(int x, int y) {
 template<typename VecType>
 __device__
 VecType ImageCudaServer<VecType>::get_interp(float x, float y) {
+#ifdef DEBUG_CUDA
     assert(x >= 0 && x < width_ - 1);
     assert(y >= 0 && y < height_ - 1);
-
+#endif
     int x0 = (int) floor(x), y0 = (int) floor(y);
     float a = x - x0, b = y - y0;
     return VecType(
@@ -55,8 +61,10 @@ VecType ImageCudaServer<VecType>::get_interp(float x, float y) {
 template<typename VecType>
 __device__
 VecType ImageCudaServer<VecType>::get_interp_with_holes(float x, float y) {
+#ifdef DEBUG_CUDA
     assert(x >= 0 && x < width_ - 1);
     assert(y >= 0 && y < height_ - 1);
+#endif
 
     int x0 = (int) floor(x), y0 = (int) floor(y);
     float a = x - x0, b = y - y0;

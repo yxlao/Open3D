@@ -45,7 +45,7 @@ void ShiftImageKernel(
     int u = blockIdx.x * blockDim.x + threadIdx.x;
     int v = blockIdx.y * blockDim.y + threadIdx.y;
 
-    dst.get(u, v) = 0;
+    dst.get(u, v) = VecType(0);
     if (u >= dst.width_ || v >= dst.height_)
         return;
 
