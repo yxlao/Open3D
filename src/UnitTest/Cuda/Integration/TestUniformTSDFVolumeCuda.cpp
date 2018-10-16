@@ -17,7 +17,8 @@ TEST(UniformTSDFVolumeCuda, UploadAndDownload) {
     //const size_t N = 512;
     const size_t N = 16;
     const size_t NNN = N * N * N;
-    std::vector<float> tsdf, weight;
+    std::vector<float> tsdf;
+    std::vector<uchar> weight;
     std::vector<open3d::Vector3b> color;
     tsdf.resize(NNN);
     weight.resize(NNN);
@@ -31,7 +32,7 @@ TEST(UniformTSDFVolumeCuda, UploadAndDownload) {
         for (int j = 0; j < N; ++j) {
             for (int k = 0; k < N; ++k) {
                 tsdf[cnt] = i * j * k;
-                weight[cnt] = i;
+                weight[cnt] = uchar(fminf(i, 255));
                 color[cnt] = open3d::Vector3b(i, j, k);
                 ++cnt;
             }
@@ -53,7 +54,7 @@ TEST(UniformTSDFVolumeCuda, UploadAndDownload) {
         for (int j = 0; j < N; ++j) {
             for (int k = 0; k < N; ++k) {
                 EXPECT_NEAR(tsdf[cnt], i * j * k, NNN * 1e-6);
-                EXPECT_NEAR(weight[cnt], i, N * 1e-6);
+                EXPECT_EQ(weight[cnt], uchar(fminf(i, 255)));
                 EXPECT_EQ(color[cnt], open3d::Vector3b(i, j, k));
                 ++cnt;
             }

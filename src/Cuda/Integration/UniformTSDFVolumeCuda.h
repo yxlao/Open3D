@@ -21,13 +21,12 @@ class __ALIGN__(16) UniformTSDFVolumeCudaServer {
 private:
     /** [N * N * N]; **/
     float *tsdf_;
-    float *weight_;
+    uchar *weight_;
     Vector3b *color_;
 
     /* Embedded vertices */
     int *table_index_;
     Vector3i *vertex_indices_;
-    Vector3i *vertex_locks_;
 
     TriangleMeshCudaServer mesh_;
 
@@ -74,15 +73,18 @@ public:
 
     inline __DEVICE__ float &tsdf(int x, int y, int z);
     inline __DEVICE__ float &tsdf(const Vector3i &X);
-    inline __DEVICE__ float &weight(int x, int y, int z);
-    inline __DEVICE__ float &weight(const Vector3i &X);
+    inline __DEVICE__ uchar &weight(int x, int y, int z);
+    inline __DEVICE__ uchar &weight(const Vector3i &X);
     inline __DEVICE__ Vector3b &color(int x, int y, int z);
     inline __DEVICE__ Vector3b &color(const Vector3i &X);
 
+    /** Voxel level trivial gradient **/
+    inline __DEVICE__ Vector3f gradient(int x, int y, int z);
+    inline __DEVICE__ Vector3f gradient(const Vector3i &X);
+
+
     inline __DEVICE__ Vector3i &vertex_indices(int x, int y, int z);
     inline __DEVICE__ Vector3i &vertex_indices(const Vector3i &X);
-    inline __DEVICE__ Vector3i &vertex_locks(int x, int y, int z);
-    inline __DEVICE__ Vector3i &vertex_locks(const Vector3i &X);
     inline __DEVICE__ int &table_index(int x, int y, int z);
     inline __DEVICE__ int &table_index(const Vector3i &X);
 
@@ -92,8 +94,8 @@ public:
 
     inline __DEVICE__ float TSDFAt(float x, float y, float z);
     inline __DEVICE__ float TSDFAt(const Vector3f &X);
-    inline __DEVICE__ float WeightAt(float x, float y, float z);
-    inline __DEVICE__ float WeightAt(const Vector3f &X);
+    inline __DEVICE__ uchar WeightAt(float x, float y, float z);
+    inline __DEVICE__ uchar WeightAt(const Vector3f &X);
     inline __DEVICE__ Vector3b ColorAt(float x, float y, float z);
     inline __DEVICE__ Vector3b ColorAt(const Vector3f &X);
 
@@ -129,9 +131,9 @@ public:
 
     void Reset();
 
-    void UploadVolume(std::vector<float> &tsdf, std::vector<float> &weight,
+    void UploadVolume(std::vector<float> &tsdf, std::vector<uchar> &weight,
                       std::vector<Vector3b> &color);
-    std::tuple<std::vector<float>, std::vector<float>, std::vector<Vector3b>>
+    std::tuple<std::vector<float>, std::vector<uchar>, std::vector<Vector3b>>
     DownloadVolume();
 
     int Integrate(ImageCuda<Vector1f> &depth,
@@ -171,6 +173,10 @@ void RayCastingKernel(UniformTSDFVolumeCudaServer<N> server,
                       ImageCudaServer<Vector3f> image,
                       MonoPinholeCameraCuda camera,
                       TransformCuda transform_camera_to_world);
+
+template<size_t N>
+__GLOBAL__
+void MarchingCubesVertexAllocationKernel(UniformTSDFVolumeCudaServer<N> server);
 
 template<size_t N>
 __GLOBAL__
