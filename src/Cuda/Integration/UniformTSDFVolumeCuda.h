@@ -18,8 +18,7 @@ namespace open3d {
 
 template<size_t N>
 class __ALIGN__(16) UniformTSDFVolumeCudaServer {
-private:
-    /** [N * N * N]; **/
+private: /** [N * N * N]; **/
     float *tsdf_;
     uchar *weight_;
     Vector3b *color_;
@@ -45,7 +44,7 @@ public:
         return mesh_;
     }
 
-    /** Conversions **/
+public: /** Conversions **/
     inline __DEVICE__ Vector3f world_to_voxel(float x, float y, float z);
     inline __DEVICE__ Vector3f world_to_voxel(const Vector3f &X);
 
@@ -62,36 +61,31 @@ public:
     inline __DEVICE__ int IndexOf(int x, int y, int z);
     inline __DEVICE__ int IndexOf(const Vector3i &X);
 
-    /** Below all the coordinates (int and float) are in Volume coordinate
-     * system **/
-
-    /** Direct index accessing
-     * - for efficiency ignore index checking in these functions
-     * - check them outside **/
     inline __DEVICE__ bool InVolume(int x, int y, int z);
     inline __DEVICE__ bool InVolume(const Vector3i &X);
+    inline __DEVICE__ bool InVolumef(float x, float y, float z);
+    inline __DEVICE__ bool InVolumef(const Vector3f &X);
 
+public: /** Direct index accessing
+          * - for efficiency ignore index checking in these functions
+          * - check them outside **/
     inline __DEVICE__ float &tsdf(int x, int y, int z);
     inline __DEVICE__ float &tsdf(const Vector3i &X);
     inline __DEVICE__ uchar &weight(int x, int y, int z);
     inline __DEVICE__ uchar &weight(const Vector3i &X);
     inline __DEVICE__ Vector3b &color(int x, int y, int z);
     inline __DEVICE__ Vector3b &color(const Vector3i &X);
-
-    /** Voxel level trivial gradient **/
+    /** Voxel level trivial gradient -- NO trilinear interpolation
+     * This especially useful for MarchingCubes **/
     inline __DEVICE__ Vector3f gradient(int x, int y, int z);
     inline __DEVICE__ Vector3f gradient(const Vector3i &X);
-
 
     inline __DEVICE__ Vector3i &vertex_indices(int x, int y, int z);
     inline __DEVICE__ Vector3i &vertex_indices(const Vector3i &X);
     inline __DEVICE__ int &table_index(int x, int y, int z);
     inline __DEVICE__ int &table_index(const Vector3i &X);
 
-    /** Value interpolating **/
-    inline __DEVICE__ bool InVolumef(float x, float y, float z);
-    inline __DEVICE__ bool InVolumef(const Vector3f &X);
-
+public: /** Value interpolating **/
     inline __DEVICE__ float TSDFAt(float x, float y, float z);
     inline __DEVICE__ float TSDFAt(const Vector3f &X);
     inline __DEVICE__ uchar WeightAt(float x, float y, float z);
@@ -101,6 +95,22 @@ public:
 
     inline __DEVICE__ Vector3f GradientAt(float x, float y, float z);
     inline __DEVICE__ Vector3f GradientAt(const Vector3f &X);
+
+public:
+    __DEVICE__ void Integrate(
+        int x, int y, int z,
+        ImageCudaServer<Vector1f>& depth,
+        MonoPinholeCameraCuda& camera,
+        TransformCuda & transform_camera_to_world);
+
+    __DEVICE__ Vector3f RayCasting(
+        int x, int y,
+        MonoPinholeCameraCuda& camera,
+        TransformCuda &transform_camera_to_world);
+
+//    inline __DEVICE__ void MarchingCubesVertexAllocation();
+//    inline __DEVICE__ void MarchingCubesVertexExtraction();
+//    inline __DEVICE__ void MarchingCubesTriangleExtraction();
 
 public:
     friend class UniformTSDFVolumeCuda<N>;

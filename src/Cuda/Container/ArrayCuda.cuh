@@ -19,7 +19,7 @@ namespace open3d {
 template<typename T>
 __device__
 int ArrayCudaServer<T>::push_back(T value) {
-    assert(*iterator_ < max_capacity_);
+    // assert(*iterator_ < max_capacity_);
     int addr = atomicAdd(iterator_, 1);
     data_[addr] = value;
     return addr;
@@ -28,7 +28,7 @@ int ArrayCudaServer<T>::push_back(T value) {
 template<typename T>
 __device__
 T &ArrayCudaServer<T>::get(size_t index) {
-    assert(index < max_capacity_);
+    // assert(index < max_capacity_);
     return data_[index];
 }
 
@@ -97,6 +97,22 @@ void ArrayCuda<T>::Release() {
 }
 
 template<typename T>
+void ArrayCuda<T>::FromCudaArray(const T *array, int size) {
+    if (server_ == nullptr) {
+        Create(size);
+    } else {
+        if (server_->max_capacity_ < size) {
+            PrintError("Array capacity too small, abort!\n");
+            return;
+        }
+    }
+    CheckCuda(cudaMemcpy(server_->data_, array,
+                         sizeof(T) * size,
+                         cudaMemcpyDeviceToDevice));
+
+}
+
+template<typename T>
 void ArrayCuda<T>::CopyTo(ArrayCuda<T> &other) const {
     if (this == &other) return;
 
@@ -117,6 +133,16 @@ void ArrayCuda<T>::Upload(std::vector<T> &data) {
     int size = data.size();
     assert(size < max_capacity_);
     CheckCuda(cudaMemcpy(server_->data_, data.data(), sizeof(T) * size,
+                         cudaMemcpyHostToDevice));
+    CheckCuda(cudaMemcpy(server_->iterator_, &size,
+                         sizeof(int),
+                         cudaMemcpyHostToDevice));
+}
+
+template<typename T>
+void ArrayCuda<T>::Upload(const T *data, int size) {
+    assert(size < max_capacity_);
+    CheckCuda(cudaMemcpy(server_->data_, data, sizeof(T) * size,
                          cudaMemcpyHostToDevice));
     CheckCuda(cudaMemcpy(server_->iterator_, &size,
                          sizeof(int),
@@ -149,7 +175,7 @@ std::vector<T> ArrayCuda<T>::DownloadAll() {
 }
 
 template<typename T>
-void ArrayCuda<T>::Fill(const T& val) {
+void ArrayCuda<T>::Fill(const T &val) {
     const int threads = THREAD_1D_UNIT;
     const int blocks = UPPER_ALIGN(max_capacity_, THREAD_1D_UNIT);
     FillArrayKernel << < blocks, threads >> > (*server_, val);

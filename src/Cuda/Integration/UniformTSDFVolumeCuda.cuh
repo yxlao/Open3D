@@ -7,12 +7,14 @@
 #include "UniformTSDFVolumeCuda.h"
 #include <Core/Core.h>
 #include <Cuda/Common/UtilsCuda.h>
+#include <Cuda/Geometry/ImageCuda.cuh>
 
 namespace open3d {
 
 /**
  * Server end
  */
+
 /** Coordinate conversions **/
 template<size_t N>
 __device__
@@ -110,6 +112,22 @@ inline bool UniformTSDFVolumeCudaServer<N>::InVolume(const Vector3i &X) {
 
 template<size_t N>
 __device__
+inline bool UniformTSDFVolumeCudaServer<N>::InVolumef(
+    float x, float y, float z) {
+    return 0 <= x && x < (N - 1)
+        && 0 <= y && y < (N - 1)
+        && 0 <= z && z < (N - 1);
+}
+
+template<size_t N>
+__device__
+inline bool UniformTSDFVolumeCudaServer<N>::InVolumef(const Vector3f &X) {
+    return InVolumef(X(0), X(1), X(2));
+}
+
+/** Value access **/
+template<size_t N>
+__device__
 inline float &UniformTSDFVolumeCudaServer<N>::tsdf(int x, int y, int z) {
     return tsdf_[IndexOf(x, y, z)];
 }
@@ -122,12 +140,13 @@ inline float &UniformTSDFVolumeCudaServer<N>::tsdf(const Vector3i &X) {
 template<size_t N>
 __device__
 inline Vector3f UniformTSDFVolumeCudaServer<N>::gradient(int x, int y, int z) {
-    return Vector3f(tsdf_[IndexOf(min(x + 1, int(N - 1)), y, z)]
-                        - tsdf_[IndexOf(max(x - 1, 0), y, z)],
-                    tsdf_[IndexOf(x, min(y + 1, int(N - 1)), z)]
-                        - tsdf_[IndexOf(x, max(y - 1, 0), z)],
-                    tsdf_[IndexOf(x, y, min(z + 1, int(N - 1)))]
-                        - tsdf_[IndexOf(x, y, max(z - 1, 0))]);
+    return Vector3f(
+            tsdf_[IndexOf(min(x + 1, int(N - 1)), y, z)]
+                - tsdf_[IndexOf(max(x - 1, 0), y, z)],
+            tsdf_[IndexOf(x, min(y + 1, int(N - 1)), z)]
+                - tsdf_[IndexOf(x, max(y - 1, 0), z)],
+            tsdf_[IndexOf(x, y, min(z + 1, int(N - 1)))]
+                - tsdf_[IndexOf(x, y, max(z - 1, 0))]);
 }
 
 template<size_t N>
@@ -184,22 +203,8 @@ inline int &UniformTSDFVolumeCudaServer<N>::table_index(
     return table_index_[IndexOf(X)];
 }
 
-template<size_t N>
-__device__
-inline bool UniformTSDFVolumeCudaServer<N>::InVolumef(
-    float x, float y, float z) {
-    return 0 <= x && x < (N - 1)
-        && 0 <= y && y < (N - 1)
-        && 0 <= z && z < (N - 1);
-}
 
-template<size_t N>
-__device__
-inline bool UniformTSDFVolumeCudaServer<N>::InVolumef(const Vector3f &X) {
-    return InVolumef(X(0), X(1), X(2));
-}
-
-/** Default invalid value is 0. TODO: Check it later **/
+/** Interpolations. TODO: Check default value later **/
 template<size_t N>
 __device__
 inline float UniformTSDFVolumeCudaServer<N>::TSDFAt(float x, float y, float z) {
@@ -209,9 +214,6 @@ inline float UniformTSDFVolumeCudaServer<N>::TSDFAt(float x, float y, float z) {
     Vector3i X = Vector3i(int(x), int(y), int(z));
     Vector3f r = Xf - X.ToVectorf();
 
-    assert(X(0) < N - 1);
-    assert(X(1) < N - 1);
-    assert(X(2) < N - 1);
     return (1 - r(0)) * (
         (1 - r(1)) * (
             (1 - r(2)) * tsdf_[IndexOf(X + Vector3i(0, 0, 0))] +
@@ -313,12 +315,13 @@ inline Vector3f UniformTSDFVolumeCudaServer<N>::GradientAt(const Vector3f &X) {
     Vector3f n = Vector3f::Zeros();
 
     const float half_gap = 0.5f * voxel_length_;
+    const float epsilon = 0.1f * voxel_length_;
     Vector3f X0 = X, X1 = X;
 
 #pragma unroll 1
     for (size_t i = 0; i < 3; i++) {
-        X0(i) = fmaxf(X0(i) - half_gap, 0.01f);
-        X1(i) = fminf(X1(i) + half_gap, N - 1 - 0.01f);
+        X0(i) = fmaxf(X0(i) - half_gap, epsilon);
+        X1(i) = fminf(X1(i) + half_gap, N - 1 - epsilon);
         n(i) = (TSDFAt(X1) - TSDFAt(X0)) * inv_voxel_length_;
 
         X0(i) = X(i);
@@ -327,10 +330,93 @@ inline Vector3f UniformTSDFVolumeCudaServer<N>::GradientAt(const Vector3f &X) {
     return n;
 }
 
+/** High level methods **/
+template<size_t N>
+__device__
+inline void UniformTSDFVolumeCudaServer<N>::Integrate(
+    int x, int y, int z,
+    ImageCudaServer<Vector1f> &depth,
+    MonoPinholeCameraCuda &camera,
+    TransformCuda &transform_camera_to_world) {
+
+    /** Projective data association **/
+    Vector3f X_w = voxel_to_world(x, y, z);
+    Vector3f X_c = transform_camera_to_world.Inverse() * X_w;
+    Vector2f p = camera.Projection(X_c);
+
+    /** TSDF **/
+    if (!camera.IsValid(p)) return;
+    float d = depth.get_interp(p(0), p(1))(0);
+
+    float sdf = d - X_c(2);
+    if (sdf <= - sdf_trunc_) return;
+    sdf = fminf(sdf, sdf_trunc_);
+
+    /** Weight average **/
+    /** TODO: color **/
+    float &tsdf = this->tsdf(x, y, z);
+    uchar &weight = this->weight(x, y, z);
+    tsdf = (tsdf * weight + sdf * 1.0f) / (weight + 1.0f);
+    weight = uchar(fminf(weight + 1.0f, 255));
+}
+
+template<size_t N>
+__device__
+Vector3f UniformTSDFVolumeCudaServer<N>::RayCasting(
+    int x, int y,
+    MonoPinholeCameraCuda &camera,
+    TransformCuda &transform_camera_to_world) {
+
+    Vector3f ret = Vector3f(0);
+
+    Vector3f ray_c = camera.InverseProjection(x, y, 1.0f).normalized();
+    /** TODO: throw it into parameters **/
+    const float t_min = 0.2f / ray_c(2);
+    const float t_max = 3.0f / ray_c(2);
+
+    const Vector3f camera_origin_v = transform_world_to_volume_ *
+        (transform_camera_to_world * Vector3f(0));
+    const Vector3f ray_v = transform_world_to_volume_.Rotate(
+        transform_camera_to_world.Rotate(ray_c));
+
+    float t_prev = 0, tsdf_prev = 0;
+
+    /** Do NOT use #pragma unroll: it will make it slow **/
+    float t_curr = t_min;
+    while (t_curr < t_max) {
+        Vector3f X_v = camera_origin_v + t_curr * ray_v;
+        Vector3f X_voxel = volume_to_voxel(X_v);
+
+        if (!InVolumef(X_voxel)) return ret;
+
+        float tsdf_curr = this->tsdf(X_voxel);
+
+        float step_size = tsdf_curr == 0 ?
+                          sdf_trunc_ : fmaxf(tsdf_curr, voxel_length_);
+
+        if (tsdf_prev > 0 && tsdf_curr < 0) { /** Zero crossing **/
+            float t_intersect = (t_curr * tsdf_prev - t_prev * tsdf_curr)
+                / (tsdf_prev - tsdf_curr);
+
+            Vector3f X_surface_v = camera_origin_v + t_intersect * ray_v;
+            Vector3f X_surface_voxel = volume_to_voxel(X_surface_v);
+            Vector3f normal_v = GradientAt(X_surface_voxel).normalized();
+
+            return transform_camera_to_world.Inverse().Rotate(
+                transform_volume_to_world_.Rotate(normal_v));
+        }
+
+        tsdf_prev = tsdf_curr;
+        t_prev = t_curr;
+        t_curr += step_size;
+    }
+
+    return ret;
+}
+
 /**
  * Client end
  */
-
 template<size_t N>
 UniformTSDFVolumeCuda<N>::UniformTSDFVolumeCuda() {}
 
@@ -389,7 +475,6 @@ void UniformTSDFVolumeCuda<N>::Create() {
     CheckCuda(cudaMalloc(&(server_->color_), sizeof(Vector3b) * NNN));
 
     CheckCuda(cudaMalloc(&(server_->vertex_indices_), sizeof(Vector3i) * NNN));
-
     CheckCuda(cudaMalloc(&(server_->table_index_), sizeof(int) * NNN));
 
     mesh_.Create(64 * N * N, 64 * N * N);
@@ -416,6 +501,7 @@ template<size_t N>
 void UniformTSDFVolumeCuda<N>::UpdateServer() {
     server_->voxel_length_ = voxel_length_;
     server_->inv_voxel_length_ = 1.0f / voxel_length_;
+
     server_->sdf_trunc_ = sdf_trunc_;
     server_->transform_volume_to_world_ = transform_volume_to_world_;
     server_->transform_world_to_volume_ = transform_volume_to_world_.Inverse();
@@ -429,6 +515,7 @@ void UniformTSDFVolumeCuda<N>::Reset() {
         CheckCuda(cudaMemset(server_->tsdf_, 0, sizeof(float) * NNN));
         CheckCuda(cudaMemset(server_->weight_, 0, sizeof(uchar) * NNN));
         CheckCuda(cudaMemset(server_->color_, 0, sizeof(Vector3b) * NNN));
+
         CheckCuda(cudaMemset(server_->vertex_indices_, 0xff,
                              sizeof(Vector3i) * NNN));
         CheckCuda(cudaMemset(server_->table_index_, 0, sizeof(int) * NNN));
@@ -528,6 +615,7 @@ int UniformTSDFVolumeCuda<N>::MarchingCubes() {
     const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
 
     Timer timer;
+
     timer.Start();
     MarchingCubesVertexAllocationKernel << < blocks, threads >> > (*server_);
     CheckCuda(cudaDeviceSynchronize());

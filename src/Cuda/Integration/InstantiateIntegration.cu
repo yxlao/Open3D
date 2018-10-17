@@ -5,83 +5,62 @@
 #include "UniformTSDFVolumeCuda.cuh"
 #include "UniformTSDFVolumeCudaKernel.cuh"
 
+#include "UniformMeshVolumeCuda.cuh"
+
 namespace open3d {
+
 template
 class UniformTSDFVolumeCudaServer<8>;
-
 template
 class UniformTSDFVolumeCudaServer<16>;
-
 template
 class UniformTSDFVolumeCudaServer<256>;
-
 template
 class UniformTSDFVolumeCudaServer<512>;
 
 template
 class UniformTSDFVolumeCuda<8>;
-
 template
 class UniformTSDFVolumeCuda<16>;
-
 template
 class UniformTSDFVolumeCuda<256>;
-
 template
 class UniformTSDFVolumeCuda<512>;
 
 template
-__global__
-void IntegrateKernel<8>(UniformTSDFVolumeCudaServer<8> server,
-                        ImageCudaServer<Vector1f> depth,
-                        MonoPinholeCameraCuda camera,
-                        TransformCuda transform_camera_to_world);
+class UniformMeshVolumeCuda<VertexRaw, 8>;
+template
+class UniformMeshVolumeCuda<VertexRaw, 16>;
+template
+class UniformMeshVolumeCuda<VertexRaw, 256>;
+template
+class UniformMeshVolumeCuda<VertexRaw, 512>;
 
 template
-__global__
-void IntegrateKernel<16>(UniformTSDFVolumeCudaServer<16> server,
-                         ImageCudaServer<Vector1f> depth,
-                         MonoPinholeCameraCuda camera,
-                         TransformCuda transform_camera_to_world);
+class UniformMeshVolumeCuda<VertexWithNormal, 8>;
 template
-__global__
-void IntegrateKernel<256>(UniformTSDFVolumeCudaServer<256> server,
-                          ImageCudaServer<Vector1f> depth,
-                          MonoPinholeCameraCuda camera,
-                          TransformCuda transform_camera_to_world);
+class UniformMeshVolumeCuda<VertexWithNormal, 16>;
 template
-__global__
-void IntegrateKernel<512>(UniformTSDFVolumeCudaServer<512> server,
-                          ImageCudaServer<Vector1f> depth,
-                          MonoPinholeCameraCuda camera,
-                          TransformCuda transform_camera_to_world);
+class UniformMeshVolumeCuda<VertexWithNormal, 256>;
+template
+class UniformMeshVolumeCuda<VertexWithNormal, 512>;
 
 template
-__global__
-void RayCastingKernel<8>(UniformTSDFVolumeCudaServer<8> server,
-                         ImageCudaServer<Vector3f> image,
-                         MonoPinholeCameraCuda camera,
-                         TransformCuda transform_camera_to_world);
+class UniformMeshVolumeCuda<VertexWithColor, 8>;
 template
-__global__
-void RayCastingKernel<16>(UniformTSDFVolumeCudaServer<16> server,
-                          ImageCudaServer<Vector3f> image,
-                          MonoPinholeCameraCuda camera,
-                          TransformCuda transform_camera_to_world);
+class UniformMeshVolumeCuda<VertexWithColor, 16>;
 template
-__global__
-void RayCastingKernel<256>(UniformTSDFVolumeCudaServer<256> server,
-                           ImageCudaServer<Vector3f> image,
-                           MonoPinholeCameraCuda camera,
-                           TransformCuda transform_camera_to_world);
+class UniformMeshVolumeCuda<VertexWithColor, 256>;
+template
+class UniformMeshVolumeCuda<VertexWithColor, 512>;
 
 template
-__global__
-void RayCastingKernel<512>(UniformTSDFVolumeCudaServer<512> server,
-                           ImageCudaServer<Vector3f> image,
-                           MonoPinholeCameraCuda camera,
-                           TransformCuda transform_camera_to_world);
+class UniformMeshVolumeCuda<VertexWithNormalAndColor, 8>;
+template
+class UniformMeshVolumeCuda<VertexWithNormalAndColor, 16>;
+template
+class UniformMeshVolumeCuda<VertexWithNormalAndColor, 256>;
+template
+class UniformMeshVolumeCuda<VertexWithNormalAndColor, 512>;
 
 }
-
-

@@ -13,5 +13,16 @@ class UniformTSDFVolumeCudaServer;
 template<size_t N>
 class UniformTSDFVolumeCuda;
 
+enum VertexType {
+    VertexRaw = 0,
+    VertexWithColor = 1,
+    VertexWithNormal = 2,
+    VertexWithNormalAndColor = 3
+};
 
+template<VertexType type, size_t N>
+class UniformMeshVolumeCudaServer;
+
+template<VertexType type, size_t N>
+class UniformMeshVolumeCuda;
 }

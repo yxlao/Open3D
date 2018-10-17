@@ -46,8 +46,10 @@ public:
     void Create(int max_capacity);
     void Release();
 
+    void FromCudaArray(const T* array, int size);
     void CopyTo(ArrayCuda<T> &other) const;
     void Upload(std::vector<T> &data);
+    void Upload(const T *data, int size);
 
     /* Download valid parts (.size() elements by GPU push_back operations) */
     std::vector<T> Download();

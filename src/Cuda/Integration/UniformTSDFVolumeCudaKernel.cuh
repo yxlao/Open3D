@@ -21,27 +21,7 @@ void IntegrateKernel(UniformTSDFVolumeCudaServer<N> server,
     const int z = threadIdx.z + blockIdx.z * blockDim.z;
 
     if (x >= N || y >= N || z >= N) return;
-
-    /** Projective data association **/
-    Vector3f X_w = server.voxel_to_world(x, y, z);
-    Vector3f X_c = transform_camera_to_world.Inverse() * X_w;
-    Vector2f p = camera.Projection(X_c);
-
-    /** TSDF **/
-    if (!camera.IsValid(p)) return;
-    float d = depth.get_interp(p(0), p(1))(0);
-
-    float sdf = d - X_c(2);
-    if (sdf <= -server.sdf_trunc_) return;
-    sdf = fminf(sdf, server.sdf_trunc_);
-
-    /** Weight average **/
-    float &tsdf = server.tsdf(x, y, z);
-    uchar &weight = server.weight(x, y, z);
-
-    /** TODO: color **/
-    tsdf = (tsdf * weight + sdf * 1.0f) / (weight + 1.0f);
-    weight = uchar(fminf(weight + 1.0f, 255));
+    server.Integrate(x, y, z, depth, camera, transform_camera_to_world);
 }
 
 template<size_t N>
@@ -54,67 +34,8 @@ void RayCastingKernel(UniformTSDFVolumeCudaServer<N> server,
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
 
     if (x >= image.width_ || y >= image.height_) return;
-    image.get(x, y) = Vector3f(0);
-
-    Vector3f ray_c = camera.InverseProjection(x, y, 1.0f).normalized();
-
-    /** TODO: throw it into parameters **/
-    const float t_min = 0.2f / ray_c(2);
-    const float t_max = 3.0f / ray_c(2);
-
-    const Vector3f camera_origin_v = server.transform_world_to_volume_ *
-        (transform_camera_to_world * Vector3f(0));
-    const Vector3f ray_v = server.transform_world_to_volume_.Rotate(
-        transform_camera_to_world.Rotate(ray_c));
-
-    float t_prev = 0, tsdf_prev = 0;
-
-    /** Do NOT use #pragma unroll: it will make it slow **/
-    float t_curr = t_min;
-    while (t_curr < t_max) {
-        Vector3f X_v = camera_origin_v + t_curr * ray_v;
-        Vector3f X_voxel = server.volume_to_voxel(X_v);
-
-        if (!server.InVolumef(X_voxel)) return;
-
-        float tsdf_curr = server.tsdf(X_voxel);
-
-        float step_size = tsdf_curr == 0 ?
-                          server.sdf_trunc_ : fmaxf(tsdf_curr,
-                                                    server.voxel_length_);
-
-        if (tsdf_prev > 0 && tsdf_curr < 0) { /** Zero crossing **/
-            float t_intersect = (t_curr * tsdf_prev - t_prev * tsdf_curr)
-                / (tsdf_prev - tsdf_curr);
-
-            Vector3f X_surface_v = camera_origin_v + t_intersect * ray_v;
-            Vector3f X_surface_voxel = server.volume_to_voxel(X_surface_v);
-            Vector3f normal_v = server.GradientAt(X_surface_voxel).normalized();
-            image.get(x, y) = transform_camera_to_world.Inverse().Rotate(
-                server.transform_volume_to_world_.Rotate(normal_v));
-            return;
-        }
-
-        tsdf_prev = tsdf_curr;
-        t_prev = t_curr;
-        t_curr += step_size;
-    }
-}
-
-__device__
-inline Vector3f InterpVertex(const Vector3i &X0, float tsdf0,
-                             const Vector3i &X1, float tsdf1) {
-    float mu = (0 - tsdf0) / (tsdf1 - tsdf0);
-    return Vector3f((1 - mu) * X0(0) + mu * X1(0),
-                    (1 - mu) * X0(1) + mu * X1(1),
-                    (1 - mu) * X0(2) + mu * X1(2));
-}
-
-__device__
-inline Vector3i Shift(const Vector3i &X, const int i) {
-    return Vector3i(X(0) + shift[i][0],
-                    X(1) + shift[i][1],
-                    X(2) + shift[i][2]);
+    image.get(x, y) = server.RayCasting(
+        x, y, camera, transform_camera_to_world);
 }
 
 template<size_t N>
@@ -136,12 +57,14 @@ void MarchingCubesVertexAllocationKernel(
 
     /** There are early returns. #pragma unroll SLOWS it down **/
     for (int i = 0; i < 8; ++i) {
-        const Vector3i Xi_voxel = Shift(X_voxel, i);
+        const int xi = x + shift[i][0] ;
+        const int yi = y + shift[i][1];
+        const int zi = z + shift[i][2];
 
-        uchar weight = server.weight(Xi_voxel);
+        uchar weight = server.weight(xi, yi, zi);
         if (weight == 0) return;
 
-        float tsdf = server.tsdf(Xi_voxel);
+        float tsdf = server.tsdf(xi, yi, zi);
         if (fabsf(tsdf) > 2 * server.voxel_length_) return;
 
         tmp_table_index |= ((tsdf < 0) ? (1 << i) : 0);
@@ -156,7 +79,8 @@ void MarchingCubesVertexAllocationKernel(
         if (edges & (1 << i)) {
             server.vertex_indices(x + edge_shift[i][0],
                                   y + edge_shift[i][1],
-                                  z + edge_shift[i][2])(edge_shift[i][3]) = 0;
+                                  z + edge_shift[i][2])
+                (edge_shift[i][3]) = 0;
         }
     }
 }
@@ -185,7 +109,9 @@ void MarchingCubesVertexExtractionKernel(
         float mu = (0 - tsdf0) / (tsdf1 - tsdf0);
         vertex_index(0) = server.mesh().vertices().push_back(
             server.voxel_to_world(x + mu, y, z));
-        (1 - mu) * server.gradient(x, y, z) + mu * server.gradient(x + 1, y, z);
+        server.transform_volume_to_world_.Rotate(
+            (1 - mu) * server.gradient(x, y, z) + mu * server.gradient(x + 1, y,
+                                                                       z));
     }
 
     if (f2) {
@@ -193,14 +119,18 @@ void MarchingCubesVertexExtractionKernel(
         float mu = (0 - tsdf0) / (tsdf3 - tsdf0);
         vertex_index(1) = server.mesh().vertices().push_back(
             server.voxel_to_world(x, y + mu, z));
-        (1 - mu) * server.gradient(x, y, z) + mu * server.gradient(x, y + 1, z);
+        server.transform_volume_to_world_.Rotate(
+            (1 - mu) * server.gradient(x, y, z) + mu * server.gradient(x, y + 1,
+                                                                       z));
     }
     if (f3) {
         float tsdf4 = server.tsdf(x, y, z + 1);
         float mu = (0 - tsdf0) / (tsdf4 - tsdf0);
         vertex_index(2) = server.mesh().vertices().push_back(
             server.voxel_to_world(x, y, z + mu));
-        (1 - mu) * server.gradient(x, y, z) + mu * server.gradient(x, y, z + 1);
+        server.transform_volume_to_world_.Rotate(
+            (1 - mu) * server.gradient(x, y, z) + mu * server.gradient(x, y, z +
+                1));
     }
 
 }
