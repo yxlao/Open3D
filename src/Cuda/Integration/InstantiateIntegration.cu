@@ -28,6 +28,58 @@ template
 class UniformTSDFVolumeCuda<512>;
 
 template
+int UniformTSDFVolumeCuda<8>::MarchingCubes<VertexRaw>(
+    UniformMeshVolumeCuda<VertexRaw, 8> &mesher);
+template
+int UniformTSDFVolumeCuda<8>::MarchingCubes<VertexWithNormal>(
+    UniformMeshVolumeCuda<VertexWithNormal, 8> &mesher);
+template
+int UniformTSDFVolumeCuda<8>::MarchingCubes<VertexWithColor>(
+    UniformMeshVolumeCuda<VertexWithColor, 8> &mesher);
+template
+int UniformTSDFVolumeCuda<8>::MarchingCubes<VertexWithNormalAndColor>(
+    UniformMeshVolumeCuda<VertexWithNormalAndColor, 8> &mesher);
+
+template
+int UniformTSDFVolumeCuda<16>::MarchingCubes<VertexRaw>(
+    UniformMeshVolumeCuda<VertexRaw, 16> &mesher);
+template
+int UniformTSDFVolumeCuda<16>::MarchingCubes<VertexWithNormal>(
+    UniformMeshVolumeCuda<VertexWithNormal, 16> &mesher);
+template
+int UniformTSDFVolumeCuda<16>::MarchingCubes<VertexWithColor>(
+    UniformMeshVolumeCuda<VertexWithColor, 16> &mesher);
+template
+int UniformTSDFVolumeCuda<16>::MarchingCubes<VertexWithNormalAndColor>(
+    UniformMeshVolumeCuda<VertexWithNormalAndColor, 16> &mesher);
+
+template
+int UniformTSDFVolumeCuda<256>::MarchingCubes<VertexRaw>(
+    UniformMeshVolumeCuda<VertexRaw, 256> &mesher);
+template
+int UniformTSDFVolumeCuda<256>::MarchingCubes<VertexWithNormal>(
+    UniformMeshVolumeCuda<VertexWithNormal, 256> &mesher);
+template
+int UniformTSDFVolumeCuda<256>::MarchingCubes<VertexWithColor>(
+    UniformMeshVolumeCuda<VertexWithColor, 256> &mesher);
+template
+int UniformTSDFVolumeCuda<256>::MarchingCubes<VertexWithNormalAndColor>(
+    UniformMeshVolumeCuda<VertexWithNormalAndColor, 256> &mesher);
+
+template
+int UniformTSDFVolumeCuda<512>::MarchingCubes<VertexRaw>(
+    UniformMeshVolumeCuda<VertexRaw, 512> &mesher);
+template
+int UniformTSDFVolumeCuda<512>::MarchingCubes<VertexWithNormal>(
+    UniformMeshVolumeCuda<VertexWithNormal, 512> &mesher);
+template
+int UniformTSDFVolumeCuda<512>::MarchingCubes<VertexWithColor>(
+    UniformMeshVolumeCuda<VertexWithColor, 512> &mesher);
+template
+int UniformTSDFVolumeCuda<512>::MarchingCubes<VertexWithNormalAndColor>(
+    UniformMeshVolumeCuda<VertexWithNormalAndColor, 512> &mesher);
+
+template
 class UniformMeshVolumeCuda<VertexRaw, 8>;
 template
 class UniformMeshVolumeCuda<VertexRaw, 16>;

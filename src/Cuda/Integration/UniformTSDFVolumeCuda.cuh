@@ -177,33 +177,6 @@ inline Vector3b &UniformTSDFVolumeCudaServer<N>::color(const Vector3i &X) {
     return color_[IndexOf(X)];
 }
 
-template<size_t N>
-__device__
-inline Vector3i &UniformTSDFVolumeCudaServer<N>::vertex_indices(
-    int x, int y, int z) {
-    return vertex_indices_[IndexOf(x, y, z)];
-}
-template<size_t N>
-__device__
-inline Vector3i &UniformTSDFVolumeCudaServer<N>::vertex_indices(
-    const Vector3i &X) {
-    return vertex_indices_[IndexOf(X)];
-}
-
-template<size_t N>
-__device__
-inline uchar &UniformTSDFVolumeCudaServer<N>::table_index(
-    int x, int y, int z) {
-    return table_index_[IndexOf(x, y, z)];
-}
-template<size_t N>
-__device__
-inline uchar &UniformTSDFVolumeCudaServer<N>::table_index(
-    const Vector3i &X) {
-    return table_index_[IndexOf(X)];
-}
-
-
 /** Interpolations. TODO: Check default value later **/
 template<size_t N>
 __device__
@@ -437,7 +410,6 @@ UniformTSDFVolumeCuda<N>::UniformTSDFVolumeCuda(
     const UniformTSDFVolumeCuda<N> &other) {
 
     server_ = other.server();
-    mesh_ = other.mesh();
     voxel_length_ = other.voxel_length_;
     sdf_trunc_ = other.sdf_trunc_;
     transform_volume_to_world_ = other.transform_volume_to_world_;
@@ -448,7 +420,6 @@ UniformTSDFVolumeCuda<N> &UniformTSDFVolumeCuda<N>::operator=(
     const UniformTSDFVolumeCuda<N> &other) {
     if (this != &other) {
         server_ = other.server();
-        mesh_ = other.mesh();
         voxel_length_ = other.voxel_length_;
         sdf_trunc_ = other.sdf_trunc_;
         transform_volume_to_world_ = other.transform_volume_to_world_;
@@ -474,10 +445,6 @@ void UniformTSDFVolumeCuda<N>::Create() {
     CheckCuda(cudaMalloc(&(server_->weight_), sizeof(uchar) * NNN));
     CheckCuda(cudaMalloc(&(server_->color_), sizeof(Vector3b) * NNN));
 
-    CheckCuda(cudaMalloc(&(server_->vertex_indices_), sizeof(Vector3i) * NNN));
-    CheckCuda(cudaMalloc(&(server_->table_index_), sizeof(uchar) * NNN));
-
-    mesh_.Create(64 * N * N, 64 * N * N);
     UpdateServer();
     Reset();
 }
@@ -488,10 +455,6 @@ void UniformTSDFVolumeCuda<N>::Release() {
         CheckCuda(cudaFree(server_->tsdf_));
         CheckCuda(cudaFree(server_->weight_));
         CheckCuda(cudaFree(server_->color_));
-
-        CheckCuda(cudaFree(server_->vertex_indices_));
-        CheckCuda(cudaFree(server_->table_index_));
-        mesh_.Release();
     }
 
     server_ = nullptr;
@@ -505,29 +468,22 @@ void UniformTSDFVolumeCuda<N>::UpdateServer() {
     server_->sdf_trunc_ = sdf_trunc_;
     server_->transform_volume_to_world_ = transform_volume_to_world_;
     server_->transform_world_to_volume_ = transform_volume_to_world_.Inverse();
-    server_->mesh_ = *mesh_.server();
 }
 
 template<size_t N>
 void UniformTSDFVolumeCuda<N>::Reset() {
     if (server_ != nullptr) {
-        const int NNN = N * N * N;
+        const size_t NNN = N * N * N;
         CheckCuda(cudaMemset(server_->tsdf_, 0, sizeof(float) * NNN));
         CheckCuda(cudaMemset(server_->weight_, 0, sizeof(uchar) * NNN));
         CheckCuda(cudaMemset(server_->color_, 0, sizeof(Vector3b) * NNN));
-
-        CheckCuda(cudaMemset(server_->vertex_indices_, 0xff,
-                             sizeof(Vector3i) * NNN));
-        CheckCuda(cudaMemset(server_->table_index_, 0, sizeof(uchar) * NNN));
-
-        mesh_.Reset();
     }
 }
 
 template<size_t N>
 void UniformTSDFVolumeCuda<N>::UploadVolume(std::vector<float> &tsdf,
                                             std::vector<uchar> &weight,
-                                            std::vector<open3d::Vector3b> &color) {
+                                            std::vector<Vector3b> &color) {
     if (server_ == nullptr) {
         PrintError("Server not available!\n");
         return;
@@ -609,7 +565,8 @@ int UniformTSDFVolumeCuda<N>::RayCasting(ImageCuda<open3d::Vector3f> &image,
 }
 
 template<size_t N>
-int UniformTSDFVolumeCuda<N>::MarchingCubes() {
+template<VertexType type>
+int UniformTSDFVolumeCuda<N>::MarchingCubes(UniformMeshVolumeCuda<type, N> &mesher) {
     const int num_blocks = UPPER_ALIGN(N, THREAD_3D_UNIT);
     const dim3 blocks(num_blocks, num_blocks, num_blocks);
     const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
@@ -617,25 +574,37 @@ int UniformTSDFVolumeCuda<N>::MarchingCubes() {
     Timer timer;
 
     timer.Start();
-    MarchingCubesVertexAllocationKernel << < blocks, threads >> > (*server_);
+    MarchingCubesVertexAllocationKernel << < blocks, threads >> > (
+        *server_, *mesher.server());
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
     timer.Stop();
     PrintInfo("Allocation takes %f milliseconds\n", timer.GetDuration());
 
     timer.Start();
-    MarchingCubesVertexExtractionKernel << < blocks, threads >> > (*server_);
+    MarchingCubesVertexExtractionKernel << < blocks, threads >> > (
+        *server_, *mesher.server());
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
     timer.Stop();
     PrintInfo("Extraction takes %f milliseconds\n", timer.GetDuration());
 
     timer.Start();
-    MarchingCubesTriangleExtractionKernel << < blocks, threads >> > (*server_);
+    MarchingCubesTriangleExtractionKernel << < blocks, threads >> > (
+        *server_, *mesher.server());
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
     timer.Stop();
     PrintInfo("Triangulation takes %f milliseconds\n", timer.GetDuration());
+
+    if (type & VertexWithNormal) {
+        mesher.mesh().vertex_normals().set_size(
+            mesher.mesh().vertices().size());
+    }
+    if (type & VertexWithColor) {
+        mesher.mesh().vertex_colors().set_size(
+            mesher.mesh().vertices().size());
+    }
     return 0;
 }
 }

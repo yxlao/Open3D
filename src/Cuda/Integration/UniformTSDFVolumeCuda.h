@@ -5,6 +5,7 @@
 #pragma once
 
 #include "IntegrationClasses.h"
+#include "UniformMeshVolumeCuda.h"
 #include <Cuda/Geometry/VectorCuda.h>
 #include <Cuda/Geometry/ImageCuda.h>
 #include <Cuda/Geometry/PinholeCameraCuda.h>
@@ -23,12 +24,6 @@ private: /** [N * N * N]; **/
     uchar *weight_;
     Vector3b *color_;
 
-    /* Embedded vertices */
-    uchar *table_index_;
-    Vector3i *vertex_indices_;
-
-    TriangleMeshCudaServer<VertexRaw> mesh_;
-
 public:
     /** According to UniformTSDFVolume.cpp,
      * Voxel xyz is at Vector3f(0.5) + [x, y, z]^T * voxel_length_;
@@ -38,11 +33,6 @@ public:
     float sdf_trunc_;
     TransformCuda transform_volume_to_world_;
     TransformCuda transform_world_to_volume_;
-
-public:
-    inline __DEVICE__ TriangleMeshCudaServer<VertexRaw>& mesh() {
-        return mesh_;
-    }
 
 public: /** Conversions **/
     inline __DEVICE__ Vector3f world_to_voxel(float x, float y, float z);
@@ -80,11 +70,6 @@ public: /** Direct index accessing
     inline __DEVICE__ Vector3f gradient(int x, int y, int z);
     inline __DEVICE__ Vector3f gradient(const Vector3i &X);
 
-    inline __DEVICE__ Vector3i &vertex_indices(int x, int y, int z);
-    inline __DEVICE__ Vector3i &vertex_indices(const Vector3i &X);
-    inline __DEVICE__ uchar &table_index(int x, int y, int z);
-    inline __DEVICE__ uchar &table_index(const Vector3i &X);
-
 public: /** Value interpolating **/
     inline __DEVICE__ float TSDFAt(float x, float y, float z);
     inline __DEVICE__ float TSDFAt(const Vector3f &X);
@@ -116,7 +101,6 @@ template<size_t N>
 class UniformTSDFVolumeCuda {
 private:
     std::shared_ptr<UniformTSDFVolumeCudaServer<N>> server_ = nullptr;
-    TriangleMeshCuda<VertexRaw> mesh_;
 
 public:
     float voxel_length_;
@@ -145,19 +129,14 @@ public:
     int Integrate(ImageCuda<Vector1f> &depth,
                   MonoPinholeCameraCuda &camera,
                   TransformCuda &transform_camera_to_world);
-    int MarchingCubes();
+    template<VertexType type>
+    int MarchingCubes(UniformMeshVolumeCuda<type, N> &mesher);
 
     int RayCasting(ImageCuda<Vector3f> &image,
                    MonoPinholeCameraCuda &camera,
                    TransformCuda &transform_camera_to_world);
 
 public:
-    TriangleMeshCuda<VertexRaw> &mesh() {
-        return mesh_;
-    }
-    const TriangleMeshCuda<VertexRaw> &mesh() const {
-        return mesh_;
-    }
     std::shared_ptr<UniformTSDFVolumeCudaServer<N>> &server() {
         return server_;
     }
@@ -180,15 +159,21 @@ void RayCastingKernel(UniformTSDFVolumeCudaServer<N> server,
                       MonoPinholeCameraCuda camera,
                       TransformCuda transform_camera_to_world);
 
-template<size_t N>
+template<VertexType type, size_t N>
 __GLOBAL__
-void MarchingCubesVertexAllocationKernel(UniformTSDFVolumeCudaServer<N> server);
+void MarchingCubesVertexAllocationKernel(
+    UniformTSDFVolumeCudaServer<N> server,
+    UniformMeshVolumeCudaServer<type, N> mesher);
 
-template<size_t N>
+template<VertexType type, size_t N>
 __GLOBAL__
-void MarchingCubesVertexExtractionKernel(UniformTSDFVolumeCudaServer<N> server);
+void MarchingCubesVertexExtractionKernel(
+    UniformTSDFVolumeCudaServer<N> server,
+    UniformMeshVolumeCudaServer<type, N> mesher);
 
-template<size_t N>
+template<VertexType type, size_t N>
 __GLOBAL__
-void MarchingCubesTriangleExtractionKernel(UniformTSDFVolumeCudaServer<N> server);
+void MarchingCubesTriangleExtractionKernel(
+    UniformTSDFVolumeCudaServer<N> server,
+    UniformMeshVolumeCudaServer<type, N> mesher);
 }

@@ -19,7 +19,6 @@ namespace open3d {
 template<typename T>
 __device__
 int ArrayCudaServer<T>::push_back(T value) {
-    // assert(*iterator_ < max_capacity_);
     int addr = atomicAdd(iterator_, 1);
     data_[addr] = value;
     return addr;
@@ -28,9 +27,15 @@ int ArrayCudaServer<T>::push_back(T value) {
 template<typename T>
 __device__
 T &ArrayCudaServer<T>::get(size_t index) {
-    // assert(index < max_capacity_);
     return data_[index];
 }
+
+template<typename T>
+__device__
+T &ArrayCudaServer<T>::operator[](size_t index) {
+    return data_[index];
+}
+
 
 /**
  * Client end

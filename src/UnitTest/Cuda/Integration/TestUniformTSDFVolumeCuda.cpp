@@ -3,6 +3,7 @@
 //
 
 #include <Cuda/Integration/UniformTSDFVolumeCuda.h>
+#include <Cuda/Integration/UniformMeshVolumeCuda.h>
 #include <Cuda/Geometry/VectorCuda.h>
 #include <Core/Core.h>
 #include <Eigen/Eigen>
@@ -118,19 +119,20 @@ TEST(UniformTSDFVolumeCuda, MarchingCubes) {
     TransformCuda extrinsics = TransformCuda::Identity();
     volume.Integrate(imcudaf, default_camera, extrinsics);
 
+    UniformMeshVolumeCuda<VertexWithNormal, 512> mesher;
+    mesher.Create(100000, 100000);
+
     Timer timer;
     timer.Start();
-    volume.MarchingCubes();
+    volume.MarchingCubes(mesher);
     timer.Stop();
     PrintInfo("MarchingCubes time: %f milliseconds\n", timer.GetDuration());
 
-    std::shared_ptr<TriangleMesh> mesh = volume.mesh().Download();
-    PrintInfo("triangle.size(): %d\n, vertices.size(): %d\n",
-        mesh->triangles_.size(), mesh->vertices_.size());
-//    for (auto &triangle : mesh->triangles_) {
-//        std::cout << triangle(0) << " " << triangle(1) << " " << triangle(2)
-//        << std::endl;
-//    }
+    std::shared_ptr<TriangleMesh> mesh = mesher.mesh().Download();
+    PrintInfo("triangle.size(): %d, vertices.size(): %d, normals.size(): %d\n",
+        mesh->triangles_.size(),
+        mesh->vertices_.size(),
+        mesh->vertex_normals_.size());
     WriteTriangleMeshToPLY("test.ply", *mesh, true);
 }
 

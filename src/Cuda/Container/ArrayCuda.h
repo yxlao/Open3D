@@ -26,6 +26,7 @@ public:
     __HOSTDEVICE__ T *&data() { return data_; }
     __DEVICE__ int push_back(T value);
     __DEVICE__ T &get(size_t index);
+    __DEVICE__ T& operator[] (size_t index);
 
     friend class ArrayCuda<T>;
 };

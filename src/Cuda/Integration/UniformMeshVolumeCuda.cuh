@@ -21,10 +21,7 @@ UniformMeshVolumeCuda<type, N>::UniformMeshVolumeCuda(
     max_triangles_ = other.max_triangles_;
 
     server_ = other.server();
-    vertices_ = other.vertices();
-    vertex_normals_ = other.vertex_normals();
-    vertex_colors_ = other.vertex_colors();
-    triangles_ = other.triangles();
+    mesh_ = other.mesh();
 }
 
 template<VertexType type, size_t N>
@@ -35,10 +32,7 @@ UniformMeshVolumeCuda<type, N> &UniformMeshVolumeCuda<type, N>::operator=(
         max_triangles_ = other.max_triangles_;
 
         server_ = other.server();
-        vertices_ = other.vertices();
-        vertex_normals_ = other.vertex_normals();
-        vertex_colors_ = other.vertex_colors();
-        triangles_ = other.triangles();
+        mesh_ = other.mesh();
     }
     return *this;
 }
@@ -63,20 +57,12 @@ void UniformMeshVolumeCuda<type, N>::Create(
     max_vertices_ = max_vertices;
 
     const int NNN = N * N * N;
-    CheckCuda(cudaMalloc(&server_->table_indices_,
-                        sizeof(uchar) * NNN));
-    CheckCuda(cudaMalloc(&server_->vertex_indices_,
-                         sizeof(Vector3i) * NNN));
-    triangles_.Create(max_triangles);
-    vertices_.Create(max_vertices);
-    if (type == VertexWithNormal || type == VertexWithNormalAndColor) {
-        vertex_normals_.Create(max_vertices);
-    }
-    if (type == VertexWithColor || type == VertexWithNormalAndColor) {
-        vertex_colors_.Create(max_vertices);
-    }
+    CheckCuda(cudaMalloc(&server_->table_indices_, sizeof(uchar) * NNN));
+    CheckCuda(cudaMalloc(&server_->vertex_indices_, sizeof(Vector3i) * NNN));
+    mesh_.Create(max_vertices, max_triangles);
 
     UpdateServer();
+    Reset();
 }
 
 template<VertexType type, size_t N>
@@ -85,15 +71,22 @@ void UniformMeshVolumeCuda<type, N>::Release() {
         CheckCuda(cudaFree(server_->table_indices_));
         CheckCuda(cudaFree(server_->vertex_indices_));
     }
-
-    vertices_.Release();
-    vertex_normals_.Release();
-    vertex_colors_.Release();
-    triangles_.Release();
-
+    mesh_.Release();
     server_ = nullptr;
     max_vertices_ = -1;
     max_triangles_ = -1;
+}
+
+template<VertexType type, size_t N>
+void UniformMeshVolumeCuda<type, N>::Reset() {
+    if (server_ != nullptr) {
+        const size_t NNN = N * N * N;
+        CheckCuda(cudaMemset(server_->table_indices_, 0,
+                             sizeof(uchar) * NNN));
+        CheckCuda(cudaMemset(server_->vertex_indices_, 0xff,
+                             sizeof(Vector3i) * NNN));
+        mesh_.Reset();
+    }
 }
 
 template<VertexType type, size_t N>
@@ -101,31 +94,7 @@ void UniformMeshVolumeCuda<type, N>::UpdateServer() {
     server_->max_vertices_ = max_vertices_;
     server_->max_triangles_ = max_triangles_;
 
-    server_->vertices_ = *vertices_.server();
-    server_->vertex_normals_ = *vertex_normals_.server();
-    server_->vertex_colors_ = *vertex_colors_.server();
-    server_->triangles_ = *triangles_.server();
+    server_->mesh_ = *mesh_.server();
 }
-
-//template<VertexType type, size_t N>
-//TriangleMeshCuda UniformMeshVolumeCuda<type, N>::ToTriangleMeshCuda(){
-//    /** No way to copy interleaved data. Must launch a kernel call **/
-//    TriangleMeshCuda mesh;
-//    ToTriangleMeshCuda(mesh);
-//    return mesh;
-//}
-//
-//template<VertexType type, size_t N>
-//void UniformMeshVolumeCuda<type, N>::ToTriangleMeshCuda(
-//    TriangleMeshCuda &mesh) {
-//    mesh.vertices() = vertices_;
-//    mesh.vertex_normals() = vertex_normals_;
-//    mesh.vertex_colors() = vertex_colors_;
-//    mesh.triangles() = triangles_;
-//    mesh.max_vertices_ = max_vertices_;
-//    mesh.max_triangles_ = max_triangles_;
-//
-//    mesh.UpdateServer();
-//}
 
 }
