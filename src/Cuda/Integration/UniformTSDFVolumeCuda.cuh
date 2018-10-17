@@ -192,13 +192,13 @@ inline Vector3i &UniformTSDFVolumeCudaServer<N>::vertex_indices(
 
 template<size_t N>
 __device__
-inline int &UniformTSDFVolumeCudaServer<N>::table_index(
+inline uchar &UniformTSDFVolumeCudaServer<N>::table_index(
     int x, int y, int z) {
     return table_index_[IndexOf(x, y, z)];
 }
 template<size_t N>
 __device__
-inline int &UniformTSDFVolumeCudaServer<N>::table_index(
+inline uchar &UniformTSDFVolumeCudaServer<N>::table_index(
     const Vector3i &X) {
     return table_index_[IndexOf(X)];
 }
@@ -475,7 +475,7 @@ void UniformTSDFVolumeCuda<N>::Create() {
     CheckCuda(cudaMalloc(&(server_->color_), sizeof(Vector3b) * NNN));
 
     CheckCuda(cudaMalloc(&(server_->vertex_indices_), sizeof(Vector3i) * NNN));
-    CheckCuda(cudaMalloc(&(server_->table_index_), sizeof(int) * NNN));
+    CheckCuda(cudaMalloc(&(server_->table_index_), sizeof(uchar) * NNN));
 
     mesh_.Create(64 * N * N, 64 * N * N);
     UpdateServer();
@@ -518,7 +518,7 @@ void UniformTSDFVolumeCuda<N>::Reset() {
 
         CheckCuda(cudaMemset(server_->vertex_indices_, 0xff,
                              sizeof(Vector3i) * NNN));
-        CheckCuda(cudaMemset(server_->table_index_, 0, sizeof(int) * NNN));
+        CheckCuda(cudaMemset(server_->table_index_, 0, sizeof(uchar) * NNN));
 
         mesh_.Reset();
     }

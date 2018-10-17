@@ -3,12 +3,15 @@
 //
 
 #pragma once
+#include "GeometryClasses.h"
 #include "VectorCuda.h"
 #include <Core/Geometry/TriangleMesh.h>
 #include <Cuda/Container/ArrayCuda.h>
 #include <memory>
 
 namespace open3d {
+
+template<VertexType type>
 class TriangleMeshCudaServer {
 private:
     ArrayCudaServer<Vector3f> vertices_;
@@ -35,12 +38,13 @@ public:
     }
 
 public:
-    friend class TriangleMeshCuda;
+    friend class TriangleMeshCuda<type>;
 };
 
+template <VertexType type>
 class TriangleMeshCuda {
 private:
-    std::shared_ptr<TriangleMeshCudaServer> server_ = nullptr;
+    std::shared_ptr<TriangleMeshCudaServer<type> > server_ = nullptr;
     ArrayCuda<Vector3f> vertices_;
     ArrayCuda<Vector3f> vertex_normals_;
     ArrayCuda<Vector3b> vertex_colors_;
@@ -97,10 +101,10 @@ public:
         return triangles_;
     }
 
-    std::shared_ptr<TriangleMeshCudaServer>& server() {
+    std::shared_ptr<TriangleMeshCudaServer<type>>& server() {
         return server_;
     }
-    const std::shared_ptr<TriangleMeshCudaServer>& server() const {
+    const std::shared_ptr<TriangleMeshCudaServer<type>>& server() const {
         return server_;
     }
 };

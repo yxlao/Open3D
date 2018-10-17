@@ -24,10 +24,10 @@ private: /** [N * N * N]; **/
     Vector3b *color_;
 
     /* Embedded vertices */
-    int *table_index_;
+    uchar *table_index_;
     Vector3i *vertex_indices_;
 
-    TriangleMeshCudaServer mesh_;
+    TriangleMeshCudaServer<VertexRaw> mesh_;
 
 public:
     /** According to UniformTSDFVolume.cpp,
@@ -40,7 +40,7 @@ public:
     TransformCuda transform_world_to_volume_;
 
 public:
-    inline __DEVICE__ TriangleMeshCudaServer& mesh() {
+    inline __DEVICE__ TriangleMeshCudaServer<VertexRaw>& mesh() {
         return mesh_;
     }
 
@@ -82,8 +82,8 @@ public: /** Direct index accessing
 
     inline __DEVICE__ Vector3i &vertex_indices(int x, int y, int z);
     inline __DEVICE__ Vector3i &vertex_indices(const Vector3i &X);
-    inline __DEVICE__ int &table_index(int x, int y, int z);
-    inline __DEVICE__ int &table_index(const Vector3i &X);
+    inline __DEVICE__ uchar &table_index(int x, int y, int z);
+    inline __DEVICE__ uchar &table_index(const Vector3i &X);
 
 public: /** Value interpolating **/
     inline __DEVICE__ float TSDFAt(float x, float y, float z);
@@ -108,10 +108,6 @@ public:
         MonoPinholeCameraCuda& camera,
         TransformCuda &transform_camera_to_world);
 
-//    inline __DEVICE__ void MarchingCubesVertexAllocation();
-//    inline __DEVICE__ void MarchingCubesVertexExtraction();
-//    inline __DEVICE__ void MarchingCubesTriangleExtraction();
-
 public:
     friend class UniformTSDFVolumeCuda<N>;
 };
@@ -120,7 +116,7 @@ template<size_t N>
 class UniformTSDFVolumeCuda {
 private:
     std::shared_ptr<UniformTSDFVolumeCudaServer<N>> server_ = nullptr;
-    TriangleMeshCuda mesh_;
+    TriangleMeshCuda<VertexRaw> mesh_;
 
 public:
     float voxel_length_;
@@ -156,10 +152,10 @@ public:
                    TransformCuda &transform_camera_to_world);
 
 public:
-    TriangleMeshCuda &mesh() {
+    TriangleMeshCuda<VertexRaw> &mesh() {
         return mesh_;
     }
-    const TriangleMeshCuda &mesh() const {
+    const TriangleMeshCuda<VertexRaw> &mesh() const {
         return mesh_;
     }
     std::shared_ptr<UniformTSDFVolumeCudaServer<N>> &server() {

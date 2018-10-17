@@ -23,8 +23,18 @@ class ImagePyramidCudaServer;
 template<typename T, size_t N>
 class ImagePyramidCuda;
 
+
+enum VertexType {
+    VertexRaw = 0,
+    VertexWithNormal = 1,
+    VertexWithColor = 2,
+    VertexWithNormalAndColor = 3
+};
+
+template<VertexType type>
 class TriangleMeshCudaServer;
 
+template<VertexType type>
 class TriangleMeshCuda;
 
 class PointCloudCudaServer;

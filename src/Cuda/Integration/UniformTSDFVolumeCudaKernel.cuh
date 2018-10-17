@@ -50,7 +50,7 @@ void MarchingCubesVertexAllocationKernel(
 
     const Vector3i X_voxel = Vector3i(x, y, z);
 
-    int &table_index = server.table_index(x, y, z);
+    uchar &table_index = server.table_index(x, y, z);
     table_index = 0;
 
     int tmp_table_index = 0;
@@ -70,7 +70,7 @@ void MarchingCubesVertexAllocationKernel(
         tmp_table_index |= ((tsdf < 0) ? (1 << i) : 0);
     }
     if (tmp_table_index == 0 || tmp_table_index == 255) return;
-    table_index = tmp_table_index;
+    table_index = (uchar)tmp_table_index;
 
     /** Extract up to 3 edges in this voxel: 0 - 1; 0 - 3; 0 - 4 **/
     int edges = edge_table[table_index];
@@ -147,7 +147,7 @@ void MarchingCubesTriangleExtractionKernel(
 
     /** Get table index - it is always faster to recompute it rather than
      * save it **/
-    const int table_index = server.table_index(x, y, z);
+    const uchar table_index = server.table_index(x, y, z);
     if (table_index == 0 || table_index == 255) return;
 
 #pragma unroll 1

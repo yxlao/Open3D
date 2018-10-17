@@ -107,25 +107,25 @@ void UniformMeshVolumeCuda<type, N>::UpdateServer() {
     server_->triangles_ = *triangles_.server();
 }
 
-template<VertexType type, size_t N>
-TriangleMeshCuda UniformMeshVolumeCuda<type, N>::ToTriangleMeshCuda(){
-    /** No way to copy interleaved data. Must launch a kernel call **/
-    TriangleMeshCuda mesh;
-    ToTriangleMeshCuda(mesh);
-    return mesh;
-}
-
-template<VertexType type, size_t N>
-void UniformMeshVolumeCuda<type, N>::ToTriangleMeshCuda(
-    TriangleMeshCuda &mesh) {
-    mesh.vertices() = vertices_;
-    mesh.vertex_normals() = vertex_normals_;
-    mesh.vertex_colors() = vertex_colors_;
-    mesh.triangles() = triangles_;
-    mesh.max_vertices_ = max_vertices_;
-    mesh.max_triangles_ = max_triangles_;
-
-    mesh.UpdateServer();
-}
+//template<VertexType type, size_t N>
+//TriangleMeshCuda UniformMeshVolumeCuda<type, N>::ToTriangleMeshCuda(){
+//    /** No way to copy interleaved data. Must launch a kernel call **/
+//    TriangleMeshCuda mesh;
+//    ToTriangleMeshCuda(mesh);
+//    return mesh;
+//}
+//
+//template<VertexType type, size_t N>
+//void UniformMeshVolumeCuda<type, N>::ToTriangleMeshCuda(
+//    TriangleMeshCuda &mesh) {
+//    mesh.vertices() = vertices_;
+//    mesh.vertex_normals() = vertex_normals_;
+//    mesh.vertex_colors() = vertex_colors_;
+//    mesh.triangles() = triangles_;
+//    mesh.max_vertices_ = max_vertices_;
+//    mesh.max_triangles_ = max_triangles_;
+//
+//    mesh.UpdateServer();
+//}
 
 }

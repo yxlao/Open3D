@@ -113,8 +113,8 @@ public:
     void Release();
     void UpdateServer();
 
-    TriangleMeshCuda ToTriangleMeshCuda();
-    void ToTriangleMeshCuda(TriangleMeshCuda &mesh);
+//    TriangleMeshCuda<VertexRaw> ToTriangleMeshCuda();
+//    void ToTriangleMeshCuda(TriangleMeshCuda<VertexRaw> &mesh);
 
 public:
     ArrayCuda<Vector3i> &triangles() {

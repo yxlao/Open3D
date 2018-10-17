@@ -7,7 +7,17 @@
 
 namespace open3d {
 
-class TriangleMeshCuda;
+template
+class TriangleMeshCuda<VertexRaw>;
+
+template
+class TriangleMeshCuda<VertexWithNormal>;
+
+template
+class TriangleMeshCuda<VertexWithColor>;
+
+template
+class TriangleMeshCuda<VertexWithNormalAndColor>;
 
 template
 class ImageCuda<Vector1s>;
