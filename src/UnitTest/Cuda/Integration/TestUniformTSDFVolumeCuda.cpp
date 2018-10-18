@@ -92,12 +92,12 @@ TEST(UniformTSDFVolumeCuda, RayCasting) {
         volume.RayCasting(raycaster, default_camera, extrinsics);
     }
     timer.Stop();
+    PrintInfo("Average raycasting time: %f milliseconds\n",
+              timer.GetDuration() / iteration_times);
+
     cv::Mat imraycaster = raycaster.Download();
     cv::imshow("im", imraycaster);
     cv::waitKey(-1);
-
-    PrintInfo("Average raycasting time: %f milliseconds\n",
-        timer.GetDuration() / iteration_times);
 }
 
 TEST(UniformTSDFVolumeCuda, MarchingCubes) {

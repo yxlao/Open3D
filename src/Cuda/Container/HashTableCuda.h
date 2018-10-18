@@ -94,7 +94,18 @@ private:
     MemoryHeapCudaServer<Value> memory_heap_value_;
     MemoryHeapCudaServer<LinkedListNodeEntryCuda> memory_heap_entry_list_node_;
 
-    /* Explicit allocation for LinkedLists living in Array ON CUDA */
+    /** WARNING!!!
+      * When our Cuda containers store SERVERS
+      * (in this case LinkedListEntryCudaServer),
+      * we have to be very careful.
+      * - One option is to call Create() for their host classes per element.
+      *   but that means, for a 100000 element array, we have to allocate 100000
+      *   host classes them on CPU, create them, and push them on GPU
+      *   one-by-one. That is too expensive and stupid.
+      * - Another option is to allocate them on CUDA using malloc, but that
+      *   somehow fail to work.
+      * - So we choose to
+     Explicit allocation for LinkedLists living in Array ON CUDA */
     int *entry_list_head_node_ptrs_;
     int *entry_list_size_ptrs_;
 
@@ -112,6 +123,7 @@ public:
 
     /** External interfaces - return nullable object **/
     __DEVICE__ Value *GetValuePtrByKey(const Key &key);
+    __DEVICE__ Value *operator[] (const Key &key);
 
     __DEVICE__ int New(const Key &key);
     __DEVICE__ int Delete(const Key &key);
@@ -190,7 +202,6 @@ public:
      * @param pairs
      * @return pair count
      */
-
     void New(std::vector<Key> &keys, std::vector<Value> &values);
     void Delete(std::vector<Key> &keys);
     std::tuple<std::vector<int>, std::vector<int>> Profile();

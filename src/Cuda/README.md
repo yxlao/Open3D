@@ -96,4 +96,6 @@ make_float(template<T>) may work?
 are correctly prefixed with EIGEN_DEVICE_FUNC. Even if I don't call Eigen 
 function in CUDA, as long as I compile with nvcc, the annoying warnings will 
 come out. Work around: UNCOMMENT EIGEN_DEVICE_FUNC.
+- DO NOT add boundary checks in frequently accessed functions, such as get(),
+ push_back(), etc. Check them outside (or just ignore them first...)
 

@@ -10,6 +10,7 @@
 #include "MemoryHeapCuda.cuh"
 
 #include <Cuda/Common/Common.h>
+#include <cuda.h>
 
 #include <vector>
 #include <cassert>
@@ -63,6 +64,13 @@ Value *HashTableCudaServer<Key, Value, Hasher>
     int internal_ptr = GetInternalValuePtrByKey(key);
     if (internal_ptr == NULL_PTR) return nullptr;
     return GetValueByInternalValuePtr(internal_ptr);
+}
+
+template<typename Key, typename Value, typename Hasher>
+__device__
+Value *HashTableCudaServer<Key, Value, Hasher>
+::operator[] (const Key &key) {
+    return GetValuePtrByKey(key);
 }
 
 template<typename Key, typename Value, typename Hasher>

@@ -14,6 +14,12 @@ class UniformTSDFVolumeCudaServer;
 template<size_t N>
 class UniformTSDFVolumeCuda;
 
+template<size_t N>
+class ScalableTSDFVolumeCudaServer;
+
+template<size_t N>
+class ScalableTSDFVolumeCuda;
+
 template<VertexType type, size_t N>
 class UniformMeshVolumeCudaServer;
 

@@ -248,7 +248,10 @@ list(APPEND 3RDPARTY_LIBRARIES
      ${tinyfiledialogs_LIBRARIES}
 
      ${OpenCV_LIBS}
-     ${CUDA_LIBRARIES}) # > additional libraries for CUDA
+     ${CUDA_LIBRARIES}
+     ${CUDA_cudart_static_LIBRARY}
+     ${CUDA_cupti_LIBRARY}
+     ${CUDA_cudadevrt_LIBRARY}) # > additional libraries for CUDA
 
 # set PRE_BUILT_3RDPARTY_LIBRARIES. When building Open3D as shared library,
 # the user app that links Open3D also need to link PRE_BUILT_3RDPARTY_LIBRARIES,

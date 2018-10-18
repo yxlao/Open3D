@@ -1,5 +1,5 @@
 //
-// Created by wei on 9/24/18.
+// Created by wei on 10/17/18.
 //
 
 #include <Cuda/Container/ArrayCuda.h>
@@ -13,63 +13,7 @@
 #include <random>
 #include "UnitTest.h"
 
-TEST(ContainerCuda, ArrayFill) {
-    using namespace open3d;
-
-    Timer timer;
-    std::random_device rd;
-    std::default_random_engine rd_engine(rd());
-
-    timer.Start();
-
-    ArrayCuda<int> array;
-    const int kMaxCapacity = 1000000;
-    const int kFilledValue = 1203;
-
-    array.Create(kMaxCapacity);
-    array.Fill(kFilledValue);
-    std::vector<int> downloaded = array.DownloadAll();
-    for (auto &val : downloaded) {
-        EXPECT_EQ(val, kFilledValue);
-    }
-    timer.Stop();
-    PrintInfo("> ArrayCuda.Fill() passed in %.2f seconds.\n",
-              timer.GetDuration() * 0.001f);
-}
-
-TEST(ContainerCuda, ArrayUploadAndDownload) {
-    using namespace open3d;
-    Timer timer;
-    std::random_device rd;
-    std::default_random_engine rd_engine(rd());
-
-    timer.Start();
-
-    ArrayCuda<int> array;
-    const int kMaxCapacity = 1000000;
-    array.Create(kMaxCapacity);
-
-    std::vector<int> random_vec;
-    random_vec.resize(kMaxCapacity / 2);
-    std::uniform_int_distribution<> dist(0, kMaxCapacity);
-    for (auto &val : random_vec) {
-        val = dist(rd_engine);
-    }
-
-    array.Upload(random_vec);
-    std::vector<int> downloaded = array.Download();
-    EXPECT_EQ(random_vec.size(), downloaded.size());
-
-    for (int i = 0; i < (int) random_vec.size(); ++i) {
-        EXPECT_EQ(random_vec[i], downloaded[i]);
-    }
-    timer.Stop();
-    PrintInfo("ArrayCuda.Upload() and ArrayCuda.Download() "
-              "passed in %.2f seconds.\n",
-              timer.GetDuration() * 0.001f);
-}
-
-TEST(ContainerCuda, LinkedListInsertAndDownload) {
+TEST(LinkedListCuda, LinkedListInsertAndDownload) {
     using namespace open3d;
 
     Timer timer;
@@ -129,7 +73,7 @@ TEST(ContainerCuda, LinkedListInsertAndDownload) {
     memory_heap.Release();
 }
 
-TEST(ContainerCuda, LinkedListInsertAndDelete) {
+TEST(LinkedListCuda, LinkedListInsertAndDelete) {
     using namespace open3d;
 
     Timer timer;
@@ -273,7 +217,7 @@ TEST(ContainerCuda, LinkedListInsertAndDelete) {
               timer.GetDuration() * 0.001f);
 }
 
-TEST(ContainerCuda, HashTableProfiling) {
+TEST(LinkedListCuda, HashTableProfiling) {
     using namespace open3d;
 
     Timer timer;
@@ -328,7 +272,7 @@ TEST(ContainerCuda, HashTableProfiling) {
               "per bucket...\n");
     for (int i = 0; i < array_entry_count.size(); ++i) {
         PrintInfo("> %d: %d %d\n", i,
-            array_entry_count[i], list_entry_count[i]);
+                  array_entry_count[i], list_entry_count[i]);
     }
 
     for (int i = 0; i < num_iters; ++i) {
@@ -351,108 +295,13 @@ TEST(ContainerCuda, HashTableProfiling) {
               "per bucket...\n");
     for (int i = 0; i < array_entry_count.size(); ++i) {
         PrintInfo("> %d: d %d\n", i,
-            array_entry_count[i], list_entry_count[i]);
+                  array_entry_count[i], list_entry_count[i]);
     }
 
-    table.Release();
-}
-
-TEST(ContainerCuda, HashTableInsertionAndDelete) {
-    using namespace open3d;
-
-    Timer timer;
-    std::random_device rd;
-    std::default_random_engine rd_engine(rd());
-
-    HashTableCuda<Vector3i, int, SpatialHasher> table;
-    const int bucket_count = 400000;
-    table.Create(bucket_count, 2000000);
-
-    int num_pairs = 2000000;
-    std::vector<Vector3i> keys;
-    std::vector<int> values;
-
-    keys.resize(num_pairs);
-    values.resize(num_pairs);
-
-    std::uniform_int_distribution<> dist(0, num_pairs);
-    std::unordered_map<Vector3i, int, SpatialHasher> pairs;
-    for (int i = 0; i < num_pairs; ++i) {
-        keys[i] =
-            Vector3i(dist(rd_engine), dist(rd_engine), dist(rd_engine));
-        values[i] = dist(rd_engine);
-        pairs[keys[i]] = values[i];
-    }
-
-    /* give more tries */
-    int iters = 1000;
-    int num_per_iter = num_pairs / iters;
-    for (int i = 0; i < iters; ++i) {
-        std::vector<Vector3i> subkeys(
-            keys.begin() + i * num_per_iter,
-            keys.begin() + (i + 1) * num_per_iter);
-        std::vector<int> subvalues(
-            values.begin() + i * num_per_iter,
-            values.begin() + (i + 1) * num_per_iter);
-        table.New(subkeys, subvalues);
-        table.ResetLocks();
-    }
-    auto downloaded = table.Download();
-    std::vector<Vector3i> downloaded_keys = std::get<0>(downloaded);
-    std::vector<int> downloaded_values = std::get<1>(downloaded);
-    PrintInfo("Uploading passed, %d / %d entries uploaded.\n",
-              downloaded_keys.size(), keys.size());
-    auto profile = table.Profile();
-    std::vector<int> array_entry_count = std::get<0>(profile);
-    std::vector<int> list_entry_count = std::get<1>(profile);
-    PrintInfo("Profiling occupied array entries and linked list entries "
-              "per bucket...\n");
-    int array_entry_cnt = 0, list_entry_cnt = 0;
-    for (int i = 0; i < (int) array_entry_count.size(); ++i) {
-        array_entry_cnt += array_entry_count[i];
-        list_entry_cnt += list_entry_count[i];
-    }
-    PrintInfo("Average %.2f entries per array, %.2f entries per linked "
-              "list\n",
-              array_entry_cnt / (float) bucket_count,
-              list_entry_cnt / (float) bucket_count
-    );
-
-    for (int i = 0; i < iters; ++i) {
-        std::vector<Vector3i> subkeys(
-            keys.begin() + i * num_per_iter,
-            keys.begin() + (i + 1) * num_per_iter);
-        table.Delete(subkeys);
-        table.ResetLocks();
-    }
-    downloaded = table.Download();
-    downloaded_keys = std::get<0>(downloaded);
-    downloaded_values = std::get<1>(downloaded);
-    PrintInfo("Delete passed, %d entries remains.\n",
-              downloaded_keys.size());
-
-    profile = table.Profile();
-    array_entry_count = std::get<0>(profile);
-    list_entry_count = std::get<1>(profile);
-    PrintInfo("Profiling occupied array entries and linked list entries "
-              "per bucket...\n");
-    array_entry_cnt = 0;
-    list_entry_cnt = 0;
-    for (int i = 0; i < (int) array_entry_count.size(); ++i) {
-        array_entry_cnt += array_entry_count[i];
-        list_entry_cnt += list_entry_count[i];
-    }
-    PrintInfo("Average %.2f entries per array, %.2f entries per linked "
-              "list\n",
-              array_entry_cnt / (float) bucket_count,
-              list_entry_cnt / (float) bucket_count
-    );
     table.Release();
 }
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
-    RUN_ALL_TESTS();
-
-    return 0;
+    return RUN_ALL_TESTS();
 }

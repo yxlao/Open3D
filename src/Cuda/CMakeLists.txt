@@ -13,8 +13,9 @@ set(CUDA_NVCC_FLAGS
 # create (should be static) library
 cuda_add_library(Cuda
         ${CUDA_ALL_HEADER_FILES} ${CUDA_ALL_SOURCE_FILES}
-        ${CUDA_ALL_CUDA_HEADER_FILES} ${CUDA_ALL_CUDA_SOURCE_FILES})
-target_link_libraries(Cuda Core ${OpenCV_LIBS})
+        ${CUDA_ALL_CUDA_HEADER_FILES} ${CUDA_ALL_CUDA_SOURCE_FILES}
+        $<TARGET_OBJECTS:Core>)
+target_link_libraries(Cuda ${3RD_PARTY_LIBRARIES})
 
 # create subgroups
 ADD_SOURCE_GROUP(Common)

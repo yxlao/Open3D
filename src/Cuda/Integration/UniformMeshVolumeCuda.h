@@ -6,7 +6,7 @@
 
 #include "IntegrationClasses.h"
 
-#include <Geometry/TriangleMesh.h>
+#include <Core/Geometry/TriangleMesh.h>
 #include <Cuda/Common/UtilsCuda.h>
 #include <Cuda/Container/ArrayCuda.h>
 #include <Cuda/Geometry/VectorCuda.h>
