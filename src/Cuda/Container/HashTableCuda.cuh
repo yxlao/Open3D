@@ -253,9 +253,9 @@ void HashTableCuda<Key, Value, Hasher>::Create(
      * are initialized on CUDA (they don't have corresponding clients, so let
      * HashTable class be its client)
      */
-    CheckCuda(cudaMalloc(&server_->entry_list_head_node_ptrs_,
+    CheckCuda(cudaMalloc(&server_->entry_list_head_node_ptrs_memory_pool_,
                          sizeof(int) * bucket_count));
-    CheckCuda(cudaMalloc(&server_->entry_list_size_ptrs_,
+    CheckCuda(cudaMalloc(&server_->entry_list_size_ptrs_memory_pool_,
                          sizeof(int) * bucket_count));
     UpdateServer();
 
@@ -284,8 +284,8 @@ void HashTableCuda<Key, Value, Hasher>::Release() {
 
         memory_heap_entry_list_node_.Release();
         memory_heap_value_.Release();
-        CheckCuda(cudaFree(server_->entry_list_head_node_ptrs_));
-        CheckCuda(cudaFree(server_->entry_list_size_ptrs_));
+        CheckCuda(cudaFree(server_->entry_list_head_node_ptrs_memory_pool_));
+        CheckCuda(cudaFree(server_->entry_list_size_ptrs_memory_pool_));
     }
 
     server_ = nullptr;

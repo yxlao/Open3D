@@ -103,11 +103,12 @@ private:
       *   host classes them on CPU, create them, and push them on GPU
       *   one-by-one. That is too expensive and stupid.
       * - Another option is to allocate them on CUDA using malloc, but that
-      *   somehow fail to work.
-      * - So we choose to
-     Explicit allocation for LinkedLists living in Array ON CUDA */
-    int *entry_list_head_node_ptrs_;
-    int *entry_list_size_ptrs_;
+      *   is very slow (imagine thousands of kernel querying per element
+      *   mallocing simultaneously.
+      * - So we choose external allocation for LinkedLists, and manage them
+      *   on kernels. */
+    int *entry_list_head_node_ptrs_memory_pool_;
+    int *entry_list_size_ptrs_memory_pool_;
 
     /** Internal implementations **/
     /**
@@ -144,11 +145,11 @@ public:
     __DEVICE__ MemoryHeapCudaServer<Value> &memory_heap_value() {
         return memory_heap_value_;
     }
-    __DEVICE__ int *&entry_list_head_node_ptrs() {
-        return entry_list_head_node_ptrs_;
+    __DEVICE__ int *&entry_list_head_node_ptrs_memory_pool() {
+        return entry_list_head_node_ptrs_memory_pool_;
     }
-    __DEVICE__ int *&entry_list_size_ptrs() {
-        return entry_list_size_ptrs_;
+    __DEVICE__ int *&entry_list_size_ptrs_memory_pool() {
+        return entry_list_size_ptrs_memory_pool_;
     }
 
     friend class HashTableCuda<Key, Value, Hasher>;

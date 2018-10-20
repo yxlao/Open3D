@@ -226,8 +226,8 @@ list(APPEND 3RDPARTY_INCLUDE_DIRS
      ${rply_INCLUDE_DIRS}
      ${tinyfiledialogs_INCLUDE_DIRS}
 
-     ${CUDA_TOOLKIT_INCLUDE} # > additional libraries for CUDA
-     ${OpenCV_INCLUDE_DIRS}
+     ${CUDA_TOOLKIT_INCLUDE} # > additional include files for CUDA
+     ${OpenCV_INCLUDE_DIRS}  # > Temporarily used
      ${Sophus_INCLUDE_DIRS})
 
 # set 3RDPARTY_LIBRARY_DIRS
@@ -248,10 +248,8 @@ list(APPEND 3RDPARTY_LIBRARIES
      ${tinyfiledialogs_LIBRARIES}
 
      ${OpenCV_LIBS}
-     ${CUDA_LIBRARIES}
-     ${CUDA_cudart_static_LIBRARY}
-     ${CUDA_cupti_LIBRARY}
-     ${CUDA_cudadevrt_LIBRARY}) # > additional libraries for CUDA
+     ${CUDA_LIBRARIES}) # > additional libraries for CUDA
+
 
 # set PRE_BUILT_3RDPARTY_LIBRARIES. When building Open3D as shared library,
 # the user app that links Open3D also need to link PRE_BUILT_3RDPARTY_LIBRARIES,

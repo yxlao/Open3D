@@ -133,11 +133,13 @@ for (auto &barray_host : barray_hosts_) {
 }
 /** On kernel, array_->server[i] = *barray_host.server() ??? **/
 ```   
-- Another workaround is to preallocated the data in plain cuda array using 
-cudaMalloc on host side, and assign them on kernel.
-- The best way for me is to call malloc on kernels. This is intuitive, like 
+- Another workaround is to pre-allocate the data in a plain cuda array using 
+cudaMalloc on host side, and assign them on kernel. (Name them server memory 
+pool will be a little bit easy to understand?)
+- ~~The best way for me is to call malloc on kernels. This is intuitive, like 
 you are calling a server to connect to some other servers on the server side.
- But there are problems of Cuda's heap size. Working on that.
+ But there are problems of Cuda's heap size. Working on that.~~ That is too 
+ slow and add extra dependencies (cuda driver). Forget it.
 
 ## Conventions of Creating Objects 
 

@@ -2,7 +2,7 @@ message(status ${3RDPARTY_LIBRARIES})
 add_executable(TestHashTableCuda Container/TestHashTableCuda.cpp)
 target_link_libraries(TestHashTableCuda ${CMAKE_PROJECT_NAME}
         ${3RDPARTY_LIBRARIES}
-        ${GTEST_LIBRARIES} pthread cuda)
+        ${GTEST_LIBRARIES} pthread)
 
 add_executable(TestArrayCuda Container/TestArrayCuda.cpp)
 target_link_libraries(TestArrayCuda ${CMAKE_PROJECT_NAME}

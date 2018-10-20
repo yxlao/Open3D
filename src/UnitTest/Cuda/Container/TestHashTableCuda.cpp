@@ -14,29 +14,6 @@
 #include <random>
 #include "UnitTest.h"
 
-TEST(HashTableCuda, HashTableCreation) {
-    using namespace open3d;
-
-
-    size_t size;
-    size = 20000000 * sizeof(int);
-
-    cuInit(0);
-    CUcontext context;
-    CUresult ret = cuCtxCreate_v2(&context, 0, 0);
-    std::cout << ret << std::endl;
-    ret = cuCtxSetCurrent(context);
-    std::cout << ret << std::endl;
-    ret = cuCtxSetLimit(CU_LIMIT_MALLOC_HEAP_SIZE, size);
-    std::cout << ret << std::endl;
-    ret = cuCtxGetLimit(&size, CU_LIMIT_MALLOC_HEAP_SIZE);
-    std::cout << ret << std::endl;
-
-    PrintInfo("CU_LIMIT_MALLOC_HEAP_SIZE: %d\n", size);
-
-    HashTableCuda<Vector3i, int, SpatialHasher> table;
-    table.Create(400000, 200000);
-}
 
 TEST(HashTableCuda, HashTableProfiling) {
     using namespace open3d;
