@@ -11,6 +11,8 @@
 #include <Cuda/Common/Common.h>
 #include <Cuda/Geometry/VectorCuda.h>
 
+#define BUCKET_SIZE 10
+
 namespace open3d {
 
 /**
@@ -26,7 +28,7 @@ public:
     __HOSTDEVICE__ SpatialHasher() { bucket_count_ = 1000000; }
     __HOSTDEVICE__ SpatialHasher(int bucket_count)
         : bucket_count_(bucket_count) {}
-    __HOSTDEVICE__ size_t operator()(const Vector3i &key) const {
+    __HOSTDEVICE__ inline size_t operator()(const Vector3i &key) const {
         const int p0 = 73856093;
         const int p1 = 19349669;
         const int p2 = 83492791;
@@ -37,26 +39,24 @@ public:
     }
 };
 
-#define BUCKET_SIZE 10
-
 template<typename Key>
 class HashEntry {
 public:
     Key key;
     int value_ptr;
 
-    __HOSTDEVICE__ bool operator==(const HashEntry<Key> &other) const {
+    __HOSTDEVICE__ inline bool operator==(const HashEntry<Key> &other) const {
         return key == other.key;
     }
-    __HOSTDEVICE__ bool Matches(const Key &other) const {
-        return (key == other) && (value_ptr != NULL_PTR);
+    __HOSTDEVICE__ inline bool Matches(const Key &other) const {
+        return (key == other) && (value_ptr != NULLPTR_CUDA);
     }
-    __HOSTDEVICE__ bool IsEmpty() {
-        return value_ptr == NULL_PTR;
+    __HOSTDEVICE__ inline bool IsEmpty() {
+        return value_ptr == NULLPTR_CUDA;
     }
-    __HOSTDEVICE__ void Clear() {
+    __HOSTDEVICE__ inline void Clear() {
         key = Key();
-        value_ptr = NULL_PTR;
+        value_ptr = NULLPTR_CUDA;
     }
 };
 
@@ -129,26 +129,27 @@ public:
     __DEVICE__ int New(const Key &key);
     __DEVICE__ int Delete(const Key &key);
 
-    __DEVICE__ ArrayCudaServer<Entry> &entry_array() {
+    __DEVICE__ inline ArrayCudaServer<Entry> &entry_array() {
         return entry_array_;
     }
-    __DEVICE__ ArrayCudaServer<LinkedListEntryCudaServer> &entry_list_array() {
+    __DEVICE__ inline ArrayCudaServer<LinkedListEntryCudaServer>
+        &entry_list_array() {
         return entry_list_array_;
     }
-    __DEVICE__ ArrayCudaServer<Entry> &assigned_entry_array() {
+    __DEVICE__ inline ArrayCudaServer<Entry> &assigned_entry_array() {
         return assigned_entry_array_;
     }
-    __DEVICE__ MemoryHeapCudaServer<LinkedListNodeEntryCuda>
+    __DEVICE__ inline MemoryHeapCudaServer<LinkedListNodeEntryCuda>
     &memory_heap_entry_list_node() {
         return memory_heap_entry_list_node_;
     }
-    __DEVICE__ MemoryHeapCudaServer<Value> &memory_heap_value() {
+    __DEVICE__ inline MemoryHeapCudaServer<Value> &memory_heap_value() {
         return memory_heap_value_;
     }
-    __DEVICE__ int *&entry_list_head_node_ptrs_memory_pool() {
+    __DEVICE__ inline int *&entry_list_head_node_ptrs_memory_pool() {
         return entry_list_head_node_ptrs_memory_pool_;
     }
-    __DEVICE__ int *&entry_list_size_ptrs_memory_pool() {
+    __DEVICE__ inline int *&entry_list_size_ptrs_memory_pool() {
         return entry_list_size_ptrs_memory_pool_;
     }
 

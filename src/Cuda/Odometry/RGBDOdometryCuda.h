@@ -72,63 +72,63 @@ public:
     float depth_diff_threshold_;
 
 public:
-    inline __HOSTDEVICE__ bool IsValidDepth(float depth) {
+    __HOSTDEVICE__ inline bool IsValidDepth(float depth) {
         return depth_near_threshold_ <= depth && depth <= depth_far_threshold_;
     }
-    inline __HOSTDEVICE__ bool IsValidDepthDiff(float depth_diff) {
+    __HOSTDEVICE__ inline bool IsValidDepthDiff(float depth_diff) {
         return fabsf(depth_diff) <= depth_diff_threshold_;
     }
 
 public:
-    inline __DEVICE__ bool ComputePixelwiseJacobiansAndResiduals(
+    __DEVICE__ bool ComputePixelwiseJacobiansAndResiduals(
         int x, int y, size_t level,
         JacobianCuda<6> &jacobian_I, JacobianCuda<6> &jacobian_D,
         float &residual_I, float &residual_D);
-    inline __DEVICE__ bool ComputePixelwiseJtJAndJtr(
+    __DEVICE__ bool ComputePixelwiseJtJAndJtr(
         JacobianCuda<6> &jacobian_I, JacobianCuda<6> &jacobian_D,
         float &residual_I, float &residual_D,
         HessianCuda<6> &JtJ, Vector6f &Jtr);
 
 public:
-    inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
+    __HOSTDEVICE__ inline ImagePyramidCudaServer<Vector1f, N> &
     source_on_target() {
         return source_on_target_;
     }
-    inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
+    __HOSTDEVICE__ inline ImagePyramidCudaServer<Vector1f, N> &
     target_depth() {
         return target_depth_;
     }
-    inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
+    __HOSTDEVICE__ inline ImagePyramidCudaServer<Vector1f, N> &
     target_depth_dx() {
         return target_depth_dx_;
     }
-    inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
+    __HOSTDEVICE__ inline ImagePyramidCudaServer<Vector1f, N> &
     target_depth_dy() {
         return target_depth_dy_;
     }
-    inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
+    __HOSTDEVICE__ inline ImagePyramidCudaServer<Vector1f, N> &
     target_intensity() {
         return target_intensity_;
     }
-    inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
+    __HOSTDEVICE__ inline ImagePyramidCudaServer<Vector1f, N> &
     target_intensity_dx() {
         return target_intensity_dx_;
     }
-    inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
+    __HOSTDEVICE__ inline ImagePyramidCudaServer<Vector1f, N> &
     target_intensity_dy() {
         return target_intensity_dy_;
     }
 
-    inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
+    __HOSTDEVICE__ inline ImagePyramidCudaServer<Vector1f, N> &
     source_depth() {
         return source_depth_;
     }
-    inline __HOSTDEVICE__ ImagePyramidCudaServer<Vector1f, N> &
+    __HOSTDEVICE__ inline ImagePyramidCudaServer<Vector1f, N> &
     source_intensity() {
         return source_intensity_;
     }
 
-    inline __HOSTDEVICE__ ArrayCudaServer<float> &results() {
+    __HOSTDEVICE__ inline ArrayCudaServer<float> &results() {
         return results_;
     }
 
@@ -199,7 +199,6 @@ public:
 
 template<size_t N>
 __GLOBAL__
-void ApplyRGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry,
-                             size_t level);
+void ApplyRGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry, size_t level);
 
 }

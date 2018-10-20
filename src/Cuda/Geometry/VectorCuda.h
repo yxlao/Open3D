@@ -92,21 +92,33 @@ public:
         }
     }
     inline __HOSTDEVICE__ VectorCuda(T v0, T v1) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
         assert(N > 1);
+#endif
         v[0] = v0, v[1] = v1;
     }
     inline __HOSTDEVICE__ VectorCuda(T v0, T v1, T v2) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
         assert(N > 2);
+#endif
         v[0] = v0, v[1] = v1, v[2] = v2;
     }
     inline __HOSTDEVICE__ VectorCuda(T v0, T v1, T v2, T v3) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
         assert(N > 3);
+#endif
         v[0] = v0, v[1] = v1, v[2] = v2, v[3] = v3;
     }
     inline __HOSTDEVICE__ T &operator()(size_t i) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+        assert(i < N);
+#endif
         return v[i];
     }
     inline __HOSTDEVICE__ const T &operator()(size_t i) const {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+        assert(i < N);
+#endif
         return v[i];
     }
     inline __HOSTDEVICE__ bool operator==(const VecType &other) const {

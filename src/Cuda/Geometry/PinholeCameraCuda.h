@@ -26,20 +26,19 @@ public:
     float cy_[N];
 
 public:
-    inline __HOSTDEVICE__ int width(size_t level = 0) { return width_[level]; }
-    inline __HOSTDEVICE__ int height(size_t level = 0) { return height_[level]; }
-    inline __HOSTDEVICE__ float fx(size_t level = 0) { return fx_[level]; }
-    inline __HOSTDEVICE__ float fy(size_t level = 0) { return fy_[level]; }
-    inline __HOSTDEVICE__ float cx(size_t level = 0) { return cx_[level]; }
-    inline __HOSTDEVICE__ float cy(size_t level = 0) { return cy_[level]; }
+    __HOSTDEVICE__ inline int width(size_t level = 0) { return width_[level]; }
+    __HOSTDEVICE__ inline int height(size_t level = 0) { return height_[level]; }
+    __HOSTDEVICE__ inline float fx(size_t level = 0) { return fx_[level]; }
+    __HOSTDEVICE__ inline float fy(size_t level = 0) { return fy_[level]; }
+    __HOSTDEVICE__ inline float cx(size_t level = 0) { return cx_[level]; }
+    __HOSTDEVICE__ inline float cy(size_t level = 0) { return cy_[level]; }
 
-    inline __HOSTDEVICE__ void SetUp(int in_width = 640,
-                                     int in_height = 480,
-                                     float in_fx = 525.0f,
-                                     float in_fy = 525.0f,
-                                     float in_cx = 319.5f,
-                                     float in_cy = 239.5f) {
+    __HOSTDEVICE__ void SetUp(
+        int in_width = 640, int in_height = 480,
+        float in_fx = 525.0f, float in_fy = 525.0f,
+        float in_cx = 319.5f, float in_cy = 239.5f) {
         for (int i = 0; i < N; ++i) {
+
             float factor = 1.0f / (1 << i);
             width_[i] = in_width >> i;
             height_[i] = in_height >> i;
@@ -52,13 +51,19 @@ public:
         }
     }
 
-    inline __HOSTDEVICE__ bool IsValid(const Vector2f &p, size_t level = 0) {
+    __HOSTDEVICE__ inline bool IsValid(const Vector2f &p, size_t level = 0) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+        assert(level < N);
+#endif
         return p(0) >= 0 && p(0) < width_[level] - 1
             && p(1) >= 0 && p(1) < height_[level] - 1;
     }
 
     inline __HOSTDEVICE__ Vector2f Projection(const Vector3f &X,
                                               size_t level = 0) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+        assert(level < N);
+#endif
         return Vector2f((fx_[level] * X(0)) / X(2) + cx_[level],
                         (fy_[level] * X(1)) / X(2) + cy_[level]);
     }
@@ -66,6 +71,9 @@ public:
     inline __HOSTDEVICE__ Vector3f InverseProjection(const Vector2f &p,
                                                      float d,
                                                      size_t level = 0) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+        assert(level < N);
+#endif
         return Vector3f(d * (p(0) - cx_[level]) * inv_fx_[level],
                         d * (p(1) - cy_[level]) * inv_fy_[level],
                         d);
@@ -73,6 +81,9 @@ public:
 
     inline __HOSTDEVICE__ Vector3f InverseProjection(int x, int y, float d,
                                                      size_t level = 0) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+        assert(level < N);
+#endif
         return Vector3f(d * (x - cx_[level]) * inv_fx_[level],
                         d * (y - cy_[level]) * inv_fy_[level],
                         d);

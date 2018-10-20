@@ -6,17 +6,6 @@
 #define _COMMON_H_
 #include <cmath>
 
-/**
- * Make Eigen work on CUDA.
- * DO NOT USE CLANG!
- * - https://eigen.tuxfamily.org/dox/TopicCUDA.html
- * workaround issue between gcc >= 4.7 and cuda 5.5
- */
-#if (defined __GNUC__) && (__GNUC__ > 4 || __GNUC_MINOR__ >= 7)
-#undef _GLIBCXX_ATOMIC_BUILTINS
-#undef _GLIBCXX_USE_INT128
-#endif
-
 #if defined(__CUDACC__)
 #define __ALIGN__(n)  __align__(n)
 /* Use these to avoid redundant conditional macro code ONLY in headers */
@@ -41,39 +30,26 @@ typedef unsigned char uchar;
 typedef unsigned int uint;
 #endif
 
-__HOSTDEVICE__
-inline uchar safe_add(uchar a, uchar b) {
-	return uchar(fminf(a + b, 255));
-}
-__HOSTDEVICE__
-inline uchar safe_mul(float a, uchar b) {
-	return uchar(fminf(a * b, 255));
-}
-
 /* @TODO: make this part modern, using enum, const, etc. */
+#define NULLPTR_CUDA (-1)
 
-/* Default values */
-#define EMPTY_ENTRY (-1)
-#define NULL_PTR (-1)
+#define LINKED_LIST_NODE_NOT_FOUND (-1)
 
-/* Error code */
+#define HASH_ENTRY_EMPTY    (-1)
+#define HASH_ENTRY_EXISTING (-2)
+#define HASH_ENTRY_LOCKED   (-3)
+
 #define SUCCESS  0
-#define UNLOCKED 0
+#define FAIL     1
 
+/* Atomic Lock */
+#define UNLOCKED  0
 #define LOCKED    (-1)
-#define FILE_NOT_FOUND (-2)
-#define NODE_NOT_FOUND (-2)
-#define ENTRY_EXISTED  (-3)
-
-/* Volume configuration */
-#define BLOCK_SIDE_LENGTH  8
-#define SQR_BLOCK_SIDE_LENGTH (BLOCK_SIDE_LENGTH * BLOCK_SIDE_LENGTH)
-#define BLOCK_SIZE            (BLOCK_SIDE_LENGTH * BLOCK_SIDE_LENGTH * BLOCK_SIDE_LENGTH)
 
 #define THREAD_3D_UNIT   8
 #define THREAD_2D_UNIT   16
 #define THREAD_1D_UNIT   32
-#define UPPER_ALIGN(a, b) ((a + b - 1) / b)
+#define DIV_CEILING(a, b) ((a + b - 1) / b)
 
 #define EPSILON (1e-6f)
 #define MINF __int_as_float(0xff800000)

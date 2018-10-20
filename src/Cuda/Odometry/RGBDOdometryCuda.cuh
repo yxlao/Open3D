@@ -299,8 +299,8 @@ void RGBDOdometryCuda<N>::Apply(ImageCuda<Vector1f> &source_depth,
             server_->transform_source_to_target_.FromEigen(
                 transform_source_to_target_);
             const dim3 blocks(
-                UPPER_ALIGN(source_depth_.width(level), THREAD_2D_UNIT),
-                UPPER_ALIGN(source_depth_.height(level), THREAD_2D_UNIT));
+                DIV_CEILING(source_depth_.width(level), THREAD_2D_UNIT),
+                DIV_CEILING(source_depth_.height(level), THREAD_2D_UNIT));
             const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
             ApplyRGBDOdometryKernel << < blocks, threads >> > (*server_, level);
             CheckCuda(cudaDeviceSynchronize());

@@ -31,9 +31,15 @@ public:
     }
 
     inline __HOSTDEVICE__ float &operator()(size_t i, size_t j) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+        assert(i < 4 && j < 4);
+#endif
         return m_[i][j];
     }
     inline __HOSTDEVICE__ const float &operator()(size_t i, size_t j) const {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+        assert(i < 4 && j < 4);
+#endif
         return m_[i][j];
     }
 

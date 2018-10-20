@@ -20,13 +20,13 @@ template<typename T>
 __device__
 void LinkedListCudaServer<T>::Clear() {
     int node_ptr = *head_node_ptr_;
-    while (node_ptr != NULL_PTR) {
+    while (node_ptr != NULLPTR_CUDA) {
         int next_node_ptr = memory_heap_.get_value(node_ptr).next_node_ptr;
         memory_heap_.Free(node_ptr);
         node_ptr = next_node_ptr;
         (*size_)--;
     }
-    *head_node_ptr_ = NULL_PTR;
+    *head_node_ptr_ = NULLPTR_CUDA;
     assert((*size_) == 0);
 }
 
@@ -64,7 +64,7 @@ void LinkedListCudaServer<T>::Create(
     memory_heap_ = memory_heap_server;
     head_node_ptr_ = head_node_ptr;
     size_ = size_ptr;
-    (*head_node_ptr_) = NULL_PTR;
+    (*head_node_ptr_) = NULLPTR_CUDA;
     (*size_) = 0;
 }
 
@@ -76,11 +76,11 @@ void LinkedListCudaServer<T>::Release() {}
 template<typename T>
 __device__
 int LinkedListCudaServer<T>::Delete(const int node_ptr) {
-    if (*head_node_ptr_ == NULL_PTR || node_ptr == NULL_PTR) {
-#ifdef __CUDAPRINT__
+    if (*head_node_ptr_ == NULLPTR_CUDA || node_ptr == NULLPTR_CUDA) {
+#ifdef CUDA_DEBUG_ENABLE_PRINTF
         printf("Error: Invalid pointer or linked list!\n");
 #endif
-        return NODE_NOT_FOUND;
+        return LINKED_LIST_NODE_NOT_FOUND;
     }
 
     /* 1. Head */
@@ -94,15 +94,15 @@ int LinkedListCudaServer<T>::Delete(const int node_ptr) {
     /* 2. Search in the linked list for its predecessor */
     int node_ptr_pred = *head_node_ptr_;
     while (memory_heap_.get_value(node_ptr_pred).next_node_ptr != node_ptr
-        && memory_heap_.get_value(node_ptr_pred).next_node_ptr != NULL_PTR) {
+        && memory_heap_.get_value(node_ptr_pred).next_node_ptr != NULLPTR_CUDA) {
         node_ptr_pred = memory_heap_.get_value(node_ptr_pred).next_node_ptr;
     }
 
-    if (memory_heap_.get_value(node_ptr_pred).next_node_ptr == NULL_PTR) {
-#ifdef __CUDAPRINT__
+    if (memory_heap_.get_value(node_ptr_pred).next_node_ptr == NULLPTR_CUDA) {
+#ifdef CUDA_DEBUG_ENABLE_PRINTF
         printf("Error: Node_ptr %d not found!\n", node_ptr);
 #endif
-        return NODE_NOT_FOUND;
+        return LINKED_LIST_NODE_NOT_FOUND;
     }
 
     memory_heap_.get_value(node_ptr_pred).next_node_ptr =
@@ -116,26 +116,26 @@ template<typename T>
 __device__
 int LinkedListCudaServer<T>::Find(T value) {
     int node_ptr = *head_node_ptr_;
-    while (node_ptr != NULL_PTR) {
+    while (node_ptr != NULLPTR_CUDA) {
         if (memory_heap_.get_value(node_ptr).data == value)
             return node_ptr;
         node_ptr = memory_heap_.get_value(node_ptr).next_node_ptr;
     }
 
-#ifdef __CUDAPRINT__
+#ifdef CUDA_DEBUG_ENABLE_PRINTF
     printf("Error: Value not found!\n");
 #endif
-    return NODE_NOT_FOUND;
+    return LINKED_LIST_NODE_NOT_FOUND;
 }
 
 template<class T>
 __device__
 int LinkedListCudaServer<T>::FindAndDelete(T value) {
-    if (*head_node_ptr_ == NULL_PTR) {
-#ifdef __CUDAPRINT__
+    if (*head_node_ptr_ == NULLPTR_CUDA) {
+#ifdef CUDA_DEBUG_ENABLE_PRINTF
         printf("Empty linked list!\n");
 #endif
-        return NODE_NOT_FOUND;
+        return LINKED_LIST_NODE_NOT_FOUND;
     }
 
     /* 1. Head */
@@ -152,18 +152,18 @@ int LinkedListCudaServer<T>::FindAndDelete(T value) {
     /* 2. Search in the linked list for its predecessor */
     int node_ptr_pred = *head_node_ptr_;
     int node_ptr_curr = memory_heap_.get_value(*head_node_ptr_).next_node_ptr;
-    while (node_ptr_curr != NULL_PTR) {
+    while (node_ptr_curr != NULLPTR_CUDA) {
         T &data = memory_heap_.get_value(node_ptr_curr).data;
         if (data == value) break;
         node_ptr_pred = node_ptr_curr;
         node_ptr_curr = memory_heap_.get_value(node_ptr_curr).next_node_ptr;
     }
 
-    if (node_ptr_curr == NULL_PTR) {
-#ifdef __CUDAPRINT__
+    if (node_ptr_curr == NULLPTR_CUDA) {
+#ifdef CUDA_DEBUG_ENABLE_PRINTF
         printf("Error: Value not found!\n");
 #endif
-        return NODE_NOT_FOUND;
+        return LINKED_LIST_NODE_NOT_FOUND;
     }
 
     memory_heap_.get_value(node_ptr_pred).next_node_ptr =
@@ -221,7 +221,7 @@ void LinkedListCuda<T>::Create(int max_capacity,
     memory_heap_ = memory_heap;
 
     CheckCuda(cudaMalloc(&server_->head_node_ptr_, sizeof(int)));
-    CheckCuda(cudaMemset(server_->head_node_ptr_, NULL_PTR, sizeof(int)));
+    CheckCuda(cudaMemset(server_->head_node_ptr_, NULLPTR_CUDA, sizeof(int)));
 
     CheckCuda(cudaMalloc(&server_->size_, sizeof(int)));
     CheckCuda(cudaMemset(server_->size_, 0, sizeof(int)));

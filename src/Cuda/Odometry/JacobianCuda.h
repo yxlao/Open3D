@@ -25,12 +25,16 @@ private:
 
 public:
     inline __HOSTDEVICE__ float &operator()(size_t i) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
         assert(i < (N + 1) * N / 2);
+#endif
         return h_[i];
     }
 
     inline __HOSTDEVICE__ const float &operator()(size_t i) const {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
         assert(i < (N + 1) * N / 2);
+#endif
         return h_[i];
     }
 
@@ -65,11 +69,15 @@ private:
 
 public:
     inline __HOSTDEVICE__ float &operator()(size_t i) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
         assert(i < N);
+#endif
         return j_[i];
     }
     inline __HOSTDEVICE__ const float &operator()(size_t i) const {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
         assert(i < N);
+#endif
         return j_[i];
     }
 

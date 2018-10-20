@@ -18,7 +18,11 @@ namespace open3d {
  */
 template<typename T>
 __device__
-int ArrayCudaServer<T>::push_back(T value) {
+inline int ArrayCudaServer<T>::push_back(T value) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+    assert(*iterator_ < max_capacity_);
+#endif
+
     int addr = atomicAdd(iterator_, 1);
     data_[addr] = value;
     return addr;
@@ -26,13 +30,21 @@ int ArrayCudaServer<T>::push_back(T value) {
 
 template<typename T>
 __device__
-T &ArrayCudaServer<T>::get(size_t index) {
+inline T &ArrayCudaServer<T>::get(size_t index) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+    assert(index <= max_capacity_);
+#endif
+
     return data_[index];
 }
 
 template<typename T>
 __device__
-T &ArrayCudaServer<T>::operator[](size_t index) {
+inline T &ArrayCudaServer<T>::operator[](size_t index) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+    assert(index <= max_capacity_);
+#endif
+
     return data_[index];
 }
 
@@ -182,7 +194,7 @@ std::vector<T> ArrayCuda<T>::DownloadAll() {
 template<typename T>
 void ArrayCuda<T>::Fill(const T &val) {
     const int threads = THREAD_1D_UNIT;
-    const int blocks = UPPER_ALIGN(max_capacity_, THREAD_1D_UNIT);
+    const int blocks = DIV_CEILING(max_capacity_, THREAD_1D_UNIT);
     FillArrayKernel << < blocks, threads >> > (*server_, val);
     CheckCuda(cudaDeviceSynchronize());
 }

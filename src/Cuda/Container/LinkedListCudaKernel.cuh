@@ -19,7 +19,7 @@ __global__
 void FindLinkedListKernel(LinkedListCudaServer<T> server, T *query,
                           const int N) {
     for (int i = 0; i < N; ++i) {
-        if (NODE_NOT_FOUND == server.Find(query[i])) {
+        if (LINKED_LIST_NODE_NOT_FOUND == server.Find(query[i])) {
             printf("val[%d] Not found!\n", i);
         }
     }
@@ -49,7 +49,7 @@ void DownloadLinkedListKernel(LinkedListCudaServer<T> server, T *data,
     int node_ptr = server.head_node_ptr();
 
     int cnt = 0;
-    while (node_ptr != NULL_PTR) {
+    while (node_ptr != NULLPTR_CUDA) {
         assert(cnt < N);
         LinkedListNodeCuda<T> &node = server.get_node(node_ptr);
         data[cnt] = node.data;

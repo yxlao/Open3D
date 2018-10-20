@@ -5,7 +5,6 @@
 #pragma once
 
 #include "IntegrationClasses.h"
-#include "UniformMeshVolumeCuda.h"
 #include <Cuda/Geometry/VectorCuda.h>
 #include <Cuda/Geometry/ImageCuda.h>
 #include <Cuda/Geometry/PinholeCameraCuda.h>
@@ -34,64 +33,99 @@ public:
     TransformCuda transform_volume_to_world_;
     TransformCuda transform_world_to_volume_;
 
-public: /** Conversions **/
-    inline __DEVICE__ Vector3f world_to_voxel(float x, float y, float z);
-    inline __DEVICE__ Vector3f world_to_voxel(const Vector3f &X);
-
-    inline __DEVICE__ Vector3f voxel_to_world(float x, float y, float z);
-    inline __DEVICE__ Vector3f voxel_to_world(const Vector3f &X);
-
-    inline __DEVICE__ Vector3f voxel_to_volume(const Vector3f &X);
-    inline __DEVICE__ Vector3f voxel_to_volume(float x, float y, float z);
-
-    inline __DEVICE__ Vector3f volume_to_voxel(const Vector3f &X);
-    inline __DEVICE__ Vector3f volume_to_voxel(float x, float y, float z);
-
-    inline __DEVICE__ Vector3i Vectorize(size_t index);
-    inline __DEVICE__ int IndexOf(int x, int y, int z);
-    inline __DEVICE__ int IndexOf(const Vector3i &X);
-
-    inline __DEVICE__ bool InVolume(int x, int y, int z);
-    inline __DEVICE__ bool InVolume(const Vector3i &X);
-    inline __DEVICE__ bool InVolumef(float x, float y, float z);
-    inline __DEVICE__ bool InVolumef(const Vector3f &X);
-
-public: /** Direct index accessing
-          * - for efficiency ignore index checking in these functions
-          * - check them outside **/
-    inline __DEVICE__ float &tsdf(int x, int y, int z);
-    inline __DEVICE__ float &tsdf(const Vector3i &X);
-    inline __DEVICE__ uchar &weight(int x, int y, int z);
-    inline __DEVICE__ uchar &weight(const Vector3i &X);
-    inline __DEVICE__ Vector3b &color(int x, int y, int z);
-    inline __DEVICE__ Vector3b &color(const Vector3i &X);
-    /** Voxel level trivial gradient -- NO trilinear interpolation
-     * This especially useful for MarchingCubes **/
-    inline __DEVICE__ Vector3f gradient(int x, int y, int z);
-    inline __DEVICE__ Vector3f gradient(const Vector3i &X);
-
-public: /** Value interpolating **/
-    inline __DEVICE__ float TSDFAt(float x, float y, float z);
-    inline __DEVICE__ float TSDFAt(const Vector3f &X);
-    inline __DEVICE__ uchar WeightAt(float x, float y, float z);
-    inline __DEVICE__ uchar WeightAt(const Vector3f &X);
-    inline __DEVICE__ Vector3b ColorAt(float x, float y, float z);
-    inline __DEVICE__ Vector3b ColorAt(const Vector3f &X);
-
-    inline __DEVICE__ Vector3f GradientAt(float x, float y, float z);
-    inline __DEVICE__ Vector3f GradientAt(const Vector3f &X);
+public:
+    __DEVICE__ inline Vector3i Vectorize(size_t index) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+        assert(index < N * N * N);
+#endif
+        Vector3i ret;
+        ret(0) = int(index % N);
+        ret(1) = int((index % (N * N)) / N);
+        ret(2) = int(index / (N * N));
+        return ret;
+    }
+    __DEVICE__ inline int IndexOf(int x, int y, int z) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+        assert(x >= 0 && y >= 0 && z >= 0);
+        assert(x < N && y < N && z < N);
+#endif
+        return int(z * (N * N) + y * N + x);
+    }
+    __DEVICE__ inline int IndexOf(const Vector3i &X) {
+        return IndexOf(X(0), X(1), X(2));
+    }
 
 public:
-    __DEVICE__ void Integrate(
-        int x, int y, int z,
-        ImageCudaServer<Vector1f>& depth,
-        MonoPinholeCameraCuda& camera,
-        TransformCuda & transform_camera_to_world);
+    /** Direct index accessing
+      * - for efficiency ignore index checking in these functions
+      * - check them outside **/
+    __DEVICE__ inline float &tsdf(int x, int y, int z) {
+        return tsdf_[IndexOf(x, y, z)];
+    }
+    __DEVICE__ inline float &tsdf(const Vector3i &X) {
+        return tsdf_[IndexOf(X(0), X(1), X(2))];
+    }
+    __DEVICE__ inline uchar &weight(int x, int y, int z) {
+        return weight_[IndexOf(x, y, z)];
+    }
+    __DEVICE__ inline uchar &weight(const Vector3i &X) {
+        return weight_[IndexOf(X(0), X(1), X(2))];
+    }
+    __DEVICE__ inline Vector3b &color(int x, int y, int z) {
+        return color_[IndexOf(x, y, z)];
+    }
+    __DEVICE__ inline Vector3b &color(const Vector3i &X) {
+        return color_[IndexOf(X(0), X(1), X(2))];
+    }
 
-    __DEVICE__ Vector3f RayCasting(
-        int x, int y,
-        MonoPinholeCameraCuda& camera,
-        TransformCuda &transform_camera_to_world);
+    /** Voxel level trivial gradient -- NO trilinear interpolation
+     * This is especially useful for MarchingCubes **/
+    __DEVICE__ Vector3f gradient(int x, int y, int z);
+    __DEVICE__ Vector3f gradient(const Vector3i &X);
+
+
+    /** Coordinate onversions **/
+    __DEVICE__ inline bool InVolume(int x, int y, int z);
+    __DEVICE__ inline bool InVolume(const Vector3i &X);
+
+    __DEVICE__ inline bool InVolumef(float x, float y, float z);
+    __DEVICE__ inline bool InVolumef(const Vector3f &X);
+
+    __DEVICE__ inline Vector3f world_to_voxel(float x, float y, float z);
+    __DEVICE__ inline Vector3f world_to_voxel(const Vector3f &X);
+
+    __DEVICE__ inline Vector3f voxel_to_world(float x, float y, float z);
+    __DEVICE__ inline Vector3f voxel_to_world(const Vector3f &X);
+
+    __DEVICE__ inline Vector3f voxel_to_volume(const Vector3f &X);
+    __DEVICE__ inline Vector3f voxel_to_volume(float x, float y, float z);
+
+    __DEVICE__ inline Vector3f volume_to_voxel(const Vector3f &X);
+    __DEVICE__ inline Vector3f volume_to_voxel(float x, float y, float z);
+
+public:
+    /** Value interpolating **/
+    __DEVICE__ float TSDFAt(float x, float y, float z);
+    __DEVICE__ float TSDFAt(const Vector3f &X);
+
+    __DEVICE__ uchar WeightAt(float x, float y, float z);
+    __DEVICE__ uchar WeightAt(const Vector3f &X);
+
+    __DEVICE__ Vector3b ColorAt(float x, float y, float z);
+    __DEVICE__ Vector3b ColorAt(const Vector3f &X);
+
+    __DEVICE__ Vector3f GradientAt(float x, float y, float z);
+    __DEVICE__ Vector3f GradientAt(const Vector3f &X);
+
+public:
+    __DEVICE__ void Integrate(int x, int y, int z,
+                              ImageCudaServer<Vector1f> &depth,
+                              MonoPinholeCameraCuda &camera,
+                              TransformCuda &transform_camera_to_world);
+
+    __DEVICE__ Vector3f RayCasting(int x, int y,
+                                   MonoPinholeCameraCuda &camera,
+                                   TransformCuda &transform_camera_to_world);
 
 public:
     friend class UniformTSDFVolumeCuda<N>;
@@ -126,15 +160,12 @@ public:
     std::tuple<std::vector<float>, std::vector<uchar>, std::vector<Vector3b>>
     DownloadVolume();
 
-    int Integrate(ImageCuda<Vector1f> &depth,
-                  MonoPinholeCameraCuda &camera,
-                  TransformCuda &transform_camera_to_world);
-    template<VertexType type>
-    int MarchingCubes(UniformMeshVolumeCuda<type, N> &mesher);
-
-    int RayCasting(ImageCuda<Vector3f> &image,
+    void Integrate(ImageCuda<Vector1f> &depth,
                    MonoPinholeCameraCuda &camera,
                    TransformCuda &transform_camera_to_world);
+    void RayCasting(ImageCuda<Vector3f> &image,
+                    MonoPinholeCameraCuda &camera,
+                    TransformCuda &transform_camera_to_world);
 
 public:
     std::shared_ptr<UniformTSDFVolumeCudaServer<N>> &server() {
@@ -158,22 +189,4 @@ void RayCastingKernel(UniformTSDFVolumeCudaServer<N> server,
                       ImageCudaServer<Vector3f> image,
                       MonoPinholeCameraCuda camera,
                       TransformCuda transform_camera_to_world);
-
-template<VertexType type, size_t N>
-__GLOBAL__
-void MarchingCubesVertexAllocationKernel(
-    UniformTSDFVolumeCudaServer<N> server,
-    UniformMeshVolumeCudaServer<type, N> mesher);
-
-template<VertexType type, size_t N>
-__GLOBAL__
-void MarchingCubesVertexExtractionKernel(
-    UniformTSDFVolumeCudaServer<N> server,
-    UniformMeshVolumeCudaServer<type, N> mesher);
-
-template<VertexType type, size_t N>
-__GLOBAL__
-void MarchingCubesTriangleExtractionKernel(
-    UniformTSDFVolumeCudaServer<N> server,
-    UniformMeshVolumeCudaServer<type, N> mesher);
 }

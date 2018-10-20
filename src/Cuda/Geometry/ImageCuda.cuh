@@ -23,7 +23,7 @@ namespace open3d {
 template<typename VecType>
 __device__
 VecType &ImageCudaServer<VecType>::get(int x, int y) {
-#ifdef DEBUG_CUDA
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_);
     assert(y >= 0 && y < height_);
 #endif
@@ -43,7 +43,7 @@ VecType &ImageCudaServer<VecType>::operator()(int x, int y) {
 template<typename VecType>
 __device__
 VecType ImageCudaServer<VecType>::get_interp(float x, float y) {
-#ifdef DEBUG_CUDA
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_ - 1);
     assert(y >= 0 && y < height_ - 1);
 #endif
@@ -61,7 +61,7 @@ VecType ImageCudaServer<VecType>::get_interp(float x, float y) {
 template<typename VecType>
 __device__
 VecType ImageCudaServer<VecType>::get_interp_with_holes(float x, float y) {
-#ifdef DEBUG_CUDA
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_ - 1);
     assert(y >= 0 && y < height_ - 1);
 #endif
@@ -99,6 +99,11 @@ VecType ImageCudaServer<VecType>::get_interp_with_holes(float x, float y) {
 template<typename VecType>
 __device__
 VecType ImageCudaServer<VecType>::BoxFilter2x2(int x, int y) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+    assert(x >= 0 && x < width_);
+    assert(y >= 0 && y < height_);
+#endif
+
     int xp1 = min(width_ - 1, x + 1);
     int yp1 = min(height_ - 1, y + 1);
 
@@ -115,6 +120,11 @@ VecType ImageCudaServer<VecType>::BoxFilter2x2(int x, int y) {
 template<typename VecType>
 __device__
 VecType ImageCudaServer<VecType>::BoxFilter2x2WithHoles(int x, int y) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+    assert(x >= 0 && x < width_);
+    assert(y >= 0 && y < height_);
+#endif
+
     int xp1 = min(width_ - 1, x + 1);
     int yp1 = min(height_ - 1, y + 1);
 
@@ -145,6 +155,11 @@ VecType ImageCudaServer<VecType>::BoxFilter2x2WithHoles(int x, int y) {
 template<typename VecType>
 __device__
 VecType ImageCudaServer<VecType>::GaussianFilter(int x, int y, int kernel_idx) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+    assert(x >= 0 && x < width_);
+    assert(y >= 0 && y < height_);
+#endif
+
     static const int kernel_sizes[3] = {3, 5, 7};
     static const float gaussian_weights[3][7] = {
         {0.25f, 0.5f, 0.25f, 0, 0, 0, 0},
@@ -181,6 +196,11 @@ template<typename VecType>
 __device__
 VecType ImageCudaServer<VecType>::GaussianFilterWithHoles(
     int x, int y, int kernel_idx) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+    assert(x >= 0 && x < width_);
+    assert(y >= 0 && y < height_);
+#endif
+
     static const int kernel_sizes[3] = {3, 5, 7};
     static const float gaussian_weights[3][7] = {
         {0.25f, 0.5f, 0.25f, 0, 0, 0, 0},
@@ -223,6 +243,11 @@ template<typename VecType>
 __device__
 VecType ImageCudaServer<VecType>::BilateralFilter(
     int x, int y, int kernel_idx, float val_sigma) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+    assert(x >= 0 && x < width_);
+    assert(y >= 0 && y < height_);
+#endif
+
     static const int kernel_sizes[3] = {3, 5, 7};
     static const float gaussian_weights[3][7] = {
         {0.25f, 0.5f, 0.25f, 0, 0, 0, 0},
@@ -263,6 +288,11 @@ template<typename VecType>
 __device__
 VecType ImageCudaServer<VecType>::BilateralFilterWithHoles(
     int x, int y, int kernel_idx, float val_sigma) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+    assert(x >= 0 && x < width_);
+    assert(y >= 0 && y < height_);
+#endif
+
     static const int kernel_sizes[3] = {3, 5, 7};
     static const float gaussian_weights[3][7] = {
         {0.25f, 0.5f, 0.25f, 0, 0, 0, 0},
@@ -307,6 +337,11 @@ template<typename VecType>
 __device__
 ImageCudaServer<VecType>::Grad
 ImageCudaServer<VecType>::Sobel(int x, int y) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+    assert(x >= 1 && x < width_ - 1);
+    assert(y >= 1 && y < height_ - 1);
+#endif
+
     auto Iumvm = get(x - 1, y - 1).ToVectorf();
     auto Iumv0 = get(x - 1, y).ToVectorf();
     auto Iumvp = get(x - 1, y + 1).ToVectorf();
@@ -331,6 +366,11 @@ template<typename VecType>
 __device__
 ImageCudaServer<VecType>::Grad
 ImageCudaServer<VecType>::SobelWithHoles(int x, int y) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+    assert(x >= 1 && x < width_ - 1);
+    assert(y >= 1 && y < height_ - 1);
+#endif
+
     auto zero = VecType::VecTypef(0);
     auto Iumvm = get(x - 1, y - 1).ToVectorf();
     auto Iumv0 = get(x - 1, y).ToVectorf();
@@ -358,14 +398,14 @@ ImageCudaServer<VecType>::SobelWithHoles(int x, int y) {
  */
 template<typename VecType>
 ImageCuda<VecType>::ImageCuda() : width_(-1), height_(-1) {
-#ifdef __TRACE_LIFE_CYCLE__
+#ifdef HOST_DEBUG_MONITOR_LIFECYCLE
     PrintInfo("Default ImageCuda constructor.\n");
 #endif
 }
 
 template<typename VecType>
 ImageCuda<VecType>::ImageCuda(const ImageCuda<VecType> &other) {
-#ifdef __TRACE_LIFE_CYCLE__
+#ifdef HOST_DEBUG_MONITOR_LIFECYCLE
     PrintInfo("ImageCuda copy constructor.\n");
 #endif
     server_ = other.server();
@@ -374,14 +414,14 @@ ImageCuda<VecType>::ImageCuda(const ImageCuda<VecType> &other) {
     height_ = other.height();
     pitch_ = other.pitch();
 
-#ifdef __TRACE_LIFE_CYCLE__
+#ifdef HOST_DEBUG_MONITOR_LIFECYCLE
     PrintInfo("Ref count after copy construction: %d\n", server_.use_count());
 #endif
 }
 
 template<typename VecType>
 ImageCuda<VecType> &ImageCuda<VecType>::operator=(const ImageCuda<VecType> &other) {
-#ifdef __TRACE_LIFE_CYCLE__
+#ifdef HOST_DEBUG_MONITOR_LIFECYCLE
     PrintInfo("ImageCuda assignment operator.\n");
 #endif
     if (this != &other) {
@@ -392,7 +432,7 @@ ImageCuda<VecType> &ImageCuda<VecType>::operator=(const ImageCuda<VecType> &othe
         height_ = other.height();
         pitch_ = other.pitch();
 
-#ifdef __TRACE_LIFE_CYCLE__
+#ifdef HOST_DEBUG_MONITOR_LIFECYCLE
         PrintInfo("Ref count after copy construction: %d\n", server_.use_count());
 #endif
     }
@@ -402,34 +442,34 @@ ImageCuda<VecType> &ImageCuda<VecType>::operator=(const ImageCuda<VecType> &othe
 
 template<typename VecType>
 ImageCuda<VecType>::~ImageCuda() {
-#ifdef __TRACE_LIFE_CYCLE__
+#ifdef HOST_DEBUG_MONITOR_LIFECYCLE
     PrintInfo("Destructor.\n");
 #endif
     Release();
 }
 
 template<typename VecType>
-int ImageCuda<VecType>::Resize(int width, int height) {
+void ImageCuda<VecType>::Resize(int width, int height) {
     assert(width > 0 && height > 0);
     if (width == width_ && height == height_) {
         PrintWarning("No need to resize!\n");
-        return 1;
+        return;
     }
 
     Release();
-    return Create(width, height);
+    Create(width, height);
 }
 
 template<typename VecType>
-int ImageCuda<VecType>::Create(int width, int height) {
+void ImageCuda<VecType>::Create(int width, int height) {
     assert(width > 0 && height > 0);
 
     if (server_ != nullptr) {
         PrintWarning("Already created, stop re-creating!\n");
-        return -1;
+        return;
     }
 
-#ifdef __TRACE_LIFE_CYCLE__
+#ifdef HOST_DEBUG_MONITOR_LIFECYCLE
     PrintInfo("Creating.\n");
 #endif
 
@@ -445,13 +485,11 @@ int ImageCuda<VecType>::Create(int width, int height) {
     server_->width_ = width_;
     server_->height_ = height_;
     server_->pitch_ = pitch_;
-
-    return 0;
 }
 
 template<typename VecType>
 void ImageCuda<VecType>::Release() {
-#ifdef __TRACE_LIFE_CYCLE__
+#ifdef HOST_DEBUG_MONITOR_LIFECYCLE
     if (server_ != nullptr) {
         PrintInfo("ref count before releasing: %d\n", server_.use_count());
     }
@@ -487,7 +525,7 @@ void ImageCuda<VecType>::CopyTo(ImageCuda<VecType> &other) const {
 }
 
 template<typename VecType>
-int ImageCuda<VecType>::Upload(cv::Mat &m) {
+void ImageCuda<VecType>::Upload(cv::Mat &m) {
     assert(m.rows > 0 && m.cols > 0);
 
     /* Type checking */
@@ -507,7 +545,7 @@ int ImageCuda<VecType>::Upload(cv::Mat &m) {
         assert(m.type() == CV_32FC1);
     } else {
         PrintWarning("Unsupported format %d!\n");
-        return -1;
+        return;
     }
 
     if (server_ == nullptr) {
@@ -515,13 +553,12 @@ int ImageCuda<VecType>::Upload(cv::Mat &m) {
     }
     if (width_ != m.cols || height_ != m.rows) {
         PrintWarning("Incompatible image size!\n");
-        return 1;
+        return;
     }
 
     CheckCuda(cudaMemcpy2D(server_->data_, pitch_, m.data, m.step,
                            sizeof(VecType) * m.cols, m.rows,
                            cudaMemcpyHostToDevice));
-    return 0;
 }
 
 template<typename VecType>
@@ -575,8 +612,8 @@ void ImageCuda<VecType>::Downsample(ImageCuda<VecType> &image,
         return;
     }
 
-    const dim3 blocks(UPPER_ALIGN(image.width(), THREAD_2D_UNIT),
-                      UPPER_ALIGN(image.height(), THREAD_2D_UNIT));
+    const dim3 blocks(DIV_CEILING(image.width(), THREAD_2D_UNIT),
+                      DIV_CEILING(image.height(), THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
     DownsampleImageKernel << < blocks, threads >> > (
         *server_, *(image.server()), method);
@@ -614,8 +651,8 @@ void ImageCuda<VecType>::Sobel(ImageCuda<typename VecType::VecTypef> &dx,
         return;
     }
 
-    const dim3 blocks(UPPER_ALIGN(width_, THREAD_2D_UNIT),
-                      UPPER_ALIGN(height_, THREAD_2D_UNIT));
+    const dim3 blocks(DIV_CEILING(width_, THREAD_2D_UNIT),
+                      DIV_CEILING(height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
     SobelImageKernel << < blocks, threads >> > (
         *server_, *(dx.server()), *(dy.server()), with_holes);
@@ -644,8 +681,8 @@ void ImageCuda<VecType>::Shift(ImageCuda<VecType> &image, float dx, float dy,
         return;
     }
 
-    const dim3 blocks(UPPER_ALIGN(width_, THREAD_2D_UNIT),
-                      UPPER_ALIGN(height_, THREAD_2D_UNIT));
+    const dim3 blocks(DIV_CEILING(width_, THREAD_2D_UNIT),
+                      DIV_CEILING(height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
     ShiftImageKernel << < blocks, threads >> > (
         *server_, *(image.server()), dx, dy, with_holes);
@@ -673,8 +710,8 @@ void ImageCuda<VecType>::Gaussian(ImageCuda<VecType> &image,
         return;
     }
 
-    const dim3 blocks(UPPER_ALIGN(width_, THREAD_2D_UNIT),
-                      UPPER_ALIGN(height_, THREAD_2D_UNIT));
+    const dim3 blocks(DIV_CEILING(width_, THREAD_2D_UNIT),
+                      DIV_CEILING(height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
     GaussianImageKernel << < blocks, threads >> > (
         *server_, *(image.server()), (int) kernel, with_holes);
@@ -704,8 +741,8 @@ void ImageCuda<VecType>::Bilateral(ImageCuda<VecType> &image,
         return;
     }
 
-    const dim3 blocks(UPPER_ALIGN(width_, THREAD_2D_UNIT),
-                      UPPER_ALIGN(height_, THREAD_2D_UNIT));
+    const dim3 blocks(DIV_CEILING(width_, THREAD_2D_UNIT),
+                      DIV_CEILING(height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
     BilateralImageKernel << < blocks, threads >> > (
         *server_, *(image.server()), (int) kernel, val_sigma, with_holes);
@@ -732,8 +769,8 @@ void ImageCuda<VecType>::ToFloat(ImageCuda<typename VecType::VecTypef> &image,
         return;
     }
 
-    const dim3 blocks(UPPER_ALIGN(width_, THREAD_2D_UNIT),
-                      UPPER_ALIGN(height_, THREAD_2D_UNIT));
+    const dim3 blocks(DIV_CEILING(width_, THREAD_2D_UNIT),
+                      DIV_CEILING(height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
     ToFloatImageKernel << < blocks, threads >> > (
         *server_, *(image.server()), scale, offset);

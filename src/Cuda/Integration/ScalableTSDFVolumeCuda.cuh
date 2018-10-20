@@ -10,17 +10,6 @@ namespace open3d {
 /** Coordinate conversions **/
 template<size_t N>
 __device__
-inline Vector3i
-ScalableTSDFVolumeCudaServer<N>::Vectorize(size_t index) {
-    Vector3i ret;
-    ret(0) = int(index % N);
-    ret(1) = int((index % (N * N)) / N);
-    ret(2) = int(index / (N * N));
-    return ret;
-}
-
-template<size_t N>
-__device__
 inline int ScalableTSDFVolumeCudaServer<N>::IndexOf(int x, int y, int z) {
     return int(z * (N * N) + y * N + x);
 }
@@ -336,5 +325,10 @@ inline Vector3f ScalableTSDFVolumeCudaServer<N>::GradientAt(const Vector3f &X) {
     }
     return n;
 }
+
+/**
+ * Client end
+ */
+
 
 }

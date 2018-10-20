@@ -72,7 +72,7 @@ void GetHashTableAssignedEntriesKernel(
 #pragma unroll 1
     for (int i = 0; i < BUCKET_SIZE; ++i) {
         Entry &entry = server.entry_array().get(bucket_base_idx + i);
-        if (entry.value_ptr != NULL_PTR) {
+        if (entry.value_ptr != NULLPTR_CUDA) {
             server.assigned_entry_array().push_back(entry);
         }
     }
@@ -80,7 +80,7 @@ void GetHashTableAssignedEntriesKernel(
     LinkedListCudaServer<Entry> &linked_list =
         server.entry_list_array().get(bucket_idx);
     int node_ptr = linked_list.head_node_ptr();
-    while (node_ptr != NULL_PTR) {
+    while (node_ptr != NULLPTR_CUDA) {
         LinkedListNodeCuda<Entry> &linked_list_node =
             linked_list.get_node(node_ptr);
         server.assigned_entry_array().push_back(linked_list_node.data);
@@ -140,7 +140,7 @@ void ProfileHashTableKernel(
 
     int linked_list_entry_cnt = 0;
     int node_ptr = linked_list.head_node_ptr();
-    while (node_ptr != NULL_PTR) {
+    while (node_ptr != NULLPTR_CUDA) {
         linked_list_entry_cnt++;
         LinkedListNodeCuda<Entry> &linked_list_node =
             linked_list.get_node(node_ptr);

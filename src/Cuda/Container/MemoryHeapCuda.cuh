@@ -18,15 +18,19 @@ namespace open3d {
  */
 template<typename T>
 __device__
-int &MemoryHeapCudaServer<T>::get_heap(int index) {
-    assert(index >= 0 && index < max_capacity_);
+int &MemoryHeapCudaServer<T>::get_heap(size_t index) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+    assert(index < max_capacity_);
+#endif
     return heap_[index];
 }
 
 template<typename T>
 __device__
-T &MemoryHeapCudaServer<T>::get_value(int addr) {
-    assert(addr >= 0 && addr < max_capacity_);
+T &MemoryHeapCudaServer<T>::get_value(size_t addr) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+    assert(addr < max_capacity_);
+#endif
     return data_[addr];
 }
 
@@ -47,18 +51,22 @@ template<class T>
 __device__
 int MemoryHeapCudaServer<T>::Malloc() {
     int index = atomicSub(heap_counter_, 1);
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
     if (index < 0) {
         printf("Heap exhausted, return.\n");
         return -1;
     }
+#endif
     return heap_[index];
 }
 
 template<class T>
 __device__
-void MemoryHeapCudaServer<T>::Free(int addr) {
+void MemoryHeapCudaServer<T>::Free(size_t addr) {
     int index = atomicAdd(heap_counter_, 1);
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(index + 1 < max_capacity_);
+#endif
     heap_[index + 1] = addr;
 }
 
@@ -131,7 +139,7 @@ void MemoryHeapCuda<T>::Release() {
 template<typename T>
 void MemoryHeapCuda<T>::Reset() {
     const int threads = THREAD_1D_UNIT;
-    const int blocks = UPPER_ALIGN(max_capacity_, THREAD_1D_UNIT);
+    const int blocks = DIV_CEILING(max_capacity_, THREAD_1D_UNIT);
 
     ResetMemoryHeapKernel << < blocks, threads >> > (*server_);
     CheckCuda(cudaDeviceSynchronize());

@@ -24,16 +24,16 @@ public:
     int max_triangles_;
 
 public:
-    inline __DEVICE__ ArrayCudaServer<Vector3f>& vertices() {
+    __DEVICE__ inline ArrayCudaServer<Vector3f>& vertices() {
         return vertices_;
     }
-    inline __DEVICE__ ArrayCudaServer<Vector3f>& vertex_normals() {
+    __DEVICE__ inline ArrayCudaServer<Vector3f>& vertex_normals() {
         return vertex_normals_;
     }
-    inline __DEVICE__ ArrayCudaServer<Vector3b> &vertex_colors() {
+    __DEVICE__ inline ArrayCudaServer<Vector3b> &vertex_colors() {
         return vertex_colors_;
     }
-    inline __DEVICE__ ArrayCudaServer<Vector3i> &triangles() {
+    __DEVICE__ inline ArrayCudaServer<Vector3i> &triangles() {
         return triangles_;
     }
 

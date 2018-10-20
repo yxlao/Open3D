@@ -5,13 +5,13 @@
 #pragma once
 
 #include "IntegrationClasses.h"
+#include "UniformTSDFVolumeCuda.h"
 
 #include <Core/Geometry/TriangleMesh.h>
 #include <Cuda/Common/UtilsCuda.h>
 #include <Cuda/Container/ArrayCuda.h>
 #include <Cuda/Geometry/VectorCuda.h>
 #include <Cuda/Geometry/TriangleMeshCuda.h>
-
 #include <memory>
 
 /** A class that embeds mesh in the volumes **/
@@ -53,24 +53,48 @@ public:
     int max_triangles_;
 
 public:
-    inline __DEVICE__ int IndexOf(int x, int y, int z) {
-        return int(x + y * N  + z * (N * N));
+    __DEVICE__ inline Vector3i Vectorize(size_t index) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+        assert(0 <= index && index < N * N * N);
+#endif
+        Vector3i ret(0);
+        ret(0) = int(index % N);
+        ret(1) = int((index % (N * N)) / N);
+        ret(2) = int(index / (N * N));
+        return ret;
     }
-    inline __DEVICE__ uchar &table_indices(int x, int y, int z) {
+
+    __DEVICE__ inline int IndexOf(int x, int y, int z) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+        assert(x >= 0 && y >= 0 && z >= 0);
+        assert(x < N && y < N && z < N);
+#endif
+        return int(z * (N * N) + y * N + x);
+    }
+    __DEVICE__ inline uchar &table_indices(int x, int y, int z) {
         return table_indices_[IndexOf(x, y, z)];
     }
-    inline __DEVICE__ uchar &table_indices(int i) {
+    __DEVICE__ inline uchar &table_indices(int i) {
         return table_indices_[i];
     }
-    inline __DEVICE__ Vector3i &vertex_indices(int x, int y, int z) {
+    __DEVICE__ inline Vector3i &vertex_indices(int x, int y, int z) {
         return vertex_indices_[IndexOf(x, y, z)];
     }
-    inline __DEVICE__ Vector3i &vertex_indices(int i) {
+    __DEVICE__ inline Vector3i &vertex_indices(int i) {
         return vertex_indices_[i];
     }
-    inline __DEVICE__ TriangleMeshCudaServer<type> mesh() {
+    __DEVICE__ inline TriangleMeshCudaServer<type> mesh() {
         return mesh_;
     }
+
+public:
+    __DEVICE__ void AllocateVertex(
+        int x, int y, int z,
+        UniformTSDFVolumeCudaServer<N> &tsdf_volume);
+    __DEVICE__ void ExtractVertex(
+        int x, int y, int z,
+        UniformTSDFVolumeCudaServer<N> &tsdf_volume);
+    __DEVICE__ void ExtractTriangle(int x, int y, int z);
 
 public:
     friend class UniformMeshVolumeCuda<type, N>;
@@ -99,6 +123,9 @@ public:
     void UpdateServer();
 
 public:
+    void MarchingCubes(UniformTSDFVolumeCuda<N>& tsdf_volume);
+
+public:
     std::shared_ptr<UniformMeshVolumeCudaServer<type, N>> &server() {
         return server_;
     }
@@ -114,4 +141,21 @@ public:
         return mesh_;
     }
 };
+
+template<VertexType type, size_t N>
+__GLOBAL__
+void MarchingCubesVertexAllocationKernel(
+    UniformMeshVolumeCudaServer<type, N> server,
+    UniformTSDFVolumeCudaServer<N> tsdf_volume);
+
+template<VertexType type, size_t N>
+__GLOBAL__
+void MarchingCubesVertexExtractionKernel(
+    UniformMeshVolumeCudaServer<type, N> server,
+    UniformTSDFVolumeCudaServer<N> tsdf_volume);
+
+template<VertexType type, size_t N>
+__GLOBAL__
+void MarchingCubesTriangleExtractionKernel(
+    UniformMeshVolumeCudaServer<type, N> server);
 }

@@ -18,24 +18,28 @@ namespace open3d {
 /** Coordinate conversions **/
 template<size_t N>
 __device__
-inline Vector3i UniformTSDFVolumeCudaServer<N>::Vectorize(size_t index) {
-    Vector3i ret;
-    ret(0) = int(index % N);
-    ret(1) = int((index % (N * N)) / N);
-    ret(2) = int(index / (N * N));
-    return ret;
+inline bool UniformTSDFVolumeCudaServer<N>::InVolume(int x, int y, int z) {
+    return 0 <= x && x < N && 0 <= y && y < N && 0 <= z && z < N;
+}
+template<size_t N>
+__device__
+inline bool UniformTSDFVolumeCudaServer<N>::InVolume(const Vector3i &X) {
+    return InVolume(X(0), X(1), X(2));
 }
 
 template<size_t N>
 __device__
-inline int UniformTSDFVolumeCudaServer<N>::IndexOf(int x, int y, int z) {
-    return int(z * (N * N) + y * N + x);
+inline bool UniformTSDFVolumeCudaServer<N>::InVolumef(
+    float x, float y, float z) {
+    return 0 <= x && x < (N - 1)
+        && 0 <= y && y < (N - 1)
+        && 0 <= z && z < (N - 1);
 }
 
 template<size_t N>
 __device__
-inline int UniformTSDFVolumeCudaServer<N>::IndexOf(const Vector3i &X) {
-    return IndexOf(X(0), X(1), X(2));
+inline bool UniformTSDFVolumeCudaServer<N>::InVolumef(const Vector3f &X) {
+    return InVolumef(X(0), X(1), X(2));
 }
 
 template<size_t N>
@@ -101,86 +105,26 @@ inline Vector3f UniformTSDFVolumeCudaServer<N>::volume_to_voxel(
 
 template<size_t N>
 __device__
-inline bool UniformTSDFVolumeCudaServer<N>::InVolume(int x, int y, int z) {
-    return 0 <= x && x < N && 0 <= y && y < N && 0 <= z && z < N;
-}
-template<size_t N>
-__device__
-inline bool UniformTSDFVolumeCudaServer<N>::InVolume(const Vector3i &X) {
-    return InVolume(X(0), X(1), X(2));
-}
-
-template<size_t N>
-__device__
-inline bool UniformTSDFVolumeCudaServer<N>::InVolumef(
-    float x, float y, float z) {
-    return 0 <= x && x < (N - 1)
-        && 0 <= y && y < (N - 1)
-        && 0 <= z && z < (N - 1);
-}
-
-template<size_t N>
-__device__
-inline bool UniformTSDFVolumeCudaServer<N>::InVolumef(const Vector3f &X) {
-    return InVolumef(X(0), X(1), X(2));
-}
-
-/** Value access **/
-template<size_t N>
-__device__
-inline float &UniformTSDFVolumeCudaServer<N>::tsdf(int x, int y, int z) {
-    return tsdf_[IndexOf(x, y, z)];
-}
-template<size_t N>
-__device__
-inline float &UniformTSDFVolumeCudaServer<N>::tsdf(const Vector3i &X) {
-    return tsdf_[IndexOf(X)];
-}
-
-template<size_t N>
-__device__
-inline Vector3f UniformTSDFVolumeCudaServer<N>::gradient(int x, int y, int z) {
+Vector3f UniformTSDFVolumeCudaServer<N>::gradient(int x, int y, int z) {
     return Vector3f(
-            tsdf_[IndexOf(min(x + 1, int(N - 1)), y, z)]
-                - tsdf_[IndexOf(max(x - 1, 0), y, z)],
-            tsdf_[IndexOf(x, min(y + 1, int(N - 1)), z)]
-                - tsdf_[IndexOf(x, max(y - 1, 0), z)],
-            tsdf_[IndexOf(x, y, min(z + 1, int(N - 1)))]
-                - tsdf_[IndexOf(x, y, max(z - 1, 0))]);
+        tsdf_[IndexOf(min(x + 1, int(N - 1)), y, z)]
+            - tsdf_[IndexOf(max(x - 1, 0), y, z)],
+        tsdf_[IndexOf(x, min(y + 1, int(N - 1)), z)]
+            - tsdf_[IndexOf(x, max(y - 1, 0), z)],
+        tsdf_[IndexOf(x, y, min(z + 1, int(N - 1)))]
+            - tsdf_[IndexOf(x, y, max(z - 1, 0))]);
 }
 
 template<size_t N>
 __device__
-inline Vector3f UniformTSDFVolumeCudaServer<N>::gradient(const Vector3i &X) {
+Vector3f UniformTSDFVolumeCudaServer<N>::gradient(const Vector3i &X) {
     return gradient(X(0), X(1), X(2));
-}
-
-template<size_t N>
-__device__
-inline uchar &UniformTSDFVolumeCudaServer<N>::weight(int x, int y, int z) {
-    return weight_[IndexOf(x, y, z)];
-}
-template<size_t N>
-__device__
-inline uchar &UniformTSDFVolumeCudaServer<N>::weight(const Vector3i &X) {
-    return weight_[IndexOf(X)];
-}
-
-template<size_t N>
-__device__
-inline Vector3b &UniformTSDFVolumeCudaServer<N>::color(int x, int y, int z) {
-    return color_[IndexOf(x, y, z)];
-}
-template<size_t N>
-__device__
-inline Vector3b &UniformTSDFVolumeCudaServer<N>::color(const Vector3i &X) {
-    return color_[IndexOf(X)];
 }
 
 /** Interpolations. TODO: Check default value later **/
 template<size_t N>
 __device__
-inline float UniformTSDFVolumeCudaServer<N>::TSDFAt(float x, float y, float z) {
+float UniformTSDFVolumeCudaServer<N>::TSDFAt(float x, float y, float z) {
     /** If it is in Volume, then all the nearby components are in volume,
      * no boundary check is required **/
     Vector3f Xf(x, y, z);
@@ -206,13 +150,13 @@ inline float UniformTSDFVolumeCudaServer<N>::TSDFAt(float x, float y, float z) {
 
 template<size_t N>
 __device__
-inline float UniformTSDFVolumeCudaServer<N>::TSDFAt(const Vector3f &X) {
+float UniformTSDFVolumeCudaServer<N>::TSDFAt(const Vector3f &X) {
     return TSDFAt(X(0), X(1), X(2));
 }
 
 template<size_t N>
 __device__
-inline uchar UniformTSDFVolumeCudaServer<N>::WeightAt(
+uchar UniformTSDFVolumeCudaServer<N>::WeightAt(
     float x, float y, float z) {
     Vector3f Xf = Vector3f(x, y, z);
     Vector3i X = Vector3i(int(x), int(y), int(z));
@@ -237,13 +181,13 @@ inline uchar UniformTSDFVolumeCudaServer<N>::WeightAt(
 
 template<size_t N>
 __device__
-inline uchar UniformTSDFVolumeCudaServer<N>::WeightAt(const Vector3f &X) {
+uchar UniformTSDFVolumeCudaServer<N>::WeightAt(const Vector3f &X) {
     return WeightAt(X(0), X(1), X(2));
 }
 
 template<size_t N>
 __device__
-inline Vector3b UniformTSDFVolumeCudaServer<N>::ColorAt(
+Vector3b UniformTSDFVolumeCudaServer<N>::ColorAt(
     float x, float y, float z) {
 
     Vector3f Xf = Vector3f(x, y, z);
@@ -271,20 +215,20 @@ inline Vector3b UniformTSDFVolumeCudaServer<N>::ColorAt(
 
 template<size_t N>
 __device__
-inline Vector3b UniformTSDFVolumeCudaServer<N>::ColorAt(const Vector3f &X) {
+Vector3b UniformTSDFVolumeCudaServer<N>::ColorAt(const Vector3f &X) {
     return ColorAt(X(0), X(1), X(2));
 }
 
 template<size_t N>
 __device__
-inline Vector3f UniformTSDFVolumeCudaServer<N>::GradientAt(
+Vector3f UniformTSDFVolumeCudaServer<N>::GradientAt(
     float x, float y, float z) {
     return GradientAt(Vector3f(x, y, z));
 }
 
 template<size_t N>
 __device__
-inline Vector3f UniformTSDFVolumeCudaServer<N>::GradientAt(const Vector3f &X) {
+Vector3f UniformTSDFVolumeCudaServer<N>::GradientAt(const Vector3f &X) {
     Vector3f n = Vector3f::Zeros();
 
     const float half_gap = 0.5f * voxel_length_;
@@ -306,7 +250,7 @@ inline Vector3f UniformTSDFVolumeCudaServer<N>::GradientAt(const Vector3f &X) {
 /** High level methods **/
 template<size_t N>
 __device__
-inline void UniformTSDFVolumeCudaServer<N>::Integrate(
+void UniformTSDFVolumeCudaServer<N>::Integrate(
     int x, int y, int z,
     ImageCudaServer<Vector1f> &depth,
     MonoPinholeCameraCuda &camera,
@@ -537,74 +481,28 @@ UniformTSDFVolumeCuda<N>::DownloadVolume() {
 }
 
 template<size_t N>
-int UniformTSDFVolumeCuda<N>::Integrate(ImageCuda<open3d::Vector1f> &depth,
+void UniformTSDFVolumeCuda<N>::Integrate(ImageCuda<open3d::Vector1f> &depth,
                                         MonoPinholeCameraCuda &camera,
                                         TransformCuda &transform_camera_to_world) {
-    const int num_blocks = UPPER_ALIGN(N, THREAD_3D_UNIT);
+    const int num_blocks = DIV_CEILING(N, THREAD_3D_UNIT);
     const dim3 blocks(num_blocks, num_blocks, num_blocks);
     const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
     IntegrateKernel << < blocks, threads >> > (
         *server_, *depth.server(), camera, transform_camera_to_world);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
-    return 0;
 }
 
 template<size_t N>
-int UniformTSDFVolumeCuda<N>::RayCasting(ImageCuda<open3d::Vector3f> &image,
+void UniformTSDFVolumeCuda<N>::RayCasting(ImageCuda<open3d::Vector3f> &image,
                                          MonoPinholeCameraCuda &camera,
                                          TransformCuda &transform_camera_to_world) {
-    const dim3 blocks(UPPER_ALIGN(image.width(), THREAD_2D_UNIT),
-                      UPPER_ALIGN(image.height(), THREAD_2D_UNIT));
+    const dim3 blocks(DIV_CEILING(image.width(), THREAD_2D_UNIT),
+                      DIV_CEILING(image.height(), THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
     RayCastingKernel << < blocks, threads >> > (
         *server_, *image.server(), camera, transform_camera_to_world);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
-    return 0;
-}
-
-template<size_t N>
-template<VertexType type>
-int UniformTSDFVolumeCuda<N>::MarchingCubes(UniformMeshVolumeCuda<type, N> &mesher) {
-    const int num_blocks = UPPER_ALIGN(N, THREAD_3D_UNIT);
-    const dim3 blocks(num_blocks, num_blocks, num_blocks);
-    const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
-
-    Timer timer;
-
-    timer.Start();
-    MarchingCubesVertexAllocationKernel << < blocks, threads >> > (
-        *server_, *mesher.server());
-    CheckCuda(cudaDeviceSynchronize());
-    CheckCuda(cudaGetLastError());
-    timer.Stop();
-    PrintInfo("Allocation takes %f milliseconds\n", timer.GetDuration());
-
-    timer.Start();
-    MarchingCubesVertexExtractionKernel << < blocks, threads >> > (
-        *server_, *mesher.server());
-    CheckCuda(cudaDeviceSynchronize());
-    CheckCuda(cudaGetLastError());
-    timer.Stop();
-    PrintInfo("Extraction takes %f milliseconds\n", timer.GetDuration());
-
-    timer.Start();
-    MarchingCubesTriangleExtractionKernel << < blocks, threads >> > (
-        *server_, *mesher.server());
-    CheckCuda(cudaDeviceSynchronize());
-    CheckCuda(cudaGetLastError());
-    timer.Stop();
-    PrintInfo("Triangulation takes %f milliseconds\n", timer.GetDuration());
-
-    if (type & VertexWithNormal) {
-        mesher.mesh().vertex_normals().set_size(
-            mesher.mesh().vertices().size());
-    }
-    if (type & VertexWithColor) {
-        mesher.mesh().vertex_colors().set_size(
-            mesher.mesh().vertices().size());
-    }
-    return 0;
 }
 }

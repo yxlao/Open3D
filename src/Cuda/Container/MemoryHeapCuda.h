@@ -46,12 +46,12 @@ public:
 
 public:
     __DEVICE__ int Malloc();
-    __DEVICE__ void Free(int addr);
+    __DEVICE__ void Free(size_t addr);
 
     /* heap (at each index) stores addrs
      * addrs point to values */
-    __DEVICE__ int &get_heap(int index);
-    __DEVICE__ T &get_value(int addr);
+    __DEVICE__ int &get_heap(size_t index);
+    __DEVICE__ T &get_value(size_t addr);
 
     friend class MemoryHeapCuda<T>;
 };

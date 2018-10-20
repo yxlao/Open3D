@@ -12,7 +12,7 @@
 #include <vector_types.h>
 #include <opencv2/opencv.hpp>
 
-//#define __TRACE_LIFE_CYCLE__
+//#define HOST_DEBUG_MONITOR_LIFECYCLE
 
 namespace open3d {
 
@@ -48,22 +48,22 @@ public:
         return data_;
     }
 
-    inline __DEVICE__ VecType &get(int x, int y);
-    inline __DEVICE__ VecType &operator()(int x, int y);
-    inline __DEVICE__ VecType get_interp(float x, float y);
-    inline __DEVICE__ VecType get_interp_with_holes(float x, float y);
+    __DEVICE__ inline VecType &get(int x, int y);
+    __DEVICE__ inline VecType &operator()(int x, int y);
+    __DEVICE__ inline VecType get_interp(float x, float y);
+    __DEVICE__ inline VecType get_interp_with_holes(float x, float y);
 
-    inline __DEVICE__
+    __DEVICE__
     VecType BoxFilter2x2(int x, int y);
-    inline __DEVICE__
+    __DEVICE__
     VecType BoxFilter2x2WithHoles(int x, int y);
-    inline __DEVICE__
+    __DEVICE__
     VecType GaussianFilter(int x, int y, int kernel_idx);
-    inline __DEVICE__
+    __DEVICE__
     VecType GaussianFilterWithHoles(int x, int y, int kernel_idx);
-    inline __DEVICE__
+    __DEVICE__
     VecType BilateralFilter(int x, int y, int kernel_idx, float val_sigma);
-    inline __DEVICE__
+    __DEVICE__
     VecType BilateralFilterWithHoles(int x, int y, int kernel_idx, float val_sigma);
 
     /** Wish I could use std::pair here... **/
@@ -71,8 +71,8 @@ public:
         typename VecType::VecTypef dx;
         typename VecType::VecTypef dy;
     };
-    inline __DEVICE__ Grad Sobel(int x, int y);
-    inline __DEVICE__ Grad SobelWithHoles(int x, int y);
+    __DEVICE__ Grad Sobel(int x, int y);
+    __DEVICE__ Grad SobelWithHoles(int x, int y);
 
     friend class ImageCuda<VecType>;
 };
@@ -95,8 +95,8 @@ public:
     ~ImageCuda();
     ImageCuda<VecType> &operator=(const ImageCuda<VecType> &other);
 
-    int Create(int width, int height);
-    int Resize(int width, int height);
+    void Create(int width, int height);
+    void Resize(int width, int height);
     void Release();
     void CopyTo(ImageCuda<VecType> &other) const;
 
@@ -135,7 +135,7 @@ public:
     void ToFloat(ImageCuda<typename VecType::VecTypef> &image,
                  float scale, float offset);
 
-    int Upload(cv::Mat &m);
+    void Upload(cv::Mat &m);
     cv::Mat Download();
 
     int width() const {

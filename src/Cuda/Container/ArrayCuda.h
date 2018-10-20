@@ -23,11 +23,12 @@ public:
     int max_capacity_;
 
 public:
-    __HOSTDEVICE__ T *&data() { return data_; }
-    __DEVICE__ int push_back(T value);
-    __DEVICE__ T &get(size_t index);
-    __DEVICE__ T& operator[] (size_t index);
+    __HOSTDEVICE__ inline T *&data() { return data_; }
+    __DEVICE__ inline int push_back(T value);
+    __DEVICE__ inline T &get(size_t index);
+    __DEVICE__ inline T& operator[] (size_t index);
 
+public:
     friend class ArrayCuda<T>;
 };
 

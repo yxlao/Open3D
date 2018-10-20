@@ -4,8 +4,10 @@
 
 #include "UniformTSDFVolumeCuda.cuh"
 #include "UniformTSDFVolumeCudaKernel.cuh"
-
 #include "UniformMeshVolumeCuda.cuh"
+#include "UniformMeshVolumeCudaKernel.cuh"
+
+//#include "ScalableTSDFVolumeCuda.cuh"
 
 namespace open3d {
 
@@ -27,57 +29,23 @@ class UniformTSDFVolumeCuda<256>;
 template
 class UniformTSDFVolumeCuda<512>;
 
-template
-int UniformTSDFVolumeCuda<8>::MarchingCubes<VertexRaw>(
-    UniformMeshVolumeCuda<VertexRaw, 8> &mesher);
-template
-int UniformTSDFVolumeCuda<8>::MarchingCubes<VertexWithNormal>(
-    UniformMeshVolumeCuda<VertexWithNormal, 8> &mesher);
-template
-int UniformTSDFVolumeCuda<8>::MarchingCubes<VertexWithColor>(
-    UniformMeshVolumeCuda<VertexWithColor, 8> &mesher);
-template
-int UniformTSDFVolumeCuda<8>::MarchingCubes<VertexWithNormalAndColor>(
-    UniformMeshVolumeCuda<VertexWithNormalAndColor, 8> &mesher);
-
-template
-int UniformTSDFVolumeCuda<16>::MarchingCubes<VertexRaw>(
-    UniformMeshVolumeCuda<VertexRaw, 16> &mesher);
-template
-int UniformTSDFVolumeCuda<16>::MarchingCubes<VertexWithNormal>(
-    UniformMeshVolumeCuda<VertexWithNormal, 16> &mesher);
-template
-int UniformTSDFVolumeCuda<16>::MarchingCubes<VertexWithColor>(
-    UniformMeshVolumeCuda<VertexWithColor, 16> &mesher);
-template
-int UniformTSDFVolumeCuda<16>::MarchingCubes<VertexWithNormalAndColor>(
-    UniformMeshVolumeCuda<VertexWithNormalAndColor, 16> &mesher);
-
-template
-int UniformTSDFVolumeCuda<256>::MarchingCubes<VertexRaw>(
-    UniformMeshVolumeCuda<VertexRaw, 256> &mesher);
-template
-int UniformTSDFVolumeCuda<256>::MarchingCubes<VertexWithNormal>(
-    UniformMeshVolumeCuda<VertexWithNormal, 256> &mesher);
-template
-int UniformTSDFVolumeCuda<256>::MarchingCubes<VertexWithColor>(
-    UniformMeshVolumeCuda<VertexWithColor, 256> &mesher);
-template
-int UniformTSDFVolumeCuda<256>::MarchingCubes<VertexWithNormalAndColor>(
-    UniformMeshVolumeCuda<VertexWithNormalAndColor, 256> &mesher);
-
-template
-int UniformTSDFVolumeCuda<512>::MarchingCubes<VertexRaw>(
-    UniformMeshVolumeCuda<VertexRaw, 512> &mesher);
-template
-int UniformTSDFVolumeCuda<512>::MarchingCubes<VertexWithNormal>(
-    UniformMeshVolumeCuda<VertexWithNormal, 512> &mesher);
-template
-int UniformTSDFVolumeCuda<512>::MarchingCubes<VertexWithColor>(
-    UniformMeshVolumeCuda<VertexWithColor, 512> &mesher);
-template
-int UniformTSDFVolumeCuda<512>::MarchingCubes<VertexWithNormalAndColor>(
-    UniformMeshVolumeCuda<VertexWithNormalAndColor, 512> &mesher);
+//template
+//class ScalableTSDFVolumeCudaServer<8>;
+//template
+//class ScalableTSDFVolumeCudaServer<16>;
+//template
+//class ScalableTSDFVolumeCudaServer<256>;
+//template
+//class ScalableTSDFVolumeCudaServer<512>;
+//
+//template
+//class ScalableTSDFVolumeCuda<8>;
+//template
+//class ScalableTSDFVolumeCuda<16>;
+//template
+//class ScalableTSDFVolumeCuda<256>;
+//template
+//class ScalableTSDFVolumeCuda<512>;
 
 template
 class UniformMeshVolumeCuda<VertexRaw, 8>;
@@ -114,5 +82,179 @@ template
 class UniformMeshVolumeCuda<VertexWithNormalAndColor, 256>;
 template
 class UniformMeshVolumeCuda<VertexWithNormalAndColor, 512>;
+
+/** Vertex Allocation **/
+template
+__global__
+void MarchingCubesVertexAllocationKernel<VertexRaw, 8>(
+    UniformMeshVolumeCudaServer<VertexRaw, 8> mesher,
+    UniformTSDFVolumeCudaServer<8> tsdf_volume);
+template
+__global__
+void MarchingCubesVertexAllocationKernel<VertexWithNormal, 8>(
+    UniformMeshVolumeCudaServer<VertexWithNormal, 8> mesher,
+    UniformTSDFVolumeCudaServer<8> tsdf_volume);
+template
+__global__
+void MarchingCubesVertexAllocationKernel<VertexWithColor, 8>(
+    UniformMeshVolumeCudaServer<VertexWithColor, 8> mesher,
+    UniformTSDFVolumeCudaServer<8> tsdf_volume);
+template
+__global__
+void MarchingCubesVertexAllocationKernel<VertexWithNormalAndColor, 8>(
+    UniformMeshVolumeCudaServer<VertexWithNormalAndColor, 8> mesher,
+    UniformTSDFVolumeCudaServer<8> tsdf_volume);
+
+template
+__global__
+void MarchingCubesVertexAllocationKernel<VertexRaw, 16>(
+    UniformMeshVolumeCudaServer<VertexRaw, 16> mesher,
+    UniformTSDFVolumeCudaServer<16> tsdf_volume);
+template
+__global__
+void MarchingCubesVertexAllocationKernel<VertexWithNormal, 16>(
+    UniformMeshVolumeCudaServer<VertexWithNormal, 16> mesher,
+    UniformTSDFVolumeCudaServer<16> tsdf_volume);
+template
+__global__
+void MarchingCubesVertexAllocationKernel<VertexWithColor, 16>(
+    UniformMeshVolumeCudaServer<VertexWithColor, 16> mesher,
+    UniformTSDFVolumeCudaServer<16> tsdf_volume);
+template
+__global__
+void MarchingCubesVertexAllocationKernel<VertexWithNormalAndColor, 16>(
+    UniformMeshVolumeCudaServer<VertexWithNormalAndColor, 16> mesher,
+    UniformTSDFVolumeCudaServer<16> tsdf_volume);
+
+template
+__global__
+void MarchingCubesVertexAllocationKernel<VertexRaw, 256>(
+    UniformMeshVolumeCudaServer<VertexRaw, 256> mesher,
+    UniformTSDFVolumeCudaServer<256> tsdf_volume);
+template
+__global__
+void MarchingCubesVertexAllocationKernel<VertexWithNormal, 256>(
+    UniformMeshVolumeCudaServer<VertexWithNormal, 256> mesher,
+    UniformTSDFVolumeCudaServer<256> tsdf_volume);
+template
+__global__
+void MarchingCubesVertexAllocationKernel<VertexWithColor, 256>(
+    UniformMeshVolumeCudaServer<VertexWithColor, 256> mesher,
+    UniformTSDFVolumeCudaServer<256> tsdf_volume);
+template
+__global__
+void MarchingCubesVertexAllocationKernel<VertexWithNormalAndColor, 256>(
+    UniformMeshVolumeCudaServer<VertexWithNormalAndColor, 256> mesher,
+    UniformTSDFVolumeCudaServer<256> tsdf_volume);
+
+template
+__global__
+void MarchingCubesVertexAllocationKernel<VertexRaw, 512>(
+    UniformMeshVolumeCudaServer<VertexRaw, 512> mesher,
+    UniformTSDFVolumeCudaServer<512> tsdf_volume);
+template
+__global__
+void MarchingCubesVertexAllocationKernel<VertexWithNormal, 512>(
+    UniformMeshVolumeCudaServer<VertexWithNormal, 512> mesher,
+    UniformTSDFVolumeCudaServer<512> tsdf_volume);
+template
+__global__
+void MarchingCubesVertexAllocationKernel<VertexWithColor, 512>(
+    UniformMeshVolumeCudaServer<VertexWithColor, 512> mesher,
+    UniformTSDFVolumeCudaServer<512> tsdf_volume);
+template
+__global__
+void MarchingCubesVertexAllocationKernel<VertexWithNormalAndColor, 512>(
+    UniformMeshVolumeCudaServer<VertexWithNormalAndColor, 512> mesher,
+    UniformTSDFVolumeCudaServer<512> tsdf_volume);
+
+/** Vertex Extraction **/
+template
+__global__
+void MarchingCubesVertexExtractionKernel<VertexRaw, 8>(
+    UniformMeshVolumeCudaServer<VertexRaw, 8> mesher,
+    UniformTSDFVolumeCudaServer<8> tsdf_volume);
+
+template
+__global__
+void MarchingCubesVertexExtractionKernel<VertexWithNormal, 8>(
+    UniformMeshVolumeCudaServer<VertexWithNormal, 8> mesher,
+    UniformTSDFVolumeCudaServer<8> tsdf_volume);
+template
+__global__
+void MarchingCubesVertexExtractionKernel<VertexWithColor, 8>(
+    UniformMeshVolumeCudaServer<VertexWithColor, 8> mesher,
+    UniformTSDFVolumeCudaServer<8> tsdf_volume);
+template
+__global__
+void MarchingCubesVertexExtractionKernel<VertexWithNormalAndColor, 8>(
+    UniformMeshVolumeCudaServer<VertexWithNormalAndColor, 8> mesher,
+    UniformTSDFVolumeCudaServer<8> tsdf_volume);
+
+template
+__global__
+void MarchingCubesVertexExtractionKernel<VertexRaw, 16>(
+    UniformMeshVolumeCudaServer<VertexRaw, 16> mesher,
+    UniformTSDFVolumeCudaServer<16> tsdf_volume);
+template
+__global__
+void MarchingCubesVertexExtractionKernel<VertexWithNormal, 16>(
+    UniformMeshVolumeCudaServer<VertexWithNormal, 16> mesher,
+    UniformTSDFVolumeCudaServer<16> tsdf_volume);
+template
+__global__
+void MarchingCubesVertexExtractionKernel<VertexWithColor, 16>(
+    UniformMeshVolumeCudaServer<VertexWithColor, 16> mesher,
+    UniformTSDFVolumeCudaServer<16> tsdf_volume);
+template
+__global__
+void MarchingCubesVertexExtractionKernel<VertexWithNormalAndColor, 16>(
+    UniformMeshVolumeCudaServer<VertexWithNormalAndColor, 16> mesher,
+    UniformTSDFVolumeCudaServer<16> tsdf_volume);
+
+template
+__global__
+void MarchingCubesVertexExtractionKernel<VertexRaw, 256>(
+    UniformMeshVolumeCudaServer<VertexRaw, 256> mesher,
+    UniformTSDFVolumeCudaServer<256> tsdf_volume);
+template
+__global__
+void MarchingCubesVertexExtractionKernel<VertexWithNormal, 256>(
+    UniformMeshVolumeCudaServer<VertexWithNormal, 256> mesher,
+    UniformTSDFVolumeCudaServer<256> tsdf_volume);
+template
+__global__
+void MarchingCubesVertexExtractionKernel<VertexWithColor, 256>(
+    UniformMeshVolumeCudaServer<VertexWithColor, 256> mesher,
+    UniformTSDFVolumeCudaServer<256> tsdf_volume);
+template
+__global__
+void MarchingCubesVertexExtractionKernel<VertexWithNormalAndColor, 256>(
+    UniformMeshVolumeCudaServer<VertexWithNormalAndColor, 256> mesher,
+    UniformTSDFVolumeCudaServer<256> tsdf_volume);
+
+template
+__global__
+void MarchingCubesVertexExtractionKernel<VertexRaw, 512>(
+    UniformMeshVolumeCudaServer<VertexRaw, 512> mesher,
+    UniformTSDFVolumeCudaServer<512> tsdf_volume);
+template
+__global__
+void MarchingCubesVertexExtractionKernel<VertexWithNormal, 512>(
+    UniformMeshVolumeCudaServer<VertexWithNormal, 512> mesher,
+    UniformTSDFVolumeCudaServer<512> tsdf_volume);
+template
+__global__
+void MarchingCubesVertexExtractionKernel<VertexWithColor, 512>(
+    UniformMeshVolumeCudaServer<VertexWithColor, 512> mesher,
+    UniformTSDFVolumeCudaServer<512> tsdf_volume);
+template
+__global__
+void MarchingCubesVertexExtractionKernel<VertexWithNormalAndColor, 512>(
+    UniformMeshVolumeCudaServer<VertexWithNormalAndColor, 512> mesher,
+    UniformTSDFVolumeCudaServer<512> tsdf_volume);
+
+/** Triangle Extraction **/
+/** Should be self contained and don't need to be instantiated? **/
 
 }

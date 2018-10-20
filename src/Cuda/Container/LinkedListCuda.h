@@ -33,10 +33,8 @@ private:
     int *head_node_ptr_;
     int *size_;
 
-    /* In CPU code, it's fine if we assign a @memory_heap_ by passing value
-     * because the data are all stored in pointers.
-     */
     MemoryHeapServer memory_heap_;
+
 public:
     int max_capacity_;
 
@@ -60,10 +58,10 @@ public:
     __DEVICE__ int FindAndDelete(T value);
     __DEVICE__ void Clear();
 
-    __DEVICE__ int head_node_ptr() {
+    __DEVICE__ inline int head_node_ptr() {
         return *head_node_ptr_;
     }
-    __DEVICE__ int size() {
+    __DEVICE__ inline int size() {
         return *size_;
     }
     __DEVICE__

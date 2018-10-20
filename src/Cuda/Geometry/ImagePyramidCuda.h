@@ -18,7 +18,9 @@ private:
 
 public:
 	__HOSTDEVICE__ ImageCudaServer<VecType>& level(size_t i) {
+#ifdef DEBUG_CUDA_ENABLE_ASSERTION
 		assert(i < N);
+#endif
 		return images_[i];
 	}
 

@@ -172,4 +172,4 @@ function in CUDA, as long as I compile with nvcc, the annoying warnings will
 come out. Work around: uncomment `EIGEN_DEVICE_FUNC` in Eigen's headers.
 - DO NOT add boundary checks in frequently accessed functions, such as get(),
  push_back(), etc. Check them outside (or just ignore them first...)
-
+- Never abuse `inline` for non-trivial functions. NVCC will cry!
