@@ -34,6 +34,12 @@ public:
     TransformCuda transform_world_to_volume_;
 
 public:
+    /** WARNING!!!
+     * This method is designed for ScalableTSDFVolumeCudaServer
+     * That class requires us to initialize memory ON GPU. */
+    __DEVICE__ void Create(float *tsdf, uchar *weight, Vector3b *color);
+
+public:
     __DEVICE__ inline Vector3i Vectorize(size_t index) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
         assert(index < N * N * N);
@@ -129,6 +135,7 @@ public:
 
 public:
     friend class UniformTSDFVolumeCuda<N>;
+    friend class ScalableTSDFVolumeCuda<N>;
 };
 
 template<size_t N>

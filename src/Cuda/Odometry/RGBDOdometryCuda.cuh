@@ -198,20 +198,22 @@ void RGBDOdometryCuda<N>::Release() {
 
 template<size_t N>
 void RGBDOdometryCuda<N>::UpdateServer() {
-    server_->target_depth() = *target_depth_.server();
-    server_->target_depth_dx() = *target_depth_dx_.server();
-    server_->target_depth_dy() = *target_depth_dy_.server();
+    if (server_ != nullptr) {
+        server_->target_depth() = *target_depth_.server();
+        server_->target_depth_dx() = *target_depth_dx_.server();
+        server_->target_depth_dy() = *target_depth_dy_.server();
 
-    server_->target_intensity() = *target_intensity_.server();
-    server_->target_intensity_dx() = *target_intensity_dx_.server();
-    server_->target_intensity_dy() = *target_intensity_dy_.server();
+        server_->target_intensity() = *target_intensity_.server();
+        server_->target_intensity_dx() = *target_intensity_dx_.server();
+        server_->target_intensity_dy() = *target_intensity_dy_.server();
 
-    server_->source_depth() = *source_depth_.server();
-    server_->source_intensity() = *source_intensity_.server();
+        server_->source_depth() = *source_depth_.server();
+        server_->source_intensity() = *source_intensity_.server();
 
-    server_->source_on_target() = *source_on_target_.server();
+        server_->source_on_target() = *source_on_target_.server();
 
-    server_->results() = *results_.server();
+        server_->results() = *results_.server();
+    }
 }
 
 template<size_t N>

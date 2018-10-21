@@ -15,12 +15,24 @@ namespace open3d {
  * Server end
  */
 
+template<size_t N>
+__device__
+inline void UniformTSDFVolumeCudaServer<N>::Create(
+    float *tsdf, uchar *weight, open3d::Vector3b *color) {
+    tsdf_ = tsdf;
+    weight_ = weight;
+    color_ = color;
+}
+
 /** Coordinate conversions **/
 template<size_t N>
 __device__
 inline bool UniformTSDFVolumeCudaServer<N>::InVolume(int x, int y, int z) {
-    return 0 <= x && x < N && 0 <= y && y < N && 0 <= z && z < N;
+    return 0 <= x && x < N
+    && 0 <= y && y < N
+    && 0 <= z && z < N;
 }
+
 template<size_t N>
 __device__
 inline bool UniformTSDFVolumeCudaServer<N>::InVolume(const Vector3i &X) {
@@ -406,12 +418,15 @@ void UniformTSDFVolumeCuda<N>::Release() {
 
 template<size_t N>
 void UniformTSDFVolumeCuda<N>::UpdateServer() {
-    server_->voxel_length_ = voxel_length_;
-    server_->inv_voxel_length_ = 1.0f / voxel_length_;
+    if (server_ != nullptr) {
+        server_->voxel_length_ = voxel_length_;
+        server_->inv_voxel_length_ = 1.0f / voxel_length_;
 
-    server_->sdf_trunc_ = sdf_trunc_;
-    server_->transform_volume_to_world_ = transform_volume_to_world_;
-    server_->transform_world_to_volume_ = transform_volume_to_world_.Inverse();
+        server_->sdf_trunc_ = sdf_trunc_;
+        server_->transform_volume_to_world_ = transform_volume_to_world_;
+        server_->transform_world_to_volume_ =
+            transform_volume_to_world_.Inverse();
+    }
 }
 
 template<size_t N>

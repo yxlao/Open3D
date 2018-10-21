@@ -231,8 +231,10 @@ void LinkedListCuda<T>::Create(int max_capacity,
 
 template<typename T>
 void LinkedListCuda<T>::UpdateServer() {
-    server_->max_capacity_ = max_capacity_;
-    server_->memory_heap_ = *memory_heap_.server();
+    if (server_ != nullptr) {
+        server_->max_capacity_ = max_capacity_;
+        server_->memory_heap_ = *memory_heap_.server();
+    }
 }
 
 template<typename T>

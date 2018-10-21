@@ -17,84 +17,40 @@ namespace open3d {
 
 template<size_t N>
 class __ALIGN__(16) ScalableTSDFVolumeCudaServer {
-
-private: /** [N * N * N]; **/
-    HashTableCudaServer
-        <Vector3i, UniformTSDFVolumeCudaServer<N>, SpatialHasher> hash_table_;
+public:
+    typedef HashTableCudaServer<Vector3i, UniformTSDFVolumeCudaServer<N>,
+                                SpatialHasher> SpatialHashTableCudaServer;
 
 public:
+    int bucket_count_;
+    int value_capacity_;
+
     float voxel_length_;
     float inv_voxel_length_;
     float sdf_trunc_;
     TransformCuda transform_volume_to_world_;
     TransformCuda transform_world_to_volume_;
 
-public: /** Conversions **/
-    /** Voxel coordinate can be arbitrary value.
-      * They can be e.g. (1230, 1024, -1024). We then convert them in the
-      * desired block to access them if they exist. **/
-    inline __DEVICE__ Vector3f world_to_voxel(float x, float y, float z);
-    inline __DEVICE__ Vector3f world_to_voxel(const Vector3f &X);
+private:
+    SpatialHashTableCudaServer hash_table_;
 
-    inline __DEVICE__ Vector3f voxel_to_world(float x, float y, float z);
-    inline __DEVICE__ Vector3f voxel_to_world(const Vector3f &X);
-
-    inline __DEVICE__ Vector3f voxel_to_volume(float x, float y, float z);
-    inline __DEVICE__ Vector3f voxel_to_volume(const Vector3f &X);
-
-    inline __DEVICE__ Vector3f volume_to_voxel(float x, float y, float z);
-    inline __DEVICE__ Vector3f volume_to_voxel(const Vector3f &X);
-
-    inline __DEVICE__ Vector3i voxel_to_block(float x, float y, float z);
-    inline __DEVICE__ Vector3i voxel_to_block(const Vector3f &X);
-
-    inline __DEVICE__ Vector3i voxel_in_block(
-        float x, float y, float z, int block_x, int block_y, int block_z);
-    inline __DEVICE__ Vector3i voxel_in_block(
-        const Vector3f &X, const Vector3i &block);
+    float *tsdf_memory_pool_;
+    uchar *weight_memory_pool_;
+    Vector3b *color_memory_pool_;
 
 public:
-    /** Direct index accessing are wrapped in UniformVolumes
-     * Find the block with voxel_to_block, and access it explicitly.
-     */
-     inline __DEVICE__ float tsdf(int x, int y, int z);
-     inline __DEVICE__ float tsdf(const Vector3i &X);
-     inline __DEVICE__ uchar weight(int x, int y, int z);
-     inline __DEVICE__ uchar weight(const Vector3i &X);
-     inline __DEVICE__ Vector3b color(int x, int y, int z);
-     inline __DEVICE__ Vector3b color(const Vector3i &X);
-
-     inline __DEVICE__ Vector3f gradient(int x, int y, int z);
-     inline __DEVICE__ Vector3f gradient(const Vector3i &X);
-
-public:
-    /** Value interpolating (across sub-volumes)
-     * DO NOT frequently use them. They can be really slow.
-     * (TRY TO) ONLY use them for boundary value interpolations. **/
-    inline __DEVICE__ float TSDFAt(float x, float y, float z);
-    inline __DEVICE__ float TSDFAt(const Vector3f &X);
-
-    inline __DEVICE__ uchar WeightAt(float x, float y, float z);
-    inline __DEVICE__ uchar WeightAt(const Vector3f &X);
-
-    inline __DEVICE__ Vector3b ColorAt(float x, float y, float z);
-    inline __DEVICE__ Vector3b ColorAt(const Vector3f &X);
-
-    inline __DEVICE__ Vector3f GradientAt(float x, float y, float z);
-    inline __DEVICE__ Vector3f GradientAt(const Vector3f &X);
-
-public:
-    __DEVICE__ void Integrate(
-        int x, int y, int z,
-        ImageCudaServer<Vector1f> &depth,
-        MonoPinholeCameraCuda &camera,
-        TransformCuda &transform_camera_to_world);
-
-    __DEVICE__ Vector3f
-    RayCasting(
-        int x, int y,
-        MonoPinholeCameraCuda &camera,
-        TransformCuda &transform_camera_to_world);
+    __HOSTDEVICE__ inline SpatialHashTableCudaServer &hash_table() {
+        return hash_table_;
+    }
+    __DEVICE__ inline float *tsdf_memory_pool() {
+        return tsdf_memory_pool_;
+    }
+    __DEVICE__ inline uchar *weight_memory_pool() {
+        return weight_memory_pool_;
+    }
+    __DEVICE__ inline Vector3b *color_memory_pool() {
+        return color_memory_pool_;
+    }
 
 public:
     friend class ScalableTSDFVolumeCuda<N>;
@@ -102,49 +58,57 @@ public:
 
 template<size_t N>
 class ScalableTSDFVolumeCuda {
+public:
+    /** Note here the template is exactly the same as the
+     * SpatialHashTableCudaServer.
+     * We will explicitly deal with the UniformTSDFVolumeCudaServer later
+     * **/
+    typedef HashTableCuda
+        <Vector3i, UniformTSDFVolumeCudaServer<N>, SpatialHasher>
+        SpatialHashTableCuda;
+
 private:
     std::shared_ptr<ScalableTSDFVolumeCudaServer<N>> server_ = nullptr;
+    SpatialHashTableCuda hash_table_;
 
 public:
+    int bucket_count_;
+    int value_capacity_;
+
     float voxel_length_;
     float sdf_trunc_;
     TransformCuda transform_volume_to_world_;
 
 public:
     ScalableTSDFVolumeCuda();
-    ScalableTSDFVolumeCuda(float voxel_length, float sdf_trunc,
-                           TransformCuda &volume_to_world = TransformCuda::Identity());
+    ScalableTSDFVolumeCuda(int bucket_count, int value_capacity,
+                           float voxel_length, float sdf_trunc,
+                           TransformCuda &transform_volume_to_world = TransformCuda::Identity());
     ScalableTSDFVolumeCuda(const ScalableTSDFVolumeCuda<N> &other);
     ScalableTSDFVolumeCuda<N> &operator=(const ScalableTSDFVolumeCuda<N> &other);
     ~ScalableTSDFVolumeCuda();
 
     /** BE CAREFUL, we have to rewrite some
      * non-wrapped allocation stuff here for UniformTSDFVolumeCudaServer **/
-    void Create();
+    void Create(int bucket_count, int value_capacity);
     void Release();
     void UpdateServer();
 
+    std::pair<std::vector<Vector3i>,          /* Keys */
+              std::vector<std::tuple<std::vector<float>,  /* TSDF volumes */
+                                     std::vector<uchar>,
+                                     std::vector<Vector3b>>>> DownloadVolumes();
+
     void Reset();
 
-    void UploadVolume(std::vector<float> &tsdf, std::vector<uchar> &weight,
-                      std::vector<Vector3b> &color);
-    std::tuple<std::vector<float>, std::vector<uchar>, std::vector<Vector3b>>
-    DownloadVolume();
-
-    int Integrate(ImageCuda<Vector1f> &depth,
-                  MonoPinholeCameraCuda &camera,
-                  TransformCuda &transform_camera_to_world);
-
-    template<VertexType type>
-    int MarchingCubes(UniformMeshVolumeCuda<type, N> &mesher);
-
-    int RayCasting(ImageCuda<Vector3f> &image,
-                   MonoPinholeCameraCuda &camera,
-                   TransformCuda &transform_camera_to_world);
-
 public:
-    std::shared_ptr<ScalableTSDFVolumeCudaServer<N>> &
-    server() {
+    SpatialHashTableCuda &hash_table() {
+        return hash_table_;
+    }
+    const SpatialHashTableCuda &hash_table() const {
+        return hash_table_;
+    }
+    std::shared_ptr<ScalableTSDFVolumeCudaServer<N>> &server() {
         return server_;
     }
     const std::shared_ptr<ScalableTSDFVolumeCudaServer<N>> &
@@ -155,16 +119,5 @@ public:
 
 template<size_t N>
 __GLOBAL__
-void IntegrateKernel(ScalableTSDFVolumeCudaServer<N> server,
-                     ImageCudaServer<Vector1f> depth,
-                     MonoPinholeCameraCuda camera,
-                     TransformCuda transform_camera_to_world);
-
-template<size_t N>
-__GLOBAL__
-void RayCastingKernel(ScalableTSDFVolumeCudaServer<N> server,
-                      ImageCudaServer<Vector3f> image,
-                      MonoPinholeCameraCuda camera,
-                      TransformCuda transform_camera_to_world);
-
+void CreateScalableTSDFVolumesKernel(ScalableTSDFVolumeCudaServer<N> server);
 }

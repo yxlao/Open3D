@@ -14,7 +14,7 @@ void ResetMemoryHeapKernel(MemoryHeapCudaServer<T> server) {
 	const int i = blockIdx.x * blockDim.x + threadIdx.x;
 	if (i < server.max_capacity_) {
 		server.get_value(i) = T(); /* This is not necessary. */
-		server.get_heap(i) = server.max_capacity_ - i - 1;
+		server.get_heap(i) = i;
 	}
 }
 }

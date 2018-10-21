@@ -295,15 +295,17 @@ void HashTableCuda<Key, Value, Hasher>::Release() {
 
 template<typename Key, typename Value, typename Hasher>
 void HashTableCuda<Key, Value, Hasher>::UpdateServer() {
-    server_->hasher_ = hasher_;
-    server_->bucket_count_ = bucket_count_;
-    server_->memory_heap_entry_list_node_ =
-        *memory_heap_entry_list_node_.server();
-    server_->memory_heap_value_ = *memory_heap_value_.server();
-    server_->entry_array_ = *entry_array_.server();
-    server_->entry_list_array_ = *entry_list_array_.server();
-    server_->lock_array_ = *lock_array_.server();
-    server_->assigned_entry_array_ = *assigned_entry_array_.server();
+    if (server_ != nullptr) {
+        server_->hasher_ = hasher_;
+        server_->bucket_count_ = bucket_count_;
+        server_->memory_heap_entry_list_node_ =
+            *memory_heap_entry_list_node_.server();
+        server_->memory_heap_value_ = *memory_heap_value_.server();
+        server_->entry_array_ = *entry_array_.server();
+        server_->entry_list_array_ = *entry_list_array_.server();
+        server_->lock_array_ = *lock_array_.server();
+        server_->assigned_entry_array_ = *assigned_entry_array_.server();
+    }
 }
 
 template<typename Key, typename Value, typename Hasher>

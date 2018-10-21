@@ -112,17 +112,19 @@ void TriangleMeshCuda<type>::Release() {
 
 template<VertexType type>
 void TriangleMeshCuda<type>::UpdateServer() {
-    server_->max_vertices_ = max_vertices_;
-    server_->max_triangles_ = max_triangles_;
+    if (server_ != nullptr) {
+        server_->max_vertices_ = max_vertices_;
+        server_->max_triangles_ = max_triangles_;
 
-    server_->vertices_ = *vertices_.server();
-    server_->triangles_ = *triangles_.server();
+        server_->vertices_ = *vertices_.server();
+        server_->triangles_ = *triangles_.server();
 
-    if (type & VertexWithNormal) {
-        server_->vertex_normals_ = *vertex_normals_.server();
-    }
-    if (type & VertexWithColor) {
-        server_->vertex_colors_ = *vertex_colors_.server();
+        if (type & VertexWithNormal) {
+            server_->vertex_normals_ = *vertex_normals_.server();
+        }
+        if (type & VertexWithColor) {
+            server_->vertex_colors_ = *vertex_colors_.server();
+        }
     }
 }
 

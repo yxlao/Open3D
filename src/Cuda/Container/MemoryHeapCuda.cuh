@@ -35,27 +35,27 @@ T &MemoryHeapCudaServer<T>::get_value(size_t addr) {
 }
 
 /**
- * Only the unallocated part is maintained
- * Notice: heap grows toward low-numbered addresses
- * heap addr <- Free(*1*)        addr <- Malloc()         addr
- * N-1 | 0 |                 => | 0 |                 => | 0 |
- * N-2 | 1 |                 => | 1 |                 => | 1 |
- * N-3 | 2 |                 => | 2 |                 => | 2 |
- * N-4 | 3 |                 => |*1*| <- heap_counter => | 1 |
- * N-5 | 4 | <- heap_counter => | 4 |                 => | 4 | <- heap_counter
- * N-6 | 5 |                 => | 5 |                 => | 5 |
- *      ...                  =>  ...                     ...
- * 0   |N-1|                 => |N-1|                 => |N-1|
+ * The @value array is FIXED.
+ * The @heap array stores the addresses of the values.
+ * Only the unallocated part is maintained.
+ * (ONLY care about the heap above the heap counter. Below is meaningless.)
+ * ---------------------------------------------------------------------
+ * heap  ---Malloc-->  heap  ---Malloc-->  heap  ---Free(0)-->  heap
+ * N-1                 N-1                  N-1                  N-1   |
+ *  .                   .                    .                    .    |
+ *  .                   .                    .                    .    |
+ *  .                   .                    .                    .    |
+ *  3                   3                    3                    3    |
+ *  2                   2                    2 <-                 2    |
+ *  1                   1 <-                 1                    0 <- |
+ *  0 <- heap_counter   0                    0                    0
  */
 template<class T>
 __device__
 int MemoryHeapCudaServer<T>::Malloc() {
-    int index = atomicSub(heap_counter_, 1);
+    int index = atomicAdd(heap_counter_, 1);
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
-    if (index < 0) {
-        printf("Heap exhausted, return.\n");
-        return -1;
-    }
+    assert(index < max_capacity_);
 #endif
     return heap_[index];
 }
@@ -63,11 +63,11 @@ int MemoryHeapCudaServer<T>::Malloc() {
 template<class T>
 __device__
 void MemoryHeapCudaServer<T>::Free(size_t addr) {
-    int index = atomicAdd(heap_counter_, 1);
+    int index = atomicSub(heap_counter_, 1);
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
-    assert(index + 1 < max_capacity_);
+    assert(index >= 1);
 #endif
-    heap_[index + 1] = addr;
+    heap_[index - 1] = addr;
 }
 
 /**
@@ -145,7 +145,7 @@ void MemoryHeapCuda<T>::Reset() {
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 
-    int heap_counter = max_capacity_ - 1;
+    int heap_counter = 0;
     CheckCuda(cudaMemcpy(server_->heap_counter_, &heap_counter,
                          sizeof(int), cudaMemcpyHostToDevice));
 }

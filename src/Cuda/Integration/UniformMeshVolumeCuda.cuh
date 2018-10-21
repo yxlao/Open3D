@@ -235,10 +235,12 @@ void UniformMeshVolumeCuda<type, N>::Reset() {
 
 template<VertexType type, size_t N>
 void UniformMeshVolumeCuda<type, N>::UpdateServer() {
-    server_->max_vertices_ = max_vertices_;
-    server_->max_triangles_ = max_triangles_;
+    if (server_ != nullptr) {
+        server_->max_vertices_ = max_vertices_;
+        server_->max_triangles_ = max_triangles_;
 
-    server_->mesh_ = *mesh_.server();
+        server_->mesh_ = *mesh_.server();
+    }
 }
 
 template<VertexType type, size_t N>

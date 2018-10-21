@@ -45,6 +45,13 @@ public:
     int max_capacity_;
 
 public:
+    __HOSTDEVICE__ inline T* data() {
+        return data_;
+    }
+    __HOSTDEVICE__ inline int* heap() {
+        return heap_;
+    }
+
     __DEVICE__ int Malloc();
     __DEVICE__ void Free(size_t addr);
 

@@ -42,7 +42,7 @@ TEST(HashTableCuda, HashTableProfiling) {
     }
 
     /* give more tries */
-    int num_iters = 30;
+    int num_iters = 60;
     int num_per_iter = num_pairs / num_iters;
     for (int i = 0; i < num_iters; ++i) {
         std::vector<Vector3i> subkeys(

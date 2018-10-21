@@ -100,8 +100,10 @@ void ImagePyramidCuda<VecType, N>::Build(const ImageCuda<VecType> &image) {
 
 template<typename VecType, size_t N>
 void ImagePyramidCuda<VecType, N>::UpdateServer() {
-    for (size_t i = 0; i < N; ++i) {
-        server_->level(i) = *images_[i].server();
+    if (server_ != nullptr) {
+        for (size_t i = 0; i < N; ++i) {
+            server_->level(i) = *images_[i].server();
+        }
     }
 }
 

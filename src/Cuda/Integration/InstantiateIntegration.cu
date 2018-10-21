@@ -6,8 +6,8 @@
 #include "UniformTSDFVolumeCudaKernel.cuh"
 #include "UniformMeshVolumeCuda.cuh"
 #include "UniformMeshVolumeCudaKernel.cuh"
-
-//#include "ScalableTSDFVolumeCuda.cuh"
+#include "ScalableTSDFVolumeCuda.cuh"
+#include "ScalableTSDFVolumeCudaKernel.cuh"
 
 namespace open3d {
 
@@ -28,24 +28,6 @@ template
 class UniformTSDFVolumeCuda<256>;
 template
 class UniformTSDFVolumeCuda<512>;
-
-//template
-//class ScalableTSDFVolumeCudaServer<8>;
-//template
-//class ScalableTSDFVolumeCudaServer<16>;
-//template
-//class ScalableTSDFVolumeCudaServer<256>;
-//template
-//class ScalableTSDFVolumeCudaServer<512>;
-//
-//template
-//class ScalableTSDFVolumeCuda<8>;
-//template
-//class ScalableTSDFVolumeCuda<16>;
-//template
-//class ScalableTSDFVolumeCuda<256>;
-//template
-//class ScalableTSDFVolumeCuda<512>;
 
 template
 class UniformMeshVolumeCuda<VertexRaw, 8>;
@@ -256,5 +238,18 @@ void MarchingCubesVertexExtractionKernel<VertexWithNormalAndColor, 512>(
 
 /** Triangle Extraction **/
 /** Should be self contained and don't need to be instantiated? **/
+
+
+/** Scalable part **/
+/** Oh we can't afford larger chunks **/
+template
+class ScalableTSDFVolumeCudaServer<8>;
+
+template
+class ScalableTSDFVolumeCuda<8>;
+
+template
+__global__
+void CreateScalableTSDFVolumesKernel<8>(ScalableTSDFVolumeCudaServer<8> server);
 
 }
