@@ -59,6 +59,7 @@ public:
      * addrs point to values */
     __DEVICE__ int &get_heap(size_t index);
     __DEVICE__ T &get_value(size_t addr);
+    __DEVICE__ const T& get_value(size_t addr) const;
 
     friend class MemoryHeapCuda<T>;
 };

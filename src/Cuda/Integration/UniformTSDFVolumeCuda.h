@@ -26,18 +26,13 @@ private: /** [N * N * N]; **/
 public:
     /** According to UniformTSDFVolume.cpp,
      * Voxel xyz is at Vector3f(0.5) + [x, y, z]^T * voxel_length_;
-     */
+     * Shared parameters with UniformTDFVolumes
+     **/
     float voxel_length_;
     float inv_voxel_length_;
     float sdf_trunc_;
     TransformCuda transform_volume_to_world_;
     TransformCuda transform_world_to_volume_;
-
-public:
-    /** WARNING!!!
-     * This method is designed for ScalableTSDFVolumeCudaServer
-     * That class requires us to initialize memory ON GPU. */
-    __DEVICE__ void Create(float *tsdf, uchar *weight, Vector3b *color);
 
 public:
     __DEVICE__ inline Vector3i Vectorize(size_t index) {
@@ -90,15 +85,15 @@ public:
     __DEVICE__ Vector3f gradient(const Vector3i &X);
 
 
-    /** Coordinate onversions **/
+    /** Coordinate conversions **/
     __DEVICE__ inline bool InVolume(int x, int y, int z);
     __DEVICE__ inline bool InVolume(const Vector3i &X);
 
     __DEVICE__ inline bool InVolumef(float x, float y, float z);
     __DEVICE__ inline bool InVolumef(const Vector3f &X);
 
-    __DEVICE__ inline Vector3f world_to_voxel(float x, float y, float z);
-    __DEVICE__ inline Vector3f world_to_voxel(const Vector3f &X);
+    __DEVICE__ inline Vector3f world_to_voxel(float xw, float yw, float zw);
+    __DEVICE__ inline Vector3f world_to_voxel(const Vector3f &Xw);
 
     __DEVICE__ inline Vector3f voxel_to_world(float x, float y, float z);
     __DEVICE__ inline Vector3f voxel_to_world(const Vector3f &X);
@@ -106,8 +101,8 @@ public:
     __DEVICE__ inline Vector3f voxel_to_volume(const Vector3f &X);
     __DEVICE__ inline Vector3f voxel_to_volume(float x, float y, float z);
 
-    __DEVICE__ inline Vector3f volume_to_voxel(const Vector3f &X);
-    __DEVICE__ inline Vector3f volume_to_voxel(float x, float y, float z);
+    __DEVICE__ inline Vector3f volume_to_voxel(const Vector3f &Xv);
+    __DEVICE__ inline Vector3f volume_to_voxel(float xv, float yv, float zv);
 
 public:
     /** Value interpolating **/
@@ -124,6 +119,11 @@ public:
     __DEVICE__ Vector3f GradientAt(const Vector3f &X);
 
 public:
+    /** WARNING!!!
+      * This method is designed for ScalableTSDFVolumeCudaServer
+      * That class requires us to initialize memory ON GPU. */
+    __DEVICE__ void Create(float *tsdf, uchar *weight, Vector3b *color);
+
     __DEVICE__ void Integrate(int x, int y, int z,
                               ImageCudaServer<Vector1f> &depth,
                               MonoPinholeCameraCuda &camera,
@@ -167,6 +167,7 @@ public:
     std::tuple<std::vector<float>, std::vector<uchar>, std::vector<Vector3b>>
     DownloadVolume();
 
+public:
     void Integrate(ImageCuda<Vector1f> &depth,
                    MonoPinholeCameraCuda &camera,
                    TransformCuda &transform_camera_to_world);

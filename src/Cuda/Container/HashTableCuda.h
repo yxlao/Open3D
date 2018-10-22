@@ -231,6 +231,9 @@ public:
     const ArrayCuda<Entry>& assigned_entry_array() const {
         return assigned_entry_array_;
     };
+    ArrayCuda<Entry>& assigned_entry_array() {
+        return assigned_entry_array_;
+    }
     const MemoryHeapCuda<LinkedListNodeEntryCuda>&
         memory_heap_entry_list_node() const {
         return memory_heap_entry_list_node_;

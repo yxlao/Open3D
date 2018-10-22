@@ -59,8 +59,8 @@ Value *HashTableCudaServer<Key, Value, Hasher>::GetValueByInternalValuePtr(
 
 template<typename Key, typename Value, typename Hasher>
 __device__
-Value *HashTableCudaServer<Key, Value, Hasher>
-::GetValuePtrByKey(const Key &key) {
+Value *HashTableCudaServer<Key, Value, Hasher>::GetValuePtrByKey(
+    const Key &key) {
     int internal_ptr = GetInternalValuePtrByKey(key);
     if (internal_ptr == NULLPTR_CUDA) return nullptr;
     return GetValueByInternalValuePtr(internal_ptr);
@@ -339,6 +339,7 @@ void HashTableCuda<Key, Value, Hasher>::GetAssignedEntries() {
     const int blocks = DIV_CEILING(bucket_count_, THREAD_1D_UNIT);
     GetHashTableAssignedEntriesKernel << < blocks, threads >> > (*server_);
     CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
 }
 
 template<typename Key, typename Value, typename Hasher>

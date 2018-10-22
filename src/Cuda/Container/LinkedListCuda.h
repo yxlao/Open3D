@@ -54,7 +54,7 @@ public:
 
     __DEVICE__ void Insert(T value);
     __DEVICE__ int Delete(int node_ptr);
-    __DEVICE__ int Find(T value);
+    __DEVICE__ int Find(T value) const;
     __DEVICE__ int FindAndDelete(T value);
     __DEVICE__ void Clear();
 

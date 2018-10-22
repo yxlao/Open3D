@@ -114,7 +114,7 @@ int LinkedListCudaServer<T>::Delete(const int node_ptr) {
 
 template<typename T>
 __device__
-int LinkedListCudaServer<T>::Find(T value) {
+int LinkedListCudaServer<T>::Find(T value) const {
     int node_ptr = *head_node_ptr_;
     while (node_ptr != NULLPTR_CUDA) {
         if (memory_heap_.get_value(node_ptr).data == value)

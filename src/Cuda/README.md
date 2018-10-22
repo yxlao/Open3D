@@ -173,3 +173,16 @@ come out. Work around: uncomment `EIGEN_DEVICE_FUNC` in Eigen's headers.
 - DO NOT add boundary checks in frequently accessed functions, such as get(),
  push_back(), etc. Check them outside (or just ignore them first...)
 - Never abuse `inline` for non-trivial functions. NVCC will cry!
+2
+## Notations
+- World coordinate (in unit of meter): Xw = (xw, yw, zw)$
+- Volume coordinate (in unit of meter, transformed from world): Xv = (xv, yv,
+ zv)
+
+- Global voxel coordinate (in unit of voxel): X = (x, y, z)
+- Local voxel coordinates in one specific subvolume: Xlocal = (xlocal, ylocal, zlocal)
+- Voxel offset (global or local): dX = (dx, dy, dz)
+
+- Subvolume coordinate (in unit of subvolume): Xsv = (xsv, ysv, zsv)
+- Subvolume neighbor indices (in unit of subvolume): dXsv = (dxsv, dysv, dzsv)
+ 

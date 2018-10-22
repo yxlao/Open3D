@@ -34,6 +34,16 @@ T &MemoryHeapCudaServer<T>::get_value(size_t addr) {
     return data_[addr];
 }
 
+template<typename T>
+__device__
+const T &MemoryHeapCudaServer<T>::get_value(size_t addr) const {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+    assert(addr < max_capacity_);
+#endif
+    return data_[addr];
+}
+
+
 /**
  * The @value array is FIXED.
  * The @heap array stores the addresses of the values.
