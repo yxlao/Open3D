@@ -8,33 +8,27 @@ namespace open3d {
 
 template<size_t N>
 __global__
-void AllocateBlocksKernel(ScalableTSDFVolumeCudaServer<N> server,
-                          ImageCudaServer<Vector1f> depth,
-                          MonoPinholeCameraCuda camera,
-                          TransformCuda transform_camera_to_world) {
+void TouchSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server,
+                       ImageCudaServer<Vector1f> depth,
+                       MonoPinholeCameraCuda camera,
+                       TransformCuda transform_camera_to_world) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
 
     if (x >= depth.width_ || y >= depth.height_) return;
-    float d = depth.get(x, y)(0);
-    if (d == 0) return;
 
-    Vector3f X_v = server.transform_world_to_volume_ * (
-        transform_camera_to_world * camera.InverseProjection(x, y, d));
-
-    // if server.volume_to_block() not allocated
-    // server.new(block idx)
+    server.TouchSubvolume(x, y, depth, camera, transform_camera_to_world);
 }
 
 template<size_t N>
 __global__
-void GetBlocksInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
+void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
                               MonoPinholeCameraCuda camera,
                               TransformCuda transform_camera_to_world) {
     const int bucket_idx = threadIdx.x + blockIdx.x * blockDim.x;
     if (bucket_idx >= server.bucket_count_) return;
 
-    auto& hash_table = server.hash_table();
+    auto &hash_table = server.hash_table();
 
     int bucket_base_idx = bucket_idx * BUCKET_SIZE;
 #pragma unroll 1
@@ -42,9 +36,10 @@ void GetBlocksInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
         HashEntry<Vector3i> &entry = hash_table.entry_array().get(
             bucket_base_idx + i);
         if (entry.value_ptr != NULLPTR_CUDA) {
-            // AND IN FRUSTUM
-            // TODO: Maintain entry array elsewhere
-            hash_table.assigned_entry_array().push_back(entry);
+            Vector3f X = server.voxelf_local_to_global(0, 0, 0, entry.key);
+            if (camera.IsInFrustum(server.voxel_to_world(X))) {
+                server.target_subvolume_entry_array().push_back(entry);
+            }
         }
     }
 
@@ -54,7 +49,13 @@ void GetBlocksInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
     while (node_ptr != NULLPTR_CUDA) {
         LinkedListNodeCuda<HashEntry<Vector3i>> &linked_list_node =
             linked_list.get_node(node_ptr);
-        hash_table.assigned_entry_array().push_back(linked_list_node.data);
+
+        HashEntry<Vector3i> &entry = linked_list_node.data;
+        Vector3f X = server.voxelf_local_to_global(0, 0, 0, entry.key);
+        if (camera.IsInFrustum(server.voxel_to_world(X))) {
+            server.target_subvolume_entry_array().push_back(entry);
+        }
+
         node_ptr = linked_list_node.next_node_ptr;
     }
 }
@@ -69,8 +70,8 @@ void IntegrateKernel(ScalableTSDFVolumeCudaServer<N> server,
     const int x = threadIdx.x;
     const int y = threadIdx.y;
     const int z = threadIdx.z;
-}
 
+}
 
 template<size_t N>
 __global__
@@ -91,7 +92,9 @@ void CreateScalableTSDFVolumesKernel(ScalableTSDFVolumeCudaServer<N> server) {
     uniform_volume.voxel_length_ = server.voxel_length_;
     uniform_volume.inv_voxel_length_ = server.inv_voxel_length_;
     uniform_volume.sdf_trunc_ = server.sdf_trunc_;
-    uniform_volume.transform_volume_to_world_ = server.transform_volume_to_world_;
-    uniform_volume.transform_world_to_volume_ = server.transform_world_to_volume_;
+    uniform_volume.transform_volume_to_world_ =
+        server.transform_volume_to_world_;
+    uniform_volume.transform_world_to_volume_ =
+        server.transform_world_to_volume_;
 }
 }

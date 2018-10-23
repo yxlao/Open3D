@@ -59,7 +59,17 @@ public:
             && p(1) >= 0 && p(1) < height_[level] - 1;
     }
 
-    inline __HOSTDEVICE__ Vector2f Projection(const Vector3f &X,
+    __HOSTDEVICE__ bool IsInFrustum(const Vector3f &X, size_t level = 0) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+        assert(level < N);
+#endif
+        /* TODO: Derive a RGBDImage Class (using short),
+         * holding depth constraints */
+        if (X(2) < 0.1 || X(2) > 3) return false;
+        return IsValid(Projection(X, level), level);
+    }
+
+    __HOSTDEVICE__ Vector2f Projection(const Vector3f &X,
                                               size_t level = 0) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
         assert(level < N);
@@ -68,7 +78,7 @@ public:
                         (fy_[level] * X(1)) / X(2) + cy_[level]);
     }
 
-    inline __HOSTDEVICE__ Vector3f InverseProjection(const Vector2f &p,
+    __HOSTDEVICE__ Vector3f InverseProjection(const Vector2f &p,
                                                      float d,
                                                      size_t level = 0) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
@@ -79,7 +89,7 @@ public:
                         d);
     }
 
-    inline __HOSTDEVICE__ Vector3f InverseProjection(int x, int y, float d,
+    __HOSTDEVICE__ Vector3f InverseProjection(int x, int y, float d,
                                                      size_t level = 0) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
         assert(level < N);

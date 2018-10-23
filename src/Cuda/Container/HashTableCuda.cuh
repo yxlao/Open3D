@@ -118,8 +118,7 @@ int HashTableCudaServer<Key, Value, Hasher>::New(const Key &key) {
         linked_list.Insert(new_entry);
     }
 
-    /* An attempt */
-    atomicExch(&lock_array_.get(bucket_idx), UNLOCKED);
+    /** Don't unlock, otherwise the result can be inconsistent **/
     return new_entry.value_ptr;
 }
 
