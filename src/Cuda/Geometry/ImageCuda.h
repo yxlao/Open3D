@@ -92,6 +92,7 @@ public:
      *  is memory efficient. No moving semantic is needed.
      */
     ImageCuda(const ImageCuda<VecType> &other);
+    ImageCuda(int width, int height);
     ~ImageCuda();
     ImageCuda<VecType> &operator=(const ImageCuda<VecType> &other);
 

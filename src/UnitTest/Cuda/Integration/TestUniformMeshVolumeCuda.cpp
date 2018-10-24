@@ -33,14 +33,15 @@ TEST(UniformMeshVolumeCuda, MarchingCubes) {
     TransformCuda extrinsics = TransformCuda::Identity();
     volume.Integrate(imcudaf, default_camera, extrinsics);
 
-    UniformMeshVolumeCuda<VertexWithNormal, 512> mesher;
-    mesher.Create(100000, 100000);
+    UniformMeshVolumeCuda<VertexWithNormal, 512> mesher(100000, 100000);
 
     Timer timer;
     timer.Start();
-    mesher.MarchingCubes(volume);
+    for (int i = 0; i < 10; ++i) {
+        mesher.MarchingCubes(volume);
+    }
     timer.Stop();
-    PrintInfo("MarchingCubes time: %f milliseconds\n", timer.GetDuration());
+    PrintInfo("MarchingCubes time: %f milliseconds\n", timer.GetDuration() / 10);
 
     std::shared_ptr<TriangleMesh> mesh = mesher.mesh().Download();
     PrintInfo("triangle.size(): %d, vertices.size(): %d, normals.size(): %d\n",

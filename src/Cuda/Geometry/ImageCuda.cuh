@@ -420,6 +420,11 @@ ImageCuda<VecType>::ImageCuda(const ImageCuda<VecType> &other) {
 }
 
 template<typename VecType>
+ImageCuda<VecType>::ImageCuda(int width, int height) {
+    Create(width, height);
+}
+
+template<typename VecType>
 ImageCuda<VecType> &ImageCuda<VecType>::operator=(const ImageCuda<VecType> &other) {
 #ifdef HOST_DEBUG_MONITOR_LIFECYCLE
     PrintInfo("ImageCuda assignment operator.\n");

@@ -20,6 +20,8 @@
  *  When we need to do meshing, we attache this MeshVolume to TSDFVolume **/
 namespace open3d {
 
+static const int VERTEX_TO_ALLOCATE = -1;
+
 template<VertexType type, size_t N>
 class UniformMeshVolumeCudaServer {
 private:
@@ -28,15 +30,15 @@ private:
 
     /** !!! WARNING !!!:
      * For classes with normals or colors, we pre-allocate all the data,
-     * and ONLY the iterator (index) of @vertices_ is carefully maintained by
+     * and ONLY the @iterator (index) of @vertices_ is carefully maintained by
      * atomicAdd in array.push_back;
      * @vertex_normals_, @vertex_colros_ just
      * REUSE the iterator (index) of @vertices_
      *
      * > Example: (in a cuda device/global function)
-     *   int idx = mesh_.vertices().push_back(vertex);
-     *   mesh_.vertex_normals()[idx] = vertex_normal;
-     *   mesh_.vertex_colors()[idx] = vertex_color;
+     *   int addr = mesh_.vertices().push_back(vertex);
+     *   mesh_.vertex_normals()[addr] = vertex_normal;
+     *   mesh_.vertex_colors()[addr] = vertex_color;
      *
      * Here are some reasons for this choice:
      * 1. We don't want to mess up the iterators by multiple atomicAdds
@@ -47,10 +49,6 @@ private:
      *       transfer data into TriangleMesh, or OpenGL handles, for rendering.
      **/
     TriangleMeshCudaServer<type> mesh_;
-
-public:
-    int max_vertices_;
-    int max_triangles_;
 
 public:
     __DEVICE__ inline Vector3i Vectorize(size_t index) {
@@ -112,6 +110,7 @@ public:
 
 public:
     UniformMeshVolumeCuda();
+    UniformMeshVolumeCuda(int max_vertices, int max_triangles);
     UniformMeshVolumeCuda(const UniformMeshVolumeCuda<type, N> &other);
     UniformMeshVolumeCuda<type, N>& operator=(const
         UniformMeshVolumeCuda<type, N> &other);
@@ -123,6 +122,10 @@ public:
     void UpdateServer();
 
 public:
+    void VertexAllocation(UniformTSDFVolumeCuda<N>& tsdf_volume);
+    void VertexExtraction(UniformTSDFVolumeCuda<N>& tsdf_volume);
+    void TriangleExtraction();
+
     void MarchingCubes(UniformTSDFVolumeCuda<N>& tsdf_volume);
 
 public:

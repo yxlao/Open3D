@@ -22,7 +22,7 @@ void TouchSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server,
 
 template<size_t N>
 __global__
-void IntegrateKernel(ScalableTSDFVolumeCudaServer<N> server,
+void IntegrateSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server,
                      ImageCudaServer<Vector1f> depth,
                      MonoPinholeCameraCuda camera,
                      TransformCuda transform_camera_to_world) {

@@ -71,8 +71,8 @@ TEST(UniformTSDFVolumeCuda, RayCasting) {
     imcuda.Upload(im);
     auto imcudaf = imcuda.ToFloat(0.001f);
 
-    MonoPinholeCameraCuda default_camera;
-    default_camera.SetUp();
+    MonoPinholeCameraCuda intrinsics;
+    intrinsics.SetUp();
     TransformCuda transform = TransformCuda::Identity();
 
     const float voxel_length = 0.01f;
@@ -80,7 +80,9 @@ TEST(UniformTSDFVolumeCuda, RayCasting) {
     UniformTSDFVolumeCuda<512> volume(voxel_length, voxel_length * 3, transform);
 
     TransformCuda extrinsics = TransformCuda::Identity();
-    volume.Integrate(imcudaf, default_camera, extrinsics);
+    for (int i = 0; i < 10; ++i) {
+        volume.Integrate(imcudaf, intrinsics, extrinsics);
+    }
 
     ImageCuda<Vector3f> raycaster;
     raycaster.Create(imcuda.width(), imcuda.height());
@@ -89,7 +91,7 @@ TEST(UniformTSDFVolumeCuda, RayCasting) {
     int iteration_times = 100;
     timer.Start();
     for (int i = 0; i < iteration_times; ++i) {
-        volume.RayCasting(raycaster, default_camera, extrinsics);
+        volume.RayCasting(raycaster, intrinsics, extrinsics);
     }
     timer.Stop();
     PrintInfo("Average raycasting time: %f milliseconds\n",

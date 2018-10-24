@@ -240,16 +240,14 @@ bool TriangleMeshCuda<type>::HasTriangles() {
 
 template<VertexType type>
 bool TriangleMeshCuda<type>::HasVertexNormals() {
-    if ((type & VertexWithNormal) == 0
-    || server_ == nullptr) return false;
+    if ((type & VertexWithNormal) == 0 || server_ == nullptr) return false;
     int vertices_size = vertices_.size();
     return vertices_size > 0 && vertices_size == vertex_normals_.size();
 }
 
 template<VertexType type>
 bool TriangleMeshCuda<type>::HasVertexColors(){
-    if ((type & VertexWithColor) == 0
-    || server_ == nullptr) return false;
+    if ((type & VertexWithColor) == 0 || server_ == nullptr) return false;
     int vertices_size = vertices_.size();
     return vertices_size > 0 && vertices_size == vertex_colors_.size();
 }

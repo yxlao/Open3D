@@ -14,23 +14,13 @@ namespace open3d {
 /**
  * Server end
  */
-
-template<size_t N>
-__device__
-inline void UniformTSDFVolumeCudaServer<N>::Create(
-    float *tsdf, uchar *weight, open3d::Vector3b *color) {
-    tsdf_ = tsdf;
-    weight_ = weight;
-    color_ = color;
-}
-
 /** Coordinate conversions **/
 template<size_t N>
 __device__
 inline bool UniformTSDFVolumeCudaServer<N>::InVolume(int x, int y, int z) {
     return 0 <= x && x < N
-    && 0 <= y && y < N
-    && 0 <= z && z < N;
+        && 0 <= y && y < N
+        && 0 <= z && z < N;
 }
 
 template<size_t N>
@@ -132,12 +122,11 @@ Vector3f UniformTSDFVolumeCudaServer<N>::gradient(const Vector3i &X) {
     return gradient(X(0), X(1), X(2));
 }
 
-/** Interpolations. TODO: Check default value later **/
+/** Interpolations. **/
+/** Ensure it is called within [0, N - 1)^3 **/
 template<size_t N>
 __device__
 float UniformTSDFVolumeCudaServer<N>::TSDFAt(float x, float y, float z) {
-    /** If it is in Volume, then all the nearby components are in volume,
-     * no boundary check is required **/
     Vector3i X = Vector3i(int(x), int(y), int(z));
     Vector3f r = Vector3f(x - X(0), y - X(1), z - X(2));
 
@@ -274,7 +263,7 @@ void UniformTSDFVolumeCudaServer<N>::Integrate(
     float d = depth.get_interp(p(0), p(1))(0);
 
     float sdf = d - Xc(2);
-    if (sdf <= - sdf_trunc_) return;
+    if (sdf <= -sdf_trunc_) return;
     sdf = fminf(sdf, sdf_trunc_);
 
     /** Weight average **/
@@ -295,6 +284,7 @@ Vector3f UniformTSDFVolumeCudaServer<N>::RayCasting(
     Vector3f ret = Vector3f(0);
 
     Vector3f ray_c = camera.InverseProjection(x, y, 1.0f).normalized();
+
     /** TODO: throw it into parameters **/
     const float t_min = 0.2f / ray_c(2);
     const float t_max = 3.0f / ray_c(2);
@@ -491,10 +481,20 @@ UniformTSDFVolumeCuda<N>::DownloadVolume() {
         std::move(tsdf), std::move(weight), std::move(color));
 }
 
+/** Reserved for ScalableTSDFVolumeCuda **/
+template<size_t N>
+__device__
+inline void UniformTSDFVolumeCudaServer<N>::Create(
+    float *tsdf, uchar *weight, open3d::Vector3b *color) {
+    tsdf_ = tsdf;
+    weight_ = weight;
+    color_ = color;
+}
+
 template<size_t N>
 void UniformTSDFVolumeCuda<N>::Integrate(ImageCuda<open3d::Vector1f> &depth,
-                                        MonoPinholeCameraCuda &camera,
-                                        TransformCuda &transform_camera_to_world) {
+                                         MonoPinholeCameraCuda &camera,
+                                         TransformCuda &transform_camera_to_world) {
     const int num_blocks = DIV_CEILING(N, THREAD_3D_UNIT);
     const dim3 blocks(num_blocks, num_blocks, num_blocks);
     const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
@@ -506,8 +506,8 @@ void UniformTSDFVolumeCuda<N>::Integrate(ImageCuda<open3d::Vector1f> &depth,
 
 template<size_t N>
 void UniformTSDFVolumeCuda<N>::RayCasting(ImageCuda<open3d::Vector3f> &image,
-                                         MonoPinholeCameraCuda &camera,
-                                         TransformCuda &transform_camera_to_world) {
+                                          MonoPinholeCameraCuda &camera,
+                                          TransformCuda &transform_camera_to_world) {
     const dim3 blocks(DIV_CEILING(image.width(), THREAD_2D_UNIT),
                       DIV_CEILING(image.height(), THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);

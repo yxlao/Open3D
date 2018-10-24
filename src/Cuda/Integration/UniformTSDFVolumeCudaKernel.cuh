@@ -34,7 +34,7 @@ void RayCastingKernel(UniformTSDFVolumeCudaServer<N> server,
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
 
     if (x >= image.width_ || y >= image.height_) return;
-    image.get(x, y) = server.RayCasting(
-        x, y, camera, transform_camera_to_world);
+    Vector3f n = server.RayCasting(x, y, camera, transform_camera_to_world);
+    image.get(x, y) = (n == Vector3f::Zeros()) ? n : n * 0.5f + Vector3f(0.5f);
 }
 }

@@ -16,13 +16,6 @@ TEST(ScalableTSDFVolumeCuda, Create) {
 
     ScalableTSDFVolumeCuda<8> volume_copy;
     volume_copy = volume;
-
-    auto downloaded_volume = volume_copy.DownloadVolumes();
-    auto& keys = downloaded_volume.first;
-    auto& volumes = downloaded_volume.second;
-    for (auto &key : keys) {
-        PrintInfo("(%d %d %d)\n", keys[0], keys[1], keys[2]);
-    }
 }
 
 TEST(ScalableTSDFVolumeCuda, TouchSubvolumes) {
@@ -33,22 +26,17 @@ TEST(ScalableTSDFVolumeCuda, TouchSubvolumes) {
     imcuda.Upload(im);
     auto imcudaf = imcuda.ToFloat(0.001f);
 
-    MonoPinholeCameraCuda default_camera;
-    default_camera.SetUp();
+    MonoPinholeCameraCuda intrinsics;
+    intrinsics.SetUp();
 
     float voxel_length = 0.01f;
     TransformCuda extrinsics = TransformCuda::Identity();
-    ScalableTSDFVolumeCuda<8> volume(10000,
-                                     200000,
-                                     voxel_length,
-                                     3 * voxel_length,
+    ScalableTSDFVolumeCuda<8> volume(10000, 200000,
+                                     voxel_length, 3 * voxel_length,
                                      extrinsics);
 
-    Timer timer;
-    timer.Start();
-    volume.TouchBlocks(imcudaf, default_camera, extrinsics);
-    timer.Stop();
-    PrintInfo("ToucBlocks takes %f milliseconds.\n", timer.GetDuration());
+    volume.TouchSubvolumes(imcudaf, intrinsics, extrinsics);
+    volume.GetSubvolumesInFrustum(intrinsics, extrinsics);
 
     auto entry_vector = volume.target_subvolume_entry_array().Download();
     for (auto &entry : entry_vector) {
@@ -65,28 +53,21 @@ TEST(ScalableTSDFVolumeCuda, Integration) {
     imcuda.Upload(im);
     auto imcudaf = imcuda.ToFloat(0.001f);
 
-    MonoPinholeCameraCuda default_camera;
-    default_camera.SetUp();
+    MonoPinholeCameraCuda intrinsics;
+    intrinsics.SetUp();
 
     float voxel_length = 0.01f;
     TransformCuda extrinsics = TransformCuda::Identity();
-    ScalableTSDFVolumeCuda<8> volume(10000,
-                                     200000,
-                                     voxel_length,
-                                     3 * voxel_length,
+    ScalableTSDFVolumeCuda<8> volume(10000, 200000,
+                                     voxel_length, 3 * voxel_length,
                                      extrinsics);
-
     Timer timer;
     timer.Start();
-    volume.TouchBlocks(imcudaf, default_camera, extrinsics);
+    for (int i = 0; i < 10; ++i) {
+        volume.Integrate(imcudaf, intrinsics, extrinsics);
+    }
     timer.Stop();
-    PrintInfo("TouchBlocks takes %f milliseconds.\n", timer.GetDuration());
-    auto entry_vector = volume.target_subvolume_entry_array().Download();
-
-    timer.Start();
-    volume.Integrate(imcudaf, default_camera, extrinsics);
-    timer.Stop();
-    PrintInfo("Integrate takes %f milliseconds.\n", timer.GetDuration());
+    PrintInfo("Integrations takes %f milliseconds\n", timer.GetDuration() / 10);
 
     PrintInfo("Downloading volumes: \n");
     auto result = volume.DownloadVolumes();
@@ -111,34 +92,32 @@ TEST(ScalableTSDFVolumeCuda, RayCasting) {
     imcuda.Upload(im);
     auto imcudaf = imcuda.ToFloat(0.001f);
 
-    MonoPinholeCameraCuda default_camera;
-    default_camera.SetUp();
+    MonoPinholeCameraCuda intrinsics;
+    intrinsics.SetUp();
 
     float voxel_length = 0.01f;
     TransformCuda extrinsics = TransformCuda::Identity();
-    ScalableTSDFVolumeCuda<8> volume(10000,
-                                     200000,
-                                     voxel_length,
-                                     3 * voxel_length,
+    ScalableTSDFVolumeCuda<8> volume(10000, 200000,
+                                     voxel_length, 3 * voxel_length,
                                      extrinsics);
 
+    ImageCuda<Vector3f> raycaster(imcuda.width(), imcuda.height());
+
     Timer timer;
-    timer.Start();
-    volume.TouchBlocks(imcudaf, default_camera, extrinsics);
-    timer.Stop();
-    PrintInfo("TouchBlocks takes %f milliseconds.\n", timer.GetDuration());
-    auto entry_vector = volume.target_subvolume_entry_array().Download();
+    const int iters = 10;
+    float time = 0;
+    for (int i = 0; i < iters; ++i) {
+        volume.Integrate(imcudaf, intrinsics, extrinsics);
+        timer.Start();
+        volume.RayCasting(raycaster, intrinsics, extrinsics);
+        timer.Stop();
+        time += timer.GetDuration();
 
-    timer.Start();
-    volume.Integrate(imcudaf, default_camera, extrinsics);
-    timer.Stop();
-    PrintInfo("Integrate takes %f milliseconds.\n", timer.GetDuration());
-
-    ImageCuda<Vector3f> raycaster;
-    raycaster.Create(imcuda.width(), imcuda.height());
-    volume.RayCasting(raycaster, default_camera, extrinsics);
-    cv::imshow("Raycaster", raycaster.Download());
+        cv::imshow("Raycaster", raycaster.Download());
+        cv::waitKey(10);
+    }
     cv::waitKey(-1);
+    PrintInfo("Raycasting takes %f milliseconds\n", time / iters);
 }
 
 int main(int argc, char **argv) {

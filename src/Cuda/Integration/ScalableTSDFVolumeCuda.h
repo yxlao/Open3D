@@ -28,7 +28,8 @@ private:
     uchar *weight_memory_pool_;
     Vector3b *color_memory_pool_;
 
-    /** These are return values when subvolume is null. Refer to tsdf(), etc **/
+    /** These are return values when subvolume is null.
+     *  Refer to tsdf(), etc **/
     float tsdf_dummy_ = 0;
     uchar weight_dummy_ = 0;
     Vector3b color_dummy_ = Vector3b(0);
@@ -115,14 +116,14 @@ public:
 
     /** Unoptimized access and interpolation
      * (required hash-table access every access, good for RayCasting) **/
-    __DEVICE__ float& tsdf(int x, int y, int z);
-    __DEVICE__ float& tsdf(const Vector3i &X);
+    __DEVICE__ float &tsdf(int x, int y, int z);
+    __DEVICE__ float &tsdf(const Vector3i &X);
 
-    __DEVICE__ uchar& weight(int x, int y, int z);
-    __DEVICE__ uchar& weight(const Vector3i &X);
+    __DEVICE__ uchar &weight(int x, int y, int z);
+    __DEVICE__ uchar &weight(const Vector3i &X);
 
-    __DEVICE__ Vector3b& color(int x, int y, int z);
-    __DEVICE__ Vector3b& color(const Vector3i &X);
+    __DEVICE__ Vector3b &color(int x, int y, int z);
+    __DEVICE__ Vector3b &color(const Vector3i &X);
 
     __DEVICE__ float TSDFAt(float x, float y, float z);
     __DEVICE__ float TSDFAt(const Vector3f &X);
@@ -134,7 +135,7 @@ public:
     __DEVICE__ Vector3b ColorAt(const Vector3f &X);
 
     __DEVICE__ Vector3f GradientAt(float x, float y, float z);
-    __DEVICE__ Vector3f GradientAt(const Vector3f& X);
+    __DEVICE__ Vector3f GradientAt(const Vector3f &X);
 
     /**
      * Optimized access and interpolation
@@ -289,7 +290,7 @@ public:
     ScalableTSDFVolumeCuda();
     ScalableTSDFVolumeCuda(int bucket_count, int value_capacity,
                            float voxel_length, float sdf_trunc,
-                           TransformCuda &transform_volume_to_world = TransformCuda::Identity());
+                           TransformCuda &transform_volume_to_world);
     ScalableTSDFVolumeCuda(const ScalableTSDFVolumeCuda<N> &other);
     ScalableTSDFVolumeCuda<N> &operator=(const ScalableTSDFVolumeCuda<N> &other);
     ~ScalableTSDFVolumeCuda();
@@ -306,11 +307,24 @@ public:
                                      std::vector<Vector3b>>>> DownloadVolumes();
 
 public:
-    void TouchBlocks(ImageCuda<Vector1f> &depth,
-                     MonoPinholeCameraCuda &camera,
-                     TransformCuda &transform_camera_to_world);
+    /** Hash_table based integration is non-trivial,
+     *  it requires 3: pre-allocation, get volumes, and integration
+     *  NOTE: we cannot merge stage 1 and 2:
+     *  - TouchBlocks allocate blocks in parallel.
+     *  - If we return only newly allocated volumes, then we fail to capture
+     *    already allocated volumes.
+     *  - If we capture all the allocated volume indices in parallel, then
+     *    there will be duplicates. (thread1 allocate and return, thread2
+     *    capture it and return again). **/
+    void TouchSubvolumes(ImageCuda<Vector1f> &depth,
+                         MonoPinholeCameraCuda &camera,
+                         TransformCuda &transform_camera_to_world);
     void GetSubvolumesInFrustum(MonoPinholeCameraCuda &camera,
                                 TransformCuda &transform_camera_to_world);
+    void IntegrateSubvolumes(ImageCuda<Vector1f> &depth,
+                             MonoPinholeCameraCuda &camera,
+                             TransformCuda &transform_camera_to_world);
+
     void Integrate(ImageCuda<Vector1f> &depth,
                    MonoPinholeCameraCuda &camera,
                    TransformCuda &transform_camera_to_world);
@@ -351,10 +365,16 @@ void TouchSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server,
                            TransformCuda transform_camera_to_world);
 template<size_t N>
 __GLOBAL__
-void IntegrateKernel(ScalableTSDFVolumeCudaServer<N> server,
-                     ImageCudaServer<Vector1f> depth,
-                     MonoPinholeCameraCuda camera,
-                     TransformCuda transform_camera_to_world);
+void IntegrateSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server,
+                               ImageCudaServer<Vector1f> depth,
+                               MonoPinholeCameraCuda camera,
+                               TransformCuda transform_camera_to_world);
+
+template<size_t N>
+__GLOBAL__
+void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
+                                  MonoPinholeCameraCuda camera,
+                                  TransformCuda transform_camera_to_world);
 
 template<size_t N>
 __GLOBAL__
@@ -363,9 +383,4 @@ void RayCastingKernel(ScalableTSDFVolumeCudaServer<N> server,
                       MonoPinholeCameraCuda camera,
                       TransformCuda transform_camera_to_world);
 
-template<size_t N>
-__GLOBAL__
-void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
-                                  MonoPinholeCameraCuda camera,
-                                  TransformCuda transform_camera_to_world);
 }

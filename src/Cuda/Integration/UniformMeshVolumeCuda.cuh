@@ -48,7 +48,8 @@ void UniformMeshVolumeCudaServer<type, N>::AllocateVertex(
         if (edges & (1 << i)) {
             vertex_indices(x + edge_shift[i][0],
                            y + edge_shift[i][1],
-                           z + edge_shift[i][2])(edge_shift[i][3]) = 0;
+                           z + edge_shift[i][2])(edge_shift[i][3]) =
+                VERTEX_TO_ALLOCATE;
         }
     }
 }
@@ -60,9 +61,9 @@ void UniformMeshVolumeCudaServer<type, N>::ExtractVertex(
     UniformTSDFVolumeCudaServer<N> &tsdf_volume) {
 
     Vector3i &vertex_index = vertex_indices(x, y, z);
-    bool vx = vertex_index(0) == 0;
-    bool vy = vertex_index(1) == 0;
-    bool vz = vertex_index(2) == 0;
+    bool vx = vertex_index(0) == VERTEX_TO_ALLOCATE;
+    bool vy = vertex_index(1) == VERTEX_TO_ALLOCATE;
+    bool vz = vertex_index(2) == VERTEX_TO_ALLOCATE;
     if (!vx && !vy && !vz) return;
 
     float tsdf0 = tsdf_volume.tsdf(x, y, z);
@@ -160,6 +161,12 @@ UniformMeshVolumeCuda<type, N>::UniformMeshVolumeCuda() {
 
 template<VertexType type, size_t N>
 UniformMeshVolumeCuda<type, N>::UniformMeshVolumeCuda(
+    int max_vertices, int max_triangles) {
+    Create(max_vertices, max_triangles);
+}
+
+template<VertexType type, size_t N>
+UniformMeshVolumeCuda<type, N>::UniformMeshVolumeCuda(
     const UniformMeshVolumeCuda<type, N> &other) {
     max_vertices_ = other.max_vertices_;
     max_triangles_ = other.max_triangles_;
@@ -221,13 +228,19 @@ void UniformMeshVolumeCuda<type, N>::Release() {
     max_triangles_ = -1;
 }
 
+/** Reset only have to be performed once on initialization:
+ * 1. table_indices_ will be reset in kernels;
+ * 2. None of the vertex_indices_ will be -1 after this reset, because
+ *  - The not effected vertex indices will remain 0;
+ *  - The effected vertex indices will be >= 0 after being assigned address.
+ **/
 template<VertexType type, size_t N>
 void UniformMeshVolumeCuda<type, N>::Reset() {
     if (server_ != nullptr) {
         const size_t NNN = N * N * N;
         CheckCuda(cudaMemset(server_->table_indices_, 0,
                              sizeof(uchar) * NNN));
-        CheckCuda(cudaMemset(server_->vertex_indices_, 0xff,
+        CheckCuda(cudaMemset(server_->vertex_indices_, 0,
                              sizeof(Vector3i) * NNN));
         mesh_.Reset();
     }
@@ -236,45 +249,76 @@ void UniformMeshVolumeCuda<type, N>::Reset() {
 template<VertexType type, size_t N>
 void UniformMeshVolumeCuda<type, N>::UpdateServer() {
     if (server_ != nullptr) {
-        server_->max_vertices_ = max_vertices_;
-        server_->max_triangles_ = max_triangles_;
-
         server_->mesh_ = *mesh_.server();
     }
+}
+
+template<VertexType type, size_t N>
+void UniformMeshVolumeCuda<type, N>::VertexAllocation(
+    UniformTSDFVolumeCuda<N> &tsdf_volume) {
+
+    Timer timer;
+    timer.Start();
+
+    const int num_blocks = DIV_CEILING(N, THREAD_3D_UNIT);
+    const dim3 blocks(num_blocks, num_blocks, num_blocks);
+    const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
+    MarchingCubesVertexAllocationKernel << < blocks, threads >> > (
+        *server_, *tsdf_volume.server());
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+
+    timer.Stop();
+    PrintInfo("Allocation takes %f milliseconds\n", timer.GetDuration());
+}
+
+
+template<VertexType type, size_t N>
+void UniformMeshVolumeCuda<type, N>::VertexExtraction(
+    UniformTSDFVolumeCuda<N> &tsdf_volume) {
+
+    Timer timer;
+    timer.Start();
+
+    const int num_blocks = DIV_CEILING(N, THREAD_3D_UNIT);
+    const dim3 blocks(num_blocks, num_blocks, num_blocks);
+    const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
+    MarchingCubesVertexExtractionKernel << < blocks, threads >> > (
+        *server_, *tsdf_volume.server());
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+
+    timer.Stop();
+    PrintInfo("Extraction takes %f milliseconds\n", timer.GetDuration());
+}
+
+template<VertexType type, size_t N>
+void UniformMeshVolumeCuda<type, N>::TriangleExtraction() {
+
+    Timer timer;
+    timer.Start();
+
+    const int num_blocks = DIV_CEILING(N, THREAD_3D_UNIT);
+    const dim3 blocks(num_blocks, num_blocks, num_blocks);
+    const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
+    MarchingCubesTriangleExtractionKernel << < blocks, threads >> > (*server_);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+
+    timer.Stop();
+    PrintInfo("Triangulation takes %f milliseconds\n", timer.GetDuration());
 }
 
 template<VertexType type, size_t N>
 void UniformMeshVolumeCuda<type, N>::MarchingCubes(
     UniformTSDFVolumeCuda<N> &tsdf_volume) {
 
-    const int num_blocks = DIV_CEILING(N, THREAD_3D_UNIT);
-    const dim3 blocks(num_blocks, num_blocks, num_blocks);
-    const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
+    mesh_.Reset();
 
-    Timer timer;
+    VertexAllocation(tsdf_volume);
+    VertexExtraction(tsdf_volume);
 
-    timer.Start();
-    MarchingCubesVertexAllocationKernel << < blocks, threads >> > (
-        *server_, *tsdf_volume.server());
-    CheckCuda(cudaDeviceSynchronize());
-    CheckCuda(cudaGetLastError());
-    timer.Stop();
-    PrintInfo("Allocation takes %f milliseconds\n", timer.GetDuration());
-
-    timer.Start();
-    MarchingCubesVertexExtractionKernel << < blocks, threads >> > (
-        *server_, *tsdf_volume.server());
-    CheckCuda(cudaDeviceSynchronize());
-    CheckCuda(cudaGetLastError());
-    timer.Stop();
-    PrintInfo("Extraction takes %f milliseconds\n", timer.GetDuration());
-
-    timer.Start();
-    MarchingCubesTriangleExtractionKernel << < blocks, threads >> > (*server_);
-    CheckCuda(cudaDeviceSynchronize());
-    CheckCuda(cudaGetLastError());
-    timer.Stop();
-    PrintInfo("Triangulation takes %f milliseconds\n", timer.GetDuration());
+    TriangleExtraction();
 
     if (type & VertexWithNormal) {
         mesh_.vertex_normals().set_size(mesh_.vertices().size());

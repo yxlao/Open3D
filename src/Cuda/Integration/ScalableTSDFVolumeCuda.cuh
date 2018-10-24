@@ -387,8 +387,7 @@ void ScalableTSDFVolumeCudaServer<N>::QuerySubvolumeWithNeighborIndex(
     const Vector3i &Xsv, int dxsv, int dysv, int dzsv,
     UniformTSDFVolumeCudaServer<N> **subvolumes) {
     subvolumes[LinearizeNeighborIndex(dxsv, dysv, dzsv)]
-        =
-        hash_table_[Vector3i(Xsv(0) + dxsv, Xsv(1) + dysv, Xsv(2) + dzsv)];
+        = hash_table_[Vector3i(Xsv(0) + dxsv, Xsv(1) + dysv, Xsv(2) + dzsv)];
 }
 
 template<size_t N>
@@ -613,7 +612,7 @@ Vector3b ScalableTSDFVolumeCudaServer<N>::ColorOnBoundaryAt(
                            subvolume->color(X_i(0) - int(N) * dXsv_i(0),
                                             X_i(1) - int(N) * dXsv_i(1),
                                             X_i(2) - int(N) * dXsv_i(2))
-                                            .ToVectorf();
+                               .ToVectorf();
         float weight_interp_i = (subvolume == nullptr) ? 0.0f :
                                 (rneg(0) * (1 - dX_i(0)) + r(0) * dX_i(0)) *
                                     (rneg(1) * (1 - dX_i(1))
@@ -705,15 +704,8 @@ void ScalableTSDFVolumeCudaServer<N>::TouchSubvolume(
 
     HashEntry<Vector3i> entry;
     for (int i = 0; i <= step; ++i) {
-        int addr = hash_table_.New(Vector3i(
-            int(Xsv_curr(0)), int(Xsv_curr(1)), int(Xsv_curr(2))));
-
-        if (addr >= 0) {
-            entry.key = Xsv_curr;
-            entry.internal_addr = addr;
-            target_subvolume_entry_array_.push_back(entry);
-        }
-
+        hash_table_.New(
+            Vector3i(int(Xsv_curr(0)), int(Xsv_curr(1)), int(Xsv_curr(2))));
         Xsv_curr += DXsv_normalized;
     }
 }
@@ -775,38 +767,53 @@ Vector3f ScalableTSDFVolumeCudaServer<N>::RayCasting(
         transform_camera_to_world.Rotate(ray_c));
 
     float t_prev = 0, tsdf_prev = 0;
+    Vector3i Xsv_prev = Vector3i(INT_MIN, INT_MIN, INT_MIN);
+    UniformTSDFVolumeCudaServer<N> *subvolume = nullptr;
 
     /** Do NOT use #pragma unroll: it will make it slow **/
     float t_curr = t_min;
     while (t_curr < t_max) {
         Vector3f Xv_t = camera_origin_v + t_curr * ray_v;
-        Vector3f X_t = volume_to_voxel(Xv_t);
+        Vector3i X_t = volume_to_voxel(Xv_t).ToVectori();
+        Vector3i Xsv_t = voxel_locate_subvolume(X_t);
+        Vector3i Xlocal_t = voxel_global_to_local(X_t, Xsv_t);
 
-        Vector3i Xsv_t = voxelf_locate_subvolume(X_t);
-        UniformTSDFVolumeCudaServer<N> *subvolume = QuerySubvolume(Xsv_t);
+        subvolume = (Xsv_t == Xsv_prev) ? subvolume : QuerySubvolume(Xsv_t);
 
-        float tsdf_curr = this->tsdf(X_t);
-
+        float tsdf_curr = subvolume == nullptr ? 0 : subvolume->tsdf(Xlocal_t);
         float step_size = tsdf_curr == 0 ?
                           (subvolume == nullptr ?
-                          int(N) * voxel_length_ * 0.5f : sdf_trunc_)
-            : fmaxf(tsdf_curr, voxel_length_);
+                           int(N) * voxel_length_ * 0.8f : sdf_trunc_)
+                                         : fmaxf(tsdf_curr, voxel_length_);
 
         if (tsdf_prev > 0 && tsdf_curr < 0) { /** Zero crossing **/
             float t_intersect = (t_curr * tsdf_prev - t_prev * tsdf_curr)
                 / (tsdf_prev - tsdf_curr);
 
-            Vector3f Xv_surface_t = camera_origin_v + t_intersect * ray_v;
-            Vector3f X_surface_t = volume_to_voxel(Xv_surface_t);
-            Vector3f normal_v_t = GradientAt(X_surface_t).normalized();
+            Vector3f Xv_surface = camera_origin_v + t_intersect * ray_v;
+            Vector3f X_surface = volume_to_voxel(Xv_surface);
+
+            Vector3i Xsv_surface = voxelf_locate_subvolume(X_surface);
+            Vector3f Xlocal_surface = voxelf_global_to_local(
+                X_surface, Xsv_surface);
+
+            subvolume = (Xsv_t == Xsv_surface) ?
+                        subvolume : QuerySubvolume(Xsv_surface);
+
+            Vector3f normal_surface =
+                (subvolume == nullptr || OnBoundaryf(Xlocal_surface, true)) ?
+                this->GradientAt(X_surface)
+                                                                            : subvolume->GradientAt(
+                    Xlocal_surface);
 
             return transform_camera_to_world.Inverse().Rotate(
-                transform_volume_to_world_.Rotate(normal_v_t));
+                transform_volume_to_world_.Rotate(normal_surface.normalized()));
         }
 
         tsdf_prev = tsdf_curr;
         t_prev = t_curr;
         t_curr += step_size;
+        Xsv_prev = Xsv_t;
     }
 
     return ret;
@@ -828,9 +835,6 @@ ScalableTSDFVolumeCuda<N>::ScalableTSDFVolumeCuda(
     float voxel_length,
     float sdf_trunc,
     TransformCuda &transform_volume_to_world) {
-
-    bucket_count_ = bucket_count;
-    value_capacity_ = value_capacity;
 
     voxel_length_ = voxel_length;
     sdf_trunc_ = sdf_trunc;
@@ -881,18 +885,21 @@ ScalableTSDFVolumeCuda<N>::~ScalableTSDFVolumeCuda() {
 template<size_t N>
 void ScalableTSDFVolumeCuda<N>::Create(
     int bucket_count, int value_capacity) {
+    assert(bucket_count > 0 && value_capacity > 0);
+
     if (server_ != nullptr) {
         PrintError("Already created, stop re-creating!\n");
         return;
     }
 
-    server_ = std::make_shared<ScalableTSDFVolumeCudaServer<N>>
-        ();
+    bucket_count_ = bucket_count;
+    value_capacity_ = value_capacity;
+    server_ = std::make_shared<ScalableTSDFVolumeCudaServer<N>>();
     hash_table_.Create(bucket_count, value_capacity);
     target_subvolume_entry_array_.Create(value_capacity);
 
-    /** Comparing to 512^3, we can have at most (512^2) 8^3 cubes.
-     * That is 262144. **/
+    /** Comparing to 512^3, we can hold (sparsely) at most (512^2) 8^3 cubes.
+     *  That is 262144. **/
     const int NNN = N * N * N;
     CheckCuda(cudaMalloc(&server_->tsdf_memory_pool_,
                          sizeof(float) * NNN * value_capacity));
@@ -900,7 +907,6 @@ void ScalableTSDFVolumeCuda<N>::Create(
                          sizeof(uchar) * NNN * value_capacity));
     CheckCuda(cudaMalloc(&server_->color_memory_pool_,
                          sizeof(Vector3b) * NNN * value_capacity));
-
     UpdateServer();
 
     const dim3 threads(THREAD_1D_UNIT);
@@ -936,7 +942,8 @@ void ScalableTSDFVolumeCuda<N>::UpdateServer() {
         server_->voxel_length_ = voxel_length_;
         server_->inv_voxel_length_ = 1.0f / voxel_length_;
         server_->sdf_trunc_ = sdf_trunc_;
-        server_->transform_volume_to_world_ = transform_volume_to_world_;
+        server_->transform_volume_to_world_ =
+            transform_volume_to_world_;
         server_->transform_world_to_volume_ =
             transform_volume_to_world_.Inverse();
     }
@@ -989,7 +996,7 @@ ScalableTSDFVolumeCuda<N>::DownloadVolumes() {
 }
 
 template<size_t N>
-void ScalableTSDFVolumeCuda<N>::TouchBlocks(
+void ScalableTSDFVolumeCuda<N>::TouchSubvolumes(
     ImageCuda<Vector1f> &depth,
     MonoPinholeCameraCuda &camera,
     TransformCuda &transform_camera_to_world) {
@@ -1017,7 +1024,7 @@ void ScalableTSDFVolumeCuda<N>::GetSubvolumesInFrustum(
 }
 
 template<size_t N>
-void ScalableTSDFVolumeCuda<N>::Integrate(
+void ScalableTSDFVolumeCuda<N>::IntegrateSubvolumes(
     ImageCuda<Vector1f> &depth,
     MonoPinholeCameraCuda &camera,
     TransformCuda &transform_camera_to_world) {
@@ -1025,10 +1032,22 @@ void ScalableTSDFVolumeCuda<N>::Integrate(
     const int num_blocks = target_subvolume_entry_array_.size();
     const dim3 blocks(num_blocks);
     const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
-    IntegrateKernel << < blocks, threads >> > (
+    IntegrateSubvolumesKernel << < blocks, threads >> > (
         *server_, *depth.server(), camera, transform_camera_to_world);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
+}
+
+template<size_t N>
+void ScalableTSDFVolumeCuda<N>::Integrate(
+    ImageCuda<Vector1f> &depth,
+    MonoPinholeCameraCuda &camera,
+    TransformCuda &transform_camera_to_world) {
+
+    hash_table_.ResetLocks();
+    TouchSubvolumes(depth, camera, transform_camera_to_world);
+    GetSubvolumesInFrustum(camera, transform_camera_to_world);
+    IntegrateSubvolumes(depth, camera, transform_camera_to_world);
 }
 
 template<size_t N>

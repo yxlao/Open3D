@@ -120,11 +120,12 @@ public:
     __DEVICE__ Vector3f GradientAt(const Vector3f &X);
 
 public:
-    /** WARNING!!!
-      * This method is designed for ScalableTSDFVolumeCudaServer
+    /** WARNING!!! DO NOT USE IT!!!
+      * This method is reserved for ScalableTSDFVolumeCudaServer
       * That class requires us to initialize memory ON GPU. */
     __DEVICE__ void Create(float *tsdf, uchar *weight, Vector3b *color);
 
+public:
     __DEVICE__ void Integrate(int x, int y, int z,
                               ImageCudaServer<Vector1f> &depth,
                               MonoPinholeCameraCuda &camera,
@@ -152,7 +153,7 @@ public:
 public:
     UniformTSDFVolumeCuda();
     UniformTSDFVolumeCuda(float voxel_length, float sdf_trunc,
-                          TransformCuda &volume_to_world = TransformCuda::Identity());
+                          TransformCuda &volume_to_world);
     UniformTSDFVolumeCuda(const UniformTSDFVolumeCuda<N> &other);
     UniformTSDFVolumeCuda<N> &operator=(const UniformTSDFVolumeCuda<N> &other);
     ~UniformTSDFVolumeCuda();
@@ -163,7 +164,8 @@ public:
 
     void Reset();
 
-    void UploadVolume(std::vector<float> &tsdf, std::vector<uchar> &weight,
+    void UploadVolume(std::vector<float> &tsdf,
+                      std::vector<uchar> &weight,
                       std::vector<Vector3b> &color);
     std::tuple<std::vector<float>, std::vector<uchar>, std::vector<Vector3b>>
     DownloadVolume();
