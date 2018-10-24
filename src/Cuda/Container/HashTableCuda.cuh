@@ -22,7 +22,7 @@ namespace open3d {
  */
 template<typename Key, typename Value, typename Hasher>
 __device__
-int HashTableCudaServer<Key, Value, Hasher>::GetInternalValuePtrByKey(
+int HashTableCudaServer<Key, Value, Hasher>::GetInternalAddrByKey(
     const Key &key) {
     int bucket_idx = hasher_(key);
     int bucket_base_idx = bucket_idx * BUCKET_SIZE;
@@ -32,7 +32,7 @@ int HashTableCudaServer<Key, Value, Hasher>::GetInternalValuePtrByKey(
     for (int i = 0; i < BUCKET_SIZE; ++i) {
         const Entry &entry = entry_array_[bucket_base_idx + i];
         if (entry.Matches(key)) {
-            return entry.value_ptr;
+            return entry.internal_addr;
         }
     }
 
@@ -44,7 +44,7 @@ int HashTableCudaServer<Key, Value, Hasher>::GetInternalValuePtrByKey(
     int entry_node_ptr = linked_list.Find(query_entry);
     if (entry_node_ptr != LINKED_LIST_NODE_NOT_FOUND) {
         const Entry &entry = linked_list.get_node(entry_node_ptr).data;
-        return entry.value_ptr;
+        return entry.internal_addr;
     }
 
     return NULLPTR_CUDA;
@@ -52,7 +52,7 @@ int HashTableCudaServer<Key, Value, Hasher>::GetInternalValuePtrByKey(
 
 template<typename Key, typename Value, typename Hasher>
 __device__
-Value *HashTableCudaServer<Key, Value, Hasher>::GetValueByInternalValuePtr(
+Value *HashTableCudaServer<Key, Value, Hasher>::GetValuePtrByInternalAddr(
     const int addr) {
     return &(memory_heap_value_.get_value(addr));
 }
@@ -61,9 +61,9 @@ template<typename Key, typename Value, typename Hasher>
 __device__
 Value *HashTableCudaServer<Key, Value, Hasher>::GetValuePtrByKey(
     const Key &key) {
-    int internal_ptr = GetInternalValuePtrByKey(key);
+    int internal_ptr = GetInternalAddrByKey(key);
     if (internal_ptr == NULLPTR_CUDA) return nullptr;
-    return GetValueByInternalValuePtr(internal_ptr);
+    return GetValuePtrByInternalAddr(internal_ptr);
 }
 
 template<typename Key, typename Value, typename Hasher>
@@ -87,7 +87,7 @@ int HashTableCudaServer<Key, Value, Hasher>::New(const Key &key) {
             return HASH_ENTRY_EXISTING;
         }
         if (entry_array_empty_slot_idx == (-1)
-            && entry.value_ptr == HASH_ENTRY_EMPTY) {
+            && entry.internal_addr == HASH_ENTRY_EMPTY) {
             entry_array_empty_slot_idx = bucket_base_idx + i;
         }
     }
@@ -109,7 +109,7 @@ int HashTableCudaServer<Key, Value, Hasher>::New(const Key &key) {
 
     Entry new_entry;
     new_entry.key = key;
-    new_entry.value_ptr = memory_heap_value_.Malloc();
+    new_entry.internal_addr = memory_heap_value_.Malloc();
 
     /* 3.1. Empty slot in ordered part */
     if (entry_array_empty_slot_idx != (-1)) {
@@ -119,7 +119,7 @@ int HashTableCudaServer<Key, Value, Hasher>::New(const Key &key) {
     }
 
     /** Don't unlock, otherwise the result can be inconsistent **/
-    return new_entry.value_ptr;
+    return new_entry.internal_addr;
 }
 
 template<typename Key, typename Value, typename Hasher>
@@ -137,7 +137,7 @@ int HashTableCudaServer<Key, Value, Hasher>::Delete(const Key &key) {
             if (lock == LOCKED) {
                 return HASH_ENTRY_LOCKED;
             }
-            memory_heap_value_.Free(entry.value_ptr);
+            memory_heap_value_.Free(entry.internal_addr);
             entry.Clear();
             return SUCCESS;
         }
@@ -408,7 +408,7 @@ HashTableCuda<Key, Value, Hasher>::Download() {
     for (int i = 0; i < assigned_entry_array_size; ++i) {
         Entry &entry = assigned_entries[i];
         keys[i] = entry.key;
-        values[i] = memory_heap_values[entry.value_ptr];
+        values[i] = memory_heap_values[entry.internal_addr];
     }
 
     return std::make_tuple(keys, values);

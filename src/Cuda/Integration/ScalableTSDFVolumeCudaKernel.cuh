@@ -9,9 +9,9 @@ namespace open3d {
 template<size_t N>
 __global__
 void TouchSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server,
-                       ImageCudaServer<Vector1f> depth,
-                       MonoPinholeCameraCuda camera,
-                       TransformCuda transform_camera_to_world) {
+                           ImageCudaServer<Vector1f> depth,
+                           MonoPinholeCameraCuda camera,
+                           TransformCuda transform_camera_to_world) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
 
@@ -22,9 +22,74 @@ void TouchSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server,
 
 template<size_t N>
 __global__
+void IntegrateKernel(ScalableTSDFVolumeCudaServer<N> server,
+                     ImageCudaServer<Vector1f> depth,
+                     MonoPinholeCameraCuda camera,
+                     TransformCuda transform_camera_to_world) {
+
+    const size_t entry_idx = blockIdx.x;
+    const int xlocal = threadIdx.x;
+    const int ylocal = threadIdx.y;
+    const int zlocal = threadIdx.z;
+
+    if (entry_idx >= server.target_subvolume_entry_array().size()
+        || xlocal >= N || ylocal >= N || zlocal >= N)
+        return;
+
+    HashEntry<Vector3i> &entry = server.target_subvolume_entry_array().get(
+        entry_idx);
+
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+    assert(entry.internal_addr >= 0);
+#endif
+    server.Integrate(xlocal, ylocal, zlocal, entry,
+                     depth, camera, transform_camera_to_world);
+}
+
+template<size_t N>
+__global__
+void RayCastingKernel(ScalableTSDFVolumeCudaServer<N> server,
+                      ImageCudaServer<Vector3f> normal,
+                      MonoPinholeCameraCuda camera,
+                      TransformCuda transform_camera_to_world) {
+    const int x = threadIdx.x + blockIdx.x * blockDim.x;
+    const int y = threadIdx.y + blockIdx.y * blockDim.y;
+
+    if (x >= normal.width_ || y >= normal.height_) return;
+
+    Vector3f n = server.RayCasting(x, y, camera, transform_camera_to_world);
+    normal.get(x, y) = (n == Vector3f::Zeros()) ? n : 0.5f * n + Vector3f(0.5f);
+}
+
+template<size_t N>
+__global__
+void CreateScalableTSDFVolumesKernel(ScalableTSDFVolumeCudaServer<N> server) {
+    const size_t index = blockIdx.x * blockDim.x + threadIdx.x;
+    if (index >= server.value_capacity_) return;
+
+    const size_t offset = (N * N * N) * index;
+    UniformTSDFVolumeCudaServer<N> &subvolume = server.hash_table()
+        .memory_heap_value().get_value(index);
+
+    /** Assign memory **/
+    subvolume.Create(&server.tsdf_memory_pool()[offset],
+                     &server.weight_memory_pool()[offset],
+                     &server.color_memory_pool()[offset]);
+
+    /** Assign property **/
+    subvolume.voxel_length_ = server.voxel_length_;
+    subvolume.inv_voxel_length_ = server.inv_voxel_length_;
+    subvolume.sdf_trunc_ = server.sdf_trunc_;
+    subvolume.transform_volume_to_world_ = server.transform_volume_to_world_;
+    subvolume.transform_world_to_volume_ = server.transform_world_to_volume_;
+}
+
+
+template<size_t N>
+__global__
 void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
-                              MonoPinholeCameraCuda camera,
-                              TransformCuda transform_camera_to_world) {
+                                  MonoPinholeCameraCuda camera,
+                                  TransformCuda transform_camera_to_world) {
     const int bucket_idx = threadIdx.x + blockIdx.x * blockDim.x;
     if (bucket_idx >= server.bucket_count_) return;
 
@@ -35,7 +100,7 @@ void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
     for (int i = 0; i < BUCKET_SIZE; ++i) {
         HashEntry<Vector3i> &entry = hash_table.entry_array().get(
             bucket_base_idx + i);
-        if (entry.value_ptr != NULLPTR_CUDA) {
+        if (entry.internal_addr != NULLPTR_CUDA) {
             Vector3f X = server.voxelf_local_to_global(0, 0, 0, entry.key);
             if (camera.IsInFrustum(server.voxel_to_world(X))) {
                 server.target_subvolume_entry_array().push_back(entry);
@@ -58,43 +123,5 @@ void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
 
         node_ptr = linked_list_node.next_node_ptr;
     }
-}
-
-template<size_t N>
-__global__
-void IntegrateKernel(ScalableTSDFVolumeCudaServer<N> server,
-                     ImageCudaServer<Vector1f> depth,
-                     MonoPinholeCameraCuda camera,
-                     TransformCuda transform_camera_to_world) {
-    const int block_idx = blockIdx.x;
-    const int x = threadIdx.x;
-    const int y = threadIdx.y;
-    const int z = threadIdx.z;
-
-}
-
-template<size_t N>
-__global__
-void CreateScalableTSDFVolumesKernel(ScalableTSDFVolumeCudaServer<N> server) {
-    const size_t index = blockIdx.x * blockDim.x + threadIdx.x;
-    if (index >= server.value_capacity_) return;
-
-    const size_t offset = (N * N * N) * index;
-    UniformTSDFVolumeCudaServer<N> &uniform_volume = server.hash_table()
-        .memory_heap_value().get_value(index);
-
-    /** Assign memory **/
-    uniform_volume.Create(server.tsdf_memory_pool() + offset,
-                          server.weight_memory_pool() + offset,
-                          server.color_memory_pool() + offset);
-
-    /** Assign property **/
-    uniform_volume.voxel_length_ = server.voxel_length_;
-    uniform_volume.inv_voxel_length_ = server.inv_voxel_length_;
-    uniform_volume.sdf_trunc_ = server.sdf_trunc_;
-    uniform_volume.transform_volume_to_world_ =
-        server.transform_volume_to_world_;
-    uniform_volume.transform_world_to_volume_ =
-        server.transform_world_to_volume_;
 }
 }

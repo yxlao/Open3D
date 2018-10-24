@@ -138,7 +138,6 @@ __device__
 float UniformTSDFVolumeCudaServer<N>::TSDFAt(float x, float y, float z) {
     /** If it is in Volume, then all the nearby components are in volume,
      * no boundary check is required **/
-    Vector3f Xf(x, y, z);
     Vector3i X = Vector3i(int(x), int(y), int(z));
     Vector3f r = Vector3f(x - X(0), y - X(1), z - X(2));
 
@@ -169,7 +168,6 @@ template<size_t N>
 __device__
 uchar UniformTSDFVolumeCudaServer<N>::WeightAt(
     float x, float y, float z) {
-    Vector3f Xf = Vector3f(x, y, z);
     Vector3i X = Vector3i(int(x), int(y), int(z));
     Vector3f r = Vector3f(x - X(0), y - X(1), z - X(2));
 
@@ -201,7 +199,6 @@ __device__
 Vector3b UniformTSDFVolumeCudaServer<N>::ColorAt(
     float x, float y, float z) {
 
-    Vector3f Xf = Vector3f(x, y, z);
     Vector3i X = Vector3i(int(x), int(y), int(z));
     Vector3f r = Vector3f(x - X(0), y - X(1), z - X(2));
 

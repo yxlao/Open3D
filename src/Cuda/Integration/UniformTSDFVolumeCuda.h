@@ -18,7 +18,8 @@ namespace open3d {
 
 template<size_t N>
 class __ALIGN__(16) UniformTSDFVolumeCudaServer {
-private: /** [N * N * N]; **/
+private:
+    /** [N * N * N] **/
     float *tsdf_;
     uchar *weight_;
     Vector3b *color_;

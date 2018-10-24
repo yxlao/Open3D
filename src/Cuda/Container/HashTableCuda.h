@@ -43,20 +43,20 @@ template<typename Key>
 class HashEntry {
 public:
     Key key;
-    int value_ptr;
+    int internal_addr;
 
     __HOSTDEVICE__ inline bool operator==(const HashEntry<Key> &other) const {
         return key == other.key;
     }
     __HOSTDEVICE__ inline bool Matches(const Key &other) const {
-        return (key == other) && (value_ptr != NULLPTR_CUDA);
+        return (key == other) && (internal_addr != NULLPTR_CUDA);
     }
     __HOSTDEVICE__ inline bool IsEmpty() {
-        return value_ptr == NULLPTR_CUDA;
+        return internal_addr == NULLPTR_CUDA;
     }
     __HOSTDEVICE__ inline void Clear() {
         key = Key();
-        value_ptr = NULLPTR_CUDA;
+        internal_addr = NULLPTR_CUDA;
     }
 };
 
@@ -119,8 +119,8 @@ private:
     * between internal ptrs (MemoryHeap) and conventional ptrs (*Object)
     */
 public:
-    __DEVICE__ int GetInternalValuePtrByKey(const Key &key);
-    __DEVICE__ Value *GetValueByInternalValuePtr(const int addr);
+    __DEVICE__ int GetInternalAddrByKey(const Key &key);
+    __DEVICE__ Value *GetValuePtrByInternalAddr(const int addr);
 
     /** External interfaces - return nullable object **/
     __DEVICE__ Value *GetValuePtrByKey(const Key &key);

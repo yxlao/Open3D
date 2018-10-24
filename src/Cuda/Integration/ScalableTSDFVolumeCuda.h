@@ -22,6 +22,22 @@ public:
         Vector3i, UniformTSDFVolumeCudaServer<N>, SpatialHasher>
         SpatialHashTableCudaServer;
 
+private:
+    /** (N * N * N) * value_capacity **/
+    float *tsdf_memory_pool_;
+    uchar *weight_memory_pool_;
+    Vector3b *color_memory_pool_;
+
+    /** These are return values when subvolume is null. Refer to tsdf(), etc **/
+    float tsdf_dummy_ = 0;
+    uchar weight_dummy_ = 0;
+    Vector3b color_dummy_ = Vector3b(0);
+
+    SpatialHashTableCudaServer hash_table_;
+
+    /** An extension to hash_table_.assigned_entries_array_ **/
+    ArrayCudaServer<HashEntry<Vector3i>> target_subvolume_entry_array_;
+
 public:
     int bucket_count_;
     int value_capacity_;
@@ -32,21 +48,11 @@ public:
     TransformCuda transform_volume_to_world_;
     TransformCuda transform_world_to_volume_;
 
-private:
-    SpatialHashTableCudaServer hash_table_;
-
-    /** An extension to hash_table_.assigned_entries_array_ **/
-    ArrayCudaServer<HashEntry<Vector3i>> target_subvolume_entry_array_;
-
-    float *tsdf_memory_pool_;
-    uchar *weight_memory_pool_;
-    Vector3b *color_memory_pool_;
-
 public:
     __HOSTDEVICE__ inline SpatialHashTableCudaServer &hash_table() {
         return hash_table_;
     }
-    __HOSTDEVICE__ inline ArrayCudaServer<HashEntry<Vector3i>>&
+    __HOSTDEVICE__ inline ArrayCudaServer<HashEntry<Vector3i>> &
     target_subvolume_entry_array() {
         return target_subvolume_entry_array_;
     }
@@ -75,22 +81,6 @@ public:
     __DEVICE__ inline Vector3f volume_to_voxel(const Vector3f &Xv);
     __DEVICE__ inline Vector3f volume_to_voxel(float xv, float yv, float zv);
 
-    /**
-     * NOTE: to access voxel values, we DO NOT DEEPLY COUPLE FUNCTIONS.
-     * Otherwise there will be too much redundant operations.
-     *
-     * Given (x, y, z) in voxel units, the query process should be
-     * 1. > Get volume index it is in
-     *      Vector3i subvolume_idx = subvolume_index[f](x, y, z):
-     * 2. > Get volume pointer (server)
-     *      UniformTSDFVolumeCudaServer* subvolume = query_subvolume(subvolume_idx);
-     *      if (subvolume == nullptr) break or return;
-     * 3. > Get voxel coordinate in this specific volume
-     *      Vector3f offset = subvolume_offset(x, y, z, subvolume_idx);
-     * 4. > Access or interpolate in this volume (and neighbors)
-     *      int -> direct access with subvolume->tsdf, etc
-     *      float -> we should turn to interpolations
-     **/
     /** Similar to LocateVolumeUnit **/
     __DEVICE__ inline Vector3i voxel_locate_subvolume(int x, int y, int z);
     __DEVICE__ inline Vector3i voxel_locate_subvolume(const Vector3i &X);
@@ -120,43 +110,82 @@ public:
     __DEVICE__ inline Vector3f voxelf_local_to_global(
         const Vector3f &Xlocal, const Vector3i &Xsv);
 
-    /** Note when we assume we already know @offset is in @block.
-     *  For interpolation, boundary regions are [N-1~N] for float, none for int
-     *  For gradient, boundary regions are
-     *  > [N-2 ~ N) and [0 ~ 1)
-     * **/
-    __DEVICE__ inline bool OnBoundary(
-        int xlocal, int ylocal, int zlocal, bool for_gradient = false);
-    __DEVICE__ inline bool OnBoundary(
-        const Vector3i &Xlocal, bool for_gradient = false);
-    __DEVICE__ inline bool OnBoundaryf(
-        float xlocal, float ylocal, float zlocal, bool for_gradinet = false);
-    __DEVICE__ inline bool OnBoundaryf(
-        const Vector3f &Xlocal, bool for_gradient = false);
-
-    /**
-     * NOTE: interpolation, especially on boundaries, is very expensive.
-     * To interpolate, kernels will frequently query neighbor volumes.
-     * In a typical kernel, we should pre-store them in __shared__ memory.
-     * __shared__ UniformTSDFVolumeCudaServer<N>* subvolume_neighbors[N];
-     *
-     * > For value interpolation, we define 8 neighbor subvolume indices as
-     *  (0, 1) x (0, 1) x (0, 1)
-     *
-     * > For gradient interpolation, we define 20 neighbor indices as
-     *   (w.r.t. smallest coordinate)
-     *   (0, 1) x (0, 1) x (0, 1)   8
-     *   (-1, ) x (0, 1) x (0, 1) + 4
-     *   (0, 1) x (-1, ) x (0, 1) + 4
-     *   (0, 1) x (0, 1) x (-1, ) + 4
-     *
-     * > To simplify, we define all the 27 neighbor indices
-     *   (not necessary to assign them all in pre-processing).
-     *   (-1, 0, 1) ^ 3
-     */
     __DEVICE__ UniformTSDFVolumeCudaServer<N> *QuerySubvolume(
         const Vector3i &Xsv);
 
+    /** Unoptimized access and interpolation
+     * (required hash-table access every access, good for RayCasting) **/
+    __DEVICE__ float& tsdf(int x, int y, int z);
+    __DEVICE__ float& tsdf(const Vector3i &X);
+
+    __DEVICE__ uchar& weight(int x, int y, int z);
+    __DEVICE__ uchar& weight(const Vector3i &X);
+
+    __DEVICE__ Vector3b& color(int x, int y, int z);
+    __DEVICE__ Vector3b& color(const Vector3i &X);
+
+    __DEVICE__ float TSDFAt(float x, float y, float z);
+    __DEVICE__ float TSDFAt(const Vector3f &X);
+
+    __DEVICE__ uchar WeightAt(float x, float y, float z);
+    __DEVICE__ uchar WeightAt(const Vector3f &X);
+
+    __DEVICE__ Vector3b ColorAt(float x, float y, float z);
+    __DEVICE__ Vector3b ColorAt(const Vector3f &X);
+
+    __DEVICE__ Vector3f GradientAt(float x, float y, float z);
+    __DEVICE__ Vector3f GradientAt(const Vector3f& X);
+
+    /**
+     * Optimized access and interpolation
+     * (pre stored neighbors, good for MarchingCubes TBD)
+     *
+     * NOTE:
+     * Interpolation, especially on boundaries, is very expensive when kernels
+     * frequently query neighbor volumes.
+     * In a typical kernel like MC, we pre-store them in __shared__ memory.
+     *
+     * In the beginning of a kernel, we pre-query these volumes and syncthreads.
+     * The neighbors are stored in __shared__ subvolumes[N].
+     *
+     * > The neighbor subvolume indices for value interpolation are
+     *  (0, 1) x (0, 1) x (0, 1) -> N = 8
+     *
+     * > For gradient interpolation, more neighbors have to be considered
+     *   (0, 1) x (0, 1) x (0, 1)   8
+     *   (-1, ) x (0, 1) x (0, 1) + 4
+     *   (0, 1) x (-1, ) x (0, 1) + 4
+     *   (0, 1) x (0, 1) x (-1, ) + 4 -> N = 20
+     *
+     * > To simplify, we define all the 27 neighbor indices
+     *   (not necessary to assign them all in pre-processing, but it is
+     *   anyway not too expensive to do so).
+     *   (-1, 0, 1) ^ 3 -> N = 27
+     *   The 3D neighbor indices are converted to 1D in LinearizeNeighborIndex.
+     *
+     * ---
+     *
+     * Given (x, y, z) in voxel units, the optimized query should be:
+     * 0. > Decide the subvolume this kernel is working on (Xsv, can be
+     *      stored in @target_subvolume_entry_array_ beforehand),
+     *      and pre-allocate and store neighbor @subvolumes in shared memory.
+     *
+     *      For each voxel (x, y, z):
+     * 1. > Get voxel coordinate in this specific volume
+     *      Vector3f Xlocal = voxel[f]_global_to_local(x, y, z, Xsv);
+     *
+     * 2. > Check if it is on boundary (danger zone)
+     *      OnBoundary[f](Xlocal)
+     *
+     * 3. > If not, directly use subvolumes[LinearizeNeighborIndex(0, 0, 0)]
+     *      to access/interpolate data
+     *
+     * 4. > If so, use XXXOnBorderAt(Xlocal) to interpolate.
+     *      These functions will first query neighbors for each point to
+     *      interpolate, and access them from pre-allocated subvolumes
+     *        Vector3i dXsv = NeighborIndexOfBoundaryVoxel(Xlocal)
+     *        subvolumes[LinearizeNeighborIndex(dXsv)].tsdf() ...
+     */
     __DEVICE__ void QuerySubvolumeWithNeighborIndex(
         const Vector3i &Xsv, int dxsv, int dysv, int dzsv,
         UniformTSDFVolumeCudaServer<N> **subvolume);
@@ -169,11 +198,21 @@ public:
     __DEVICE__ inline int LinearizeNeighborIndex(int dxsv, int dysv, int dzsv);
     __DEVICE__ inline int LinearizeNeighborIndex(const Vector3i &dXsv);
 
+    /** Note we assume we already know @offset is in @block.
+     *  For interpolation, boundary regions are [N-1~N] for float, none for int
+     *  For gradient, boundary regions are [N-2 ~ N) and [0 ~ 1) **/
+    __DEVICE__ inline bool OnBoundary(
+        int xlocal, int ylocal, int zlocal, bool for_gradient = false);
+    __DEVICE__ inline bool OnBoundary(
+        const Vector3i &Xlocal, bool for_gradient = false);
+    __DEVICE__ inline bool OnBoundaryf(
+        float xlocal, float ylocal, float zlocal, bool for_gradinet = false);
+    __DEVICE__ inline bool OnBoundaryf(
+        const Vector3f &Xlocal, bool for_gradient = false);
+
     /** In these functions range of input indices are [-1, N+1)
-     * (xlocal, ylocal, zlocal) is inside
-     * subvolumes[IndexOfNeighborSubvolumes(0, 0, 0)]
+     * (xlocal, ylocal, zlocal) is inside subvolumes[IndexOfNeighborSubvolumes(0, 0, 0)]
      **/
-    /** Similar to uniform level gradient **/
     __DEVICE__ Vector3f gradient(
         int xlocal, int ylocal, int zlocal,
         UniformTSDFVolumeCudaServer<N> **subvolumes);
@@ -209,14 +248,14 @@ public:
                                    ImageCudaServer<Vector1f> &depth,
                                    MonoPinholeCameraCuda &camera,
                                    TransformCuda &transform_camera_to_world);
-    __DEVICE__ void Integrate(int x, int y, int z,
+    __DEVICE__ void Integrate(int xlocal, int ylocal, int zlocal,
+                              HashEntry<Vector3i> &target_subvolume_entry,
                               ImageCudaServer<Vector1f> &depth,
                               MonoPinholeCameraCuda &camera,
                               TransformCuda &transform_camera_to_world);
-    __DEVICE__ void RayCasting(int x, int y,
-                               ImageCudaServer<Vector3b> &color,
-                               MonoPinholeCameraCuda &camera,
-                               TransformCuda &transform_camera_to_world);
+    __DEVICE__ Vector3f RayCasting(int x, int y,
+                                   MonoPinholeCameraCuda &camera,
+                                   TransformCuda &transform_camera_to_world);
 
 public:
     friend class ScalableTSDFVolumeCuda<N>;
@@ -271,11 +310,11 @@ public:
                      MonoPinholeCameraCuda &camera,
                      TransformCuda &transform_camera_to_world);
     void GetSubvolumesInFrustum(MonoPinholeCameraCuda &camera,
-                            TransformCuda &transform_camera_to_world);
+                                TransformCuda &transform_camera_to_world);
     void Integrate(ImageCuda<Vector1f> &depth,
                    MonoPinholeCameraCuda &camera,
                    TransformCuda &transform_camera_to_world);
-    void RayCasting(ImageCuda<Vector1f> &image,
+    void RayCasting(ImageCuda<Vector3f> &image,
                     MonoPinholeCameraCuda &camera,
                     TransformCuda &transform_camera_to_world);
 
@@ -286,10 +325,10 @@ public:
     const SpatialHashTableCuda &hash_table() const {
         return hash_table_;
     }
-    ArrayCuda<HashEntry<Vector3i>>& target_subvolume_entry_array() {
+    ArrayCuda<HashEntry<Vector3i>> &target_subvolume_entry_array() {
         return target_subvolume_entry_array_;
     }
-    const ArrayCuda<HashEntry<Vector3i>>& target_subvolume_entry_array() const {
+    const ArrayCuda<HashEntry<Vector3i>> &target_subvolume_entry_array() const {
         return target_subvolume_entry_array_;
     }
     std::shared_ptr<ScalableTSDFVolumeCudaServer<N>> &server() {
@@ -307,14 +346,26 @@ void CreateScalableTSDFVolumesKernel(ScalableTSDFVolumeCudaServer<N> server);
 template<size_t N>
 __GLOBAL__
 void TouchSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server,
-                       ImageCudaServer<Vector1f> depth,
-                       MonoPinholeCameraCuda camera,
-                       TransformCuda transform_camera_to_world);
-
+                           ImageCudaServer<Vector1f> depth,
+                           MonoPinholeCameraCuda camera,
+                           TransformCuda transform_camera_to_world);
 template<size_t N>
 __GLOBAL__
 void IntegrateKernel(ScalableTSDFVolumeCudaServer<N> server,
                      ImageCudaServer<Vector1f> depth,
                      MonoPinholeCameraCuda camera,
                      TransformCuda transform_camera_to_world);
+
+template<size_t N>
+__GLOBAL__
+void RayCastingKernel(ScalableTSDFVolumeCudaServer<N> server,
+                      ImageCudaServer<Vector3f> normal,
+                      MonoPinholeCameraCuda camera,
+                      TransformCuda transform_camera_to_world);
+
+template<size_t N>
+__GLOBAL__
+void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
+                                  MonoPinholeCameraCuda camera,
+                                  TransformCuda transform_camera_to_world);
 }

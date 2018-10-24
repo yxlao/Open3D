@@ -72,7 +72,7 @@ void GetHashTableAssignedEntriesKernel(
 #pragma unroll 1
     for (int i = 0; i < BUCKET_SIZE; ++i) {
         Entry &entry = server.entry_array().get(bucket_base_idx + i);
-        if (entry.value_ptr != NULLPTR_CUDA) {
+        if (entry.internal_addr != NULLPTR_CUDA) {
             server.assigned_entry_array().push_back(entry);
         }
     }
@@ -100,7 +100,7 @@ void InsertHashTableEntriesKernel(
         /* Might fail to allocate when there are thread conflicts */
         if (value_internal_ptr >= 0) {
             Value *value_ptr = server.
-                GetValueByInternalValuePtr(value_internal_ptr);
+                GetValuePtrByInternalAddr(value_internal_ptr);
             (*value_ptr) = values[idx];
         }
     }

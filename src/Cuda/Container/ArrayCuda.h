@@ -24,6 +24,7 @@ public:
 
 public:
     __HOSTDEVICE__ inline T *&data() { return data_; }
+    __DEVICE__ inline int size() { return *iterator_; }
     __DEVICE__ inline int push_back(T value);
     __DEVICE__ inline T &get(size_t index);
     __DEVICE__ inline T& operator[] (size_t index);
