@@ -28,8 +28,6 @@ void MarchingCubesVertexExtractionKernel(
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
     const int z = threadIdx.z + blockIdx.z * blockDim.z;
 
-    if (x >= N || y >= N || z >= N) return;
-
     server.ExtractVertex(x, y, z, tsdf_volume);
 }
 

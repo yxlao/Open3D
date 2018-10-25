@@ -383,15 +383,6 @@ inline bool ScalableTSDFVolumeCudaServer<N>::OnBoundaryf(
 
 template<size_t N>
 __device__
-void ScalableTSDFVolumeCudaServer<N>::QuerySubvolumeWithNeighborIndex(
-    const Vector3i &Xsv, int dxsv, int dysv, int dzsv,
-    UniformTSDFVolumeCudaServer<N> **subvolumes) {
-    subvolumes[LinearizeNeighborIndex(dxsv, dysv, dzsv)]
-        = hash_table_[Vector3i(Xsv(0) + dxsv, Xsv(1) + dysv, Xsv(2) + dzsv)];
-}
-
-template<size_t N>
-__device__
 inline Vector3i ScalableTSDFVolumeCudaServer<N>::NeighborIndexOfBoundaryVoxel(
     int xlocal, int ylocal, int zlocal) {
     return Vector3i(xlocal < 0 ? -1 : (xlocal >= N ? 1 : 0),
@@ -670,6 +661,23 @@ Vector3f ScalableTSDFVolumeCudaServer<N>::GradientOnBoundaryAt(
     return GradientOnBoundaryAt(Xlocal(0), Xlocal(1), Xlocal(2), subvolumes);
 }
 
+template<size_t N>
+__device__
+void ScalableTSDFVolumeCudaServer<N>::ActivateSubvolume(
+    const HashEntry<Vector3i> &entry) {
+    int index = active_subvolume_entry_array_.push_back(entry);
+    active_subvolume_indices_[entry.internal_addr] = index;
+}
+
+template<size_t N>
+__device__
+int ScalableTSDFVolumeCudaServer<N>::QueryActiveSubvolumeIndex(
+    const Vector3i &key) {
+    int internal_addr = hash_table_.GetInternalAddrByKey(key);
+    return internal_addr == NULLPTR_CUDA ?
+           NULLPTR_CUDA : active_subvolume_indices_[internal_addr];
+}
+
 /** High level functions **/
 template<size_t N>
 __device__
@@ -896,7 +904,7 @@ void ScalableTSDFVolumeCuda<N>::Create(
     value_capacity_ = value_capacity;
     server_ = std::make_shared<ScalableTSDFVolumeCudaServer<N>>();
     hash_table_.Create(bucket_count, value_capacity);
-    target_subvolume_entry_array_.Create(value_capacity);
+    active_subvolume_entry_array_.Create(value_capacity);
 
     /** Comparing to 512^3, we can hold (sparsely) at most (512^2) 8^3 cubes.
      *  That is 262144. **/
@@ -907,6 +915,9 @@ void ScalableTSDFVolumeCuda<N>::Create(
                          sizeof(uchar) * NNN * value_capacity));
     CheckCuda(cudaMalloc(&server_->color_memory_pool_,
                          sizeof(Vector3b) * NNN * value_capacity));
+
+    CheckCuda(cudaMalloc(&server_->active_subvolume_indices_,
+                         sizeof(int) * value_capacity));
     UpdateServer();
 
     const dim3 threads(THREAD_1D_UNIT);
@@ -922,19 +933,20 @@ void ScalableTSDFVolumeCuda<N>::Release() {
         CheckCuda(cudaFree(server_->tsdf_memory_pool_));
         CheckCuda(cudaFree(server_->weight_memory_pool_));
         CheckCuda(cudaFree(server_->color_memory_pool_));
+        CheckCuda(cudaFree(server_->active_subvolume_indices_));
     }
 
     server_ = nullptr;
     hash_table_.Release();
-    target_subvolume_entry_array_.Release();
+    active_subvolume_entry_array_.Release();
 }
 
 template<size_t N>
 void ScalableTSDFVolumeCuda<N>::UpdateServer() {
     if (server_ != nullptr) {
         server_->hash_table_ = *hash_table_.server();
-        server_->target_subvolume_entry_array_ =
-            *target_subvolume_entry_array_.server();
+        server_->active_subvolume_entry_array_ =
+            *active_subvolume_entry_array_.server();
 
         server_->bucket_count_ = bucket_count_;
         server_->value_capacity_ = value_capacity_;
@@ -1029,7 +1041,7 @@ void ScalableTSDFVolumeCuda<N>::IntegrateSubvolumes(
     MonoPinholeCameraCuda &camera,
     TransformCuda &transform_camera_to_world) {
 
-    const int num_blocks = target_subvolume_entry_array_.size();
+    const int num_blocks = active_subvolume_entry_array_.size();
     const dim3 blocks(num_blocks);
     const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
     IntegrateSubvolumesKernel << < blocks, threads >> > (
@@ -1039,13 +1051,22 @@ void ScalableTSDFVolumeCuda<N>::IntegrateSubvolumes(
 }
 
 template<size_t N>
+void ScalableTSDFVolumeCuda<N>::ResetActiveSubvolumeIndices() {
+    CheckCuda(cudaMemset(server_->active_subvolume_indices_, 0xff,
+                         sizeof(int) * value_capacity_));
+}
+
+template<size_t N>
 void ScalableTSDFVolumeCuda<N>::Integrate(
     ImageCuda<Vector1f> &depth,
     MonoPinholeCameraCuda &camera,
     TransformCuda &transform_camera_to_world) {
 
     hash_table_.ResetLocks();
+    active_subvolume_entry_array_.set_size(0);
     TouchSubvolumes(depth, camera, transform_camera_to_world);
+
+    ResetActiveSubvolumeIndices();
     GetSubvolumesInFrustum(camera, transform_camera_to_world);
     IntegrateSubvolumes(depth, camera, transform_camera_to_world);
 }

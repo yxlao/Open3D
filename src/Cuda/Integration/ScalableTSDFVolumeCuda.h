@@ -36,8 +36,17 @@ private:
 
     SpatialHashTableCudaServer hash_table_;
 
-    /** An extension to hash_table_.assigned_entries_array_ **/
-    ArrayCudaServer<HashEntry<Vector3i>> target_subvolume_entry_array_;
+    /** Below are the extended part of the hash table.
+     *  The essential idea is that we wish to
+     *  1. Compress all the hashed subvolumes so that they can be processed in
+     *     parallel with trivial indexing. (Active subvolumes)
+     *  2. Meanwhile know its reverse, i.e. what's the index in array of the
+     *     active subvolumes given the 3D index.
+     *  Refer to function @ActivateSubvolume **/
+    /** f: R -> R^3. Given index, query subvolume coordinate **/
+    ArrayCudaServer<HashEntry<Vector3i>> active_subvolume_entry_array_;
+    /** f: R^3 -> R -> R. Given subvolume coordinate, query index **/
+    int* active_subvolume_indices_;
 
 public:
     int bucket_count_;
@@ -53,10 +62,7 @@ public:
     __HOSTDEVICE__ inline SpatialHashTableCudaServer &hash_table() {
         return hash_table_;
     }
-    __HOSTDEVICE__ inline ArrayCudaServer<HashEntry<Vector3i>> &
-    target_subvolume_entry_array() {
-        return target_subvolume_entry_array_;
-    }
+
     __HOSTDEVICE__ inline float *tsdf_memory_pool() {
         return tsdf_memory_pool_;
     }
@@ -65,6 +71,14 @@ public:
     }
     __HOSTDEVICE__ inline Vector3b *color_memory_pool() {
         return color_memory_pool_;
+    }
+
+    __HOSTDEVICE__ inline ArrayCudaServer<HashEntry<Vector3i>> &
+    active_subvolume_entry_array() {
+        return active_subvolume_entry_array_;
+    }
+    __HOSTDEVICE__ inline int* active_subvolume_indices() {
+        return active_subvolume_indices_;
     }
 
 public:
@@ -187,10 +201,6 @@ public:
      *        Vector3i dXsv = NeighborIndexOfBoundaryVoxel(Xlocal)
      *        subvolumes[LinearizeNeighborIndex(dXsv)].tsdf() ...
      */
-    __DEVICE__ void QuerySubvolumeWithNeighborIndex(
-        const Vector3i &Xsv, int dxsv, int dysv, int dzsv,
-        UniformTSDFVolumeCudaServer<N> **subvolume);
-
     __DEVICE__ inline Vector3i NeighborIndexOfBoundaryVoxel(
         int xlocal, int ylocal, int zlocal);
     __DEVICE__ inline Vector3i NeighborIndexOfBoundaryVoxel(
@@ -244,6 +254,13 @@ public:
     __DEVICE__ Vector3f GradientOnBoundaryAt(
         const Vector3f &Xlocal, UniformTSDFVolumeCudaServer<N> **subvolumes);
 
+    /** This adds the entry into the active entry array,
+     *  waiting for parallel processing.
+     *  The tricky part is that we also have to know its reverse (for meshing):
+     *  given Xsv, we also wish to know the active subvolume id. **/
+    __DEVICE__ void ActivateSubvolume(const HashEntry<Vector3i>& entry);
+    __DEVICE__ int QueryActiveSubvolumeIndex(const Vector3i& key);
+
 public:
     __DEVICE__ void TouchSubvolume(int x, int y,
                                    ImageCudaServer<Vector1f> &depth,
@@ -276,7 +293,7 @@ public:
 private:
     std::shared_ptr<ScalableTSDFVolumeCudaServer<N>> server_ = nullptr;
     SpatialHashTableCuda hash_table_;
-    ArrayCuda<HashEntry<Vector3i>> target_subvolume_entry_array_;
+    ArrayCuda<HashEntry<Vector3i>> active_subvolume_entry_array_;
 
 public:
     int bucket_count_;
@@ -325,6 +342,8 @@ public:
                              MonoPinholeCameraCuda &camera,
                              TransformCuda &transform_camera_to_world);
 
+    void ResetActiveSubvolumeIndices();
+
     void Integrate(ImageCuda<Vector1f> &depth,
                    MonoPinholeCameraCuda &camera,
                    TransformCuda &transform_camera_to_world);
@@ -339,11 +358,11 @@ public:
     const SpatialHashTableCuda &hash_table() const {
         return hash_table_;
     }
-    ArrayCuda<HashEntry<Vector3i>> &target_subvolume_entry_array() {
-        return target_subvolume_entry_array_;
+    ArrayCuda<HashEntry<Vector3i>> &active_subvolume_entry_array() {
+        return active_subvolume_entry_array_;
     }
-    const ArrayCuda<HashEntry<Vector3i>> &target_subvolume_entry_array() const {
-        return target_subvolume_entry_array_;
+    const ArrayCuda<HashEntry<Vector3i>> &active_subvolume_entry_array() const {
+        return active_subvolume_entry_array_;
     }
     std::shared_ptr<ScalableTSDFVolumeCudaServer<N>> &server() {
         return server_;

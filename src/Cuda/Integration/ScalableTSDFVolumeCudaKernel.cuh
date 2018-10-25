@@ -32,13 +32,13 @@ void IntegrateSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server,
     const int ylocal = threadIdx.y;
     const int zlocal = threadIdx.z;
 
-    if (entry_idx >= server.target_subvolume_entry_array().size()
-        || xlocal >= N || ylocal >= N || zlocal >= N)
-        return;
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+    assert (entry_idx < server.active_subvolume_entry_array().size()
+        && xlocal < N && ylocal < N && zlocal < N);
+#endif
 
-    HashEntry<Vector3i> &entry = server.target_subvolume_entry_array().get(
+    HashEntry<Vector3i> &entry = server.active_subvolume_entry_array().get(
         entry_idx);
-
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(entry.internal_addr >= 0);
 #endif
@@ -103,7 +103,7 @@ void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
         if (entry.internal_addr != NULLPTR_CUDA) {
             Vector3f X = server.voxelf_local_to_global(0, 0, 0, entry.key);
             if (camera.IsInFrustum(server.voxel_to_world(X))) {
-                server.target_subvolume_entry_array().push_back(entry);
+                server.ActivateSubvolume(entry);
             }
         }
     }
@@ -118,7 +118,7 @@ void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
         HashEntry<Vector3i> &entry = linked_list_node.data;
         Vector3f X = server.voxelf_local_to_global(0, 0, 0, entry.key);
         if (camera.IsInFrustum(server.voxel_to_world(X))) {
-            server.target_subvolume_entry_array().push_back(entry);
+            server.ActivateSubvolume(entry);
         }
 
         node_ptr = linked_list_node.next_node_ptr;

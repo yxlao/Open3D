@@ -25,4 +25,11 @@ class UniformMeshVolumeCudaServer;
 
 template<VertexType type, size_t N>
 class UniformMeshVolumeCuda;
+
+template<VertexType type, size_t N>
+class ScalableMeshVolumeCudaServer;
+
+template<VertexType type, size_t N>
+class ScalableMeshVolumeCuda;
+
 }

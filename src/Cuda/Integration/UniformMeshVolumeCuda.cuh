@@ -197,7 +197,7 @@ template<VertexType type, size_t N>
 void UniformMeshVolumeCuda<type, N>::Create(
     int max_vertices, int max_triangles) {
     if (server_ != nullptr) {
-        PrintError("Already Created. Stop re-creating!\n");
+        PrintError("Already created. Stop re-creating!\n");
         return;
     }
 
@@ -210,7 +210,7 @@ void UniformMeshVolumeCuda<type, N>::Create(
     const int NNN = N * N * N;
     CheckCuda(cudaMalloc(&server_->table_indices_, sizeof(uchar) * NNN));
     CheckCuda(cudaMalloc(&server_->vertex_indices_, sizeof(Vector3i) * NNN));
-    mesh_.Create(max_vertices, max_triangles);
+    mesh_.Create(max_vertices_, max_triangles_);
 
     UpdateServer();
     Reset();
