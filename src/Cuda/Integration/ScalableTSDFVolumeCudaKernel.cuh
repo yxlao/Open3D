@@ -101,8 +101,8 @@ void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
         HashEntry<Vector3i> &entry = hash_table.entry_array().get(
             bucket_base_idx + i);
         if (entry.internal_addr != NULLPTR_CUDA) {
-            Vector3f X = server.voxelf_local_to_global(0, 0, 0, entry.key);
-            if (camera.IsInFrustum(server.voxel_to_world(X))) {
+            Vector3f X = server.voxelf_local_to_global(Vector3f(0), entry.key);
+            if (camera.IsInFrustum(server.voxelf_to_world(X))) {
                 server.ActivateSubvolume(entry);
             }
         }
@@ -116,8 +116,8 @@ void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
             linked_list.get_node(node_ptr);
 
         HashEntry<Vector3i> &entry = linked_list_node.data;
-        Vector3f X = server.voxelf_local_to_global(0, 0, 0, entry.key);
-        if (camera.IsInFrustum(server.voxel_to_world(X))) {
+        Vector3f X = server.voxelf_local_to_global(Vector3f(0), entry.key);
+        if (camera.IsInFrustum(server.voxelf_to_world(X))) {
             server.ActivateSubvolume(entry);
         }
 

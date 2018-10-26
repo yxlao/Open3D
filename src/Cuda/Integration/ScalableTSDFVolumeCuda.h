@@ -84,44 +84,22 @@ public:
 public:
     /** Coordinate conversions
      *  Duplicate functions of UniformTSDFVolume (how to simplify?) **/
-    __DEVICE__ inline Vector3f world_to_voxel(float xw, float yw, float zw);
-    __DEVICE__ inline Vector3f world_to_voxel(const Vector3f &Xw);
-
-    __DEVICE__ inline Vector3f voxel_to_world(float x, float y, float z);
-    __DEVICE__ inline Vector3f voxel_to_world(const Vector3f &X);
-
-    __DEVICE__ inline Vector3f voxel_to_volume(const Vector3f &X);
-    __DEVICE__ inline Vector3f voxel_to_volume(float x, float y, float z);
-
-    __DEVICE__ inline Vector3f volume_to_voxel(const Vector3f &Xv);
-    __DEVICE__ inline Vector3f volume_to_voxel(float xv, float yv, float zv);
+    __DEVICE__ inline Vector3f world_to_voxelf(const Vector3f &Xw);
+    __DEVICE__ inline Vector3f voxelf_to_world(const Vector3f &X);
+    __DEVICE__ inline Vector3f voxelf_to_volume(const Vector3f &X);
+    __DEVICE__ inline Vector3f volume_to_voxelf(const Vector3f &Xv);
 
     /** Similar to LocateVolumeUnit **/
-    __DEVICE__ inline Vector3i voxel_locate_subvolume(int x, int y, int z);
     __DEVICE__ inline Vector3i voxel_locate_subvolume(const Vector3i &X);
+    __DEVICE__ inline Vector3i voxelf_locate_subvolume(const Vector3f &X);
 
-    __DEVICE__ inline Vector3i voxelf_locate_subvolume(
-        float x, float y, float z);
-    __DEVICE__ inline Vector3i voxelf_locate_subvolume(
-        const Vector3f &X);
-
-    __DEVICE__ inline Vector3i voxel_global_to_local(
-        int x, int y, int z, const Vector3i &Xsv);
     __DEVICE__ inline Vector3i voxel_global_to_local(
         const Vector3i &X, const Vector3i &Xsv);
-
-    __DEVICE__ inline Vector3f voxelf_global_to_local(
-        float x, float y, float z, const Vector3i &Xsv);
     __DEVICE__ inline Vector3f voxelf_global_to_local(
         const Vector3f &X, const Vector3i &Xsv);
 
     __DEVICE__ inline Vector3i voxel_local_to_global(
-        int xlocal, int ylocal, int zlocal, const Vector3i &Xsv);
-    __DEVICE__ inline Vector3i voxel_local_to_global(
         const Vector3i &Xlocal, const Vector3i &Xsv);
-
-    __DEVICE__ inline Vector3f voxelf_local_to_global(
-        float xlocal, float ylocal, float zlocal, const Vector3i &Xsv);
     __DEVICE__ inline Vector3f voxelf_local_to_global(
         const Vector3f &Xlocal, const Vector3i &Xsv);
 
@@ -130,25 +108,13 @@ public:
 
     /** Unoptimized access and interpolation
      * (required hash-table access every access, good for RayCasting) **/
-    __DEVICE__ float &tsdf(int x, int y, int z);
     __DEVICE__ float &tsdf(const Vector3i &X);
-
-    __DEVICE__ uchar &weight(int x, int y, int z);
     __DEVICE__ uchar &weight(const Vector3i &X);
-
-    __DEVICE__ Vector3b &color(int x, int y, int z);
     __DEVICE__ Vector3b &color(const Vector3i &X);
 
-    __DEVICE__ float TSDFAt(float x, float y, float z);
     __DEVICE__ float TSDFAt(const Vector3f &X);
-
-    __DEVICE__ uchar WeightAt(float x, float y, float z);
     __DEVICE__ uchar WeightAt(const Vector3f &X);
-
-    __DEVICE__ Vector3b ColorAt(float x, float y, float z);
     __DEVICE__ Vector3b ColorAt(const Vector3f &X);
-
-    __DEVICE__ Vector3f GradientAt(float x, float y, float z);
     __DEVICE__ Vector3f GradientAt(const Vector3f &X);
 
     /**
@@ -202,22 +168,14 @@ public:
      *        subvolumes[LinearizeNeighborIndex(dXsv)].tsdf() ...
      */
     __DEVICE__ inline Vector3i NeighborIndexOfBoundaryVoxel(
-        int xlocal, int ylocal, int zlocal);
-    __DEVICE__ inline Vector3i NeighborIndexOfBoundaryVoxel(
         const Vector3i &Xlocal);
-
-    __DEVICE__ inline int LinearizeNeighborIndex(int dxsv, int dysv, int dzsv);
     __DEVICE__ inline int LinearizeNeighborIndex(const Vector3i &dXsv);
 
     /** Note we assume we already know @offset is in @block.
      *  For interpolation, boundary regions are [N-1~N] for float, none for int
      *  For gradient, boundary regions are [N-2 ~ N) and [0 ~ 1) **/
     __DEVICE__ inline bool OnBoundary(
-        int xlocal, int ylocal, int zlocal, bool for_gradient = false);
-    __DEVICE__ inline bool OnBoundary(
         const Vector3i &Xlocal, bool for_gradient = false);
-    __DEVICE__ inline bool OnBoundaryf(
-        float xlocal, float ylocal, float zlocal, bool for_gradinet = false);
     __DEVICE__ inline bool OnBoundaryf(
         const Vector3f &Xlocal, bool for_gradient = false);
 
@@ -225,32 +183,13 @@ public:
      * (xlocal, ylocal, zlocal) is inside subvolumes[IndexOfNeighborSubvolumes(0, 0, 0)]
      **/
     __DEVICE__ Vector3f gradient(
-        int xlocal, int ylocal, int zlocal,
-        UniformTSDFVolumeCudaServer<N> **subvolumes);
-    __DEVICE__ Vector3f gradient(
         const Vector3i &Xlocal, UniformTSDFVolumeCudaServer<N> **subvolumes);
-
-    __DEVICE__ float TSDFOnBoundaryAt(
-        float xlocal, float ylocal, float zlocal,
-        UniformTSDFVolumeCudaServer<N> **subvolumes);
     __DEVICE__ float TSDFOnBoundaryAt(
         const Vector3f &Xlocal, UniformTSDFVolumeCudaServer<N> **subvolumes);
-
-    __DEVICE__ uchar WeightOnBoundaryAt(
-        float xlocal, float ylocal, float zlocal,
-        UniformTSDFVolumeCudaServer<N> **subvolumes);
     __DEVICE__ uchar WeightOnBoundaryAt(
         const Vector3f &Xlocal, UniformTSDFVolumeCudaServer<N> **subvolumes);
-
-    __DEVICE__ Vector3b ColorOnBoundaryAt(
-        float xlocal, float ylocal, float zlocal,
-        UniformTSDFVolumeCudaServer<N> **subvolumes);
     __DEVICE__ Vector3b ColorOnBoundaryAt(
         const Vector3f &Xlocal, UniformTSDFVolumeCudaServer<N> **subvolumes);
-
-    __DEVICE__ Vector3f GradientOnBoundaryAt(
-        float xlocal, float ylocal, float zlocal,
-        UniformTSDFVolumeCudaServer<N> **subvolumes);
     __DEVICE__ Vector3f GradientOnBoundaryAt(
         const Vector3f &Xlocal, UniformTSDFVolumeCudaServer<N> **subvolumes);
 

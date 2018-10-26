@@ -13,7 +13,7 @@
 namespace open3d {
 
 /** If this is on, perform boundary checks! **/
-#define CUDA_DEBUG_ENABLE_ASSERTION_
+#define CUDA_DEBUG_ENABLE_ASSERTION
 #define CUDA_DEBUG_ENABLE_PRINTF_
 #define HOST_DEBUG_MONITOR_LIFECYCLE_
 

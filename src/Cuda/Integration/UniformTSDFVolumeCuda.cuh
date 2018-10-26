@@ -27,8 +27,8 @@ template<size_t N>
 __device__
 inline bool UniformTSDFVolumeCudaServer<N>::InVolumef(const Vector3f &X) {
     return 0 <= X(0) && X(0) < (N - 1)
-    && 0 <= X(1) && X(1) < (N - 1)
-    && 0 <= X(2) && X(2) < (N - 1);
+        && 0 <= X(1) && X(1) < (N - 1)
+        && 0 <= X(2) && X(2) < (N - 1);
 }
 
 template<size_t N>
@@ -48,14 +48,18 @@ template<size_t N>
 __device__
 inline Vector3f UniformTSDFVolumeCudaServer<N>::voxelf_to_volume(
     const Vector3f &X) {
-    return (X + Vector3f(0.5)) * voxel_length_;
+    return Vector3f((X(0) + 0.5f) * voxel_length_,
+                    (X(1) + 0.5f) * voxel_length_,
+                    (X(2) + 0.5f) * voxel_length_);
 }
 
 template<size_t N>
 __device__
 inline Vector3f UniformTSDFVolumeCudaServer<N>::volume_to_voxelf(
     const Vector3f &Xv) {
-    return Xv * inv_voxel_length_ - Vector3f(0.5f);
+    return Vector3f(Xv(0) * inv_voxel_length_ - 0.5f,
+                    Xv(1) * inv_voxel_length_ - 0.5f,
+                    Xv(2) * inv_voxel_length_ - 0.5f);
 }
 
 template<size_t N>
@@ -239,9 +243,7 @@ Vector3f UniformTSDFVolumeCudaServer<N>::RayCasting(
             Vector3f Xv_surface_t = camera_origin_v + t_intersect * ray_v;
             Vector3f X_surface_t = volume_to_voxelf(Xv_surface_t);
             Vector3f normal_v_t = GradientAt(X_surface_t).normalized();
-
-            return transform_camera_to_world.Inverse().Rotate(
-                transform_volume_to_world_.Rotate(normal_v_t));
+            return transform_volume_to_world_.Rotate(normal_v_t);
         }
 
         tsdf_prev = tsdf_curr;
