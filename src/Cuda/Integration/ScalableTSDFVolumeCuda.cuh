@@ -350,10 +350,10 @@ template<size_t N>
 __device__
 inline bool ScalableTSDFVolumeCudaServer<N>::OnBoundary(
     int xlocal, int ylocal, int zlocal, bool for_gradient) {
-    return !for_gradient
-        || (xlocal == 0 || xlocal == N - 1
-            || ylocal == 0 || ylocal == N - 1
-            || zlocal == 0 || zlocal == N - 1);
+    return for_gradient ?
+           (xlocal == 0 || ylocal == 0 || zlocal == 0
+           || xlocal >= N - 2 || ylocal >= N - 2 || zlocal >= N - 2)
+           : (xlocal == N - 1 || ylocal == N - 1 || zlocal == N - 1);
 }
 
 template<size_t N>
@@ -367,11 +367,10 @@ template<size_t N>
 __device__
 inline bool ScalableTSDFVolumeCudaServer<N>::OnBoundaryf(
     float xlocal, float ylocal, float zlocal, bool for_gradient) {
-    return (xlocal >= N - 1 || ylocal >= N - 1 || zlocal >= N - 1)
-        && (!for_gradient
-            || (xlocal < 1 || xlocal >= N - 2
-                || ylocal < 1 || ylocal >= N - 2
-                || zlocal < 1 || zlocal >= N - 2));
+    return for_gradient ?
+           (xlocal < 1 || ylocal < 1 || zlocal < 1
+           || xlocal >= N - 2 || ylocal >= N - 2 || zlocal >= N - 2)
+           : (xlocal >= N - 1 || ylocal >= N - 1 || zlocal >= N - 1);
 }
 
 template<size_t N>
@@ -418,9 +417,9 @@ inline Vector3f ScalableTSDFVolumeCudaServer<N>::gradient(
     int xlocal, int ylocal, int zlocal,
     UniformTSDFVolumeCudaServer<N> **subvolumes) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
-    assert(0 <= xlocal && xlocal < N);
-    assert(0 <= ylocal && ylocal < N);
-    assert(0 <= zlocal && zlocal < N);
+    assert(-1 <= xlocal && xlocal <= N);
+    assert(-1 <= ylocal && ylocal <= N);
+    assert(-1 <= zlocal && zlocal <= N);
 #endif
     Vector3f n = Vector3f::Zeros();
     Vector3i X = Vector3i(xlocal, ylocal, zlocal);
@@ -440,9 +439,9 @@ inline Vector3f ScalableTSDFVolumeCudaServer<N>::gradient(
         UniformTSDFVolumeCudaServer<N> *subvolume1 =
             subvolumes[LinearizeNeighborIndex(dXsv1)];
         float tsdf0 = (subvolume0 == nullptr) ? 0 :
-                      subvolume0->tsdf(X0 - dXsv0 * N);
+                      subvolume0->tsdf(X0 - dXsv0 * int(N));
         float tsdf1 = (subvolume1 == nullptr) ? 0 :
-                      subvolume1->tsdf(X1 - dXsv1 * N);
+                      subvolume1->tsdf(X1 - dXsv1 * int(N));
         n(i) = tsdf1 - tsdf0;
 
         X0(i) = X(i);
@@ -676,6 +675,44 @@ int ScalableTSDFVolumeCudaServer<N>::QueryActiveSubvolumeIndex(
     int internal_addr = hash_table_.GetInternalAddrByKey(key);
     return internal_addr == NULLPTR_CUDA ?
            NULLPTR_CUDA : active_subvolume_indices_[internal_addr];
+}
+
+template<size_t N>
+__device__
+void ScalableTSDFVolumeCudaServer<N>::CollectNeighborSubvolumeInfo(
+    const Vector3i &Xsv, const Vector3i &dXsv,
+    int *neighbor_subvolume_indices,
+    UniformTSDFVolumeCudaServer<N> **neighbor_subvolumes) {
+
+    Vector3i Xsv_neighbor = Xsv + dXsv;
+    int i = LinearizeNeighborIndex(dXsv);
+
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+    assert(0 <= i && i < 27);
+#endif
+
+    int neighbor_subvolume_idx = QueryActiveSubvolumeIndex(Xsv_neighbor);
+    neighbor_subvolume_indices[i] = neighbor_subvolume_idx;
+
+    /** Some of the subvolumes ARE maintained in hash_table,
+     *  but ARE NOT active (NOT in view frustum).
+     *  For speed, re-write this part with internal addr accessing.
+     *  (can be 0.1 ms faster)
+     *  For readablity, keep this. **/
+    neighbor_subvolumes[i] = neighbor_subvolume_idx == NULLPTR_CUDA ?
+                             nullptr : QuerySubvolume(Xsv_neighbor);
+
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+    if (neighbor_subvolume_idx == NULLPTR_CUDA) {
+        assert(neighbor_subvolumes[i] == nullptr);
+    } else {
+        HashEntry<Vector3i> &entry =
+            active_subvolume_entry_array_[neighbor_subvolume_idx];
+        assert(entry.key == Xsv_neighbor);
+        assert(hash_table_.GetValuePtrByInternalAddr(entry.internal_addr)
+                   == neighbor_subvolumes[i]);
+    }
+#endif
 }
 
 /** High level functions **/

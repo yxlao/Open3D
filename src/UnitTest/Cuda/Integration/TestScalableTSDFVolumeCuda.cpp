@@ -38,7 +38,7 @@ TEST(ScalableTSDFVolumeCuda, TouchSubvolumes) {
     volume.TouchSubvolumes(imcudaf, intrinsics, extrinsics);
     volume.GetSubvolumesInFrustum(intrinsics, extrinsics);
 
-    auto entry_vector = volume.target_subvolume_entry_array().Download();
+    auto entry_vector = volume.active_subvolume_entry_array().Download();
     for (auto &entry : entry_vector) {
         PrintInfo("%d %d %d %d\n", entry.key(0), entry.key(1), entry.key(2),
             entry.internal_addr);

@@ -261,6 +261,13 @@ public:
     __DEVICE__ void ActivateSubvolume(const HashEntry<Vector3i>& entry);
     __DEVICE__ int QueryActiveSubvolumeIndex(const Vector3i& key);
 
+    /** This collects subvolumes into shared memory **/
+    __DEVICE__ void CollectNeighborSubvolumeInfo(
+        const Vector3i &Xsv, const Vector3i& dXsv,
+        int* neighbor_subvolume_indices,
+        UniformTSDFVolumeCudaServer<N>** neighbor_subvolumes);
+
+
 public:
     __DEVICE__ void TouchSubvolume(int x, int y,
                                    ImageCudaServer<Vector1f> &depth,

@@ -61,53 +61,38 @@ void UniformMeshVolumeCudaServer<type, N>::ExtractVertex(
     UniformTSDFVolumeCudaServer<N> &tsdf_volume) {
 
     Vector3i &vertex_index = vertex_indices(x, y, z);
-    bool vx = vertex_index(0) == VERTEX_TO_ALLOCATE;
-    bool vy = vertex_index(1) == VERTEX_TO_ALLOCATE;
-    bool vz = vertex_index(2) == VERTEX_TO_ALLOCATE;
-    if (!vx && !vy && !vz) return;
+    if (vertex_index(0) != VERTEX_TO_ALLOCATE
+        && vertex_index(1) != VERTEX_TO_ALLOCATE
+        && vertex_index(2) != VERTEX_TO_ALLOCATE)
+        return;
 
-    float tsdf0 = tsdf_volume.tsdf(x, y, z);
+    Vector3i X = Vector3i(x, y, z);
+    Vector3i offset = Vector3i::Zeros();
 
-    if (vx) {
-        float tsdfx = tsdf_volume.tsdf(x + 1, y, z);
-        float mu = (0 - tsdf0) / (tsdfx - tsdf0);
-        vertex_index(0) = mesh_.vertices().push_back(
-            tsdf_volume.voxel_to_world(x + mu, y, z));
+    float tsdf_0 = tsdf_volume.tsdf(X);
+    Vector3f gradient_0 = tsdf_volume.gradient(X);
 
-        /** Note we share the vertex indices **/
-        if (type & VertexWithNormal) {
-            mesh_.vertex_normals()[vertex_index(0)] =
-                tsdf_volume.transform_volume_to_world_.Rotate(
-                    (1 - mu) * tsdf_volume.gradient(x, y, z)
-                        + mu * tsdf_volume.gradient(x + 1, y, z));
-        }
-    }
+#pragma unroll 1
+    for (size_t i = 0; i < 3; ++i) {
+        if (vertex_index(i) == VERTEX_TO_ALLOCATE) {
+            offset(i) = 1;
+            Vector3i X_i = X + offset;
 
-    if (vy) {
-        float tsdfy = tsdf_volume.tsdf(x, y + 1, z);
-        float mu = (0 - tsdf0) / (tsdfy - tsdf0);
-        vertex_index(1) = mesh_.vertices().push_back(
-            tsdf_volume.voxel_to_world(x, y + mu, z));
+            float tsdf_i = tsdf_volume.tsdf(X_i);
+            float mu = (0 - tsdf_0) / (tsdf_i - tsdf_0);
+            vertex_index(i) = mesh_.vertices().push_back(
+                tsdf_volume.voxel_to_world(x + mu * offset(0),
+                                           y + mu * offset(1),
+                                           z + mu * offset(2)));
 
-        if (type & VertexWithNormal) {
-            mesh_.vertex_normals()[vertex_index(1)] =
-                tsdf_volume.transform_volume_to_world_.Rotate(
-                    (1 - mu) * tsdf_volume.gradient(x, y, z)
-                        + mu * tsdf_volume.gradient(x, y + 1, z));
-        }
-    }
+            /** Note we share the vertex indices **/
+            if (type & VertexWithNormal) {
+                mesh_.vertex_normals()[vertex_index(i)] =
+                    tsdf_volume.transform_volume_to_world_.Rotate(
+                        (1 - mu) * gradient_0 + mu * tsdf_volume.gradient(X_i));
+            }
 
-    if (vz) {
-        float tsdfz = tsdf_volume.tsdf(x, y, z + 1);
-        float mu = (0 - tsdf0) / (tsdfz - tsdf0);
-        vertex_index(2) = mesh_.vertices().push_back(
-            tsdf_volume.voxel_to_world(x, y, z + mu));
-
-        if (type & VertexWithNormal) {
-            mesh_.vertex_normals()[vertex_index(2)] =
-                tsdf_volume.transform_volume_to_world_.Rotate(
-                    (1 - mu) * tsdf_volume.gradient(x, y, z)
-                        + mu * tsdf_volume.gradient(x, y, z + 1));
+            offset(i) = 0;
         }
     }
 }
@@ -120,32 +105,20 @@ inline void UniformMeshVolumeCudaServer<type, N>::ExtractTriangle(
     const uchar table_index = table_indices(x, y, z);
     if (table_index == 0 || table_index == 255) return;
 
-#pragma unroll 1
     for (int i = 0; i < 16; i += 3) {
         if (tri_table[table_index][i] == -1) return;
 
-        /** Edge index **/
-        int edge0 = tri_table[table_index][i + 0];
-        int edge1 = tri_table[table_index][i + 1];
-        int edge2 = tri_table[table_index][i + 2];
-
         /** Edge index -> neighbor cube index ([0, 1])^3 x vertex index (3) **/
         Vector3i vertex_index;
-        vertex_index(0) = vertex_indices(
-            x + edge_shift[edge0][0],
-            y + edge_shift[edge0][1],
-            z + edge_shift[edge0][2])(edge_shift[edge0][3]);
-
-        vertex_index(1) = vertex_indices(
-            x + edge_shift[edge1][0],
-            y + edge_shift[edge1][1],
-            z + edge_shift[edge1][2])(edge_shift[edge1][3]);
-
-        vertex_index(2) = vertex_indices(
-            x + edge_shift[edge2][0],
-            y + edge_shift[edge2][1],
-            z + edge_shift[edge2][2])(edge_shift[edge2][3]);
-
+#pragma unroll 1
+        for (int j = 0; j < 3; ++j) {
+            /** Edge index **/
+            int edge_j = tri_table[table_index][i + j];
+            vertex_index(j) = vertex_indices(
+                x + edge_shift[edge_j][0],
+                y + edge_shift[edge_j][1],
+                z + edge_shift[edge_j][2])(edge_shift[edge_j][3]);
+        }
         mesh_.triangles().push_back(vertex_index);
     }
 }
@@ -271,7 +244,6 @@ void UniformMeshVolumeCuda<type, N>::VertexAllocation(
     timer.Stop();
     PrintInfo("Allocation takes %f milliseconds\n", timer.GetDuration());
 }
-
 
 template<VertexType type, size_t N>
 void UniformMeshVolumeCuda<type, N>::VertexExtraction(
