@@ -110,7 +110,13 @@ void MarchingCubesTriangleExtractionKernel(
     }
     __syncthreads();
 
-    server.ExtractTriangle(Xlocal(0), Xlocal(1), Xlocal(2), subvolume_idx,
-        tsdf_volume, neighbor_subvolume_indices);
+    if (tsdf_volume.OnBoundary(Xlocal)) {
+        server.ExtractTriangleOnBoundary(Xlocal(0), Xlocal(1), Xlocal(2),
+                                         subvolume_idx,
+                                         tsdf_volume,
+                                         neighbor_subvolume_indices);
+    } else {
+        server.ExtractTriangle(Xlocal(0), Xlocal(1), Xlocal(2), subvolume_idx);
+    }
 }
 }

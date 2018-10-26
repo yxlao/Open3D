@@ -246,6 +246,33 @@ void ScalableMeshVolumeCudaServer<type, N>::ExtractVertexOnBoundary(
 template<VertexType type, size_t N>
 __device__
 void ScalableMeshVolumeCudaServer<type, N>::ExtractTriangle(
+    int xlocal, int ylocal, int zlocal, int subvolume_idx) {
+
+    const uchar table_index = table_indices(xlocal, ylocal, zlocal, subvolume_idx);
+    if (table_index == 0 || table_index == 255) return;
+
+    for (int i = 0; i < 16; i += 3) {
+        if (tri_table[table_index][i] == -1) return;
+
+        /** Edge index -> neighbor cube index ([0, 1])^3 x vertex index (3) **/
+        Vector3i vertex_index;
+#pragma unroll 1
+        for (int j = 0; j < 3; ++j) {
+            /** Edge index **/
+            int edge_j = tri_table[table_index][i + j];
+            vertex_index(j) = vertex_indices(
+                xlocal + edge_shift[edge_j][0],
+                ylocal + edge_shift[edge_j][1],
+                zlocal + edge_shift[edge_j][2],
+                subvolume_idx)(edge_shift[edge_j][3]);
+        }
+        mesh_.triangles().push_back(vertex_index);
+    }
+}
+
+template<VertexType type, size_t N>
+__device__
+void ScalableMeshVolumeCudaServer<type, N>::ExtractTriangleOnBoundary(
     int xlocal, int ylocal, int zlocal, int subvolume_idx,
     ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
     int *neighbor_subvolume_indices) {

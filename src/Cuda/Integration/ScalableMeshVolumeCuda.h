@@ -81,6 +81,9 @@ public:
         UniformTSDFVolumeCudaServer<N> **neighbor_subvolumes);
 
     __DEVICE__ void ExtractTriangle(
+        int xlocal, int ylocal, int zlocal, int subvolume_idx);
+
+    __DEVICE__ void ExtractTriangleOnBoundary(
         int xlocal, int ylocal, int zlocal, int subvolume_idx,
         ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
         int *neighbor_subvolume_indices);
