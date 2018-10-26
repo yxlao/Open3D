@@ -304,7 +304,7 @@ Vector3f UniformTSDFVolumeCudaServer<N>::RayCasting(
 
         if (!InVolumef(X_t)) return ret;
 
-        float tsdf_curr = this->tsdf(X_t);
+        float tsdf_curr = this->tsdf(X_t.ToVectori());
 
         float step_size = tsdf_curr == 0 ?
                           sdf_trunc_ : fmaxf(tsdf_curr, voxel_length_);

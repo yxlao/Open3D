@@ -27,8 +27,10 @@ public:
 public:
     typedef T ValType;
     typedef VectorCuda<T, N> VecType;
+
     typedef VectorCuda<float, N> VecTypef;
     typedef VectorCuda<int, N> VecTypei;
+    typedef VectorCuda<short, N> VecTypes;
     typedef VectorCuda<uchar, N> VecTypeb;
 
     /** Conversions **/
@@ -37,6 +39,9 @@ public:
     }
     __HOSTDEVICE__ inline static VecTypei Vectori() {
         return VecTypei();
+    }
+    __HOSTDEVICE__ inline static VecTypes Vectors() {
+        return VecTypes();
     }
     __HOSTDEVICE__ inline static VecTypeb Vectorb() {
         return VecTypeb();
@@ -64,6 +69,17 @@ public:
         return ret;
     }
 
+    __HOSTDEVICE__ inline VecTypes ToVectors() {
+        VecTypes ret;
+#ifdef __CUDACC__
+#pragma unroll 1
+#endif
+        for (int i = 0; i < N; ++i) {
+            ret.v[i] = short(fminf(v[i], 32767));
+        }
+        return ret;
+    }
+
     __HOSTDEVICE__ inline VecTypeb ToVectorb() {
         VecTypeb ret;
 #ifdef __CUDACC__
@@ -71,6 +87,18 @@ public:
 #endif
         for (int i = 0; i < N; ++i) {
             ret.v[i] = uchar(fminf(v[i], 255));
+        }
+        return ret;
+    }
+
+    __HOSTDEVICE__ inline static VectorCuda<T, N> FromVectorf(
+        const VecTypef &other) {
+        VectorCuda<T, N> ret;
+#ifdef __CUDACC__
+#pragma unroll 1
+#endif
+        for (int i = 0; i < N; ++i) {
+            ret(i) = T(other.v[i]);
         }
         return ret;
     }
@@ -84,12 +112,12 @@ public:
     }
 
     /** Constructors **/
-    __HOSTDEVICE__ inline VectorCuda(const VecTypef &other) {
+    __HOSTDEVICE__ inline VectorCuda(const VecType &other) {
 #ifdef __CUDACC__
 #pragma unroll 1
 #endif
         for (int i = 0; i < N; ++i) {
-            v[i] = T(other.v[i]);
+            v[i] = other.v[i];
         }
     }
 
@@ -132,6 +160,8 @@ public:
 #endif
         v[0] = v0, v[1] = v1, v[2] = v2, v[3] = v3;
     }
+
+    /** Access **/
     __HOSTDEVICE__ inline T &operator()(size_t i) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
         assert(i < N);
@@ -144,6 +174,8 @@ public:
 #endif
         return v[i];
     }
+
+    /** Comparison **/
     __HOSTDEVICE__ inline bool operator==(const VecType &other) const {
 #ifdef __CUDACC__
 #pragma unroll 1
@@ -156,6 +188,8 @@ public:
     __HOSTDEVICE__ inline bool operator!=(const VecType &other) const {
         return !((*this) == other);
     }
+
+    /** Arithmetic operators **/
     __HOSTDEVICE__ inline VecType operator+(const VecType &other) const {
         VecType ret;
 #ifdef __CUDACC__
@@ -222,7 +256,7 @@ public:
 #pragma unroll 1
 #endif
         for (int i = 0; i < N; ++i) {
-            ret.v[i] = v[i] * other;
+            ret.v[i] = T(v[i] * other);
         }
         return ret;
     }
@@ -241,7 +275,7 @@ public:
 #pragma unroll 1
 #endif
         for (int i = 0; i < N; ++i) {
-            v[i] *= other;
+            v[i] = T(v[i] * other);
         }
     }
 
@@ -262,7 +296,7 @@ public:
 #pragma unroll 1
 #endif
         for (int i = 0; i < N; ++i) {
-            ret.v[i] = v[i] / other;
+            ret.v[i] = T(v[i] / other);
         }
         return ret;
     }
@@ -281,10 +315,11 @@ public:
 #pragma unroll 1
 #endif
         for (int i = 0; i < N; ++i) {
-            v[i] /= other;
+            v[i] = T(v[i] / other);
         }
     }
 
+    /** Linear algebraic operations **/
     __HOSTDEVICE__ inline VectorCuda<T, N + 1> homogeneous() {
         VectorCuda<T, N + 1> ret;
 #ifdef __CUDACC__
@@ -298,6 +333,10 @@ public:
     }
 
     __HOSTDEVICE__ inline VectorCuda<T, N - 1> hnormalized() {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+        assert(N > 1);
+#endif
+
         VectorCuda<T, N - 1> ret;
 #ifdef __CUDACC__
 #pragma unroll 1

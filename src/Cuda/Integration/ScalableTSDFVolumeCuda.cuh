@@ -731,11 +731,11 @@ void ScalableTSDFVolumeCudaServer<N>::TouchSubvolume(
 
     Vector3f Xw_near = transform_camera_to_world * camera.InverseProjection(
         x, y, d - sdf_trunc_);
-    Vector3i Xsv_near = voxel_locate_subvolume(world_to_voxel(Xw_near));
+    Vector3i Xsv_near = voxelf_locate_subvolume(world_to_voxel(Xw_near));
 
     Vector3f Xw_far = transform_camera_to_world * camera.InverseProjection(
         x, y, d + sdf_trunc_);
-    Vector3i Xsv_far = voxel_locate_subvolume(world_to_voxel(Xw_far));
+    Vector3i Xsv_far = voxelf_locate_subvolume(world_to_voxel(Xw_far));
 
     /** 3D line from Xsv_near to Xsv_far **/
     /** https://en.wikipedia.org/wiki/Digital_differential_analyzer_(graphics_algorithm) **/

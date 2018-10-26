@@ -25,19 +25,26 @@ TEST(ScalableMeshVolumeCuda, VertexAllocation) {
     ScalableTSDFVolumeCuda<8> tsdf_volume(10000, 200000,
                                           voxel_length, 3 * voxel_length,
                                           extrinsics);
+    Timer timer;
+    timer.Start();
     for (int i = 0; i < 10; ++i) {
         tsdf_volume.Integrate(imcudaf, intrinsics, extrinsics);
     }
+    timer.Stop();
+    PrintInfo("Integration takes: %f milliseconds\n", timer.GetDuration() / 10);
 
     ScalableMeshVolumeCuda<VertexWithNormal, 8> mesher(10000, 100000, 200000);
     mesher.active_subvolumes_ = tsdf_volume.active_subvolume_entry_array().size();
 
     PrintInfo("Active subvolumes: %d\n", mesher.active_subvolumes_);
-    Timer timer;
+
     timer.Start();
-    mesher.MarchingCubes(tsdf_volume);
+    int iter = 100;
+    for (int i = 0; i < iter; ++i) {
+        mesher.MarchingCubes(tsdf_volume);
+    }
     timer.Stop();
-    PrintInfo("MarchingCubes takes: %f milliseconds\n", timer.GetDuration());
+    PrintInfo("MarchingCubes takes: %f milliseconds\n", timer.GetDuration() / iter);
 
     std::shared_ptr<TriangleMesh> mesh = mesher.mesh().Download();
     PrintInfo("triangle.size(): %d, vertices.size(): %d, normals.size(): %d\n",

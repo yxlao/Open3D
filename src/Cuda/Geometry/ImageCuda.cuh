@@ -49,7 +49,7 @@ VecType ImageCudaServer<VecType>::get_interp(float x, float y) {
 #endif
     int x0 = (int) floor(x), y0 = (int) floor(y);
     float a = x - x0, b = y - y0;
-    return VecType(
+    return VecType::FromVectorf(
         (1 - a) * (1 - b) * get(x0, y0).ToVectorf()
             + (1 - a) * b * get(x0, y0 + 1).ToVectorf()
             + a * b * get(x0 + 1, y0 + 1).ToVectorf()
@@ -93,7 +93,7 @@ VecType ImageCudaServer<VecType>::get_interp_with_holes(float x, float y) {
     sum_val += w * val;
     sum_w += (val == zero) ? 0 : w;
 
-    return sum_w == 0 ? zero : VecType(sum_val / sum_w);
+    return sum_w == 0 ? VecType(0) : VecType::FromVectorf(sum_val / sum_w);
 }
 
 template<typename VecType>
@@ -114,7 +114,7 @@ VecType ImageCudaServer<VecType>::BoxFilter2x2(int x, int y) {
     sum_val += get(xp1, yp1).ToVectorf();
 
     sum_val *= 0.25f;
-    return VecType(sum_val);
+    return VecType::FromVectorf(sum_val);
 }
 
 template<typename VecType>
@@ -149,7 +149,7 @@ VecType ImageCudaServer<VecType>::BoxFilter2x2WithHoles(int x, int y) {
     sum_val += val.ToVectorf();
     cnt += (val == zero) ? 0.0f : 1.0f;
 
-    return cnt == 0 ? VecType(0) : VecType(sum_val / cnt);
+    return cnt == 0 ? VecType(0) : VecType::FromVectorf(sum_val / cnt);
 }
 
 template<typename VecType>
@@ -189,7 +189,7 @@ VecType ImageCudaServer<VecType>::GaussianFilter(int x, int y, int kernel_idx) {
     }
 
     sum_val /= sum_weight;
-    return VecType(sum_val);
+    return VecType::FromVectorf(sum_val);
 }
 
 template<typename VecType>
@@ -236,7 +236,7 @@ VecType ImageCudaServer<VecType>::GaussianFilterWithHoles(
 
     /** Center is not zero, so sum_weight > 0 **/
     sum_val /= sum_weight;
-    return VecType(sum_val);
+    return VecType::FromVectorf(sum_val);
 }
 
 template<typename VecType>
@@ -281,7 +281,7 @@ VecType ImageCudaServer<VecType>::BilateralFilter(
     }
 
     sum_val /= sum_weight;
-    return VecType(sum_val);
+    return VecType::FromVectorf(sum_val);
 }
 
 template<typename VecType>
@@ -330,7 +330,7 @@ VecType ImageCudaServer<VecType>::BilateralFilterWithHoles(
     }
 
     sum_val /= sum_weight;
-    return VecType(sum_val);
+    return VecType::FromVectorf(sum_val);
 }
 
 template<typename VecType>

@@ -21,24 +21,24 @@ public:
 #ifdef __CUDACC__
 #pragma unroll 1
 #endif
-        for (int i = 0; i < 3; ++i)
+        for (size_t i = 0; i < 3; ++i)
 #ifdef __CUDACC__
 #pragma unroll 1
 #endif
-            for (int j = 0; j < 4; ++j)
+            for (size_t j = 0; j < 4; ++j)
                 ret(i, j) = (i == j) ? 1 : 0;
         return ret;
     }
 
     inline __HOSTDEVICE__ float &operator()(size_t i, size_t j) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
-        assert(i < 4 && j < 4);
+        assert(i < 3 && j < 4);
 #endif
         return m_[i][j];
     }
     inline __HOSTDEVICE__ const float &operator()(size_t i, size_t j) const {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
-        assert(i < 4 && j < 4);
+        assert(i < 3 && j < 4);
 #endif
         return m_[i][j];
     }
@@ -49,8 +49,7 @@ public:
 #pragma unroll 1
 #endif
         for (size_t i = 0; i < 3; ++i) {
-            ret(i) = m_[i][0] * v(0) + m_[i][1] * v(1) + m_[i][2] * v(2)
-                + m_[i][3];
+            ret(i) = m_[i][0] * v(0) + m_[i][1] * v(1) + m_[i][2] * v(2) + m_[i][3];
         }
         return ret;
     }
