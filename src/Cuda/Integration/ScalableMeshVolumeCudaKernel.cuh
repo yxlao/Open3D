@@ -34,13 +34,13 @@ void MarchingCubesVertexAllocationKernel(
     __syncthreads();
 
     if (tsdf_volume.OnBoundary(Xlocal)) {
-        server.AllocateVertexOnBoundary(Xlocal(0), Xlocal(1), Xlocal(2),
+        server.AllocateVertexOnBoundary(Xlocal,
                                         subvolume_idx,
                                         tsdf_volume,
                                         neighbor_subvolume_indices,
                                         neighbor_subvolumes);
     } else {
-        server.AllocateVertex(Xlocal(0), Xlocal(1), Xlocal(2), subvolume_idx,
+        server.AllocateVertex(Xlocal, subvolume_idx,
                               neighbor_subvolumes[13]);
 
     }
@@ -72,13 +72,13 @@ void MarchingCubesVertexExtractionKernel(
     __syncthreads();
 
     if (tsdf_volume.OnBoundary(Xlocal, true)) {
-        server.ExtractVertexOnBoundary(Xlocal(0), Xlocal(1), Xlocal(2),
+        server.ExtractVertexOnBoundary(Xlocal,
                                        subvolume_idx, Xsv,
                                        tsdf_volume,
                                        neighbor_subvolume_indices,
                                        neighbor_subvolumes);
     } else {
-        server.ExtractVertex(Xlocal(0), Xlocal(1), Xlocal(2),
+        server.ExtractVertex(Xlocal,
                              subvolume_idx, Xsv,
                              tsdf_volume,
                              neighbor_subvolumes[13]);
@@ -111,12 +111,12 @@ void MarchingCubesTriangleExtractionKernel(
     __syncthreads();
 
     if (tsdf_volume.OnBoundary(Xlocal)) {
-        server.ExtractTriangleOnBoundary(Xlocal(0), Xlocal(1), Xlocal(2),
+        server.ExtractTriangleOnBoundary(Xlocal,
                                          subvolume_idx,
                                          tsdf_volume,
                                          neighbor_subvolume_indices);
     } else {
-        server.ExtractTriangle(Xlocal(0), Xlocal(1), Xlocal(2), subvolume_idx);
+        server.ExtractTriangle(Xlocal, subvolume_idx);
     }
 }
 }
