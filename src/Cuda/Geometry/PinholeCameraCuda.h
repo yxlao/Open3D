@@ -69,8 +69,7 @@ public:
         return IsValid(Projection(X, level), level);
     }
 
-    __HOSTDEVICE__ Vector2f Projection(const Vector3f &X,
-                                              size_t level = 0) {
+    __HOSTDEVICE__ Vector2f Projection(const Vector3f &X, size_t level = 0) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
         assert(level < N);
 #endif
@@ -78,9 +77,8 @@ public:
                         (fy_[level] * X(1)) / X(2) + cy_[level]);
     }
 
-    __HOSTDEVICE__ Vector3f InverseProjection(const Vector2f &p,
-                                                     float d,
-                                                     size_t level = 0) {
+    __HOSTDEVICE__ Vector3f InverseProjection(const Vector2f &p, float d,
+                                              size_t level = 0) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
         assert(level < N);
 #endif
@@ -89,13 +87,13 @@ public:
                         d);
     }
 
-    __HOSTDEVICE__ Vector3f InverseProjection(int x, int y, float d,
-                                                     size_t level = 0) {
+    __HOSTDEVICE__ Vector3f InverseProjection(const Vector2i &p, float d,
+                                              size_t level = 0) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
         assert(level < N);
 #endif
-        return Vector3f(d * (x - cx_[level]) * inv_fx_[level],
-                        d * (y - cy_[level]) * inv_fy_[level],
+        return Vector3f(d * (p(0) - cx_[level]) * inv_fx_[level],
+                        d * (p(1) - cy_[level]) * inv_fy_[level],
                         d);
     }
 };

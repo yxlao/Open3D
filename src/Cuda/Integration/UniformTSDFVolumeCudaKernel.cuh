@@ -21,7 +21,9 @@ void IntegrateKernel(UniformTSDFVolumeCudaServer<N> server,
     const int z = threadIdx.z + blockIdx.z * blockDim.z;
 
     if (x >= N || y >= N || z >= N) return;
-    server.Integrate(x, y, z, depth, camera, transform_camera_to_world);
+
+    Vector3i X = Vector3i(x, y, z);
+    server.Integrate(X, depth, camera, transform_camera_to_world);
 }
 
 template<size_t N>
@@ -34,7 +36,12 @@ void RayCastingKernel(UniformTSDFVolumeCudaServer<N> server,
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
 
     if (x >= image.width_ || y >= image.height_) return;
-    Vector3f n = server.RayCasting(x, y, camera, transform_camera_to_world);
-    image.get(x, y) = (n == Vector3f::Zeros()) ? n : n * 0.5f + Vector3f(0.5f);
+
+    Vector2i p = Vector2i(x, y);
+    Vector3f n = server.RayCasting(p, camera, transform_camera_to_world);
+    image.get(x, y) = (n == Vector3f::Zeros()) ?
+                      n : Vector3f((n(0) + 1) * 0.5f,
+                                   (n(1) + 1) * 0.5f,
+                                   (n(2) + 1) * 0.5f);
 }
 }

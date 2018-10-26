@@ -487,9 +487,7 @@ float ScalableTSDFVolumeCudaServer<N>::TSDFOnBoundaryAt(
             subvolumes[LinearizeNeighborIndex(dXsv_i)];
 
         float tsdf_i = (subvolume == nullptr) ? 0.0f :
-                       subvolume->tsdf(X_i(0) - int(N) * dXsv_i(0),
-                                       X_i(1) - int(N) * dXsv_i(1),
-                                       X_i(2) - int(N) * dXsv_i(2));
+                       subvolume->tsdf(X_i - float(N) * dXsv_i);
         float weight_interp_i = (subvolume == nullptr) ? 0.0f :
                                 (rneg(0) * (1 - dX_i(0)) + r(0) * dX_i(0)) *
                                     (rneg(1) * (1 - dX_i(1))
@@ -543,9 +541,7 @@ uchar ScalableTSDFVolumeCudaServer<N>::WeightOnBoundaryAt(
             subvolumes[LinearizeNeighborIndex(dXsv_i)];
 
         float weight_i = (subvolume == nullptr) ? 0.0f :
-                         subvolume->weight(X_i(0) - int(N) * dXsv_i(0),
-                                           X_i(1) - int(N) * dXsv_i(1),
-                                           X_i(2) - int(N) * dXsv_i(2));
+                         subvolume->weight(X_i - float(N) * dXsv_i);
         float weight_interp_i = (subvolume == nullptr) ? 0.0f :
                                 (rneg(0) * (1 - dX_i(0)) + r(0) * dX_i(0)) *
                                     (rneg(1) * (1 - dX_i(1))
@@ -599,9 +595,7 @@ Vector3b ScalableTSDFVolumeCudaServer<N>::ColorOnBoundaryAt(
             subvolumes[LinearizeNeighborIndex(dXsv_i)];
 
         Vector3f color_i = (subvolume == nullptr) ? Vector3f(0) :
-                           subvolume->color(X_i(0) - int(N) * dXsv_i(0),
-                                            X_i(1) - int(N) * dXsv_i(1),
-                                            X_i(2) - int(N) * dXsv_i(2))
+                           subvolume->color(X_i - float(N) * dXsv_i)
                                .ToVectorf();
         float weight_interp_i = (subvolume == nullptr) ? 0.0f :
                                 (rneg(0) * (1 - dX_i(0)) + r(0) * dX_i(0)) *
@@ -730,11 +724,11 @@ void ScalableTSDFVolumeCudaServer<N>::TouchSubvolume(
     if (d < 0.1f || d > 3.0f) return;
 
     Vector3f Xw_near = transform_camera_to_world * camera.InverseProjection(
-        x, y, d - sdf_trunc_);
+        Vector2i(x, y), d - sdf_trunc_);
     Vector3i Xsv_near = voxelf_locate_subvolume(world_to_voxel(Xw_near));
 
     Vector3f Xw_far = transform_camera_to_world * camera.InverseProjection(
-        x, y, d + sdf_trunc_);
+        Vector2i(x, y), d + sdf_trunc_);
     Vector3i Xsv_far = voxelf_locate_subvolume(world_to_voxel(Xw_far));
 
     /** 3D line from Xsv_near to Xsv_far **/
@@ -763,6 +757,7 @@ void ScalableTSDFVolumeCudaServer<N>::Integrate(
     ImageCudaServer<open3d::Vector1f> &depth,
     MonoPinholeCameraCuda &camera,
     TransformCuda &transform_camera_to_world) {
+    Vector3i Xlocal = Vector3i(xlocal, ylocal, zlocal);
 
     /** Projective data association - additional local to global transform **/
     Vector3f X = voxelf_local_to_global(xlocal, ylocal, zlocal, entry.key);
@@ -785,8 +780,8 @@ void ScalableTSDFVolumeCudaServer<N>::Integrate(
     assert(subvolume != nullptr);
 #endif
 
-    float &tsdf = subvolume->tsdf(xlocal, ylocal, zlocal);
-    uchar &weight = subvolume->weight(xlocal, ylocal, zlocal);
+    float &tsdf = subvolume->tsdf(Xlocal);
+    uchar &weight = subvolume->weight(Xlocal);
     tsdf = (tsdf * weight + sdf * 1.0f) / (weight + 1.0f);
     weight = uchar(fminf(weight + 1.0f, 255));
 }
@@ -800,7 +795,8 @@ Vector3f ScalableTSDFVolumeCudaServer<N>::RayCasting(
 
     Vector3f ret = Vector3f(0);
 
-    Vector3f ray_c = camera.InverseProjection(x, y, 1.0f).normalized();
+    Vector3f ray_c = camera.InverseProjection(Vector2i(x, y), 1.0f)
+        .normalized();
 
     /** TODO: throw it into parameters **/
     const float t_min = 0.2f / ray_c(2);

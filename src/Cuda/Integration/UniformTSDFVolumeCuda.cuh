@@ -17,210 +17,134 @@ namespace open3d {
 /** Coordinate conversions **/
 template<size_t N>
 __device__
-inline bool UniformTSDFVolumeCudaServer<N>::InVolume(int x, int y, int z) {
-    return 0 <= x && x < N
-        && 0 <= y && y < N
-        && 0 <= z && z < N;
-}
-
-template<size_t N>
-__device__
 inline bool UniformTSDFVolumeCudaServer<N>::InVolume(const Vector3i &X) {
-    return InVolume(X(0), X(1), X(2));
-}
-
-template<size_t N>
-__device__
-inline bool UniformTSDFVolumeCudaServer<N>::InVolumef(
-    float x, float y, float z) {
-    return 0 <= x && x < (N - 1)
-        && 0 <= y && y < (N - 1)
-        && 0 <= z && z < (N - 1);
+    return 0 <= X(0) && X(0) < (N - 1)
+        && 0 <= X(1) && X(1) < (N - 1)
+        && 0 <= X(2) && X(2) < (N - 1);
 }
 
 template<size_t N>
 __device__
 inline bool UniformTSDFVolumeCudaServer<N>::InVolumef(const Vector3f &X) {
-    return InVolumef(X(0), X(1), X(2));
+    return 0 <= X(0) && X(0) < (N - 1)
+    && 0 <= X(1) && X(1) < (N - 1)
+    && 0 <= X(2) && X(2) < (N - 1);
 }
 
 template<size_t N>
 __device__
-inline Vector3f UniformTSDFVolumeCudaServer<N>::world_to_voxel(
-    float xw, float yw, float zw) {
-    return world_to_voxel(Vector3f(xw, yw, zw));
-}
-
-template<size_t N>
-__device__
-inline Vector3f UniformTSDFVolumeCudaServer<N>::world_to_voxel(
+inline Vector3f UniformTSDFVolumeCudaServer<N>::world_to_voxelf(
     const Vector3f &Xw) {
-    return volume_to_voxel(transform_world_to_volume_ * Xw);
+    return volume_to_voxelf(transform_world_to_volume_ * Xw);
 }
-
 template<size_t N>
 __device__
-inline Vector3f UniformTSDFVolumeCudaServer<N>::voxel_to_world(
-    float x, float y, float z) {
-    return voxel_to_world(Vector3f(x, y, z));
-}
-
-template<size_t N>
-__device__
-inline Vector3f UniformTSDFVolumeCudaServer<N>::voxel_to_world(
-    const Vector3f &X_v) {
-    return transform_volume_to_world_ * voxel_to_volume(X_v);
-}
-
-template<size_t N>
-__device__
-inline Vector3f UniformTSDFVolumeCudaServer<N>::voxel_to_volume(
-    float x, float y, float z) {
-    return Vector3f((x + 0.5f) * voxel_length_, /** Scale transform **/
-                    (y + 0.5f) * voxel_length_,
-                    (z + 0.5f) * voxel_length_);
-}
-
-template<size_t N>
-__device__
-inline Vector3f UniformTSDFVolumeCudaServer<N>::voxel_to_volume(
+inline Vector3f UniformTSDFVolumeCudaServer<N>::voxelf_to_world(
     const Vector3f &X) {
-    return voxel_to_volume(X(0), X(1), X(2));
+    return transform_volume_to_world_ * voxelf_to_volume(X);
 }
 
 template<size_t N>
 __device__
-inline Vector3f UniformTSDFVolumeCudaServer<N>::volume_to_voxel(
-    float xv, float yv, float zv) {
-    return Vector3f(xv * inv_voxel_length_ - 0.5f,
-                    yv * inv_voxel_length_ - 0.5f,
-                    zv * inv_voxel_length_ - 0.5f);
+inline Vector3f UniformTSDFVolumeCudaServer<N>::voxelf_to_volume(
+    const Vector3f &X) {
+    return (X + Vector3f(0.5)) * voxel_length_;
 }
 
 template<size_t N>
 __device__
-inline Vector3f UniformTSDFVolumeCudaServer<N>::volume_to_voxel(
+inline Vector3f UniformTSDFVolumeCudaServer<N>::volume_to_voxelf(
     const Vector3f &Xv) {
-    return volume_to_voxel(Xv(0), Xv(1), Xv(2));
-}
-
-template<size_t N>
-__device__
-Vector3f UniformTSDFVolumeCudaServer<N>::gradient(int x, int y, int z) {
-    return Vector3f(
-        tsdf_[IndexOf(min(x + 1, int(N - 1)), y, z)]
-            - tsdf_[IndexOf(max(x - 1, 0), y, z)],
-        tsdf_[IndexOf(x, min(y + 1, int(N - 1)), z)]
-            - tsdf_[IndexOf(x, max(y - 1, 0), z)],
-        tsdf_[IndexOf(x, y, min(z + 1, int(N - 1)))]
-            - tsdf_[IndexOf(x, y, max(z - 1, 0))]);
+    return Xv * inv_voxel_length_ - Vector3f(0.5f);
 }
 
 template<size_t N>
 __device__
 Vector3f UniformTSDFVolumeCudaServer<N>::gradient(const Vector3i &X) {
-    return gradient(X(0), X(1), X(2));
+    Vector3f n = Vector3f::Zeros();
+    Vector3i X1 = X, X0 = X;
+
+#pragma unroll 1
+    for (int i = 0; i < 3; ++i) {
+        X1(i) = min(X(i) + 1, int(N) - 1);
+        X0(i) = max(X(i) - 1, 0);
+        n(i) = tsdf_[IndexOf(X1)] - tsdf_[IndexOf(X0)];
+        X1(i) = X0(i) = X(i);
+    }
+    return n;
 }
 
 /** Interpolations. **/
 /** Ensure it is called within [0, N - 1)^3 **/
 template<size_t N>
 __device__
-float UniformTSDFVolumeCudaServer<N>::TSDFAt(float x, float y, float z) {
-    Vector3i X = Vector3i(int(x), int(y), int(z));
-    Vector3f r = Vector3f(x - X(0), y - X(1), z - X(2));
+float UniformTSDFVolumeCudaServer<N>::TSDFAt(const Vector3f &X) {
+    Vector3i Xi = X.ToVectori();
+    Vector3f r = X - Xi.ToVectorf();
 
     return (1 - r(0)) * (
         (1 - r(1)) * (
-            (1 - r(2)) * tsdf_[IndexOf(X + Vector3i(0, 0, 0))] +
-                r(2) * tsdf_[IndexOf(X + Vector3i(0, 0, 1))]
+            (1 - r(2)) * tsdf_[IndexOf(Xi + Vector3i(0, 0, 0))] +
+                r(2) * tsdf_[IndexOf(Xi + Vector3i(0, 0, 1))]
         ) + r(1) * (
-            (1 - r(2)) * tsdf_[IndexOf(X + Vector3i(0, 1, 0))] +
-                r(2) * tsdf_[IndexOf(X + Vector3i(0, 1, 1))]
+            (1 - r(2)) * tsdf_[IndexOf(Xi + Vector3i(0, 1, 0))] +
+                r(2) * tsdf_[IndexOf(Xi + Vector3i(0, 1, 1))]
         )) + r(0) * (
         (1 - r(1)) * (
-            (1 - r(2)) * tsdf_[IndexOf(X + Vector3i(1, 0, 0))] +
-                r(2) * tsdf_[IndexOf(X + Vector3i(1, 0, 1))]
+            (1 - r(2)) * tsdf_[IndexOf(Xi + Vector3i(1, 0, 0))] +
+                r(2) * tsdf_[IndexOf(Xi + Vector3i(1, 0, 1))]
         ) + r(1) * (
-            (1 - r(2)) * tsdf_[IndexOf(X + Vector3i(1, 1, 0))] +
-                r(2) * tsdf_[IndexOf(X + Vector3i(1, 1, 1))]
+            (1 - r(2)) * tsdf_[IndexOf(Xi + Vector3i(1, 1, 0))] +
+                r(2) * tsdf_[IndexOf(Xi + Vector3i(1, 1, 1))]
         ));
-}
-
-template<size_t N>
-__device__
-float UniformTSDFVolumeCudaServer<N>::TSDFAt(const Vector3f &X) {
-    return TSDFAt(X(0), X(1), X(2));
-}
-
-template<size_t N>
-__device__
-uchar UniformTSDFVolumeCudaServer<N>::WeightAt(
-    float x, float y, float z) {
-    Vector3i X = Vector3i(int(x), int(y), int(z));
-    Vector3f r = Vector3f(x - X(0), y - X(1), z - X(2));
-
-    return uchar((1 - r(0)) * (
-        (1 - r(1)) * (
-            (1 - r(2)) * weight_[IndexOf(X + Vector3i(0, 0, 0))] +
-                r(2) * weight_[IndexOf(X + Vector3i(0, 0, 1))]
-        ) + r(1) * (
-            (1 - r(2)) * weight_[IndexOf(X + Vector3i(0, 1, 0))] +
-                r(2) * weight_[IndexOf(X + Vector3i(0, 1, 1))]
-        )) + r(0) * (
-        (1 - r(1)) * (
-            (1 - r(2)) * weight_[IndexOf(X + Vector3i(1, 0, 0))] +
-                r(2) * weight_[IndexOf(X + Vector3i(1, 0, 1))]
-        ) + r(1) * (
-            (1 - r(2)) * weight_[IndexOf(X + Vector3i(1, 1, 0))] +
-                r(2) * weight_[IndexOf(X + Vector3i(1, 1, 1))]
-        )));
 }
 
 template<size_t N>
 __device__
 uchar UniformTSDFVolumeCudaServer<N>::WeightAt(const Vector3f &X) {
-    return WeightAt(X(0), X(1), X(2));
-}
+    Vector3i Xi = X.ToVectori();
+    Vector3f r = X - Xi.ToVectorf();
 
-template<size_t N>
-__device__
-Vector3b UniformTSDFVolumeCudaServer<N>::ColorAt(
-    float x, float y, float z) {
-
-    Vector3i X = Vector3i(int(x), int(y), int(z));
-    Vector3f r = Vector3f(x - X(0), y - X(1), z - X(2));
-
-    Vector3f colorf = (1 - r(0)) * (
+    return uchar((1 - r(0)) * (
         (1 - r(1)) * (
-            (1 - r(2)) * color_[IndexOf(X + Vector3i(0, 0, 0))].ToVectorf() +
-                r(2) * color_[IndexOf(X + Vector3i(0, 0, 1))].ToVectorf()
+            (1 - r(2)) * weight_[IndexOf(Xi + Vector3i(0, 0, 0))] +
+                r(2) * weight_[IndexOf(Xi + Vector3i(0, 0, 1))]
         ) + r(1) * (
-            (1 - r(2)) * color_[IndexOf(X + Vector3i(0, 1, 0))].ToVectorf() +
-                r(2) * color_[IndexOf(X + Vector3i(0, 1, 1))].ToVectorf()
+            (1 - r(2)) * weight_[IndexOf(Xi + Vector3i(0, 1, 0))] +
+                r(2) * weight_[IndexOf(Xi + Vector3i(0, 1, 1))]
         )) + r(0) * (
         (1 - r(1)) * (
-            (1 - r(2)) * color_[IndexOf(X + Vector3i(1, 0, 0))].ToVectorf() +
-                r(2) * color_[IndexOf(X + Vector3i(1, 0, 1))].ToVectorf()
+            (1 - r(2)) * weight_[IndexOf(Xi + Vector3i(1, 0, 0))] +
+                r(2) * weight_[IndexOf(Xi + Vector3i(1, 0, 1))]
         ) + r(1) * (
-            (1 - r(2)) * color_[IndexOf(X + Vector3i(1, 1, 0))].ToVectorf() +
-                r(2) * color_[IndexOf(X + Vector3i(1, 1, 1))].ToVectorf()
-        ));
-
-    return Vector3b(uchar(colorf(0)), uchar(colorf(1)), uchar(colorf(2)));
+            (1 - r(2)) * weight_[IndexOf(Xi + Vector3i(1, 1, 0))] +
+                r(2) * weight_[IndexOf(Xi + Vector3i(1, 1, 1))]
+        )));
 }
 
 template<size_t N>
 __device__
 Vector3b UniformTSDFVolumeCudaServer<N>::ColorAt(const Vector3f &X) {
-    return ColorAt(X(0), X(1), X(2));
-}
+    Vector3i Xi = X.ToVectori();
+    Vector3f r = X - Xi.ToVectorf();
 
-template<size_t N>
-__device__
-Vector3f UniformTSDFVolumeCudaServer<N>::GradientAt(
-    float x, float y, float z) {
-    return GradientAt(Vector3f(x, y, z));
+    Vector3f colorf = (1 - r(0)) * (
+        (1 - r(1)) * (
+            (1 - r(2)) * color_[IndexOf(Xi + Vector3i(0, 0, 0))].ToVectorf() +
+                r(2) * color_[IndexOf(Xi + Vector3i(0, 0, 1))].ToVectorf()
+        ) + r(1) * (
+            (1 - r(2)) * color_[IndexOf(Xi + Vector3i(0, 1, 0))].ToVectorf() +
+                r(2) * color_[IndexOf(Xi + Vector3i(0, 1, 1))].ToVectorf()
+        )) + r(0) * (
+        (1 - r(1)) * (
+            (1 - r(2)) * color_[IndexOf(Xi + Vector3i(1, 0, 0))].ToVectorf() +
+                r(2) * color_[IndexOf(Xi + Vector3i(1, 0, 1))].ToVectorf()
+        ) + r(1) * (
+            (1 - r(2)) * color_[IndexOf(Xi + Vector3i(1, 1, 0))].ToVectorf() +
+                r(2) * color_[IndexOf(Xi + Vector3i(1, 1, 1))].ToVectorf()
+        ));
+
+    return colorf.ToVectorb();
 }
 
 template<size_t N>
@@ -238,8 +162,7 @@ Vector3f UniformTSDFVolumeCudaServer<N>::GradientAt(const Vector3f &X) {
         X1(i) = fminf(X1(i) + half_gap, N - 1 - epsilon);
         n(i) = (TSDFAt(X1) - TSDFAt(X0));
 
-        X0(i) = X(i);
-        X1(i) = X(i);
+        X0(i) = X1(i) = X(i);
     }
     return n;
 }
@@ -248,13 +171,13 @@ Vector3f UniformTSDFVolumeCudaServer<N>::GradientAt(const Vector3f &X) {
 template<size_t N>
 __device__
 void UniformTSDFVolumeCudaServer<N>::Integrate(
-    int x, int y, int z,
+    Vector3i &X,
     ImageCudaServer<Vector1f> &depth,
     MonoPinholeCameraCuda &camera,
     TransformCuda &transform_camera_to_world) {
 
     /** Projective data association **/
-    Vector3f Xw = voxel_to_world(x, y, z);
+    Vector3f Xw = voxelf_to_world(X.ToVectorf());
     Vector3f Xc = transform_camera_to_world.Inverse() * Xw;
     Vector2f p = camera.Projection(Xc);
 
@@ -268,8 +191,8 @@ void UniformTSDFVolumeCudaServer<N>::Integrate(
 
     /** Weight average **/
     /** TODO: color **/
-    float &tsdf = this->tsdf(x, y, z);
-    uchar &weight = this->weight(x, y, z);
+    float &tsdf = this->tsdf(X);
+    uchar &weight = this->weight(X);
     tsdf = (tsdf * weight + sdf * 1.0f) / (weight + 1.0f);
     weight = uchar(fminf(weight + 1.0f, 255));
 }
@@ -277,20 +200,20 @@ void UniformTSDFVolumeCudaServer<N>::Integrate(
 template<size_t N>
 __device__
 Vector3f UniformTSDFVolumeCudaServer<N>::RayCasting(
-    int x, int y,
+    Vector2i &p,
     MonoPinholeCameraCuda &camera,
     TransformCuda &transform_camera_to_world) {
 
     Vector3f ret = Vector3f(0);
 
-    Vector3f ray_c = camera.InverseProjection(x, y, 1.0f).normalized();
+    Vector3f ray_c = camera.InverseProjection(p, 1.0f).normalized();
 
     /** TODO: throw it into parameters **/
     const float t_min = 0.2f / ray_c(2);
     const float t_max = 3.0f / ray_c(2);
 
     const Vector3f camera_origin_v = transform_world_to_volume_ *
-        (transform_camera_to_world * Vector3f(0));
+        (transform_camera_to_world * Vector3f::Zeros());
     const Vector3f ray_v = transform_world_to_volume_.Rotate(
         transform_camera_to_world.Rotate(ray_c));
 
@@ -300,7 +223,7 @@ Vector3f UniformTSDFVolumeCudaServer<N>::RayCasting(
     float t_curr = t_min;
     while (t_curr < t_max) {
         Vector3f Xv_t = camera_origin_v + t_curr * ray_v;
-        Vector3f X_t = volume_to_voxel(Xv_t);
+        Vector3f X_t = volume_to_voxelf(Xv_t);
 
         if (!InVolumef(X_t)) return ret;
 
@@ -314,7 +237,7 @@ Vector3f UniformTSDFVolumeCudaServer<N>::RayCasting(
                 / (tsdf_prev - tsdf_curr);
 
             Vector3f Xv_surface_t = camera_origin_v + t_intersect * ray_v;
-            Vector3f X_surface_t = volume_to_voxel(Xv_surface_t);
+            Vector3f X_surface_t = volume_to_voxelf(Xv_surface_t);
             Vector3f normal_v_t = GradientAt(X_surface_t).normalized();
 
             return transform_camera_to_world.Inverse().Rotate(

@@ -31,7 +31,8 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
     /** Check 2: reprojected point in image? **/
     Vector3f
         X = transform_source_to_target_
-        * pinhole_camera_intrinsics_.InverseProjection(x, y, d_source, level);
+        * pinhole_camera_intrinsics_.InverseProjection(Vector2i(x, y),
+            d_source, level);
 
     Vector2f p_warped = pinhole_camera_intrinsics_.Projection(X, level);
     mask = pinhole_camera_intrinsics_.IsValid(p_warped, level);

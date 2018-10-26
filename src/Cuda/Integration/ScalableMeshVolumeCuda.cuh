@@ -19,6 +19,8 @@ void ScalableMeshVolumeCudaServer<type, N>::AllocateVertex(
     int xlocal, int ylocal, int zlocal, int subvolume_idx,
     UniformTSDFVolumeCudaServer<N> *subvolume) {
 
+    Vector3i Xlocal = Vector3i(xlocal, ylocal, zlocal);
+
     uchar &table_index = table_indices(xlocal, ylocal, zlocal, subvolume_idx);
     table_index = 0;
 
@@ -26,14 +28,13 @@ void ScalableMeshVolumeCudaServer<type, N>::AllocateVertex(
 
     /** There are early returns. #pragma unroll SLOWS it down **/
     for (int i = 0; i < 8; ++i) {
-        const int xi = xlocal + shift[i][0];
-        const int yi = ylocal + shift[i][1];
-        const int zi = zlocal + shift[i][2];
+        Vector3i Xlocal_i = Xlocal + Vector3i(shift[i][0], shift[i][1],
+            shift[i][2]);
 
-        uchar weight = subvolume->weight(xi, yi, zi);
+        uchar weight = subvolume->weight(Xlocal_i);
         if (weight == 0) return;
 
-        float tsdf = subvolume->tsdf(xi, yi, zi);
+        float tsdf = subvolume->tsdf(Xlocal_i);
         if (fabsf(tsdf) > 2 * subvolume->voxel_length_) return;
 
         tmp_table_index |= ((tsdf < 0) ? (1 << i) : 0);
@@ -88,14 +89,12 @@ void ScalableMeshVolumeCudaServer<type, N>::AllocateVertexOnBoundary(
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
         assert(neighbor_subvolume_indices[neighbor_idx] != NULLPTR_CUDA);
 #endif
-
-        const int xi_neighbor = xi - int(N) * dXsv(0);
-        const int yi_neighbor = yi - int(N) * dXsv(1);
-        const int zi_neighbor = zi - int(N) * dXsv(2);
-        uchar weight = subvolume->weight(xi_neighbor, yi_neighbor, zi_neighbor);
+        Vector3i Xi_neighbor = Vector3i(xi - int(N) * dXsv(0),
+            yi - int(N) * dXsv(1), zi - int(N) * dXsv(2));
+        uchar weight = subvolume->weight(Xi_neighbor);
         if (weight == 0) return;
 
-        float tsdf = subvolume->tsdf(xi_neighbor, yi_neighbor, zi_neighbor);
+        float tsdf = subvolume->tsdf(Xi_neighbor);
         if (fabsf(tsdf) > 2 * subvolume->voxel_length_) return;
 
         tmp_table_index |= ((tsdf < 0) ? (1 << i) : 0);
@@ -213,10 +212,7 @@ void ScalableMeshVolumeCudaServer<type, N>::ExtractVertexOnBoundary(
             assert(neighbor_subvolumes[k] != nullptr);
 #endif
 
-            float tsdf_i = neighbor_subvolumes[k]->tsdf(
-                Xlocal_i(0) - dXsv(0) * int(N),
-                Xlocal_i(1) - dXsv(1) * int(N),
-                Xlocal_i(2) - dXsv(2) * int(N));
+            float tsdf_i = neighbor_subvolumes[k]->tsdf(Xlocal_i - float(N) * dXsv);
 
             float mu = (0 - tsdf_0) / (tsdf_i - tsdf_0);
 

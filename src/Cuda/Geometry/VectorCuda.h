@@ -47,7 +47,7 @@ public:
         return VecTypeb();
     }
 
-    __HOSTDEVICE__ inline VecTypef ToVectorf() {
+    __HOSTDEVICE__ inline VecTypef ToVectorf() const {
         VecTypef ret;
 #ifdef __CUDACC__
 #pragma unroll 1
@@ -58,7 +58,7 @@ public:
         return ret;
     }
 
-    __HOSTDEVICE__ inline VecTypei ToVectori() {
+    __HOSTDEVICE__ inline VecTypei ToVectori() const {
         VecTypei ret;
 #ifdef __CUDACC__
 #pragma unroll 1
@@ -69,7 +69,7 @@ public:
         return ret;
     }
 
-    __HOSTDEVICE__ inline VecTypes ToVectors() {
+    __HOSTDEVICE__ inline VecTypes ToVectors() const {
         VecTypes ret;
 #ifdef __CUDACC__
 #pragma unroll 1
@@ -80,7 +80,7 @@ public:
         return ret;
     }
 
-    __HOSTDEVICE__ inline VecTypeb ToVectorb() {
+    __HOSTDEVICE__ inline VecTypeb ToVectorb() const {
         VecTypeb ret;
 #ifdef __CUDACC__
 #pragma unroll 1
@@ -109,6 +109,16 @@ public:
     }
     __HOSTDEVICE__ inline VectorCuda<T, N> static Ones() {
         return VectorCuda<T, N>(1);
+    }
+    __HOSTDEVICE__ inline bool IsZero() {
+        bool is_zero = true;
+#ifdef __CUDACC__
+#pragma unroll 1
+#endif
+        for (int i = 0; i < N; ++i) {
+            is_zero = is_zero && v[i] == 0;
+        }
+        return is_zero;
     }
 
     /** Constructors **/

@@ -2,10 +2,10 @@
  * Created by wei on 18-3-29.
  */
 
-#ifndef _COMMON_H_
-#define _COMMON_H_
+#pragma once
 #include <cmath>
 
+namespace open3d {
 #if defined(__CUDACC__)
 #define __ALIGN__(n)  __align__(n)
 /* Use these to avoid redundant conditional macro code ONLY in headers */
@@ -60,4 +60,4 @@ typedef unsigned int uint;
 #define KEY_SPACE  32
 #define KEY_ENTER  13
 
-#endif /* _COMMON_H_ */
+}

@@ -46,77 +46,47 @@ public:
         ret(2) = int(index / (N * N));
         return ret;
     }
-    __DEVICE__ inline int IndexOf(int x, int y, int z) {
-#ifdef CUDA_DEBUG_ENABLE_ASSERTION
-        assert(x >= 0 && y >= 0 && z >= 0);
-        assert(x < N && y < N && z < N);
-#endif
-        return int(z * (N * N) + y * N + x);
-    }
     __DEVICE__ inline int IndexOf(const Vector3i &X) {
-        return IndexOf(X(0), X(1), X(2));
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+        assert(X(0) >= 0 && X(1) >= 0 && X(2) >= 0);
+        assert(X(0) < N && X(1) < N && X(2) < N);
+#endif
+        return int(X(2) * (N * N) + X(1) * N + X(0));
     }
 
 public:
     /** Direct index accessing
       * - for efficiency ignore index checking in these functions
       * - check them outside **/
-    __DEVICE__ inline float &tsdf(int x, int y, int z) {
-        return tsdf_[IndexOf(x, y, z)];
-    }
     __DEVICE__ inline float &tsdf(const Vector3i &X) {
-        return tsdf_[IndexOf(X(0), X(1), X(2))];
-    }
-    __DEVICE__ inline uchar &weight(int x, int y, int z) {
-        return weight_[IndexOf(x, y, z)];
+        return tsdf_[IndexOf(X)];
     }
     __DEVICE__ inline uchar &weight(const Vector3i &X) {
-        return weight_[IndexOf(X(0), X(1), X(2))];
-    }
-    __DEVICE__ inline Vector3b &color(int x, int y, int z) {
-        return color_[IndexOf(x, y, z)];
+        return weight_[IndexOf(X)];
     }
     __DEVICE__ inline Vector3b &color(const Vector3i &X) {
-        return color_[IndexOf(X(0), X(1), X(2))];
+        return color_[IndexOf(X)];
     }
 
     /** Voxel level trivial gradient -- NO trilinear interpolation
      * This is especially useful for MarchingCubes **/
-    __DEVICE__ Vector3f gradient(int x, int y, int z);
     __DEVICE__ Vector3f gradient(const Vector3i &X);
 
 
     /** Coordinate conversions **/
-    __DEVICE__ inline bool InVolume(int x, int y, int z);
     __DEVICE__ inline bool InVolume(const Vector3i &X);
-
-    __DEVICE__ inline bool InVolumef(float x, float y, float z);
     __DEVICE__ inline bool InVolumef(const Vector3f &X);
 
-    __DEVICE__ inline Vector3f world_to_voxel(float xw, float yw, float zw);
-    __DEVICE__ inline Vector3f world_to_voxel(const Vector3f &Xw);
-
-    __DEVICE__ inline Vector3f voxel_to_world(float x, float y, float z);
-    __DEVICE__ inline Vector3f voxel_to_world(const Vector3f &X);
-
-    __DEVICE__ inline Vector3f voxel_to_volume(const Vector3f &X);
-    __DEVICE__ inline Vector3f voxel_to_volume(float x, float y, float z);
-
-    __DEVICE__ inline Vector3f volume_to_voxel(const Vector3f &Xv);
-    __DEVICE__ inline Vector3f volume_to_voxel(float xv, float yv, float zv);
+    __DEVICE__ inline Vector3f world_to_voxelf(const Vector3f &Xw);
+    __DEVICE__ inline Vector3f voxelf_to_world(const Vector3f &X);
+    __DEVICE__ inline Vector3f voxelf_to_volume(const Vector3f &X);
+    __DEVICE__ inline Vector3f volume_to_voxelf(const Vector3f &Xv);
 
 public:
     /** Value interpolating **/
-    __DEVICE__ float TSDFAt(float x, float y, float z);
     __DEVICE__ float TSDFAt(const Vector3f &X);
-
-    __DEVICE__ uchar WeightAt(float x, float y, float z);
     __DEVICE__ uchar WeightAt(const Vector3f &X);
-
-    __DEVICE__ Vector3b ColorAt(float x, float y, float z);
     __DEVICE__ Vector3b ColorAt(const Vector3f &X);
-
-    __DEVICE__ Vector3f GradientAt(float x, float y, float z);
     __DEVICE__ Vector3f GradientAt(const Vector3f &X);
 
 public:
@@ -126,12 +96,12 @@ public:
     __DEVICE__ void Create(float *tsdf, uchar *weight, Vector3b *color);
 
 public:
-    __DEVICE__ void Integrate(int x, int y, int z,
+    __DEVICE__ void Integrate(Vector3i &X,
                               ImageCudaServer<Vector1f> &depth,
                               MonoPinholeCameraCuda &camera,
                               TransformCuda &transform_camera_to_world);
 
-    __DEVICE__ Vector3f RayCasting(int x, int y,
+    __DEVICE__ Vector3f RayCasting(Vector2i &p,
                                    MonoPinholeCameraCuda &camera,
                                    TransformCuda &transform_camera_to_world);
 

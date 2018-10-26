@@ -16,27 +16,27 @@ namespace open3d {
 template<VertexType type, size_t N>
 __device__
 void UniformMeshVolumeCudaServer<type, N>::AllocateVertex(
-    int x, int y, int z,
+    const Vector3i &&X,
     UniformTSDFVolumeCudaServer<N> &tsdf_volume) {
 
-    uchar &table_index = table_indices(x, y, z);
+    uchar &table_index = table_indices(X);
     table_index = 0;
 
     int tmp_table_index = 0;
 
     /** There are early returns. #pragma unroll SLOWS it down **/
-    for (int i = 0; i < 8; ++i) {
-        const int xi = x + shift[i][0];
-        const int yi = y + shift[i][1];
-        const int zi = z + shift[i][2];
+    for (int v = 0; v < 8; ++v) {
+        Vector3i X_v = Vector3i(X(0) + shift[v][0],
+                                X(1) + shift[v][1],
+                                X(2) + shift[v][2]);
 
-        uchar weight = tsdf_volume.weight(xi, yi, zi);
+        uchar weight = tsdf_volume.weight(X_v);
         if (weight == 0) return;
 
-        float tsdf = tsdf_volume.tsdf(xi, yi, zi);
+        float tsdf = tsdf_volume.tsdf(X_v);
         if (fabsf(tsdf) > 2 * tsdf_volume.voxel_length_) return;
 
-        tmp_table_index |= ((tsdf < 0) ? (1 << i) : 0);
+        tmp_table_index |= ((tsdf < 0) ? (1 << v) : 0);
     }
     if (tmp_table_index == 0 || tmp_table_index == 255) return;
     table_index = (uchar) tmp_table_index;
@@ -44,12 +44,12 @@ void UniformMeshVolumeCudaServer<type, N>::AllocateVertex(
     /** Tell them they will be extracted. Conflict can be ignored **/
     int edges = edge_table[table_index];
 #pragma unroll 12
-    for (int i = 0; i < 12; ++i) {
-        if (edges & (1 << i)) {
-            vertex_indices(x + edge_shift[i][0],
-                           y + edge_shift[i][1],
-                           z + edge_shift[i][2])(edge_shift[i][3]) =
-                VERTEX_TO_ALLOCATE;
+    for (int e = 0; e < 12; ++e) {
+        if (edges & (1 << e)) {
+            Vector3i X_e = Vector3i(X(0) + edge_shift[e][0],
+                                    X(1) + edge_shift[e][1],
+                                    X(2) + edge_shift[e][2]);
+            vertex_indices(X_e)(edge_shift[e][3]) = VERTEX_TO_ALLOCATE;
         }
     }
 }
@@ -57,16 +57,15 @@ void UniformMeshVolumeCudaServer<type, N>::AllocateVertex(
 template<VertexType type, size_t N>
 __device__
 void UniformMeshVolumeCudaServer<type, N>::ExtractVertex(
-    int x, int y, int z,
+    const Vector3i &&X,
     UniformTSDFVolumeCudaServer<N> &tsdf_volume) {
 
-    Vector3i &vertex_index = vertex_indices(x, y, z);
+    Vector3i &vertex_index = vertex_indices(X);
     if (vertex_index(0) != VERTEX_TO_ALLOCATE
         && vertex_index(1) != VERTEX_TO_ALLOCATE
         && vertex_index(2) != VERTEX_TO_ALLOCATE)
         return;
 
-    Vector3i X = Vector3i(x, y, z);
     Vector3i offset = Vector3i::Zeros();
 
     float tsdf_0 = tsdf_volume.tsdf(X);
@@ -81,9 +80,9 @@ void UniformMeshVolumeCudaServer<type, N>::ExtractVertex(
             float tsdf_i = tsdf_volume.tsdf(X_i);
             float mu = (0 - tsdf_0) / (tsdf_i - tsdf_0);
             vertex_index(i) = mesh_.vertices().push_back(
-                tsdf_volume.voxel_to_world(x + mu * offset(0),
-                                           y + mu * offset(1),
-                                           z + mu * offset(2)));
+                tsdf_volume.voxelf_to_world(Vector3f(X(0) + mu * offset(0),
+                                                     X(1) + mu * offset(1),
+                                                     X(2) + mu * offset(2))));
 
             /** Note we share the vertex indices **/
             if (type & VertexWithNormal) {
@@ -100,9 +99,9 @@ void UniformMeshVolumeCudaServer<type, N>::ExtractVertex(
 template<VertexType type, size_t N>
 __device__
 inline void UniformMeshVolumeCudaServer<type, N>::ExtractTriangle(
-    int x, int y, int z) {
+    const Vector3i &&X) {
 
-    const uchar table_index = table_indices(x, y, z);
+    const uchar table_index = table_indices(X);
     if (table_index == 0 || table_index == 255) return;
 
     for (int i = 0; i < 16; i += 3) {
@@ -114,10 +113,10 @@ inline void UniformMeshVolumeCudaServer<type, N>::ExtractTriangle(
         for (int j = 0; j < 3; ++j) {
             /** Edge index **/
             int edge_j = tri_table[table_index][i + j];
-            vertex_index(j) = vertex_indices(
-                x + edge_shift[edge_j][0],
-                y + edge_shift[edge_j][1],
-                z + edge_shift[edge_j][2])(edge_shift[edge_j][3]);
+            Vector3i Xij = Vector3i(X(0) + edge_shift[edge_j][0],
+                                    X(1) + edge_shift[edge_j][1],
+                                    X(2) + edge_shift[edge_j][2]);
+            vertex_index(j) = vertex_indices(Xij)(edge_shift[edge_j][3]);
         }
         mesh_.triangles().push_back(vertex_index);
     }

@@ -62,24 +62,18 @@ public:
         return ret;
     }
 
-    __DEVICE__ inline int IndexOf(int x, int y, int z) {
+    __DEVICE__ inline int IndexOf(const Vector3i &X) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
-        assert(x >= 0 && y >= 0 && z >= 0);
-        assert(x < N && y < N && z < N);
+        assert(X(0) >= 0 && X(1) >= 0 && X(2) >= 0);
+        assert(X(0) < N && X(1) < N && X(2) < N);
 #endif
-        return int(z * (N * N) + y * N + x);
+        return int(X(2) * (N * N) + X(1) * N + X(0));
     }
-    __DEVICE__ inline uchar &table_indices(int x, int y, int z) {
-        return table_indices_[IndexOf(x, y, z)];
+    __DEVICE__ inline uchar &table_indices(const Vector3i &X) {
+        return table_indices_[IndexOf(X)];
     }
-    __DEVICE__ inline uchar &table_indices(int i) {
-        return table_indices_[i];
-    }
-    __DEVICE__ inline Vector3i &vertex_indices(int x, int y, int z) {
-        return vertex_indices_[IndexOf(x, y, z)];
-    }
-    __DEVICE__ inline Vector3i &vertex_indices(int i) {
-        return vertex_indices_[i];
+    __DEVICE__ inline Vector3i &vertex_indices(const Vector3i &X) {
+        return vertex_indices_[IndexOf(X)];
     }
     __DEVICE__ inline TriangleMeshCudaServer<type> mesh() {
         return mesh_;
@@ -87,12 +81,10 @@ public:
 
 public:
     __DEVICE__ void AllocateVertex(
-        int x, int y, int z,
-        UniformTSDFVolumeCudaServer<N> &tsdf_volume);
+        const Vector3i &&X, UniformTSDFVolumeCudaServer<N> &tsdf_volume);
     __DEVICE__ void ExtractVertex(
-        int x, int y, int z,
-        UniformTSDFVolumeCudaServer<N> &tsdf_volume);
-    __DEVICE__ void ExtractTriangle(int x, int y, int z);
+        const Vector3i &&X, UniformTSDFVolumeCudaServer<N> &tsdf_volume);
+    __DEVICE__ void ExtractTriangle(const Vector3i &&X);
 
 public:
     friend class UniformMeshVolumeCuda<type, N>;
@@ -112,8 +104,8 @@ public:
     UniformMeshVolumeCuda();
     UniformMeshVolumeCuda(int max_vertices, int max_triangles);
     UniformMeshVolumeCuda(const UniformMeshVolumeCuda<type, N> &other);
-    UniformMeshVolumeCuda<type, N>& operator=(const
-        UniformMeshVolumeCuda<type, N> &other);
+    UniformMeshVolumeCuda<type, N> &operator=(
+        const UniformMeshVolumeCuda<type, N> &other);
     ~UniformMeshVolumeCuda();
 
     void Create(int max_vertices, int max_triangles);
@@ -122,11 +114,11 @@ public:
     void UpdateServer();
 
 public:
-    void VertexAllocation(UniformTSDFVolumeCuda<N>& tsdf_volume);
-    void VertexExtraction(UniformTSDFVolumeCuda<N>& tsdf_volume);
+    void VertexAllocation(UniformTSDFVolumeCuda<N> &tsdf_volume);
+    void VertexExtraction(UniformTSDFVolumeCuda<N> &tsdf_volume);
     void TriangleExtraction();
 
-    void MarchingCubes(UniformTSDFVolumeCuda<N>& tsdf_volume);
+    void MarchingCubes(UniformTSDFVolumeCuda<N> &tsdf_volume);
 
 public:
     std::shared_ptr<UniformMeshVolumeCudaServer<type, N>> &server() {
