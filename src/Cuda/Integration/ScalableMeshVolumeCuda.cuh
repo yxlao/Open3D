@@ -15,6 +15,32 @@ namespace open3d {
  */
 template<VertexType type, size_t N>
 __device__
+inline Vector3i ScalableMeshVolumeCudaServer<type, N>::
+NeighborOffsetOfBoundaryVoxel(const Vector3i &Xlocal) {
+    return Vector3i(Xlocal(0) < 0 ? -1 : (Xlocal(0) >= N ? 1 : 0),
+                    Xlocal(1) < 0 ? -1 : (Xlocal(1) >= N ? 1 : 0),
+                    Xlocal(2) < 0 ? -1 : (Xlocal(2) >= N ? 1 : 0));
+}
+
+template<VertexType type, size_t N>
+__device__
+inline int ScalableMeshVolumeCudaServer<type, N>::LinearizeNeighborOffset(
+    const Vector3i &dXsv) {
+    /* return (dz + 1) * 9 + (dy + 1) * 3 + (dx + 1); */
+    return 9 * dXsv(2) + 3 * dXsv(1) + dXsv(0) + 13;
+}
+
+template<VertexType type, size_t N>
+__device__
+inline Vector3i ScalableMeshVolumeCudaServer<type, N>::BoundaryVoxelInNeighbor(
+    const Vector3i &Xlocal, const Vector3i &dXsv) {
+    return Vector3i(Xlocal(0) - dXsv(0) * int(N),
+                    Xlocal(1) - dXsv(1) * int(N),
+                    Xlocal(2) - dXsv(2) * int(N));
+}
+
+template<VertexType type, size_t N>
+__device__
 void ScalableMeshVolumeCudaServer<type, N>::AllocateVertex(
     const Vector3i &Xlocal, int subvolume_idx,
     UniformTSDFVolumeCudaServer<N> *subvolume) {
@@ -25,36 +51,39 @@ void ScalableMeshVolumeCudaServer<type, N>::AllocateVertex(
     int tmp_table_index = 0;
 
     /** There are early returns. #pragma unroll SLOWS it down **/
-    for (int i = 0; i < 8; ++i) {
-        Vector3i Xlocal_i = Vector3i(Xlocal(0) + shift[i][0],
-                                     Xlocal(1) + shift[i][1],
-                                     Xlocal(2) + shift[i][2]);
+    for (size_t corner = 0; corner < 8; ++corner) {
+        Vector3i Xlocal_corner = Vector3i(Xlocal(0) + shift[corner][0],
+                                          Xlocal(1) + shift[corner][1],
+                                          Xlocal(2) + shift[corner][2]);
 
-        uchar weight = subvolume->weight(Xlocal_i);
+        uchar weight = subvolume->weight(Xlocal_corner);
         if (weight == 0) return;
 
-        float tsdf = subvolume->tsdf(Xlocal_i);
+        float tsdf = subvolume->tsdf(Xlocal_corner);
         if (fabsf(tsdf) > 2 * subvolume->voxel_length_) return;
 
-        tmp_table_index |= ((tsdf < 0) ? (1 << i) : 0);
+        tmp_table_index |= ((tsdf < 0) ? (1 << corner) : 0);
     }
     if (tmp_table_index == 0 || tmp_table_index == 255) return;
     table_index = (uchar) tmp_table_index;
 
-    /** Tell them they will be extracted. Conflict can be ignored **/
     int edges = edge_table[table_index];
 #pragma unroll 12
-    for (int i = 0; i < 12; ++i) {
-        if (edges & (1 << i)) {
-            Vector3i Xedge = Vector3i(Xlocal(0) + edge_shift[i][0],
-                                      Xlocal(1) + edge_shift[i][1],
-                                      Xlocal(2) + edge_shift[i][2]);
+    for (size_t edge = 0; edge < 12; ++edge) {
+        if (edges & (1 << edge)) {
+            /** Voxel holding the edge **/
+            Vector3i Xlocal_edge_holder = Vector3i(
+                Xlocal(0) + edge_shift[edge][0],
+                Xlocal(1) + edge_shift[edge][1],
+                Xlocal(2) + edge_shift[edge][2]);
 
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
-            assert(Xedge(0) < N && Xedge(1) < N && Xedge(2) < N);
+            assert(Xlocal_edge_holder(0) < N
+            && Xlocal_edge_holder(1) < N
+            && Xlocal_edge_holder(2) < N);
 #endif
-            vertex_indices(Xedge, subvolume_idx)(edge_shift[i][3])
-                = VERTEX_TO_ALLOCATE;
+            vertex_indices(Xlocal_edge_holder, subvolume_idx)
+                (edge_shift[edge][3]) = VERTEX_TO_ALLOCATE;
         }
     }
 }
@@ -63,9 +92,8 @@ template<VertexType type, size_t N>
 __device__
 void ScalableMeshVolumeCudaServer<type, N>::AllocateVertexOnBoundary(
     const Vector3i &Xlocal, int subvolume_idx,
-    ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
-    int *neighbor_subvolume_indices,
-    UniformTSDFVolumeCudaServer<N> **neighbor_subvolumes) {
+    int *cached_subvolume_indices,
+    UniformTSDFVolumeCudaServer<N> **cached_subvolumes) {
 
     uchar &table_index = table_indices(Xlocal, subvolume_idx);
     table_index = 0;
@@ -73,57 +101,58 @@ void ScalableMeshVolumeCudaServer<type, N>::AllocateVertexOnBoundary(
     int tmp_table_index = 0;
 
     /** There are early returns. #pragma unroll SLOWS it down **/
-    for (int v = 0; v < 8; ++v) {
-        const Vector3i X_v = Vector3i(Xlocal(0) + shift[v][0],
-                                      Xlocal(1) + shift[v][1],
-                                      Xlocal(2) + shift[v][2]);
+    for (size_t corner = 0; corner < 8; ++corner) {
+        Vector3i Xlocal_corner = Vector3i(Xlocal(0) + shift[corner][0],
+                                          Xlocal(1) + shift[corner][1],
+                                          Xlocal(2) + shift[corner][2]);
 
-        Vector3i dXsv = tsdf_volume.NeighborIndexOfBoundaryVoxel(X_v);
-        int neighbor_idx = tsdf_volume.LinearizeNeighborIndex(dXsv);
-        UniformTSDFVolumeCudaServer<N>
-            *subvolume = neighbor_subvolumes[neighbor_idx];
+        Vector3i dXsv_corner = NeighborOffsetOfBoundaryVoxel(Xlocal_corner);
+        int neighbor_idx = LinearizeNeighborOffset(dXsv_corner);
+        UniformTSDFVolumeCudaServer<N> *neighbor_subvolume =
+            cached_subvolumes[neighbor_idx];
 
-        if (subvolume == nullptr) return;
+        if (neighbor_subvolume == nullptr) return;
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
-        assert(neighbor_subvolume_indices[neighbor_idx] != NULLPTR_CUDA);
+        assert(cached_subvolume_indices[neighbor_idx] != NULLPTR_CUDA);
 #endif
-        Vector3i Xi_neighbor = Vector3i(X_v(0) - int(N) * dXsv(0),
-                                        X_v(1) - int(N) * dXsv(1),
-                                        X_v(2) - int(N) * dXsv(2));
-        uchar weight = subvolume->weight(Xi_neighbor);
+
+        Vector3i Xlocal_corner_in_neighbor =
+            BoundaryVoxelInNeighbor(Xlocal_corner, dXsv_corner);
+        uchar weight = neighbor_subvolume->weight(Xlocal_corner_in_neighbor);
         if (weight == 0) return;
 
-        float tsdf = subvolume->tsdf(Xi_neighbor);
-        if (fabsf(tsdf) > 2 * subvolume->voxel_length_) return;
+        float tsdf = neighbor_subvolume->tsdf(Xlocal_corner_in_neighbor);
+        if (fabsf(tsdf) > 2 * neighbor_subvolume->voxel_length_) return;
 
-        tmp_table_index |= ((tsdf < 0) ? (1 << v) : 0);
+        tmp_table_index |= ((tsdf < 0) ? (1 << corner) : 0);
     }
     if (tmp_table_index == 0 || tmp_table_index == 255) return;
     table_index = (uchar) tmp_table_index;
 
     int edges = edge_table[table_index];
-    for (int e = 0; e < 12; ++e) {
-        if (edges & (1 << e)) {
-            Vector3i X_e = Vector3i(Xlocal(0) + edge_shift[e][0],
-                                    Xlocal(1) + edge_shift[e][1],
-                                    Xlocal(2) + edge_shift[e][2]);
+    for (size_t edge = 0; edge < 12; ++edge) {
+        if (edges & (1 << edge)) {
+            /** Voxel holding the edge **/
+            Vector3i Xlocal_edge_holder = Vector3i(
+                Xlocal(0) + edge_shift[edge][0],
+                Xlocal(1) + edge_shift[edge][1],
+                Xlocal(2) + edge_shift[edge][2]);
 
-            Vector3i
-                dXsv = tsdf_volume.NeighborIndexOfBoundaryVoxel(X_e);
-            int neighbor_idx = tsdf_volume.LinearizeNeighborIndex(dXsv);
-            int neighbor_subvolume_idx =
-                neighbor_subvolume_indices[neighbor_idx];
+            Vector3i dXsv_edge_holder =
+                NeighborOffsetOfBoundaryVoxel(Xlocal_edge_holder);
+            int neighbor_idx = LinearizeNeighborOffset(dXsv_edge_holder);
+            int neighbor_subvolume_idx = cached_subvolume_indices[neighbor_idx];
 
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
             assert(neighbor_subvolume_idx != NULLPTR_CUDA);
 #endif
 
-            Vector3i Xlocal_e = Vector3i(X_e(0) - int(N) * dXsv(0),
-                                         X_e(1) - int(N) * dXsv(1),
-                                         X_e(2) - int(N) * dXsv(2));
-            vertex_indices(Xlocal_e,
-                           neighbor_subvolume_idx)(edge_shift[e][3]) =
-                VERTEX_TO_ALLOCATE;
+            Vector3i Xlocal_edge_holder_in_neighbor = BoundaryVoxelInNeighbor(
+                Xlocal_edge_holder, dXsv_edge_holder);
+
+            vertex_indices(
+                Xlocal_edge_holder_in_neighbor,neighbor_subvolume_idx)(
+                    edge_shift[edge][3]) = VERTEX_TO_ALLOCATE;
         }
     }
 }
@@ -136,45 +165,43 @@ void ScalableMeshVolumeCudaServer<type, N>::ExtractVertex(
     ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
     UniformTSDFVolumeCudaServer<N> *subvolume) {
 
-    Vector3i
-        &vertex_index = vertex_indices(Xlocal, subvolume_idx);
-    if (vertex_index(0) != VERTEX_TO_ALLOCATE
-        && vertex_index(1) != VERTEX_TO_ALLOCATE
-        && vertex_index(2) != VERTEX_TO_ALLOCATE)
+    Vector3i &voxel_vertex_indices = vertex_indices(Xlocal, subvolume_idx);
+    if (voxel_vertex_indices(0) != VERTEX_TO_ALLOCATE
+        && voxel_vertex_indices(1) != VERTEX_TO_ALLOCATE
+        && voxel_vertex_indices(2) != VERTEX_TO_ALLOCATE)
         return;
 
-    Vector3i offset = Vector3i::Zeros();
+    Vector3i axis_offset = Vector3i::Zeros();
 
     float tsdf_0 = subvolume->tsdf(Xlocal);
     Vector3f gradient_0 = subvolume->gradient(Xlocal);
 
 #pragma unroll 1
-    for (size_t i = 0; i < 3; ++i) {
-        if (vertex_index(i) == VERTEX_TO_ALLOCATE) {
-            offset(i) = 1;
-            Vector3i Xlocal_i = Xlocal + offset;
+    for (size_t axis = 0; axis < 3; ++axis) {
+        if (voxel_vertex_indices(axis) == VERTEX_TO_ALLOCATE) {
+            axis_offset(axis) = 1;
+            Vector3i Xlocal_axis = Xlocal + axis_offset;
 
-            float tsdf_i = subvolume->tsdf(Xlocal_i);
-            float mu = (0 - tsdf_0) / (tsdf_i - tsdf_0);
+            float tsdf_axis = subvolume->tsdf(Xlocal_axis);
+            float mu = (0 - tsdf_0) / (tsdf_axis - tsdf_0);
 
-            Vector3f X_i = tsdf_volume.voxelf_local_to_global(
-                Vector3f(Xlocal(0) + mu * offset(0),
-                         Xlocal(1) + mu * offset(1),
-                         Xlocal(2) + mu * offset(2)),
+            Vector3f Xlocal_interp_axis = tsdf_volume.voxelf_local_to_global(
+                Vector3f(Xlocal(0) + mu * axis_offset(0),
+                         Xlocal(1) + mu * axis_offset(1),
+                         Xlocal(2) + mu * axis_offset(2)),
                 Xsv);
 
-            vertex_index(i) = mesh_.vertices().push_back(
-                tsdf_volume.voxelf_to_world(X_i));
+            voxel_vertex_indices(axis) = mesh_.vertices().push_back(
+                tsdf_volume.voxelf_to_world(Xlocal_interp_axis));
 
-            /** Note we share the vertex indices **/
             if (type & VertexWithNormal) {
-                mesh_.vertex_normals()[vertex_index(i)] =
+                mesh_.vertex_normals()[voxel_vertex_indices(axis)] =
                     tsdf_volume.transform_volume_to_world_.Rotate(
                         (1 - mu) * gradient_0
-                            + mu * subvolume->gradient(Xlocal_i));
+                            + mu * subvolume->gradient(Xlocal_axis));
             }
 
-            offset(i) = 0;
+            axis_offset(axis) = 0;
         }
     }
 }
@@ -185,57 +212,54 @@ void ScalableMeshVolumeCudaServer<type, N>::ExtractVertexOnBoundary(
     const Vector3i &Xlocal,
     int subvolume_idx, const Vector3i &Xsv,
     ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
-    int *neighbor_subvolume_indices,
-    UniformTSDFVolumeCudaServer<N> **neighbor_subvolumes) {
+    UniformTSDFVolumeCudaServer<N> **cached_subvolumes) {
 
-    Vector3i &vertex_index = vertex_indices(Xlocal, subvolume_idx);
-    if (vertex_index(0) != VERTEX_TO_ALLOCATE
-        && vertex_index(1) != VERTEX_TO_ALLOCATE
-        && vertex_index(2) != VERTEX_TO_ALLOCATE)
+    Vector3i &voxel_vertex_indices = vertex_indices(Xlocal, subvolume_idx);
+    if (voxel_vertex_indices(0) != VERTEX_TO_ALLOCATE
+        && voxel_vertex_indices(1) != VERTEX_TO_ALLOCATE
+        && voxel_vertex_indices(2) != VERTEX_TO_ALLOCATE)
         return;
 
-    Vector3i offset = Vector3i::Zeros();
+    Vector3i axis_offset = Vector3i::Zeros();
 
-    float tsdf_0 = neighbor_subvolumes[13]->tsdf(Xlocal);
-
-    Vector3f gradient_0 = tsdf_volume.gradient(Xlocal, neighbor_subvolumes);
+    float tsdf_0 = cached_subvolumes[13]->tsdf(Xlocal);
+    Vector3f gradient_0 = tsdf_volume.gradient(Xlocal, cached_subvolumes);
 
 #pragma unroll 1
-    for (size_t i = 0; i < 3; ++i) {
-        if (vertex_index(i) == VERTEX_TO_ALLOCATE) {
-            offset(i) = 1;
-            Vector3i Xlocal_i = Xlocal + offset;
-            Vector3i dXsv = tsdf_volume.NeighborIndexOfBoundaryVoxel(Xlocal_i);
-            int k = tsdf_volume.LinearizeNeighborIndex(dXsv);
+    for (size_t axis = 0; axis < 3; ++axis) {
+        if (voxel_vertex_indices(axis) == VERTEX_TO_ALLOCATE) {
+            axis_offset(axis) = 1;
+            Vector3i Xlocal_axis = Xlocal + axis_offset;
+            Vector3i dXsv_axis = NeighborOffsetOfBoundaryVoxel(Xlocal_axis);
+            int neighbor_idx = LinearizeNeighborOffset(dXsv_axis);
 
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
-            assert(neighbor_subvolumes[k] != nullptr);
+            assert(cached_subvolumes[neighbor_idx] != nullptr);
 #endif
 
-            float tsdf_i =
-                neighbor_subvolumes[k]->tsdf(Xlocal_i - float(N) * dXsv);
+            float tsdf_axis = cached_subvolumes[neighbor_idx]->tsdf(
+                Xlocal_axis - float(N) * dXsv_axis);
 
-            float mu = (0 - tsdf_0) / (tsdf_i - tsdf_0);
+            float mu = (0 - tsdf_0) / (tsdf_axis - tsdf_0);
 
-            Vector3f X_i = tsdf_volume.voxelf_local_to_global(
-                Vector3f(Xlocal(0) + mu * offset(0),
-                         Xlocal(1) + mu * offset(1),
-                         Xlocal(2) + mu * offset(2)),
+            Vector3f Xlocal_interp_axis = tsdf_volume.voxelf_local_to_global(
+                Vector3f(Xlocal(0) + mu * axis_offset(0),
+                         Xlocal(1) + mu * axis_offset(1),
+                         Xlocal(2) + mu * axis_offset(2)),
                 Xsv);
 
-            vertex_index(i) = mesh_.vertices().push_back(
-                tsdf_volume.voxelf_to_world(X_i));
+            voxel_vertex_indices(axis) = mesh_.vertices().push_back(
+                tsdf_volume.voxelf_to_world(Xlocal_interp_axis));
 
-            /** Note we share the vertex indices **/
             if (type & VertexWithNormal) {
-                mesh_.vertex_normals()[vertex_index(i)] =
+                mesh_.vertex_normals()[voxel_vertex_indices(axis)] =
                     tsdf_volume.transform_volume_to_world_.Rotate(
                         (1 - mu) * gradient_0
-                            + mu * tsdf_volume.gradient(Xlocal_i,
-                                                        neighbor_subvolumes));
+                            + mu * tsdf_volume.gradient(
+                                Xlocal_axis, cached_subvolumes));
             }
 
-            offset(i) = 0;
+            axis_offset(axis) = 0;
         }
     }
 }
@@ -245,26 +269,27 @@ __device__
 void ScalableMeshVolumeCudaServer<type, N>::ExtractTriangle(
     const Vector3i &Xlocal, int subvolume_idx) {
 
-    const uchar
-        table_index = table_indices(Xlocal, subvolume_idx);
+    const uchar table_index = table_indices(Xlocal, subvolume_idx);
     if (table_index == 0 || table_index == 255) return;
 
-    for (int i = 0; i < 16; i += 3) {
-        if (tri_table[table_index][i] == -1) return;
+    for (size_t tri = 0; tri < 16; tri += 3) {
+        if (tri_table[table_index][tri] == -1) return;
 
         /** Edge index -> neighbor cube index ([0, 1])^3 x vertex index (3) **/
-        Vector3i vertex_index;
+        Vector3i tri_vertex_indices;
 #pragma unroll 1
-        for (int j = 0; j < 3; ++j) {
-            /** Edge index **/
-            int edge_j = tri_table[table_index][i + j];
-            Vector3i Ve = Vector3i(Xlocal(0) + edge_shift[edge_j][0],
-                                   Xlocal(1) + edge_shift[edge_j][1],
-                                   Xlocal(2) + edge_shift[edge_j][2]);
-            vertex_index(j) = vertex_indices(
-                Ve, subvolume_idx)(edge_shift[edge_j][3]);
+        for (size_t vertex = 0; vertex < 3; ++vertex) {
+            /** Edge holding the vetex **/
+            int edge = tri_table[table_index][tri + vertex];
+            /** Voxel holding the edge **/
+            Vector3i Xlocal_edge_holder = Vector3i(
+                Xlocal(0) + edge_shift[edge][0],
+                Xlocal(1) + edge_shift[edge][1],
+                Xlocal(2) + edge_shift[edge][2]);
+            tri_vertex_indices(vertex) = vertex_indices(
+                Xlocal_edge_holder, subvolume_idx)(edge_shift[edge][3]);
         }
-        mesh_.triangles().push_back(vertex_index);
+        mesh_.triangles().push_back(tri_vertex_indices);
     }
 }
 
@@ -272,39 +297,41 @@ template<VertexType type, size_t N>
 __device__
 void ScalableMeshVolumeCudaServer<type, N>::ExtractTriangleOnBoundary(
     const Vector3i &Xlocal, int subvolume_idx,
-    ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
-    int *neighbor_subvolume_indices) {
+    int *cached_subvolume_indices) {
 
     const uchar table_index = table_indices(Xlocal, subvolume_idx);
     if (table_index == 0 || table_index == 255) return;
 
-    for (int i = 0; i < 16; i += 3) {
-        if (tri_table[table_index][i] == -1) return;
+    for (size_t tri = 0; tri < 16; tri += 3) {
+        if (tri_table[table_index][tri] == -1) return;
 
         /** Edge index -> neighbor cube index ([0, 1])^3 x vertex index (3) **/
-        Vector3i vertex_index;
+        Vector3i tri_vertex_indices;
 #pragma unroll 1
-        for (int j = 0; j < 3; ++j) {
-            /** Edge index **/
-            int edge_j = tri_table[table_index][i + j];
+        for (size_t vertex = 0; vertex < 3; ++vertex) {
+            /** Edge holding the vertex **/
+            int edge = tri_table[table_index][tri + vertex];
 
-            Vector3i Xlocal_j = Vector3i(Xlocal(0) + edge_shift[edge_j][0],
-                                         Xlocal(1) + edge_shift[edge_j][1],
-                                         Xlocal(2) + edge_shift[edge_j][2]);
-            Vector3i dXsv = tsdf_volume.NeighborIndexOfBoundaryVoxel(Xlocal_j);
-            int k = tsdf_volume.LinearizeNeighborIndex(dXsv);
-            int neighbor_subvolume_idx = neighbor_subvolume_indices[k];
+            /** Voxel hoding the edge **/
+            Vector3i Xlocal_edge_holder =
+                Vector3i(Xlocal(0) + edge_shift[edge][0],
+                         Xlocal(1) + edge_shift[edge][1],
+                         Xlocal(2) + edge_shift[edge][2]);
+            Vector3i dXsv_edge_holder =
+                NeighborOffsetOfBoundaryVoxel(Xlocal_edge_holder);
+            int neighbor_idx = LinearizeNeighborOffset(dXsv_edge_holder);
+            int neighbor_subvolume_idx = cached_subvolume_indices[neighbor_idx];
 
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
             assert(neighbor_subvolume_idx != NULLPTR_CUDA);
 #endif
-            Vector3i Ve = Vector3i(Xlocal_j(0) - int(N) * dXsv(0),
-                                   Xlocal_j(1) - int(N) * dXsv(1),
-                                   Xlocal_j(2) - int(N) * dXsv(2));
-            vertex_index(j) = vertex_indices(
-                Ve, neighbor_subvolume_idx)(edge_shift[edge_j][3]);
+            Vector3i Xlocal_edge_holder_in_neighbor =
+                BoundaryVoxelInNeighbor(Xlocal_edge_holder, dXsv_edge_holder);
+            tri_vertex_indices(vertex) = vertex_indices(
+                Xlocal_edge_holder_in_neighbor, neighbor_subvolume_idx)(
+                edge_shift[edge][3]);
         }
-        mesh_.triangles().push_back(vertex_index);
+        mesh_.triangles().push_back(tri_vertex_indices);
     }
 }
 

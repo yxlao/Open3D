@@ -17,7 +17,8 @@ void TouchSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server,
 
     if (x >= depth.width_ || y >= depth.height_) return;
 
-    server.TouchSubvolume(x, y, depth, camera, transform_camera_to_world);
+    const Vector2i p = Vector2i(x, y);
+    server.TouchSubvolume(p, depth, camera, transform_camera_to_world);
 }
 
 template<size_t N>
@@ -28,22 +29,18 @@ void IntegrateSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server,
                      TransformCuda transform_camera_to_world) {
 
     const size_t entry_idx = blockIdx.x;
-    const int xlocal = threadIdx.x;
-    const int ylocal = threadIdx.y;
-    const int zlocal = threadIdx.z;
+    const Vector3i Xlocal = Vector3i(threadIdx.x, threadIdx.y, threadIdx.z);
 
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
-    assert (entry_idx < server.active_subvolume_entry_array().size()
-        && xlocal < N && ylocal < N && zlocal < N);
+    assert(entry_idx < server.active_subvolume_entry_array().size()
+        && Xlocal(0) < N && Xlocal(1) < N && Xlocal(2) < N);
 #endif
 
-    HashEntry<Vector3i> &entry = server.active_subvolume_entry_array().get(
-        entry_idx);
+    HashEntry<Vector3i> &entry = server.active_subvolume_entry_array().get(entry_idx);
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(entry.internal_addr >= 0);
 #endif
-    server.Integrate(xlocal, ylocal, zlocal, entry,
-                     depth, camera, transform_camera_to_world);
+    server.Integrate(Xlocal, entry, depth, camera, transform_camera_to_world);
 }
 
 template<size_t N>
@@ -57,7 +54,8 @@ void RayCastingKernel(ScalableTSDFVolumeCudaServer<N> server,
 
     if (x >= normal.width_ || y >= normal.height_) return;
 
-    Vector3f n = server.RayCasting(x, y, camera, transform_camera_to_world);
+    Vector2i p = Vector2i(x, y);
+    Vector3f n = server.RayCasting(p, camera, transform_camera_to_world);
     normal.get(x, y) = (n == Vector3f::Zeros()) ? n : 0.5f * n + Vector3f(0.5f);
 }
 
@@ -97,7 +95,7 @@ void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
 
     int bucket_base_idx = bucket_idx * BUCKET_SIZE;
 #pragma unroll 1
-    for (int i = 0; i < BUCKET_SIZE; ++i) {
+    for (size_t i = 0; i < BUCKET_SIZE; ++i) {
         HashEntry<Vector3i> &entry = hash_table.entry_array().get(
             bucket_base_idx + i);
         if (entry.internal_addr != NULLPTR_CUDA) {

@@ -68,10 +68,9 @@ public:
         return color_[IndexOf(X)];
     }
 
-    /** Voxel level trivial gradient -- NO trilinear interpolation
+    /** Voxel level gradient -- NO trilinear interpolation.
      * This is especially useful for MarchingCubes **/
     __DEVICE__ Vector3f gradient(const Vector3i &X);
-
 
     /** Coordinate conversions **/
     __DEVICE__ inline bool InVolume(const Vector3i &X);
@@ -79,8 +78,8 @@ public:
 
     __DEVICE__ inline Vector3f world_to_voxelf(const Vector3f &Xw);
     __DEVICE__ inline Vector3f voxelf_to_world(const Vector3f &X);
-    __DEVICE__ inline Vector3f voxelf_to_volume(const Vector3f &X);
     __DEVICE__ inline Vector3f volume_to_voxelf(const Vector3f &Xv);
+    __DEVICE__ inline Vector3f voxelf_to_volume(const Vector3f &X);
 
 public:
     /** Value interpolating **/
@@ -96,12 +95,12 @@ public:
     __DEVICE__ void Create(float *tsdf, uchar *weight, Vector3b *color);
 
 public:
-    __DEVICE__ void Integrate(Vector3i &X,
+    __DEVICE__ void Integrate(const Vector3i &X,
                               ImageCudaServer<Vector1f> &depth,
                               MonoPinholeCameraCuda &camera,
                               TransformCuda &transform_camera_to_world);
 
-    __DEVICE__ Vector3f RayCasting(Vector2i &p,
+    __DEVICE__ Vector3f RayCasting(const Vector2i &p,
                                    MonoPinholeCameraCuda &camera,
                                    TransformCuda &transform_camera_to_world);
 

@@ -25,7 +25,7 @@ void MarchingCubesVertexAllocationKernel(
 
     /** [0, 1, 2] -> [-1, 0, 1], query neighbors **/
     if (Xlocal(0) < 3 && Xlocal(1) < 3 && Xlocal(2) < 3) {
-        tsdf_volume.CollectNeighborSubvolumeInfo(
+        tsdf_volume.CacheNeighborSubvolumes(
             Xsv, Xlocal - Vector3i::Ones(),
             neighbor_subvolume_indices,
             neighbor_subvolumes);
@@ -34,9 +34,7 @@ void MarchingCubesVertexAllocationKernel(
     __syncthreads();
 
     if (tsdf_volume.OnBoundary(Xlocal)) {
-        server.AllocateVertexOnBoundary(Xlocal,
-                                        subvolume_idx,
-                                        tsdf_volume,
+        server.AllocateVertexOnBoundary(Xlocal, subvolume_idx,
                                         neighbor_subvolume_indices,
                                         neighbor_subvolumes);
     } else {
@@ -64,7 +62,7 @@ void MarchingCubesVertexExtractionKernel(
 
     /** [0, 1, 2] -> [-1, 0, 1], query neighbors **/
     if (Xlocal(0) < 3 && Xlocal(1) < 3 && Xlocal(2) < 3) {
-        tsdf_volume.CollectNeighborSubvolumeInfo(
+        tsdf_volume.CacheNeighborSubvolumes(
             Xsv, Xlocal - Vector3i::Ones(),
             neighbor_subvolume_indices,
             neighbor_subvolumes);
@@ -72,14 +70,13 @@ void MarchingCubesVertexExtractionKernel(
     __syncthreads();
 
     if (tsdf_volume.OnBoundary(Xlocal, true)) {
-        server.ExtractVertexOnBoundary(Xlocal,
-                                       subvolume_idx, Xsv,
+        server.ExtractVertexOnBoundary(Xlocal, subvolume_idx,
+                                       Xsv,
                                        tsdf_volume,
-                                       neighbor_subvolume_indices,
                                        neighbor_subvolumes);
     } else {
-        server.ExtractVertex(Xlocal,
-                             subvolume_idx, Xsv,
+        server.ExtractVertex(Xlocal, subvolume_idx,
+                             Xsv,
                              tsdf_volume,
                              neighbor_subvolumes[13]);
     }
@@ -103,7 +100,7 @@ void MarchingCubesTriangleExtractionKernel(
 
     /** [0, 1, 2] -> [-1, 0, 1], query neighbors **/
     if (Xlocal(0) < 3 && Xlocal(1) < 3 && Xlocal(2) < 3) {
-        tsdf_volume.CollectNeighborSubvolumeInfo(
+        tsdf_volume.CacheNeighborSubvolumes(
             Xsv, Xlocal - Vector3i::Ones(),
             neighbor_subvolume_indices,
             neighbor_subvolumes);
@@ -111,9 +108,7 @@ void MarchingCubesTriangleExtractionKernel(
     __syncthreads();
 
     if (tsdf_volume.OnBoundary(Xlocal)) {
-        server.ExtractTriangleOnBoundary(Xlocal,
-                                         subvolume_idx,
-                                         tsdf_volume,
+        server.ExtractTriangleOnBoundary(Xlocal, subvolume_idx,
                                          neighbor_subvolume_indices);
     } else {
         server.ExtractTriangle(Xlocal, subvolume_idx);

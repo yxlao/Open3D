@@ -69,11 +69,11 @@ Vector3f UniformTSDFVolumeCudaServer<N>::gradient(const Vector3i &X) {
     Vector3i X1 = X, X0 = X;
 
 #pragma unroll 1
-    for (int i = 0; i < 3; ++i) {
-        X1(i) = min(X(i) + 1, int(N) - 1);
-        X0(i) = max(X(i) - 1, 0);
-        n(i) = tsdf_[IndexOf(X1)] - tsdf_[IndexOf(X0)];
-        X1(i) = X0(i) = X(i);
+    for (size_t k = 0; k < 3; ++k) {
+        X1(k) = min(X(k) + 1, int(N) - 1);
+        X0(k) = max(X(k) - 1, 0);
+        n(k) = tsdf_[IndexOf(X1)] - tsdf_[IndexOf(X0)];
+        X1(k) = X0(k) = X(k);
     }
     return n;
 }
@@ -161,12 +161,12 @@ Vector3f UniformTSDFVolumeCudaServer<N>::GradientAt(const Vector3f &X) {
     Vector3f X0 = X, X1 = X;
 
 #pragma unroll 1
-    for (size_t i = 0; i < 3; i++) {
-        X0(i) = fmaxf(X0(i) - half_gap, epsilon);
-        X1(i) = fminf(X1(i) + half_gap, N - 1 - epsilon);
-        n(i) = (TSDFAt(X1) - TSDFAt(X0));
+    for (size_t k = 0; k < 3; k++) {
+        X0(k) = fmaxf(X0(k) - half_gap, epsilon);
+        X1(k) = fminf(X1(k) + half_gap, N - 1 - epsilon);
+        n(k) = (TSDFAt(X1) - TSDFAt(X0));
 
-        X0(i) = X1(i) = X(i);
+        X0(k) = X1(k) = X(k);
     }
     return n;
 }
@@ -175,7 +175,7 @@ Vector3f UniformTSDFVolumeCudaServer<N>::GradientAt(const Vector3f &X) {
 template<size_t N>
 __device__
 void UniformTSDFVolumeCudaServer<N>::Integrate(
-    Vector3i &X,
+    const Vector3i &X,
     ImageCudaServer<Vector1f> &depth,
     MonoPinholeCameraCuda &camera,
     TransformCuda &transform_camera_to_world) {
@@ -204,7 +204,7 @@ void UniformTSDFVolumeCudaServer<N>::Integrate(
 template<size_t N>
 __device__
 Vector3f UniformTSDFVolumeCudaServer<N>::RayCasting(
-    Vector2i &p,
+    const Vector2i &p,
     MonoPinholeCameraCuda &camera,
     TransformCuda &transform_camera_to_world) {
 
@@ -243,7 +243,8 @@ Vector3f UniformTSDFVolumeCudaServer<N>::RayCasting(
             Vector3f Xv_surface_t = camera_origin_v + t_intersect * ray_v;
             Vector3f X_surface_t = volume_to_voxelf(Xv_surface_t);
             Vector3f normal_v_t = GradientAt(X_surface_t).normalized();
-            return transform_volume_to_world_.Rotate(normal_v_t);
+            return transform_camera_to_world.Inverse().Rotate(
+                transform_volume_to_world_.Rotate(normal_v_t));
         }
 
         tsdf_prev = tsdf_curr;

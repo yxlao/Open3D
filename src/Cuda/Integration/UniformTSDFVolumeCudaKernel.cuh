@@ -37,19 +37,10 @@ void RayCastingKernel(UniformTSDFVolumeCudaServer<N> server,
 
     if (x >= image.width_ || y >= image.height_) return;
 
-    __shared__ TransformCuda transform_world_to_camera;
-    if (threadIdx.x == 0 && threadIdx.y == 0) {
-        transform_world_to_camera = transform_camera_to_world.Inverse();
-    }
-    __syncthreads();
-
     Vector2i p = Vector2i(x, y);
     Vector3f n = server.RayCasting(p, camera, transform_camera_to_world);
-    n = transform_world_to_camera.Rotate(n);
 
     image.get(x, y) = (n == Vector3f::Zeros()) ?
-                      n : Vector3f((n(0) + 1) * 0.5f,
-                                   (n(1) + 1) * 0.5f,
-                                   (n(2) + 1) * 0.5f);
+        n : Vector3f((n(0) + 1) * 0.5f, (n(1) + 1) * 0.5f, (n(2) + 1) * 0.5f);
 }
 }

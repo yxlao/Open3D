@@ -16,7 +16,7 @@ namespace open3d {
 template<VertexType type, size_t N>
 __device__
 void UniformMeshVolumeCudaServer<type, N>::AllocateVertex(
-    const Vector3i &&X,
+    const Vector3i &X,
     UniformTSDFVolumeCudaServer<N> &tsdf_volume) {
 
     uchar &table_index = table_indices(X);
@@ -58,13 +58,13 @@ void UniformMeshVolumeCudaServer<type, N>::AllocateVertex(
 template<VertexType type, size_t N>
 __device__
 void UniformMeshVolumeCudaServer<type, N>::ExtractVertex(
-    const Vector3i &&X,
+    const Vector3i &X,
     UniformTSDFVolumeCudaServer<N> &tsdf_volume) {
 
-    Vector3i &vertex_index = vertex_indices(X);
-    if (vertex_index(0) != VERTEX_TO_ALLOCATE
-        && vertex_index(1) != VERTEX_TO_ALLOCATE
-        && vertex_index(2) != VERTEX_TO_ALLOCATE)
+    Vector3i &voxel_vertex_indices = vertex_indices(X);
+    if (voxel_vertex_indices(0) != VERTEX_TO_ALLOCATE
+        && voxel_vertex_indices(1) != VERTEX_TO_ALLOCATE
+        && voxel_vertex_indices(2) != VERTEX_TO_ALLOCATE)
         return;
 
     Vector3i axis_offset = Vector3i::Zeros();
@@ -74,14 +74,14 @@ void UniformMeshVolumeCudaServer<type, N>::ExtractVertex(
 
 #pragma unroll 1
     for (size_t axis = 0; axis < 3; ++axis) {
-        if (vertex_index(axis) == VERTEX_TO_ALLOCATE) {
+        if (voxel_vertex_indices(axis) == VERTEX_TO_ALLOCATE) {
             axis_offset(axis) = 1;
             Vector3i X_axis = X + axis_offset;
 
             float tsdf_i = tsdf_volume.tsdf(X_axis);
             float mu = (0 - tsdf_0) / (tsdf_i - tsdf_0);
 
-            vertex_index(axis) = mesh_.vertices().push_back(
+            voxel_vertex_indices(axis) = mesh_.vertices().push_back(
                 tsdf_volume.voxelf_to_world(
                     Vector3f(X(0) + mu * axis_offset(0),
                              X(1) + mu * axis_offset(1),
@@ -89,7 +89,7 @@ void UniformMeshVolumeCudaServer<type, N>::ExtractVertex(
 
             /** Note we share the vertex indices **/
             if (type & VertexWithNormal) {
-                mesh_.vertex_normals()[vertex_index(axis)] =
+                mesh_.vertex_normals()[voxel_vertex_indices(axis)] =
                     tsdf_volume.transform_volume_to_world_.Rotate(
                         (1 - mu) * gradient_0
                             + mu * tsdf_volume.gradient(X_axis));
@@ -103,25 +103,26 @@ void UniformMeshVolumeCudaServer<type, N>::ExtractVertex(
 template<VertexType type, size_t N>
 __device__
 inline void UniformMeshVolumeCudaServer<type, N>::ExtractTriangle(
-    const Vector3i &&X) {
+    const Vector3i &X) {
 
     const uchar table_index = table_indices(X);
     if (table_index == 0 || table_index == 255) return;
 
-    for (int tri = 0; tri < 16; tri += 3) {
+    for (size_t tri = 0; tri < 16; tri += 3) {
         if (tri_table[table_index][tri] == -1) return;
 
         /** Edge index -> neighbor cube index ([0, 1])^3 x vertex index (3) **/
         Vector3i tri_vertex_indices;
 #pragma unroll 1
         for (int vertex = 0; vertex < 3; ++vertex) {
-            /** Edge index **/
-            int edge_j = tri_table[table_index][tri + vertex];
-            Vector3i X_edge_j_holder = Vector3i(X(0) + edge_shift[edge_j][0],
-                                                X(1) + edge_shift[edge_j][1],
-                                                X(2) + edge_shift[edge_j][2]);
-            tri_vertex_indices(vertex) =
-                vertex_indices(X_edge_j_holder)(edge_shift[edge_j][3]);
+            /** Edge holding the vertex **/
+            int edge = tri_table[table_index][tri + vertex];
+            /** Voxel hoding the edge **/
+            Vector3i X_edge_holder = Vector3i(X(0) + edge_shift[edge][0],
+                                              X(1) + edge_shift[edge][1],
+                                              X(2) + edge_shift[edge][2]);
+            tri_vertex_indices(vertex) = vertex_indices(
+                X_edge_holder)(edge_shift[edge][3]);
         }
         mesh_.triangles().push_back(tri_vertex_indices);
     }

@@ -34,7 +34,7 @@ namespace open3d {
 namespace {
 
 __DEVICE__
-static const int edge_table[256] = {
+const int edge_table[256] = {
     0x0, 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
     0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
     0x190, 0x99, 0x393, 0x29a, 0x596, 0x49f, 0x795, 0x69c,
@@ -69,7 +69,7 @@ static const int edge_table[256] = {
     0x70c, 0x605, 0x50f, 0x406, 0x30a, 0x203, 0x109, 0x0};
 
 __DEVICE__
-static const int tri_table[256][16] =
+const int tri_table[256][16] =
     {{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
      {0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
      {0, 1, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
@@ -328,7 +328,7 @@ static const int tri_table[256][16] =
      {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}};
 
 __DEVICE__
-static const int shift[8][3] = {
+const int shift[8][3] = {
     {0, 0, 0},
     {1, 0, 0},
     {1, 1, 0},
@@ -340,7 +340,7 @@ static const int shift[8][3] = {
 };
 
 __DEVICE__
-static const int edge_shift[12][4] = {
+const int edge_shift[12][4] = {
     {0, 0, 0, 0},
     {1, 0, 0, 1},
     {0, 1, 0, 0},
@@ -356,7 +356,7 @@ static const int edge_shift[12][4] = {
 };
 
 __DEVICE__
-static const int edge_to_vert[12][2] = {
+const int edge_to_vert[12][2] = {
     {0, 1},
     {1, 2},
     {3, 2},

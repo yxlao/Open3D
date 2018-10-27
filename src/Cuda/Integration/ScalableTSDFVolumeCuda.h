@@ -46,7 +46,7 @@ private:
     /** f: R -> R^3. Given index, query subvolume coordinate **/
     ArrayCudaServer<HashEntry<Vector3i>> active_subvolume_entry_array_;
     /** f: R^3 -> R -> R. Given subvolume coordinate, query index **/
-    int* active_subvolume_indices_;
+    int *active_subvolume_indices_;
 
 public:
     int bucket_count_;
@@ -77,15 +77,24 @@ public:
     active_subvolume_entry_array() {
         return active_subvolume_entry_array_;
     }
-    __HOSTDEVICE__ inline int* active_subvolume_indices() {
+    __HOSTDEVICE__ inline int *active_subvolume_indices() {
         return active_subvolume_indices_;
     }
 
 public:
+    /** This adds the entry into the active entry array,
+     *  waiting for parallel processing.
+     *  The tricky part is that we also have to know its reverse (for meshing):
+     *  given Xsv, we also wish to know the active subvolume id.
+     *  That is stored in @active_subvolume_indices_. **/
+    __DEVICE__ void ActivateSubvolume(const HashEntry<Vector3i> &entry);
+    __DEVICE__ int QueryActiveSubvolumeIndex(const Vector3i &key);
+
+public:
     /** Coordinate conversions
      *  Duplicate functions of UniformTSDFVolume (how to simplify?) **/
-    __DEVICE__ inline Vector3f world_to_voxelf(const Vector3f &Xw);
     __DEVICE__ inline Vector3f voxelf_to_world(const Vector3f &X);
+    __DEVICE__ inline Vector3f world_to_voxelf(const Vector3f &Xw);
     __DEVICE__ inline Vector3f voxelf_to_volume(const Vector3f &X);
     __DEVICE__ inline Vector3f volume_to_voxelf(const Vector3f &Xv);
 
@@ -118,15 +127,14 @@ public:
     __DEVICE__ Vector3f GradientAt(const Vector3f &X);
 
     /**
-     * Optimized access and interpolation
-     * (pre stored neighbors, good for MarchingCubes TBD)
+     * Optimized access and interpolation using cached neighbor subvolumes.
      *
      * NOTE:
      * Interpolation, especially on boundaries, is very expensive when kernels
      * frequently query neighbor volumes.
-     * In a typical kernel like MC, we pre-store them in __shared__ memory.
+     * In a typical kernel like MC, we cache them in __shared__ memory.
      *
-     * In the beginning of a kernel, we pre-query these volumes and syncthreads.
+     * In the beginning of a kernel, we query these volumes and syncthreads.
      * The neighbors are stored in __shared__ subvolumes[N].
      *
      * > The neighbor subvolume indices for value interpolation are
@@ -146,78 +154,76 @@ public:
      *
      * ---
      *
-     * Given (x, y, z) in voxel units, the optimized query should be:
+     * Given X = (x, y, z) in voxel units, the optimized query should be:
      * 0. > Decide the subvolume this kernel is working on (Xsv, can be
      *      stored in @target_subvolume_entry_array_ beforehand),
-     *      and pre-allocate and store neighbor @subvolumes in shared memory.
+     *      and pre-allocate to cache neighbor @cached_subvolumes
+     *      in shared memory.
      *
-     *      For each voxel (x, y, z):
+     *      For each voxel (X):
      * 1. > Get voxel coordinate in this specific volume
-     *      Vector3f Xlocal = voxel[f]_global_to_local(x, y, z, Xsv);
+     *      Vector3f Xlocal = voxel[f]_global_to_local(X, Xsv);
      *
      * 2. > Check if it is on boundary (danger zone)
      *      OnBoundary[f](Xlocal)
      *
-     * 3. > If not, directly use subvolumes[LinearizeNeighborIndex(0, 0, 0)]
+     * 3. > If not, directly use subvolumes[LinearizeNeighborOffset(Vector3i(0)]
      *      to access/interpolate data
      *
      * 4. > If so, use XXXOnBorderAt(Xlocal) to interpolate.
      *      These functions will first query neighbors for each point to
-     *      interpolate, and access them from pre-allocated subvolumes
-     *        Vector3i dXsv = NeighborIndexOfBoundaryVoxel(Xlocal)
-     *        subvolumes[LinearizeNeighborIndex(dXsv)].tsdf() ...
+     *      interpolate, and access them from cached subvolumes
+     *        Vector3i dXsv = NeighborOffsetOfBoundaryVoxel(Xlocal)
+     *        cached_subvolumes[LinearizeNeighborOffset(dXsv)].tsdf() ...
      */
-    __DEVICE__ inline Vector3i NeighborIndexOfBoundaryVoxel(
-        const Vector3i &Xlocal);
-    __DEVICE__ inline int LinearizeNeighborIndex(const Vector3i &dXsv);
-
-    /** Note we assume we already know @offset is in @block.
-     *  For interpolation, boundary regions are [N-1~N] for float, none for int
-     *  For gradient, boundary regions are [N-2 ~ N) and [0 ~ 1) **/
+    /** Decide which version of function we should use **/
     __DEVICE__ inline bool OnBoundary(
         const Vector3i &Xlocal, bool for_gradient = false);
     __DEVICE__ inline bool OnBoundaryf(
         const Vector3f &Xlocal, bool for_gradient = false);
 
+    /** Query neighbor subvolumes and cache them or access them **/
+    __DEVICE__ inline Vector3i NeighborOffsetOfBoundaryVoxel(
+        const Vector3i &Xlocal);
+    __DEVICE__ inline int LinearizeNeighborOffset(const Vector3i &dXsv);
+    __DEVICE__ inline Vector3i BoundaryVoxelInNeighbor(
+        const Vector3i &Xlocal, const Vector3i &dXsv);
+
+    __DEVICE__ void CacheNeighborSubvolumes(
+        const Vector3i &Xsv, const Vector3i &dXsv,
+        int *cached_subvolume_indices,
+        UniformTSDFVolumeCudaServer<N> **cached_subvolumes);
+
     /** In these functions range of input indices are [-1, N+1)
-     * (xlocal, ylocal, zlocal) is inside subvolumes[IndexOfNeighborSubvolumes(0, 0, 0)]
-     **/
+     * (xlocal, ylocal, zlocal) is inside
+     * cached_subvolumes[IndexOfNeighborSubvolumes(0, 0, 0)] **/
     __DEVICE__ Vector3f gradient(
-        const Vector3i &Xlocal, UniformTSDFVolumeCudaServer<N> **subvolumes);
+        const Vector3i &Xlocal,
+        UniformTSDFVolumeCudaServer<N> **cached_subvolumes);
     __DEVICE__ float TSDFOnBoundaryAt(
-        const Vector3f &Xlocal, UniformTSDFVolumeCudaServer<N> **subvolumes);
+        const Vector3f &Xlocal,
+        UniformTSDFVolumeCudaServer<N> **cached_subvolumes);
     __DEVICE__ uchar WeightOnBoundaryAt(
-        const Vector3f &Xlocal, UniformTSDFVolumeCudaServer<N> **subvolumes);
+        const Vector3f &Xlocal,
+        UniformTSDFVolumeCudaServer<N> **cached_subvolumes);
     __DEVICE__ Vector3b ColorOnBoundaryAt(
-        const Vector3f &Xlocal, UniformTSDFVolumeCudaServer<N> **subvolumes);
+        const Vector3f &Xlocal,
+        UniformTSDFVolumeCudaServer<N> **cached_subvolumes);
     __DEVICE__ Vector3f GradientOnBoundaryAt(
-        const Vector3f &Xlocal, UniformTSDFVolumeCudaServer<N> **subvolumes);
-
-    /** This adds the entry into the active entry array,
-     *  waiting for parallel processing.
-     *  The tricky part is that we also have to know its reverse (for meshing):
-     *  given Xsv, we also wish to know the active subvolume id. **/
-    __DEVICE__ void ActivateSubvolume(const HashEntry<Vector3i>& entry);
-    __DEVICE__ int QueryActiveSubvolumeIndex(const Vector3i& key);
-
-    /** This collects subvolumes into shared memory **/
-    __DEVICE__ void CollectNeighborSubvolumeInfo(
-        const Vector3i &Xsv, const Vector3i& dXsv,
-        int* neighbor_subvolume_indices,
-        UniformTSDFVolumeCudaServer<N>** neighbor_subvolumes);
-
+        const Vector3f &Xlocal,
+        UniformTSDFVolumeCudaServer<N> **cached_subvolumes);
 
 public:
-    __DEVICE__ void TouchSubvolume(int x, int y,
+    __DEVICE__ void TouchSubvolume(const Vector2i& p,
                                    ImageCudaServer<Vector1f> &depth,
                                    MonoPinholeCameraCuda &camera,
                                    TransformCuda &transform_camera_to_world);
-    __DEVICE__ void Integrate(int xlocal, int ylocal, int zlocal,
+    __DEVICE__ void Integrate(const Vector3i &Xlocal,
                               HashEntry<Vector3i> &target_subvolume_entry,
                               ImageCudaServer<Vector1f> &depth,
                               MonoPinholeCameraCuda &camera,
                               TransformCuda &transform_camera_to_world);
-    __DEVICE__ Vector3f RayCasting(int x, int y,
+    __DEVICE__ Vector3f RayCasting(const Vector2i& p,
                                    MonoPinholeCameraCuda &camera,
                                    TransformCuda &transform_camera_to_world);
 

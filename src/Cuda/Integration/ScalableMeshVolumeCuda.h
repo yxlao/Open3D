@@ -16,7 +16,7 @@
 
 namespace open3d {
 /** Almost all the important functions have to be re-written,
- *  so we choose not to use UniformMeshVolumeCudaServer.
+ *  so we choose not to reuse UniformMeshVolumeCudaServer.
  */
 template<VertexType type, size_t N>
 class ScalableMeshVolumeCudaServer {
@@ -25,34 +25,43 @@ private:
     Vector3i *vertex_indices_memory_pool_;
 
     /** Refer to UniformMeshVolumeCudaServer to check how do we manage
-     * vertex indices **/
+      * vertex indices **/
     TriangleMeshCudaServer<type> mesh_;
 
 public:
     __DEVICE__ inline int IndexOf(const Vector3i &Xlocal,
-        int target_subvolume_idx) {
+        int subvolume_idx) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
         assert(Xlocal(0) >= 0 && Xlocal(1) >= 0 && Xlocal(2) >= 0 &&
             target_subvolume_idx >= 0);
         assert(Xlocal(0) < N && Xlocal(1) < N && Xlocal(2) < N);
 #endif
         return int(Xlocal(2) * (N * N) + Xlocal(1) * N + Xlocal(0)
-                       + target_subvolume_idx * (N * N * N));
+                       + subvolume_idx * (N * N * N));
     }
 
     __DEVICE__ inline uchar &table_indices(
-        const Vector3i &Xlocal, int target_subvolume_idx) {
-        return table_indices_memory_pool_[IndexOf(Xlocal, target_subvolume_idx)];
+        const Vector3i &Xlocal, int subvolume_idx) {
+        return table_indices_memory_pool_[IndexOf(Xlocal, subvolume_idx)];
     }
 
     __DEVICE__ inline Vector3i &vertex_indices(
-        const Vector3i &Xlocal, int target_subvolume_idx) {
-        return vertex_indices_memory_pool_[IndexOf(Xlocal, target_subvolume_idx)];
+        const Vector3i &Xlocal, int subvolume_idx) {
+        return vertex_indices_memory_pool_[IndexOf(Xlocal, subvolume_idx)];
     }
 
     __DEVICE__ inline TriangleMeshCudaServer<type> &mesh() {
         return mesh_;
     }
+
+public:
+    /** Same functions as in ScalableTSDFVolumeCuda.
+     * Put them here to save calling stack **/
+    __DEVICE__ inline Vector3i NeighborOffsetOfBoundaryVoxel(
+        const Vector3i &Xlocal);
+    __DEVICE__ inline int LinearizeNeighborOffset(const Vector3i &dXsv);
+    __DEVICE__ inline Vector3i BoundaryVoxelInNeighbor(
+        const Vector3i &Xlocal, const Vector3i &dXsv);
 
 public:
     __DEVICE__ void AllocateVertex(
@@ -61,29 +70,26 @@ public:
 
     __DEVICE__ void AllocateVertexOnBoundary(
         const Vector3i &Xlocal, int subvolume_idx,
-        ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
-        int *neighbor_subvolume_indices,
-        UniformTSDFVolumeCudaServer<N> **neighbor_subvolumes);
+        int *cached_subvolume_indices,
+        UniformTSDFVolumeCudaServer<N> **cached_subvolumes);
 
     __DEVICE__ void ExtractVertex(
-        const Vector3i &Xlocal,
-        int subvolume_idx, const Vector3i &Xsv,
+        const Vector3i &Xlocal, int subvolume_idx,
+        const Vector3i &Xsv,
         ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
         UniformTSDFVolumeCudaServer<N> *subvolume);
 
     __DEVICE__ void ExtractVertexOnBoundary(
-        const Vector3i &Xlocal,
-        int subvolume_idx, const Vector3i& Xsv,
+        const Vector3i &Xlocal, int subvolume_idx,
+        const Vector3i& Xsv,
         ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
-        int *neighbor_subvolume_indices,
-        UniformTSDFVolumeCudaServer<N> **neighbor_subvolumes);
+        UniformTSDFVolumeCudaServer<N> **cached_subvolumes);
 
     __DEVICE__ void ExtractTriangle(const Vector3i &Xlocal, int subvolume_idx);
 
     __DEVICE__ void ExtractTriangleOnBoundary(
         const Vector3i &Xlocal, int subvolume_idx,
-        ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
-        int *neighbor_subvolume_indices);
+        int *cached_subvolume_indices);
 
 public:
     friend class ScalableMeshVolumeCuda<type, N>;
@@ -111,8 +117,7 @@ public:
         const ScalableMeshVolumeCuda<type, N> &other);
     ~ScalableMeshVolumeCuda();
 
-    void Create(
-        int max_subvolumes, int max_vertices, int max_triangles);
+    void Create(int max_subvolumes, int max_vertices, int max_triangles);
     void Release();
     void Reset();
     void UpdateServer();

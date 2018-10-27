@@ -81,10 +81,10 @@ public:
 
 public:
     __DEVICE__ void AllocateVertex(
-        const Vector3i &&X, UniformTSDFVolumeCudaServer<N> &tsdf_volume);
+        const Vector3i &X, UniformTSDFVolumeCudaServer<N> &tsdf_volume);
     __DEVICE__ void ExtractVertex(
-        const Vector3i &&X, UniformTSDFVolumeCudaServer<N> &tsdf_volume);
-    __DEVICE__ void ExtractTriangle(const Vector3i &&X);
+        const Vector3i &X, UniformTSDFVolumeCudaServer<N> &tsdf_volume);
+    __DEVICE__ void ExtractTriangle(const Vector3i &X);
 
 public:
     friend class UniformMeshVolumeCuda<type, N>;
