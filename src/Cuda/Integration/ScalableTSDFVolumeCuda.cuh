@@ -558,7 +558,7 @@ void ScalableTSDFVolumeCudaServer<N>::TouchSubvolume(
 
     Vector3f Xsv_curr = Xsv_near.ToVectorf();
     HashEntry<Vector3i> entry;
-    for (int i = 0; i <= step; ++i) {
+    for (int k = 0; k <= step; ++k) {
         hash_table_.New(Xsv_curr.ToVectori());
         Xsv_curr += DXsv_normalized;
     }
@@ -583,7 +583,7 @@ void ScalableTSDFVolumeCudaServer<N>::Integrate(
     if (!camera.IsValid(p)) return;
     float d = depth.get_interp(p(0), p(1))(0);
 
-    float sdf = d - Xc(2);
+    float sdf = Xc(2) - d;
     if (sdf <= -sdf_trunc_) return;
     sdf = fminf(sdf, sdf_trunc_);
 

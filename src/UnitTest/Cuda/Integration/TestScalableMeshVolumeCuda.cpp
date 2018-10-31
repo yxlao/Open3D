@@ -11,7 +11,7 @@
 
 TEST(ScalableMeshVolumeCuda, VertexAllocation) {
     using namespace open3d;
-    cv::Mat im = cv::imread("../../examples/TestData/RGBD/depth/00000.png",
+    cv::Mat im = cv::imread("../../examples/TestData/RGBD/depth/apt-022640.png",
                             cv::IMREAD_UNCHANGED);
     ImageCuda<Vector1s> imcuda;
     imcuda.Upload(im);

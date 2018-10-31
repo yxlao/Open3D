@@ -189,7 +189,7 @@ void UniformTSDFVolumeCudaServer<N>::Integrate(
     if (!camera.IsValid(p)) return;
     float d = depth.get_interp(p(0), p(1))(0);
 
-    float sdf = d - Xc(2);
+    float sdf = Xc(2) - d;
     if (sdf <= -sdf_trunc_) return;
     sdf = fminf(sdf, sdf_trunc_);
 
