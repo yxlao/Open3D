@@ -25,6 +25,28 @@
 # ----------------------------------------------------------------------------
 
 from setuptools import setup, find_packages
+import glob
+try:
+    from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
+    class bdist_wheel(_bdist_wheel):
+        def finalize_options(self):
+            _bdist_wheel.finalize_options(self)
+            self.root_is_pure = False
+except ImportError:
+    bdist_wheel = None
+
+# Read requirements.txt
+with open('requirements.txt', 'r') as f:
+    lines = f.readlines()
+install_requires = [line.strip() for line in lines if line]
+
+# Data files for packaging
+data_files = [
+    ('share/jupyter/nbextensions/open3d', glob.glob('open3d/static/*')),
+    ('etc/jupyter/nbconfig/notebook.d', [
+        'enable_jupyter_extension.json'
+    ])
+]
 
 setup(
     author='Open3D Team',
@@ -64,10 +86,10 @@ setup(
     description=[
         "Open3D is an open-source library that supports rapid development of software that deals with 3D data."
     ],
-    install_requires=[
-        'numpy',
-    ],
+    cmdclass={'bdist_wheel': bdist_wheel},
+    install_requires=install_requires,
     include_package_data=True,
+    data_files=data_files,
     keywords="3D reconstruction point cloud mesh RGB-D visualization",
     license="MIT",
     long_description=open('README.rst').read(),
@@ -83,4 +105,5 @@ setup(
         'Issues': '@PROJECT_ISSUES@',
     },
     version='@PROJECT_VERSION@',
+    zip_safe=False,
 )
