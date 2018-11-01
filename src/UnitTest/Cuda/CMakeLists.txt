@@ -46,3 +46,7 @@ target_link_libraries(TestScalableTSDFVolumeCuda ${CMAKE_PROJECT_NAME}
 add_executable(TestScalableMeshVolumeCuda Integration/TestScalableMeshVolumeCuda.cpp)
 target_link_libraries(TestScalableMeshVolumeCuda ${CMAKE_PROJECT_NAME}
         ${GTEST_LIBRARIES} pthread)
+
+add_executable(TestVisualizerCuda Visualizer/TestVisualizerCuda.cpp)
+target_link_libraries(TestVisualizerCuda ${CMAKE_PROJECT_NAME}
+        ${GTEST_LIBRARIES} pthread)
