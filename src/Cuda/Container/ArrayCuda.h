@@ -64,7 +64,7 @@ public:
     void Memset(int val);
     void Clear();
 
-    int size();
+    int size() const;
     void set_size(int iterator_position);
 
     int max_capacity() const {

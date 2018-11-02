@@ -8,7 +8,8 @@
 #include <Cuda/Container/ArrayCuda.cuh>
 
 namespace open3d {
-TriangleMeshCuda::TriangleMeshCuda() {
+TriangleMeshCuda::TriangleMeshCuda()
+    : Geometry3D(Geometry::GeometryType::TriangleMesh) {
     type_ = VertexTypeUnknown;
 
     max_vertices_ = -1;
@@ -16,11 +17,13 @@ TriangleMeshCuda::TriangleMeshCuda() {
 }
 
 TriangleMeshCuda::TriangleMeshCuda(
-    VertexType type, int max_vertices, int max_triangles) {
+    VertexType type, int max_vertices, int max_triangles)
+    : Geometry3D(Geometry::GeometryType::TriangleMesh) {
     Create(type, max_vertices, max_triangles);
 }
 
-TriangleMeshCuda::TriangleMeshCuda(const TriangleMeshCuda &other) {
+TriangleMeshCuda::TriangleMeshCuda(const TriangleMeshCuda &other)
+    : Geometry3D(Geometry::GeometryType::TriangleMesh) {
     server_ = other.server();
 
     vertices_ = other.vertices();
@@ -143,7 +146,7 @@ void TriangleMeshCuda::Upload(TriangleMesh &mesh) {
     std::vector<Vector3f> vertices, vertex_normals;
     std::vector<Vector3b> vertex_colors;
 
-    if (! mesh.HasVertices() || ! mesh.HasTriangles()) {
+    if (!mesh.HasVertices() || !mesh.HasTriangles()) {
         PrintError("Empty mesh!\n");
         return;
     }
@@ -192,7 +195,7 @@ std::shared_ptr<TriangleMesh> TriangleMeshCuda::Download() {
     std::shared_ptr<TriangleMesh> mesh = std::make_shared<TriangleMesh>();
     if (server_ == nullptr) return mesh;
 
-    if (! HasVertices() || ! HasTriangles()) return mesh;
+    if (!HasVertices() || !HasTriangles()) return mesh;
 
     std::vector<Vector3f> vertices = vertices_.Download();
     std::vector<Vector3i> triangles = triangles_.Download();
@@ -236,25 +239,113 @@ std::shared_ptr<TriangleMesh> TriangleMeshCuda::Download() {
     return mesh;
 }
 
-bool TriangleMeshCuda::HasVertices() {
+bool TriangleMeshCuda::HasVertices() const {
     if (type_ == VertexTypeUnknown || server_ == nullptr) return false;
     return vertices_.size() > 0;
 }
 
-bool TriangleMeshCuda::HasTriangles() {
+bool TriangleMeshCuda::HasTriangles() const {
     if (type_ == VertexTypeUnknown || server_ == nullptr) return false;
     return triangles_.size() > 0;
 }
 
-bool TriangleMeshCuda::HasVertexNormals() {
+bool TriangleMeshCuda::HasVertexNormals() const {
     if ((type_ & VertexWithNormal) == 0 || server_ == nullptr) return false;
     int vertices_size = vertices_.size();
     return vertices_size > 0 && vertices_size == vertex_normals_.size();
 }
 
-bool TriangleMeshCuda::HasVertexColors(){
+bool TriangleMeshCuda::HasVertexColors() const {
     if ((type_ & VertexWithColor) == 0 || server_ == nullptr) return false;
     int vertices_size = vertices_.size();
     return vertices_size > 0 && vertices_size == vertex_colors_.size();
+}
+
+void TriangleMeshCuda::Clear() {
+    Reset();
+}
+
+bool TriangleMeshCuda::IsEmpty() const {
+    return HasVertices();
+}
+
+Eigen::Vector3d TriangleMeshCuda::GetMinBound() const {
+    const int num_vertices = vertices_.size();
+    if (num_vertices == 0) return Eigen::Vector3d(0, 0, 0);
+
+    const dim3 blocks(DIV_CEILING(num_vertices, THREAD_1D_UNIT));
+    const dim3 threads(THREAD_1D_UNIT);
+
+    Vector3f min_bound_upload = Vector3f(1e10f, 1e10f, 1e10f);
+
+    Vector3f *min_bound;
+    CheckCuda(cudaMalloc(&min_bound, sizeof(Vector3f)));
+    CheckCuda(cudaMemcpy(min_bound, &min_bound_upload,
+                         sizeof(Vector3f),
+                         cudaMemcpyHostToDevice));
+
+    GetMinBoundKernel << < blocks, threads >> > (*server_, min_bound);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+
+    Vector3f min_bound_download;
+    CheckCuda(cudaMemcpy(&min_bound_download, min_bound, sizeof(Vector3f),
+                         cudaMemcpyDeviceToHost));
+    CheckCuda(cudaFree(min_bound));
+
+    return Eigen::Vector3d(min_bound_download(0),
+                           min_bound_download(1),
+                           min_bound_download(2));
+}
+
+Eigen::Vector3d TriangleMeshCuda::GetMaxBound() const {
+    const int num_vertices = vertices_.size();
+    if (num_vertices == 0) return Eigen::Vector3d(0, 0, 0);
+
+    const dim3 blocks(DIV_CEILING(num_vertices, THREAD_1D_UNIT));
+    const dim3 threads(THREAD_1D_UNIT);
+
+    Vector3f max_bound_upload = Vector3f(-1e10f, -1e10f, -1e10f);
+
+    Vector3f *max_bound;
+    CheckCuda(cudaMalloc(&max_bound, sizeof(Vector3f)));
+    CheckCuda(cudaMemcpy(max_bound, &max_bound_upload,
+                         sizeof(Vector3f),
+                         cudaMemcpyHostToDevice));
+    GetMaxBoundKernel << < blocks, threads >> > (*server_, max_bound);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+
+    Vector3f max_bound_download;
+    CheckCuda(cudaMemcpy(&max_bound_download, max_bound,
+                         sizeof(Vector3f),
+                         cudaMemcpyDeviceToHost));
+    CheckCuda(cudaFree(max_bound));
+
+    return Eigen::Vector3d(max_bound_download(0),
+                           max_bound_download(1),
+                           max_bound_download(2));
+}
+
+void TriangleMeshCuda::Transform(const Eigen::Matrix4d &transformation) {
+    const int num_vertices = vertices_.size();
+    if (num_vertices == 0) return;
+
+    Eigen::Matrix<float, 4, 4, Eigen::DontAlign> transformationf;
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            transformationf(i, j) = transformation(i, j);
+        }
+    }
+
+    TransformCuda transformation_cuda;
+    transformation_cuda.FromEigen(transformationf);
+
+    const dim3 blocks(DIV_CEILING(num_vertices, THREAD_1D_UNIT));
+    const dim3 threads(THREAD_1D_UNIT);
+
+    TransformKernel << < blocks, threads >> > (*server_, transformation_cuda);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
 }
 }

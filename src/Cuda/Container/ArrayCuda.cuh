@@ -210,7 +210,7 @@ void ArrayCuda<T>::Clear() {
 }
 
 template<class T>
-int ArrayCuda<T>::size() {
+int ArrayCuda<T>::size() const {
     int ret;
     CheckCuda(cudaMemcpy(&ret, server_->iterator_,
                          sizeof(int),

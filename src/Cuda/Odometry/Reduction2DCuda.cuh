@@ -8,21 +8,6 @@
 
 namespace open3d {
 
-/**
- * This is SIMD: each += operation is synchronized over 32 threads at exactly
- * the same time
- */
-template<typename T>
-__device__
-inline void WarpReduceSum(volatile T *local_sum, const int tid) {
-    local_sum[tid] += local_sum[tid + 32];
-    local_sum[tid] += local_sum[tid + 16];
-    local_sum[tid] += local_sum[tid + 8];
-    local_sum[tid] += local_sum[tid + 4];
-    local_sum[tid] += local_sum[tid + 2];
-    local_sum[tid] += local_sum[tid + 1];
-}
-
 template<typename T>
 __device__
 inline void BlockReduceSum(volatile T *local_sum, const int tid) {

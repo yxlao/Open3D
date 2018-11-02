@@ -40,7 +40,6 @@ typedef unsigned int uint;
 #define HASH_ENTRY_LOCKED   (-3)
 
 #define SUCCESS  0
-#define FAIL     1
 
 /* Atomic Lock */
 #define UNLOCKED  0
@@ -48,7 +47,7 @@ typedef unsigned int uint;
 
 #define THREAD_3D_UNIT   8
 #define THREAD_2D_UNIT   16
-#define THREAD_1D_UNIT   32
+#define THREAD_1D_UNIT   64
 #define DIV_CEILING(a, b) ((a + b - 1) / b)
 
 #define EPSILON (1e-6f)

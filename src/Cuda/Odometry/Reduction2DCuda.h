@@ -5,6 +5,7 @@
 #pragma once
 
 #include <Cuda/Common/UtilsCuda.h>
+#include <Cuda/Common/ReductionCuda.h>
 #include <Cuda/Geometry/ImageCuda.h>
 #include <Cuda/Geometry/VectorCuda.h>
 
@@ -21,11 +22,7 @@ namespace open3d {
 
 template<typename T>
 __DEVICE__
-inline void WarpReduceSum(volatile T *local_sum, const int tid);
-
-template<typename T>
-__DEVICE__
-inline void BlockReduceSum(volatile T *local_sum, const int tid);
+inline void BlockReduceSum(volatile T *local_sum, int tid);
 
 template<typename T>
 __DEVICE__

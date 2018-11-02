@@ -135,6 +135,7 @@ public:
         }
     }
 
+
     inline Matrix4f ToEigen() {
         Matrix4f T = Matrix4f::Identity();
         for (size_t i = 0; i < 3; ++i) {
