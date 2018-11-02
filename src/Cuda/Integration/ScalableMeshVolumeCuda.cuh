@@ -13,35 +13,35 @@ namespace open3d {
 /**
  * Server end
  */
-template<VertexType type, size_t N>
+template<size_t N>
 __device__
-inline Vector3i ScalableMeshVolumeCudaServer<type, N>::
-NeighborOffsetOfBoundaryVoxel(const Vector3i &Xlocal) {
+inline Vector3i ScalableMeshVolumeCudaServer<N>::NeighborOffsetOfBoundaryVoxel(
+    const Vector3i &Xlocal) {
     return Vector3i(Xlocal(0) < 0 ? -1 : (Xlocal(0) >= N ? 1 : 0),
                     Xlocal(1) < 0 ? -1 : (Xlocal(1) >= N ? 1 : 0),
                     Xlocal(2) < 0 ? -1 : (Xlocal(2) >= N ? 1 : 0));
 }
 
-template<VertexType type, size_t N>
+template<size_t N>
 __device__
-inline int ScalableMeshVolumeCudaServer<type, N>::LinearizeNeighborOffset(
+inline int ScalableMeshVolumeCudaServer<N>::LinearizeNeighborOffset(
     const Vector3i &dXsv) {
     /* return (dz + 1) * 9 + (dy + 1) * 3 + (dx + 1); */
     return 9 * dXsv(2) + 3 * dXsv(1) + dXsv(0) + 13;
 }
 
-template<VertexType type, size_t N>
+template<size_t N>
 __device__
-inline Vector3i ScalableMeshVolumeCudaServer<type, N>::BoundaryVoxelInNeighbor(
+inline Vector3i ScalableMeshVolumeCudaServer<N>::BoundaryVoxelInNeighbor(
     const Vector3i &Xlocal, const Vector3i &dXsv) {
     return Vector3i(Xlocal(0) - dXsv(0) * int(N),
                     Xlocal(1) - dXsv(1) * int(N),
                     Xlocal(2) - dXsv(2) * int(N));
 }
 
-template<VertexType type, size_t N>
+template<size_t N>
 __device__
-void ScalableMeshVolumeCudaServer<type, N>::AllocateVertex(
+void ScalableMeshVolumeCudaServer<N>::AllocateVertex(
     const Vector3i &Xlocal, int subvolume_idx,
     UniformTSDFVolumeCudaServer<N> *subvolume) {
 
@@ -88,9 +88,9 @@ void ScalableMeshVolumeCudaServer<type, N>::AllocateVertex(
     }
 }
 
-template<VertexType type, size_t N>
+template<size_t N>
 __device__
-void ScalableMeshVolumeCudaServer<type, N>::AllocateVertexOnBoundary(
+void ScalableMeshVolumeCudaServer<N>::AllocateVertexOnBoundary(
     const Vector3i &Xlocal, int subvolume_idx,
     int *cached_subvolume_indices,
     UniformTSDFVolumeCudaServer<N> **cached_subvolumes) {
@@ -157,9 +157,9 @@ void ScalableMeshVolumeCudaServer<type, N>::AllocateVertexOnBoundary(
     }
 }
 
-template<VertexType type, size_t N>
+template<size_t N>
 __device__
-void ScalableMeshVolumeCudaServer<type, N>::ExtractVertex(
+void ScalableMeshVolumeCudaServer<N>::ExtractVertex(
     const Vector3i &Xlocal,
     int subvolume_idx, const Vector3i &Xsv,
     ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
@@ -194,7 +194,7 @@ void ScalableMeshVolumeCudaServer<type, N>::ExtractVertex(
             voxel_vertex_indices(axis) = mesh_.vertices().push_back(
                 tsdf_volume.voxelf_to_world(Xlocal_interp_axis));
 
-            if (type & VertexWithNormal) {
+            if (mesh_.type_ & VertexWithNormal) {
                 mesh_.vertex_normals()[voxel_vertex_indices(axis)] =
                     tsdf_volume.transform_volume_to_world_.Rotate(
                         (1 - mu) * gradient_0
@@ -206,9 +206,9 @@ void ScalableMeshVolumeCudaServer<type, N>::ExtractVertex(
     }
 }
 
-template<VertexType type, size_t N>
+template<size_t N>
 __device__
-void ScalableMeshVolumeCudaServer<type, N>::ExtractVertexOnBoundary(
+void ScalableMeshVolumeCudaServer<N>::ExtractVertexOnBoundary(
     const Vector3i &Xlocal,
     int subvolume_idx, const Vector3i &Xsv,
     ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
@@ -251,7 +251,7 @@ void ScalableMeshVolumeCudaServer<type, N>::ExtractVertexOnBoundary(
             voxel_vertex_indices(axis) = mesh_.vertices().push_back(
                 tsdf_volume.voxelf_to_world(Xlocal_interp_axis));
 
-            if (type & VertexWithNormal) {
+            if (mesh_.type_ & VertexWithNormal) {
                 mesh_.vertex_normals()[voxel_vertex_indices(axis)] =
                     tsdf_volume.transform_volume_to_world_.Rotate(
                         (1 - mu) * gradient_0
@@ -264,9 +264,9 @@ void ScalableMeshVolumeCudaServer<type, N>::ExtractVertexOnBoundary(
     }
 }
 
-template<VertexType type, size_t N>
+template<size_t N>
 __device__
-void ScalableMeshVolumeCudaServer<type, N>::ExtractTriangle(
+void ScalableMeshVolumeCudaServer<N>::ExtractTriangle(
     const Vector3i &Xlocal, int subvolume_idx) {
 
     const uchar table_index = table_indices(Xlocal, subvolume_idx);
@@ -293,9 +293,9 @@ void ScalableMeshVolumeCudaServer<type, N>::ExtractTriangle(
     }
 }
 
-template<VertexType type, size_t N>
+template<size_t N>
 __device__
-void ScalableMeshVolumeCudaServer<type, N>::ExtractTriangleOnBoundary(
+void ScalableMeshVolumeCudaServer<N>::ExtractTriangleOnBoundary(
     const Vector3i &Xlocal, int subvolume_idx,
     int *cached_subvolume_indices) {
 
@@ -338,23 +338,27 @@ void ScalableMeshVolumeCudaServer<type, N>::ExtractTriangleOnBoundary(
 /**
  * Client end
  */
-template<VertexType type, size_t N>
-ScalableMeshVolumeCuda<type, N>::ScalableMeshVolumeCuda() {
+template<size_t N>
+ScalableMeshVolumeCuda<N>::ScalableMeshVolumeCuda() {
     max_subvolumes_ = -1;
+    vertex_type_ = VertexTypeUnknown;
     max_vertices_ = -1;
     max_triangles_ = -1;
 }
 
-template<VertexType type, size_t N>
-ScalableMeshVolumeCuda<type, N>::ScalableMeshVolumeCuda(
-    int max_subvolumes, int max_vertices, int max_triangles) {
-    Create(max_subvolumes, max_vertices, max_triangles);
+template<size_t N>
+ScalableMeshVolumeCuda<N>::ScalableMeshVolumeCuda(
+    int max_subvolumes,
+    VertexType type, int max_vertices, int max_triangles) {
+    Create(max_subvolumes, type, max_vertices, max_triangles);
 }
 
-template<VertexType type, size_t N>
-ScalableMeshVolumeCuda<type, N>::ScalableMeshVolumeCuda(
-    const ScalableMeshVolumeCuda<type, N> &other) {
+template<size_t N>
+ScalableMeshVolumeCuda<N>::ScalableMeshVolumeCuda(
+    const ScalableMeshVolumeCuda<N> &other) {
     max_subvolumes_ = other.max_subvolumes_;
+
+    vertex_type_ = other.vertex_type_;
     max_vertices_ = other.max_vertices_;
     max_triangles_ = other.max_triangles_;
 
@@ -362,11 +366,13 @@ ScalableMeshVolumeCuda<type, N>::ScalableMeshVolumeCuda(
     mesh_ = other.mesh();
 }
 
-template<VertexType type, size_t N>
-ScalableMeshVolumeCuda<type, N> &ScalableMeshVolumeCuda<type, N>::operator=(
-    const ScalableMeshVolumeCuda<type, N> &other) {
+template<size_t N>
+ScalableMeshVolumeCuda<N> &ScalableMeshVolumeCuda<N>::operator=(
+    const ScalableMeshVolumeCuda<N> &other) {
     if (this != &other) {
         max_subvolumes_ = other.max_subvolumes_;
+
+        vertex_type_ = other.vertex_type_;
         max_vertices_ = other.max_vertices_;
         max_triangles_ = other.max_triangles_;
 
@@ -376,14 +382,15 @@ ScalableMeshVolumeCuda<type, N> &ScalableMeshVolumeCuda<type, N>::operator=(
     return *this;
 }
 
-template<VertexType type, size_t N>
-ScalableMeshVolumeCuda<type, N>::~ScalableMeshVolumeCuda() {
+template<size_t N>
+ScalableMeshVolumeCuda<N>::~ScalableMeshVolumeCuda() {
     Release();
 }
 
-template<VertexType type, size_t N>
-void ScalableMeshVolumeCuda<type, N>::Create(
-    int max_subvolumes, int max_vertices, int max_triangles) {
+template<size_t N>
+void ScalableMeshVolumeCuda<N>::Create(
+    int max_subvolumes,
+    VertexType type, int max_vertices, int max_triangles) {
     if (server_ != nullptr) {
         PrintError("Already created. Stop re-creating!\n");
         return;
@@ -391,8 +398,10 @@ void ScalableMeshVolumeCuda<type, N>::Create(
 
     assert(max_subvolumes > 0 && max_vertices > 0 && max_triangles > 0);
 
-    server_ = std::make_shared<ScalableMeshVolumeCudaServer<type, N>>();
+    server_ = std::make_shared<ScalableMeshVolumeCudaServer<N>>();
     max_subvolumes_ = max_subvolumes;
+
+    vertex_type_ = type;
     max_vertices_ = max_vertices;
     max_triangles_ = max_triangles;
 
@@ -401,14 +410,14 @@ void ScalableMeshVolumeCuda<type, N>::Create(
                          sizeof(uchar) * NNN * max_subvolumes_));
     CheckCuda(cudaMalloc(&server_->vertex_indices_memory_pool_,
                          sizeof(Vector3i) * NNN * max_subvolumes_));
-    mesh_.Create(max_vertices_, max_triangles_);
+    mesh_.Create(type, max_vertices_, max_triangles_);
 
     UpdateServer();
     Reset();
 }
 
-template<VertexType type, size_t N>
-void ScalableMeshVolumeCuda<type, N>::Release() {
+template<size_t N>
+void ScalableMeshVolumeCuda<N>::Release() {
     if (server_ != nullptr && server_.use_count() == 1) {
         CheckCuda(cudaFree(server_->table_indices_memory_pool_));
         CheckCuda(cudaFree(server_->vertex_indices_memory_pool_));
@@ -420,8 +429,8 @@ void ScalableMeshVolumeCuda<type, N>::Release() {
     max_triangles_ = -1;
 }
 
-template<VertexType type, size_t N>
-void ScalableMeshVolumeCuda<type, N>::Reset() {
+template<size_t N>
+void ScalableMeshVolumeCuda<N>::Reset() {
     if (server_ != nullptr) {
         const size_t NNN = N * N * N;
         CheckCuda(cudaMemset(server_->table_indices_memory_pool_, 0,
@@ -432,15 +441,15 @@ void ScalableMeshVolumeCuda<type, N>::Reset() {
     }
 }
 
-template<VertexType type, size_t N>
-void ScalableMeshVolumeCuda<type, N>::UpdateServer() {
+template<size_t N>
+void ScalableMeshVolumeCuda<N>::UpdateServer() {
     if (server_ != nullptr) {
         server_->mesh_ = *mesh_.server();
     }
 }
 
-template<VertexType type, size_t N>
-void ScalableMeshVolumeCuda<type, N>::VertexAllocation(
+template<size_t N>
+void ScalableMeshVolumeCuda<N>::VertexAllocation(
     ScalableTSDFVolumeCuda<N> &tsdf_volume) {
 
     Timer timer;
@@ -457,8 +466,8 @@ void ScalableMeshVolumeCuda<type, N>::VertexAllocation(
     PrintInfo("Allocation takes %f milliseconds\n", timer.GetDuration());
 }
 
-template<VertexType type, size_t N>
-void ScalableMeshVolumeCuda<type, N>::VertexExtraction(
+template<size_t N>
+void ScalableMeshVolumeCuda<N>::VertexExtraction(
     ScalableTSDFVolumeCuda<N> &tsdf_volume) {
     Timer timer;
     timer.Start();
@@ -474,8 +483,8 @@ void ScalableMeshVolumeCuda<type, N>::VertexExtraction(
     PrintInfo("Extraction takes %f milliseconds\n", timer.GetDuration());
 }
 
-template<VertexType type, size_t N>
-void ScalableMeshVolumeCuda<type, N>::TriangleExtraction(
+template<size_t N>
+void ScalableMeshVolumeCuda<N>::TriangleExtraction(
     ScalableTSDFVolumeCuda<N> &tsdf_volume) {
     Timer timer;
     timer.Start();
@@ -491,14 +500,16 @@ void ScalableMeshVolumeCuda<type, N>::TriangleExtraction(
     PrintInfo("Triangulation takes %f milliseconds\n", timer.GetDuration());
 }
 
-template<VertexType type, size_t N>
-void ScalableMeshVolumeCuda<type, N>::MarchingCubes(
+template<size_t N>
+void ScalableMeshVolumeCuda<N>::MarchingCubes(
     ScalableTSDFVolumeCuda<N> &tsdf_volume) {
+    assert(vertex_type_ != VertexTypeUnknown);
 
     mesh_.Reset();
     active_subvolumes_ = tsdf_volume.active_subvolume_entry_array().size();
     if (active_subvolumes_ <= 0) {
-        PrintError("Invalid active subvolumes!\n");
+        PrintError("Invalid active subvolume numbers: %d !\n",
+            active_subvolumes_);
         return;
     }
 
@@ -507,10 +518,10 @@ void ScalableMeshVolumeCuda<type, N>::MarchingCubes(
 
     TriangleExtraction(tsdf_volume);
 
-    if (type & VertexWithNormal) {
+    if (vertex_type_ & VertexWithNormal) {
         mesh_.vertex_normals().set_size(mesh_.vertices().size());
     }
-    if (type & VertexWithColor) {
+    if (vertex_type_ & VertexWithColor) {
         mesh_.vertex_colors().set_size(mesh_.vertices().size());
     }
 }

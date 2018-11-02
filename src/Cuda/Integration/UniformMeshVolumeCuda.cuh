@@ -13,9 +13,9 @@ namespace open3d {
 /**
  * Server end
  */
-template<VertexType type, size_t N>
+template<size_t N>
 __device__
-void UniformMeshVolumeCudaServer<type, N>::AllocateVertex(
+void UniformMeshVolumeCudaServer<N>::AllocateVertex(
     const Vector3i &X,
     UniformTSDFVolumeCudaServer<N> &tsdf_volume) {
 
@@ -55,9 +55,9 @@ void UniformMeshVolumeCudaServer<type, N>::AllocateVertex(
     }
 }
 
-template<VertexType type, size_t N>
+template<size_t N>
 __device__
-void UniformMeshVolumeCudaServer<type, N>::ExtractVertex(
+void UniformMeshVolumeCudaServer<N>::ExtractVertex(
     const Vector3i &X,
     UniformTSDFVolumeCudaServer<N> &tsdf_volume) {
 
@@ -88,7 +88,7 @@ void UniformMeshVolumeCudaServer<type, N>::ExtractVertex(
                              X(2) + mu * axis_offset(2))));
 
             /** Note we share the vertex indices **/
-            if (type & VertexWithNormal) {
+            if (mesh_.type_ & VertexWithNormal) {
                 mesh_.vertex_normals()[voxel_vertex_indices(axis)] =
                     tsdf_volume.transform_volume_to_world_.Rotate(
                         (1 - mu) * gradient_0
@@ -100,9 +100,9 @@ void UniformMeshVolumeCudaServer<type, N>::ExtractVertex(
     }
 }
 
-template<VertexType type, size_t N>
+template<size_t N>
 __device__
-inline void UniformMeshVolumeCudaServer<type, N>::ExtractTriangle(
+inline void UniformMeshVolumeCudaServer<N>::ExtractTriangle(
     const Vector3i &X) {
 
     const uchar table_index = table_indices(X);
@@ -131,21 +131,23 @@ inline void UniformMeshVolumeCudaServer<type, N>::ExtractTriangle(
 /**
  * Client end
  */
-template<VertexType type, size_t N>
-UniformMeshVolumeCuda<type, N>::UniformMeshVolumeCuda() {
+template<size_t N>
+UniformMeshVolumeCuda<N>::UniformMeshVolumeCuda() {
+    vertex_type_ = VertexTypeUnknown;
     max_vertices_ = -1;
     max_triangles_ = -1;
 }
 
-template<VertexType type, size_t N>
-UniformMeshVolumeCuda<type, N>::UniformMeshVolumeCuda(
-    int max_vertices, int max_triangles) {
-    Create(max_vertices, max_triangles);
+template<size_t N>
+UniformMeshVolumeCuda<N>::UniformMeshVolumeCuda(
+    VertexType type, int max_vertices, int max_triangles) {
+    Create(type, max_vertices, max_triangles);
 }
 
-template<VertexType type, size_t N>
-UniformMeshVolumeCuda<type, N>::UniformMeshVolumeCuda(
-    const UniformMeshVolumeCuda<type, N> &other) {
+template<size_t N>
+UniformMeshVolumeCuda<N>::UniformMeshVolumeCuda(
+    const UniformMeshVolumeCuda<N> &other) {
+    vertex_type_ = other.vertex_type_;
     max_vertices_ = other.max_vertices_;
     max_triangles_ = other.max_triangles_;
 
@@ -153,10 +155,11 @@ UniformMeshVolumeCuda<type, N>::UniformMeshVolumeCuda(
     mesh_ = other.mesh();
 }
 
-template<VertexType type, size_t N>
-UniformMeshVolumeCuda<type, N> &UniformMeshVolumeCuda<type, N>::operator=(
-    const UniformMeshVolumeCuda<type, N> &other) {
+template<size_t N>
+UniformMeshVolumeCuda<N> &UniformMeshVolumeCuda<N>::operator=(
+    const UniformMeshVolumeCuda<N> &other) {
     if (this != &other) {
+        vertex_type_ = other.vertex_type_;
         max_vertices_ = other.max_vertices_;
         max_triangles_ = other.max_triangles_;
 
@@ -166,42 +169,47 @@ UniformMeshVolumeCuda<type, N> &UniformMeshVolumeCuda<type, N>::operator=(
     return *this;
 }
 
-template<VertexType type, size_t N>
-UniformMeshVolumeCuda<type, N>::~UniformMeshVolumeCuda() {
+template<size_t N>
+UniformMeshVolumeCuda<N>::~UniformMeshVolumeCuda() {
     Release();
 }
 
-template<VertexType type, size_t N>
-void UniformMeshVolumeCuda<type, N>::Create(
-    int max_vertices, int max_triangles) {
+template<size_t N>
+void UniformMeshVolumeCuda<N>::Create(
+    VertexType type, int max_vertices, int max_triangles) {
     if (server_ != nullptr) {
         PrintError("Already created. Stop re-creating!\n");
         return;
     }
 
     assert(max_vertices > 0 && max_triangles > 0);
+    assert(type != VertexTypeUnknown);
 
-    server_ = std::make_shared<UniformMeshVolumeCudaServer<type, N>>();
+    server_ = std::make_shared<UniformMeshVolumeCudaServer<N>>();
+
+    vertex_type_ = type;
     max_triangles_ = max_triangles;
     max_vertices_ = max_vertices;
 
     const int NNN = N * N * N;
     CheckCuda(cudaMalloc(&server_->table_indices_, sizeof(uchar) * NNN));
     CheckCuda(cudaMalloc(&server_->vertex_indices_, sizeof(Vector3i) * NNN));
-    mesh_.Create(max_vertices_, max_triangles_);
+    mesh_.Create(vertex_type_, max_vertices_, max_triangles_);
 
     UpdateServer();
     Reset();
 }
 
-template<VertexType type, size_t N>
-void UniformMeshVolumeCuda<type, N>::Release() {
+template<size_t N>
+void UniformMeshVolumeCuda<N>::Release() {
     if (server_ != nullptr && server_.use_count() == 1) {
         CheckCuda(cudaFree(server_->table_indices_));
         CheckCuda(cudaFree(server_->vertex_indices_));
     }
     mesh_.Release();
     server_ = nullptr;
+
+    vertex_type_ = VertexTypeUnknown;
     max_vertices_ = -1;
     max_triangles_ = -1;
 }
@@ -212,8 +220,8 @@ void UniformMeshVolumeCuda<type, N>::Release() {
  *  - The not effected vertex indices will remain 0;
  *  - The effected vertex indices will be >= 0 after being assigned address.
  **/
-template<VertexType type, size_t N>
-void UniformMeshVolumeCuda<type, N>::Reset() {
+template<size_t N>
+void UniformMeshVolumeCuda<N>::Reset() {
     if (server_ != nullptr) {
         const size_t NNN = N * N * N;
         CheckCuda(cudaMemset(server_->table_indices_, 0,
@@ -224,15 +232,15 @@ void UniformMeshVolumeCuda<type, N>::Reset() {
     }
 }
 
-template<VertexType type, size_t N>
-void UniformMeshVolumeCuda<type, N>::UpdateServer() {
+template<size_t N>
+void UniformMeshVolumeCuda<N>::UpdateServer() {
     if (server_ != nullptr) {
         server_->mesh_ = *mesh_.server();
     }
 }
 
-template<VertexType type, size_t N>
-void UniformMeshVolumeCuda<type, N>::VertexAllocation(
+template<size_t N>
+void UniformMeshVolumeCuda<N>::VertexAllocation(
     UniformTSDFVolumeCuda<N> &tsdf_volume) {
 
     Timer timer;
@@ -250,8 +258,8 @@ void UniformMeshVolumeCuda<type, N>::VertexAllocation(
     PrintInfo("Allocation takes %f milliseconds\n", timer.GetDuration());
 }
 
-template<VertexType type, size_t N>
-void UniformMeshVolumeCuda<type, N>::VertexExtraction(
+template<size_t N>
+void UniformMeshVolumeCuda<N>::VertexExtraction(
     UniformTSDFVolumeCuda<N> &tsdf_volume) {
 
     Timer timer;
@@ -269,8 +277,8 @@ void UniformMeshVolumeCuda<type, N>::VertexExtraction(
     PrintInfo("Extraction takes %f milliseconds\n", timer.GetDuration());
 }
 
-template<VertexType type, size_t N>
-void UniformMeshVolumeCuda<type, N>::TriangleExtraction() {
+template<size_t N>
+void UniformMeshVolumeCuda<N>::TriangleExtraction() {
 
     Timer timer;
     timer.Start();
@@ -286,9 +294,10 @@ void UniformMeshVolumeCuda<type, N>::TriangleExtraction() {
     PrintInfo("Triangulation takes %f milliseconds\n", timer.GetDuration());
 }
 
-template<VertexType type, size_t N>
-void UniformMeshVolumeCuda<type, N>::MarchingCubes(
+template<size_t N>
+void UniformMeshVolumeCuda<N>::MarchingCubes(
     UniformTSDFVolumeCuda<N> &tsdf_volume) {
+    assert(vertex_type_ != VertexTypeUnknown);
 
     mesh_.Reset();
 
@@ -297,10 +306,10 @@ void UniformMeshVolumeCuda<type, N>::MarchingCubes(
 
     TriangleExtraction();
 
-    if (type & VertexWithNormal) {
+    if (vertex_type_ & VertexWithNormal) {
         mesh_.vertex_normals().set_size(mesh_.vertices().size());
     }
-    if (type & VertexWithColor) {
+    if (vertex_type_ & VertexWithColor) {
         mesh_.vertex_colors().set_size(mesh_.vertices().size());
     }
 }

@@ -33,7 +33,7 @@ TEST(ScalableMeshVolumeCuda, VertexAllocation) {
     timer.Stop();
     PrintInfo("Integration takes: %f milliseconds\n", timer.GetDuration() / 10);
 
-    ScalableMeshVolumeCuda<VertexWithNormal, 8> mesher(10000, 100000, 200000);
+    ScalableMeshVolumeCuda<8> mesher(10000, VertexWithNormal, 100000, 200000);
     mesher.active_subvolumes_ = tsdf_volume.active_subvolume_entry_array().size();
 
     PrintInfo("Active subvolumes: %d\n", mesher.active_subvolumes_);

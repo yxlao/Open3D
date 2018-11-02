@@ -32,40 +32,14 @@ template
 class UniformTSDFVolumeCuda<512>;
 
 template
-class UniformMeshVolumeCuda<VertexRaw, 8>;
+class UniformMeshVolumeCuda<8>;
 template
-class UniformMeshVolumeCuda<VertexRaw, 16>;
+class UniformMeshVolumeCuda<16>;
 template
-class UniformMeshVolumeCuda<VertexRaw, 256>;
+class UniformMeshVolumeCuda<256>;
 template
-class UniformMeshVolumeCuda<VertexRaw, 512>;
+class UniformMeshVolumeCuda<512>;
 
-template
-class UniformMeshVolumeCuda<VertexWithNormal, 8>;
-template
-class UniformMeshVolumeCuda<VertexWithNormal, 16>;
-template
-class UniformMeshVolumeCuda<VertexWithNormal, 256>;
-template
-class UniformMeshVolumeCuda<VertexWithNormal, 512>;
-
-template
-class UniformMeshVolumeCuda<VertexWithColor, 8>;
-template
-class UniformMeshVolumeCuda<VertexWithColor, 16>;
-template
-class UniformMeshVolumeCuda<VertexWithColor, 256>;
-template
-class UniformMeshVolumeCuda<VertexWithColor, 512>;
-
-template
-class UniformMeshVolumeCuda<VertexWithNormalAndColor, 8>;
-template
-class UniformMeshVolumeCuda<VertexWithNormalAndColor, 16>;
-template
-class UniformMeshVolumeCuda<VertexWithNormalAndColor, 256>;
-template
-class UniformMeshVolumeCuda<VertexWithNormalAndColor, 512>;
 
 /** Scalable part **/
 /** Oh we can't afford larger chunks **/
@@ -76,14 +50,6 @@ template
 class ScalableTSDFVolumeCuda<8>;
 
 template
-class ScalableMeshVolumeCuda<VertexRaw, 8>;
+class ScalableMeshVolumeCuda<8>;
 
-template
-class ScalableMeshVolumeCuda<VertexWithNormal, 8>;
-
-template
-class ScalableMeshVolumeCuda<VertexWithColor, 8>;
-
-template
-class ScalableMeshVolumeCuda<VertexWithNormalAndColor, 8>;
 }

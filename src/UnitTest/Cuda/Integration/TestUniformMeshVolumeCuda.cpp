@@ -33,7 +33,7 @@ TEST(UniformMeshVolumeCuda, MarchingCubes) {
     TransformCuda extrinsics = TransformCuda::Identity();
     volume.Integrate(imcudaf, default_camera, extrinsics);
 
-    UniformMeshVolumeCuda<VertexWithNormal, 512> mesher(100000, 100000);
+    UniformMeshVolumeCuda<512> mesher(VertexWithNormal, 100000, 100000);
 
     Timer timer;
     timer.Start();
@@ -48,7 +48,7 @@ TEST(UniformMeshVolumeCuda, MarchingCubes) {
               mesh->triangles_.size(),
               mesh->vertices_.size(),
               mesh->vertex_normals_.size());
-    WriteTriangleMeshToPLY("test.ply", *mesh, true);
+    WriteTriangleMeshToPLY("test_uniform.ply", *mesh, true);
 }
 
 int main(int argc, char **argv) {

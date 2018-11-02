@@ -8,21 +8,19 @@
 #include <Cuda/Container/ArrayCuda.cuh>
 
 namespace open3d {
-template<VertexType type>
-TriangleMeshCuda<type>::TriangleMeshCuda() {
+TriangleMeshCuda::TriangleMeshCuda() {
+    type_ = VertexTypeUnknown;
+
     max_vertices_ = -1;
     max_triangles_ = -1;
 }
 
-template<VertexType type>
-TriangleMeshCuda<type>::TriangleMeshCuda(int max_vertices, int max_triangles) {
-    max_vertices_ = max_vertices;
-    max_triangles_ = max_triangles;
-    Create(max_vertices_, max_triangles_);
+TriangleMeshCuda::TriangleMeshCuda(
+    VertexType type, int max_vertices, int max_triangles) {
+    Create(type, max_vertices, max_triangles);
 }
 
-template<VertexType type>
-TriangleMeshCuda<type>::TriangleMeshCuda(const TriangleMeshCuda<type> &other) {
+TriangleMeshCuda::TriangleMeshCuda(const TriangleMeshCuda &other) {
     server_ = other.server();
 
     vertices_ = other.vertices();
@@ -31,13 +29,12 @@ TriangleMeshCuda<type>::TriangleMeshCuda(const TriangleMeshCuda<type> &other) {
     vertex_normals_ = other.vertex_normals();
     vertex_colors_ = other.vertex_colors();
 
+    type_ = other.type_;
     max_vertices_ = other.max_triangles_;
     max_triangles_ = other.max_triangles_;
 }
 
-template<VertexType type>
-TriangleMeshCuda<type> &TriangleMeshCuda<type>::operator=(
-    const TriangleMeshCuda<type> &other) {
+TriangleMeshCuda &TriangleMeshCuda::operator=(const TriangleMeshCuda &other) {
     if (this != &other) {
         server_ = other.server();
 
@@ -47,6 +44,7 @@ TriangleMeshCuda<type> &TriangleMeshCuda<type>::operator=(
         vertex_normals_ = other.vertex_normals();
         vertex_colors_ = other.vertex_colors();
 
+        type_ = other.type_;
         max_vertices_ = other.max_vertices_;
         max_triangles_ = other.max_triangles_;
     }
@@ -54,88 +52,101 @@ TriangleMeshCuda<type> &TriangleMeshCuda<type>::operator=(
     return *this;
 }
 
-template<VertexType type>
-TriangleMeshCuda<type>::~TriangleMeshCuda() {
+TriangleMeshCuda::~TriangleMeshCuda() {
     Release();
 }
 
-template<VertexType type>
-void TriangleMeshCuda<type>::Reset() {
+void TriangleMeshCuda::Reset() {
     /** No need to clear data **/
+    if (type_ == VertexTypeUnknown) {
+        PrintError("Unknown vertex type!\n");
+    }
+
     vertices_.set_size(0);
     triangles_.set_size(0);
 
-    if (type & VertexWithNormal) {
+    if (type_ & VertexWithNormal) {
         vertex_normals_.set_size(0);
     }
-    if (type & VertexWithColor) {
+    if (type_ & VertexWithColor) {
         vertex_colors_.set_size(0);
     }
 }
 
-template<VertexType type>
-void TriangleMeshCuda<type>::Create(int max_vertices, int max_triangles) {
+void TriangleMeshCuda::Create(
+    VertexType type, int max_vertices, int max_triangles) {
     assert(max_vertices > 0 && max_triangles > 0);
     if (server_ != nullptr) {
         PrintError("Already created, stop re-creating!\n");
         return;
     }
 
+    if (type == VertexTypeUnknown) {
+        PrintError("Unknown vertex type!\n");
+        return;
+    }
+
+    type_ = type;
     max_vertices_ = max_vertices;
     max_triangles_ = max_triangles;
 
     vertices_.Create(max_vertices_);
     triangles_.Create(max_triangles_);
 
-    if (type & VertexWithNormal) {
+    if (type_ & VertexWithNormal) {
         vertex_normals_.Create(max_vertices_);
     }
-    if (type & VertexWithColor) {
+    if (type_ & VertexWithColor) {
         vertex_colors_.Create(max_vertices_);
     }
 
-    server_ = std::make_shared<TriangleMeshCudaServer<type>>();
+    server_ = std::make_shared<TriangleMeshCudaServer>();
     UpdateServer();
 }
 
-template<VertexType type>
-void TriangleMeshCuda<type>::Release() {
+void TriangleMeshCuda::Release() {
     vertices_.Release();
     vertex_normals_.Release();
     vertex_colors_.Release();
     triangles_.Release();
 
     server_ = nullptr;
+    type_ = VertexTypeUnknown;
     max_vertices_ = -1;
     max_triangles_ = -1;
 }
 
-template<VertexType type>
-void TriangleMeshCuda<type>::UpdateServer() {
+void TriangleMeshCuda::UpdateServer() {
     if (server_ != nullptr) {
+
+        server_->type_ = type_;
         server_->max_vertices_ = max_vertices_;
         server_->max_triangles_ = max_triangles_;
 
-        server_->vertices_ = *vertices_.server();
-        server_->triangles_ = *triangles_.server();
+        if (type_ != VertexTypeUnknown) {
+            server_->vertices_ = *vertices_.server();
+            server_->triangles_ = *triangles_.server();
+        }
 
-        if (type & VertexWithNormal) {
+        if (type_ & VertexWithNormal) {
             server_->vertex_normals_ = *vertex_normals_.server();
         }
-        if (type & VertexWithColor) {
+        if (type_ & VertexWithColor) {
             server_->vertex_colors_ = *vertex_colors_.server();
         }
     }
 }
 
-template<VertexType type>
-void TriangleMeshCuda<type>::Upload(TriangleMesh &mesh) {
+void TriangleMeshCuda::Upload(TriangleMesh &mesh) {
     if (server_ == nullptr) return;
 
     std::vector<Vector3f> vertices, vertex_normals;
     std::vector<Vector3b> vertex_colors;
 
-    if (! mesh.HasVertices() || ! mesh.HasTriangles()) return;
+    if (! mesh.HasVertices() || ! mesh.HasTriangles()) {
+        PrintError("Empty mesh!\n");
+        return;
+    }
 
     const size_t N = mesh.vertices_.size();
     vertices.resize(N);
@@ -156,7 +167,7 @@ void TriangleMeshCuda<type>::Upload(TriangleMesh &mesh) {
     }
     triangles_.Upload(triangles);
 
-    if ((type & VertexWithNormal) && mesh.HasVertexNormals()) {
+    if ((type_ & VertexWithNormal) && mesh.HasVertexNormals()) {
         vertex_normals.resize(N);
         for (int i = 0; i < N; ++i) {
             vertex_normals[i] = Vector3f(mesh.vertex_normals_[i](0),
@@ -166,7 +177,7 @@ void TriangleMeshCuda<type>::Upload(TriangleMesh &mesh) {
         vertex_normals_.Upload(vertex_normals);
     }
 
-    if ((type & VertexWithColor) && mesh.HasVertexColors()) {
+    if ((type_ & VertexWithColor) && mesh.HasVertexColors()) {
         vertex_colors.resize(N);
         for (int i = 0; i < N; ++i) {
             vertex_colors[i] = Vector3b(mesh.vertex_colors_[i](0),
@@ -177,8 +188,7 @@ void TriangleMeshCuda<type>::Upload(TriangleMesh &mesh) {
     }
 }
 
-template<VertexType type>
-std::shared_ptr<TriangleMesh> TriangleMeshCuda<type>::Download() {
+std::shared_ptr<TriangleMesh> TriangleMeshCuda::Download() {
     std::shared_ptr<TriangleMesh> mesh = std::make_shared<TriangleMesh>();
     if (server_ == nullptr) return mesh;
 
@@ -226,28 +236,24 @@ std::shared_ptr<TriangleMesh> TriangleMeshCuda<type>::Download() {
     return mesh;
 }
 
-template<VertexType type>
-bool TriangleMeshCuda<type>::HasVertices() {
-    if (server_ == nullptr) return false;
+bool TriangleMeshCuda::HasVertices() {
+    if (type_ == VertexTypeUnknown || server_ == nullptr) return false;
     return vertices_.size() > 0;
 }
 
-template<VertexType type>
-bool TriangleMeshCuda<type>::HasTriangles() {
-    if (server_ == nullptr) return false;
+bool TriangleMeshCuda::HasTriangles() {
+    if (type_ == VertexTypeUnknown || server_ == nullptr) return false;
     return triangles_.size() > 0;
 }
 
-template<VertexType type>
-bool TriangleMeshCuda<type>::HasVertexNormals() {
-    if ((type & VertexWithNormal) == 0 || server_ == nullptr) return false;
+bool TriangleMeshCuda::HasVertexNormals() {
+    if ((type_ & VertexWithNormal) == 0 || server_ == nullptr) return false;
     int vertices_size = vertices_.size();
     return vertices_size > 0 && vertices_size == vertex_normals_.size();
 }
 
-template<VertexType type>
-bool TriangleMeshCuda<type>::HasVertexColors(){
-    if ((type & VertexWithColor) == 0 || server_ == nullptr) return false;
+bool TriangleMeshCuda::HasVertexColors(){
+    if ((type_ & VertexWithColor) == 0 || server_ == nullptr) return false;
     int vertices_size = vertices_.size();
     return vertices_size > 0 && vertices_size == vertex_colors_.size();
 }

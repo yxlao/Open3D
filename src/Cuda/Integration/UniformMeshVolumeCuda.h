@@ -22,7 +22,7 @@ namespace open3d {
 
 static const int VERTEX_TO_ALLOCATE = -1;
 
-template<VertexType type, size_t N>
+template<size_t N>
 class UniformMeshVolumeCudaServer {
 private:
     uchar *table_indices_;
@@ -48,7 +48,7 @@ private:
      *    -- the interleaved storage will require non-trivial efforts to
      *       transfer data into TriangleMesh, or OpenGL handles, for rendering.
      **/
-    TriangleMeshCudaServer<type> mesh_;
+    TriangleMeshCudaServer mesh_;
 
 public:
     __DEVICE__ inline Vector3i Vectorize(size_t index) {
@@ -75,7 +75,7 @@ public:
     __DEVICE__ inline Vector3i &vertex_indices(const Vector3i &X) {
         return vertex_indices_[IndexOf(X)];
     }
-    __DEVICE__ inline TriangleMeshCudaServer<type> mesh() {
+    __DEVICE__ inline TriangleMeshCudaServer mesh() {
         return mesh_;
     }
 
@@ -87,28 +87,29 @@ public:
     __DEVICE__ void ExtractTriangle(const Vector3i &X);
 
 public:
-    friend class UniformMeshVolumeCuda<type, N>;
+    friend class UniformMeshVolumeCuda<N>;
 };
 
-template<VertexType type, size_t N>
+template<size_t N>
 class UniformMeshVolumeCuda {
 private:
-    std::shared_ptr<UniformMeshVolumeCudaServer<type, N> > server_ = nullptr;
-    TriangleMeshCuda<type> mesh_;
+    std::shared_ptr<UniformMeshVolumeCudaServer<N> > server_ = nullptr;
+    TriangleMeshCuda mesh_;
 
 public:
+    VertexType vertex_type_;
     int max_vertices_;
     int max_triangles_;
 
 public:
     UniformMeshVolumeCuda();
-    UniformMeshVolumeCuda(int max_vertices, int max_triangles);
-    UniformMeshVolumeCuda(const UniformMeshVolumeCuda<type, N> &other);
-    UniformMeshVolumeCuda<type, N> &operator=(
-        const UniformMeshVolumeCuda<type, N> &other);
+    UniformMeshVolumeCuda(VertexType type, int max_vertices, int max_triangles);
+    UniformMeshVolumeCuda(const UniformMeshVolumeCuda<N> &other);
+    UniformMeshVolumeCuda<N> &operator=(
+        const UniformMeshVolumeCuda<N> &other);
     ~UniformMeshVolumeCuda();
 
-    void Create(int max_vertices, int max_triangles);
+    void Create(VertexType type, int max_vertices, int max_triangles);
     void Release();
     void Reset();
     void UpdateServer();
@@ -121,36 +122,35 @@ public:
     void MarchingCubes(UniformTSDFVolumeCuda<N> &tsdf_volume);
 
 public:
-    std::shared_ptr<UniformMeshVolumeCudaServer<type, N>> &server() {
+    std::shared_ptr<UniformMeshVolumeCudaServer<N>> &server() {
         return server_;
     }
-    const std::shared_ptr<UniformMeshVolumeCudaServer<type, N>> &server()
-    const {
+    const std::shared_ptr<UniformMeshVolumeCudaServer<N>> &server() const {
         return server_;
     }
 
-    TriangleMeshCuda<type> &mesh() {
+    TriangleMeshCuda &mesh() {
         return mesh_;
     }
-    const TriangleMeshCuda<type> &mesh() const {
+    const TriangleMeshCuda &mesh() const {
         return mesh_;
     }
 };
 
-template<VertexType type, size_t N>
+template<size_t N>
 __GLOBAL__
 void MarchingCubesVertexAllocationKernel(
-    UniformMeshVolumeCudaServer<type, N> server,
+    UniformMeshVolumeCudaServer<N> server,
     UniformTSDFVolumeCudaServer<N> tsdf_volume);
 
-template<VertexType type, size_t N>
+template<size_t N>
 __GLOBAL__
 void MarchingCubesVertexExtractionKernel(
-    UniformMeshVolumeCudaServer<type, N> server,
+    UniformMeshVolumeCudaServer<N> server,
     UniformTSDFVolumeCudaServer<N> tsdf_volume);
 
-template<VertexType type, size_t N>
+template<size_t N>
 __GLOBAL__
 void MarchingCubesTriangleExtractionKernel(
-    UniformMeshVolumeCudaServer<type, N> server);
+    UniformMeshVolumeCudaServer<N> server);
 }

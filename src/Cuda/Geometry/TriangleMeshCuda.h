@@ -11,7 +11,6 @@
 
 namespace open3d {
 
-template<VertexType type>
 class TriangleMeshCudaServer {
 private:
     ArrayCudaServer<Vector3f> vertices_;
@@ -20,6 +19,7 @@ private:
     ArrayCudaServer<Vector3i> triangles_;
 
 public:
+    VertexType type_;
     int max_vertices_;
     int max_triangles_;
 
@@ -38,25 +38,25 @@ public:
     }
 
 public:
-    friend class TriangleMeshCuda<type>;
+    friend class TriangleMeshCuda;
 };
 
-template <VertexType type>
 class TriangleMeshCuda {
 private:
-    std::shared_ptr<TriangleMeshCudaServer<type> > server_ = nullptr;
+    std::shared_ptr<TriangleMeshCudaServer> server_ = nullptr;
     ArrayCuda<Vector3f> vertices_;
     ArrayCuda<Vector3f> vertex_normals_;
     ArrayCuda<Vector3b> vertex_colors_;
     ArrayCuda<Vector3i> triangles_;
 
 public:
+    VertexType type_;
     int max_vertices_;
     int max_triangles_;
 
 public:
     TriangleMeshCuda();
-    TriangleMeshCuda(int max_vertices, int max_triangles);
+    TriangleMeshCuda(VertexType type, int max_vertices, int max_triangles);
     TriangleMeshCuda(const TriangleMeshCuda& other);
     TriangleMeshCuda& operator= (const TriangleMeshCuda& other);
     ~TriangleMeshCuda();
@@ -64,7 +64,7 @@ public:
     void Reset();
     void UpdateServer();
 
-    void Create(int max_vertices, int max_triangles);
+    void Create(VertexType type, int max_vertices, int max_triangles);
     void Release();
 
     bool HasVertices();
@@ -101,10 +101,10 @@ public:
         return triangles_;
     }
 
-    std::shared_ptr<TriangleMeshCudaServer<type>>& server() {
+    std::shared_ptr<TriangleMeshCudaServer>& server() {
         return server_;
     }
-    const std::shared_ptr<TriangleMeshCudaServer<type>>& server() const {
+    const std::shared_ptr<TriangleMeshCudaServer>& server() const {
         return server_;
     }
 };

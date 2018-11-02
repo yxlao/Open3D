@@ -7,10 +7,10 @@
 #include "ScalableMeshVolumeCuda.cuh"
 
 namespace open3d {
-template<VertexType type, size_t N>
+template<size_t N>
 __global__
 void MarchingCubesVertexAllocationKernel(
-    ScalableMeshVolumeCudaServer<type, N> server,
+    ScalableMeshVolumeCudaServer<N> server,
     ScalableTSDFVolumeCudaServer<N> tsdf_volume) {
 
     __shared__ UniformTSDFVolumeCudaServer<N> *neighbor_subvolumes[27];
@@ -44,10 +44,10 @@ void MarchingCubesVertexAllocationKernel(
     }
 }
 
-template<VertexType type, size_t N>
+template<size_t N>
 __global__
 void MarchingCubesVertexExtractionKernel(
-    ScalableMeshVolumeCudaServer<type, N> server,
+    ScalableMeshVolumeCudaServer<N> server,
     ScalableTSDFVolumeCudaServer<N> tsdf_volume) {
 
     __shared__ UniformTSDFVolumeCudaServer<N> *neighbor_subvolumes[27];
@@ -82,10 +82,10 @@ void MarchingCubesVertexExtractionKernel(
     }
 }
 
-template<VertexType type, size_t N>
+template<size_t N>
 __global__
 void MarchingCubesTriangleExtractionKernel(
-    ScalableMeshVolumeCudaServer<type, N> server,
+    ScalableMeshVolumeCudaServer<N> server,
     ScalableTSDFVolumeCudaServer<N> tsdf_volume) {
 
     __shared__ UniformTSDFVolumeCudaServer<N> *neighbor_subvolumes[27];
