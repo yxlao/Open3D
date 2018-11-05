@@ -1,4 +1,5 @@
 #include "ImageCuda.cuh"
+#include "RGBDImageCuda.cuh"
 #include "ImagePyramidCuda.cuh"
 #include "ImageCudaKernel.cuh"
 #include "TriangleMeshCuda.cuh"

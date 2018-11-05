@@ -46,11 +46,11 @@ int main(int argc, char **argv)
     using namespace open3d::filesystem;
 
     using namespace open3d;
-    cv::Mat im = cv::imread("../../examples/TestData/RGBD/depth/apt-022640.png",
+    cv::Mat im = cv::imread("../../examples/TestData/RGBD/other_formats/TUM_depth.png",
                             cv::IMREAD_UNCHANGED);
     ImageCuda<Vector1s> imcuda;
     imcuda.Upload(im);
-    auto imcudaf = imcuda.ToFloat(0.001f);
+    auto imcudaf = imcuda.ToFloat(0.0002f);
 
     MonoPinholeCameraCuda intrinsics;
     intrinsics.SetUp();

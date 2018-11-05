@@ -29,8 +29,8 @@ public:
     typedef VectorCuda<T, N> VecType;
 
     typedef VectorCuda<float, N> VecTypef;
-    typedef VectorCuda<int, N> VecTypei;
-    typedef VectorCuda<short, N> VecTypes;
+    typedef VectorCuda<int, N>   VecTypei;
+    typedef VectorCuda<ushort, N> VecTypes;
     typedef VectorCuda<uchar, N> VecTypeb;
 
     /** Conversions **/
@@ -75,7 +75,7 @@ public:
 #pragma unroll 1
 #endif
         for (int i = 0; i < N; ++i) {
-            ret.v[i] = short(fminf(v[i], 32767));
+            ret.v[i] = ushort(fminf(v[i], 65535));
         }
         return ret;
     }
@@ -410,7 +410,7 @@ typedef VectorCuda<int, 2> Vector2i;
 typedef VectorCuda<int, 3> Vector3i;
 typedef VectorCuda<int, 4> Vector4i;
 
-typedef VectorCuda<short, 1> Vector1s;
+typedef VectorCuda<ushort, 1> Vector1s;
 
 typedef VectorCuda<uchar, 1> Vector1b;
 typedef VectorCuda<uchar, 3> Vector3b;

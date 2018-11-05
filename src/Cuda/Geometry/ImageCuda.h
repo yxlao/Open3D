@@ -134,7 +134,7 @@ public:
     ImageCuda<typename VecType::VecTypef> ToFloat(
         float scale = 1.0f, float offset = 0.0f);
     void ToFloat(ImageCuda<typename VecType::VecTypef> &image,
-                 float scale, float offset);
+                 float scale = 1.0f, float offset = 0.0f);
 
     void Upload(cv::Mat &m);
     cv::Mat Download();

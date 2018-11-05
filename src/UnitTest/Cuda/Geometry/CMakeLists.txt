@@ -3,6 +3,10 @@ add_executable(TestImageCuda TestImageCuda.cpp)
 target_link_libraries(TestImageCuda ${CMAKE_PROJECT_NAME}
         ${GTEST_LIBRARIES} pthread)
 
+add_executable(TestRGBDImageCuda TestRGBDImageCuda.cpp)
+target_link_libraries(TestRGBDImageCuda ${CMAKE_PROJECT_NAME}
+        ${GTEST_LIBRARIES} pthread)
+
 add_executable(TestTransformCuda TestTransformCuda.cpp)
 target_link_libraries(TestTransformCuda ${CMAKE_PROJECT_NAME}
         ${GTEST_LIBRARIES} pthread)
