@@ -29,7 +29,6 @@
 #include <vector>
 #include <Eigen/Core>
 #include <Visualization/Shader/ShaderWrapper.h>
-#include <Cuda/Geometry/TriangleMeshCuda.h>
 
 #include <Cuda/Common/UtilsCuda.h>
 #include "CudaGLInterp.h"
@@ -38,21 +37,24 @@ namespace open3d {
 
 namespace glsl {
 
-class NormalShaderCuda : public ShaderWrapper {
+class SimpleBlackShaderCuda : public ShaderWrapper {
 public:
-    ~NormalShaderCuda() override { Release(); }
+    ~SimpleBlackShaderCuda() override { Release(); }
 
 protected:
-    NormalShaderCuda(const std::string &name) : ShaderWrapper(name) {
+    SimpleBlackShaderCuda(const std::string &name)
+        : ShaderWrapper(name) {
         Compile();
     }
 
 protected:
     bool Compile() final;
     void Release() final;
-    bool BindGeometry(const Geometry &geometry, const RenderOption &option,
+    bool BindGeometry(const Geometry &geometry,
+                      const RenderOption &option,
                       const ViewControl &view) final;
-    bool RenderGeometry(const Geometry &geometry, const RenderOption &option,
+    bool RenderGeometry(const Geometry &geometry,
+                        const RenderOption &option,
                         const ViewControl &view) final;
     void UnbindGeometry() final;
 
@@ -69,22 +71,17 @@ protected:
     GLuint vertex_position_buffer_;
     cudaGraphicsResource_t vertex_position_cuda_resource_;
 
-    GLuint vertex_normal_;
-    GLuint vertex_normal_buffer_;
-    cudaGraphicsResource_t vertex_normal_cuda_resource_;
-
     GLuint triangle_buffer_;
-    cudaGraphicsResource_t triangle_cuda_resource_;
+    cudaGraphicsResource_t triangle_cuda_resource;
 
     GLuint MVP_;
-    GLuint V_;
-    GLuint M_;
 };
 
-class NormalShaderForTriangleMeshCuda : public NormalShaderCuda {
+class SimpleBlackShaderForTriangleMeshCuda
+    : public SimpleBlackShaderCuda {
 public:
-    NormalShaderForTriangleMeshCuda()
-    : NormalShaderCuda("NormalShaderForTriangleMeshCuda") {}
+    SimpleBlackShaderForTriangleMeshCuda() :
+        SimpleBlackShaderCuda("SimpleBlackShaderCudaForTriangleMeshWireFrame") {}
 
 protected:
     bool PrepareRendering(const Geometry &geometry,

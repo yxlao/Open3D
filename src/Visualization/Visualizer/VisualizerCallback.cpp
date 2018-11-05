@@ -321,6 +321,11 @@ void Visualizer::KeyPressCallback(GLFWwindow *window,
 void Visualizer::WindowCloseCallback(GLFWwindow *window)
 {
     // happens when user click the close icon to close the window
+    /** Unbind everything BEFORE context is destroyed.
+     * Otherwise CUDA OpenGL interpolation will crash **/
+     for (auto & renderer_ptr : geometry_renderer_ptrs_) {
+        renderer_ptr->UpdateGeometry();
+    }
 }
 
 }    // namespace open3d

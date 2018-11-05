@@ -92,7 +92,7 @@ void UniformMeshVolumeCudaServer<N>::ExtractVertex(
                 mesh_.vertex_normals()[voxel_vertex_indices(axis)] =
                     tsdf_volume.transform_volume_to_world_.Rotate(
                         (1 - mu) * gradient_0
-                            + mu * tsdf_volume.gradient(X_axis));
+                            + mu * tsdf_volume.gradient(X_axis)).normalized();
             }
 
             axis_offset(axis) = 0;

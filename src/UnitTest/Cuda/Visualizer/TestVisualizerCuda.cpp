@@ -81,10 +81,13 @@ int main(int argc, char **argv)
     timer.Stop();
     PrintInfo("MarchingCubes takes: %f milliseconds\n", timer.GetDuration() / iter);
 
-    std::shared_ptr<TriangleMesh> mesh = mesher.mesh().Download();
-    mesh->ComputeVertexNormals();
+    std::shared_ptr<TriangleMeshCuda> mesh =
+        std::make_shared<TriangleMeshCuda>(mesher.mesh());
 
-    std::vector<std::shared_ptr<Geometry>> geometry_ptrs;
+    //std::shared_ptr<TriangleMesh> meshcpu = mesh->Download();
+
+    //    std::shared_ptr<TriangleMesh> mesh = mesher.mesh().Download();
+//    mesh->ComputeVertexNormals();
 
     VisualizerWithCustomAnimation visualizer;
     if (! visualizer.CreateVisualizerWindow("test", 640, 480, 0, 0)) {
@@ -93,13 +96,15 @@ int main(int argc, char **argv)
     }
     visualizer.AddGeometry(mesh);
 
-    if (visualizer.HasGeometry() == false) {
+    if (! visualizer.HasGeometry()) {
         PrintWarning("No geometry to render!\n");
         visualizer.DestroyVisualizerWindow();
         return 0;
     }
 
     visualizer.GetRenderOption().show_coordinate_frame_ = true;
+    visualizer.GetRenderOption().mesh_color_option_ = RenderOption::MeshColorOption::Normal;
+    visualizer.GetRenderOption().mesh_show_wireframe_ = true;
     visualizer.Run();
     visualizer.DestroyVisualizerWindow();
 

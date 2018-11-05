@@ -37,6 +37,11 @@ public:
         LineSet = 2,
         TriangleMesh = 3,
         Image = 4,
+
+        PointCloudCuda = 5,
+        LineSetCuda = 6,
+        TriangleMeshCuda = 7,
+        ImageCuda = 8
     };
 
 public:

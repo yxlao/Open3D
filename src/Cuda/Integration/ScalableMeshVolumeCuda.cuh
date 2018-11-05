@@ -198,7 +198,8 @@ void ScalableMeshVolumeCudaServer<N>::ExtractVertex(
                 mesh_.vertex_normals()[voxel_vertex_indices(axis)] =
                     tsdf_volume.transform_volume_to_world_.Rotate(
                         (1 - mu) * gradient_0
-                            + mu * subvolume->gradient(Xlocal_axis));
+                            + mu * subvolume->gradient(Xlocal_axis))
+                            .normalized();
             }
 
             axis_offset(axis) = 0;
@@ -256,7 +257,7 @@ void ScalableMeshVolumeCudaServer<N>::ExtractVertexOnBoundary(
                     tsdf_volume.transform_volume_to_world_.Rotate(
                         (1 - mu) * gradient_0
                             + mu * tsdf_volume.gradient(
-                                Xlocal_axis, cached_subvolumes));
+                                Xlocal_axis, cached_subvolumes)).normalized();
             }
 
             axis_offset(axis) = 0;

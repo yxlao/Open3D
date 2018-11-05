@@ -29,30 +29,30 @@
 #include <vector>
 #include <Eigen/Core>
 #include <Visualization/Shader/ShaderWrapper.h>
-#include <Cuda/Geometry/TriangleMeshCuda.h>
-
-#include <Cuda/Common/UtilsCuda.h>
 #include "CudaGLInterp.h"
 
 namespace open3d {
 
 namespace glsl {
 
-class NormalShaderCuda : public ShaderWrapper {
+class PhongShaderCuda : public ShaderWrapper {
 public:
-    ~NormalShaderCuda() override { Release(); }
+    ~PhongShaderCuda() override { Release(); }
 
 protected:
-    NormalShaderCuda(const std::string &name) : ShaderWrapper(name) {
+    PhongShaderCuda(const std::string &name)
+        : ShaderWrapper(name) {
         Compile();
     }
 
 protected:
     bool Compile() final;
     void Release() final;
-    bool BindGeometry(const Geometry &geometry, const RenderOption &option,
+    bool BindGeometry(const Geometry &geometry,
+                      const RenderOption &option,
                       const ViewControl &view) final;
-    bool RenderGeometry(const Geometry &geometry, const RenderOption &option,
+    bool RenderGeometry(const Geometry &geometry,
+                        const RenderOption &option,
                         const ViewControl &view) final;
     void UnbindGeometry() final;
 
@@ -65,9 +65,16 @@ protected:
                                 const ViewControl &view) = 0;
 
 protected:
+    void SetLighting(const ViewControl &view, const RenderOption &option);
+
+protected:
     GLuint vertex_position_;
     GLuint vertex_position_buffer_;
     cudaGraphicsResource_t vertex_position_cuda_resource_;
+
+    GLuint vertex_color_;
+    GLuint vertex_color_buffer_;
+    cudaGraphicsResource_t vertex_color_cuda_resource_;
 
     GLuint vertex_normal_;
     GLuint vertex_normal_buffer_;
@@ -79,12 +86,26 @@ protected:
     GLuint MVP_;
     GLuint V_;
     GLuint M_;
+    GLuint light_position_world_;
+    GLuint light_color_;
+    GLuint light_diffuse_power_;
+    GLuint light_specular_power_;
+    GLuint light_specular_shininess_;
+    GLuint light_ambient_;
+
+    // At most support 4 lights
+    GLHelper::GLMatrix4f light_position_world_data_;
+    GLHelper::GLMatrix4f light_color_data_;
+    GLHelper::GLVector4f light_diffuse_power_data_;
+    GLHelper::GLVector4f light_specular_power_data_;
+    GLHelper::GLVector4f light_specular_shininess_data_;
+    GLHelper::GLVector4f light_ambient_data_;
 };
 
-class NormalShaderForTriangleMeshCuda : public NormalShaderCuda {
+class PhongShaderForTriangleMeshCuda : public PhongShaderCuda {
 public:
-    NormalShaderForTriangleMeshCuda()
-    : NormalShaderCuda("NormalShaderForTriangleMeshCuda") {}
+    PhongShaderForTriangleMeshCuda()
+    : PhongShaderCuda("PhongShaderForTriangleMesh") {}
 
 protected:
     bool PrepareRendering(const Geometry &geometry,

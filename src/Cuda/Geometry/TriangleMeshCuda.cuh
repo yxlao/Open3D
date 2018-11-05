@@ -9,7 +9,7 @@
 
 namespace open3d {
 TriangleMeshCuda::TriangleMeshCuda()
-    : Geometry3D(Geometry::GeometryType::TriangleMesh) {
+    : Geometry3D(Geometry::GeometryType::TriangleMeshCuda) {
     type_ = VertexTypeUnknown;
 
     max_vertices_ = -1;
@@ -18,12 +18,12 @@ TriangleMeshCuda::TriangleMeshCuda()
 
 TriangleMeshCuda::TriangleMeshCuda(
     VertexType type, int max_vertices, int max_triangles)
-    : Geometry3D(Geometry::GeometryType::TriangleMesh) {
+    : Geometry3D(Geometry::GeometryType::TriangleMeshCuda) {
     Create(type, max_vertices, max_triangles);
 }
 
 TriangleMeshCuda::TriangleMeshCuda(const TriangleMeshCuda &other)
-    : Geometry3D(Geometry::GeometryType::TriangleMesh) {
+    : Geometry3D(Geometry::GeometryType::TriangleMeshCuda) {
     server_ = other.server();
 
     vertices_ = other.vertices();
@@ -266,7 +266,7 @@ void TriangleMeshCuda::Clear() {
 }
 
 bool TriangleMeshCuda::IsEmpty() const {
-    return HasVertices();
+    return !HasVertices();
 }
 
 Eigen::Vector3d TriangleMeshCuda::GetMinBound() const {

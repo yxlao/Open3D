@@ -24,42 +24,42 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "NormalShaderCuda.h"
-
-#include <Core/Geometry/PointCloud.h>
-#include <Core/Geometry/TriangleMesh.h>
+#include "SimpleShaderCuda.h"
+#include "CudaGLInterp.h"
+#include <Cuda/Common/UtilsCuda.h>
+#include <Cuda/Geometry/TriangleMeshCuda.h>
 #include <Visualization/Shader/Shader.h>
+#include <Visualization/Utility/ColorMap.h>
 
 namespace open3d {
 
 namespace glsl {
 
-bool NormalShaderCuda::Compile() {
-    if (!CompileShaders(NormalVertexShader, NULL, NormalFragmentShader)) {
+bool SimpleShaderCuda::Compile() {
+    if (CompileShaders(SimpleVertexShader, NULL,
+                       SimpleFragmentShader) == false) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }
     vertex_position_ = glGetAttribLocation(program_, "vertex_position");
-    vertex_normal_ = glGetAttribLocation(program_, "vertex_normal");
+    vertex_color_ = glGetAttribLocation(program_, "vertex_color");
     MVP_ = glGetUniformLocation(program_, "MVP");
-    V_ = glGetUniformLocation(program_, "V");
-    M_ = glGetUniformLocation(program_, "M");
     return true;
 }
 
-void NormalShaderCuda::Release() {
+void SimpleShaderCuda::Release() {
     UnbindGeometry();
     ReleaseProgram();
 }
 
-bool NormalShaderCuda::BindGeometry(const Geometry &geometry,
+bool SimpleShaderCuda::BindGeometry(const Geometry &geometry,
                                     const RenderOption &option,
                                     const ViewControl &view) {
     // If there is already geometry, we first unbind it.
     // We use GL_STATIC_DRAW. When geometry changes, we clear buffers and
     // rebind the geometry. Note that this approach is slow. If the geometry is
     // changing per frame, consider implementing a new ShaderWrapper using
-    // GL_STREAM_DRAW, and replace UnbindGeometry() with Buffer Object
+    // GL_STREAM_DRAW, and replace InvalidateGeometry() with Buffer Object
     // Streaming mechanisms.
     UnbindGeometry();
 
@@ -69,73 +69,65 @@ bool NormalShaderCuda::BindGeometry(const Geometry &geometry,
         return false;
     }
 
-    const TriangleMeshCuda &mesh = (const TriangleMeshCuda &) geometry;
-
     // Create buffers and bind the geometry
+    auto &mesh = (const TriangleMeshCuda &) geometry;
     RegisterResource(vertex_position_cuda_resource_,
                      GL_ARRAY_BUFFER, vertex_position_buffer_,
                      mesh.vertices().server()->data(),
                      mesh.vertices().size());
 
-    RegisterResource(vertex_normal_cuda_resource_,
-                     GL_ARRAY_BUFFER, vertex_normal_buffer_,
-                     mesh.vertex_normals().server()->data(),
-                     mesh.vertex_normals().size());
+    RegisterResource(vertex_color_cuda_resource_,
+                     GL_ARRAY_BUFFER, vertex_color_buffer_,
+                     mesh.vertex_colors().server()->data(),
+                     mesh.vertex_colors().size());
 
     RegisterResource(triangle_cuda_resource_,
                      GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_,
                      mesh.triangles().server()->data(),
                      mesh.triangles().size());
-
     bound_ = true;
     return true;
 }
 
-bool NormalShaderCuda::RenderGeometry(const Geometry &geometry,
+bool SimpleShaderCuda::RenderGeometry(const Geometry &geometry,
                                       const RenderOption &option,
                                       const ViewControl &view) {
-    if (!PrepareRendering(geometry, option, view)) {
+    if (PrepareRendering(geometry, option, view) == false) {
         PrintShaderWarning("Rendering failed during preparation.");
         return false;
     }
     glUseProgram(program_);
     glUniformMatrix4fv(MVP_, 1, GL_FALSE, view.GetMVPMatrix().data());
-    glUniformMatrix4fv(V_, 1, GL_FALSE, view.GetViewMatrix().data());
-    glUniformMatrix4fv(M_, 1, GL_FALSE, view.GetModelMatrix().data());
 
     glEnableVertexAttribArray(vertex_position_);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer_);
     glVertexAttribPointer(vertex_position_, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
-    glEnableVertexAttribArray(vertex_normal_);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_normal_buffer_);
-    glVertexAttribPointer(vertex_normal_, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    glEnableVertexAttribArray(vertex_color_);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_color_buffer_);
+    glVertexAttribPointer(vertex_color_, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
-    /* No vertex attrib array is required for ELEMENT_ARRAY_BUFFER */
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_);
+    glBindBuffer(GL_ARRAY_BUFFER, triangle_buffer_);
 
-    glDrawElements(draw_arrays_mode_, draw_arrays_size_,
-                   GL_UNSIGNED_INT, nullptr);
-
+    glDrawElements(draw_arrays_mode_, draw_arrays_size_, GL_UNSIGNED_INT, NULL);
     glDisableVertexAttribArray(vertex_position_);
-    glDisableVertexAttribArray(vertex_normal_);
-
+    glDisableVertexAttribArray(vertex_color_);
     return true;
 }
 
-void NormalShaderCuda::UnbindGeometry() {
+void SimpleShaderCuda::UnbindGeometry() {
     if (bound_) {
         UnregisterResource(vertex_position_cuda_resource_,
                            vertex_position_buffer_);
-        UnregisterResource(vertex_normal_cuda_resource_,
-                           vertex_normal_buffer_);
+        UnregisterResource(vertex_color_cuda_resource_,
+                           vertex_color_buffer_);
         UnregisterResource(triangle_cuda_resource_,
                            triangle_buffer_);
         bound_ = false;
     }
 }
 
-bool NormalShaderForTriangleMeshCuda::PrepareRendering(const Geometry &geometry,
+bool SimpleShaderForTriangleMeshCuda::PrepareRendering(const Geometry &geometry,
                                                        const RenderOption &option,
                                                        const ViewControl &view) {
     if (geometry.GetGeometryType() !=
@@ -160,7 +152,7 @@ bool NormalShaderForTriangleMeshCuda::PrepareRendering(const Geometry &geometry,
     return true;
 }
 
-bool NormalShaderForTriangleMeshCuda::PrepareBinding(const Geometry &geometry,
+bool SimpleShaderForTriangleMeshCuda::PrepareBinding(const Geometry &geometry,
                                                      const RenderOption &option,
                                                      const ViewControl &view) {
     if (geometry.GetGeometryType() !=
@@ -170,16 +162,16 @@ bool NormalShaderForTriangleMeshCuda::PrepareBinding(const Geometry &geometry,
     }
 
     const TriangleMeshCuda &mesh = (const TriangleMeshCuda &) geometry;
-    if (!mesh.HasTriangles()) {
+    if (mesh.HasTriangles() == false) {
         PrintShaderWarning("Binding failed with empty triangle mesh.");
         return false;
     }
 
     draw_arrays_mode_ = GL_TRIANGLES;
-    draw_arrays_size_ = GLsizei(mesh.triangles().size() * 3);
+    draw_arrays_size_ = GLsizei(mesh.triangles().size());
     return true;
 }
 
-}    // namespace glsl
+}    // namespace open3d::glsl
 
 }    // namespace open3d

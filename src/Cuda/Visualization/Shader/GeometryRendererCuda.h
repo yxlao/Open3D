@@ -5,32 +5,14 @@
 #pragma once
 
 #include "NormalShaderCuda.h"
+#include "PhongShaderCuda.h"
+#include "SimpleShaderCuda.h"
+#include "SimpleBlackShaderCuda.h"
 #include <Visualization/Shader/GeometryRenderer.h>
 
 namespace open3d {
 
 namespace glsl {
-
-/**
- * Replacement of BindData - direct transfer data to graphics part
- */
-template<typename T>
-bool BindCudaGraphicsResource(GLuint &opengl_buffer,
-                              cudaGraphicsResource_t &cuda_graphics_resource,
-                              T *cuda_vector,
-                              size_t cuda_vector_size) {
-
-    CheckCuda(cudaGraphicsMapResources(1, &cuda_graphics_resource));
-    void *mapped_ptr;
-    size_t mapped_size;
-    CheckCuda(cudaGraphicsResourceGetMappedPointer(
-        &mapped_ptr, &mapped_size, cuda_graphics_resource));
-    CheckCuda(cudaMemcpy(mapped_ptr, cuda_vector, sizeof(T) * cuda_vector_size,
-                         cudaMemcpyDeviceToDevice));
-    CheckCuda(cudaGraphicsUnmapResources(1, &cuda_graphics_resource, nullptr));
-
-    return true;
-}
 
 class TriangleMeshCudaRenderer : public GeometryRenderer {
 public:
@@ -43,6 +25,10 @@ public:
 
 protected:
     NormalShaderForTriangleMeshCuda normal_mesh_shader_;
+    PhongShaderForTriangleMeshCuda phong_mesh_shader_;
+    SimpleShaderForTriangleMeshCuda simple_mesh_shader_;
+    SimpleBlackShaderForTriangleMeshCuda simpleblack_wireframe_shader_;
+
 };
 }
 

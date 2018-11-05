@@ -24,37 +24,49 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "NormalShaderCuda.h"
-
+#include "PhongShaderCuda.h"
+#include "CudaGLInterp.h"
 #include <Core/Geometry/PointCloud.h>
-#include <Core/Geometry/TriangleMesh.h>
+#include <Cuda/Geometry/TriangleMeshCuda.h>
 #include <Visualization/Shader/Shader.h>
+#include <Visualization/Utility/ColorMap.h>
 
 namespace open3d {
 
 namespace glsl {
 
-bool NormalShaderCuda::Compile() {
-    if (!CompileShaders(NormalVertexShader, NULL, NormalFragmentShader)) {
+bool PhongShaderCuda::Compile() {
+    if (CompileShaders(PhongVertexShader, NULL, PhongFragmentShader) == false) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }
     vertex_position_ = glGetAttribLocation(program_, "vertex_position");
     vertex_normal_ = glGetAttribLocation(program_, "vertex_normal");
+    vertex_color_ = glGetAttribLocation(program_, "vertex_color");
     MVP_ = glGetUniformLocation(program_, "MVP");
     V_ = glGetUniformLocation(program_, "V");
     M_ = glGetUniformLocation(program_, "M");
+    light_position_world_ =
+        glGetUniformLocation(program_, "light_position_world_4");
+    light_color_ = glGetUniformLocation(program_, "light_color_4");
+    light_diffuse_power_ = glGetUniformLocation(program_,
+                                                "light_diffuse_power_4");
+    light_specular_power_ = glGetUniformLocation(program_,
+                                                 "light_specular_power_4");
+    light_specular_shininess_ = glGetUniformLocation(program_,
+                                                     "light_specular_shininess_4");
+    light_ambient_ = glGetUniformLocation(program_, "light_ambient");
     return true;
 }
 
-void NormalShaderCuda::Release() {
+void PhongShaderCuda::Release() {
     UnbindGeometry();
     ReleaseProgram();
 }
 
-bool NormalShaderCuda::BindGeometry(const Geometry &geometry,
-                                    const RenderOption &option,
-                                    const ViewControl &view) {
+bool PhongShaderCuda::BindGeometry(const Geometry &geometry,
+                                   const RenderOption &option,
+                                   const ViewControl &view) {
     // If there is already geometry, we first unbind it.
     // We use GL_STATIC_DRAW. When geometry changes, we clear buffers and
     // rebind the geometry. Note that this approach is slow. If the geometry is
@@ -82,6 +94,11 @@ bool NormalShaderCuda::BindGeometry(const Geometry &geometry,
                      mesh.vertex_normals().server()->data(),
                      mesh.vertex_normals().size());
 
+    RegisterResource(vertex_color_cuda_resource_,
+                     GL_ARRAY_BUFFER, vertex_color_buffer_,
+                     mesh.vertex_colors().server()->data(),
+                     mesh.vertex_colors().size());
+
     RegisterResource(triangle_cuda_resource_,
                      GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_,
                      mesh.triangles().server()->data(),
@@ -91,17 +108,26 @@ bool NormalShaderCuda::BindGeometry(const Geometry &geometry,
     return true;
 }
 
-bool NormalShaderCuda::RenderGeometry(const Geometry &geometry,
-                                      const RenderOption &option,
-                                      const ViewControl &view) {
-    if (!PrepareRendering(geometry, option, view)) {
+bool PhongShaderCuda::RenderGeometry(const Geometry &geometry,
+                                     const RenderOption &option,
+                                     const ViewControl &view) {
+    if (PrepareRendering(geometry, option, view) == false) {
         PrintShaderWarning("Rendering failed during preparation.");
         return false;
     }
+
     glUseProgram(program_);
     glUniformMatrix4fv(MVP_, 1, GL_FALSE, view.GetMVPMatrix().data());
     glUniformMatrix4fv(V_, 1, GL_FALSE, view.GetViewMatrix().data());
     glUniformMatrix4fv(M_, 1, GL_FALSE, view.GetModelMatrix().data());
+    glUniformMatrix4fv(light_position_world_, 1, GL_FALSE,
+                       light_position_world_data_.data());
+    glUniformMatrix4fv(light_color_, 1, GL_FALSE, light_color_data_.data());
+    glUniform4fv(light_diffuse_power_, 1, light_diffuse_power_data_.data());
+    glUniform4fv(light_specular_power_, 1, light_specular_power_data_.data());
+    glUniform4fv(light_specular_shininess_, 1,
+                 light_specular_shininess_data_.data());
+    glUniform4fv(light_ambient_, 1, light_ambient_data_.data());
 
     glEnableVertexAttribArray(vertex_position_);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer_);
@@ -111,33 +137,73 @@ bool NormalShaderCuda::RenderGeometry(const Geometry &geometry,
     glBindBuffer(GL_ARRAY_BUFFER, vertex_normal_buffer_);
     glVertexAttribPointer(vertex_normal_, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
-    /* No vertex attrib array is required for ELEMENT_ARRAY_BUFFER */
+    glEnableVertexAttribArray(vertex_color_);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_color_buffer_);
+    glVertexAttribPointer(vertex_color_, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_);
 
-    glDrawElements(draw_arrays_mode_, draw_arrays_size_,
-                   GL_UNSIGNED_INT, nullptr);
-
+    glDrawElements(draw_arrays_mode_,
+                   draw_arrays_size_,
+                   GL_UNSIGNED_INT,
+                   nullptr);
     glDisableVertexAttribArray(vertex_position_);
     glDisableVertexAttribArray(vertex_normal_);
-
+    glDisableVertexAttribArray(vertex_color_);
     return true;
 }
 
-void NormalShaderCuda::UnbindGeometry() {
+void PhongShaderCuda::UnbindGeometry() {
     if (bound_) {
         UnregisterResource(vertex_position_cuda_resource_,
                            vertex_position_buffer_);
         UnregisterResource(vertex_normal_cuda_resource_,
                            vertex_normal_buffer_);
+        UnregisterResource(vertex_color_cuda_resource_,
+                           vertex_color_buffer_);
         UnregisterResource(triangle_cuda_resource_,
                            triangle_buffer_);
         bound_ = false;
     }
 }
 
-bool NormalShaderForTriangleMeshCuda::PrepareRendering(const Geometry &geometry,
-                                                       const RenderOption &option,
-                                                       const ViewControl &view) {
+void PhongShaderCuda::SetLighting(const ViewControl &view,
+                                  const RenderOption &option) {
+    const auto &box = view.GetBoundingBox();
+    light_position_world_data_.setOnes();
+    light_color_data_.setOnes();
+    for (int i = 0; i < 4; i++) {
+        light_position_world_data_.block<3, 1>(0, i) =
+            box.GetCenter().cast<GLfloat>() + (float) box.GetSize() * (
+                (float) option.light_position_relative_[i](0) * view.GetRight()
+                    + (float) option.light_position_relative_[i](1)
+                        * view.GetUp()
+                    + (float) option.light_position_relative_[i](2)
+                        * view.GetFront());
+        light_color_data_.block<3, 1>(0, i) =
+            option.light_color_[i].cast<GLfloat>();
+    }
+    if (option.light_on_) {
+        light_diffuse_power_data_ = Eigen::Vector4d(
+            option.light_diffuse_power_).cast<GLfloat>();
+        light_specular_power_data_ = Eigen::Vector4d(
+            option.light_specular_power_).cast<GLfloat>();
+        light_specular_shininess_data_ = Eigen::Vector4d(
+            option.light_specular_shininess_).cast<GLfloat>();
+        light_ambient_data_.block<3, 1>(0, 0) =
+            option.light_ambient_color_.cast<GLfloat>();
+        light_ambient_data_(3) = 1.0f;
+    } else {
+        light_diffuse_power_data_ = GLHelper::GLVector4f::Zero();
+        light_specular_power_data_ = GLHelper::GLVector4f::Zero();
+        light_specular_shininess_data_ = GLHelper::GLVector4f::Ones();
+        light_ambient_data_ = GLHelper::GLVector4f(1.0f, 1.0f, 1.0f, 1.0f);
+    }
+}
+
+bool PhongShaderForTriangleMeshCuda::PrepareRendering(const Geometry &geometry,
+                                                      const RenderOption &option,
+                                                      const ViewControl &view) {
     if (geometry.GetGeometryType() !=
         Geometry::GeometryType::TriangleMeshCuda) {
         PrintShaderWarning("Rendering type is not TriangleMeshCuda.");
@@ -157,12 +223,13 @@ bool NormalShaderForTriangleMeshCuda::PrepareRendering(const Geometry &geometry,
     } else {
         glDisable(GL_POLYGON_OFFSET_FILL);
     }
+    SetLighting(view, option);
     return true;
 }
 
-bool NormalShaderForTriangleMeshCuda::PrepareBinding(const Geometry &geometry,
-                                                     const RenderOption &option,
-                                                     const ViewControl &view) {
+bool PhongShaderForTriangleMeshCuda::PrepareBinding(const Geometry &geometry,
+                                                    const RenderOption &option,
+                                                    const ViewControl &view) {
     if (geometry.GetGeometryType() !=
         Geometry::GeometryType::TriangleMeshCuda) {
         PrintShaderWarning("Rendering type is not TriangleMeshCuda.");
@@ -172,6 +239,11 @@ bool NormalShaderForTriangleMeshCuda::PrepareBinding(const Geometry &geometry,
     const TriangleMeshCuda &mesh = (const TriangleMeshCuda &) geometry;
     if (!mesh.HasTriangles()) {
         PrintShaderWarning("Binding failed with empty triangle mesh.");
+        return false;
+    }
+    if (!mesh.HasVertexNormals()) {
+        PrintShaderWarning("Binding failed because mesh has no normals.");
+        PrintShaderWarning("Call ComputeVertexNormals() before binding.");
         return false;
     }
 

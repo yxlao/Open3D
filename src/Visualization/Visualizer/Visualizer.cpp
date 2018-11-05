@@ -27,6 +27,7 @@
 #include "Visualizer.h"
 
 #include <Core/Geometry/TriangleMesh.h>
+#include <Cuda/Visualization/Shader/GeometryRendererCuda.h>
 
 namespace open3d{
 
@@ -270,6 +271,12 @@ void Visualizer::Run()
 
 void Visualizer::Close()
 {
+    /** Unbind everything BEFORE context is destroyed.
+     * Otherwise CUDA OpenGL interpolation will crash **/
+    for (auto &renderer_ptr : geometry_renderer_ptrs_) {
+        renderer_ptr->UpdateGeometry();
+    }
+
     glfwSetWindowShouldClose(window_, GL_TRUE);
     PrintDebug("[Visualizer] Window closing.\n");
 }
@@ -336,6 +343,13 @@ bool Visualizer::AddGeometry(std::shared_ptr<const Geometry> geometry_ptr)
     } else if (geometry_ptr->GetGeometryType() ==
             Geometry::GeometryType::Image) {
         auto renderer_ptr = std::make_shared<glsl::ImageRenderer>();
+        if (renderer_ptr->AddGeometry(geometry_ptr) == false) {
+            return false;
+        }
+        geometry_renderer_ptrs_.push_back(renderer_ptr);
+    } else if (geometry_ptr->GetGeometryType() ==
+        Geometry::GeometryType::TriangleMeshCuda) {
+        auto renderer_ptr = std::make_shared<glsl::TriangleMeshCudaRenderer>();
         if (renderer_ptr->AddGeometry(geometry_ptr) == false) {
             return false;
         }

@@ -5,10 +5,12 @@
 #ifndef OPEN3D_UTILSCUDA_H
 #define OPEN3D_UTILSCUDA_H
 
-#include "Common.h"
-#include "HelperCuda.h"
 #include <cstdlib>
 #include <driver_types.h>
+#include <cuda_runtime_api.h>
+
+#include "Common.h"
+#include "HelperCuda.h"
 
 namespace open3d {
 
