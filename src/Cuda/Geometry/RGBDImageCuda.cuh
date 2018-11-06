@@ -69,6 +69,10 @@ void RGBDImageCuda::Release() {
 }
 
 void RGBDImageCuda::Upload(cv::Mat &depth, cv::Mat &color) {
+    if (server_ == nullptr) {
+        server_ = std::make_shared<RGBDImageCudaServer>();
+    }
+
     depths_.Upload(depth);
     color_.Upload(color);
 

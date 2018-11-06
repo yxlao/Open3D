@@ -9,6 +9,7 @@
 #include <Cuda/Geometry/TransformCuda.h>
 #include <Cuda/Geometry/VectorCuda.h>
 #include <Cuda/Geometry/PinholeCameraCuda.h>
+#include <Cuda/Geometry/RGBDImageCuda.h>
 #include "IntegrationClasses.h"
 
 #include <memory>
@@ -220,7 +221,7 @@ public:
                                    TransformCuda &transform_camera_to_world);
     __DEVICE__ void Integrate(const Vector3i &Xlocal,
                               HashEntry<Vector3i> &target_subvolume_entry,
-                              ImageCudaServer<Vector1f> &depth,
+                              RGBDImageCudaServer &rgbd,
                               MonoPinholeCameraCuda &camera,
                               TransformCuda &transform_camera_to_world);
     __DEVICE__ Vector3f RayCasting(const Vector2i& p,
@@ -268,6 +269,7 @@ public:
      * non-wrapped allocation stuff here for UniformTSDFVolumeCudaServer **/
     void Create(int bucket_count, int value_capacity);
     void Release();
+    void Reset();
     void UpdateServer();
 
     std::pair<std::vector<Vector3i>,                      /* Keys */
@@ -290,13 +292,13 @@ public:
                          TransformCuda &transform_camera_to_world);
     void GetSubvolumesInFrustum(MonoPinholeCameraCuda &camera,
                                 TransformCuda &transform_camera_to_world);
-    void IntegrateSubvolumes(ImageCuda<Vector1f> &depth,
+    void IntegrateSubvolumes(RGBDImageCuda &rgbd,
                              MonoPinholeCameraCuda &camera,
                              TransformCuda &transform_camera_to_world);
 
     void ResetActiveSubvolumeIndices();
 
-    void Integrate(ImageCuda<Vector1f> &depth,
+    void Integrate(RGBDImageCuda &rgbd,
                    MonoPinholeCameraCuda &camera,
                    TransformCuda &transform_camera_to_world);
     void RayCasting(ImageCuda<Vector3f> &image,
@@ -337,7 +339,7 @@ void TouchSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server,
 template<size_t N>
 __GLOBAL__
 void IntegrateSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server,
-                               ImageCudaServer<Vector1f> depth,
+                               RGBDImageCudaServer depth,
                                MonoPinholeCameraCuda camera,
                                TransformCuda transform_camera_to_world);
 

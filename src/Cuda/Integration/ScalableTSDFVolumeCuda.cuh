@@ -240,8 +240,10 @@ inline bool ScalableTSDFVolumeCudaServer<N>::OnBoundary(
     const Vector3i &Xlocal, bool for_gradient) {
     return for_gradient ?
            (Xlocal(0) == 0 || Xlocal(1) == 0 || Xlocal(2) == 0
-           || Xlocal(0) >= N - 2 || Xlocal(1) >= N - 2 || Xlocal(2) >= N - 2)
-           : (Xlocal(0) == N - 1 || Xlocal(1) == N - 1 || Xlocal(2) == N - 1);
+               || Xlocal(0) >= N - 2 || Xlocal(1) >= N - 2
+               || Xlocal(2) >= N - 2)
+                        : (Xlocal(0) == N - 1 || Xlocal(1) == N - 1
+            || Xlocal(2) == N - 1);
 }
 
 template<size_t N>
@@ -250,8 +252,10 @@ inline bool ScalableTSDFVolumeCudaServer<N>::OnBoundaryf(
     const Vector3f &Xlocal, bool for_gradient) {
     return for_gradient ?
            (Xlocal(0) < 1 || Xlocal(1) < 1 || Xlocal(2) < 1
-           || Xlocal(0) >= N - 2 || Xlocal(1) >= N - 2 || Xlocal(2) >= N - 2)
-           : (Xlocal(0) >= N - 1 || Xlocal(1) >= N - 1 || Xlocal(2) >= N - 1);
+               || Xlocal(0) >= N - 2 || Xlocal(1) >= N - 2
+               || Xlocal(2) >= N - 2)
+                        : (Xlocal(0) >= N - 1 || Xlocal(1) >= N - 1
+            || Xlocal(2) >= N - 1);
 }
 
 template<size_t N>
@@ -306,9 +310,9 @@ inline Vector3f ScalableTSDFVolumeCudaServer<N>::gradient(
         UniformTSDFVolumeCudaServer<N> *subvolume1 =
             cached_subvolumes[LinearizeNeighborOffset(dXsv1)];
         float tsdf0 = (subvolume0 == nullptr) ?
-            0 : subvolume0->tsdf(BoundaryVoxelInNeighbor(X0, dXsv0));
+                      0 : subvolume0->tsdf(BoundaryVoxelInNeighbor(X0, dXsv0));
         float tsdf1 = (subvolume1 == nullptr) ?
-            0 : subvolume1->tsdf(BoundaryVoxelInNeighbor(X1, dXsv1));
+                      0 : subvolume1->tsdf(BoundaryVoxelInNeighbor(X1, dXsv1));
         n(k) = tsdf1 - tsdf0;
 
         X0(k) = X1(k) = Xlocal(k);
@@ -348,11 +352,15 @@ float ScalableTSDFVolumeCudaServer<N>::TSDFOnBoundaryAt(
             cached_subvolumes[LinearizeNeighborOffset(dXsv_k)];
 
         float tsdf_k = (subvolume == nullptr) ? 0.0f :
-            subvolume->tsdf(BoundaryVoxelInNeighbor(Xlocali_k, dXsv_k));
+                       subvolume->tsdf(BoundaryVoxelInNeighbor(Xlocali_k,
+                                                               dXsv_k));
         float weight_interp_k = (subvolume == nullptr) ? 0.0f :
-            (rneg(0) * (1 - offset_k(0)) + r(0) * offset_k(0)) *
-            (rneg(1) * (1 - offset_k(1)) + r(1) * offset_k(1)) *
-            (rneg(2) * (1 - offset_k(2)) + r(2) * offset_k(2));
+                                (rneg(0) * (1 - offset_k(0))
+                                    + r(0) * offset_k(0)) *
+                                    (rneg(1) * (1 - offset_k(1))
+                                        + r(1) * offset_k(1)) *
+                                    (rneg(2) * (1 - offset_k(2))
+                                        + r(2) * offset_k(2));
 
         sum_tsdf += weight_interp_k * tsdf_k;
         sum_weight_interp += weight_interp_k;
@@ -391,11 +399,15 @@ uchar ScalableTSDFVolumeCudaServer<N>::WeightOnBoundaryAt(
             cached_subvolumes[LinearizeNeighborOffset(dXsv_k)];
 
         float weight_k = (subvolume == nullptr) ? 0.0f :
-            subvolume->weight(BoundaryVoxelInNeighbor(Xlocali_k, dXsv_k));
+                         subvolume->weight(BoundaryVoxelInNeighbor(Xlocali_k,
+                                                                   dXsv_k));
         float weight_interp_k = (subvolume == nullptr) ? 0.0f :
-            (rneg(0) * (1 - offset_k(0)) + r(0) * offset_k(0)) *
-            (rneg(1) * (1 - offset_k(1)) + r(1) * offset_k(1)) *
-            (rneg(2) * (1 - offset_k(2)) + r(2) * offset_k(2));
+                                (rneg(0) * (1 - offset_k(0))
+                                    + r(0) * offset_k(0)) *
+                                    (rneg(1) * (1 - offset_k(1))
+                                        + r(1) * offset_k(1)) *
+                                    (rneg(2) * (1 - offset_k(2))
+                                        + r(2) * offset_k(2));
 
         sum_weight += weight_interp_k * weight_k;
         sum_weight_interp += weight_interp_k;
@@ -435,11 +447,15 @@ Vector3b ScalableTSDFVolumeCudaServer<N>::ColorOnBoundaryAt(
             cached_subvolumes[LinearizeNeighborOffset(dXsv_k)];
 
         Vector3f color_k = (subvolume == nullptr) ? Vector3f(0) :
-            subvolume->color(BoundaryVoxelInNeighbor(Xlocali_k, dXsv_k)).ToVectorf();
+                           subvolume->color(BoundaryVoxelInNeighbor(Xlocali_k,
+                                                                    dXsv_k)).ToVectorf();
         float weight_interp_k = (subvolume == nullptr) ? 0.0f :
-            (rneg(0) * (1 - offset_k(0)) + r(0) * offset_k(0)) *
-            (rneg(1) * (1 - offset_k(1)) + r(1) * offset_k(1)) *
-            (rneg(2) * (1 - offset_k(2)) + r(2) * offset_k(2));
+                                (rneg(0) * (1 - offset_k(0))
+                                    + r(0) * offset_k(0)) *
+                                    (rneg(1) * (1 - offset_k(1))
+                                        + r(1) * offset_k(1)) *
+                                    (rneg(2) * (1 - offset_k(2))
+                                        + r(2) * offset_k(2));
 
         sum_color += weight_interp_k * color_k;
         sum_weight_interp += weight_interp_k;
@@ -464,7 +480,7 @@ Vector3f ScalableTSDFVolumeCudaServer<N>::GradientOnBoundaryAt(
         X0(k) -= half_gap;
         X1(k) += half_gap;
         n(k) = TSDFOnBoundaryAt(X1, cached_subvolumes)
-             - TSDFOnBoundaryAt(X0, cached_subvolumes);
+            - TSDFOnBoundaryAt(X0, cached_subvolumes);
 
         X0(k) = X1(k) = Xlocal(k);
     }
@@ -569,7 +585,7 @@ __device__
 void ScalableTSDFVolumeCudaServer<N>::Integrate(
     const Vector3i &Xlocal,
     HashEntry<Vector3i> &entry,
-    ImageCudaServer<open3d::Vector1f> &depth,
+    RGBDImageCudaServer &rgbd,
     MonoPinholeCameraCuda &camera,
     TransformCuda &transform_camera_to_world) {
 
@@ -581,11 +597,13 @@ void ScalableTSDFVolumeCudaServer<N>::Integrate(
 
     /** TSDF **/
     if (!camera.IsValid(p)) return;
-    float d = depth.get_interp(p(0), p(1))(0);
+    float d = rgbd.depth().get_interp(p(0), p(1))(0);
 
-    float sdf = Xc(2) - d;
-    if (sdf <= -sdf_trunc_) return;
-    sdf = fminf(sdf, sdf_trunc_);
+    float tsdf = Xc(2) - d;
+    if (tsdf <= -sdf_trunc_) return;
+    tsdf = fminf(tsdf, sdf_trunc_);
+
+    Vector3b color = rgbd.color().get(int(p(0)), int(p(1)));
 
     UniformTSDFVolumeCudaServer<N> *subvolume = hash_table_
         .GetValuePtrByInternalAddr(entry.internal_addr);
@@ -594,10 +612,18 @@ void ScalableTSDFVolumeCudaServer<N>::Integrate(
     assert(subvolume != nullptr);
 #endif
 
-    float &tsdf = subvolume->tsdf(Xlocal);
-    uchar &weight = subvolume->weight(Xlocal);
-    tsdf = (tsdf * weight + sdf * 1.0f) / (weight + 1.0f);
-    weight = uchar(fminf(weight + 1.0f, 255));
+    float &tsdf_sum = subvolume->tsdf(Xlocal);
+    uchar &weight_sum = subvolume->weight(Xlocal);
+    Vector3b &color_sum = subvolume->color(Xlocal);
+
+    float w0 = 1 / (weight_sum + 1.0f);
+    float w1 = 1 - w0;
+
+    tsdf_sum = tsdf * w0 + tsdf_sum * w1;
+    color_sum = Vector3b(color(0) * w0 + color_sum(0) * w1,
+                         color(1) * w0 + color_sum(1) * w1,
+                         color(2) * w0 + color_sum(2) * w1);
+    weight_sum = uchar(fminf(weight_sum + 1.0f, 255));
 }
 
 template<size_t N>
@@ -657,7 +683,8 @@ Vector3f ScalableTSDFVolumeCudaServer<N>::RayCasting(
             Vector3f normal_surface =
                 (subvolume == nullptr || OnBoundaryf(Xlocal_surface, true)) ?
                 this->GradientAt(X_surface)
-                : subvolume->GradientAt(Xlocal_surface);
+                                                                            : subvolume->GradientAt(
+                    Xlocal_surface);
 
             return transform_camera_to_world.Inverse().Rotate(
                 transform_volume_to_world_.Rotate(normal_surface.normalized()));
@@ -764,12 +791,24 @@ void ScalableTSDFVolumeCuda<N>::Create(
     CheckCuda(cudaMalloc(&server_->active_subvolume_indices_,
                          sizeof(int) * value_capacity));
     UpdateServer();
+    Reset();
 
     const dim3 threads(THREAD_1D_UNIT);
     const dim3 blocks(DIV_CEILING(value_capacity, THREAD_1D_UNIT));
     CreateScalableTSDFVolumesKernel << < blocks, threads >> > (*server_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
+}
+
+template<size_t N>
+void ScalableTSDFVolumeCuda<N>::Reset() {
+    const int NNN = N * N * N;
+    CheckCuda(cudaMemset(server_->tsdf_memory_pool_, 0,
+                         sizeof(float) * NNN * value_capacity_));
+    CheckCuda(cudaMemset(server_->weight_memory_pool_, 0,
+                         sizeof(uchar) * NNN * value_capacity_));
+    CheckCuda(cudaMemset(server_->color_memory_pool_, 0,
+                         sizeof(Vector3b) * NNN * value_capacity_));
 }
 
 template<size_t N>
@@ -882,7 +921,7 @@ void ScalableTSDFVolumeCuda<N>::GetSubvolumesInFrustum(
 
 template<size_t N>
 void ScalableTSDFVolumeCuda<N>::IntegrateSubvolumes(
-    ImageCuda<Vector1f> &depth,
+    RGBDImageCuda &rgbd,
     MonoPinholeCameraCuda &camera,
     TransformCuda &transform_camera_to_world) {
 
@@ -890,7 +929,7 @@ void ScalableTSDFVolumeCuda<N>::IntegrateSubvolumes(
     const dim3 blocks(num_blocks);
     const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
     IntegrateSubvolumesKernel << < blocks, threads >> > (
-        *server_, *depth.server(), camera, transform_camera_to_world);
+        *server_, *rgbd.server(), camera, transform_camera_to_world);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
@@ -903,17 +942,17 @@ void ScalableTSDFVolumeCuda<N>::ResetActiveSubvolumeIndices() {
 
 template<size_t N>
 void ScalableTSDFVolumeCuda<N>::Integrate(
-    ImageCuda<Vector1f> &depth,
+    RGBDImageCuda &rgbd,
     MonoPinholeCameraCuda &camera,
     TransformCuda &transform_camera_to_world) {
 
     hash_table_.ResetLocks();
     active_subvolume_entry_array_.set_size(0);
-    TouchSubvolumes(depth, camera, transform_camera_to_world);
+    TouchSubvolumes(rgbd.depth(), camera, transform_camera_to_world);
 
     ResetActiveSubvolumeIndices();
     GetSubvolumesInFrustum(camera, transform_camera_to_world);
-    IntegrateSubvolumes(depth, camera, transform_camera_to_world);
+    IntegrateSubvolumes(rgbd, camera, transform_camera_to_world);
 }
 
 template<size_t N>

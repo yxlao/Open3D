@@ -24,9 +24,9 @@ void TouchSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server,
 template<size_t N>
 __global__
 void IntegrateSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server,
-                     ImageCudaServer<Vector1f> depth,
-                     MonoPinholeCameraCuda camera,
-                     TransformCuda transform_camera_to_world) {
+                               RGBDImageCudaServer rgbd,
+                               MonoPinholeCameraCuda camera,
+                               TransformCuda transform_camera_to_world) {
 
     const size_t entry_idx = blockIdx.x;
     const Vector3i Xlocal = Vector3i(threadIdx.x, threadIdx.y, threadIdx.z);
@@ -40,7 +40,7 @@ void IntegrateSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server,
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(entry.internal_addr >= 0);
 #endif
-    server.Integrate(Xlocal, entry, depth, camera, transform_camera_to_world);
+    server.Integrate(Xlocal, entry, rgbd, camera, transform_camera_to_world);
 }
 
 template<size_t N>

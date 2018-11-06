@@ -151,8 +151,8 @@ void ScalableMeshVolumeCudaServer<N>::AllocateVertexOnBoundary(
                 Xlocal_edge_holder, dXsv_edge_holder);
 
             vertex_indices(
-                Xlocal_edge_holder_in_neighbor,neighbor_subvolume_idx)(
-                    edge_shift[edge][3]) = VERTEX_TO_ALLOCATE;
+                Xlocal_edge_holder_in_neighbor, neighbor_subvolume_idx)(
+                edge_shift[edge][3]) = VERTEX_TO_ALLOCATE;
         }
     }
 }
@@ -174,7 +174,12 @@ void ScalableMeshVolumeCudaServer<N>::ExtractVertex(
     Vector3i axis_offset = Vector3i::Zeros();
 
     float tsdf_0 = subvolume->tsdf(Xlocal);
-    Vector3f gradient_0 = subvolume->gradient(Xlocal);
+
+    Vector3f gradient_0 = (mesh_.type_ & VertexWithNormal) ?
+                          subvolume->gradient(Xlocal) : Vector3f::Zeros();
+
+    Vector3b color_0 = (mesh_.type_ & VertexWithColor) ?
+                       subvolume->color(Xlocal) : Vector3b::Zeros();
 
 #pragma unroll 1
     for (size_t axis = 0; axis < 3; ++axis) {
@@ -197,9 +202,19 @@ void ScalableMeshVolumeCudaServer<N>::ExtractVertex(
             if (mesh_.type_ & VertexWithNormal) {
                 mesh_.vertex_normals()[voxel_vertex_indices(axis)] =
                     tsdf_volume.transform_volume_to_world_.Rotate(
-                        (1 - mu) * gradient_0
-                            + mu * subvolume->gradient(Xlocal_axis))
-                            .normalized();
+                            (1 - mu) * gradient_0
+                                + mu * subvolume->gradient(Xlocal_axis))
+                        .normalized();
+            }
+
+            if (mesh_.type_ & VertexWithColor) {
+                Vector3b color_axis = subvolume->color(Xlocal_axis);
+                mesh_.vertex_colors()[voxel_vertex_indices(axis)] =
+                    Vector3f(((1 - mu) * color_0(0) + mu * color_axis(0)) / 255,
+                             ((1 - mu) * color_0(1) + mu * color_axis(1)) / 255,
+                             ((1 - mu) * color_0(2) + mu * color_axis(2))
+                                 / 255);
+
             }
 
             axis_offset(axis) = 0;
@@ -224,7 +239,14 @@ void ScalableMeshVolumeCudaServer<N>::ExtractVertexOnBoundary(
     Vector3i axis_offset = Vector3i::Zeros();
 
     float tsdf_0 = cached_subvolumes[13]->tsdf(Xlocal);
-    Vector3f gradient_0 = tsdf_volume.gradient(Xlocal, cached_subvolumes);
+
+    Vector3f gradient_0 = (mesh_.type_ & VertexWithNormal) ?
+                          tsdf_volume.gradient(Xlocal, cached_subvolumes) :
+                          Vector3f::Zeros();
+
+    Vector3b color_0 = (mesh_.type_ & VertexWithColor) ?
+                       cached_subvolumes[13]->color(Xlocal) :
+                       Vector3b::Zeros();
 
 #pragma unroll 1
     for (size_t axis = 0; axis < 3; ++axis) {
@@ -238,8 +260,11 @@ void ScalableMeshVolumeCudaServer<N>::ExtractVertexOnBoundary(
             assert(cached_subvolumes[neighbor_idx] != nullptr);
 #endif
 
+            Vector3i Xneighbor_axis = Xlocal_axis - float(N) * dXsv_axis;
             float tsdf_axis = cached_subvolumes[neighbor_idx]->tsdf(
-                Xlocal_axis - float(N) * dXsv_axis);
+                Xneighbor_axis);
+            Vector3b color_axis = cached_subvolumes[neighbor_idx]->color(
+                Xneighbor_axis);
 
             float mu = (0 - tsdf_0) / (tsdf_axis - tsdf_0);
 
@@ -258,6 +283,13 @@ void ScalableMeshVolumeCudaServer<N>::ExtractVertexOnBoundary(
                         (1 - mu) * gradient_0
                             + mu * tsdf_volume.gradient(
                                 Xlocal_axis, cached_subvolumes)).normalized();
+            }
+
+            if (mesh_.type_ & VertexWithColor) {
+                mesh_.vertex_colors()[voxel_vertex_indices(axis)] =
+                    Vector3f(((1 - mu) * color_0(0) + mu * color_axis(0)) / 255,
+                             ((1 - mu) * color_0(1) + mu * color_axis(1)) / 255,
+                             ((1 - mu) * color_0(2) + mu * color_axis(2)) / 255);
             }
 
             axis_offset(axis) = 0;
@@ -510,7 +542,7 @@ void ScalableMeshVolumeCuda<N>::MarchingCubes(
     active_subvolumes_ = tsdf_volume.active_subvolume_entry_array().size();
     if (active_subvolumes_ <= 0) {
         PrintError("Invalid active subvolume numbers: %d !\n",
-            active_subvolumes_);
+                   active_subvolumes_);
         return;
     }
 

@@ -168,7 +168,7 @@ bool SimpleShaderForTriangleMeshCuda::PrepareBinding(const Geometry &geometry,
     }
 
     draw_arrays_mode_ = GL_TRIANGLES;
-    draw_arrays_size_ = GLsizei(mesh.triangles().size());
+    draw_arrays_size_ = GLsizei(mesh.triangles().size() * 3);
     return true;
 }
 

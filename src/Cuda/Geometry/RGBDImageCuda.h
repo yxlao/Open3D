@@ -21,11 +21,11 @@ public:
     float depth_factor_;
 
 public:
-    ImageCudaServer<Vector1f>& depth() {
+    __HOSTDEVICE__ ImageCudaServer<Vector1f>& depth() {
         return depth_;
     }
 
-    ImageCudaServer<Vector3b>& color() {
+    __HOSTDEVICE__ ImageCudaServer<Vector3b>& color() {
         return color_;
     }
 };

@@ -36,6 +36,7 @@
 #include <Geometry/PinholeCameraCuda.h>
 #include <Geometry/TransformCuda.h>
 #include <Geometry/TriangleMeshCuda.h>
+#include <Geometry/RGBDImageCuda.h>
 #include <Integration/ScalableTSDFVolumeCuda.h>
 #include <Integration/ScalableMeshVolumeCuda.h>
 
@@ -45,12 +46,15 @@ int main(int argc, char **argv)
     using namespace open3d;
     using namespace open3d::filesystem;
 
-    using namespace open3d;
-    cv::Mat im = cv::imread("../../examples/TestData/RGBD/other_formats/TUM_depth.png",
-                            cv::IMREAD_UNCHANGED);
-    ImageCuda<Vector1s> imcuda;
-    imcuda.Upload(im);
-    auto imcudaf = imcuda.ToFloat(0.0002f);
+    cv::Mat depth = cv::imread(
+        "../../examples/TestData/RGBD/depth/00000.png",
+        cv::IMREAD_UNCHANGED);
+    cv::Mat color = cv::imread(
+        "../../examples/TestData/RGBD/color/00000.jpg");
+    cv::cvtColor(color, color, cv::COLOR_BGR2RGB);
+
+    RGBDImageCuda rgbd(0.1f, 3.5f, 1000.0f);
+    rgbd.Upload(depth, color);
 
     MonoPinholeCameraCuda intrinsics;
     intrinsics.SetUp();
@@ -63,12 +67,12 @@ int main(int argc, char **argv)
     Timer timer;
     timer.Start();
     for (int i = 0; i < 10; ++i) {
-        tsdf_volume.Integrate(imcudaf, intrinsics, extrinsics);
+        tsdf_volume.Integrate(rgbd, intrinsics, extrinsics);
     }
     timer.Stop();
     PrintInfo("Integration takes: %f milliseconds\n", timer.GetDuration() / 10);
 
-    ScalableMeshVolumeCuda<8> mesher(10000, VertexWithNormal, 100000, 200000);
+    ScalableMeshVolumeCuda<8> mesher(10000, VertexWithNormalAndColor, 100000, 200000);
     mesher.active_subvolumes_ = tsdf_volume.active_subvolume_entry_array().size();
 
     PrintInfo("Active subvolumes: %d\n", mesher.active_subvolumes_);
@@ -103,10 +107,12 @@ int main(int argc, char **argv)
     }
 
     visualizer.GetRenderOption().show_coordinate_frame_ = true;
-    visualizer.GetRenderOption().mesh_color_option_ = RenderOption::MeshColorOption::Normal;
-    visualizer.GetRenderOption().mesh_show_wireframe_ = true;
+    // visualizer.GetRenderOption().mesh_color_option_ = RenderOption::MeshColorOption::Normal;
+    //visualizer.GetRenderOption().mesh_show_wireframe_ = true;
     visualizer.Run();
     visualizer.DestroyVisualizerWindow();
 
+
+    WriteTriangleMeshToPLY("wtf.ply", *mesh->Download(), true);
     return 1;
 }

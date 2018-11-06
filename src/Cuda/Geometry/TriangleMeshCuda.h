@@ -16,7 +16,7 @@ class TriangleMeshCudaServer {
 private:
     ArrayCudaServer<Vector3f> vertices_;
     ArrayCudaServer<Vector3f> vertex_normals_;
-    ArrayCudaServer<Vector3b> vertex_colors_;
+    ArrayCudaServer<Vector3f> vertex_colors_;
     ArrayCudaServer<Vector3i> triangles_;
 
 public:
@@ -31,7 +31,7 @@ public:
     __DEVICE__ inline ArrayCudaServer<Vector3f> &vertex_normals() {
         return vertex_normals_;
     }
-    __DEVICE__ inline ArrayCudaServer<Vector3b> &vertex_colors() {
+    __DEVICE__ inline ArrayCudaServer<Vector3f> &vertex_colors() {
         return vertex_colors_;
     }
     __DEVICE__ inline ArrayCudaServer<Vector3i> &triangles() {
@@ -47,7 +47,7 @@ private:
     std::shared_ptr<TriangleMeshCudaServer> server_ = nullptr;
     ArrayCuda<Vector3f> vertices_;
     ArrayCuda<Vector3f> vertex_normals_;
-    ArrayCuda<Vector3b> vertex_colors_;
+    ArrayCuda<Vector3f> vertex_colors_;
     ArrayCuda<Vector3i> triangles_;
 
 public:
@@ -96,10 +96,10 @@ public:
     const ArrayCuda<Vector3f> &vertex_normals() const {
         return vertex_normals_;
     }
-    ArrayCuda<Vector3b> &vertex_colors() {
+    ArrayCuda<Vector3f> &vertex_colors() {
         return vertex_colors_;
     }
-    const ArrayCuda<Vector3b> &vertex_colors() const {
+    const ArrayCuda<Vector3f> &vertex_colors() const {
         return vertex_colors_;
     }
     ArrayCuda<Vector3i> &triangles() {

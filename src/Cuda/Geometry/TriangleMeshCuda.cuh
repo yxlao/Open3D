@@ -144,7 +144,7 @@ void TriangleMeshCuda::Upload(TriangleMesh &mesh) {
     if (server_ == nullptr) return;
 
     std::vector<Vector3f> vertices, vertex_normals;
-    std::vector<Vector3b> vertex_colors;
+    std::vector<Vector3f> vertex_colors;
 
     if (!mesh.HasVertices() || !mesh.HasTriangles()) {
         PrintError("Empty mesh!\n");
@@ -183,7 +183,7 @@ void TriangleMeshCuda::Upload(TriangleMesh &mesh) {
     if ((type_ & VertexWithColor) && mesh.HasVertexColors()) {
         vertex_colors.resize(N);
         for (int i = 0; i < N; ++i) {
-            vertex_colors[i] = Vector3b(mesh.vertex_colors_[i](0),
+            vertex_colors[i] = Vector3f(mesh.vertex_colors_[i](0),
                                         mesh.vertex_colors_[i](1),
                                         mesh.vertex_colors_[i](2));
         }
@@ -227,7 +227,7 @@ std::shared_ptr<TriangleMesh> TriangleMeshCuda::Download() {
     }
 
     if (HasVertexColors()) {
-        std::vector<Vector3b> vertex_colors = vertex_colors_.Download();
+        std::vector<Vector3f> vertex_colors = vertex_colors_.Download();
         mesh->vertex_colors_.resize(N);
         for (int i = 0; i < N; ++i) {
             mesh->vertex_colors_[i] = Eigen::Vector3d(vertex_colors[i](0),
