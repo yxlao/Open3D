@@ -539,6 +539,8 @@ void ScalableMeshVolumeCuda<N>::MarchingCubes(
 
     mesh_.Reset();
     active_subvolumes_ = tsdf_volume.active_subvolume_entry_array().size();
+    PrintInfo("Active subvolumes: %d\n", active_subvolumes_);
+
     if (active_subvolumes_ <= 0) {
         PrintError("Invalid active subvolume numbers: %d !\n",
                    active_subvolumes_);

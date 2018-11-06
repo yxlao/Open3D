@@ -35,6 +35,9 @@ TEST(ScalableTSDFVolumeCuda, TouchSubvolumes) {
 
     float voxel_length = 0.01f;
     TransformCuda extrinsics = TransformCuda::Identity();
+    extrinsics(0, 3) = 10.0f;
+    extrinsics(1, 3) = -10.0f;
+    extrinsics(2, 3) = 1.0f;
     ScalableTSDFVolumeCuda<8> volume(10000, 200000,
                                      voxel_length, 3 * voxel_length,
                                      extrinsics);
@@ -109,6 +112,10 @@ TEST(ScalableTSDFVolumeCuda, RayCasting) {
 
     float voxel_length = 0.01f;
     TransformCuda extrinsics = TransformCuda::Identity();
+    extrinsics(0, 3) = 10.0f;
+    extrinsics(1, 3) = -10.0f;
+    extrinsics(2, 3) = 1.0f;
+
     ScalableTSDFVolumeCuda<8> volume(10000, 200000,
                                      voxel_length, 3 * voxel_length,
                                      extrinsics);

@@ -111,9 +111,14 @@ int main(int argc, char **argv)
     visualizer.GetRenderOption().mesh_show_back_face_ = true;
 
     //visualizer.GetRenderOption().mesh_show_wireframe_ = true;
-    visualizer.Run();
-    visualizer.DestroyVisualizerWindow();
+    visualizer.BuildUtilities();
+    visualizer.UpdateWindowTitle();
 
+    bool should_close = false;
+    while (! should_close) {
+        should_close = !visualizer.PollEvents();
+    }
+    visualizer.DestroyVisualizerWindow();
 
     WriteTriangleMeshToPLY("wtf.ply", *mesh->Download(), true);
     return 1;

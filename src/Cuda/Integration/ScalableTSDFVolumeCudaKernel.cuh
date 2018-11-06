@@ -36,7 +36,8 @@ void IntegrateSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server,
         && Xlocal(0) < N && Xlocal(1) < N && Xlocal(2) < N);
 #endif
 
-    HashEntry<Vector3i> &entry = server.active_subvolume_entry_array().get(entry_idx);
+    HashEntry<Vector3i>
+        &entry = server.active_subvolume_entry_array().get(entry_idx);
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(entry.internal_addr >= 0);
 #endif
@@ -82,7 +83,6 @@ void CreateScalableTSDFVolumesKernel(ScalableTSDFVolumeCudaServer<N> server) {
     subvolume.transform_world_to_volume_ = server.transform_world_to_volume_;
 }
 
-
 template<size_t N>
 __global__
 void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
@@ -100,7 +100,9 @@ void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
             bucket_base_idx + i);
         if (entry.internal_addr != NULLPTR_CUDA) {
             Vector3f X = server.voxelf_local_to_global(Vector3f(0), entry.key);
-            if (camera.IsInFrustum(server.voxelf_to_world(X))) {
+            if (camera.IsInFrustum(
+                transform_camera_to_world.Inverse()
+                    * server.voxelf_to_world(X))) {
                 server.ActivateSubvolume(entry);
             }
         }
@@ -115,10 +117,40 @@ void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
 
         HashEntry<Vector3i> &entry = linked_list_node.data;
         Vector3f X = server.voxelf_local_to_global(Vector3f(0), entry.key);
-        if (camera.IsInFrustum(server.voxelf_to_world(X))) {
+        if (camera.IsInFrustum(
+            transform_camera_to_world.Inverse() * server.voxelf_to_world(X))) {
             server.ActivateSubvolume(entry);
         }
 
+        node_ptr = linked_list_node.next_node_ptr;
+    }
+}
+
+template<size_t N>
+__global__
+void GetAllSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server) {
+    const int bucket_idx = threadIdx.x + blockIdx.x * blockDim.x;
+    if (bucket_idx >= server.bucket_count_) return;
+
+    auto &hash_table = server.hash_table();
+
+    int bucket_base_idx = bucket_idx * BUCKET_SIZE;
+#pragma unroll 1
+    for (size_t i = 0; i < BUCKET_SIZE; ++i) {
+        HashEntry<Vector3i> &entry = hash_table.entry_array().get(
+            bucket_base_idx + i);
+        if (entry.internal_addr != NULLPTR_CUDA) {
+            server.ActivateSubvolume(entry);
+        }
+    }
+
+    LinkedListCudaServer<HashEntry<Vector3i>> &linked_list =
+        hash_table.entry_list_array().get(bucket_idx);
+    int node_ptr = linked_list.head_node_ptr();
+    while (node_ptr != NULLPTR_CUDA) {
+        LinkedListNodeCuda<HashEntry<Vector3i>> &linked_list_node =
+            linked_list.get_node(node_ptr);
+        server.ActivateSubvolume(linked_list_node.data);
         node_ptr = linked_list_node.next_node_ptr;
     }
 }

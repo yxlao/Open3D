@@ -554,7 +554,7 @@ void ScalableTSDFVolumeCudaServer<N>::TouchSubvolume(
     float d = depth.get(p(0), p(1))(0);
 
     /** TODO: wrap the criteria in depth image (RGBD-Image) **/
-    if (d < 0.1f || d > 3.0f) return;
+    if (d < 0.1f || d > 3.5f) return;
 
     Vector3f Xw_near = transform_camera_to_world *
         camera.InverseProjection(p, d - sdf_trunc_);
@@ -683,7 +683,8 @@ Vector3f ScalableTSDFVolumeCudaServer<N>::RayCasting(
             Vector3f normal_surface =
                 (subvolume == nullptr || OnBoundaryf(Xlocal_surface, true)) ?
                 this->GradientAt(X_surface)
-                : subvolume->GradientAt(Xlocal_surface);
+                                                                            : subvolume->GradientAt(
+                    Xlocal_surface);
 
             return transform_camera_to_world.Inverse().Rotate(
                 transform_volume_to_world_.Rotate(normal_surface)).normalized();
@@ -914,6 +915,15 @@ void ScalableTSDFVolumeCuda<N>::GetSubvolumesInFrustum(
     const dim3 threads(THREAD_1D_UNIT);
     GetSubvolumesInFrustumKernel << < blocks, threads >> > (
         *server_, camera, transform_camera_to_world);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+}
+
+template<size_t N>
+void ScalableTSDFVolumeCuda<N>::GetAllSubvolumes() {
+    const dim3 blocks(bucket_count_);
+    const dim3 threads(THREAD_1D_UNIT);
+    GetAllSubvolumesKernel << < blocks, threads >> > (*server_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }

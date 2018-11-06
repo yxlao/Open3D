@@ -292,6 +292,7 @@ public:
                          TransformCuda &transform_camera_to_world);
     void GetSubvolumesInFrustum(MonoPinholeCameraCuda &camera,
                                 TransformCuda &transform_camera_to_world);
+    void GetAllSubvolumes();
     void IntegrateSubvolumes(RGBDImageCuda &rgbd,
                              MonoPinholeCameraCuda &camera,
                              TransformCuda &transform_camera_to_world);
@@ -348,6 +349,10 @@ __GLOBAL__
 void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
                                   MonoPinholeCameraCuda camera,
                                   TransformCuda transform_camera_to_world);
+
+template<size_t N>
+__GLOBAL__
+void GetAllSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server);
 
 template<size_t N>
 __GLOBAL__

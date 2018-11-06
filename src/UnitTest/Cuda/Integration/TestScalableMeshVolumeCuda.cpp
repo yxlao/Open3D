@@ -9,7 +9,7 @@
 
 #include "UnitTest.h"
 
-TEST(ScalableMeshVolumeCuda, VertexAllocation) {
+TEST(ScalableMeshVolumeCuda, MarchingCubes) {
     using namespace open3d;
 
     cv::Mat depth = cv::imread(
@@ -27,6 +27,9 @@ TEST(ScalableMeshVolumeCuda, VertexAllocation) {
 
     float voxel_length = 0.01f;
     TransformCuda extrinsics = TransformCuda::Identity();
+    extrinsics(0, 3) = 10.0f;
+    extrinsics(1, 3) = -10.0f;
+    extrinsics(2, 3) = 1.0f;
     ScalableTSDFVolumeCuda<8> tsdf_volume(10000, 200000,
                                           voxel_length, 3 * voxel_length,
                                           extrinsics);
@@ -38,6 +41,7 @@ TEST(ScalableMeshVolumeCuda, VertexAllocation) {
     timer.Stop();
     PrintInfo("Integration takes: %f milliseconds\n", timer.GetDuration() / 10);
 
+    tsdf_volume.GetAllSubvolumes();
     ScalableMeshVolumeCuda<8> mesher(10000, VertexWithNormalAndColor, 100000, 200000);
     mesher.active_subvolumes_ = tsdf_volume.active_subvolume_entry_array().size();
 
