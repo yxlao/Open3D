@@ -5,6 +5,7 @@
 #pragma once
 
 #include "IntegrationClasses.h"
+#include <Cuda/Geometry/RGBDImageCuda.h>
 #include <Cuda/Geometry/VectorCuda.h>
 #include <Cuda/Geometry/ImageCuda.h>
 #include <Cuda/Geometry/PinholeCameraCuda.h>
@@ -96,7 +97,7 @@ public:
 
 public:
     __DEVICE__ void Integrate(const Vector3i &X,
-                              ImageCudaServer<Vector1f> &depth,
+                              RGBDImageCudaServer &rgbd,
                               MonoPinholeCameraCuda &camera,
                               TransformCuda &transform_camera_to_world);
 
@@ -140,7 +141,7 @@ public:
     DownloadVolume();
 
 public:
-    void Integrate(ImageCuda<Vector1f> &depth,
+    void Integrate(RGBDImageCuda &rgbd,
                    MonoPinholeCameraCuda &camera,
                    TransformCuda &transform_camera_to_world);
     void RayCasting(ImageCuda<Vector3f> &image,
@@ -159,7 +160,7 @@ public:
 template<size_t N>
 __GLOBAL__
 void IntegrateKernel(UniformTSDFVolumeCudaServer<N> server,
-                     ImageCudaServer<Vector1f> depth,
+                     RGBDImageCudaServer depth,
                      MonoPinholeCameraCuda camera,
                      TransformCuda transform_camera_to_world);
 

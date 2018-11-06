@@ -599,7 +599,7 @@ void ScalableTSDFVolumeCudaServer<N>::Integrate(
     if (!camera.IsValid(p)) return;
     float d = rgbd.depth().get_interp(p(0), p(1))(0);
 
-    float tsdf = Xc(2) - d;
+    float tsdf = d - Xc(2);
     if (tsdf <= -sdf_trunc_) return;
     tsdf = fminf(tsdf, sdf_trunc_);
 
@@ -663,7 +663,7 @@ Vector3f ScalableTSDFVolumeCudaServer<N>::RayCasting(
         float tsdf_curr = subvolume == nullptr ? 0 : subvolume->tsdf(Xlocal_t);
         float step_size = tsdf_curr == 0 ?
                           (subvolume == nullptr ?
-                           int(N) * voxel_length_ * 0.8f : sdf_trunc_)
+                           int(N) * voxel_length_ * 0.5f : sdf_trunc_)
                                          : fmaxf(tsdf_curr, voxel_length_);
 
         if (tsdf_prev > 0 && tsdf_curr < 0) { /** Zero crossing **/
@@ -683,11 +683,10 @@ Vector3f ScalableTSDFVolumeCudaServer<N>::RayCasting(
             Vector3f normal_surface =
                 (subvolume == nullptr || OnBoundaryf(Xlocal_surface, true)) ?
                 this->GradientAt(X_surface)
-                                                                            : subvolume->GradientAt(
-                    Xlocal_surface);
+                : subvolume->GradientAt(Xlocal_surface);
 
             return transform_camera_to_world.Inverse().Rotate(
-                transform_volume_to_world_.Rotate(normal_surface.normalized()));
+                transform_volume_to_world_.Rotate(normal_surface)).normalized();
         }
 
         tsdf_prev = tsdf_curr;

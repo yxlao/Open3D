@@ -176,7 +176,7 @@ template<size_t N>
 __device__
 void UniformTSDFVolumeCudaServer<N>::Integrate(
     const Vector3i &X,
-    ImageCudaServer<Vector1f> &depth,
+    RGBDImageCudaServer &rgbd,
     MonoPinholeCameraCuda &camera,
     TransformCuda &transform_camera_to_world) {
 
@@ -187,18 +187,26 @@ void UniformTSDFVolumeCudaServer<N>::Integrate(
 
     /** TSDF **/
     if (!camera.IsValid(p)) return;
-    float d = depth.get_interp(p(0), p(1))(0);
+    float d = rgbd.depth().get_interp(p(0), p(1))(0);
 
-    float sdf = Xc(2) - d;
-    if (sdf <= -sdf_trunc_) return;
-    sdf = fminf(sdf, sdf_trunc_);
+    float tsdf = d - Xc(2);
+    if (tsdf <= -sdf_trunc_) return;
+    tsdf = fminf(tsdf, sdf_trunc_);
 
-    /** Weight average **/
-    /** TODO: color **/
-    float &tsdf = this->tsdf(X);
-    uchar &weight = this->weight(X);
-    tsdf = (tsdf * weight + sdf * 1.0f) / (weight + 1.0f);
-    weight = uchar(fminf(weight + 1.0f, 255));
+    Vector3b color = rgbd.color().get(int(p(0)), int(p(1)));
+
+    float &tsdf_sum = this->tsdf(X);
+    uchar &weight_sum = this->weight(X);
+    Vector3b &color_sum = this->color(X);
+
+    float w0 = 1 / (weight_sum + 1.0f);
+    float w1 = 1 - w0;
+
+    tsdf_sum = tsdf * w0 + tsdf_sum * w1;
+    color_sum = Vector3b(color(0) * w0 + color_sum(0) * w1,
+                         color(1) * w0 + color_sum(1) * w1,
+                         color(2) * w0 + color_sum(2) * w1);
+    weight_sum = uchar(fminf(weight_sum + 1.0f, 255));
 }
 
 template<size_t N>
@@ -214,7 +222,7 @@ Vector3f UniformTSDFVolumeCudaServer<N>::RayCasting(
 
     /** TODO: throw it into parameters **/
     const float t_min = 0.2f / ray_c(2);
-    const float t_max = 3.0f / ray_c(2);
+    const float t_max = 3.5f / ray_c(2);
 
     const Vector3f camera_origin_v = transform_world_to_volume_ *
         (transform_camera_to_world * Vector3f::Zeros());
@@ -243,8 +251,9 @@ Vector3f UniformTSDFVolumeCudaServer<N>::RayCasting(
             Vector3f Xv_surface_t = camera_origin_v + t_intersect * ray_v;
             Vector3f X_surface_t = volume_to_voxelf(Xv_surface_t);
             Vector3f normal_v_t = GradientAt(X_surface_t).normalized();
+
             return transform_camera_to_world.Inverse().Rotate(
-                transform_volume_to_world_.Rotate(normal_v_t));
+                transform_volume_to_world_.Rotate(normal_v_t)).normalized();
         }
 
         tsdf_prev = tsdf_curr;
@@ -418,14 +427,14 @@ inline void UniformTSDFVolumeCudaServer<N>::Create(
 }
 
 template<size_t N>
-void UniformTSDFVolumeCuda<N>::Integrate(ImageCuda<open3d::Vector1f> &depth,
+void UniformTSDFVolumeCuda<N>::Integrate(RGBDImageCuda &rgbd,
                                          MonoPinholeCameraCuda &camera,
                                          TransformCuda &transform_camera_to_world) {
     const int num_blocks = DIV_CEILING(N, THREAD_3D_UNIT);
     const dim3 blocks(num_blocks, num_blocks, num_blocks);
     const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
     IntegrateKernel << < blocks, threads >> > (
-        *server_, *depth.server(), camera, transform_camera_to_world);
+        *server_, *rgbd.server(), camera, transform_camera_to_world);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }

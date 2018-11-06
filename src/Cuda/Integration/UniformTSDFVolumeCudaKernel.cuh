@@ -13,7 +13,7 @@ namespace open3d {
 template<size_t N>
 __global__
 void IntegrateKernel(UniformTSDFVolumeCudaServer<N> server,
-                     ImageCudaServer<Vector1f> depth,
+                     RGBDImageCudaServer rgbd,
                      MonoPinholeCameraCuda camera,
                      TransformCuda transform_camera_to_world) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
@@ -23,7 +23,7 @@ void IntegrateKernel(UniformTSDFVolumeCudaServer<N> server,
     if (x >= N || y >= N || z >= N) return;
 
     Vector3i X = Vector3i(x, y, z);
-    server.Integrate(X, depth, camera, transform_camera_to_world);
+    server.Integrate(X, rgbd, camera, transform_camera_to_world);
 }
 
 template<size_t N>

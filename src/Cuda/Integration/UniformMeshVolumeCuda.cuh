@@ -70,7 +70,12 @@ void UniformMeshVolumeCudaServer<N>::ExtractVertex(
     Vector3i axis_offset = Vector3i::Zeros();
 
     float tsdf_0 = tsdf_volume.tsdf(X);
-    Vector3f gradient_0 = tsdf_volume.gradient(X);
+
+    Vector3f gradient_0 = (mesh_.type_ & VertexWithNormal) ?
+        tsdf_volume.gradient(X) : Vector3f::Zeros();
+
+    Vector3b color_0 = (mesh_.type_ & VertexWithColor) ?
+        tsdf_volume.color(X) : Vector3b::Zeros();
 
 #pragma unroll 1
     for (size_t axis = 0; axis < 3; ++axis) {
@@ -78,8 +83,8 @@ void UniformMeshVolumeCudaServer<N>::ExtractVertex(
             axis_offset(axis) = 1;
             Vector3i X_axis = X + axis_offset;
 
-            float tsdf_i = tsdf_volume.tsdf(X_axis);
-            float mu = (0 - tsdf_0) / (tsdf_i - tsdf_0);
+            float tsdf_axis = tsdf_volume.tsdf(X_axis);
+            float mu = (0 - tsdf_0) / (tsdf_axis - tsdf_0);
 
             voxel_vertex_indices(axis) = mesh_.vertices().push_back(
                 tsdf_volume.voxelf_to_world(
@@ -93,6 +98,15 @@ void UniformMeshVolumeCudaServer<N>::ExtractVertex(
                     tsdf_volume.transform_volume_to_world_.Rotate(
                         (1 - mu) * gradient_0
                             + mu * tsdf_volume.gradient(X_axis)).normalized();
+            }
+
+            if (mesh_.type_ & VertexWithColor) {
+                assert(mu >= 0 && mu <= 1);
+                Vector3b &color_axis = tsdf_volume.color(X_axis);
+                mesh_.vertex_colors()[voxel_vertex_indices(axis)] =
+                    Vector3f(((1 - mu) * color_0(0) + mu * color_axis(0)) / 255.0f,
+                             ((1 - mu) * color_0(1) + mu * color_axis(1)) / 255.0f,
+                             ((1 - mu) * color_0(2) + mu * color_axis(2)) / 255.0f);
             }
 
             axis_offset(axis) = 0;

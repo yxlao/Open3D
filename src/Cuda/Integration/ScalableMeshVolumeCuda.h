@@ -33,7 +33,7 @@ public:
         int subvolume_idx) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
         assert(Xlocal(0) >= 0 && Xlocal(1) >= 0 && Xlocal(2) >= 0 &&
-            target_subvolume_idx >= 0);
+            subvolume_idx >= 0);
         assert(Xlocal(0) < N && Xlocal(1) < N && Xlocal(2) < N);
 #endif
         return int(Xlocal(2) * (N * N) + Xlocal(1) * N + Xlocal(0)

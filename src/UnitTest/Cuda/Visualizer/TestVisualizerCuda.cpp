@@ -107,7 +107,9 @@ int main(int argc, char **argv)
     }
 
     visualizer.GetRenderOption().show_coordinate_frame_ = true;
-    // visualizer.GetRenderOption().mesh_color_option_ = RenderOption::MeshColorOption::Normal;
+    visualizer.GetRenderOption().mesh_color_option_ =RenderOption::MeshColorOption::Normal;
+    visualizer.GetRenderOption().mesh_show_back_face_ = true;
+
     //visualizer.GetRenderOption().mesh_show_wireframe_ = true;
     visualizer.Run();
     visualizer.DestroyVisualizerWindow();

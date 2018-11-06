@@ -65,11 +65,12 @@ TEST(UniformTSDFVolumeCuda, UploadAndDownload) {
 
 TEST(UniformTSDFVolumeCuda, RayCasting) {
     using namespace open3d;
-    cv::Mat im = cv::imread("../../examples/TestData/RGBD/depth/00000.png",
+    cv::Mat depth = cv::imread("../../examples/TestData/RGBD/depth/00000.png",
                             cv::IMREAD_UNCHANGED);
-    ImageCuda<open3d::Vector1s> imcuda;
-    imcuda.Upload(im);
-    auto imcudaf = imcuda.ToFloat(0.001f);
+    cv::Mat color = cv::imread("../../examples/TestData/RGBD/color/00000.jpg");
+
+    RGBDImageCuda rgbd;
+    rgbd.Upload(depth, color);
 
     MonoPinholeCameraCuda intrinsics;
     intrinsics.SetUp();
@@ -81,11 +82,11 @@ TEST(UniformTSDFVolumeCuda, RayCasting) {
 
     TransformCuda extrinsics = TransformCuda::Identity();
     for (int i = 0; i < 10; ++i) {
-        volume.Integrate(imcudaf, intrinsics, extrinsics);
+        volume.Integrate(rgbd, intrinsics, extrinsics);
     }
 
     ImageCuda<Vector3f> raycaster;
-    raycaster.Create(imcuda.width(), imcuda.height());
+    raycaster.Create(depth.cols, depth.rows);
 
     Timer timer;
     int iteration_times = 100;

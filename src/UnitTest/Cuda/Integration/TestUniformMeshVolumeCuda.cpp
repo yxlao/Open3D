@@ -4,6 +4,7 @@
 
 #include <Cuda/Integration/UniformTSDFVolumeCuda.h>
 #include <Cuda/Integration/UniformMeshVolumeCuda.h>
+#include <Cuda/Geometry/RGBDImageCuda.h>
 #include <Cuda/Geometry/VectorCuda.h>
 #include <Core/Core.h>
 #include <Eigen/Eigen>
@@ -16,11 +17,13 @@
 
 TEST(UniformMeshVolumeCuda, MarchingCubes) {
     using namespace open3d;
-    cv::Mat im = cv::imread("../../examples/TestData/RGBD/depth/00000.png",
+    cv::Mat depth = cv::imread("../../examples/TestData/RGBD/depth/00000.png",
                             cv::IMREAD_UNCHANGED);
-    ImageCuda<open3d::Vector1s> imcuda;
-    imcuda.Upload(im);
-    auto imcudaf = imcuda.ToFloat(0.001f);
+    cv::Mat color = cv::imread("../../examples/TestData/RGBD/color/00000.jpg");
+    cv::cvtColor(color, color, cv::COLOR_BGR2RGB);
+
+    RGBDImageCuda rgbd(0.1f, 3.0f, 1000.0f);
+    rgbd.Upload(depth, color);
 
     MonoPinholeCameraCuda default_camera;
     default_camera.SetUp();
@@ -31,23 +34,19 @@ TEST(UniformMeshVolumeCuda, MarchingCubes) {
     UniformTSDFVolumeCuda<512> volume(voxel_length, voxel_length * 3, transform);
 
     TransformCuda extrinsics = TransformCuda::Identity();
-    volume.Integrate(imcudaf, default_camera, extrinsics);
+    volume.Integrate(rgbd, default_camera, extrinsics);
 
-    UniformMeshVolumeCuda<512> mesher(VertexWithNormal, 100000, 100000);
+    UniformMeshVolumeCuda<512> mesher(VertexWithNormalAndColor, 100000, 100000);
 
     Timer timer;
     timer.Start();
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 1; ++i) {
         mesher.MarchingCubes(volume);
     }
     timer.Stop();
     PrintInfo("MarchingCubes time: %f milliseconds\n", timer.GetDuration() / 10);
 
     std::shared_ptr<TriangleMesh> mesh = mesher.mesh().Download();
-    PrintInfo("triangle.size(): %d, vertices.size(): %d, normals.size(): %d\n",
-              mesh->triangles_.size(),
-              mesh->vertices_.size(),
-              mesh->vertex_normals_.size());
     WriteTriangleMeshToPLY("test_uniform.ply", *mesh, true);
 }
 

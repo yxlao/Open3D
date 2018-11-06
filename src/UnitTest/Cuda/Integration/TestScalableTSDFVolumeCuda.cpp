@@ -20,11 +20,15 @@ TEST(ScalableTSDFVolumeCuda, Create) {
 
 TEST(ScalableTSDFVolumeCuda, TouchSubvolumes) {
     using namespace open3d;
-    cv::Mat im = cv::imread("../../examples/TestData/RGBD/depth/00000.png",
-                            cv::IMREAD_UNCHANGED);
-    ImageCuda<Vector1s> imcuda;
-    imcuda.Upload(im);
-    auto imcudaf = imcuda.ToFloat(0.001f);
+    cv::Mat depth = cv::imread(
+        "../../examples/TestData/RGBD/depth/00000.png",
+        cv::IMREAD_UNCHANGED);
+    cv::Mat color = cv::imread(
+        "../../examples/TestData/RGBD/color/00000.jpg");
+    cv::cvtColor(color, color, cv::COLOR_BGR2RGB);
+
+    RGBDImageCuda rgbd(0.1f, 3.5f, 1000.0f);
+    rgbd.Upload(depth, color);
 
     MonoPinholeCameraCuda intrinsics;
     intrinsics.SetUp();
@@ -35,7 +39,7 @@ TEST(ScalableTSDFVolumeCuda, TouchSubvolumes) {
                                      voxel_length, 3 * voxel_length,
                                      extrinsics);
 
-    volume.TouchSubvolumes(imcudaf, intrinsics, extrinsics);
+    volume.TouchSubvolumes(rgbd.depth(), intrinsics, extrinsics);
     volume.GetSubvolumesInFrustum(intrinsics, extrinsics);
 
     auto entry_vector = volume.active_subvolume_entry_array().Download();
@@ -47,11 +51,15 @@ TEST(ScalableTSDFVolumeCuda, TouchSubvolumes) {
 
 TEST(ScalableTSDFVolumeCuda, Integration) {
     using namespace open3d;
-    cv::Mat im = cv::imread("../../examples/TestData/RGBD/depth/00000.png",
-                            cv::IMREAD_UNCHANGED);
-    ImageCuda<Vector1s> imcuda;
-    imcuda.Upload(im);
-    auto imcudaf = imcuda.ToFloat(0.001f);
+    cv::Mat depth = cv::imread(
+        "../../examples/TestData/RGBD/depth/00000.png",
+        cv::IMREAD_UNCHANGED);
+    cv::Mat color = cv::imread(
+        "../../examples/TestData/RGBD/color/00000.jpg");
+    cv::cvtColor(color, color, cv::COLOR_BGR2RGB);
+
+    RGBDImageCuda rgbd(0.1f, 3.5f, 1000.0f);
+    rgbd.Upload(depth, color);
 
     MonoPinholeCameraCuda intrinsics;
     intrinsics.SetUp();
@@ -64,7 +72,7 @@ TEST(ScalableTSDFVolumeCuda, Integration) {
     Timer timer;
     timer.Start();
     for (int i = 0; i < 10; ++i) {
-        volume.Integrate(imcudaf, intrinsics, extrinsics);
+        volume.Integrate(rgbd, intrinsics, extrinsics);
     }
     timer.Stop();
     PrintInfo("Integrations takes %f milliseconds\n", timer.GetDuration() / 10);
@@ -86,11 +94,15 @@ TEST(ScalableTSDFVolumeCuda, Integration) {
 
 TEST(ScalableTSDFVolumeCuda, RayCasting) {
     using namespace open3d;
-    cv::Mat im = cv::imread("../../examples/TestData/RGBD/depth/00000.png",
-                            cv::IMREAD_UNCHANGED);
-    ImageCuda<Vector1s> imcuda;
-    imcuda.Upload(im);
-    auto imcudaf = imcuda.ToFloat(0.001f);
+    cv::Mat depth = cv::imread(
+        "../../examples/TestData/RGBD/depth/00000.png",
+        cv::IMREAD_UNCHANGED);
+    cv::Mat color = cv::imread(
+        "../../examples/TestData/RGBD/color/00000.jpg");
+    cv::cvtColor(color, color, cv::COLOR_BGR2RGB);
+
+    RGBDImageCuda rgbd(0.1f, 3.5f, 1000.0f);
+    rgbd.Upload(depth, color);
 
     MonoPinholeCameraCuda intrinsics;
     intrinsics.SetUp();
@@ -101,13 +113,13 @@ TEST(ScalableTSDFVolumeCuda, RayCasting) {
                                      voxel_length, 3 * voxel_length,
                                      extrinsics);
 
-    ImageCuda<Vector3f> raycaster(imcuda.width(), imcuda.height());
+    ImageCuda<Vector3f> raycaster(depth.cols, depth.rows);
 
     Timer timer;
     const int iters = 10;
     float time = 0;
     for (int i = 0; i < iters; ++i) {
-        volume.Integrate(imcudaf, intrinsics, extrinsics);
+        volume.Integrate(rgbd, intrinsics, extrinsics);
         timer.Start();
         volume.RayCasting(raycaster, intrinsics, extrinsics);
         timer.Stop();

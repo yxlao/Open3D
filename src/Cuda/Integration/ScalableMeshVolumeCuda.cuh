@@ -212,8 +212,7 @@ void ScalableMeshVolumeCudaServer<N>::ExtractVertex(
                 mesh_.vertex_colors()[voxel_vertex_indices(axis)] =
                     Vector3f(((1 - mu) * color_0(0) + mu * color_axis(0)) / 255,
                              ((1 - mu) * color_0(1) + mu * color_axis(1)) / 255,
-                             ((1 - mu) * color_0(2) + mu * color_axis(2))
-                                 / 255);
+                             ((1 - mu) * color_0(2) + mu * color_axis(2)) / 255);
 
             }
 

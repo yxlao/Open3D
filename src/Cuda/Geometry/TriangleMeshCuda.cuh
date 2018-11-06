@@ -230,9 +230,12 @@ std::shared_ptr<TriangleMesh> TriangleMeshCuda::Download() {
         std::vector<Vector3f> vertex_colors = vertex_colors_.Download();
         mesh->vertex_colors_.resize(N);
         for (int i = 0; i < N; ++i) {
-            mesh->vertex_colors_[i] = Eigen::Vector3d(vertex_colors[i](0),
-                                                      vertex_colors[i](1),
-                                                      vertex_colors[i](2));
+            Eigen::Vector3d colord = Eigen::Vector3d(vertex_colors[i](0),
+                                                     vertex_colors[i](1),
+                                                     vertex_colors[i](2));
+            mesh->vertex_colors_[i] = Eigen::Vector3d(min(colord(0), 1.0),
+                                                      min(colord(1), 1.0),
+                                                      min(colord(2), 1.0));
         }
     }
 
