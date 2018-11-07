@@ -15,6 +15,10 @@ add_executable(TestScalableMeshVolumeCuda TestScalableMeshVolumeCuda.cpp)
 target_link_libraries(TestScalableMeshVolumeCuda ${CMAKE_PROJECT_NAME}
         ${GTEST_LIBRARIES} pthread)
 
-add_executable(TestSystem TestSystem.cpp)
-target_link_libraries(TestSystem ${CMAKE_PROJECT_NAME}
+add_executable(TestScalableSystem TestScalableSystem.cpp)
+target_link_libraries(TestScalableSystem ${CMAKE_PROJECT_NAME}
+        ${GTEST_LIBRARIES} pthread)
+
+add_executable(TestUniformSystem TestUniformSystem.cpp)
+target_link_libraries(TestUniformSystem ${CMAKE_PROJECT_NAME}
         ${GTEST_LIBRARIES} pthread)

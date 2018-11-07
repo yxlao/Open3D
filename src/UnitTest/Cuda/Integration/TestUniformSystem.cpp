@@ -31,9 +31,9 @@
 #include <IO/IO.h>
 #include <Visualization/Visualization.h>
 
-#include <Cuda/Integration/ScalableTSDFVolumeCuda.h>
+#include <Cuda/Integration/UniformTSDFVolumeCuda.h>
 #include <opencv2/opencv.hpp>
-#include <Cuda/Integration/ScalableMeshVolumeCuda.h>
+#include <Cuda/Integration/UniformMeshVolumeCuda.h>
 
 int main(int argc, char *argv[])
 {
@@ -61,27 +61,15 @@ int main(int argc, char *argv[])
 
     float voxel_length = 0.01f;
     TransformCuda extrinsics = TransformCuda::Identity();
-    Eigen::Matrix<float, 4, 4, Eigen::DontAlign> extrinsicsf0;
-    Eigen::Matrix4d extrinsics_from_file =
-        camera_trajectory->extrinsic_[0];
-    for (int i = 0; i < 4; ++i) {
-        for (int j = 0; j < 4; ++j) {
-            extrinsicsf0(i, j) = extrinsics_from_file(i, j);
-        }
-    }
-
-    extrinsicsf0 = extrinsicsf0.inverse().eval();
-    extrinsics.FromEigen(extrinsicsf0);
-    ScalableTSDFVolumeCuda<8> tsdf_volume(10000, 200000,
-                                          voxel_length, 3 * voxel_length,
-                                          extrinsics);
+    extrinsics.SetTranslation(Vector3f(-voxel_length * 256));
+    UniformTSDFVolumeCuda<512> tsdf_volume(voxel_length, 3 * voxel_length,
+                                           extrinsics);
 
     FPSTimer timer("Process RGBD stream", (int)camera_trajectory->extrinsic_.size());
 
     RGBDImageCuda rgbd(0.1f, 4.0f, 1000.0f);
 
-    ScalableMeshVolumeCuda<8> mesher(48000,
-                                     VertexWithNormalAndColor, 4000000, 8000000);
+    UniformMeshVolumeCuda<512> mesher(VertexWithNormalAndColor, 4000000, 8000000);
 
     VisualizerWithCustomAnimation visualizer;
     if (! visualizer.CreateVisualizerWindow("test", 640, 480, 0, 0)) {
@@ -134,7 +122,6 @@ int main(int argc, char *argv[])
             index++;
 
             if (index == (int)camera_trajectory->extrinsic_.size()) {
-                tsdf_volume.GetAllSubvolumes();
                 mesher.MarchingCubes(tsdf_volume);
                 WriteTriangleMeshToPLY("system.ply", *mesher.mesh().Download());
                 save_index++;
