@@ -37,7 +37,7 @@ void IntegrateSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server,
 #endif
 
     HashEntry<Vector3i>
-        &entry = server.active_subvolume_entry_array().get(entry_idx);
+        &entry = server.active_subvolume_entry_array().at(entry_idx);
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(entry.internal_addr >= 0);
 #endif
@@ -68,7 +68,7 @@ void CreateScalableTSDFVolumesKernel(ScalableTSDFVolumeCudaServer<N> server) {
 
     const size_t offset = (N * N * N) * index;
     UniformTSDFVolumeCudaServer<N> &subvolume = server.hash_table()
-        .memory_heap_value().get_value(index);
+        .memory_heap_value().value_at(index);
 
     /** Assign memory **/
     subvolume.Create(&server.tsdf_memory_pool()[offset],
@@ -96,7 +96,7 @@ void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
     int bucket_base_idx = bucket_idx * BUCKET_SIZE;
 #pragma unroll 1
     for (size_t i = 0; i < BUCKET_SIZE; ++i) {
-        HashEntry<Vector3i> &entry = hash_table.entry_array().get(
+        HashEntry<Vector3i> &entry = hash_table.entry_array().at(
             bucket_base_idx + i);
         if (entry.internal_addr != NULLPTR_CUDA) {
             Vector3f X = server.voxelf_local_to_global(Vector3f(0), entry.key);
@@ -109,7 +109,7 @@ void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
     }
 
     LinkedListCudaServer<HashEntry<Vector3i>> &linked_list =
-        hash_table.entry_list_array().get(bucket_idx);
+        hash_table.entry_list_array().at(bucket_idx);
     int node_ptr = linked_list.head_node_ptr();
     while (node_ptr != NULLPTR_CUDA) {
         LinkedListNodeCuda<HashEntry<Vector3i>> &linked_list_node =
@@ -137,7 +137,7 @@ void GetAllSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server) {
     int bucket_base_idx = bucket_idx * BUCKET_SIZE;
 #pragma unroll 1
     for (size_t i = 0; i < BUCKET_SIZE; ++i) {
-        HashEntry<Vector3i> &entry = hash_table.entry_array().get(
+        HashEntry<Vector3i> &entry = hash_table.entry_array().at(
             bucket_base_idx + i);
         if (entry.internal_addr != NULLPTR_CUDA) {
             server.ActivateSubvolume(entry);
@@ -145,7 +145,7 @@ void GetAllSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server) {
     }
 
     LinkedListCudaServer<HashEntry<Vector3i>> &linked_list =
-        hash_table.entry_list_array().get(bucket_idx);
+        hash_table.entry_list_array().at(bucket_idx);
     int node_ptr = linked_list.head_node_ptr();
     while (node_ptr != NULLPTR_CUDA) {
         LinkedListNodeCuda<HashEntry<Vector3i>> &linked_list_node =

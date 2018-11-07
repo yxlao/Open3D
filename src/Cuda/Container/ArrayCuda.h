@@ -5,10 +5,12 @@
 #pragma once
 
 #include "ContainerClasses.h"
+
 #include <Cuda/Common/Common.h>
+
 #include <cstdlib>
-#include <vector>
 #include <memory>
+#include <vector>
 
 namespace open3d {
 
@@ -26,7 +28,7 @@ public:
     __HOSTDEVICE__ inline T *&data() { return data_; }
     __DEVICE__ inline int size() { return *iterator_; }
     __DEVICE__ inline int push_back(T value);
-    __DEVICE__ inline T &get(size_t index);
+    __DEVICE__ inline T &at(size_t index);
     __DEVICE__ inline T& operator[] (size_t index);
 
 public:
@@ -37,6 +39,8 @@ template<typename T>
 class ArrayCuda {
 private:
     std::shared_ptr<ArrayCudaServer<T>> server_ = nullptr;
+
+public:
     int max_capacity_;
 
 public:
@@ -49,27 +53,24 @@ public:
     void Create(int max_capacity);
     void Release();
 
-    void FromCudaArray(const T* array, int size);
+    void CopyFromDeviceArray(const T *array, int size);
     void CopyTo(ArrayCuda<T> &other) const;
     void Upload(std::vector<T> &data);
     void Upload(const T *data, int size);
 
-    /* Download valid parts (.size() elements by GPU push_back operations) */
+    /** Download size() elements **/
     std::vector<T> Download();
+    /** Download max_capacity_ elements **/
     std::vector<T> DownloadAll();
 
-    /* Fill is non-trivial assignment to specific values, needs kernel call */
-    /* Memset is trivial setting, usually to all zero */
+    /** Fill non-trivial values **/
     void Fill(const T& val);
+    /** Fill trivial values (e.g. 0, 0xff)  **/
     void Memset(int val);
     void Clear();
 
     int size() const;
     void set_size(int iterator_position);
-
-    int max_capacity() const {
-        return max_capacity_;
-    }
 
     std::shared_ptr<ArrayCudaServer<T>> &server() {
         return server_;

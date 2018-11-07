@@ -72,9 +72,9 @@ void ApplyRGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry, size_t level) {
         }
 
         if (tid == 0) {
-            atomicAdd(&odometry.results().get(i + 0), local_sum0[0]);
-            atomicAdd(&odometry.results().get(i + 1), local_sum1[0]);
-            atomicAdd(&odometry.results().get(i + 2), local_sum2[0]);
+            atomicAdd(&odometry.results().at(i + 0), local_sum0[0]);
+            atomicAdd(&odometry.results().at(i + 1), local_sum1[0]);
+            atomicAdd(&odometry.results().at(i + 2), local_sum2[0]);
         }
         __syncthreads();
     }
@@ -109,9 +109,9 @@ void ApplyRGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry, size_t level) {
         }
 
         if (tid == 0) {
-            atomicAdd(&odometry.results().get(i + 0 + OFFSET1), local_sum0[0]);
-            atomicAdd(&odometry.results().get(i + 1 + OFFSET1), local_sum1[0]);
-            atomicAdd(&odometry.results().get(i + 2 + OFFSET1), local_sum2[0]);
+            atomicAdd(&odometry.results().at(i + 0 + OFFSET1), local_sum0[0]);
+            atomicAdd(&odometry.results().at(i + 1 + OFFSET1), local_sum1[0]);
+            atomicAdd(&odometry.results().at(i + 2 + OFFSET1), local_sum2[0]);
         }
         __syncthreads();
     }
@@ -142,8 +142,8 @@ void ApplyRGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry, size_t level) {
         }
 
         if (tid == 0) {
-            atomicAdd(&odometry.results().get(OFFSET2 + 0), local_sum0[0]);
-            atomicAdd(&odometry.results().get(OFFSET2 + 1), local_sum1[0]);
+            atomicAdd(&odometry.results().at(OFFSET2 + 0), local_sum0[0]);
+            atomicAdd(&odometry.results().at(OFFSET2 + 1), local_sum1[0]);
         }
         __syncthreads();
     }

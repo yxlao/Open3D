@@ -5,16 +5,15 @@
 #pragma once
 
 #include "HashTableCuda.h"
+#include <Cuda/Common/UtilsCuda.h>
+
 #include "ArrayCuda.cuh"
 #include "LinkedListCuda.cuh"
 #include "MemoryHeapCuda.cuh"
 
-#include <Cuda/Common/Common.h>
-#include <cuda.h>
-
-#include <vector>
 #include <cassert>
 #include <tuple>
+#include <vector>
 
 namespace open3d {
 /**
@@ -37,12 +36,12 @@ int HashTableCudaServer<Key, Value, Hasher>::GetInternalAddrByKey(
     }
 
     /* 2. Search in the unordered linked list */
-    const LinkedListEntryCudaServer
-        &linked_list = entry_list_array_[bucket_idx];
+    const LinkedListEntryCudaServer &linked_list
+        = entry_list_array_[bucket_idx];
     Entry query_entry;
     query_entry.key = key;
     int entry_node_ptr = linked_list.Find(query_entry);
-    if (entry_node_ptr != LINKED_LIST_NODE_NOT_FOUND) {
+    if (entry_node_ptr != NULLPTR_CUDA) {
         const Entry &entry = linked_list.get_node(entry_node_ptr).data;
         return entry.internal_addr;
     }
@@ -54,7 +53,7 @@ template<typename Key, typename Value, typename Hasher>
 __device__
 Value *HashTableCudaServer<Key, Value, Hasher>::GetValuePtrByInternalAddr(
     const int addr) {
-    return &(memory_heap_value_.get_value(addr));
+    return &(memory_heap_value_.value_at(addr));
 }
 
 template<typename Key, typename Value, typename Hasher>
@@ -68,13 +67,14 @@ Value *HashTableCudaServer<Key, Value, Hasher>::GetValuePtrByKey(
 
 template<typename Key, typename Value, typename Hasher>
 __device__
-Value *HashTableCudaServer<Key, Value, Hasher>::operator[] (const Key &key) {
+Value *HashTableCudaServer<Key, Value, Hasher>::operator[](const Key &key) {
     return GetValuePtrByKey(key);
 }
 
 template<typename Key, typename Value, typename Hasher>
 __device__
-int HashTableCudaServer<Key, Value, Hasher>::New(const Key &key) {
+int HashTableCudaServer<Key, Value, Hasher>::New(
+    const Key &key) {
     int bucket_idx = hasher_(key);
     int bucket_base_idx = bucket_idx * BUCKET_SIZE;
 
@@ -82,9 +82,9 @@ int HashTableCudaServer<Key, Value, Hasher>::New(const Key &key) {
     int entry_array_empty_slot_idx = (-1);
 #pragma unroll 1
     for (int i = 0; i < BUCKET_SIZE; ++i) {
-        const Entry &entry = entry_array_.get(bucket_base_idx + i);
+        const Entry &entry = entry_array_.at(bucket_base_idx + i);
         if (entry.Matches(key)) {
-            return HASH_ENTRY_EXISTING;
+            return ContainerReturnCode::HashEntryAlreadyExists;
         }
         if (entry_array_empty_slot_idx == (-1)
             && entry.internal_addr == HASH_ENTRY_EMPTY) {
@@ -93,18 +93,18 @@ int HashTableCudaServer<Key, Value, Hasher>::New(const Key &key) {
     }
 
     /* 2. Search in the unordered linked list */
-    LinkedListEntryCudaServer &linked_list = entry_list_array_.get(bucket_idx);
+    LinkedListEntryCudaServer &linked_list = entry_list_array_.at(bucket_idx);
     Entry query_entry;
     query_entry.key = key;
     int entry_node_ptr = linked_list.Find(query_entry);
-    if (entry_node_ptr != LINKED_LIST_NODE_NOT_FOUND) {
-        return HASH_ENTRY_EXISTING;
+    if (entry_node_ptr != NULLPTR_CUDA) {
+        return ContainerReturnCode::HashEntryAlreadyExists;
     }
 
     /* 3. Both not found. Write to a new entry */
-    int lock = atomicExch(&lock_array_.get(bucket_idx), LOCKED);
+    int lock = atomicExch(&lock_array_.at(bucket_idx), LOCKED);
     if (lock == LOCKED) {
-        return HASH_ENTRY_LOCKED;
+        return ContainerReturnCode::HashEntryIsLocked;
     }
 
     Entry new_entry;
@@ -113,7 +113,7 @@ int HashTableCudaServer<Key, Value, Hasher>::New(const Key &key) {
 
     /* 3.1. Empty slot in ordered part */
     if (entry_array_empty_slot_idx != (-1)) {
-        entry_array_.get(entry_array_empty_slot_idx) = new_entry;
+        entry_array_.at(entry_array_empty_slot_idx) = new_entry;
     } else { /* 3.2. Insert in the unordered_part */
         linked_list.Insert(new_entry);
     }
@@ -131,31 +131,31 @@ int HashTableCudaServer<Key, Value, Hasher>::Delete(const Key &key) {
     /* 1. Search in the ordered array */
 #pragma unroll 1
     for (int i = 0; i < BUCKET_SIZE; ++i) {
-        Entry &entry = entry_array_.get(bucket_base_idx + i);
+        Entry &entry = entry_array_.at(bucket_base_idx + i);
         if (entry.Matches(key)) {
-            int lock = atomicExch(&lock_array_.get(bucket_idx), LOCKED);
+            int lock = atomicExch(&lock_array_.at(bucket_idx), LOCKED);
             if (lock == LOCKED) {
-                return HASH_ENTRY_LOCKED;
+                return ContainerReturnCode::HashEntryIsLocked;
             }
             memory_heap_value_.Free(entry.internal_addr);
             entry.Clear();
-            return SUCCESS;
+            return ContainerReturnCode::Success;
         }
     }
 
     /* 2. Search in the unordered linked list */
-    int lock = atomicExch(&lock_array_.get(bucket_idx), LOCKED);
+    int lock = atomicExch(&lock_array_.at(bucket_idx), LOCKED);
     if (lock == LOCKED) {
-        return HASH_ENTRY_LOCKED;
+        return ContainerReturnCode::HashEntryIsLocked;
     }
-    LinkedListEntryCudaServer &linked_list = entry_list_array_.get(bucket_idx);
+    LinkedListEntryCudaServer &linked_list = entry_list_array_.at(bucket_idx);
     Entry query_entry;
     query_entry.key = key;
 
     int ret = linked_list.FindAndDelete(query_entry);
 
     /* An attempt */
-    atomicExch(&lock_array_.get(bucket_idx), UNLOCKED);
+    atomicExch(&lock_array_.at(bucket_idx), UNLOCKED);
     return ret;
 }
 
@@ -178,9 +178,9 @@ template<typename Key, typename Value, typename Hasher>
 HashTableCuda<Key, Value, Hasher>::HashTableCuda(
     const HashTableCuda<Key, Value, Hasher> &other) {
 
-    bucket_count_ = other.bucket_count();
-    max_value_capacity_ = other.max_value_capacity();
-    max_linked_list_node_capacity_ = other.max_linked_list_node_capacity();
+    bucket_count_ = other.bucket_count_;
+    max_value_capacity_ = other.max_value_capacity_;
+    max_linked_list_node_capacity_ = other.max_linked_list_node_capacity_;
     hasher_ = other.hasher();
 
     server_ = other.server();
@@ -201,9 +201,9 @@ template<typename Key, typename Value, typename Hasher>
 HashTableCuda<Key, Value, Hasher> &HashTableCuda<Key, Value, Hasher>::operator=(
     const HashTableCuda<Key, Value, Hasher> &other) {
     if (this != &other) {
-        bucket_count_ = other.bucket_count();
-        max_value_capacity_ = other.max_value_capacity();
-        max_linked_list_node_capacity_ = other.max_linked_list_node_capacity();
+        bucket_count_ = other.bucket_count_;
+        max_value_capacity_ = other.max_value_capacity_;
+        max_linked_list_node_capacity_ = other.max_linked_list_node_capacity_;
         hasher_ = other.hasher();
 
         server_ = other.server();
@@ -226,7 +226,7 @@ void HashTableCuda<Key, Value, Hasher>::Create(
     assert(bucket_count > 0 && value_capacity > 0);
 
     if (server_ != nullptr) {
-        PrintError("Already created, stop re-creating!\n");
+        PrintError("[HashTableCuda] Already created, abort!\n");
         return;
     }
 
@@ -274,6 +274,7 @@ void HashTableCuda<Key, Value, Hasher>::Release() {
         const int blocks = DIV_CEILING(bucket_count_, THREAD_1D_UNIT);
         ReleaseHashTableEntriesKernel << < blocks, threads >> > (*server_);
         CheckCuda(cudaDeviceSynchronize());
+        CheckCuda(cudaGetLastError());
 
         entry_array_.Release();
         entry_list_array_.Release();
@@ -297,6 +298,7 @@ void HashTableCuda<Key, Value, Hasher>::UpdateServer() {
     if (server_ != nullptr) {
         server_->hasher_ = hasher_;
         server_->bucket_count_ = bucket_count_;
+
         server_->memory_heap_entry_list_node_ =
             *memory_heap_entry_list_node_.server();
         server_->memory_heap_value_ = *memory_heap_value_.server();
@@ -309,6 +311,8 @@ void HashTableCuda<Key, Value, Hasher>::UpdateServer() {
 
 template<typename Key, typename Value, typename Hasher>
 void HashTableCuda<Key, Value, Hasher>::Reset() {
+    assert(server_ != nullptr);
+
     memory_heap_entry_list_node_.Reset();
     memory_heap_value_.Reset();
     ResetEntries();
@@ -317,6 +321,8 @@ void HashTableCuda<Key, Value, Hasher>::Reset() {
 
 template<typename Key, typename Value, typename Hasher>
 void HashTableCuda<Key, Value, Hasher>::ResetEntries() {
+    assert(server_ != nullptr);
+
     const int threads = THREAD_1D_UNIT;
     const int blocks = DIV_CEILING(bucket_count_, THREAD_1D_UNIT);
     ResetHashTableEntriesKernel << < blocks, threads >> > (*server_);
@@ -326,11 +332,15 @@ void HashTableCuda<Key, Value, Hasher>::ResetEntries() {
 
 template<typename Key, typename Value, typename Hasher>
 void HashTableCuda<Key, Value, Hasher>::ResetLocks() {
+    assert(server_ != nullptr);
+
     lock_array_.Memset(0);
 }
 
 template<typename Key, typename Value, typename Hasher>
 void HashTableCuda<Key, Value, Hasher>::GetAssignedEntries() {
+    assert(server_ != nullptr);
+
     /* Reset counter */
     assigned_entry_array_.Clear();
 
@@ -344,6 +354,8 @@ void HashTableCuda<Key, Value, Hasher>::GetAssignedEntries() {
 template<typename Key, typename Value, typename Hasher>
 void HashTableCuda<Key, Value, Hasher>::New(
     std::vector<Key> &keys, std::vector<Value> &values) {
+    assert(server_ != nullptr);
+
     Key *keys_packets;
     Value *values_packets;
     CheckCuda(cudaMalloc(&keys_packets, sizeof(Key) * keys.size()));
@@ -369,6 +381,7 @@ void HashTableCuda<Key, Value, Hasher>::New(
 template<typename Key, typename Value, typename Hasher>
 void HashTableCuda<Key, Value, Hasher>
 ::Delete(std::vector<Key> &keys) {
+    assert(server_ != nullptr);
 
     Key *keys_packets;
     CheckCuda(cudaMalloc(&keys_packets, sizeof(Key) * keys.size()));
@@ -389,6 +402,8 @@ void HashTableCuda<Key, Value, Hasher>
 template<typename Key, typename Value, typename Hasher>
 std::tuple<std::vector<Key>, std::vector<Value>>
 HashTableCuda<Key, Value, Hasher>::Download() {
+    assert(server_ != nullptr);
+
     std::vector<Key> keys;
     std::vector<Value> values;
 
@@ -417,6 +432,8 @@ HashTableCuda<Key, Value, Hasher>::Download() {
 template<typename Key, typename Value, typename Hasher>
 std::vector<HashEntry<Key>> HashTableCuda<Key, Value, Hasher>
 ::DownloadAssignedEntries() {
+    assert(server_ != nullptr);
+
     std::vector<Entry> ret;
     int assigned_entry_array_size = assigned_entry_array_.size();
     if (assigned_entry_array_size == 0) return ret;
@@ -426,6 +443,7 @@ std::vector<HashEntry<Key>> HashTableCuda<Key, Value, Hasher>
 template<typename Key, typename Value, typename Hasher>
 std::tuple<std::vector<int>, std::vector<int>>
 HashTableCuda<Key, Value, Hasher>::Profile() {
+    assert(server_ != nullptr);
 
     std::vector<int> array_entry_count;
     std::vector<int> list_entry_count;

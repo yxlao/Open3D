@@ -6,7 +6,9 @@
 
 #include "MemoryHeapCuda.h"
 #include <Cuda/Common/UtilsCuda.h>
+
 #include <Core/Core.h>
+
 #include <cassert>
 
 namespace open3d {
@@ -18,7 +20,7 @@ namespace open3d {
  */
 template<typename T>
 __device__
-int &MemoryHeapCudaServer<T>::get_heap(size_t index) {
+int &MemoryHeapCudaServer<T>::internal_addr_at(size_t index) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(index < max_capacity_);
 #endif
@@ -27,7 +29,7 @@ int &MemoryHeapCudaServer<T>::get_heap(size_t index) {
 
 template<typename T>
 __device__
-T &MemoryHeapCudaServer<T>::get_value(size_t addr) {
+T &MemoryHeapCudaServer<T>::value_at(size_t addr) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(addr < max_capacity_);
 #endif
@@ -36,7 +38,7 @@ T &MemoryHeapCudaServer<T>::get_value(size_t addr) {
 
 template<typename T>
 __device__
-const T &MemoryHeapCudaServer<T>::get_value(size_t addr) const {
+const T &MemoryHeapCudaServer<T>::value_at(size_t addr) const {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(addr < max_capacity_);
 #endif
@@ -96,9 +98,8 @@ MemoryHeapCuda<T>::~MemoryHeapCuda() {
 
 template<typename T>
 MemoryHeapCuda<T>::MemoryHeapCuda(const MemoryHeapCuda<T> &other) {
-    PrintInfo("Copy construct\n");
     server_ = other.server();
-    max_capacity_ = other.max_capacity();
+    max_capacity_ = other.max_capacity_;
 }
 
 template<typename T>
@@ -108,7 +109,7 @@ MemoryHeapCuda<T>& MemoryHeapCuda<T>::operator=(
         Release();
 
         server_ = other.server();
-        max_capacity_ = other.max_capacity();
+        max_capacity_ = other.max_capacity_;
     }
     return *this;
 }
@@ -118,13 +119,12 @@ void MemoryHeapCuda<T>::Create(int max_capacity) {
     assert(max_capacity > 0);
 
     if (server_ != nullptr) {
-        PrintWarning("Already created, stop re-creating!\n");
+        PrintError("[MemoryHeapCuda] Already created, abort!\n");
         return;
     }
 
-    max_capacity_ = max_capacity;
-
     server_ = std::make_shared<MemoryHeapCudaServer<T>>();
+    max_capacity_ = max_capacity;
     server_->max_capacity_ = max_capacity;
 
     CheckCuda(cudaMalloc(&(server_->heap_counter_), sizeof(int)));
@@ -148,9 +148,10 @@ void MemoryHeapCuda<T>::Release() {
 
 template<typename T>
 void MemoryHeapCuda<T>::Reset() {
+    assert(server_ != nullptr);
+
     const int threads = THREAD_1D_UNIT;
     const int blocks = DIV_CEILING(max_capacity_, THREAD_1D_UNIT);
-
     ResetMemoryHeapKernel << < blocks, threads >> > (*server_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
@@ -162,9 +163,10 @@ void MemoryHeapCuda<T>::Reset() {
 
 template<typename T>
 std::vector<int> MemoryHeapCuda<T>::DownloadHeap() {
+    assert(server_ != nullptr);
+
     std::vector<int> ret;
     ret.resize(max_capacity_);
-
     CheckCuda(cudaMemcpy(ret.data(), server_->heap_,
                          sizeof(int) * max_capacity_,
                          cudaMemcpyDeviceToHost));
@@ -173,24 +175,24 @@ std::vector<int> MemoryHeapCuda<T>::DownloadHeap() {
 
 template<typename T>
 std::vector<T> MemoryHeapCuda<T>::DownloadValue() {
+    assert(server_ != nullptr);
+
     std::vector<T> ret;
     ret.resize(max_capacity_);
-
     CheckCuda(cudaMemcpy(ret.data(), server_->data_,
                          sizeof(T) * max_capacity_,
                          cudaMemcpyDeviceToHost));
-
     return ret;
 }
 
 template<typename T>
 int MemoryHeapCuda<T>::HeapCounter() {
-    int heap_counter;
+    assert(server_ != nullptr);
 
+    int heap_counter;
     CheckCuda(cudaMemcpy(&heap_counter, server_->heap_counter_,
                          sizeof(int),
                          cudaMemcpyDeviceToHost));
-
     return heap_counter;
 }
 };

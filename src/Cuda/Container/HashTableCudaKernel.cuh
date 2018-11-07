@@ -4,10 +4,6 @@
 
 #include "HashTableCuda.cuh"
 
-#include "LinkedListCuda.h"
-#include "MemoryHeapCuda.h"
-#include "ArrayCuda.h"
-
 /**
  * Global code called by Host code
  */
@@ -22,13 +18,13 @@ void CreateHashTableEntriesKernel(
     int bucket_base_idx = bucket_idx * BUCKET_SIZE;
 #pragma unroll 1
     for (int i = 0; i < BUCKET_SIZE; ++i) {
-        server.entry_array().get(bucket_base_idx + i).Clear(); /* Clear == Create */
+        server.entry_array().at(bucket_base_idx + i).Clear(); /* Clear == Create */
     }
 
     int *head_node_ptr = &(server.entry_list_head_node_ptrs_memory_pool()[bucket_idx]);
     int *size_ptr = &(server.entry_list_size_ptrs_memory_pool()[bucket_idx]);
 
-    server.entry_list_array().get(bucket_idx).Create(
+    server.entry_list_array().at(bucket_idx).Create(
         server.memory_heap_entry_list_node(),
         head_node_ptr,
         size_ptr);
@@ -41,7 +37,7 @@ void ReleaseHashTableEntriesKernel(
     const int bucket_idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (bucket_idx >= server.bucket_count_) return;
 
-    server.entry_list_array().get(bucket_idx).Release();
+    server.entry_list_array().at(bucket_idx).Release();
 }
 
 template<typename Key, typename Value, typename Hasher>
@@ -54,9 +50,9 @@ void ResetHashTableEntriesKernel(
     int bucket_base_idx = bucket_idx * BUCKET_SIZE;
 #pragma unroll 1
     for (int i = 0; i < BUCKET_SIZE; ++i) {
-        server.entry_array().get(bucket_base_idx + i).Clear();
+        server.entry_array().at(bucket_base_idx + i).Clear();
     }
-    server.entry_list_array().get(bucket_idx).Clear();
+    server.entry_list_array().at(bucket_idx).Clear();
 }
 
 template<typename Key, typename Value, typename Hasher>
@@ -71,14 +67,14 @@ void GetHashTableAssignedEntriesKernel(
     int bucket_base_idx = bucket_idx * BUCKET_SIZE;
 #pragma unroll 1
     for (int i = 0; i < BUCKET_SIZE; ++i) {
-        Entry &entry = server.entry_array().get(bucket_base_idx + i);
+        Entry &entry = server.entry_array().at(bucket_base_idx + i);
         if (entry.internal_addr != NULLPTR_CUDA) {
             server.assigned_entry_array().push_back(entry);
         }
     }
 
     LinkedListCudaServer<Entry> &linked_list =
-        server.entry_list_array().get(bucket_idx);
+        server.entry_list_array().at(bucket_idx);
     int node_ptr = linked_list.head_node_ptr();
     while (node_ptr != NULLPTR_CUDA) {
         LinkedListNodeCuda<Entry> &linked_list_node =
@@ -92,7 +88,7 @@ template<typename Key, typename Value, typename Hasher>
 __global__
 void InsertHashTableEntriesKernel(
     HashTableCudaServer<Key, Value, Hasher> server,
-    Key *keys, Value *values, const int num_pairs) {
+    Key *keys, Value *values, int num_pairs) {
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
     if (idx < num_pairs) {
         int value_internal_ptr = server.New(keys[idx]);
@@ -110,7 +106,7 @@ template<typename Key, typename Value, typename Hasher>
 __global__
 void DeleteHashTableEntriesKernel(
     HashTableCudaServer<Key, Value, Hasher> server,
-    Key *keys, const int num_keys) {
+    Key *keys, int num_keys) {
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
     if (idx < num_keys) {
         int ret = server.Delete(keys[idx]);
@@ -130,13 +126,13 @@ void ProfileHashTableKernel(
     int bucket_base_idx = bucket_idx * BUCKET_SIZE;
     int array_entry_cnt = 0;
     for (int i = 0; i < BUCKET_SIZE; ++i) {
-        if (!server.entry_array().get(bucket_base_idx + i).IsEmpty()) {
+        if (!server.entry_array().at(bucket_base_idx + i).IsEmpty()) {
             array_entry_cnt++;
         }
     }
 
     LinkedListCudaServer<Entry> &linked_list =
-        server.entry_list_array().get(bucket_idx);
+        server.entry_list_array().at(bucket_idx);
 
     int linked_list_entry_cnt = 0;
     int node_ptr = linked_list.head_node_ptr();

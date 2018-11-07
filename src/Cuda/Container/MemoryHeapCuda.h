@@ -5,9 +5,10 @@
 #pragma once
 
 #include "ContainerClasses.h"
-#include <Cuda/Common/Common.h>
-#include <memory>
 
+#include <Cuda/Common/Common.h>
+
+#include <memory>
 #include <vector>
 
 namespace open3d {
@@ -55,11 +56,9 @@ public:
     __DEVICE__ int Malloc();
     __DEVICE__ void Free(size_t addr);
 
-    /* heap (at each index) stores addrs
-     * addrs point to values */
-    __DEVICE__ int &get_heap(size_t index);
-    __DEVICE__ T &get_value(size_t addr);
-    __DEVICE__ const T& get_value(size_t addr) const;
+    __DEVICE__ int &internal_addr_at(size_t index);
+    __DEVICE__ T &value_at(size_t addr);
+    __DEVICE__ const T& value_at(size_t addr) const;
 
     friend class MemoryHeapCuda<T>;
 };
@@ -68,8 +67,10 @@ template<typename T>
 class MemoryHeapCuda {
 private:
     std::shared_ptr<MemoryHeapCudaServer<T>> server_ = nullptr;
-    int max_capacity_;
     int HeapCounter();
+
+public:
+    int max_capacity_;
 
 public:
     MemoryHeapCuda();
@@ -85,9 +86,6 @@ public:
     std::vector<int> DownloadHeap();
     std::vector<T> DownloadValue();
 
-    int max_capacity() const {
-        return max_capacity_;
-    }
     std::shared_ptr<MemoryHeapCudaServer<T>> &server() {
         return server_;
     }

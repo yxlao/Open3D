@@ -33,4 +33,13 @@ class HashEntry;
 template<typename Key, typename Value, typename Hasher>
 class HashTableCuda;
 
+enum ContainerReturnCode {
+    Success = 0,
+    HashEntryIsEmpty = -1,
+    HashEntryAlreadyExists = -2,
+    HashEntryIsLocked = -3,
+    LinkedListEntryNotFound = -4
+};
+
+/** TODO: add resize() for containers **/
 }

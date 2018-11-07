@@ -66,11 +66,11 @@ public:
     }
     __DEVICE__
     LinkedListNodeCuda<T> &get_node(int node_ptr) {
-        return memory_heap_.get_value(node_ptr);
+        return memory_heap_.value_at(node_ptr);
     }
     __DEVICE__
     const LinkedListNodeCuda<T> &get_node(int node_ptr) const {
-        return memory_heap_.get_value(node_ptr);
+        return memory_heap_.value_at(node_ptr);
     }
 
     friend class LinkedListCuda<T>;

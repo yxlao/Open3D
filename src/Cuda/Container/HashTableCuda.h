@@ -11,8 +11,6 @@
 #include <Cuda/Common/Common.h>
 #include <Cuda/Geometry/VectorCuda.h>
 
-#define BUCKET_SIZE 10
-
 namespace open3d {
 
 /**
@@ -61,6 +59,8 @@ public:
 };
 
 typedef HashEntry<Vector3i> SpatialEntry;
+
+#define BUCKET_SIZE 10
 
 /**
  * My implementation of K\"ahler, et al, 2015
@@ -213,15 +213,6 @@ public:
     const Hasher &hasher() const {
         return hasher_;
     }
-    int bucket_count() const {
-        return bucket_count_;
-    }
-    int max_value_capacity() const {
-        return max_value_capacity_;
-    }
-    int max_linked_list_node_capacity() const {
-        return max_linked_list_node_capacity_;
-    }
     const ArrayCuda<Entry>& entry_array() const {
         return entry_array_;
     }
@@ -257,13 +248,13 @@ template<typename Key, typename Value, typename Hasher>
 __GLOBAL__
 void InsertHashTableEntriesKernel(
     HashTableCudaServer<Key, Value, Hasher> server,
-    Key *keys, Value *values, const int num_pairs);
+    Key *keys, Value *values, int num_pairs);
 
 template<typename Key, typename Value, typename Hasher>
 __GLOBAL__
 void DeleteHashTableEntriesKernel(
     HashTableCudaServer<Key, Value, Hasher> server,
-    Key *keys, const int num_keys);
+    Key *keys, int num_keys);
 
 template<typename Key, typename Value, typename Hasher>
 __GLOBAL__

@@ -3,8 +3,6 @@
 //
 
 #include "MemoryHeapCuda.cuh"
-#include "LinkedListCuda.h"
-#include "HashTableCuda.h"
 
 namespace open3d {
 
@@ -13,8 +11,8 @@ __global__
 void ResetMemoryHeapKernel(MemoryHeapCudaServer<T> server) {
 	const int i = blockIdx.x * blockDim.x + threadIdx.x;
 	if (i < server.max_capacity_) {
-		server.get_value(i) = T(); /* This is not necessary. */
-		server.get_heap(i) = i;
+		server.value_at(i) = T(); /* This is not necessary. */
+        server.internal_addr_at(i) = i;
 	}
 }
 }

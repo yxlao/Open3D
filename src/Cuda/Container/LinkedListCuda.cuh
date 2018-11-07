@@ -5,12 +5,13 @@
 #pragma once
 
 #include "LinkedListCuda.h"
-#include "MemoryHeapCuda.cuh"
-
 #include <Cuda/Common/UtilsCuda.h>
 
-#include <cstdio>
+#include "MemoryHeapCuda.cuh"
+
 #include <cassert>
+#include <cstdio>
+
 
 namespace open3d {
 /**
@@ -21,26 +22,29 @@ __device__
 void LinkedListCudaServer<T>::Clear() {
     int node_ptr = *head_node_ptr_;
     while (node_ptr != NULLPTR_CUDA) {
-        int next_node_ptr = memory_heap_.get_value(node_ptr).next_node_ptr;
+        int next_node_ptr = memory_heap_.value_at(node_ptr).next_node_ptr;
         memory_heap_.Free(node_ptr);
         node_ptr = next_node_ptr;
         (*size_)--;
     }
     *head_node_ptr_ = NULLPTR_CUDA;
+
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert((*size_) == 0);
+#endif
 }
 
 template<typename T>
 __device__
 void LinkedListCudaServer<T>::Insert(T value) {
     int node_ptr = memory_heap_.Malloc();
-    if ((*size_) >= max_capacity_) {
-        printf("Linked list full!\n");
-        return;
-    }
 
-    memory_heap_.get_value(node_ptr).data = value;
-    memory_heap_.get_value(node_ptr).next_node_ptr = *head_node_ptr_;
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+    assert(*size_ < max_capacity_);
+#endif
+
+    memory_heap_.value_at(node_ptr).data = value;
+    memory_heap_.value_at(node_ptr).next_node_ptr = *head_node_ptr_;
     *head_node_ptr_ = node_ptr;
 
     (*size_)++;
@@ -80,36 +84,36 @@ int LinkedListCudaServer<T>::Delete(const int node_ptr) {
 #ifdef CUDA_DEBUG_ENABLE_PRINTF
         printf("Error: Invalid pointer or linked list!\n");
 #endif
-        return LINKED_LIST_NODE_NOT_FOUND;
+        return ContainerReturnCode::LinkedListEntryNotFound;
     }
 
     /* 1. Head */
     if (*head_node_ptr_ == node_ptr) {
-        *head_node_ptr_ = memory_heap_.get_value(*head_node_ptr_).next_node_ptr;
+        *head_node_ptr_ = memory_heap_.value_at(*head_node_ptr_).next_node_ptr;
         memory_heap_.Free(node_ptr);
         (*size_)--;
-        return SUCCESS;
+        return ContainerReturnCode::Success;
     }
 
     /* 2. Search in the linked list for its predecessor */
     int node_ptr_pred = *head_node_ptr_;
-    while (memory_heap_.get_value(node_ptr_pred).next_node_ptr != node_ptr
-        && memory_heap_.get_value(node_ptr_pred).next_node_ptr != NULLPTR_CUDA) {
-        node_ptr_pred = memory_heap_.get_value(node_ptr_pred).next_node_ptr;
+    while (memory_heap_.value_at(node_ptr_pred).next_node_ptr != node_ptr
+        && memory_heap_.value_at(node_ptr_pred).next_node_ptr != NULLPTR_CUDA) {
+        node_ptr_pred = memory_heap_.value_at(node_ptr_pred).next_node_ptr;
     }
 
-    if (memory_heap_.get_value(node_ptr_pred).next_node_ptr == NULLPTR_CUDA) {
+    if (memory_heap_.value_at(node_ptr_pred).next_node_ptr == NULLPTR_CUDA) {
 #ifdef CUDA_DEBUG_ENABLE_PRINTF
         printf("Error: Node_ptr %d not found!\n", node_ptr);
 #endif
-        return LINKED_LIST_NODE_NOT_FOUND;
+        return ContainerReturnCode::LinkedListEntryNotFound;
     }
 
-    memory_heap_.get_value(node_ptr_pred).next_node_ptr =
-        memory_heap_.get_value(node_ptr).next_node_ptr;
+    memory_heap_.value_at(node_ptr_pred).next_node_ptr =
+        memory_heap_.value_at(node_ptr).next_node_ptr;
     memory_heap_.Free(node_ptr);
     (*size_)--;
-    return SUCCESS;
+    return ContainerReturnCode::Success;
 }
 
 template<typename T>
@@ -117,15 +121,15 @@ __device__
 int LinkedListCudaServer<T>::Find(T value) const {
     int node_ptr = *head_node_ptr_;
     while (node_ptr != NULLPTR_CUDA) {
-        if (memory_heap_.get_value(node_ptr).data == value)
+        if (memory_heap_.value_at(node_ptr).data == value)
             return node_ptr;
-        node_ptr = memory_heap_.get_value(node_ptr).next_node_ptr;
+        node_ptr = memory_heap_.value_at(node_ptr).next_node_ptr;
     }
 
 #ifdef CUDA_DEBUG_ENABLE_PRINTF
     printf("Error: Value not found!\n");
 #endif
-    return LINKED_LIST_NODE_NOT_FOUND;
+    return NULLPTR_CUDA;
 }
 
 template<class T>
@@ -135,42 +139,42 @@ int LinkedListCudaServer<T>::FindAndDelete(T value) {
 #ifdef CUDA_DEBUG_ENABLE_PRINTF
         printf("Empty linked list!\n");
 #endif
-        return LINKED_LIST_NODE_NOT_FOUND;
+        return ContainerReturnCode::LinkedListEntryNotFound;
     }
 
     /* 1. Head */
-    if (memory_heap_.get_value(*head_node_ptr_).data == value) {
+    if (memory_heap_.value_at(*head_node_ptr_).data == value) {
         /* NULL_PTR and ! NULL_PTR, both cases are ok */
-        int next_node_ptr = memory_heap_.get_value(*head_node_ptr_)
+        int next_node_ptr = memory_heap_.value_at(*head_node_ptr_)
             .next_node_ptr;
         memory_heap_.Free(*head_node_ptr_);
         *head_node_ptr_ = next_node_ptr;
         (*size_)--;
-        return SUCCESS;
+        return ContainerReturnCode::Success;
     }
 
     /* 2. Search in the linked list for its predecessor */
     int node_ptr_pred = *head_node_ptr_;
-    int node_ptr_curr = memory_heap_.get_value(*head_node_ptr_).next_node_ptr;
+    int node_ptr_curr = memory_heap_.value_at(*head_node_ptr_).next_node_ptr;
     while (node_ptr_curr != NULLPTR_CUDA) {
-        T &data = memory_heap_.get_value(node_ptr_curr).data;
+        T &data = memory_heap_.value_at(node_ptr_curr).data;
         if (data == value) break;
         node_ptr_pred = node_ptr_curr;
-        node_ptr_curr = memory_heap_.get_value(node_ptr_curr).next_node_ptr;
+        node_ptr_curr = memory_heap_.value_at(node_ptr_curr).next_node_ptr;
     }
 
     if (node_ptr_curr == NULLPTR_CUDA) {
 #ifdef CUDA_DEBUG_ENABLE_PRINTF
         printf("Error: Value not found!\n");
 #endif
-        return LINKED_LIST_NODE_NOT_FOUND;
+        return ContainerReturnCode::LinkedListEntryNotFound;
     }
 
-    memory_heap_.get_value(node_ptr_pred).next_node_ptr =
-        memory_heap_.get_value(node_ptr_curr).next_node_ptr;
+    memory_heap_.value_at(node_ptr_pred).next_node_ptr =
+        memory_heap_.value_at(node_ptr_curr).next_node_ptr;
     memory_heap_.Free(node_ptr_curr);
     (*size_)--;
-    return SUCCESS;
+    return ContainerReturnCode::Success;
 }
 
 /**
@@ -210,14 +214,14 @@ LinkedListCuda<T> &LinkedListCuda<T>::operator=(
 template<typename T>
 void LinkedListCuda<T>::Create(int max_capacity,
                                MemoryHeapCuda<LinkedListNodeCuda<T>> &memory_heap) {
-    assert(max_capacity > 0 && max_capacity < memory_heap.max_capacity());
+    assert(max_capacity > 0 && max_capacity < memory_heap.max_capacity_);
     if (server_ != nullptr) {
-        PrintError("Already created, stop re-creating!\n");
+        PrintError("[LinkedListCuda] Already created, abort!\n");
         return;
     }
 
-    max_capacity_ = max_capacity;
     server_ = std::make_shared<LinkedListCudaServer<T>>();
+    max_capacity_ = max_capacity;
     memory_heap_ = memory_heap;
 
     CheckCuda(cudaMalloc(&server_->head_node_ptr_, sizeof(int)));
@@ -254,6 +258,8 @@ void LinkedListCuda<T>::Release() {
 
 template<typename T>
 int LinkedListCuda<T>::size() {
+    assert(server_ != nullptr);
+
     int ret;
     CheckCuda(cudaMemcpy(&ret, server_->size_,
                          sizeof(int),
@@ -263,6 +269,8 @@ int LinkedListCuda<T>::size() {
 
 template<typename T>
 void LinkedListCuda<T>::Insert(std::vector<int> &data) {
+    assert(server_ != nullptr);
+
     T *data_packages;
     CheckCuda(cudaMalloc(&data_packages, sizeof(T) * data.size()));
     CheckCuda(cudaMemcpy(data_packages, data.data(),
@@ -279,6 +287,8 @@ void LinkedListCuda<T>::Insert(std::vector<int> &data) {
 
 template<typename T>
 void LinkedListCuda<T>::Find(std::vector<int> &query) {
+    assert(server_ != nullptr);
+
     T *data_packages;
     CheckCuda(cudaMalloc(&data_packages, sizeof(T) * query.size()));
     CheckCuda(cudaMemcpy(data_packages, query.data(),
@@ -295,6 +305,8 @@ void LinkedListCuda<T>::Find(std::vector<int> &query) {
 
 template<typename T>
 void LinkedListCuda<T>::Delete(std::vector<int> &query) {
+    assert(server_ != nullptr);
+
     T *data_packages;
     CheckCuda(cudaMalloc(&data_packages, sizeof(T) * query.size()));
     CheckCuda(cudaMemcpy(data_packages, query.data(),
@@ -311,6 +323,8 @@ void LinkedListCuda<T>::Delete(std::vector<int> &query) {
 
 template<typename T>
 std::vector<T> LinkedListCuda<T>::Download() {
+    assert(server_ != nullptr);
+
     std::vector<T> ret;
     int linked_list_size = size();
     if (linked_list_size == 0) return ret;
