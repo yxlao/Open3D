@@ -29,6 +29,7 @@
 
 #include <Core/Core.h>
 #include <IO/IO.h>
+#include <Visualization/Visualization.h>
 
 #include <Cuda/Integration/ScalableTSDFVolumeCuda.h>
 #include <opencv2/opencv.hpp>
@@ -78,6 +79,25 @@ int main(int argc, char *argv[])
     FPSTimer timer("Process RGBD stream", (int)camera_trajectory->extrinsic_.size());
 
     RGBDImageCuda rgbd(0.1f, 4.0f, 1000.0f);
+
+    ScalableMeshVolumeCuda<8> mesher(48000,
+                                     VertexWithNormalAndColor, 4000000, 8000000);
+
+    VisualizerWithCustomAnimation visualizer;
+    if (! visualizer.CreateVisualizerWindow("test", 640, 480, 0, 0)) {
+        PrintWarning("Failed creating OpenGL window.\n");
+        return 0;
+    }
+    visualizer.GetRenderOption().show_coordinate_frame_ = true;
+    //visualizer.GetRenderOption().mesh_color_option_
+    //=RenderOption::MeshColorOption::Normal;
+    visualizer.GetRenderOption().mesh_show_back_face_ = true;
+    visualizer.BuildUtilities();
+    visualizer.UpdateWindowTitle();
+
+    std::shared_ptr<TriangleMeshCuda> mesh = std::make_shared<TriangleMeshCuda>();
+    visualizer.AddGeometry(mesh);
+
     while (fgets(buffer, DEFAULT_IO_BUFFER_SIZE, file)) {
         std::vector<std::string> st;
         SplitString(st, buffer, "\t\r\n ");
@@ -102,14 +122,20 @@ int main(int argc, char *argv[])
             extrinsics.FromEigen(extrinsicsf);
             tsdf_volume.Integrate(rgbd, intrinsics, extrinsics);
 
+            mesher.MarchingCubes(tsdf_volume);
+
+            *mesh = mesher.mesh();
+            visualizer.PollEvents();
+            visualizer.UpdateGeometry();
+            visualizer.GetViewControl().ConvertFromPinholeCameraParameters(
+                camera_trajectory->intrinsic_,
+                camera_trajectory->extrinsic_[index]);
+
             index++;
 
             if (index == (int)camera_trajectory->extrinsic_.size()) {
                 tsdf_volume.GetAllSubvolumes();
-                ScalableMeshVolumeCuda<8> mesher(40000,
-                    VertexWithNormalAndColor, 4000000, 8000000);
                 mesher.MarchingCubes(tsdf_volume);
-
                 WriteTriangleMeshToPLY("system.ply", *mesher.mesh().Download());
                 save_index++;
             }

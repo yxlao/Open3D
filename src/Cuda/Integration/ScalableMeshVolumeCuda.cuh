@@ -60,7 +60,7 @@ void ScalableMeshVolumeCudaServer<N>::AllocateVertex(
         if (weight == 0) return;
 
         float tsdf = subvolume->tsdf(Xlocal_corner);
-        if (fabsf(tsdf) > 2 * subvolume->voxel_length_) return;
+        if (fabsf(tsdf) >= subvolume->sdf_trunc_) return;
 
         tmp_table_index |= ((tsdf < 0) ? (1 << corner) : 0);
     }
@@ -122,7 +122,7 @@ void ScalableMeshVolumeCudaServer<N>::AllocateVertexOnBoundary(
         if (weight == 0) return;
 
         float tsdf = neighbor_subvolume->tsdf(Xlocal_corner_in_neighbor);
-        if (fabsf(tsdf) > 2 * neighbor_subvolume->voxel_length_) return;
+        if (fabsf(tsdf) >= neighbor_subvolume->sdf_trunc_) return;
 
         tmp_table_index |= ((tsdf < 0) ? (1 << corner) : 0);
     }
@@ -495,7 +495,7 @@ void ScalableMeshVolumeCuda<N>::VertexAllocation(
     CheckCuda(cudaGetLastError());
 
     timer.Stop();
-    PrintInfo("Allocation takes %f milliseconds\n", timer.GetDuration());
+    PrintDebug("Allocation takes %f milliseconds\n", timer.GetDuration());
 }
 
 template<size_t N>
@@ -512,7 +512,7 @@ void ScalableMeshVolumeCuda<N>::VertexExtraction(
     CheckCuda(cudaGetLastError());
 
     timer.Stop();
-    PrintInfo("Extraction takes %f milliseconds\n", timer.GetDuration());
+    PrintDebug("Extraction takes %f milliseconds\n", timer.GetDuration());
 }
 
 template<size_t N>
@@ -529,7 +529,7 @@ void ScalableMeshVolumeCuda<N>::TriangleExtraction(
     CheckCuda(cudaGetLastError());
 
     timer.Stop();
-    PrintInfo("Triangulation takes %f milliseconds\n", timer.GetDuration());
+    PrintDebug("Triangulation takes %f milliseconds\n", timer.GetDuration());
 }
 
 template<size_t N>
@@ -539,7 +539,7 @@ void ScalableMeshVolumeCuda<N>::MarchingCubes(
 
     mesh_.Reset();
     active_subvolumes_ = tsdf_volume.active_subvolume_entry_array().size();
-    PrintInfo("Active subvolumes: %d\n", active_subvolumes_);
+    PrintDebug("Active subvolumes: %d\n", active_subvolumes_);
 
     if (active_subvolumes_ <= 0) {
         PrintError("Invalid active subvolume numbers: %d !\n",

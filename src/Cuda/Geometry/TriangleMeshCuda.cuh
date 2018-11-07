@@ -273,6 +273,8 @@ bool TriangleMeshCuda::IsEmpty() const {
 }
 
 Eigen::Vector3d TriangleMeshCuda::GetMinBound() const {
+    if (server_ == nullptr) return Eigen::Vector3d(0, 0, 0);
+
     const int num_vertices = vertices_.size();
     if (num_vertices == 0) return Eigen::Vector3d(0, 0, 0);
 
@@ -302,6 +304,8 @@ Eigen::Vector3d TriangleMeshCuda::GetMinBound() const {
 }
 
 Eigen::Vector3d TriangleMeshCuda::GetMaxBound() const {
+    if (server_ == nullptr) return Eigen::Vector3d(10, 10, 10);
+
     const int num_vertices = vertices_.size();
     if (num_vertices == 0) return Eigen::Vector3d(0, 0, 0);
 
@@ -331,6 +335,8 @@ Eigen::Vector3d TriangleMeshCuda::GetMaxBound() const {
 }
 
 void TriangleMeshCuda::Transform(const Eigen::Matrix4d &transformation) {
+    if (server_ == nullptr) return;
+
     const int num_vertices = vertices_.size();
     if (num_vertices == 0) return;
 

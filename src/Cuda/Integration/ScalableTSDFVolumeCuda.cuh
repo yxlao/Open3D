@@ -557,14 +557,29 @@ void ScalableTSDFVolumeCudaServer<N>::TouchSubvolume(
     if (d < 0.1f || d > 3.5f) return;
 
     Vector3f Xw_near = transform_camera_to_world *
-        camera.InverseProjection(p, d - sdf_trunc_);
+        camera.InverseProjection(p, fmaxf(d - sdf_trunc_, 0.1f));
     Vector3i Xsv_near = voxelf_locate_subvolume(world_to_voxelf(Xw_near));
 
     Vector3f Xw_far = transform_camera_to_world *
-        camera.InverseProjection(p, d + sdf_trunc_);
+        camera.InverseProjection(p, fminf(d + sdf_trunc_, 3.5f));
     Vector3i Xsv_far = voxelf_locate_subvolume(world_to_voxelf(Xw_far));
 
-    /** 3D line from Xsv_near to Xsv_far **/
+//    Vector3i Xsv_min = Vector3i(min(Xsv_near(0), Xsv_far(0)),
+//                                min(Xsv_near(1), Xsv_far(1)),
+//                                min(Xsv_near(2), Xsv_far(2)));
+//    Vector3i Xsv_max = Vector3i(max(Xsv_near(0), Xsv_far(0)),
+//                                max(Xsv_near(1), Xsv_far(1)),
+//                                max(Xsv_near(2), Xsv_far(2)));
+//
+//    for (int x = Xsv_min(0); x <= Xsv_max(0); ++x) {
+//        for (int y = Xsv_min(1); y <= Xsv_max(1); ++y) {
+//            for (int z = Xsv_min(2); z <= Xsv_max(2); ++z) {
+//                hash_table_.New(Vector3i(x, y, z));
+//            }
+//        }
+//    }
+
+    /** 3D line from Xsv_near to Xsv_far
     /** https://en.wikipedia.org/wiki/Digital_differential_analyzer_(graphics_algorithm) **/
     Vector3i DXsv = Xsv_far - Xsv_near;
     Vector3i DXsv_abs = Vector3i(abs(DXsv(0)), abs(DXsv(1)), abs(DXsv(2)));
