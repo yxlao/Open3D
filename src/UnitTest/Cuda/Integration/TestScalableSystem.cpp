@@ -69,8 +69,10 @@ int main(int argc, char *argv[])
 
     RGBDImageCuda rgbd(0.1f, 4.0f, 1000.0f);
 
-    ScalableMeshVolumeCuda<8> mesher(48000,
-                                     VertexWithNormalAndColor, 4000000, 8000000);
+    SetVerbosityLevel(VerbosityLevel::VerboseDebug);
+    ScalableMeshVolumeCuda<8> mesher(40000,
+                                     VertexWithNormalAndColor,
+                                     6000000, 12000000);
 
     VisualizerWithCustomAnimation visualizer;
     if (! visualizer.CreateVisualizerWindow("test", 640, 480, 0, 0)) {

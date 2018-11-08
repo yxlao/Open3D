@@ -274,7 +274,7 @@ void RGBDOdometryCuda<N>::Build(ImageCuda<Vector1f> &source_depth,
         target_intensity_.level(i).Sobel(target_intensity_dx_.level(i),
                                          target_intensity_dy_.level(i),
                                          false);
-        target_intensity_.level(i).CopyTo(source_on_target_.level(i));
+        source_on_target_.level(i).CopyFrom(target_intensity_.level(i));
     }
     target_depth_dx_.UpdateServer();
     target_depth_dy_.UpdateServer();
@@ -298,7 +298,7 @@ void RGBDOdometryCuda<N>::Apply(ImageCuda<Vector1f> &source_depth,
             results_.Memset(0);
 
 #ifdef VISUALIZE_ODOMETRY_INLIERS
-            target_intensity_.level(level).CopyTo(source_on_target_.level(level));
+            source_on_target_.level(level).CopyFrom(target_intensity_.level(level));
 #endif
             server_->transform_source_to_target_.FromEigen(
                 transform_source_to_target_);

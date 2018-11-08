@@ -81,14 +81,17 @@ void RGBDImageCuda::Upload(cv::Mat &depth, cv::Mat &color) {
     UpdateServer();
 }
 
+void RGBDImageCuda::CopyFrom(
+    ImageCuda<Vector1f> &depth, ImageCuda<Vector3b> &color) {
+    depth_.CopyFrom(depth);
+    color_.CopyFrom(color);
+
+}
+
 void RGBDImageCuda::UpdateServer() {
     if (server_ != nullptr) {
         server_->color() = *color_.server();
         server_->depth() = *depth_.server();
-
-        server_->depth_near_ = depth_near_;
-        server_->depth_far_ = depth_far_;
-        server_->depth_factor_ = depth_factor_;
     }
 }
 

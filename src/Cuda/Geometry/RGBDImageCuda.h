@@ -16,15 +16,9 @@ private:
     ImageCudaServer<Vector3b> color_;
 
 public:
-    float depth_near_;
-    float depth_far_;
-    float depth_factor_;
-
-public:
     __HOSTDEVICE__ ImageCudaServer<Vector1f>& depth() {
         return depth_;
     }
-
     __HOSTDEVICE__ ImageCudaServer<Vector3b>& color() {
         return color_;
     }
@@ -65,6 +59,7 @@ public:
     void UpdateServer();
 
     void Upload(cv::Mat &depth, cv::Mat &color);
+    void CopyFrom(ImageCuda<Vector1f> &depth, ImageCuda<Vector3b> &color);
 
 public:
     ImageCuda<Vector1f>& depth() {

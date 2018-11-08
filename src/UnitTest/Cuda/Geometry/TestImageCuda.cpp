@@ -25,7 +25,7 @@ void CheckUploadAndDownloadConsistency(std::string path) {
     PrintInfo("Upload finished in %.3f milliseconds...\n", timer.GetDuration());
 
     timer.Start();
-    image_cuda.CopyTo(image_cuda_copy);
+    image_cuda_copy.CopyFrom(image_cuda);
     timer.Stop();
     PrintInfo("Copy finished in %.3f milliseconds...\n", timer.GetDuration());
 

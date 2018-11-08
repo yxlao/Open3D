@@ -90,7 +90,7 @@ void ImagePyramidCuda<VecType, N>::Build(const ImageCuda<VecType> &image) {
         server_ = std::make_shared<ImagePyramidCudaServer<VecType, N>>();
     }
 
-    image.CopyTo(images_[0]);
+    images_[0].CopyFrom(image);
     for (size_t i = 1; i < N; ++i) {
         images_[i - 1].Downsample(images_[i]);
     }

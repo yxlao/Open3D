@@ -510,20 +510,20 @@ void ImageCuda<VecType>::Release() {
 }
 
 template<typename VecType>
-void ImageCuda<VecType>::CopyTo(ImageCuda<VecType> &other) const {
+void ImageCuda<VecType>::CopyFrom(const ImageCuda<VecType> &other) {
     if (this == &other) return;
 
-    if (other.server() == nullptr) {
-        other.Create(width_, height_);
+    if (server_ == nullptr) {
+        Create(width_, height_);
     }
 
     if (other.width() != width_ || other.height() != height_) {
-        PrintError("Incompatible image size!\n");
+        PrintError("[ImageCuda] Incompatible image size!\n");
         return;
     }
 
-    CheckCuda(cudaMemcpy2D(other.server()->data(), other.pitch(),
-                           server_->data_, pitch_,
+    CheckCuda(cudaMemcpy2D(server_->data_, pitch_,
+                           other.server()->data(), other.pitch(),
                            sizeof(VecType) * width_, height_,
                            cudaMemcpyDeviceToDevice));
 }

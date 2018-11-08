@@ -102,7 +102,7 @@ public:
     void Create(int width, int height);
     void Resize(int width, int height);
     void Release();
-    void CopyTo(ImageCuda<VecType> &other) const;
+    void CopyFrom(const ImageCuda<VecType> &other);
 
     /** 'switch' code in kernel can be slow, manually expand it if needed. **/
     ImageCuda<VecType> Downsample(DownsampleMethod method = GaussianFilter);
