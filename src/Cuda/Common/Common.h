@@ -36,12 +36,6 @@ typedef unsigned int uint;
 /* @TODO: make this part modern, using enum, const, etc. */
 #define NULLPTR_CUDA (-1)
 
-#define LINKED_LIST_NODE_NOT_FOUND (-1)
-
-#define HASH_ENTRY_EMPTY    (-1)
-#define HASH_ENTRY_EXISTING (-2)
-#define HASH_ENTRY_LOCKED   (-3)
-
 #define SUCCESS  0
 
 /* Atomic Lock */
@@ -52,14 +46,4 @@ typedef unsigned int uint;
 #define THREAD_2D_UNIT   16
 #define THREAD_1D_UNIT   64
 #define DIV_CEILING(a, b) ((a + b - 1) / b)
-
-#define EPSILON (1e-6f)
-#define MINF __int_as_float(0xff800000)
-#define PINF __int_as_float(0x7f800000)
-#define INV(x) (x == 0 ? PINF : 1.0f / x)
-
-#define KEY_ESCAPE 27
-#define KEY_SPACE  32
-#define KEY_ENTER  13
-
 }

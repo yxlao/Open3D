@@ -24,7 +24,7 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
     float &residual_D) {
 
     /** Check 1: depth valid in source? **/
-    float d_source = source_depth().level(level).get(x, y)(0);
+    float d_source = source_depth().level(level).at(x, y)(0);
     bool mask = IsValidDepth(d_source);
     if (!mask) return false;
 
@@ -39,7 +39,7 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
     if (!mask) return false;
 
     /** Check 3: depth valid in target? Occlusion? -> 1ms **/
-    float d_target = target_depth().level(level).get_interp_with_holes(
+    float d_target = target_depth().level(level).interp_with_holes_at(
         p_warped(0), p_warped(1))(0);
     mask = IsValidDepth(d_target) && IsValidDepthDiff(d_target - X(2));
     if (!mask) return false;
@@ -58,13 +58,13 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
      * J_D = (d D(p_warped) / d p_warped) (d p_warped / d X) (d X / d \xi)
      *     - (d X.z / d X) (d X / d \xi)
      */
-    float dx_I = target_intensity_dx().level(level).get_interp(
+    float dx_I = target_intensity_dx().level(level).interp_at(
         p_warped(0), p_warped(1))(0);
-    float dy_I = target_intensity_dy().level(level).get_interp(
+    float dy_I = target_intensity_dy().level(level).interp_at(
         p_warped(0), p_warped(1))(0);
-    float dx_D = target_depth_dx().level(level).get_interp(
+    float dx_D = target_depth_dx().level(level).interp_at(
         p_warped(0), p_warped(1))(0);
-    float dy_D = target_depth_dy().level(level).get_interp(
+    float dy_D = target_depth_dy().level(level).interp_at(
         p_warped(0), p_warped(1))(0);
     float fx = pinhole_camera_intrinsics_.fx(level);
     float fy = pinhole_camera_intrinsics_.fy(level);
@@ -82,8 +82,8 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
     jacobian_I(4) = sqrt_coeff_I_ * (X(2) * c0 - X(0) * c2);
     jacobian_I(5) = sqrt_coeff_I_ * (-X(1) * c0 + X(0) * c1);
     residual_I = sqrt_coeff_I_ *
-        (target_intensity().level(level).get_interp(p_warped(0), p_warped(1))(0)
-            - source_intensity().level(level).get(x, y)(0));
+        (target_intensity().level(level).interp_at(p_warped(0), p_warped(1))(0)
+            - source_intensity().level(level).at(x, y)(0));
 
     float d0 = dx_D * fx_on_Z;
     float d1 = dy_D * fy_on_Z;
@@ -219,7 +219,8 @@ void RGBDOdometryCuda<N>::UpdateServer() {
 
 template<size_t N>
 void RGBDOdometryCuda<N>::ExtractResults(std::vector<float> &results,
-                                         Matrix6f &JtJ, Vector6f &Jtr,
+                                         EigenMatrix6d &JtJ,
+                                         EigenVector6d &Jtr,
                                          float &error, float &inliers) {
     int cnt = 0;
     for (int i = 0; i < 6; ++i) {
@@ -316,8 +317,9 @@ void RGBDOdometryCuda<N>::Apply(ImageCuda<Vector1f> &source_depth,
 #endif
 
             std::vector<float> results = results_.DownloadAll();
-            Matrix6f JtJ;
-            Vector6f Jtr;
+
+            EigenMatrix6d JtJ;
+            EigenVector6d Jtr;
             float error, inliers;
             ExtractResults(results, JtJ, Jtr, error, inliers);
 
@@ -325,10 +327,9 @@ void RGBDOdometryCuda<N>::Apply(ImageCuda<Vector1f> &source_depth,
                       "inliers = %.0f\n",
                       level, iter, error, error / inliers, inliers);
 
-            Vector6d dxi = JtJ.cast<double>().ldlt().solve(-Jtr.cast<double>());
+            EigenVector6d dxi = JtJ.ldlt().solve(-Jtr);
             transform_source_to_target_ =
-                Sophus::SE3d::exp(dxi).matrix().cast<float>() *
-                    transform_source_to_target_;
+                Sophus::SE3d::exp(dxi).matrix() * transform_source_to_target_;
 
         }
     }

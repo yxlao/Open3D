@@ -3,7 +3,7 @@
 //
 
 #include "ScalableTSDFVolumeCuda.cuh"
-#include "UniformTSDFVolumeCuda.h"
+
 namespace open3d {
 
 template<size_t N>
@@ -57,7 +57,7 @@ void RayCastingKernel(ScalableTSDFVolumeCudaServer<N> server,
 
     Vector2i p = Vector2i(x, y);
     Vector3f n = server.RayCasting(p, camera, transform_camera_to_world);
-    normal.get(x, y) = (n == Vector3f::Zeros()) ? n : 0.5f * n + Vector3f(0.5f);
+    normal.at(x, y) = (n == Vector3f::Zeros()) ? n : 0.5f * n + Vector3f(0.5f);
 }
 
 template<size_t N>

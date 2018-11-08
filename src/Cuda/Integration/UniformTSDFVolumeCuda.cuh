@@ -5,15 +5,28 @@
 #pragma once
 
 #include "UniformTSDFVolumeCuda.h"
-#include <Core/Core.h>
+
 #include <Cuda/Common/UtilsCuda.h>
+
 #include <Cuda/Geometry/ImageCuda.cuh>
+
+#include <Core/Core.h>
 
 namespace open3d {
 
 /**
  * Server end
  */
+/** Reserved for ScalableTSDFVolumeCuda **/
+template<size_t N>
+__device__
+inline void UniformTSDFVolumeCudaServer<N>::Create(
+    float *tsdf, uchar *weight, open3d::Vector3b *color) {
+    tsdf_ = tsdf;
+    weight_ = weight;
+    color_ = color;
+}
+
 /** Coordinate conversions **/
 template<size_t N>
 __device__
@@ -187,13 +200,13 @@ void UniformTSDFVolumeCudaServer<N>::Integrate(
 
     /** TSDF **/
     if (!camera.IsValid(p)) return;
-    float d = rgbd.depth().get_interp(p(0), p(1))(0);
+    float d = rgbd.depth().interp_at(p(0), p(1))(0);
 
     float tsdf = d - Xc(2);
     if (tsdf <= -sdf_trunc_) return;
     tsdf = fminf(tsdf, sdf_trunc_);
 
-    Vector3b color = rgbd.color().get(int(p(0)), int(p(1)));
+    Vector3b color = rgbd.color().at(int(p(0)), int(p(1)));
 
     float &tsdf_sum = this->tsdf(X);
     uchar &weight_sum = this->weight(X);
@@ -312,7 +325,7 @@ UniformTSDFVolumeCuda<N>::~UniformTSDFVolumeCuda() {
 template<size_t N>
 void UniformTSDFVolumeCuda<N>::Create() {
     if (server_ != nullptr) {
-        PrintError("Already created, stop re-creating!\n");
+        PrintError("[UniformTSDFVolumeCuda] Already created, abort!\n");
         return;
     }
 
@@ -364,10 +377,7 @@ template<size_t N>
 void UniformTSDFVolumeCuda<N>::UploadVolume(std::vector<float> &tsdf,
                                             std::vector<uchar> &weight,
                                             std::vector<Vector3b> &color) {
-    if (server_ == nullptr) {
-        PrintError("Server not available!\n");
-        return;
-    }
+    assert(server_ != nullptr);
 
     const size_t NNN = N * N * N;
     assert(tsdf.size() == NNN);
@@ -388,6 +398,8 @@ void UniformTSDFVolumeCuda<N>::UploadVolume(std::vector<float> &tsdf,
 template<size_t N>
 std::tuple<std::vector<float>, std::vector<uchar>, std::vector<Vector3b>>
 UniformTSDFVolumeCuda<N>::DownloadVolume() {
+    assert(server_ != nullptr);
+
     std::vector<float> tsdf;
     std::vector<uchar> weight;
     std::vector<Vector3b> color;
@@ -416,20 +428,11 @@ UniformTSDFVolumeCuda<N>::DownloadVolume() {
         std::move(tsdf), std::move(weight), std::move(color));
 }
 
-/** Reserved for ScalableTSDFVolumeCuda **/
-template<size_t N>
-__device__
-inline void UniformTSDFVolumeCudaServer<N>::Create(
-    float *tsdf, uchar *weight, open3d::Vector3b *color) {
-    tsdf_ = tsdf;
-    weight_ = weight;
-    color_ = color;
-}
-
 template<size_t N>
 void UniformTSDFVolumeCuda<N>::Integrate(RGBDImageCuda &rgbd,
                                          MonoPinholeCameraCuda &camera,
                                          TransformCuda &transform_camera_to_world) {
+    assert(server_ != nullptr);
     const int num_blocks = DIV_CEILING(N, THREAD_3D_UNIT);
     const dim3 blocks(num_blocks, num_blocks, num_blocks);
     const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
@@ -443,6 +446,7 @@ template<size_t N>
 void UniformTSDFVolumeCuda<N>::RayCasting(ImageCuda<open3d::Vector3f> &image,
                                           MonoPinholeCameraCuda &camera,
                                           TransformCuda &transform_camera_to_world) {
+    assert(server_ != nullptr);
     const dim3 blocks(DIV_CEILING(image.width(), THREAD_2D_UNIT),
                       DIV_CEILING(image.height(), THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);

@@ -4,9 +4,11 @@
 
 #pragma once
 
-#include "MarchingCubesConstCuda.h"
 #include "UniformMeshVolumeCuda.h"
+#include "MarchingCubesConstCuda.h"
+
 #include "UniformTSDFVolumeCuda.cuh"
+
 #include <Core/Core.h>
 
 namespace open3d {
@@ -34,7 +36,7 @@ void UniformMeshVolumeCudaServer<N>::AllocateVertex(
         if (weight == 0) return;
 
         float tsdf = tsdf_volume.tsdf(X_corner);
-        if (fabsf(tsdf) > 2 * tsdf_volume.voxel_length_) return;
+        if (fabsf(tsdf) > tsdf_volume.sdf_trunc_) return;
 
         tmp_table_index |= ((tsdf < 0) ? (1 << corner) : 0);
     }
@@ -103,10 +105,10 @@ void UniformMeshVolumeCudaServer<N>::ExtractVertex(
             if (mesh_.type_ & VertexWithColor) {
                 assert(mu >= 0 && mu <= 1);
                 Vector3b &color_axis = tsdf_volume.color(X_axis);
-                mesh_.vertex_colors()[voxel_vertex_indices(axis)] =
-                    Vector3f(((1 - mu) * color_0(0) + mu * color_axis(0)) / 255.0f,
-                             ((1 - mu) * color_0(1) + mu * color_axis(1)) / 255.0f,
-                             ((1 - mu) * color_0(2) + mu * color_axis(2)) / 255.0f);
+                mesh_.vertex_colors()[voxel_vertex_indices(axis)] = Vector3f(
+                    ((1 - mu) * color_0(0) + mu * color_axis(0)) / 255.0f,
+                    ((1 - mu) * color_0(1) + mu * color_axis(1)) / 255.0f,
+                    ((1 - mu) * color_0(2) + mu * color_axis(2)) / 255.0f);
             }
 
             axis_offset(axis) = 0;
@@ -192,7 +194,7 @@ template<size_t N>
 void UniformMeshVolumeCuda<N>::Create(
     VertexType type, int max_vertices, int max_triangles) {
     if (server_ != nullptr) {
-        PrintError("Already created. Stop re-creating!\n");
+        PrintError("[UniformMeshVolumeCuda] Already created, abort!\n");
         return;
     }
 
@@ -256,6 +258,7 @@ void UniformMeshVolumeCuda<N>::UpdateServer() {
 template<size_t N>
 void UniformMeshVolumeCuda<N>::VertexAllocation(
     UniformTSDFVolumeCuda<N> &tsdf_volume) {
+    assert(server_ != nullptr);
 
     Timer timer;
     timer.Start();
@@ -275,6 +278,7 @@ void UniformMeshVolumeCuda<N>::VertexAllocation(
 template<size_t N>
 void UniformMeshVolumeCuda<N>::VertexExtraction(
     UniformTSDFVolumeCuda<N> &tsdf_volume) {
+    assert(server_ != nullptr);
 
     Timer timer;
     timer.Start();
@@ -293,6 +297,7 @@ void UniformMeshVolumeCuda<N>::VertexExtraction(
 
 template<size_t N>
 void UniformMeshVolumeCuda<N>::TriangleExtraction() {
+    assert(server_ != nullptr);
 
     Timer timer;
     timer.Start();
@@ -311,7 +316,7 @@ void UniformMeshVolumeCuda<N>::TriangleExtraction() {
 template<size_t N>
 void UniformMeshVolumeCuda<N>::MarchingCubes(
     UniformTSDFVolumeCuda<N> &tsdf_volume) {
-    assert(vertex_type_ != VertexTypeUnknown);
+    assert(server_ != nullptr && vertex_type_ != VertexTypeUnknown);
 
     mesh_.Reset();
 

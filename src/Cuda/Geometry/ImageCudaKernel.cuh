@@ -18,16 +18,13 @@ void DownsampleImageKernel(ImageCudaServer<VecType> src,
 
     /** Re-write the function by hard-coding if we want to accelerate **/
     switch (method) {
-        case BoxFilter: dst.get(u, v) = src.BoxFilter2x2(u << 1, v << 1);
+        case BoxFilter: dst.at(u, v) = src.BoxFilter2x2(u << 1, v << 1);
             return;
-        case BoxFilterWithHoles:
-            dst.get(u, v) = src.BoxFilter2x2WithHoles(u << 1, v << 1);
+        case BoxFilterWithHoles:dst.at(u, v) = src.BoxFilter2x2WithHoles(u << 1, v << 1);
             return;
-        case GaussianFilter:
-            dst.get(u, v) = src.GaussianFilter(u << 1, v << 1, Gaussian5x5);
+        case GaussianFilter:dst.at(u, v) = src.GaussianFilter(u << 1, v << 1, Gaussian5x5);
             return;
-        case GaussianFilterWithHoles:
-            dst.get(u, v) = src.GaussianFilterWithHoles(u << 1, v << 1, Gaussian5x5);
+        case GaussianFilterWithHoles:dst.at(u, v) = src.GaussianFilterWithHoles(u << 1, v << 1, Gaussian5x5);
             return;
         default: printf("Unsupported method.\n");
     }
@@ -45,7 +42,7 @@ void ShiftImageKernel(
     int u = blockIdx.x * blockDim.x + threadIdx.x;
     int v = blockIdx.y * blockDim.y + threadIdx.y;
 
-    dst.get(u, v) = VecType(0);
+    dst.at(u, v) = VecType(0);
     if (u >= dst.width_ || v >= dst.height_)
         return;
 
@@ -54,9 +51,9 @@ void ShiftImageKernel(
         return;
 
     if (with_holes) {
-        dst.get(u, v) = src.get_interp_with_holes(u + dx, v + dy);
+        dst.at(u, v) = src.interp_with_holes_at(u + dx, v + dy);
     } else {
-        dst.get(u, v) = src.get_interp(u + dx, v + dy);
+        dst.at(u, v) = src.interp_at(u + dx, v + dy);
     }
 }
 
@@ -78,9 +75,9 @@ void GaussianImageKernel(
         return;
 
     if (with_holes) {
-        dst.get(u, v) = src.GaussianFilterWithHoles(u, v, kernel_idx);
+        dst.at(u, v) = src.GaussianFilterWithHoles(u, v, kernel_idx);
     } else {
-        dst.get(u, v) = src.GaussianFilter(u, v, kernel_idx);
+        dst.at(u, v) = src.GaussianFilter(u, v, kernel_idx);
     }
 }
 
@@ -100,10 +97,10 @@ void BilateralImageKernel(ImageCudaServer<VecType> src,
     if (u >= dst.width_ || v >= dst.height_)
         return;
     if (with_holes) {
-        dst.get(u, v) =
+        dst.at(u, v) =
             src.BilateralFilterWithHoles(u, v, kernel_idx, val_sigma);
     } else {
-        dst.get(u, v) = src.BilateralFilter(u, v, kernel_idx, val_sigma);
+        dst.at(u, v) = src.BilateralFilter(u, v, kernel_idx, val_sigma);
     }
 }
 
@@ -121,8 +118,8 @@ void ToFloatImageKernel(
     int v = blockIdx.y * blockDim.y + threadIdx.y;
     if (u >= dst.width_ || v >= dst.height_) return;
 
-    dst.get(u, v) =
-        src.get(u, v).ToVectorf() * scale + VecType::VecTypef(offset);
+    dst.at(u, v) =
+        src.at(u, v).ToVectorf() * scale + VecType::VecTypef(offset);
 }
 
 /**
@@ -141,8 +138,8 @@ void SobelImageKernel(
     if (u >= src.width_ || v >= src.height_) return;
 
     if (u == 0 || u == src.width_ - 1 || v == 0 || v == src.height_ - 1) {
-        dx.get(u, v) = VecType::VecTypef(0);
-        dy.get(u, v) = VecType::VecTypef(0);
+        dx.at(u, v) = VecType::VecTypef(0);
+        dy.at(u, v) = VecType::VecTypef(0);
         return;
     }
 

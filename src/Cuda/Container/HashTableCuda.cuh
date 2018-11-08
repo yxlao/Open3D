@@ -87,7 +87,7 @@ int HashTableCudaServer<Key, Value, Hasher>::New(
             return ContainerReturnCode::HashEntryAlreadyExists;
         }
         if (entry_array_empty_slot_idx == (-1)
-            && entry.internal_addr == HASH_ENTRY_EMPTY) {
+            && entry.internal_addr == NULLPTR_CUDA) {
             entry_array_empty_slot_idx = bucket_base_idx + i;
         }
     }

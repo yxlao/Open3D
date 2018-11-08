@@ -22,7 +22,7 @@ namespace open3d {
  */
 template<typename VecType>
 __device__
-VecType &ImageCudaServer<VecType>::get(int x, int y) {
+VecType &ImageCudaServer<VecType>::at(int x, int y) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_);
     assert(y >= 0 && y < height_);
@@ -34,7 +34,7 @@ VecType &ImageCudaServer<VecType>::get(int x, int y) {
 template<typename VecType>
 __device__
 VecType &ImageCudaServer<VecType>::operator()(int x, int y) {
-    return get(x, y);
+    return at(x, y);
 }
 
 /**
@@ -42,7 +42,7 @@ VecType &ImageCudaServer<VecType>::operator()(int x, int y) {
  */
 template<typename VecType>
 __device__
-VecType ImageCudaServer<VecType>::get_interp(float x, float y) {
+VecType ImageCudaServer<VecType>::interp_at(float x, float y) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_ - 1);
     assert(y >= 0 && y < height_ - 1);
@@ -50,17 +50,16 @@ VecType ImageCudaServer<VecType>::get_interp(float x, float y) {
     int x0 = (int) floor(x), y0 = (int) floor(y);
     float a = x - x0, b = y - y0;
     return VecType::FromVectorf(
-        (1 - a) * (1 - b) * get(x0, y0).ToVectorf()
-            + (1 - a) * b * get(x0, y0 + 1).ToVectorf()
-            + a * b * get(x0 + 1, y0 + 1).ToVectorf()
-            + a * (1 - b) * get(x0 + 1, y0).ToVectorf()
-    );
+        (1 - a) * (1 - b) * at(x0, y0).ToVectorf()
+            + (1 - a) * b * at(x0, y0 + 1).ToVectorf()
+            + a * b * at(x0 + 1, y0 + 1).ToVectorf()
+            + a * (1 - b) * at(x0 + 1, y0).ToVectorf());
 }
 
 /** SO many if. If it is slow, fall back to get **/
 template<typename VecType>
 __device__
-VecType ImageCudaServer<VecType>::get_interp_with_holes(float x, float y) {
+VecType ImageCudaServer<VecType>::interp_with_holes_at(float x, float y) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_ - 1);
     assert(y >= 0 && y < height_ - 1);
@@ -73,22 +72,22 @@ VecType ImageCudaServer<VecType>::get_interp_with_holes(float x, float y) {
     auto sum_val = VecType::VecTypef(0);
     auto zero = VecType::VecTypef(0);
 
-    auto val = get(x0, y0).ToVectorf();
+    auto val = at(x0, y0).ToVectorf();
     float w = (1 - a) * (1 - b);
     sum_val += w * val;
     sum_w += (val == zero) ? 0 : w;
 
-    val = get(x0, y0 + 1).ToVectorf();
+    val = at(x0, y0 + 1).ToVectorf();
     w = (1 - a) * b;
     sum_val += w * val;
     sum_w += (val == zero) ? 0 : w;
 
-    val = get(x0 + 1, y0 + 1).ToVectorf();
+    val = at(x0 + 1, y0 + 1).ToVectorf();
     w = a * b;
     sum_val += w * val;
     sum_w += (val == zero) ? 0 : w;
 
-    val = get(x0 + 1, y0).ToVectorf();
+    val = at(x0 + 1, y0).ToVectorf();
     w = a * (1 - b);
     sum_val += w * val;
     sum_w += (val == zero) ? 0 : w;
@@ -108,10 +107,10 @@ VecType ImageCudaServer<VecType>::BoxFilter2x2(int x, int y) {
     int yp1 = min(height_ - 1, y + 1);
 
     auto sum_val = VecType::Vectorf();
-    sum_val += get(x, y).ToVectorf();
-    sum_val += get(x, yp1).ToVectorf();
-    sum_val += get(xp1, y).ToVectorf();
-    sum_val += get(xp1, yp1).ToVectorf();
+    sum_val += at(x, y).ToVectorf();
+    sum_val += at(x, yp1).ToVectorf();
+    sum_val += at(xp1, y).ToVectorf();
+    sum_val += at(xp1, yp1).ToVectorf();
 
     sum_val *= 0.25f;
     return VecType::FromVectorf(sum_val);
@@ -133,19 +132,19 @@ VecType ImageCudaServer<VecType>::BoxFilter2x2WithHoles(int x, int y) {
     VecType val;
     VecType zero = VecType(0);
 
-    val = get(x, y);
+    val = at(x, y);
     sum_val += val.ToVectorf();
     cnt += (val == zero) ? 0.0f : 1.0f;
 
-    val = get(x, yp1);
+    val = at(x, yp1);
     sum_val += val.ToVectorf();
     cnt += (val == zero) ? 0.0f : 1.0f;
 
-    val = get(xp1, y);
+    val = at(xp1, y);
     sum_val += val.ToVectorf();
     cnt += (val == zero) ? 0.0f : 1.0f;
 
-    val = get(xp1, yp1);
+    val = at(xp1, yp1);
     sum_val += val.ToVectorf();
     cnt += (val == zero) ? 0.0f : 1.0f;
 
@@ -181,7 +180,7 @@ VecType ImageCudaServer<VecType>::GaussianFilter(int x, int y, int kernel_idx) {
 
     for (int xx = x_min; xx <= x_max; ++xx) {
         for (int yy = y_min; yy <= y_max; ++yy) {
-            auto val = get(xx, yy).ToVectorf();
+            auto val = at(xx, yy).ToVectorf();
             float weight = kernel[abs(xx - x)] * kernel[abs(yy - y)];
             sum_val += val * weight;
             sum_weight += weight;
@@ -210,7 +209,7 @@ VecType ImageCudaServer<VecType>::GaussianFilterWithHoles(
 
     /** If it is already a hole, leave it alone **/
     VecType zero = VecType(0);
-    if (get(x, y) == zero) return zero;
+    if (at(x, y) == zero) return zero;
 
     const int kernel_size = kernel_sizes[kernel_idx];
     const int kernel_size_2 = kernel_size >> 1;
@@ -226,7 +225,7 @@ VecType ImageCudaServer<VecType>::GaussianFilterWithHoles(
 
     for (int xx = x_min; xx <= x_max; ++xx) {
         for (int yy = y_min; yy <= y_max; ++yy) {
-            VecType val = get(xx, yy);
+            VecType val = at(xx, yy);
             auto valf = val.ToVectorf();
             float weight = kernel[abs(xx - x)] * kernel[abs(yy - y)];
             sum_val += valf * weight;
@@ -264,13 +263,13 @@ VecType ImageCudaServer<VecType>::BilateralFilter(
     int x_max = min(width_ - 1, x + kernel_size_2);
     int y_max = min(height_ - 1, y + kernel_size_2);
 
-    auto center_val = get(x, y).ToVectorf();
+    auto center_val = at(x, y).ToVectorf();
     auto sum_val = VecType::Vectorf();
     float sum_weight = 0;
 
     for (int xx = x_min; xx <= x_max; ++xx) {
         for (int yy = y_min; yy <= y_max; ++yy) {
-            auto val = get(xx, yy).ToVectorf();
+            auto val = at(xx, yy).ToVectorf();
             float weight = kernel[abs(xx - x)] * kernel[abs(yy - y)];
             float value_diff = (val - center_val).norm() / val_sigma;
             weight *= expf(-value_diff);
@@ -301,7 +300,7 @@ VecType ImageCudaServer<VecType>::BilateralFilterWithHoles(
     };
 
     VecType zero = VecType(0);
-    if (get(x, y) == zero) return zero;
+    if (at(x, y) == zero) return zero;
 
     const int kernel_size = kernel_sizes[kernel_idx];
     const int kernel_size_2 = kernel_size >> 1;
@@ -312,13 +311,13 @@ VecType ImageCudaServer<VecType>::BilateralFilterWithHoles(
     int x_max = min(width_ - 1, x + kernel_size_2);
     int y_max = min(height_ - 1, y + kernel_size_2);
 
-    auto center_valf = get(x, y).ToVectorf();
+    auto center_valf = at(x, y).ToVectorf();
     auto sum_val = VecType::Vectorf();
     float sum_weight = 0;
 
     for (int xx = x_min; xx <= x_max; ++xx) {
         for (int yy = y_min; yy <= y_max; ++yy) {
-            auto val = get(xx, yy);
+            auto val = at(xx, yy);
             auto valf = val.ToVectorf();
             float weight = kernel[abs(xx - x)] * kernel[abs(yy - y)];
             float value_diff = (valf - center_valf).norm() / val_sigma;
@@ -342,14 +341,14 @@ ImageCudaServer<VecType>::Sobel(int x, int y) {
     assert(y >= 1 && y < height_ - 1);
 #endif
 
-    auto Iumvm = get(x - 1, y - 1).ToVectorf();
-    auto Iumv0 = get(x - 1, y).ToVectorf();
-    auto Iumvp = get(x - 1, y + 1).ToVectorf();
-    auto Iu0vm = get(x, y - 1).ToVectorf();
-    auto Iu0vp = get(x, y + 1).ToVectorf();
-    auto Iupvm = get(x + 1, y - 1).ToVectorf();
-    auto Iupv0 = get(x + 1, y).ToVectorf();
-    auto Iupvp = get(x + 1, y + 1).ToVectorf();
+    auto Iumvm = at(x - 1, y - 1).ToVectorf();
+    auto Iumv0 = at(x - 1, y).ToVectorf();
+    auto Iumvp = at(x - 1, y + 1).ToVectorf();
+    auto Iu0vm = at(x, y - 1).ToVectorf();
+    auto Iu0vp = at(x, y + 1).ToVectorf();
+    auto Iupvm = at(x + 1, y - 1).ToVectorf();
+    auto Iupv0 = at(x + 1, y).ToVectorf();
+    auto Iupvp = at(x + 1, y + 1).ToVectorf();
 
     return {
         (Iupvm - Iumvm) + (Iupv0 - Iumv0) * 2 + (Iupvp - Iumvp),
@@ -372,14 +371,14 @@ ImageCudaServer<VecType>::SobelWithHoles(int x, int y) {
 #endif
 
     auto zero = VecType::VecTypef(0);
-    auto Iumvm = get(x - 1, y - 1).ToVectorf();
-    auto Iumv0 = get(x - 1, y).ToVectorf();
-    auto Iumvp = get(x - 1, y + 1).ToVectorf();
-    auto Iu0vm = get(x, y - 1).ToVectorf();
-    auto Iu0vp = get(x, y + 1).ToVectorf();
-    auto Iupvm = get(x + 1, y - 1).ToVectorf();
-    auto Iupv0 = get(x + 1, y).ToVectorf();
-    auto Iupvp = get(x + 1, y + 1).ToVectorf();
+    auto Iumvm = at(x - 1, y - 1).ToVectorf();
+    auto Iumv0 = at(x - 1, y).ToVectorf();
+    auto Iumvp = at(x - 1, y + 1).ToVectorf();
+    auto Iu0vm = at(x, y - 1).ToVectorf();
+    auto Iu0vp = at(x, y + 1).ToVectorf();
+    auto Iupvm = at(x + 1, y - 1).ToVectorf();
+    auto Iupv0 = at(x + 1, y).ToVectorf();
+    auto Iupvp = at(x + 1, y + 1).ToVectorf();
 
     bool mask_corner = (Iumvm != zero) && (Iumvp != zero)
         && (Iupvm != zero) && (Iupvp != zero);

@@ -4,20 +4,22 @@
 
 #pragma once
 
+#include "IntegrationClasses.h"
 #include <Cuda/Common/UtilsCuda.h>
+
 #include <Cuda/Container/HashTableCuda.h>
+
+#include <Cuda/Geometry/PinholeCameraCuda.h>
 #include <Cuda/Geometry/TransformCuda.h>
 #include <Cuda/Geometry/VectorCuda.h>
-#include <Cuda/Geometry/PinholeCameraCuda.h>
 #include <Cuda/Geometry/RGBDImageCuda.h>
-#include "IntegrationClasses.h"
 
 #include <memory>
 
 namespace open3d {
 
 template<size_t N>
-class __ALIGN__(16) ScalableTSDFVolumeCudaServer {
+class ScalableTSDFVolumeCudaServer {
 public:
     typedef HashTableCudaServer<
         Vector3i, UniformTSDFVolumeCudaServer<N>, SpatialHasher>

@@ -3,11 +3,15 @@
 //
 
 #pragma once
+
 #include "GeometryClasses.h"
 #include "VectorCuda.h"
-#include <Core/Geometry/TriangleMesh.h>
-#include <Cuda/Geometry/TransformCuda.h>
+#include "TransformCuda.h"
+
 #include <Cuda/Container/ArrayCuda.h>
+
+#include <Core/Geometry/TriangleMesh.h>
+
 #include <memory>
 
 namespace open3d {

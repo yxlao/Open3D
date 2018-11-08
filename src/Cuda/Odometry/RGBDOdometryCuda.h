@@ -156,13 +156,9 @@ private:
     ArrayCuda<float> results_;
 
 public:
-    typedef Eigen::Matrix<float, 4, 4, Eigen::DontAlign> Matrix4f;
-    typedef Eigen::Matrix<float, 6, 6, Eigen::DontAlign> Matrix6f;
-    typedef Eigen::Matrix<float, 6, 1, Eigen::DontAlign> Vector6f;
-    typedef Eigen::Matrix<double, 6, 1, Eigen::DontAlign> Vector6d;
-
-public:
-    Matrix4f transform_source_to_target_;
+    typedef Eigen::Matrix<double, 6, 6> EigenMatrix6d;
+    typedef Eigen::Matrix<double, 6, 1> EigenVector6d;
+    Eigen::Matrix4d transform_source_to_target_;
 
     /** At current I don't want to add assignments for such a large class **/
     /** Ideally Create and Release should be only called once **/
@@ -186,7 +182,7 @@ public:
                ImageCuda<Vector1f> &target_intensity);
 
     void ExtractResults(std::vector<float> &results,
-                        Matrix6f &JtJ, Vector6f &Jtr,
+                        EigenMatrix6d &JtJ, EigenVector6d &Jtr,
                         float &error, float &inliers);
 
     std::shared_ptr<RGBDOdometryCudaServer<N>> &server() {

@@ -5,12 +5,13 @@
 #pragma once
 
 #include "IntegrationClasses.h"
-#include <Cuda/Geometry/RGBDImageCuda.h>
-#include <Cuda/Geometry/VectorCuda.h>
+
 #include <Cuda/Geometry/ImageCuda.h>
 #include <Cuda/Geometry/PinholeCameraCuda.h>
+#include <Cuda/Geometry/RGBDImageCuda.h>
 #include <Cuda/Geometry/TransformCuda.h>
 #include <Cuda/Geometry/TriangleMeshCuda.h>
+#include <Cuda/Geometry/VectorCuda.h>
 
 #include <cstdlib>
 #include <memory>
@@ -18,7 +19,7 @@
 namespace open3d {
 
 template<size_t N>
-class __ALIGN__(16) UniformTSDFVolumeCudaServer {
+class UniformTSDFVolumeCudaServer {
 private:
     /** [N * N * N] **/
     float *tsdf_;

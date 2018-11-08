@@ -4,10 +4,7 @@
 
 #pragma once
 
-#include "MarchingCubesConstCuda.h"
 #include "UniformTSDFVolumeCuda.cuh"
-#include <Cuda/Container/ArrayCuda.cuh>
-#include <Cuda/Geometry/ImageCuda.cuh>
 
 namespace open3d {
 template<size_t N>
@@ -40,7 +37,7 @@ void RayCastingKernel(UniformTSDFVolumeCudaServer<N> server,
     Vector2i p = Vector2i(x, y);
     Vector3f n = server.RayCasting(p, camera, transform_camera_to_world);
 
-    image.get(x, y) = (n == Vector3f::Zeros()) ?
+    image.at(x, y) = (n == Vector3f::Zeros()) ?
         n : Vector3f((n(0) + 1) * 0.5f, (n(1) + 1) * 0.5f, (n(2) + 1) * 0.5f);
 }
 }

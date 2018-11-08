@@ -80,12 +80,12 @@ void TriangleMeshCuda::Create(
     VertexType type, int max_vertices, int max_triangles) {
     assert(max_vertices > 0 && max_triangles > 0);
     if (server_ != nullptr) {
-        PrintError("Already created, stop re-creating!\n");
+        PrintError("[TriangleMeshCuda] Already created, abort!\n");
         return;
     }
 
     if (type == VertexTypeUnknown) {
-        PrintError("Unknown vertex type!\n");
+        PrintError("[TriangleMeshCuda] Unknown vertex type, abort!\n");
         return;
     }
 
@@ -340,15 +340,8 @@ void TriangleMeshCuda::Transform(const Eigen::Matrix4d &transformation) {
     const int num_vertices = vertices_.size();
     if (num_vertices == 0) return;
 
-    Eigen::Matrix<float, 4, 4, Eigen::DontAlign> transformationf;
-    for (int i = 0; i < 4; ++i) {
-        for (int j = 0; j < 4; ++j) {
-            transformationf(i, j) = transformation(i, j);
-        }
-    }
-
     TransformCuda transformation_cuda;
-    transformation_cuda.FromEigen(transformationf);
+    transformation_cuda.FromEigen(transformation);
 
     const dim3 blocks(DIV_CEILING(num_vertices, THREAD_1D_UNIT));
     const dim3 threads(THREAD_1D_UNIT);

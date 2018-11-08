@@ -4,9 +4,11 @@
 
 #pragma once
 
-#include "MarchingCubesConstCuda.h"
 #include "ScalableMeshVolumeCuda.h"
+#include "MarchingCubesConstCuda.h"
+
 #include "ScalableTSDFVolumeCuda.cuh"
+
 #include <Core/Core.h>
 
 namespace open3d {
@@ -204,15 +206,15 @@ void ScalableMeshVolumeCudaServer<N>::ExtractVertex(
                     tsdf_volume.transform_volume_to_world_.Rotate(
                             (1 - mu) * gradient_0
                                 + mu * subvolume->gradient(Xlocal_axis))
-                        .normalized();
+                                .normalized();
             }
 
             if (mesh_.type_ & VertexWithColor) {
                 Vector3b color_axis = subvolume->color(Xlocal_axis);
-                mesh_.vertex_colors()[voxel_vertex_indices(axis)] =
-                    Vector3f(((1 - mu) * color_0(0) + mu * color_axis(0)) / 255,
-                             ((1 - mu) * color_0(1) + mu * color_axis(1)) / 255,
-                             ((1 - mu) * color_0(2) + mu * color_axis(2)) / 255);
+                mesh_.vertex_colors()[voxel_vertex_indices(axis)] = Vector3f(
+                    ((1 - mu) * color_0(0) + mu * color_axis(0)) / 255.0f,
+                    ((1 - mu) * color_0(1) + mu * color_axis(1)) / 255.0f,
+                    ((1 - mu) * color_0(2) + mu * color_axis(2)) / 255.0f);
 
             }
 
@@ -259,7 +261,7 @@ void ScalableMeshVolumeCudaServer<N>::ExtractVertexOnBoundary(
             assert(cached_subvolumes[neighbor_idx] != nullptr);
 #endif
 
-            Vector3i Xneighbor_axis = Xlocal_axis - float(N) * dXsv_axis;
+            Vector3i Xneighbor_axis = Xlocal_axis - int(N) * dXsv_axis;
             float tsdf_axis = cached_subvolumes[neighbor_idx]->tsdf(
                 Xneighbor_axis);
             Vector3b color_axis = cached_subvolumes[neighbor_idx]->color(
@@ -285,10 +287,10 @@ void ScalableMeshVolumeCudaServer<N>::ExtractVertexOnBoundary(
             }
 
             if (mesh_.type_ & VertexWithColor) {
-                mesh_.vertex_colors()[voxel_vertex_indices(axis)] =
-                    Vector3f(((1 - mu) * color_0(0) + mu * color_axis(0)) / 255,
-                             ((1 - mu) * color_0(1) + mu * color_axis(1)) / 255,
-                             ((1 - mu) * color_0(2) + mu * color_axis(2)) / 255);
+                mesh_.vertex_colors()[voxel_vertex_indices(axis)] = Vector3f(
+                    ((1 - mu) * color_0(0) + mu * color_axis(0)) / 255.0f,
+                    ((1 - mu) * color_0(1) + mu * color_axis(1)) / 255.0f,
+                    ((1 - mu) * color_0(2) + mu * color_axis(2)) / 255.0f);
             }
 
             axis_offset(axis) = 0;
@@ -313,6 +315,7 @@ void ScalableMeshVolumeCudaServer<N>::ExtractTriangle(
         for (size_t vertex = 0; vertex < 3; ++vertex) {
             /** Edge holding the vetex **/
             int edge = tri_table[table_index][tri + vertex];
+
             /** Voxel holding the edge **/
             Vector3i Xlocal_edge_holder = Vector3i(
                 Xlocal(0) + edge_shift[edge][0],
@@ -424,7 +427,7 @@ void ScalableMeshVolumeCuda<N>::Create(
     int max_subvolumes,
     VertexType type, int max_vertices, int max_triangles) {
     if (server_ != nullptr) {
-        PrintError("Already created. Stop re-creating!\n");
+        PrintError("[ScalableMeshVolumeCuda]: Already created, abort!\n");
         return;
     }
 
@@ -483,6 +486,7 @@ void ScalableMeshVolumeCuda<N>::UpdateServer() {
 template<size_t N>
 void ScalableMeshVolumeCuda<N>::VertexAllocation(
     ScalableTSDFVolumeCuda<N> &tsdf_volume) {
+    assert(server_ != nullptr);
 
     Timer timer;
     timer.Start();
@@ -501,6 +505,8 @@ void ScalableMeshVolumeCuda<N>::VertexAllocation(
 template<size_t N>
 void ScalableMeshVolumeCuda<N>::VertexExtraction(
     ScalableTSDFVolumeCuda<N> &tsdf_volume) {
+    assert(server_ != nullptr);
+
     Timer timer;
     timer.Start();
 
@@ -518,6 +524,8 @@ void ScalableMeshVolumeCuda<N>::VertexExtraction(
 template<size_t N>
 void ScalableMeshVolumeCuda<N>::TriangleExtraction(
     ScalableTSDFVolumeCuda<N> &tsdf_volume) {
+    assert(server_ != nullptr);
+
     Timer timer;
     timer.Start();
 
@@ -535,7 +543,7 @@ void ScalableMeshVolumeCuda<N>::TriangleExtraction(
 template<size_t N>
 void ScalableMeshVolumeCuda<N>::MarchingCubes(
     ScalableTSDFVolumeCuda<N> &tsdf_volume) {
-    assert(vertex_type_ != VertexTypeUnknown);
+    assert(server_ != nullptr && vertex_type_ != VertexTypeUnknown);
 
     mesh_.Reset();
     active_subvolumes_ = tsdf_volume.active_subvolume_entry_array().size();

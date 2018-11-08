@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <Cuda/Common/AtomicCuda.h>
-#include <Cuda/Common/ReductionCuda.h>
 #include "TriangleMeshCuda.cuh"
 
 namespace open3d {

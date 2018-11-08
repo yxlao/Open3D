@@ -7,11 +7,13 @@
 #include "IntegrationClasses.h"
 #include "UniformTSDFVolumeCuda.h"
 
-#include <Core/Geometry/TriangleMesh.h>
 #include <Cuda/Common/UtilsCuda.h>
+
 #include <Cuda/Container/ArrayCuda.h>
+
 #include <Cuda/Geometry/VectorCuda.h>
 #include <Cuda/Geometry/TriangleMeshCuda.h>
+
 #include <memory>
 
 /** A class that embeds mesh in the volumes **/

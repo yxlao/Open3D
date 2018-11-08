@@ -19,6 +19,8 @@ TEST(ScalableMeshVolumeCuda, MarchingCubes) {
         "../../examples/TestData/RGBD/color/00000.jpg");
     cv::cvtColor(color, color, cv::COLOR_BGR2RGB);
 
+    SetVerbosityLevel(VerbosityLevel::VerboseDebug);
+
     RGBDImageCuda rgbd(0.1f, 3.5f, 1000.0f);
     rgbd.Upload(depth, color);
 
@@ -42,9 +44,8 @@ TEST(ScalableMeshVolumeCuda, MarchingCubes) {
     PrintInfo("Integration takes: %f milliseconds\n", timer.GetDuration() / 10);
 
     tsdf_volume.GetAllSubvolumes();
-    ScalableMeshVolumeCuda<8> mesher(10000, VertexWithNormalAndColor, 100000, 200000);
+    ScalableMeshVolumeCuda<8> mesher(10000, VertexWithNormalAndColor, 200000, 400000);
     mesher.active_subvolumes_ = tsdf_volume.active_subvolume_entry_array().size();
-
     PrintInfo("Active subvolumes: %d\n", mesher.active_subvolumes_);
 
     timer.Start();

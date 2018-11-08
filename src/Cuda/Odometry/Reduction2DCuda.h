@@ -5,7 +5,6 @@
 #pragma once
 
 #include <Cuda/Common/UtilsCuda.h>
-#include <Cuda/Common/ReductionCuda.h>
 #include <Cuda/Geometry/ImageCuda.h>
 #include <Cuda/Geometry/VectorCuda.h>
 

@@ -174,11 +174,14 @@ void CheckToFloatConversion(std::string path, float scale, float offset) {
     timer.Stop();
     PrintInfo("Upload finished in %.3f milliseconds...\n", timer.GetDuration());
 
+    int iter = 100;
     timer.Start();
-    imagef_cuda = image_cuda.ToFloat(scale, offset);
+    for (int i = 0; i < iter; ++i) {
+        imagef_cuda = image_cuda.ToFloat(scale, offset);
+    }
     timer.Stop();
     PrintInfo("Conversion finished in %.3f milliseconds...\n",
-              timer.GetDuration());
+              timer.GetDuration() / iter);
 
     cv::Mat downloaded = imagef_cuda.Download();
     const float kEpsilon = 1e-5f;
@@ -191,7 +194,7 @@ void CheckToFloatConversion(std::string path, float scale, float offset) {
                 EXPECT_NEAR(raw[1] * scale + offset, converted[1], kEpsilon);
                 EXPECT_NEAR(raw[2] * scale + offset, converted[2], kEpsilon);
             } else if (image.type() == CV_16UC1) {
-                short raw = image.at<short>(i, j);
+                ushort raw = image.at<ushort>(i, j);
                 float converted = downloaded.at<float>(i, j);
                 EXPECT_NEAR(raw * scale + offset, converted, kEpsilon);
             } else if (image.type() == CV_8UC1) {

@@ -27,7 +27,7 @@ void ReduceSum2DKernel(ImageCudaServer<VecType> src, T *sum) {
     for (int i = 0; i < TEST_ARRAY_SIZE; ++i) {
         __syncthreads();
 
-        local_sum[tid] = T(src.get(x, y)(0));
+        local_sum[tid] = T(src.at(x, y)(0));
         __syncthreads();
 
         BlockReduceSum<T>(local_sum, tid);
@@ -71,7 +71,7 @@ void ReduceSum2DShuffleKernel(ImageCudaServer<VecType> src, T *sum_total) {
 
     for (int i = 0; i < TEST_ARRAY_SIZE; ++i) {
         T sum =
-            (x >= src.width_ || y >= src.height_) ? 0 : T(src.get(x, y)(0));
+            (x >= src.width_ || y >= src.height_) ? 0 : T(src.at(x, y)(0));
         __syncthreads();
         sum = blockReduceSumShuffle(sum);
         if (threadIdx.x == 0) atomicAdd(sum_total, sum);
@@ -87,7 +87,7 @@ void AtomicSumKernel(ImageCudaServer<VecType> src, T *sum_total) {
 
     if (x >= src.width_ || y >= src.height_) return;
     for (int i = 0; i < TEST_ARRAY_SIZE; ++i) {
-        T sum = T(src.get(x, y)(0));
+        T sum = T(src.at(x, y)(0));
         atomicAdd(sum_total, sum);
     }
 }

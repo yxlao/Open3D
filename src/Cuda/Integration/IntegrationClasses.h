@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <Cuda/Geometry/GeometryClasses.h>
 #include <cstdlib>
 
 namespace open3d {

@@ -5,11 +5,13 @@
 #pragma once
 
 #include "ScalableTSDFVolumeCuda.h"
-#include "MarchingCubesConstCuda.h"
+
 #include <Cuda/Container/HashTableCuda.cuh>
 #include <Cuda/Container/HashTableCudaKernel.cuh>
+
 #include <Cuda/Container/MemoryHeapCuda.cuh>
 #include <Cuda/Container/MemoryHeapCudaKernel.cuh>
+
 #include <Core/Core.h>
 
 namespace open3d {
@@ -240,10 +242,8 @@ inline bool ScalableTSDFVolumeCudaServer<N>::OnBoundary(
     const Vector3i &Xlocal, bool for_gradient) {
     return for_gradient ?
            (Xlocal(0) == 0 || Xlocal(1) == 0 || Xlocal(2) == 0
-               || Xlocal(0) >= N - 2 || Xlocal(1) >= N - 2
-               || Xlocal(2) >= N - 2)
-                        : (Xlocal(0) == N - 1 || Xlocal(1) == N - 1
-            || Xlocal(2) == N - 1);
+           || Xlocal(0) >= N - 2 || Xlocal(1) >= N - 2 || Xlocal(2) >= N - 2)
+           : (Xlocal(0) == N - 1 || Xlocal(1) == N - 1 || Xlocal(2) == N - 1);
 }
 
 template<size_t N>
@@ -252,10 +252,8 @@ inline bool ScalableTSDFVolumeCudaServer<N>::OnBoundaryf(
     const Vector3f &Xlocal, bool for_gradient) {
     return for_gradient ?
            (Xlocal(0) < 1 || Xlocal(1) < 1 || Xlocal(2) < 1
-               || Xlocal(0) >= N - 2 || Xlocal(1) >= N - 2
-               || Xlocal(2) >= N - 2)
-                        : (Xlocal(0) >= N - 1 || Xlocal(1) >= N - 1
-            || Xlocal(2) >= N - 1);
+           || Xlocal(0) >= N - 2 || Xlocal(1) >= N - 2 || Xlocal(2) >= N - 2)
+           : (Xlocal(0) >= N - 1 || Xlocal(1) >= N - 1 || Xlocal(2) >= N - 1);
 }
 
 template<size_t N>
@@ -551,7 +549,7 @@ void ScalableTSDFVolumeCudaServer<N>::TouchSubvolume(
     MonoPinholeCameraCuda &camera,
     TransformCuda &transform_camera_to_world) {
 
-    float d = depth.get(p(0), p(1))(0);
+    float d = depth.at(p(0), p(1))(0);
 
     /** TODO: wrap the criteria in depth image (RGBD-Image) **/
     if (d < 0.1f || d > 3.5f) return;
@@ -564,20 +562,20 @@ void ScalableTSDFVolumeCudaServer<N>::TouchSubvolume(
         camera.InverseProjection(p, fminf(d + sdf_trunc_, 3.5f));
     Vector3i Xsv_far = voxelf_locate_subvolume(world_to_voxelf(Xw_far));
 
-//    Vector3i Xsv_min = Vector3i(min(Xsv_near(0), Xsv_far(0)),
-//                                min(Xsv_near(1), Xsv_far(1)),
-//                                min(Xsv_near(2), Xsv_far(2)));
-//    Vector3i Xsv_max = Vector3i(max(Xsv_near(0), Xsv_far(0)),
-//                                max(Xsv_near(1), Xsv_far(1)),
-//                                max(Xsv_near(2), Xsv_far(2)));
-//
-//    for (int x = Xsv_min(0); x <= Xsv_max(0); ++x) {
-//        for (int y = Xsv_min(1); y <= Xsv_max(1); ++y) {
-//            for (int z = Xsv_min(2); z <= Xsv_max(2); ++z) {
-//                hash_table_.New(Vector3i(x, y, z));
-//            }
-//        }
-//    }
+    //    Vector3i Xsv_min = Vector3i(min(Xsv_near(0), Xsv_far(0)),
+    //                                min(Xsv_near(1), Xsv_far(1)),
+    //                                min(Xsv_near(2), Xsv_far(2)));
+    //    Vector3i Xsv_max = Vector3i(max(Xsv_near(0), Xsv_far(0)),
+    //                                max(Xsv_near(1), Xsv_far(1)),
+    //                                max(Xsv_near(2), Xsv_far(2)));
+    //
+    //    for (int x = Xsv_min(0); x <= Xsv_max(0); ++x) {
+    //        for (int y = Xsv_min(1); y <= Xsv_max(1); ++y) {
+    //            for (int z = Xsv_min(2); z <= Xsv_max(2); ++z) {
+    //                hash_table_.New(Vector3i(x, y, z));
+    //            }
+    //        }
+    //    }
 
     /** 3D line from Xsv_near to Xsv_far
     /** https://en.wikipedia.org/wiki/Digital_differential_analyzer_(graphics_algorithm) **/
@@ -612,13 +610,13 @@ void ScalableTSDFVolumeCudaServer<N>::Integrate(
 
     /** TSDF **/
     if (!camera.IsValid(p)) return;
-    float d = rgbd.depth().get_interp(p(0), p(1))(0);
+    float d = rgbd.depth().interp_at(p(0), p(1))(0);
 
     float tsdf = d - Xc(2);
     if (tsdf <= -sdf_trunc_) return;
     tsdf = fminf(tsdf, sdf_trunc_);
 
-    Vector3b color = rgbd.color().get(int(p(0)), int(p(1)));
+    Vector3b color = rgbd.color().at(int(p(0)), int(p(1)));
 
     UniformTSDFVolumeCudaServer<N> *subvolume = hash_table_
         .GetValuePtrByInternalAddr(entry.internal_addr);
@@ -638,7 +636,7 @@ void ScalableTSDFVolumeCudaServer<N>::Integrate(
     color_sum = Vector3b(color(0) * w0 + color_sum(0) * w1,
                          color(1) * w0 + color_sum(1) * w1,
                          color(2) * w0 + color_sum(2) * w1);
-    weight_sum = uchar(fminf(weight_sum + 1.0f, 255));
+    weight_sum = uchar(fminf(weight_sum + 1.0f, 255.0f));
 }
 
 template<size_t N>
@@ -698,8 +696,7 @@ Vector3f ScalableTSDFVolumeCudaServer<N>::RayCasting(
             Vector3f normal_surface =
                 (subvolume == nullptr || OnBoundaryf(Xlocal_surface, true)) ?
                 this->GradientAt(X_surface)
-                                                                            : subvolume->GradientAt(
-                    Xlocal_surface);
+                : subvolume->GradientAt(Xlocal_surface);
 
             return transform_camera_to_world.Inverse().Rotate(
                 transform_volume_to_world_.Rotate(normal_surface)).normalized();
@@ -783,7 +780,7 @@ void ScalableTSDFVolumeCuda<N>::Create(
     assert(bucket_count > 0 && value_capacity > 0);
 
     if (server_ != nullptr) {
-        PrintError("Already created, stop re-creating!\n");
+        PrintError("[ScalableTSDFVolumeCuda] Already created, abort!\n");
         return;
     }
 
@@ -817,6 +814,8 @@ void ScalableTSDFVolumeCuda<N>::Create(
 
 template<size_t N>
 void ScalableTSDFVolumeCuda<N>::Reset() {
+    assert(server_ != nullptr);
+
     const int NNN = N * N * N;
     CheckCuda(cudaMemset(server_->tsdf_memory_pool_, 0,
                          sizeof(float) * NNN * value_capacity_));
@@ -866,6 +865,7 @@ std::pair<std::vector<Vector3i>,
                                  std::vector<uchar>,
                                  std::vector<Vector3b>>>>
 ScalableTSDFVolumeCuda<N>::DownloadVolumes() {
+    assert(server_ != nullptr);
 
     auto hash_table = hash_table_.Download();
     std::vector<Vector3i> &keys = std::get<0>(hash_table);
@@ -911,6 +911,7 @@ void ScalableTSDFVolumeCuda<N>::TouchSubvolumes(
     ImageCuda<Vector1f> &depth,
     MonoPinholeCameraCuda &camera,
     TransformCuda &transform_camera_to_world) {
+    assert(server_ != nullptr);
 
     const dim3 blocks(DIV_CEILING(depth.width(), THREAD_2D_UNIT),
                       DIV_CEILING(depth.height(), THREAD_2D_UNIT));
@@ -925,6 +926,7 @@ template<size_t N>
 void ScalableTSDFVolumeCuda<N>::GetSubvolumesInFrustum(
     MonoPinholeCameraCuda &camera,
     TransformCuda &transform_camera_to_world) {
+    assert(server_ != nullptr);
 
     const dim3 blocks(bucket_count_);
     const dim3 threads(THREAD_1D_UNIT);
@@ -936,6 +938,8 @@ void ScalableTSDFVolumeCuda<N>::GetSubvolumesInFrustum(
 
 template<size_t N>
 void ScalableTSDFVolumeCuda<N>::GetAllSubvolumes() {
+    assert(server_ != nullptr);
+
     const dim3 blocks(bucket_count_);
     const dim3 threads(THREAD_1D_UNIT);
     GetAllSubvolumesKernel << < blocks, threads >> > (*server_);
@@ -948,6 +952,7 @@ void ScalableTSDFVolumeCuda<N>::IntegrateSubvolumes(
     RGBDImageCuda &rgbd,
     MonoPinholeCameraCuda &camera,
     TransformCuda &transform_camera_to_world) {
+    assert(server_ != nullptr);
 
     const int num_blocks = active_subvolume_entry_array_.size();
     const dim3 blocks(num_blocks);
@@ -960,6 +965,8 @@ void ScalableTSDFVolumeCuda<N>::IntegrateSubvolumes(
 
 template<size_t N>
 void ScalableTSDFVolumeCuda<N>::ResetActiveSubvolumeIndices() {
+    assert(server_ != nullptr);
+
     CheckCuda(cudaMemset(server_->active_subvolume_indices_, 0xff,
                          sizeof(int) * value_capacity_));
 }
@@ -969,6 +976,7 @@ void ScalableTSDFVolumeCuda<N>::Integrate(
     RGBDImageCuda &rgbd,
     MonoPinholeCameraCuda &camera,
     TransformCuda &transform_camera_to_world) {
+    assert(server_ != nullptr);
 
     hash_table_.ResetLocks();
     active_subvolume_entry_array_.set_size(0);
@@ -984,6 +992,7 @@ void ScalableTSDFVolumeCuda<N>::RayCasting(
     ImageCuda<Vector3f> &image,
     MonoPinholeCameraCuda &camera,
     TransformCuda &transform_camera_to_world) {
+    assert(server_ != nullptr);
 
     const dim3 blocks(DIV_CEILING(image.width(), THREAD_2D_UNIT),
                       DIV_CEILING(image.height(), THREAD_2D_UNIT));
@@ -993,5 +1002,4 @@ void ScalableTSDFVolumeCuda<N>::RayCasting(
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
-
 }

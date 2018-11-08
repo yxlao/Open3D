@@ -45,10 +45,8 @@ class UniformMeshVolumeCuda<512>;
 /** Oh we can't afford larger chunks **/
 template
 class ScalableTSDFVolumeCudaServer<8>;
-
 template
 class ScalableTSDFVolumeCuda<8>;
-
 template
 class ScalableMeshVolumeCuda<8>;
 

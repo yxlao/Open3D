@@ -16,8 +16,8 @@ void MarchingCubesVertexAllocationKernel(
 
     if (x >= N - 1 || y >= N - 1 || z >= N - 1) return;
 
-    Vector3i Xlocal = Vector3i(x, y, z);
-    server.AllocateVertex(Xlocal, tsdf_volume);
+    Vector3i X = Vector3i(x, y, z);
+    server.AllocateVertex(X, tsdf_volume);
 }
 
 template<size_t N>
@@ -29,8 +29,8 @@ void MarchingCubesVertexExtractionKernel(
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
     const int z = threadIdx.z + blockIdx.z * blockDim.z;
 
-    Vector3i Xlocal = Vector3i(x, y, z);
-    server.ExtractVertex(Xlocal, tsdf_volume);
+    Vector3i X = Vector3i(x, y, z);
+    server.ExtractVertex(X, tsdf_volume);
 }
 
 template<size_t N>
@@ -43,7 +43,7 @@ void MarchingCubesTriangleExtractionKernel(
 
     if (x >= N - 1 || y >= N - 1 || z >= N - 1) return;
 
-    Vector3i Xlocal = Vector3i(x, y, z);
-    server.ExtractTriangle(Xlocal);
+    Vector3i X = Vector3i(x, y, z);
+    server.ExtractTriangle(X);
 }
 }

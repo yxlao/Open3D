@@ -5,7 +5,6 @@
 #pragma once
 
 #include <Cuda/Common/Common.h>
-#include <Cuda/Common/HelperMath.h>
 #include <Eigen/Eigen>
 
 #include <cassert>
@@ -28,12 +27,13 @@ public:
     typedef T ValType;
     typedef VectorCuda<T, N> VecType;
 
+
     typedef VectorCuda<float, N> VecTypef;
     typedef VectorCuda<int, N>   VecTypei;
     typedef VectorCuda<ushort, N> VecTypes;
     typedef VectorCuda<uchar, N> VecTypeb;
 
-    /** Conversions **/
+    /*********************** Conversions ***********************/
     __HOSTDEVICE__ inline static VecTypef Vectorf() {
         return VecTypef();
     }
@@ -103,7 +103,7 @@ public:
         return ret;
     }
 
-    /** Constants **/
+    /*********************** Constants ***********************/
     __HOSTDEVICE__ inline VectorCuda<T, N> static Zeros() {
         return VectorCuda<T, N>(0);
     }
@@ -121,22 +121,15 @@ public:
         return is_zero;
     }
 
-    /** Constructors **/
+
+    /*********************** Constructors ***********************/
+    __HOSTDEVICE__ inline VectorCuda() {};
     __HOSTDEVICE__ inline VectorCuda(const VecType &other) {
 #ifdef __CUDACC__
 #pragma unroll 1
 #endif
         for (int i = 0; i < N; ++i) {
             v[i] = other.v[i];
-        }
-    }
-
-    __HOSTDEVICE__ inline VectorCuda() {
-#ifdef __CUDACC__
-#pragma unroll 1
-#endif
-        for (int i = 0; i < N; ++i) {
-            v[i] = T(0);
         }
     }
 
@@ -260,13 +253,13 @@ public:
         return ret;
     }
 
-    __HOSTDEVICE__ inline VecType operator*(const float other) const {
+    __HOSTDEVICE__ inline VecType operator*(const T val) const {
         VecType ret;
 #ifdef __CUDACC__
 #pragma unroll 1
 #endif
         for (int i = 0; i < N; ++i) {
-            ret.v[i] = T(v[i] * other);
+            ret.v[i] = T(v[i] * val);
         }
         return ret;
     }
@@ -280,12 +273,12 @@ public:
         }
     }
 
-    __HOSTDEVICE__ inline void operator*=(const float other) {
+    __HOSTDEVICE__ inline void operator*=(const T val) {
 #ifdef __CUDACC__
 #pragma unroll 1
 #endif
         for (int i = 0; i < N; ++i) {
-            v[i] = T(v[i] * other);
+            v[i] = T(v[i] * val);
         }
     }
 
@@ -300,13 +293,13 @@ public:
         return ret;
     }
 
-    __HOSTDEVICE__ inline VecType operator/(const float other) const {
+    __HOSTDEVICE__ inline VecType operator/(const T val) const {
         VecType ret;
 #ifdef __CUDACC__
 #pragma unroll 1
 #endif
         for (int i = 0; i < N; ++i) {
-            ret.v[i] = T(v[i] / other);
+            ret.v[i] = T(v[i] / val);
         }
         return ret;
     }
@@ -320,12 +313,12 @@ public:
         }
     }
 
-    __HOSTDEVICE__ inline void operator/=(const float other) {
+    __HOSTDEVICE__ inline void operator/=(const T val) {
 #ifdef __CUDACC__
 #pragma unroll 1
 #endif
         for (int i = 0; i < N; ++i) {
-            v[i] = T(v[i] / other);
+            v[i] = T(v[i] / val);
         }
     }
 
@@ -385,16 +378,16 @@ public:
     }
 
     /** CPU CODE **/
-    inline void FromEigen(Eigen::Matrix<T, N, 1> &other) {
+    inline void FromEigen(Eigen::Matrix<double, N, 1> &other) {
         for (int i = 0; i < N; ++i) {
-            v[i] = other(i);
+            v[i] = T(other(i));
         }
     }
 
-    inline Eigen::Matrix<T, N, 1> ToEigen() {
-        Eigen::Matrix<T, N, 1> ret;
+    inline Eigen::Matrix<double, N, 1> ToEigen() {
+        Eigen::Matrix<double, N, 1> ret;
         for (int i = 0; i < N; ++i) {
-            ret(i) = v[i];
+            ret(i) = double(v[i]);
         }
         return ret;
     }
@@ -402,7 +395,7 @@ public:
 
 template<typename T, size_t N>
 __HOSTDEVICE__ inline
-VectorCuda<T, N> operator*(float s, const VectorCuda<T, N> &vec) {
+VectorCuda<T, N> operator*(T s, const VectorCuda<T, N> &vec) {
     return vec * s;
 }
 

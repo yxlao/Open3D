@@ -48,10 +48,10 @@ public:
         return data_;
     }
 
-    __DEVICE__ inline VecType &get(int x, int y);
+    __DEVICE__ inline VecType &at(int x, int y);
     __DEVICE__ inline VecType &operator()(int x, int y);
-    __DEVICE__ inline VecType get_interp(float x, float y);
-    __DEVICE__ inline VecType get_interp_with_holes(float x, float y);
+    __DEVICE__ inline VecType interp_at(float x, float y);
+    __DEVICE__ inline VecType interp_with_holes_at(float x, float y);
 
     __DEVICE__
     VecType BoxFilter2x2(int x, int y);
@@ -71,8 +71,10 @@ public:
         typename VecType::VecTypef dx;
         typename VecType::VecTypef dy;
     };
-    __DEVICE__ Grad Sobel(int x, int y);
-    __DEVICE__ Grad SobelWithHoles(int x, int y);
+    __DEVICE__
+    Grad Sobel(int x, int y);
+    __DEVICE__
+    Grad SobelWithHoles(int x, int y);
 
     friend class ImageCuda<VecType>;
 };
@@ -82,6 +84,7 @@ class ImageCuda {
 private:
     std::shared_ptr<ImageCudaServer<VecType>> server_ = nullptr;
 
+public:
     int width_;
     int height_;
     int pitch_;

@@ -8,3 +8,8 @@
 #include "Container/HashTableCuda.h"
 #include "Container/LinkedListCuda.h"
 #include "Container/MemoryHeapCuda.h"
+
+#include "Integration/UniformTSDFVolumeCuda.h"
+#include "Integration/UniformMeshVolumeCuda.h"
+#include "Integration/ScalableTSDFVolumeCuda.h"
+#include "Integration/ScalableMeshVolumeCuda.h"
