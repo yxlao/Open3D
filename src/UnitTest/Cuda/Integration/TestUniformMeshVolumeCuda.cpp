@@ -25,8 +25,9 @@ TEST(UniformMeshVolumeCuda, MarchingCubes) {
     RGBDImageCuda rgbd(0.1f, 3.0f, 1000.0f);
     rgbd.Upload(depth, color);
 
-    MonoPinholeCameraCuda default_camera;
-    default_camera.SetUp();
+    PinholeCameraIntrinsicCuda intrinsics(
+        PinholeCameraIntrinsicParameters::PrimeSenseDefault);
+
     TransformCuda transform = TransformCuda::Identity();
 
     const float voxel_length = 0.01f;
@@ -34,7 +35,7 @@ TEST(UniformMeshVolumeCuda, MarchingCubes) {
     UniformTSDFVolumeCuda<512> volume(voxel_length, voxel_length * 3, transform);
 
     TransformCuda extrinsics = TransformCuda::Identity();
-    volume.Integrate(rgbd, default_camera, extrinsics);
+    volume.Integrate(rgbd, intrinsics, extrinsics);
 
     UniformMeshVolumeCuda<512> mesher(VertexWithNormalAndColor, 100000, 100000);
 

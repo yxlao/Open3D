@@ -10,7 +10,7 @@
 #include <Cuda/Geometry/ImagePyramidCuda.h>
 #include <Cuda/Geometry/VectorCuda.h>
 #include <Cuda/Geometry/TransformCuda.h>
-#include <Cuda/Geometry/PinholeCameraCuda.h>
+#include <Cuda/Camera/PinholeCameraIntrinsicCuda.h>
 #include <Cuda/Common/UtilsCuda.h>
 #include <Eigen/Eigen>
 
@@ -56,7 +56,7 @@ private:
     ArrayCudaServer<float> results_;
 
 public:
-    PinholeCameraCuda<N> pinhole_camera_intrinsics_;
+    PinholeCameraIntrinsicCuda pinhole_camera_intrinsics_[N];
     TransformCuda transform_source_to_target_;
 
 public:

@@ -31,11 +31,11 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
     /** Check 2: reprojected point in image? **/
     Vector3f
         X = transform_source_to_target_
-        * pinhole_camera_intrinsics_.InverseProjection(Vector2i(x, y),
-            d_source, level);
+        * pinhole_camera_intrinsics_[level].InverseProjectPixel(
+            Vector2i(x, y), d_source);
 
-    Vector2f p_warped = pinhole_camera_intrinsics_.Projection(X, level);
-    mask = pinhole_camera_intrinsics_.IsValid(p_warped, level);
+    Vector2f p_warped = pinhole_camera_intrinsics_[level].ProjectPoint(X);
+    mask = pinhole_camera_intrinsics_[level].IsPixelValid(p_warped);
     if (!mask) return false;
 
     /** Check 3: depth valid in target? Occlusion? -> 1ms **/
@@ -66,8 +66,8 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
         p_warped(0), p_warped(1))(0);
     float dy_D = target_depth_dy().level(level).interp_at(
         p_warped(0), p_warped(1))(0);
-    float fx = pinhole_camera_intrinsics_.fx(level);
-    float fy = pinhole_camera_intrinsics_.fy(level);
+    float fx = pinhole_camera_intrinsics_[level].fx_;
+    float fy = pinhole_camera_intrinsics_[level].fy_;
     float inv_Z = 1.0f / X(2);
     float fx_on_Z = fx * inv_Z;
     float fy_on_Z = fy * inv_Z;

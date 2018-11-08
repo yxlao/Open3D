@@ -19,18 +19,20 @@ target_link_libraries(Cuda ${3RD_PARTY_LIBRARIES})
 
 # create subgroups
 ADD_SOURCE_GROUP(Common)
+ADD_SOURCE_GROUP(Camera)
 ADD_SOURCE_GROUP(Container)
 ADD_SOURCE_GROUP(Geometry)
 ADD_SOURCE_GROUP(Integration)
-ADD_SOURCE_GROUP(Odometry)
+# ADD_SOURCE_GROUP(Odometry)
 ADD_SOURCE_GROUP(Visualization)
 
 # and also for cuda
 ADD_CUDA_SOURCE_GROUP(Common)
+ADD_CUDA_SOURCE_GROUP(Camera)
 ADD_CUDA_SOURCE_GROUP(Container)
 ADD_CUDA_SOURCE_GROUP(Geometry)
 ADD_CUDA_SOURCE_GROUP(Integration)
-ADD_CUDA_SOURCE_GROUP(Odometry)
+# ADD_CUDA_SOURCE_GROUP(Odometry)
 ADD_CUDA_SOURCE_GROUP(Visualization)
 
 Directories(${CMAKE_CURRENT_SOURCE_DIR} CUDA_INCLUDE_DIRS)

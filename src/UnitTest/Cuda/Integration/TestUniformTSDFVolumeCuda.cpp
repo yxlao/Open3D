@@ -72,8 +72,9 @@ TEST(UniformTSDFVolumeCuda, RayCasting) {
     RGBDImageCuda rgbd;
     rgbd.Upload(depth, color);
 
-    MonoPinholeCameraCuda intrinsics;
-    intrinsics.SetUp();
+    PinholeCameraIntrinsicCuda intrinsics(
+        PinholeCameraIntrinsicParameters::PrimeSenseDefault);
+
     TransformCuda transform = TransformCuda::Identity();
 
     const float voxel_length = 0.01f;

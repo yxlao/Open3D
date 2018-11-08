@@ -33,7 +33,7 @@
 #include <Visualization/Visualization.h>
 #include <opencv2/opencv.hpp>
 #include <Geometry/ImageCuda.h>
-#include <Geometry/PinholeCameraCuda.h>
+#include <Cuda/Camera/PinholeCameraIntrinsicCuda.h>
 #include <Geometry/TransformCuda.h>
 #include <Geometry/TriangleMeshCuda.h>
 #include <Geometry/RGBDImageCuda.h>
@@ -56,8 +56,8 @@ int main(int argc, char **argv)
     RGBDImageCuda rgbd(0.1f, 3.5f, 1000.0f);
     rgbd.Upload(depth, color);
 
-    MonoPinholeCameraCuda intrinsics;
-    intrinsics.SetUp();
+    PinholeCameraIntrinsicCuda intrinsics(
+        PinholeCameraIntrinsicParameters::PrimeSenseDefault);
 
     float voxel_length = 0.01f;
     TransformCuda extrinsics = TransformCuda::Identity();

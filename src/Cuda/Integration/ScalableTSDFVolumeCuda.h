@@ -9,7 +9,7 @@
 
 #include <Cuda/Container/HashTableCuda.h>
 
-#include <Cuda/Geometry/PinholeCameraCuda.h>
+#include <Cuda/Camera/PinholeCameraIntrinsicCuda.h>
 #include <Cuda/Geometry/TransformCuda.h>
 #include <Cuda/Geometry/VectorCuda.h>
 #include <Cuda/Geometry/RGBDImageCuda.h>
@@ -219,15 +219,15 @@ public:
 public:
     __DEVICE__ void TouchSubvolume(const Vector2i& p,
                                    ImageCudaServer<Vector1f> &depth,
-                                   MonoPinholeCameraCuda &camera,
+                                   PinholeCameraIntrinsicCuda &camera,
                                    TransformCuda &transform_camera_to_world);
     __DEVICE__ void Integrate(const Vector3i &Xlocal,
                               HashEntry<Vector3i> &target_subvolume_entry,
                               RGBDImageCudaServer &rgbd,
-                              MonoPinholeCameraCuda &camera,
+                              PinholeCameraIntrinsicCuda &camera,
                               TransformCuda &transform_camera_to_world);
     __DEVICE__ Vector3f RayCasting(const Vector2i& p,
-                                   MonoPinholeCameraCuda &camera,
+                                   PinholeCameraIntrinsicCuda &camera,
                                    TransformCuda &transform_camera_to_world);
 
 public:
@@ -290,22 +290,22 @@ public:
      *    there will be duplicates. (thread1 allocate and return, thread2
      *    capture it and return again). **/
     void TouchSubvolumes(ImageCuda<Vector1f> &depth,
-                         MonoPinholeCameraCuda &camera,
+                         PinholeCameraIntrinsicCuda &camera,
                          TransformCuda &transform_camera_to_world);
-    void GetSubvolumesInFrustum(MonoPinholeCameraCuda &camera,
+    void GetSubvolumesInFrustum(PinholeCameraIntrinsicCuda &camera,
                                 TransformCuda &transform_camera_to_world);
     void GetAllSubvolumes();
     void IntegrateSubvolumes(RGBDImageCuda &rgbd,
-                             MonoPinholeCameraCuda &camera,
+                             PinholeCameraIntrinsicCuda &camera,
                              TransformCuda &transform_camera_to_world);
 
     void ResetActiveSubvolumeIndices();
 
     void Integrate(RGBDImageCuda &rgbd,
-                   MonoPinholeCameraCuda &camera,
+                   PinholeCameraIntrinsicCuda &camera,
                    TransformCuda &transform_camera_to_world);
     void RayCasting(ImageCuda<Vector3f> &image,
-                    MonoPinholeCameraCuda &camera,
+                    PinholeCameraIntrinsicCuda &camera,
                     TransformCuda &transform_camera_to_world);
 
 public:
@@ -337,19 +337,19 @@ template<size_t N>
 __GLOBAL__
 void TouchSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server,
                            ImageCudaServer<Vector1f> depth,
-                           MonoPinholeCameraCuda camera,
+                           PinholeCameraIntrinsicCuda camera,
                            TransformCuda transform_camera_to_world);
 template<size_t N>
 __GLOBAL__
 void IntegrateSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server,
                                RGBDImageCudaServer depth,
-                               MonoPinholeCameraCuda camera,
+                               PinholeCameraIntrinsicCuda camera,
                                TransformCuda transform_camera_to_world);
 
 template<size_t N>
 __GLOBAL__
 void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
-                                  MonoPinholeCameraCuda camera,
+                                  PinholeCameraIntrinsicCuda camera,
                                   TransformCuda transform_camera_to_world);
 
 template<size_t N>
@@ -360,7 +360,7 @@ template<size_t N>
 __GLOBAL__
 void RayCastingKernel(ScalableTSDFVolumeCudaServer<N> server,
                       ImageCudaServer<Vector3f> normal,
-                      MonoPinholeCameraCuda camera,
+                      PinholeCameraIntrinsicCuda camera,
                       TransformCuda transform_camera_to_world);
 
 }

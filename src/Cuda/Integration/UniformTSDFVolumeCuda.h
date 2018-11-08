@@ -7,7 +7,7 @@
 #include "IntegrationClasses.h"
 
 #include <Cuda/Geometry/ImageCuda.h>
-#include <Cuda/Geometry/PinholeCameraCuda.h>
+#include <Cuda/Camera/PinholeCameraIntrinsicCuda.h>
 #include <Cuda/Geometry/RGBDImageCuda.h>
 #include <Cuda/Geometry/TransformCuda.h>
 #include <Cuda/Geometry/TriangleMeshCuda.h>
@@ -99,11 +99,11 @@ public:
 public:
     __DEVICE__ void Integrate(const Vector3i &X,
                               RGBDImageCudaServer &rgbd,
-                              MonoPinholeCameraCuda &camera,
+                              PinholeCameraIntrinsicCuda &camera,
                               TransformCuda &transform_camera_to_world);
 
     __DEVICE__ Vector3f RayCasting(const Vector2i &p,
-                                   MonoPinholeCameraCuda &camera,
+                                   PinholeCameraIntrinsicCuda &camera,
                                    TransformCuda &transform_camera_to_world);
 
 public:
@@ -143,10 +143,10 @@ public:
 
 public:
     void Integrate(RGBDImageCuda &rgbd,
-                   MonoPinholeCameraCuda &camera,
+                   PinholeCameraIntrinsicCuda &camera,
                    TransformCuda &transform_camera_to_world);
     void RayCasting(ImageCuda<Vector3f> &image,
-                    MonoPinholeCameraCuda &camera,
+                    PinholeCameraIntrinsicCuda &camera,
                     TransformCuda &transform_camera_to_world);
 
 public:
@@ -162,13 +162,13 @@ template<size_t N>
 __GLOBAL__
 void IntegrateKernel(UniformTSDFVolumeCudaServer<N> server,
                      RGBDImageCudaServer depth,
-                     MonoPinholeCameraCuda camera,
+                     PinholeCameraIntrinsicCuda camera,
                      TransformCuda transform_camera_to_world);
 
 template<size_t N>
 __GLOBAL__
 void RayCastingKernel(UniformTSDFVolumeCudaServer<N> server,
                       ImageCudaServer<Vector3f> image,
-                      MonoPinholeCameraCuda camera,
+                      PinholeCameraIntrinsicCuda camera,
                       TransformCuda transform_camera_to_world);
 }

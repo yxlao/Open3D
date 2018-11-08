@@ -190,16 +190,16 @@ __device__
 void UniformTSDFVolumeCudaServer<N>::Integrate(
     const Vector3i &X,
     RGBDImageCudaServer &rgbd,
-    MonoPinholeCameraCuda &camera,
+    PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
 
     /** Projective data association **/
     Vector3f Xw = voxelf_to_world(X.ToVectorf());
     Vector3f Xc = transform_camera_to_world.Inverse() * Xw;
-    Vector2f p = camera.Projection(Xc);
+    Vector2f p = camera.ProjectPoint(Xc);
 
     /** TSDF **/
-    if (!camera.IsValid(p)) return;
+    if (!camera.IsPixelValid(p)) return;
     float d = rgbd.depth().interp_at(p(0), p(1))(0);
 
     float tsdf = d - Xc(2);
@@ -226,12 +226,12 @@ template<size_t N>
 __device__
 Vector3f UniformTSDFVolumeCudaServer<N>::RayCasting(
     const Vector2i &p,
-    MonoPinholeCameraCuda &camera,
+    PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
 
     Vector3f ret = Vector3f(0);
 
-    Vector3f ray_c = camera.InverseProjection(p, 1.0f).normalized();
+    Vector3f ray_c = camera.InverseProjectPixel(p, 1.0f).normalized();
 
     /** TODO: throw it into parameters **/
     const float t_min = 0.2f / ray_c(2);
@@ -430,7 +430,7 @@ UniformTSDFVolumeCuda<N>::DownloadVolume() {
 
 template<size_t N>
 void UniformTSDFVolumeCuda<N>::Integrate(RGBDImageCuda &rgbd,
-                                         MonoPinholeCameraCuda &camera,
+                                         PinholeCameraIntrinsicCuda &camera,
                                          TransformCuda &transform_camera_to_world) {
     assert(server_ != nullptr);
     const int num_blocks = DIV_CEILING(N, THREAD_3D_UNIT);
@@ -444,7 +444,7 @@ void UniformTSDFVolumeCuda<N>::Integrate(RGBDImageCuda &rgbd,
 
 template<size_t N>
 void UniformTSDFVolumeCuda<N>::RayCasting(ImageCuda<open3d::Vector3f> &image,
-                                          MonoPinholeCameraCuda &camera,
+                                          PinholeCameraIntrinsicCuda &camera,
                                           TransformCuda &transform_camera_to_world) {
     assert(server_ != nullptr);
     const dim3 blocks(DIV_CEILING(image.width(), THREAD_2D_UNIT),

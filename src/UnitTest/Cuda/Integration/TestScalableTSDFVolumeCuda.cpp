@@ -30,8 +30,8 @@ TEST(ScalableTSDFVolumeCuda, TouchSubvolumes) {
     RGBDImageCuda rgbd(0.1f, 3.5f, 1000.0f);
     rgbd.Upload(depth, color);
 
-    MonoPinholeCameraCuda intrinsics;
-    intrinsics.SetUp();
+    PinholeCameraIntrinsicCuda intrinsics(
+        PinholeCameraIntrinsicParameters::PrimeSenseDefault);
 
     float voxel_length = 0.01f;
     TransformCuda extrinsics = TransformCuda::Identity();
@@ -64,8 +64,8 @@ TEST(ScalableTSDFVolumeCuda, Integration) {
     RGBDImageCuda rgbd(0.1f, 3.5f, 1000.0f);
     rgbd.Upload(depth, color);
 
-    MonoPinholeCameraCuda intrinsics;
-    intrinsics.SetUp();
+    PinholeCameraIntrinsicCuda intrinsics(
+        PinholeCameraIntrinsicParameters::PrimeSenseDefault);
 
     float voxel_length = 0.01f;
     TransformCuda extrinsics = TransformCuda::Identity();
@@ -107,8 +107,8 @@ TEST(ScalableTSDFVolumeCuda, RayCasting) {
     RGBDImageCuda rgbd(0.1f, 3.5f, 1000.0f);
     rgbd.Upload(depth, color);
 
-    MonoPinholeCameraCuda intrinsics;
-    intrinsics.SetUp();
+    PinholeCameraIntrinsicCuda intrinsics(
+        PinholeCameraIntrinsicParameters::PrimeSenseDefault);
 
     float voxel_length = 0.01f;
     TransformCuda extrinsics = TransformCuda::Identity();

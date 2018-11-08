@@ -11,7 +11,7 @@ template<size_t N>
 __global__
 void IntegrateKernel(UniformTSDFVolumeCudaServer<N> server,
                      RGBDImageCudaServer rgbd,
-                     MonoPinholeCameraCuda camera,
+                     PinholeCameraIntrinsicCuda camera,
                      TransformCuda transform_camera_to_world) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -27,7 +27,7 @@ template<size_t N>
 __global__
 void RayCastingKernel(UniformTSDFVolumeCudaServer<N> server,
                       ImageCudaServer<Vector3f> image,
-                      MonoPinholeCameraCuda camera,
+                      PinholeCameraIntrinsicCuda camera,
                       TransformCuda transform_camera_to_world) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int y = threadIdx.y + blockIdx.y * blockDim.y;

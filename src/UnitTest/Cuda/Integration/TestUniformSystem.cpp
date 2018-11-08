@@ -56,8 +56,8 @@ int main(int argc, char *argv[])
     int index = 0;
     int save_index = 0;
 
-    MonoPinholeCameraCuda intrinsics;
-    intrinsics.SetUp();
+    PinholeCameraIntrinsicCuda intrinsics(
+        PinholeCameraIntrinsicParameters::PrimeSenseDefault);
 
     float voxel_length = 0.01f;
     TransformCuda extrinsics = TransformCuda::Identity();

@@ -546,20 +546,17 @@ __device__
 void ScalableTSDFVolumeCudaServer<N>::TouchSubvolume(
     const Vector2i &p,
     ImageCudaServer<Vector1f> &depth,
-    MonoPinholeCameraCuda &camera,
+    PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
 
     float d = depth.at(p(0), p(1))(0);
 
-    /** TODO: wrap the criteria in depth image (RGBD-Image) **/
-    if (d < 0.1f || d > 3.5f) return;
-
     Vector3f Xw_near = transform_camera_to_world *
-        camera.InverseProjection(p, fmaxf(d - sdf_trunc_, 0.1f));
+        camera.InverseProjectPixel(p, fmaxf(d - sdf_trunc_, 0.1f));
     Vector3i Xsv_near = voxelf_locate_subvolume(world_to_voxelf(Xw_near));
 
     Vector3f Xw_far = transform_camera_to_world *
-        camera.InverseProjection(p, fminf(d + sdf_trunc_, 3.5f));
+        camera.InverseProjectPixel(p, fminf(d + sdf_trunc_, 3.5f));
     Vector3i Xsv_far = voxelf_locate_subvolume(world_to_voxelf(Xw_far));
 
     //    Vector3i Xsv_min = Vector3i(min(Xsv_near(0), Xsv_far(0)),
@@ -599,17 +596,17 @@ void ScalableTSDFVolumeCudaServer<N>::Integrate(
     const Vector3i &Xlocal,
     HashEntry<Vector3i> &entry,
     RGBDImageCudaServer &rgbd,
-    MonoPinholeCameraCuda &camera,
+    PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
 
     /** Projective data association - additional local to global transform **/
     Vector3f X = voxelf_local_to_global(Xlocal.ToVectorf(), entry.key);
     Vector3f Xw = voxelf_to_world(X);
     Vector3f Xc = transform_camera_to_world.Inverse() * Xw;
-    Vector2f p = camera.Projection(Xc);
+    Vector2f p = camera.ProjectPoint(Xc);
 
     /** TSDF **/
-    if (!camera.IsValid(p)) return;
+    if (!camera.IsPixelValid(p)) return;
     float d = rgbd.depth().interp_at(p(0), p(1))(0);
 
     float tsdf = d - Xc(2);
@@ -643,12 +640,12 @@ template<size_t N>
 __device__
 Vector3f ScalableTSDFVolumeCudaServer<N>::RayCasting(
     const Vector2i &p,
-    MonoPinholeCameraCuda &camera,
+    PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
 
     Vector3f ret = Vector3f(0);
 
-    Vector3f ray_c = camera.InverseProjection(p, 1.0f).normalized();
+    Vector3f ray_c = camera.InverseProjectPixel(p, 1.0f).normalized();
 
     /** TODO: throw it into parameters **/
     const float t_min = 0.2f / ray_c(2);
@@ -909,7 +906,7 @@ ScalableTSDFVolumeCuda<N>::DownloadVolumes() {
 template<size_t N>
 void ScalableTSDFVolumeCuda<N>::TouchSubvolumes(
     ImageCuda<Vector1f> &depth,
-    MonoPinholeCameraCuda &camera,
+    PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
     assert(server_ != nullptr);
 
@@ -924,7 +921,7 @@ void ScalableTSDFVolumeCuda<N>::TouchSubvolumes(
 
 template<size_t N>
 void ScalableTSDFVolumeCuda<N>::GetSubvolumesInFrustum(
-    MonoPinholeCameraCuda &camera,
+    PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
     assert(server_ != nullptr);
 
@@ -950,7 +947,7 @@ void ScalableTSDFVolumeCuda<N>::GetAllSubvolumes() {
 template<size_t N>
 void ScalableTSDFVolumeCuda<N>::IntegrateSubvolumes(
     RGBDImageCuda &rgbd,
-    MonoPinholeCameraCuda &camera,
+    PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
     assert(server_ != nullptr);
 
@@ -974,7 +971,7 @@ void ScalableTSDFVolumeCuda<N>::ResetActiveSubvolumeIndices() {
 template<size_t N>
 void ScalableTSDFVolumeCuda<N>::Integrate(
     RGBDImageCuda &rgbd,
-    MonoPinholeCameraCuda &camera,
+    PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
     assert(server_ != nullptr);
 
@@ -990,7 +987,7 @@ void ScalableTSDFVolumeCuda<N>::Integrate(
 template<size_t N>
 void ScalableTSDFVolumeCuda<N>::RayCasting(
     ImageCuda<Vector3f> &image,
-    MonoPinholeCameraCuda &camera,
+    PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
     assert(server_ != nullptr);
 
