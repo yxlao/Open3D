@@ -1,53 +1,16 @@
-/**
- * Created by wei on 18-4-2.
- */
-
-#pragma once
+//
+// Created by wei on 11/9/18.
+//
 
 #include "ArrayCuda.h"
 #include <Cuda/Common/UtilsCuda.h>
+#include <Cuda/Common/VectorCuda.h>
 
-#include <cuda_runtime.h>
-#include <cassert>
 #include <Core/Core.h>
 
+#include <cuda_runtime.h>
+
 namespace open3d {
-
-/**
- * Server end
- */
-template<typename T>
-__device__
-inline int ArrayCudaServer<T>::push_back(T value) {
-#ifdef CUDA_DEBUG_ENABLE_ASSERTION
-    assert(*iterator_ < max_capacity_);
-#endif
-
-    int addr = atomicAdd(iterator_, 1);
-    data_[addr] = value;
-    return addr;
-}
-
-template<typename T>
-__device__
-inline T &ArrayCudaServer<T>::at(size_t index) {
-#ifdef CUDA_DEBUG_ENABLE_ASSERTION
-    assert(index <= max_capacity_);
-#endif
-
-    return data_[index];
-}
-
-template<typename T>
-__device__
-inline T &ArrayCudaServer<T>::operator[](size_t index) {
-#ifdef CUDA_DEBUG_ENABLE_ASSERTION
-    assert(index <= max_capacity_);
-#endif
-
-    return data_[index];
-}
-
 /**
  * Client end
  */
@@ -92,7 +55,7 @@ void ArrayCuda<T>::Create(int max_capacity) {
         return;
     }
 
-    server_ = std::make_shared<ArrayCudaServer<T>>();
+    server_ = std::make_shared < ArrayCudaServer < T >> ();
     max_capacity_ = max_capacity;
     server_->max_capacity_ = max_capacity;
 
@@ -205,13 +168,8 @@ std::vector<T> ArrayCuda<T>::DownloadAll() {
 
 template<typename T>
 void ArrayCuda<T>::Fill(const T &val) {
-    assert(server_ != nullptr);
-
-    const int threads = THREAD_1D_UNIT;
-    const int blocks = DIV_CEILING(max_capacity_, THREAD_1D_UNIT);
-    FillArrayKernel << < blocks, threads >> > (*server_, val);
-    CheckCuda(cudaDeviceSynchronize());
-    CheckCuda(cudaGetLastError());
+    if (server_ == nullptr) return;
+    FillArrayKernelCaller<T>(*server_, val, max_capacity_);
 }
 
 template<typename T>

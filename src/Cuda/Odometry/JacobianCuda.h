@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <Cuda/Geometry/VectorCuda.h>
+#include <Cuda/Common/VectorCuda.h>
 #include <cstdlib>
 
 namespace open3d {

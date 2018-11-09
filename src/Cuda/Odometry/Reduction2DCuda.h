@@ -6,7 +6,7 @@
 
 #include <Cuda/Common/UtilsCuda.h>
 #include <Cuda/Geometry/ImageCuda.h>
-#include <Cuda/Geometry/VectorCuda.h>
+#include <Cuda/Common/VectorCuda.h>
 
 /**
  * Reduction is a PER-BLOCK operation.

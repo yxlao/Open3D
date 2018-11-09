@@ -27,7 +27,7 @@
 #pragma once
 
 #include <Cuda/Common/Common.h>
-#include <Cuda/Geometry/VectorCuda.h>
+#include <Cuda/Common/VectorCuda.h>
 
 namespace open3d {
 

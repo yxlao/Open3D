@@ -5,7 +5,7 @@
 #include <Cuda/Integration/UniformTSDFVolumeCuda.h>
 #include <Cuda/Integration/UniformMeshVolumeCuda.h>
 #include <Cuda/Geometry/RGBDImageCuda.h>
-#include <Cuda/Geometry/VectorCuda.h>
+#include <Cuda/Common/VectorCuda.h>
 #include <Core/Core.h>
 #include <Eigen/Eigen>
 #include <IO/IO.h>

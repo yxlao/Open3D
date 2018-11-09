@@ -11,7 +11,7 @@
 
 #include <Cuda/Container/ArrayCuda.h>
 #include <Cuda/Geometry/TriangleMeshCuda.h>
-#include <Cuda/Geometry/VectorCuda.h>
+#include <Cuda/Common/VectorCuda.h>
 
 #include <memory>
 

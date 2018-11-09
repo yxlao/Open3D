@@ -10,8 +10,8 @@
 #include <Cuda/Container/HashTableCuda.h>
 
 #include <Cuda/Camera/PinholeCameraIntrinsicCuda.h>
-#include <Cuda/Geometry/TransformCuda.h>
-#include <Cuda/Geometry/VectorCuda.h>
+#include <Cuda/Common/TransformCuda.h>
+#include <Cuda/Common/VectorCuda.h>
 #include <Cuda/Geometry/RGBDImageCuda.h>
 
 #include <memory>

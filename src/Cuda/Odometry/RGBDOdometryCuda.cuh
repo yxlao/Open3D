@@ -6,7 +6,7 @@
 
 #include "RGBDOdometryCuda.h"
 #include <Cuda/Geometry/ImageCuda.cuh>
-#include <Cuda/Container/ArrayCuda.cuh>
+#include <Cuda/Container/ArrayCudaDevice.cuh>
 #include <sophus/se3.hpp>
 
 namespace open3d {

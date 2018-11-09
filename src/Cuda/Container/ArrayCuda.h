@@ -84,4 +84,8 @@ template<typename T>
 __GLOBAL__
 void FillArrayKernel(ArrayCudaServer<T> server, T val);
 
+template<typename T>
+__HOST__
+void FillArrayKernelCaller(ArrayCudaServer<T> &server,
+                           const T& val, int max_capacity);
 }

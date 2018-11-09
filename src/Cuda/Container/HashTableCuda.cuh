@@ -7,7 +7,7 @@
 #include "HashTableCuda.h"
 #include <Cuda/Common/UtilsCuda.h>
 
-#include "ArrayCuda.cuh"
+#include "ArrayCudaDevice.cuh"
 #include "LinkedListCuda.cuh"
 #include "MemoryHeapCuda.cuh"
 

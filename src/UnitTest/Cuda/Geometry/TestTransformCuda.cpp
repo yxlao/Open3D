@@ -2,7 +2,7 @@
 // Created by wei on 10/3/18.
 //
 
-#include <Cuda/Geometry/TransformCuda.h>
+#include <Cuda/Common/TransformCuda.h>
 #include <Eigen/Eigen>
 #include <Core/Core.h>
 

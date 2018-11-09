@@ -34,7 +34,7 @@
 #include <opencv2/opencv.hpp>
 #include <Geometry/ImageCuda.h>
 #include <Cuda/Camera/PinholeCameraIntrinsicCuda.h>
-#include <Geometry/TransformCuda.h>
+#include <Cuda/Common/TransformCuda.h>
 #include <Geometry/TriangleMeshCuda.h>
 #include <Geometry/RGBDImageCuda.h>
 #include <Integration/ScalableTSDFVolumeCuda.h>

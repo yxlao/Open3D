@@ -9,9 +9,9 @@
 #include <Cuda/Geometry/ImageCuda.h>
 #include <Cuda/Camera/PinholeCameraIntrinsicCuda.h>
 #include <Cuda/Geometry/RGBDImageCuda.h>
-#include <Cuda/Geometry/TransformCuda.h>
+#include <Cuda/Common/TransformCuda.h>
 #include <Cuda/Geometry/TriangleMeshCuda.h>
-#include <Cuda/Geometry/VectorCuda.h>
+#include <Cuda/Common/VectorCuda.h>
 
 #include <cstdlib>
 #include <memory>

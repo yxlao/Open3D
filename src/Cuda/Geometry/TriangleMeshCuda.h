@@ -5,8 +5,8 @@
 #pragma once
 
 #include "GeometryClasses.h"
-#include "VectorCuda.h"
-#include "TransformCuda.h"
+#include <Cuda/Common/VectorCuda.h>
+#include <Cuda/Common/TransformCuda.h>
 
 #include <Cuda/Container/ArrayCuda.h>
 

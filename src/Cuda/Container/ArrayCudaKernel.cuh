@@ -2,7 +2,7 @@
  * Created by wei on 18-4-2.
  */
 
-#include "ArrayCuda.cuh"
+#include "ArrayCudaDevice.cuh"
 
 namespace open3d {
 
@@ -13,5 +13,17 @@ void FillArrayKernel(ArrayCudaServer<T> server, T val) {
     if (i < server.max_capacity_) {
         server.at(i) = val;
     }
+}
+
+template<typename T>
+__host__
+void FillArrayKernelCaller(
+    ArrayCudaServer<T> &server, const T &val, int max_capacity) {
+
+    const int blocks = DIV_CEILING(max_capacity, THREAD_1D_UNIT);
+    const int threads = THREAD_1D_UNIT;
+    FillArrayKernel << < blocks, threads >> > (server, val);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
 }
 }
