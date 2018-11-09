@@ -5,7 +5,7 @@
 #include "ArrayCudaHost.hpp"
 #include "HashTableCudaHost.hpp"
 #include "MemoryHeapCudaHost.hpp"
-#include "LinkedListCuda.h"
+#include "LinkedListCudaHost.hpp"
 
 namespace open3d {
 
@@ -16,12 +16,12 @@ template class ArrayCuda<Vector3f>;
 template class ArrayCuda<HashEntry<Vector3i>>;
 template class ArrayCuda<LinkedListCudaServer<HashEntry<Vector3i>>>;
 
-/** Memory Heap **/
 template class MemoryHeapCuda<int>;
 template class MemoryHeapCuda<float>;
 template class MemoryHeapCuda<LinkedListNodeCuda<int>>;
 
 template class HashTableCuda<Vector3i, int, SpatialHasher>;
 
+template class LinkedListCuda<int>;
 
 }

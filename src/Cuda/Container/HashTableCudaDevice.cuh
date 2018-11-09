@@ -6,7 +6,7 @@
 
 #include "HashTableCuda.h"
 #include "ArrayCudaDevice.cuh"
-#include "LinkedListCuda.cuh"
+#include "LinkedListCudaDevice.cuh"
 #include "MemoryHeapCudaDevice.cuh"
 
 #include <cassert>

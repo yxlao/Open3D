@@ -127,28 +127,44 @@ public:
 template<typename T>
 __GLOBAL__
 void InsertLinkedListKernel(LinkedListCudaServer<T> server,
-                            T *data,
-                            const int N);
+                            ArrayCudaServer<T> data);
+template<typename T>
+__HOST__
+void InsertLinkedListKernelCaller(LinkedListCudaServer<T> &server,
+                                  ArrayCudaServer<T> &data);
 
 template<typename T>
 __GLOBAL__
 void FindLinkedListKernel(LinkedListCudaServer<T> server,
-                          T *query,
-                          const int N);
+                          ArrayCudaServer<T> query);
+template<typename T>
+__HOST__
+void FindLinkedListKernelCaller(LinkedListCudaServer<T> &server,
+                                ArrayCudaServer<T> &query);
 
 template<typename T>
 __GLOBAL__
 void DeleteLinkedListKernel(LinkedListCudaServer<T> server,
-                            T *query,
-                            const int N);
+                            ArrayCudaServer<T> query);
+template<typename T>
+__HOST__
+void DeleteLinkedListKernelCaller(LinkedListCudaServer<T> &server,
+                                  ArrayCudaServer<T> &query);
+
 
 template<typename T>
 __GLOBAL__
 void ClearLinkedListKernel(LinkedListCudaServer<T> server);
+template<typename T>
+__HOST__
+void ClearLinkedListKernelCaller(LinkedListCudaServer<T> &server);
 
 template<typename T>
 __GLOBAL__
 void DownloadLinkedListKernel(LinkedListCudaServer<T> server,
-                              T *data,
-                              const int N);
+                              ArrayCudaServer<T> data);
+template<typename T>
+__HOST__
+void DownloadLinkedListKernelCaller(LinkedListCudaServer<T> &server,
+                                    ArrayCudaServer<T> &data);
 }

@@ -6,7 +6,7 @@
 #include "ArrayCudaKernel.cuh"
 #include "MemoryHeapCudaDevice.cuh"
 #include "MemoryHeapCudaKernel.cuh"
-#include "LinkedListCuda.cuh"
+#include "LinkedListCudaDevice.cuh"
 #include "LinkedListCudaKernel.cuh"
 #include "HashTableCudaDevice.cuh"
 #include "HashTableCudaKernel.cuh"
@@ -53,8 +53,18 @@ template void ResetMemoryHeapKernelCaller<LinkedListNodeCuda<int>>(
 template void ResetMemoryHeapKernelCaller<LinkedListNodeCuda<HashEntry<Vector3i>>>(
     MemoryHeapCudaServer<LinkedListNodeCuda<HashEntry<Vector3i>>> &server, int max_capacity);
 
-template
-class LinkedListCuda<int>;
+/** LinkedList **/
+template class LinkedListCudaServer<int>;
+template void InsertLinkedListKernelCaller<int>(
+    LinkedListCudaServer<int> &server, ArrayCudaServer<int> &data);
+template void FindLinkedListKernelCaller<int>(
+    LinkedListCudaServer<int> &server, ArrayCudaServer<int> &query);
+template void DeleteLinkedListKernelCaller<int>(
+    LinkedListCudaServer<int> &server, ArrayCudaServer<int> &query);
+template void ClearLinkedListKernelCaller<int>(
+    LinkedListCudaServer<int> &server);
+template void DownloadLinkedListKernelCaller<int>(
+    LinkedListCudaServer<int> &server, ArrayCudaServer<int> &data);
 
 /** HashTable **/
 template class HashTableCudaServer<Vector3i, int, SpatialHasher>;
