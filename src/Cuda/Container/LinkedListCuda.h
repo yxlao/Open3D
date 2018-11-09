@@ -82,8 +82,10 @@ private:
     typedef MemoryHeapCuda<LinkedListNodeCuda<T>> MemoryHeap;
 
     std::shared_ptr<LinkedListCudaServer<T>> server_ = nullptr;
-    int max_capacity_;
     MemoryHeap memory_heap_;
+
+public:
+    int max_capacity_;
 
 public:
     LinkedListCuda();

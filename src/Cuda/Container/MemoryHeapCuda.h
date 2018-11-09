@@ -33,9 +33,6 @@ namespace open3d {
  */
 
 template<typename T>
-class MemoryHeapCuda;
-
-template<typename T>
 class MemoryHeapCudaServer {
 private:
     T *data_;   /* [N] */
@@ -97,5 +94,8 @@ public:
 template<class T>
 __GLOBAL__
 void ResetMemoryHeapKernel(MemoryHeapCudaServer<T> server);
-
+template<typename T>
+__HOST__
+void ResetMemoryHeapKernelCaller(MemoryHeapCudaServer<T>& server,
+    int max_capacity);
 };

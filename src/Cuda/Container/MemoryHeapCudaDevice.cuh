@@ -150,11 +150,7 @@ template<typename T>
 void MemoryHeapCuda<T>::Reset() {
     assert(server_ != nullptr);
 
-    const int threads = THREAD_1D_UNIT;
-    const int blocks = DIV_CEILING(max_capacity_, THREAD_1D_UNIT);
-    ResetMemoryHeapKernel << < blocks, threads >> > (*server_);
-    CheckCuda(cudaDeviceSynchronize());
-    CheckCuda(cudaGetLastError());
+    ResetMemoryHeapKernelCaller(*server_, max_capacity_);
 
     int heap_counter = 0;
     CheckCuda(cudaMemcpy(server_->heap_counter_, &heap_counter,

@@ -7,7 +7,7 @@
 #include "LinkedListCuda.h"
 #include <Cuda/Common/UtilsCuda.h>
 
-#include "MemoryHeapCuda.cuh"
+#include "MemoryHeapCudaDevice.cuh"
 
 #include <cassert>
 #include <cstdio>

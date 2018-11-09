@@ -6,10 +6,10 @@
 
 #include "ScalableTSDFVolumeCuda.h"
 
-#include <Cuda/Container/HashTableCuda.cuh>
+#include <Cuda/Container/HashTableCudaDevice.cuh>
 #include <Cuda/Container/HashTableCudaKernel.cuh>
 
-#include <Cuda/Container/MemoryHeapCuda.cuh>
+#include <Cuda/Container/MemoryHeapCudaDevice.cuh>
 #include <Cuda/Container/MemoryHeapCudaKernel.cuh>
 
 #include <Core/Core.h>

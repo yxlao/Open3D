@@ -4,17 +4,18 @@
 
 #include "ArrayCudaDevice.cuh"
 #include "ArrayCudaKernel.cuh"
-#include "MemoryHeapCuda.cuh"
+#include "MemoryHeapCudaDevice.cuh"
 #include "MemoryHeapCudaKernel.cuh"
 #include "LinkedListCuda.cuh"
 #include "LinkedListCudaKernel.cuh"
-#include "HashTableCuda.cuh"
+#include "HashTableCudaDevice.cuh"
 #include "HashTableCudaKernel.cuh"
 
 #include <Cuda/Common/VectorCuda.h>
 
 namespace open3d {
 
+/** ArrayCuda **/
 template class ArrayCudaServer<int>;
 template class ArrayCudaServer<float>;
 template class ArrayCudaServer<Vector3i>;
@@ -37,18 +38,49 @@ template void FillArrayKernelCaller<LinkedListCudaServer<HashEntry<Vector3i>>>(
     ArrayCudaServer<LinkedListCudaServer<HashEntry<Vector3i>>> &server,
     const LinkedListCudaServer<HashEntry<Vector3i>> &val, int max_capacity);
 
-template
-class MemoryHeapCuda<int>;
+/** Memory Heap **/
+template class MemoryHeapCudaServer<int>;
+template class MemoryHeapCudaServer<float>;
+template class MemoryHeapCudaServer<LinkedListNodeCuda<int>>;
+template class MemoryHeapCudaServer<LinkedListNodeCuda<HashEntry<Vector3i>>>;
 
-template
-class MemoryHeapCuda<float>;
-
-template
-class MemoryHeapCuda<LinkedListNodeCuda<int>>;
+template void ResetMemoryHeapKernelCaller<int>(
+    MemoryHeapCudaServer<int>&server, int max_capacity);
+template void ResetMemoryHeapKernelCaller<float>(
+    MemoryHeapCudaServer<float>&server, int max_capacity);
+template void ResetMemoryHeapKernelCaller<LinkedListNodeCuda<int>>(
+    MemoryHeapCudaServer<LinkedListNodeCuda<int>>&server, int max_capacity);
+template void ResetMemoryHeapKernelCaller<LinkedListNodeCuda<HashEntry<Vector3i>>>(
+    MemoryHeapCudaServer<LinkedListNodeCuda<HashEntry<Vector3i>>> &server, int max_capacity);
 
 template
 class LinkedListCuda<int>;
 
-template
-class HashTableCuda<Vector3i, int, SpatialHasher>;
+/** HashTable **/
+template class HashTableCudaServer<Vector3i, int, SpatialHasher>;
+template void CreateHashTableEntriesKernelCaller<Vector3i, int, SpatialHasher>(
+    HashTableCudaServer<Vector3i, int, SpatialHasher>& server,
+    int bucket_count);
+template void ReleaseHashTableEntriesKernelCaller<Vector3i, int, SpatialHasher>(
+    HashTableCudaServer<Vector3i, int, SpatialHasher>& server,
+    int bucket_count);
+template void ResetHashTableEntriesKernelCaller<Vector3i, int, SpatialHasher>(
+    HashTableCudaServer<Vector3i, int, SpatialHasher>& server,
+    int bucket_count);
+template void GetHashTableAssignedEntriesKernelCaller<Vector3i, int, SpatialHasher>(
+    HashTableCudaServer<Vector3i, int, SpatialHasher> &server,
+    int bucket_count);
+template void InsertHashTableEntriesKernelCaller<Vector3i, int, SpatialHasher>(
+    HashTableCudaServer<Vector3i, int, SpatialHasher>& server,
+    ArrayCudaServer<Vector3i>& keys,
+    ArrayCudaServer<int> &values,
+    int num_pairs, int bucket_count);
+template void DeleteHashTableEntriesKernelCaller<Vector3i, int, SpatialHasher>(
+    HashTableCudaServer<Vector3i, int, SpatialHasher> &server,
+    ArrayCudaServer<Vector3i> &keys, int num_keys, int bucket_count);
+template void ProfileHashTableKernelCaller(
+    HashTableCudaServer<Vector3i, int, SpatialHasher> &server,
+    ArrayCudaServer<int> &array_entry_count,
+    ArrayCudaServer<int> &linked_list_entry_count,
+    int bucket_count);
 }

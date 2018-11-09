@@ -115,7 +115,7 @@ void ArrayCuda<T>::Upload(std::vector<T> &data) {
     assert(server_ != nullptr);
 
     int size = data.size();
-    assert(size < max_capacity_);
+    assert(size <= max_capacity_);
     CheckCuda(cudaMemcpy(server_->data_, data.data(),
                          sizeof(T) * size,
                          cudaMemcpyHostToDevice));
@@ -128,7 +128,7 @@ template<typename T>
 void ArrayCuda<T>::Upload(const T *data, int size) {
     assert(server_ != nullptr);
 
-    assert(size < max_capacity_);
+    assert(size <= max_capacity_);
     CheckCuda(cudaMemcpy(server_->data_, data,
                          sizeof(T) * size,
                          cudaMemcpyHostToDevice));
