@@ -447,8 +447,8 @@ void UniformTSDFVolumeCuda<N>::RayCasting(ImageCuda<open3d::Vector3f> &image,
                                           PinholeCameraIntrinsicCuda &camera,
                                           TransformCuda &transform_camera_to_world) {
     assert(server_ != nullptr);
-    const dim3 blocks(DIV_CEILING(image.width(), THREAD_2D_UNIT),
-                      DIV_CEILING(image.height(), THREAD_2D_UNIT));
+    const dim3 blocks(DIV_CEILING(image.width_, THREAD_2D_UNIT),
+                      DIV_CEILING(image.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
     RayCastingKernel << < blocks, threads >> > (
         *server_, *image.server(), camera, transform_camera_to_world);

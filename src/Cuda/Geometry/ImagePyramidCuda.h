@@ -11,73 +11,68 @@ namespace open3d {
 template<typename VecType, size_t N>
 class ImagePyramidCudaServer {
 private:
-	/** Unfortunately, we cannot use shared_ptr for CUDA data structures **/
-	/** We even cannot use CPU pointers **/
-	/** -- We have to call ConnectSubServers() to explicitly link them. **/
-	ImageCudaServer<VecType> images_[N];
+    /** Unfortunately, we cannot use shared_ptr for CUDA data structures **/
+    /** We even cannot use CPU pointers **/
+    /** -- We have to call ConnectSubServers() to explicitly link them. **/
+    ImageCudaServer<VecType> images_[N];
 
 public:
-	__HOSTDEVICE__ ImageCudaServer<VecType>& level(size_t i) {
+    __HOSTDEVICE__ ImageCudaServer<VecType> &operator[] (size_t level) {
 #ifdef DEBUG_CUDA_ENABLE_ASSERTION
-		assert(i < N);
+        assert(level < N);
 #endif
-		return images_[i];
-	}
+        return images_[level];
+    }
 
-	friend class ImagePyramidCuda<VecType, N>;
+    __HOSTDEVICE__ const ImageCudaServer<VecType> &operator[] (size_t level) const {
+#ifdef DEBUG_CUDA_ENABLE_ASSERTION
+        assert(level < N);
+#endif
+        return images_[level];
+    }
+
+    friend class ImagePyramidCuda<VecType, N>;
 };
 
 template<typename VecType, size_t N>
 class ImagePyramidCuda {
 private:
-	std::shared_ptr<ImagePyramidCudaServer<VecType, N>> server_ = nullptr;
+    std::shared_ptr<ImagePyramidCudaServer<VecType, N>> server_ = nullptr;
 
 private:
-	ImageCuda<VecType> images_[N];
+    ImageCuda<VecType> images_[N];
 
 public:
-	ImagePyramidCuda();
-	~ImagePyramidCuda();
-	ImagePyramidCuda(const ImagePyramidCuda<VecType, N>& other);
-	ImagePyramidCuda<VecType, N>&operator = (
-	    const ImagePyramidCuda<VecType, N>& other);
+    ImagePyramidCuda();
+    ~ImagePyramidCuda();
+    ImagePyramidCuda(const ImagePyramidCuda<VecType, N> &other);
+    ImagePyramidCuda<VecType, N> &operator=(
+        const ImagePyramidCuda<VecType, N> &other);
 
-	void Create(int width, int height);
-	void Release();
+    void Create(int width, int height);
+    void Release();
 
-	void Build(const ImageCuda<VecType> &image);
-	void Build(cv::Mat &m);
-	std::vector<cv::Mat> Download();
+    void Build(const ImageCuda<VecType> &image);
+    std::vector<std::shared_ptr<Image>> DownloadImages();
+    std::vector<cv::Mat> DownloadMats();
 
-	void UpdateServer();
+    void UpdateServer();
 
-	ImageCuda<VecType> & level(size_t i) {
-		assert(i < N);
-		return images_[i];
-	}
-    const ImageCuda<VecType> & level(size_t i) const {
-        assert(i < N);
-        return images_[i];
+    ImageCuda<VecType> & operator[] (size_t level) {
+        assert(level < N);
+        return images_[level];
     }
-	int width(size_t i = 0) const {
-		assert(i < N);
-		return images_[i].width();
-	}
-	int height(size_t i = 0) const {
-		assert(i < N);
-		return images_[i].height();
-	}
-	int pitch(size_t i = 0) const {
-		assert(i < N);
-		return images_[i].pitch();
-	}
+    const ImageCuda<VecType> &operator[] (size_t level) const {
+        assert(level < N);
+        return images_[level];
+    }
 
-	const std::shared_ptr<ImagePyramidCudaServer<VecType, N>>& server() const {
-		return server_;
-	}
-	std::shared_ptr<ImagePyramidCudaServer<VecType, N>>& server() {
-		return server_;
-	}
+    const std::shared_ptr<ImagePyramidCudaServer<VecType, N>> &server() const {
+        return server_;
+    }
+    std::shared_ptr<ImagePyramidCudaServer<VecType, N>> &server() {
+        return server_;
+    }
 };
 }
 

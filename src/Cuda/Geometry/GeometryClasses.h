@@ -13,16 +13,21 @@ namespace open3d {
 
 template<typename T>
 class ImageCudaServer;
-
 template<typename T>
 class ImageCuda;
 
 template<typename T, size_t N>
 class ImagePyramidCudaServer;
-
 template<typename T, size_t N>
 class ImagePyramidCuda;
 
+class RGBDImageCudaServer;
+class RGBDImageCuda;
+
+template<size_t N>
+class RGBDImagePyramidCudaServer;
+template<size_t N>
+class RGBDImagePyramidCuda;
 
 enum VertexType {
     VertexRaw = 0,

@@ -2,8 +2,8 @@
 // Created by wei on 9/27/18.
 //
 
-#ifndef OPEN3D_IMAGEPYRAMIDCUDA_CUH
-#define OPEN3D_IMAGEPYRAMIDCUDA_CUH
+
+#pragma once
 
 #include "ImagePyramidCuda.h"
 #include <Cuda/Common/UtilsCuda.h>
@@ -24,7 +24,7 @@ ImagePyramidCuda<VecType, N>::ImagePyramidCuda(
 
     server_ = other.server();
     for (size_t i = 0; i < N; ++i) {
-        images_[i] = other.level(i);
+        images_[i] = other[i];
     }
 }
 
@@ -34,7 +34,7 @@ ImagePyramidCuda<VecType, N> &ImagePyramidCuda<VecType, N>::operator=(
     if (this != &other) {
         server_ = other.server();
         for (size_t i = 0; i < N; ++i) {
-            images_[i] = other.level(i);
+            images_[i] = other[i];
         }
     }
     return *this;
@@ -44,7 +44,7 @@ template<typename VecType, size_t N>
 void ImagePyramidCuda<VecType, N>::Create(int width, int height) {
     assert(width > 0 && height > 0);
     if (server_ != nullptr) {
-        PrintWarning("Already created, stop re-creating!\n");
+        PrintError("[ImagePyramidCuda] Already created, abort!\n");
         return;
     }
 
@@ -71,20 +71,6 @@ void ImagePyramidCuda<VecType, N>::Release() {
 }
 
 template<typename VecType, size_t N>
-void ImagePyramidCuda<VecType, N>::Build(cv::Mat &m) {
-    if (server_ == nullptr) {
-        server_ = std::make_shared<ImagePyramidCudaServer<VecType, N>>();
-    }
-
-    images_[0].Upload(m);
-    for (size_t i = 1; i < N; ++i) {
-        images_[i - 1].Downsample(images_[i]);
-    }
-
-    UpdateServer();
-}
-
-template<typename VecType, size_t N>
 void ImagePyramidCuda<VecType, N>::Build(const ImageCuda<VecType> &image) {
     if (server_ == nullptr) {
         server_ = std::make_shared<ImagePyramidCudaServer<VecType, N>>();
@@ -102,19 +88,28 @@ template<typename VecType, size_t N>
 void ImagePyramidCuda<VecType, N>::UpdateServer() {
     if (server_ != nullptr) {
         for (size_t i = 0; i < N; ++i) {
-            server_->level(i) = *images_[i].server();
+            (*server_)[i] = *images_[i].server();
         }
     }
 }
 
 template<typename VecType, size_t N>
-std::vector<cv::Mat> ImagePyramidCuda<VecType, N>::Download() {
+std::vector<cv::Mat> ImagePyramidCuda<VecType, N>::DownloadMats() {
     std::vector<cv::Mat> result;
     for (size_t i = 0; i < N; ++i) {
-        result.emplace_back(images_[i].Download());
+        result.emplace_back(images_[i].DownloadMat());
     }
     return result;
 }
 
+
+template<typename VecType, size_t N>
+std::vector<std::shared_ptr<Image>> ImagePyramidCuda<VecType, N>
+    ::DownloadImages(){
+    std::vector<std::shared_ptr<Image> > result;
+    for (size_t i = 0; i < N; ++i) {
+        result.emplace_back(images_[i].DownloadImage());
+    }
+    return result;
 }
-#endif //OPEN3D_IMAGEPYRAMIDCUDA_CUH
+}

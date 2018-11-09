@@ -32,8 +32,8 @@ inline T WarpReduceSumShuffle(T &sum) {
 /** For testing **/
 template<typename VecType, typename T>
 T ReduceSum2D(ImageCuda<VecType> &src) {
-    const dim3 blocks(DIV_CEILING(src.width(), THREAD_2D_UNIT),
-                      DIV_CEILING(src.height(), THREAD_2D_UNIT));
+    const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
+                      DIV_CEILING(src.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
 
     T *sum;
@@ -50,8 +50,8 @@ T ReduceSum2D(ImageCuda<VecType> &src) {
 
 template<typename VecType, typename T>
 T ReduceSum2DShuffle(ImageCuda<VecType> &src) {
-    const dim3 blocks(DIV_CEILING(src.width(), THREAD_2D_UNIT),
-                      DIV_CEILING(src.height(), THREAD_2D_UNIT));
+    const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
+                      DIV_CEILING(src.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
 
     T *sum;
@@ -68,8 +68,8 @@ T ReduceSum2DShuffle(ImageCuda<VecType> &src) {
 
 template<typename VecType, typename T>
 T AtomicSum(ImageCuda<VecType> &src) {
-    const dim3 blocks(DIV_CEILING(src.width(), THREAD_2D_UNIT),
-                      DIV_CEILING(src.height(), THREAD_2D_UNIT));
+    const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
+                      DIV_CEILING(src.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
 
     T *sum;

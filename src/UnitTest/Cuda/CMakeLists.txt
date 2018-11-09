@@ -1,4 +1,5 @@
 add_subdirectory(Container)
 add_subdirectory(Geometry)
+add_subdirectory(Odometry)
 add_subdirectory(Integration)
 add_subdirectory(Visualizer)

@@ -6,12 +6,16 @@
 
 #include "OdometryClasses.h"
 #include "JacobianCuda.h"
+
+#include <Cuda/Common/UtilsCuda.h>
+
+#include <Cuda/Camera/PinholeCameraIntrinsicCuda.h>
 #include <Cuda/Container/ArrayCuda.h>
-#include <Cuda/Geometry/ImagePyramidCuda.h>
+
 #include <Cuda/Geometry/VectorCuda.h>
 #include <Cuda/Geometry/TransformCuda.h>
-#include <Cuda/Camera/PinholeCameraIntrinsicCuda.h>
-#include <Cuda/Common/UtilsCuda.h>
+#include <Cuda/Geometry/ImagePyramidCuda.h>
+
 #include <Eigen/Eigen>
 
 namespace open3d {
@@ -29,7 +33,7 @@ namespace open3d {
  *   (1 - sigma) ||I_{target}[g(s(h(p, D_{source}), \xi))] - I_{source}[p]||^2
  * + sigma ||D_{target}[g(s(h(p, D_{source}), \xi))] - s(h(p, D_{source})).z||^2
  *
- * Usually @target frame should be a keyframe, or N-1 frame
+ * Usually @target frame should be a keyframe, or 'the previous' frame
  *                 it should hold more precomputed information,
  *                 including gradients.
  *         @source frame should be a current frame.
@@ -56,7 +60,7 @@ private:
     ArrayCudaServer<float> results_;
 
 public:
-    PinholeCameraIntrinsicCuda pinhole_camera_intrinsics_[N];
+    PinholeCameraIntrinsicCuda intrinsics_[N];
     TransformCuda transform_source_to_target_;
 
 public:
@@ -158,6 +162,8 @@ private:
 public:
     typedef Eigen::Matrix<double, 6, 6> EigenMatrix6d;
     typedef Eigen::Matrix<double, 6, 1> EigenVector6d;
+
+    PinholeCameraIntrinsic intrinsics_;
     Eigen::Matrix4d transform_source_to_target_;
 
     /** At current I don't want to add assignments for such a large class **/
@@ -167,6 +173,7 @@ public:
     void SetParameters(float sigma,
                        float depth_near_threshold, float depth_far_threshold,
                        float depth_diff_threshold);
+    void SetIntrinsics(PinholeCameraIntrinsic intrinsics);
 
     void Create(int width, int height);
     void Release();

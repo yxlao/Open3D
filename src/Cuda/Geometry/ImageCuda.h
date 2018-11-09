@@ -6,6 +6,7 @@
 
 #include "GeometryClasses.h"
 #include <Cuda/Common/Common.h>
+#include <Core/Geometry/Image.h>
 
 #include <cstdlib>
 #include <memory>
@@ -30,7 +31,7 @@ enum DownsampleMethod {
 };
 
 /**
- * @tparam VecType: uchar, uchar3, uchar4, float, float3, float4.
+ * @tparam VecType:
  * Other templates are regarded as incompatible.
  */
 template<typename VecType>
@@ -100,7 +101,6 @@ public:
     ImageCuda<VecType> &operator=(const ImageCuda<VecType> &other);
 
     void Create(int width, int height);
-    void Resize(int width, int height);
     void Release();
     void CopyFrom(const ImageCuda<VecType> &other);
 
@@ -139,18 +139,13 @@ public:
     void ToFloat(ImageCuda<typename VecType::VecTypef> &image,
                  float scale = 1.0f, float offset = 0.0f);
 
-    void Upload(cv::Mat &m);
-    cv::Mat Download();
+    void Upload(Image& image);
+    std::shared_ptr<Image> DownloadImage();
 
-    int width() const {
-        return width_;
-    }
-    int height() const {
-        return height_;
-    }
-    int pitch() const {
-        return pitch_;
-    }
+    /** Legacy **/
+    void Upload(cv::Mat &m);
+    cv::Mat DownloadMat();
+
     std::shared_ptr<ImageCudaServer<VecType>> &server() {
         return server_;
     }

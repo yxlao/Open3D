@@ -32,7 +32,6 @@
 #include <Visualization/Visualization.h>
 
 #include <Cuda/Integration/ScalableTSDFVolumeCuda.h>
-#include <opencv2/opencv.hpp>
 #include <Cuda/Integration/ScalableMeshVolumeCuda.h>
 
 int main(int argc, char *argv[])
@@ -89,14 +88,14 @@ int main(int argc, char *argv[])
     std::shared_ptr<TriangleMeshCuda> mesh = std::make_shared<TriangleMeshCuda>();
     visualizer.AddGeometry(mesh);
 
+    Image depth, color;
     while (fgets(buffer, DEFAULT_IO_BUFFER_SIZE, file)) {
         std::vector<std::string> st;
         SplitString(st, buffer, "\t\r\n ");
         if (st.size() >= 2) {
             PrintDebug("Processing frame %d ...\n", index);
-            cv::Mat depth = cv::imread(dir_name + st[0], cv::IMREAD_UNCHANGED);
-            cv::Mat color = cv::imread(dir_name + st[1]);
-            cv::cvtColor(color, color, cv::COLOR_BGR2RGB);
+            ReadImage(dir_name + st[0], depth);
+            ReadImage(dir_name + st[1], color);
 
             rgbd.Upload(depth, color);
 

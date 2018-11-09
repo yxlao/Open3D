@@ -41,6 +41,19 @@ public:
         SetIntrinsics(width, height, fx, fy, cx, cy);
     }
 
+    __HOST__ PinholeCameraIntrinsicCuda(PinholeCameraIntrinsic &intrinsic) {
+        width_ = intrinsic.width_;
+        height_ = intrinsic.height_;
+
+        auto focal_length = intrinsic.GetFocalLength();
+        fx_ = float(focal_length.first); inv_fx_ = 1.0f / fx_;
+        fy_ = float(focal_length.second); inv_fy_ = 1.0f / fy_;
+
+        auto principal_point = intrinsic.GetPrincipalPoint();
+        cx_ = float(principal_point.first);
+        cy_ = float(principal_point.second);
+    }
+
     __HOSTDEVICE__ PinholeCameraIntrinsicCuda(
         PinholeCameraIntrinsicParameters param) {
 
@@ -63,6 +76,13 @@ public:
         fy_ = fy; inv_fy_ = 1.0f / fy_;
         cx_ = cx; cy_ = cy;
     }
+
+    __HOSTDEVICE__ PinholeCameraIntrinsicCuda Downsample() {
+        PinholeCameraIntrinsicCuda ret;
+        ret.SetIntrinsics(width_ >> 1, height_ >> 1,
+            fx_ * 0.5f, fy_ * 0.5f, cx_ * 0.5f, cy_ * 0.5f);
+        return ret;
+    };
 
     __HOSTDEVICE__ inline bool IsPixelValid(const Vector2f &p) {
         return p(0) >= 0 && p(0) < width_ - 1

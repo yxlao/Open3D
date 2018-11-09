@@ -10,23 +10,23 @@
 #include <opencv2/opencv.hpp>
 #include "UnitTest.h"
 
-TEST(RGBDOdometryCuda, Odometry) {
+void f() {
     using namespace open3d;
 
     std::string base_path = "../../examples/TestData/RGBD/";
 
-    cv::Mat source_color = cv::imread(base_path + "color/00001.jpg");
+    cv::Mat source_color = cv::imread(base_path + "color/00000.jpg");
     cv::cvtColor(source_color, source_color, cv::COLOR_BGR2GRAY);
     source_color.convertTo(source_color, CV_32FC1, 1.0f / 255.0f);
 
-    cv::Mat target_color = cv::imread(base_path + "color/00000.jpg");
+    cv::Mat target_color = cv::imread(base_path + "color/00001.jpg");
     cv::cvtColor(target_color, target_color, cv::COLOR_BGR2GRAY);
     target_color.convertTo(target_color, CV_32FC1, 1.0f / 255.0f);
 
-    cv::Mat source_depth = cv::imread(base_path + "depth/00001.png",
+    cv::Mat source_depth = cv::imread(base_path + "depth/00000.png",
                                       cv::IMREAD_UNCHANGED);
     source_depth.convertTo(source_depth, CV_32FC1, 0.001f);
-    cv::Mat target_depth = cv::imread(base_path + "depth/00000.png",
+    cv::Mat target_depth = cv::imread(base_path + "depth/00001.png",
                                       cv::IMREAD_UNCHANGED);
     target_depth.convertTo(target_depth, CV_32FC1, 0.001f);
 
@@ -37,9 +37,9 @@ TEST(RGBDOdometryCuda, Odometry) {
     target_D.Upload(target_depth);
 
     RGBDOdometryCuda<3> odometry;
-    odometry.server()->pinhole_camera_intrinsics_.SetUp(
-        640, 480, 525.0, 525.0, 319.5, 239.5);
-    odometry.transform_source_to_target_ = RGBDOdometryCuda<3>::Matrix4f::Identity();
+    odometry.SetIntrinsics(PinholeCameraIntrinsic(
+        PinholeCameraIntrinsicParameters::PrimeSenseDefault));
+
     odometry.SetParameters(0.2f, 0.1f, 4.0f, 0.07f);
 
     Timer timer;
@@ -47,6 +47,7 @@ TEST(RGBDOdometryCuda, Odometry) {
     odometry.Build(source_D, source_I, target_D, target_I);
     timer.Start();
     for (int i = 0; i < num_iters; ++i) {
+        odometry.transform_source_to_target_ = Eigen::Matrix4d::Identity();
         odometry.Apply(source_D, source_I, target_D, target_I);
     }
     timer.Stop();
@@ -55,6 +56,5 @@ TEST(RGBDOdometryCuda, Odometry) {
 }
 
 int main(int argc, char**argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    RUN_ALL_TESTS();
+    f();
 }

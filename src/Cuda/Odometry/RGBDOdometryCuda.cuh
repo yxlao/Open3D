@@ -24,22 +24,22 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
     float &residual_D) {
 
     /** Check 1: depth valid in source? **/
-    float d_source = source_depth().level(level).at(x, y)(0);
+    float d_source = source_depth()[level].at(x, y)(0);
     bool mask = IsValidDepth(d_source);
     if (!mask) return false;
 
     /** Check 2: reprojected point in image? **/
     Vector3f
         X = transform_source_to_target_
-        * pinhole_camera_intrinsics_[level].InverseProjectPixel(
+        * intrinsics_[level].InverseProjectPixel(
             Vector2i(x, y), d_source);
 
-    Vector2f p_warped = pinhole_camera_intrinsics_[level].ProjectPoint(X);
-    mask = pinhole_camera_intrinsics_[level].IsPixelValid(p_warped);
+    Vector2f p_warped = intrinsics_[level].ProjectPoint(X);
+    mask = intrinsics_[level].IsPixelValid(p_warped);
     if (!mask) return false;
 
     /** Check 3: depth valid in target? Occlusion? -> 1ms **/
-    float d_target = target_depth().level(level).interp_with_holes_at(
+    float d_target = target_depth()[level].interp_with_holes_at(
         p_warped(0), p_warped(1))(0);
     mask = IsValidDepth(d_target) && IsValidDepthDiff(d_target - X(2));
     if (!mask) return false;
@@ -58,16 +58,16 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
      * J_D = (d D(p_warped) / d p_warped) (d p_warped / d X) (d X / d \xi)
      *     - (d X.z / d X) (d X / d \xi)
      */
-    float dx_I = target_intensity_dx().level(level).interp_at(
+    float dx_I = target_intensity_dx()[level].interp_at(
         p_warped(0), p_warped(1))(0);
-    float dy_I = target_intensity_dy().level(level).interp_at(
+    float dy_I = target_intensity_dy()[level].interp_at(
         p_warped(0), p_warped(1))(0);
-    float dx_D = target_depth_dx().level(level).interp_at(
+    float dx_D = target_depth_dx()[level].interp_at(
         p_warped(0), p_warped(1))(0);
-    float dy_D = target_depth_dy().level(level).interp_at(
+    float dy_D = target_depth_dy()[level].interp_at(
         p_warped(0), p_warped(1))(0);
-    float fx = pinhole_camera_intrinsics_[level].fx_;
-    float fy = pinhole_camera_intrinsics_[level].fy_;
+    float fx = intrinsics_[level].fx_;
+    float fy = intrinsics_[level].fy_;
     float inv_Z = 1.0f / X(2);
     float fx_on_Z = fx * inv_Z;
     float fy_on_Z = fy * inv_Z;
@@ -82,8 +82,8 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
     jacobian_I(4) = sqrt_coeff_I_ * (X(2) * c0 - X(0) * c2);
     jacobian_I(5) = sqrt_coeff_I_ * (-X(1) * c0 + X(0) * c1);
     residual_I = sqrt_coeff_I_ *
-        (target_intensity().level(level).interp_at(p_warped(0), p_warped(1))(0)
-            - source_intensity().level(level).at(x, y)(0));
+        (target_intensity()[level].interp_at(p_warped(0), p_warped(1))(0)
+            - source_intensity()[level].at(x, y)(0));
 
     float d0 = dx_D * fx_on_Z;
     float d1 = dy_D * fy_on_Z;
@@ -97,10 +97,9 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
     residual_D = sqrt_coeff_D_ * (d_target - X(2));
 
 #ifdef VISUALIZE_ODOMETRY_INLIERS
-    source_on_target().level(level).get((int) p_warped(0), (int) p_warped(1))
+    source_on_target()[level].at((int) p_warped(0), (int) p_warped(1))
         = Vector1f(0.0f);
 #endif
-
     return true;
 }
 
@@ -155,9 +154,18 @@ void RGBDOdometryCuda<N>::SetParameters(float sigma,
 }
 
 template<size_t N>
+void RGBDOdometryCuda<N>::SetIntrinsics(PinholeCameraIntrinsic intrinsics) {
+    intrinsics_ = intrinsics;
+    server_->intrinsics_[0] = PinholeCameraIntrinsicCuda(intrinsics);
+    for (size_t i = 1; i < N; ++i) {
+        server_->intrinsics_[i] = server_->intrinsics_[i - 1].Downsample();
+    }
+}
+
+template<size_t N>
 void RGBDOdometryCuda<N>::Create(int width, int height) {
     if (server_ != nullptr) {
-        PrintError("Already created, stop re-creating!\n");
+        PrintError("[RGBDOdometryCuda] Already created, abort!\n");
         return;
     }
 
@@ -243,15 +251,15 @@ void RGBDOdometryCuda<N>::Build(ImageCuda<Vector1f> &source_depth,
                                 ImageCuda<Vector1f> &source_intensity,
                                 ImageCuda<Vector1f> &target_depth,
                                 ImageCuda<Vector1f> &target_intensity) {
-    assert(source_depth.width() == source_intensity.width());
-    assert(source_depth.height() == source_intensity.height());
-    assert(target_depth.width() == target_intensity.width());
-    assert(target_depth.height() == target_intensity.height());
+    assert(source_depth.width_ == source_intensity.width_);
+    assert(source_depth.height_ == source_intensity.height_);
+    assert(target_depth.width_ == target_intensity.width_);
+    assert(target_depth.height_ == target_intensity.height_);
 
-    int source_width = source_depth.width();
-    int source_height = source_depth.height();
-    int target_width = target_depth.width();
-    int target_height = target_depth.height();
+    int source_width = source_depth.width_;
+    int source_height = source_depth.height_;
+    int target_width = target_depth.width_;
+    int target_height = target_depth.height_;
     assert(source_width > 0 && source_height > 0);
     assert(target_width > 0 && target_height > 0);
 
@@ -268,13 +276,13 @@ void RGBDOdometryCuda<N>::Build(ImageCuda<Vector1f> &source_depth,
     source_on_target_.Create(source_width, source_height);
 
     for (size_t i = 0; i < N; ++i) {
-        target_depth_.level(i).Sobel(target_depth_dx_.level(i),
-                                     target_depth_dy_.level(i),
-                                     false);
-        target_intensity_.level(i).Sobel(target_intensity_dx_.level(i),
-                                         target_intensity_dy_.level(i),
-                                         false);
-        source_on_target_.level(i).CopyFrom(target_intensity_.level(i));
+        target_depth_[i].Sobel(target_depth_dx_[i],
+                               target_depth_dy_[i],
+                               false);
+        target_intensity_[i].Sobel(target_intensity_dx_[i],
+                                   target_intensity_dy_[i],
+                                   false);
+        source_on_target_[i].CopyFrom(target_intensity_[i]);
     }
     target_depth_dx_.UpdateServer();
     target_depth_dy_.UpdateServer();
@@ -293,25 +301,26 @@ void RGBDOdometryCuda<N>::Apply(ImageCuda<Vector1f> &source_depth,
                                 ImageCuda<Vector1f> &target_intensity) {
 
     const int kIterations[] = {3, 5, 10};
-    for (int level = (int) N - 1; level >= 0; --level) {
+    for (int level = (int) (N - 1); level >= 0; --level) {
         for (int iter = 0; iter < kIterations[level]; ++iter) {
             results_.Memset(0);
 
 #ifdef VISUALIZE_ODOMETRY_INLIERS
-            source_on_target_.level(level).CopyFrom(target_intensity_.level(level));
+            source_on_target_[level].CopyFrom(target_intensity_[level]);
 #endif
             server_->transform_source_to_target_.FromEigen(
                 transform_source_to_target_);
+
             const dim3 blocks(
-                DIV_CEILING(source_depth_.width(level), THREAD_2D_UNIT),
-                DIV_CEILING(source_depth_.height(level), THREAD_2D_UNIT));
+                DIV_CEILING(source_depth_[level].width_, THREAD_2D_UNIT),
+                DIV_CEILING(source_depth_[level].height_, THREAD_2D_UNIT));
             const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
             ApplyRGBDOdometryKernel << < blocks, threads >> > (*server_, level);
             CheckCuda(cudaDeviceSynchronize());
             CheckCuda(cudaGetLastError());
 
 #ifdef VISUALIZE_ODOMETRY_INLIERS
-            cv::Mat im = source_on_target_.level(level).Download();
+            cv::Mat im = source_on_target_[level].DownloadMat();
             cv::imshow("source_on_target", im);
             cv::waitKey(-1);
 #endif

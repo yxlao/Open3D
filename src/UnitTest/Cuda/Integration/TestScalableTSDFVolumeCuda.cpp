@@ -132,7 +132,7 @@ TEST(ScalableTSDFVolumeCuda, RayCasting) {
         timer.Stop();
         time += timer.GetDuration();
 
-        cv::imshow("Raycaster", raycaster.Download());
+        cv::imshow("Raycaster", raycaster.DownloadMat());
         cv::waitKey(10);
     }
     cv::waitKey(-1);

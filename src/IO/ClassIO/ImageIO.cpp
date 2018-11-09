@@ -63,7 +63,6 @@ bool ReadImage(const std::string &filename, Image &image)
 {
     std::string filename_ext =
             filesystem::GetFileExtensionInLowerCase(filename);
-    PrintInfo("ext: %s\n", filename_ext.c_str());
     if (filename_ext.empty()) {
         PrintWarning("Read Image failed: unknown file extension.\n");
         return false;

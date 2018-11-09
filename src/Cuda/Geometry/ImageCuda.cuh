@@ -69,7 +69,7 @@ VecType ImageCudaServer<VecType>::interp_with_holes_at(float x, float y) {
     float a = x - x0, b = y - y0;
 
     float sum_w = 0;
-    auto sum_val = VecType::VecTypef(0);
+    auto sum_val = VecType::VecTypef::Zeros();
     auto zero = VecType::VecTypef(0);
 
     auto val = at(x0, y0).ToVectorf();
@@ -106,7 +106,7 @@ VecType ImageCudaServer<VecType>::BoxFilter2x2(int x, int y) {
     int xp1 = min(width_ - 1, x + 1);
     int yp1 = min(height_ - 1, y + 1);
 
-    auto sum_val = VecType::Vectorf();
+    auto sum_val = VecType::VecTypef::Zeros();
     sum_val += at(x, y).ToVectorf();
     sum_val += at(x, yp1).ToVectorf();
     sum_val += at(xp1, y).ToVectorf();
@@ -127,7 +127,7 @@ VecType ImageCudaServer<VecType>::BoxFilter2x2WithHoles(int x, int y) {
     int xp1 = min(width_ - 1, x + 1);
     int yp1 = min(height_ - 1, y + 1);
 
-    auto sum_val = VecType::Vectorf();
+    auto sum_val = VecType::VecTypef::Zeros();
     float cnt = 0.0;
     VecType val;
     VecType zero = VecType(0);
@@ -175,7 +175,7 @@ VecType ImageCudaServer<VecType>::GaussianFilter(int x, int y, int kernel_idx) {
     int x_max = min(width_ - 1, x + kernel_size_2);
     int y_max = min(height_ - 1, y + kernel_size_2);
 
-    auto sum_val = VecType::Vectorf();
+    auto sum_val = VecType::VecTypef::Zeros();
     float sum_weight = 0;
 
     for (int xx = x_min; xx <= x_max; ++xx) {
@@ -188,6 +188,7 @@ VecType ImageCudaServer<VecType>::GaussianFilter(int x, int y, int kernel_idx) {
     }
 
     sum_val /= sum_weight;
+
     return VecType::FromVectorf(sum_val);
 }
 
@@ -220,7 +221,7 @@ VecType ImageCudaServer<VecType>::GaussianFilterWithHoles(
     int x_max = min(width_ - 1, x + kernel_size_2);
     int y_max = min(height_ - 1, y + kernel_size_2);
 
-    auto sum_val = VecType::Vectorf();
+    auto sum_val = VecType::VecTypef::Zeros();
     float sum_weight = 0;
 
     for (int xx = x_min; xx <= x_max; ++xx) {
@@ -264,7 +265,7 @@ VecType ImageCudaServer<VecType>::BilateralFilter(
     int y_max = min(height_ - 1, y + kernel_size_2);
 
     auto center_val = at(x, y).ToVectorf();
-    auto sum_val = VecType::Vectorf();
+    auto sum_val = VecType::VecTypef::Zeros();
     float sum_weight = 0;
 
     for (int xx = x_min; xx <= x_max; ++xx) {
@@ -312,7 +313,7 @@ VecType ImageCudaServer<VecType>::BilateralFilterWithHoles(
     int y_max = min(height_ - 1, y + kernel_size_2);
 
     auto center_valf = at(x, y).ToVectorf();
-    auto sum_val = VecType::Vectorf();
+    auto sum_val = VecType::VecTypef::Zeros();
     float sum_weight = 0;
 
     for (int xx = x_min; xx <= x_max; ++xx) {
@@ -409,9 +410,9 @@ ImageCuda<VecType>::ImageCuda(const ImageCuda<VecType> &other) {
 #endif
     server_ = other.server();
 
-    width_ = other.width();
-    height_ = other.height();
-    pitch_ = other.pitch();
+    width_ = other.width_;
+    height_ = other.height_;
+    pitch_ = other.pitch_;
 
 #ifdef HOST_DEBUG_MONITOR_LIFECYCLE
     PrintInfo("Ref count after copy construction: %d\n", server_.use_count());
@@ -432,9 +433,9 @@ ImageCuda<VecType> &ImageCuda<VecType>::operator=(const ImageCuda<VecType> &othe
         Release();
 
         server_ = other.server();
-        width_ = other.width();
-        height_ = other.height();
-        pitch_ = other.pitch();
+        width_ = other.width_;
+        height_ = other.height_;
+        pitch_ = other.pitch_;
 
 #ifdef HOST_DEBUG_MONITOR_LIFECYCLE
         PrintInfo("Ref count after copy construction: %d\n", server_.use_count());
@@ -450,18 +451,6 @@ ImageCuda<VecType>::~ImageCuda() {
     PrintInfo("Destructor.\n");
 #endif
     Release();
-}
-
-template<typename VecType>
-void ImageCuda<VecType>::Resize(int width, int height) {
-    assert(width > 0 && height > 0);
-    if (width == width_ && height == height_) {
-        PrintWarning("No need to resize!\n");
-        return;
-    }
-
-    Release();
-    Create(width, height);
 }
 
 template<typename VecType>
@@ -483,7 +472,8 @@ void ImageCuda<VecType>::Create(int width, int height) {
     server_ = std::make_shared<ImageCudaServer<VecType>>();
 
     size_t pitch_size_t = 0;
-    CheckCuda(cudaMallocPitch((void **) &(server_->data_), &pitch_size_t,
+    CheckCuda(cudaMallocPitch((void **) &(server_->data_),
+                              &pitch_size_t,
                               sizeof(VecType) * width_, height_));
     pitch_ = (int) pitch_size_t;
     server_->width_ = width_;
@@ -514,16 +504,16 @@ void ImageCuda<VecType>::CopyFrom(const ImageCuda<VecType> &other) {
     if (this == &other) return;
 
     if (server_ == nullptr) {
-        Create(width_, height_);
+        Create(other.width_, other.height_);
     }
 
-    if (other.width() != width_ || other.height() != height_) {
+    if (other.width_ != width_ || other.height_ != height_) {
         PrintError("[ImageCuda] Incompatible image size!\n");
         return;
     }
 
     CheckCuda(cudaMemcpy2D(server_->data_, pitch_,
-                           other.server()->data(), other.pitch(),
+                           other.server()->data(), other.pitch_,
                            sizeof(VecType) * width_, height_,
                            cudaMemcpyDeviceToDevice));
 }
@@ -566,7 +556,41 @@ void ImageCuda<VecType>::Upload(cv::Mat &m) {
 }
 
 template<typename VecType>
-cv::Mat ImageCuda<VecType>::Download() {
+void ImageCuda<VecType>::Upload(Image &image) {
+    assert(image.width_ > 0 && image.height_ > 0);
+
+    /* Type checking */
+    if (typeid(VecType) == typeid(Vector1s)) {
+        assert(image.bytes_per_channel_ == 2 && image.num_of_channels_ == 1);
+    } else if (typeid(VecType) == typeid(Vector3b)) {
+        assert(image.bytes_per_channel_ == 1 && image.num_of_channels_ == 3);
+    } else if (typeid(VecType) == typeid(Vector1b)) {
+        assert(image.bytes_per_channel_ == 1 && image.num_of_channels_ == 1);
+    } else if (typeid(VecType) == typeid(Vector3f)) {
+        assert(image.bytes_per_channel_ == 4 && image.num_of_channels_ == 3);
+    } else if (typeid(VecType) == typeid(Vector1f)) {
+        assert(image.bytes_per_channel_ == 4 && image.num_of_channels_ == 1);
+    } else {
+        PrintWarning("Unsupported format %d!\n");
+        return;
+    }
+
+    if (server_ == nullptr) {
+        Create(image.width_, image.height_);
+    }
+    if (width_ != image.width_ || height_ != image.height_) {
+        PrintWarning("Incompatible image size!\n");
+        return;
+    }
+
+    CheckCuda(cudaMemcpy2D(server_->data_, pitch_,
+                           image.data_.data(), image.BytesPerLine(),
+                           sizeof(VecType) * image.width_, image.height_,
+                           cudaMemcpyHostToDevice));
+}
+
+template<typename VecType>
+cv::Mat ImageCuda<VecType>::DownloadMat() {
     cv::Mat m;
     if (typeid(VecType) == typeid(Vector1s)) {
         m = cv::Mat(height_, width_, CV_16UC1);
@@ -599,6 +623,37 @@ cv::Mat ImageCuda<VecType>::Download() {
 }
 
 template<typename VecType>
+std::shared_ptr<Image> ImageCuda<VecType>::DownloadImage() {
+    std::shared_ptr<Image> image = std::make_shared<Image>();
+
+    if (typeid(VecType) == typeid(Vector1s)) {
+        image->PrepareImage(width_, height_, 1, 2);
+    } else if (typeid(VecType) == typeid(Vector3b)) {
+        image->PrepareImage(width_, height_, 3, 1);
+    } else if (typeid(VecType) == typeid(Vector1b)) {
+        image->PrepareImage(width_, height_, 1, 1);
+    } else if (typeid(VecType) == typeid(Vector3f)) {
+        image->PrepareImage(width_, height_, 3, 4);
+    } else if (typeid(VecType) == typeid(Vector1f)) {
+        image->PrepareImage(width_, height_, 1, 4);
+    } else {
+        PrintWarning("Unsupported format %d!\n");
+        return image;
+    }
+
+    if (server_ == nullptr) {
+        PrintWarning("ImageCuda not initialized!\n");
+        return image;
+    }
+
+    CheckCuda(cudaMemcpy2D(image->data_.data(), image->BytesPerLine(),
+                           server_->data_, pitch_,
+                           sizeof(VecType) * width_, height_,
+                           cudaMemcpyDeviceToHost));
+    return image;
+}
+
+template<typename VecType>
 ImageCuda<VecType> ImageCuda<VecType>::Downsample(DownsampleMethod method) {
     ImageCuda<VecType> dst;
     dst.Create(width_ / 2, height_ / 2);
@@ -611,13 +666,13 @@ void ImageCuda<VecType>::Downsample(ImageCuda<VecType> &image,
                                     DownsampleMethod method) {
     if (image.server() == nullptr) {
         image.Create(width_ / 2, height_ / 2);
-    } else if (image.width() != width_ / 2 || image.height() != height_ / 2) {
+    } else if (image.width_ != width_ / 2 || image.height_ != height_ / 2) {
         PrintError("Incompatible image size!\n");
         return;
     }
 
-    const dim3 blocks(DIV_CEILING(image.width(), THREAD_2D_UNIT),
-                      DIV_CEILING(image.height(), THREAD_2D_UNIT));
+    const dim3 blocks(DIV_CEILING(image.width_, THREAD_2D_UNIT),
+                      DIV_CEILING(image.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
     DownsampleImageKernel << < blocks, threads >> > (
         *server_, *(image.server()), method);
@@ -643,14 +698,14 @@ void ImageCuda<VecType>::Sobel(ImageCuda<typename VecType::VecTypef> &dx,
                                bool with_holes) {
     if (dx.server() == nullptr) {
         dx.Create(width_, height_);
-    } else if (dx.width() != width_ || dx.height() != height_) {
+    } else if (dx.width_ != width_ || dx.height_ != height_) {
         PrintError("Incompatible image size!\n");
         return;
     }
 
     if (dy.server() == nullptr) {
         dy.Create(width_, height_);
-    } else if (dy.width() != width_ || dy.height() != height_) {
+    } else if (dy.width_ != width_ || dy.height_ != height_) {
         PrintError("Incompatible image size!\n");
         return;
     }
@@ -662,8 +717,6 @@ void ImageCuda<VecType>::Sobel(ImageCuda<typename VecType::VecTypef> &dx,
         *server_, *(dx.server()), *(dy.server()), with_holes);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
-
-    return;
 }
 
 template<typename VecType>
@@ -680,7 +733,7 @@ void ImageCuda<VecType>::Shift(ImageCuda<VecType> &image, float dx, float dy,
                                bool with_holes) {
     if (image.server() == nullptr) {
         image.Create(width_, height_);
-    } else if (image.width() != width_ || image.height() != height_) {
+    } else if (image.width_ != width_ || image.height_ != height_) {
         PrintInfo("Incompatible image size!\n");
         return;
     }
@@ -709,7 +762,7 @@ void ImageCuda<VecType>::Gaussian(ImageCuda<VecType> &image,
                                   bool with_holes) {
     if (image.server() == nullptr) {
         image.Create(width_, height_);
-    } else if (image.width() != width_ || image.height() != height_) {
+    } else if (image.width_ != width_ || image.height_ != height_) {
         PrintInfo("Incompatible image size!\n");
         return;
     }
@@ -740,7 +793,7 @@ void ImageCuda<VecType>::Bilateral(ImageCuda<VecType> &image,
                                    bool with_holes) {
     if (image.server() == nullptr) {
         image.Create(width_, height_);
-    } else if (image.width() != width_ || image.height() != height_) {
+    } else if (image.width_ != width_ || image.height_ != height_) {
         PrintInfo("Incompatible image size!\n");
         return;
     }
@@ -768,7 +821,7 @@ void ImageCuda<VecType>::ToFloat(ImageCuda<typename VecType::VecTypef> &image,
                                  float scale, float offset) {
     if (image.server() == nullptr) {
         image.Create(width_, height_);
-    } else if (image.width() != width_ || image.height() != height_) {
+    } else if (image.width_ != width_ || image.height_ != height_) {
         PrintInfo("Incompatible image size!\n");
         return;
     }

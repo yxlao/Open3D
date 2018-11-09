@@ -81,7 +81,20 @@ void RGBDImageCuda::Upload(cv::Mat &depth, cv::Mat &color) {
     UpdateServer();
 }
 
-void RGBDImageCuda::CopyFrom(
+void RGBDImageCuda::Upload(Image &depth, Image &color) {
+    if (server_ == nullptr) {
+        server_ = std::make_shared<RGBDImageCudaServer>();
+    }
+
+    depths_.Upload(depth);
+    color_.Upload(color);
+
+    depths_.ToFloat(depth_, 1.0f / depth_factor_);
+
+    UpdateServer();
+}
+
+void RGBDImageCuda::Upload(
     ImageCuda<Vector1f> &depth, ImageCuda<Vector3b> &color) {
     depth_.CopyFrom(depth);
     color_.CopyFrom(color);
