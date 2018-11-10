@@ -1,7 +1,6 @@
 #include "ImageCudaDevice.cuh"
-#include "RGBDImageCuda.cuh"
-#include "ImagePyramidCuda.cuh"
 #include "ImageCudaKernel.cuh"
+
 #include "TriangleMeshCuda.cuh"
 #include "TriangleMeshCudaKernel.cuh"
 #include "VectorCuda.h"
@@ -24,22 +23,6 @@ template class ImageCudaKernelCaller<Vector1b>;
 template class ImageCudaKernelCaller<Vector4f>;
 template class ImageCudaKernelCaller<Vector3f>;
 template class ImageCudaKernelCaller<Vector1f>;
-
-template class ImagePyramidCuda<Vector1s, 3>;
-template class ImagePyramidCuda<Vector1s, 4>;
-template class ImagePyramidCuda<Vector4b, 3>;
-template class ImagePyramidCuda<Vector4b, 4>;
-template class ImagePyramidCuda<Vector3b, 3>;
-
-template class ImagePyramidCuda<Vector3b, 4>;
-template class ImagePyramidCuda<Vector1b, 3>;
-template class ImagePyramidCuda<Vector1b, 4>;
-template class ImagePyramidCuda<Vector4f, 3>;
-template class ImagePyramidCuda<Vector4f, 4>;
-template class ImagePyramidCuda<Vector3f, 3>;
-template class ImagePyramidCuda<Vector3f, 4>;
-template class ImagePyramidCuda<Vector1f, 3>;
-template class ImagePyramidCuda<Vector1f, 4>;
 
 /** Vector **/
 template Vector4f operator*<float, 4>(float s, const Vector4f &vec);
