@@ -5,7 +5,7 @@
 #pragma once
 
 #include "ImageCuda.h"
-#include "VectorCuda.h"
+#include <Cuda/Common/VectorCuda.h>
 #include <memory>
 #include <opencv2/opencv.hpp>
 
