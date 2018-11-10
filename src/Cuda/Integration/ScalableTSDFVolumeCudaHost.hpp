@@ -3,6 +3,7 @@
 //
 
 #include "ScalableTSDFVolumeCuda.h"
+#include <Cuda/Container/HashTableCudaHost.hpp>
 #include <cuda_runtime.h>
 
 namespace open3d {

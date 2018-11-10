@@ -22,8 +22,6 @@ template class UniformMeshVolumeCuda<16>;
 template class UniformMeshVolumeCuda<256>;
 template class UniformMeshVolumeCuda<512>;
 
-template class HashTableCuda
-    <Vector3i, UniformTSDFVolumeCudaServer<8>, SpatialHasher>;
 template class ScalableMeshVolumeCuda<8>;
 template class ScalableTSDFVolumeCuda<8>;
 

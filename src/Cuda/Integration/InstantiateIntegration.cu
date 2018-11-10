@@ -39,12 +39,8 @@ template class UniformMeshVolumeCudaKernelCaller<512>;
 
 /** Scalable part **/
 /** Oh we can't afford larger chunks **/
-template class HashTableCudaServer
-    <Vector3i, UniformTSDFVolumeCudaServer<8ul>, SpatialHasher>;
 template class HashTableCudaKernelCaller
-    <Vector3i, UniformTSDFVolumeCudaServer<8ul>, SpatialHasher>;
-
-template class MemoryHeapCuda<UniformTSDFVolumeCudaServer<8>>;
+    <Vector3i, UniformTSDFVolumeCudaServer<8>, SpatialHasher>;
 template class MemoryHeapCudaKernelCaller<UniformTSDFVolumeCudaServer<8>>;
 
 template class ScalableTSDFVolumeCudaServer<8>;

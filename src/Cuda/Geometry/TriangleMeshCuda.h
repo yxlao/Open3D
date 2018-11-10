@@ -121,11 +121,31 @@ public:
     }
 };
 
-__GLOBAL__
-void GetMinBoundKernel(TriangleMeshCudaServer server, Vector3f *min_bound);
+class TriangleMeshCudaKernelCaller {
+public:
+    static __HOST__ void GetMinBoundKernelCaller(
+        TriangleMeshCudaServer &server,
+        ArrayCudaServer<Vector3f> &min_bound,
+        int num_vertices);
+
+    static __HOST__ void GetMaxBoundKernelCaller(
+        TriangleMeshCudaServer &server,
+        ArrayCudaServer<Vector3f> &max_bound,
+        int num_vertices);
+
+    static __HOST__ void TransformKernelCaller(
+        TriangleMeshCudaServer& server,
+        TransformCuda &transform,
+        int num_vertices);
+};
 
 __GLOBAL__
-void GetMaxBoundKernel(TriangleMeshCudaServer server, Vector3f *max_bound);
+void GetMinBoundKernel(TriangleMeshCudaServer server,
+                       ArrayCudaServer<Vector3f> min_bound);
+
+__GLOBAL__
+void GetMaxBoundKernel(TriangleMeshCudaServer server,
+                       ArrayCudaServer<Vector3f> max_bound);
 
 __GLOBAL__
 void TransformKernel(TriangleMeshCudaServer, TransformCuda transform);

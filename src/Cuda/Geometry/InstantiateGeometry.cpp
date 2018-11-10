@@ -5,8 +5,10 @@
 #include "ImageCudaHost.hpp"
 #include "RGBDImageCudaHost.hpp"
 
-#include "ImagePyramidCuda.hpp"
+#include "ImagePyramidCudaHost.hpp"
 #include "RGBDImagePyramidCudaHost.hpp"
+
+#include "TriangleMeshCudaHost.hpp"
 
 namespace open3d {
 

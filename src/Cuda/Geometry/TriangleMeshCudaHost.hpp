@@ -5,7 +5,9 @@
 #pragma once
 
 #include "TriangleMeshCuda.h"
-#include <Cuda/Container/ArrayCudaDevice.cuh>
+
+#include <Cuda/Container/ArrayCuda.h>
+#include <Core/Core.h>
 
 namespace open3d {
 TriangleMeshCuda::TriangleMeshCuda()
@@ -233,9 +235,9 @@ std::shared_ptr<TriangleMesh> TriangleMeshCuda::Download() {
             Eigen::Vector3d colord = Eigen::Vector3d(vertex_colors[i](0),
                                                      vertex_colors[i](1),
                                                      vertex_colors[i](2));
-            mesh->vertex_colors_[i] = Eigen::Vector3d(min(colord(0), 1.0),
-                                                      min(colord(1), 1.0),
-                                                      min(colord(2), 1.0));
+            mesh->vertex_colors_[i] = Eigen::Vector3d(fminf(colord(0), 1.0f),
+                                                      fminf(colord(1), 1.0f),
+                                                      fminf(colord(2), 1.0f));
         }
     }
 
@@ -278,29 +280,15 @@ Eigen::Vector3d TriangleMeshCuda::GetMinBound() const {
     const int num_vertices = vertices_.size();
     if (num_vertices == 0) return Eigen::Vector3d(0, 0, 0);
 
-    const dim3 blocks(DIV_CEILING(num_vertices, THREAD_1D_UNIT));
-    const dim3 threads(THREAD_1D_UNIT);
+    ArrayCuda<Vector3f> min_bound_cuda(1);
+    std::vector<Vector3f> min_bound = {Vector3f(1e10f, 1e10f, 1e10f)};
+    min_bound_cuda.Upload(min_bound);
 
-    Vector3f min_bound_upload = Vector3f(1e10f, 1e10f, 1e10f);
+    TriangleMeshCudaKernelCaller::GetMinBoundKernelCaller(
+        *server_, *min_bound_cuda.server(), num_vertices);
 
-    Vector3f *min_bound;
-    CheckCuda(cudaMalloc(&min_bound, sizeof(Vector3f)));
-    CheckCuda(cudaMemcpy(min_bound, &min_bound_upload,
-                         sizeof(Vector3f),
-                         cudaMemcpyHostToDevice));
-
-    GetMinBoundKernel << < blocks, threads >> > (*server_, min_bound);
-    CheckCuda(cudaDeviceSynchronize());
-    CheckCuda(cudaGetLastError());
-
-    Vector3f min_bound_download;
-    CheckCuda(cudaMemcpy(&min_bound_download, min_bound, sizeof(Vector3f),
-                         cudaMemcpyDeviceToHost));
-    CheckCuda(cudaFree(min_bound));
-
-    return Eigen::Vector3d(min_bound_download(0),
-                           min_bound_download(1),
-                           min_bound_download(2));
+    min_bound = min_bound_cuda.Download();
+    return min_bound[0].ToEigen();
 }
 
 Eigen::Vector3d TriangleMeshCuda::GetMaxBound() const {
@@ -309,29 +297,15 @@ Eigen::Vector3d TriangleMeshCuda::GetMaxBound() const {
     const int num_vertices = vertices_.size();
     if (num_vertices == 0) return Eigen::Vector3d(0, 0, 0);
 
-    const dim3 blocks(DIV_CEILING(num_vertices, THREAD_1D_UNIT));
-    const dim3 threads(THREAD_1D_UNIT);
+    ArrayCuda<Vector3f> max_bound_cuda(1);
+    std::vector<Vector3f> max_bound = {Vector3f(-1e10f, -1e10f, -1e10f)};
+    max_bound_cuda.Upload(max_bound);
 
-    Vector3f max_bound_upload = Vector3f(-1e10f, -1e10f, -1e10f);
+    TriangleMeshCudaKernelCaller::GetMaxBoundKernelCaller(
+        *server_, *max_bound_cuda.server(), num_vertices);
 
-    Vector3f *max_bound;
-    CheckCuda(cudaMalloc(&max_bound, sizeof(Vector3f)));
-    CheckCuda(cudaMemcpy(max_bound, &max_bound_upload,
-                         sizeof(Vector3f),
-                         cudaMemcpyHostToDevice));
-    GetMaxBoundKernel << < blocks, threads >> > (*server_, max_bound);
-    CheckCuda(cudaDeviceSynchronize());
-    CheckCuda(cudaGetLastError());
-
-    Vector3f max_bound_download;
-    CheckCuda(cudaMemcpy(&max_bound_download, max_bound,
-                         sizeof(Vector3f),
-                         cudaMemcpyDeviceToHost));
-    CheckCuda(cudaFree(max_bound));
-
-    return Eigen::Vector3d(max_bound_download(0),
-                           max_bound_download(1),
-                           max_bound_download(2));
+    max_bound = max_bound_cuda.Download();
+    return max_bound[0].ToEigen();
 }
 
 void TriangleMeshCuda::Transform(const Eigen::Matrix4d &transformation) {
@@ -343,11 +317,7 @@ void TriangleMeshCuda::Transform(const Eigen::Matrix4d &transformation) {
     TransformCuda transformation_cuda;
     transformation_cuda.FromEigen(transformation);
 
-    const dim3 blocks(DIV_CEILING(num_vertices, THREAD_1D_UNIT));
-    const dim3 threads(THREAD_1D_UNIT);
-
-    TransformKernel << < blocks, threads >> > (*server_, transformation_cuda);
-    CheckCuda(cudaDeviceSynchronize());
-    CheckCuda(cudaGetLastError());
+    TriangleMeshCudaKernelCaller::TransformKernelCaller(
+        *server_, transformation_cuda, num_vertices);
 }
 }
