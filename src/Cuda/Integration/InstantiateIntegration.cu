@@ -7,7 +7,7 @@
 
 #include "UniformTSDFVolumeCudaDevice.cuh"
 #include "UniformTSDFVolumeCudaKernel.cuh"
-#include "UniformMeshVolumeCuda.cuh"
+#include "UniformMeshVolumeCudaDevice.cuh"
 #include "UniformMeshVolumeCudaKernel.cuh"
 #include "ScalableTSDFVolumeCuda.cuh"
 #include "ScalableTSDFVolumeCudaKernel.cuh"
@@ -30,6 +30,11 @@ template class UniformMeshVolumeCuda<8>;
 template class UniformMeshVolumeCuda<16>;
 template class UniformMeshVolumeCuda<256>;
 template class UniformMeshVolumeCuda<512>;
+
+template class UniformMeshVolumeCudaKernelCaller<8>;
+template class UniformMeshVolumeCudaKernelCaller<16>;
+template class UniformMeshVolumeCudaKernelCaller<256>;
+template class UniformMeshVolumeCudaKernelCaller<512>;
 
 
 /** Scalable part **/

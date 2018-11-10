@@ -217,7 +217,7 @@ public:
         UniformTSDFVolumeCudaServer<N> **cached_subvolumes);
 
 public:
-    __DEVICE__ void TouchSubvolume(const Vector2i& p,
+    __DEVICE__ void TouchSubvolume(const Vector2i &p,
                                    ImageCudaServer<Vector1f> &depth,
                                    PinholeCameraIntrinsicCuda &camera,
                                    TransformCuda &transform_camera_to_world);
@@ -226,7 +226,7 @@ public:
                               RGBDImageCudaServer &rgbd,
                               PinholeCameraIntrinsicCuda &camera,
                               TransformCuda &transform_camera_to_world);
-    __DEVICE__ Vector3f RayCasting(const Vector2i& p,
+    __DEVICE__ Vector3f RayCasting(const Vector2i &p,
                                    PinholeCameraIntrinsicCuda &camera,
                                    TransformCuda &transform_camera_to_world);
 
@@ -330,37 +330,80 @@ public:
 };
 
 template<size_t N>
-__GLOBAL__
-void CreateScalableTSDFVolumesKernel(ScalableTSDFVolumeCudaServer<N> server);
+class ScalableTSDFVolumeCudaKernelCaller {
+public:
+    static __HOST__ void CreateScalableTSDFVolumesKernelCaller(
+        ScalableTSDFVolumeCudaServer<N> &server, int value_capacity);
+
+    static __HOST__ void TouchSubvolumesKernelCaller(
+        ScalableTSDFVolumeCudaServer<N> &server,
+        ImageCudaServer<Vector1f> &depth,
+        PinholeCameraIntrinsicCuda &camera,
+        TransformCuda &transform_camera_to_world);
+
+    static __HOST__ void IntegrateSubvolumesKernelCaller(
+        ScalableTSDFVolumeCudaServer<N> &server,
+        RGBDImageCudaServer &rgbd,
+        PinholeCameraIntrinsicCuda &camera,
+        TransformCuda &transform_camera_to_world,
+        int active_subvolumes);
+
+    static __HOST__ void GetSubvolumesInFrustumKernelCaller(
+        ScalableTSDFVolumeCudaServer<N> &server,
+        PinholeCameraIntrinsicCuda &camera,
+        TransformCuda &transform_camera_to_world,
+        int bucket_count);
+
+    static __HOST__ void GetAllSubvolumesKernelCaller(
+        ScalableTSDFVolumeCudaServer<N> &server,
+        int bucket_count);
+
+    static __HOST__ void RayCastingKernelCaller(
+        ScalableTSDFVolumeCudaServer<N> &server,
+        ImageCudaServer<Vector3f> &normal,
+        PinholeCameraIntrinsicCuda &camera,
+        TransformCuda &transform_camera_to_world);
+};
 
 template<size_t N>
 __GLOBAL__
-void TouchSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server,
-                           ImageCudaServer<Vector1f> depth,
-                           PinholeCameraIntrinsicCuda camera,
-                           TransformCuda transform_camera_to_world);
-template<size_t N>
-__GLOBAL__
-void IntegrateSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server,
-                               RGBDImageCudaServer depth,
-                               PinholeCameraIntrinsicCuda camera,
-                               TransformCuda transform_camera_to_world);
+void CreateScalableTSDFVolumesKernel(
+    ScalableTSDFVolumeCudaServer<N> server);
 
 template<size_t N>
 __GLOBAL__
-void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
-                                  PinholeCameraIntrinsicCuda camera,
-                                  TransformCuda transform_camera_to_world);
+void TouchSubvolumesKernel(
+    ScalableTSDFVolumeCudaServer<N> server,
+    ImageCudaServer<Vector1f> depth,
+    PinholeCameraIntrinsicCuda camera,
+    TransformCuda transform_camera_to_world);
 
 template<size_t N>
 __GLOBAL__
-void GetAllSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server);
+void IntegrateSubvolumesKernel(
+    ScalableTSDFVolumeCudaServer<N> server,
+    RGBDImageCudaServer depth,
+    PinholeCameraIntrinsicCuda camera,
+    TransformCuda transform_camera_to_world);
 
 template<size_t N>
 __GLOBAL__
-void RayCastingKernel(ScalableTSDFVolumeCudaServer<N> server,
-                      ImageCudaServer<Vector3f> normal,
-                      PinholeCameraIntrinsicCuda camera,
-                      TransformCuda transform_camera_to_world);
+void GetSubvolumesInFrustumKernel(
+    ScalableTSDFVolumeCudaServer<N> server,
+    PinholeCameraIntrinsicCuda camera,
+    TransformCuda transform_camera_to_world);
+
+template<size_t N>
+__GLOBAL__
+void GetAllSubvolumesKernel(
+    ScalableTSDFVolumeCudaServer<N> server);
+
+template<size_t N>
+__GLOBAL__
+void RayCastingKernel(
+    ScalableTSDFVolumeCudaServer<N> server,
+    ImageCudaServer<Vector3f> normal,
+    PinholeCameraIntrinsicCuda camera,
+    TransformCuda transform_camera_to_world);
 
 }

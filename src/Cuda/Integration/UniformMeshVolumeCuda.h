@@ -140,6 +140,21 @@ public:
 };
 
 template<size_t N>
+class UniformMeshVolumeCudaKernelCaller {
+public:
+    static __HOST__ void MarchingCubesVertexAllocationKernelCaller(
+        UniformMeshVolumeCudaServer<N> &server,
+        UniformTSDFVolumeCudaServer<N> &tsdf_volume);
+
+    static __HOST__ void MarchingCubesVertexExtractionKernelCaller(
+        UniformMeshVolumeCudaServer<N> &server,
+        UniformTSDFVolumeCudaServer<N> &tsdf_volume);
+
+    static __HOST__ void MarchingCubesTriangleExtractionKernelCaller(
+        UniformMeshVolumeCudaServer<N> &server);
+};
+
+template<size_t N>
 __GLOBAL__
 void MarchingCubesVertexAllocationKernel(
     UniformMeshVolumeCudaServer<N> server,

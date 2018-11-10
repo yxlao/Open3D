@@ -803,11 +803,9 @@ void ScalableTSDFVolumeCuda<N>::Create(
     UpdateServer();
     Reset();
 
-    const dim3 threads(THREAD_1D_UNIT);
-    const dim3 blocks(DIV_CEILING(value_capacity, THREAD_1D_UNIT));
-    CreateScalableTSDFVolumesKernel << < blocks, threads >> > (*server_);
-    CheckCuda(cudaDeviceSynchronize());
-    CheckCuda(cudaGetLastError());
+    ScalableTSDFVolumeCudaKernelCaller<N>::
+        CreateScalableTSDFVolumesKernelCaller(
+            *server_, value_capacity_);
 }
 
 template<size_t N>
@@ -911,13 +909,9 @@ void ScalableTSDFVolumeCuda<N>::TouchSubvolumes(
     TransformCuda &transform_camera_to_world) {
     assert(server_ != nullptr);
 
-    const dim3 blocks(DIV_CEILING(depth.width_, THREAD_2D_UNIT),
-                      DIV_CEILING(depth.height_, THREAD_2D_UNIT));
-    const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
-    TouchSubvolumesKernel << < blocks, threads >> > (
-        *server_, *depth.server(), camera, transform_camera_to_world);
-    CheckCuda(cudaDeviceSynchronize());
-    CheckCuda(cudaGetLastError());
+    ScalableTSDFVolumeCudaKernelCaller<N>::
+        TouchSubvolumesKernelCaller(
+            *server_, *depth.server(), camera, transform_camera_to_world);
 }
 
 template<size_t N>
@@ -926,23 +920,16 @@ void ScalableTSDFVolumeCuda<N>::GetSubvolumesInFrustum(
     TransformCuda &transform_camera_to_world) {
     assert(server_ != nullptr);
 
-    const dim3 blocks(bucket_count_);
-    const dim3 threads(THREAD_1D_UNIT);
-    GetSubvolumesInFrustumKernel << < blocks, threads >> > (
-        *server_, camera, transform_camera_to_world);
-    CheckCuda(cudaDeviceSynchronize());
-    CheckCuda(cudaGetLastError());
+    ScalableTSDFVolumeCudaKernelCaller<N>::
+        GetSubvolumesInFrustumKernelCaller(
+            *server_, camera, transform_camera_to_world, bucket_count_);
 }
 
 template<size_t N>
 void ScalableTSDFVolumeCuda<N>::GetAllSubvolumes() {
     assert(server_ != nullptr);
-
-    const dim3 blocks(bucket_count_);
-    const dim3 threads(THREAD_1D_UNIT);
-    GetAllSubvolumesKernel << < blocks, threads >> > (*server_);
-    CheckCuda(cudaDeviceSynchronize());
-    CheckCuda(cudaGetLastError());
+    ScalableTSDFVolumeCudaKernelCaller<N>::
+        GetAllSubvolumesKernelCaller(*server_, bucket_count_);
 }
 
 template<size_t N>
@@ -952,13 +939,11 @@ void ScalableTSDFVolumeCuda<N>::IntegrateSubvolumes(
     TransformCuda &transform_camera_to_world) {
     assert(server_ != nullptr);
 
-    const int num_blocks = active_subvolume_entry_array_.size();
-    const dim3 blocks(num_blocks);
-    const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
-    IntegrateSubvolumesKernel << < blocks, threads >> > (
-        *server_, *rgbd.server(), camera, transform_camera_to_world);
-    CheckCuda(cudaDeviceSynchronize());
-    CheckCuda(cudaGetLastError());
+    const int active_subvolumes = active_subvolume_entry_array_.size();
+    ScalableTSDFVolumeCudaKernelCaller<N>::
+        IntegrateSubvolumesKernelCaller(
+            *server_, *rgbd.server(), camera, transform_camera_to_world,
+            active_subvolumes);
 }
 
 template<size_t N>
@@ -992,12 +977,8 @@ void ScalableTSDFVolumeCuda<N>::RayCasting(
     TransformCuda &transform_camera_to_world) {
     assert(server_ != nullptr);
 
-    const dim3 blocks(DIV_CEILING(image.width_, THREAD_2D_UNIT),
-                      DIV_CEILING(image.height_, THREAD_2D_UNIT));
-    const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
-    RayCastingKernel << < blocks, threads >> > (
-        *server_, *image.server(), camera, transform_camera_to_world);
-    CheckCuda(cudaDeviceSynchronize());
-    CheckCuda(cudaGetLastError());
+    ScalableTSDFVolumeCudaKernelCaller<N>::
+        RayCastingKernelCaller(
+            *server_, *image.server(), camera, transform_camera_to_world);
 }
 }

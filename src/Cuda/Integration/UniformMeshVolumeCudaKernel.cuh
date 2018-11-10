@@ -2,7 +2,8 @@
 // Created by wei on 10/20/18.
 //
 
-#include "UniformMeshVolumeCuda.cuh"
+#pragma once
+#include "UniformMeshVolumeCudaDevice.cuh"
 
 namespace open3d {
 template<size_t N>
@@ -21,6 +22,22 @@ void MarchingCubesVertexAllocationKernel(
 }
 
 template<size_t N>
+__host__
+void UniformMeshVolumeCudaKernelCaller<N>::
+    MarchingCubesVertexAllocationKernelCaller(
+    UniformMeshVolumeCudaServer<N> &server,
+    UniformTSDFVolumeCudaServer<N> &tsdf_volume) {
+
+    const int num_blocks = DIV_CEILING(N, THREAD_3D_UNIT);
+    const dim3 blocks(num_blocks, num_blocks, num_blocks);
+    const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
+    MarchingCubesVertexAllocationKernel << < blocks, threads >> > (
+        server, tsdf_volume);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+}
+
+template<size_t N>
 __global__
 void MarchingCubesVertexExtractionKernel(
     UniformMeshVolumeCudaServer<N> server,
@@ -34,6 +51,23 @@ void MarchingCubesVertexExtractionKernel(
 }
 
 template<size_t N>
+__host__
+void UniformMeshVolumeCudaKernelCaller<N>::
+    MarchingCubesVertexExtractionKernelCaller(
+    UniformMeshVolumeCudaServer<N> &server,
+    UniformTSDFVolumeCudaServer<N> &tsdf_volume) {
+
+    const int num_blocks = DIV_CEILING(N, THREAD_3D_UNIT);
+    const dim3 blocks(num_blocks, num_blocks, num_blocks);
+    const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
+    MarchingCubesVertexExtractionKernel << < blocks, threads >> > (
+        server, tsdf_volume);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+}
+
+
+template<size_t N>
 __global__
 void MarchingCubesTriangleExtractionKernel(
     UniformMeshVolumeCudaServer<N> server) {
@@ -45,5 +79,19 @@ void MarchingCubesTriangleExtractionKernel(
 
     Vector3i X = Vector3i(x, y, z);
     server.ExtractTriangle(X);
+}
+
+template<size_t N>
+__host__
+void UniformMeshVolumeCudaKernelCaller<N>::
+    MarchingCubesTriangleExtractionKernelCaller(
+    UniformMeshVolumeCudaServer<N> &server) {
+
+    const int num_blocks = DIV_CEILING(N, THREAD_3D_UNIT);
+    const dim3 blocks(num_blocks, num_blocks, num_blocks);
+    const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
+    MarchingCubesTriangleExtractionKernel << < blocks, threads >> > (server);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
 }
 }
