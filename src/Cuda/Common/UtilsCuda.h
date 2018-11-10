@@ -90,6 +90,27 @@ inline void WarpReduceMax(volatile T *local_max, const int tid) {
     local_max[tid] = (local_max[tid + 1] < local_max[tid]) ?
                      local_max[tid] : local_max[tid + 1];
 }
+
+template<typename T>
+__device__
+inline void BlockReduceSum(volatile T *local_sum, const int tid) {
+    if (tid < 128) local_sum[tid] += local_sum[tid + 128];
+    __syncthreads();
+    if (tid < 64) local_sum[tid] += local_sum[tid + 64];
+    __syncthreads();
+    if (tid < 32) WarpReduceSum<T>(local_sum, tid);
+}
+
+template<typename T>
+__device__
+inline T WarpReduceSumShuffle(T &sum) {
+    sum += __shfl_down_sync(0xFFFFFFFF, sum, 16);
+    sum += __shfl_down_sync(0xFFFFFFFF, sum, 8);
+    sum += __shfl_down_sync(0xFFFFFFFF, sum, 4);
+    sum += __shfl_down_sync(0xFFFFFFFF, sum, 2);
+    sum += __shfl_down_sync(0xFFFFFFFF, sum, 1);
+    return sum;
+}
 #endif
 }
 

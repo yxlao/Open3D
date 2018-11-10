@@ -2,7 +2,8 @@
 // Created by wei on 10/2/18.
 //
 
-#include "Reduction2DCuda.cuh"
+#include "Reduction2DCuda.h"
+#include <Cuda/Common/UtilsCuda.h>
 #include <Cuda/Geometry/ImageCudaDevice.cuh>
 
 namespace open3d {
@@ -90,5 +91,60 @@ void AtomicSumKernel(ImageCudaServer<VecType> src, T *sum_total) {
         T sum = T(src.at(x, y)(0));
         atomicAdd(sum_total, sum);
     }
+}
+
+/** For testing **/
+template<typename VecType, typename T>
+T ReduceSum2D(ImageCuda<VecType> &src) {
+    const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
+                      DIV_CEILING(src.height_, THREAD_2D_UNIT));
+    const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+
+    T *sum;
+    CheckCuda(cudaMalloc(&sum, sizeof(T)));
+    CheckCuda(cudaMemset(sum, 0, sizeof(T)));
+    ReduceSum2DKernel << < blocks, threads >> > (*src.server(), sum);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+
+    T ret;
+    CheckCuda(cudaMemcpy(&ret, sum, sizeof(T), cudaMemcpyDeviceToHost));
+    return ret;
+}
+
+template<typename VecType, typename T>
+T ReduceSum2DShuffle(ImageCuda<VecType> &src) {
+    const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
+                      DIV_CEILING(src.height_, THREAD_2D_UNIT));
+    const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+
+    T *sum;
+    CheckCuda(cudaMalloc(&sum, sizeof(T)));
+    CheckCuda(cudaMemset(sum, 0, sizeof(T)));
+    ReduceSum2DShuffleKernel << < blocks, threads >> > (*src.server(), sum);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+
+    T ret;
+    CheckCuda(cudaMemcpy(&ret, sum, sizeof(T), cudaMemcpyDeviceToHost));
+    return ret;
+}
+
+template<typename VecType, typename T>
+T AtomicSum(ImageCuda<VecType> &src) {
+    const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
+                      DIV_CEILING(src.height_, THREAD_2D_UNIT));
+    const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+
+    T *sum;
+    CheckCuda(cudaMalloc(&sum, sizeof(T)));
+    CheckCuda(cudaMemset(sum, 0, sizeof(T)));
+    AtomicSumKernel << < blocks, threads >> > (*src.server(), sum);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+
+    T ret;
+    CheckCuda(cudaMemcpy(&ret, sum, sizeof(T), cudaMemcpyDeviceToHost));
+    return ret;
 }
 }

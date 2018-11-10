@@ -2,8 +2,7 @@
 // Created by wei on 10/1/18.
 //
 
-#include "RGBDOdometryCuda.cuh"
-#include "Reduction2DCuda.cuh"
+#include "RGBDOdometryCudaDevice.cuh"
 
 namespace open3d {
 
@@ -147,6 +146,19 @@ void ApplyRGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry, size_t level) {
         }
         __syncthreads();
     }
+}
+
+template<size_t N>
+void RGBDOdometryCudaKernelCaller<N>::ApplyRGBDOdometryKernelCaller(
+    RGBDOdometryCudaServer<N> &server, size_t level,
+    int width, int height) {
+
+    const dim3 blocks(DIV_CEILING(width, THREAD_2D_UNIT),
+                      DIV_CEILING(height, THREAD_2D_UNIT));
+    const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+    ApplyRGBDOdometryKernel << < blocks, threads >> > (server, level);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
 }
 
 }

@@ -183,6 +183,7 @@ public:
                ImageCuda<Vector1f> &source_intensity,
                ImageCuda<Vector1f> &target_depth,
                ImageCuda<Vector1f> &target_intensity);
+
     void Apply(ImageCuda<Vector1f> &source_depth,
                ImageCuda<Vector1f> &source_intensity,
                ImageCuda<Vector1f> &target_depth,
@@ -198,6 +199,14 @@ public:
     const std::shared_ptr<RGBDOdometryCudaServer<N>> &server() const {
         return server_;
     }
+};
+
+template<size_t N>
+class RGBDOdometryCudaKernelCaller {
+public:
+    static __HOST__ void ApplyRGBDOdometryKernelCaller(
+        RGBDOdometryCudaServer<N>&server, size_t level,
+        int width, int height);
 };
 
 template<size_t N>
