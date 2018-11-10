@@ -91,11 +91,15 @@ public:
     }
 };
 
+template<typename T>
+class MemoryHeapCudaKernelCaller {
+public:
+    static __HOST__ void ResetMemoryHeapKernelCaller(
+        MemoryHeapCudaServer<T>& server, int max_capacity);
+};
+
 template<class T>
 __GLOBAL__
 void ResetMemoryHeapKernel(MemoryHeapCudaServer<T> server);
-template<typename T>
-__HOST__
-void ResetMemoryHeapKernelCaller(MemoryHeapCudaServer<T>& server,
-    int max_capacity);
+
 };

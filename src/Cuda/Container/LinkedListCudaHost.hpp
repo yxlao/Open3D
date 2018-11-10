@@ -83,6 +83,7 @@ void LinkedListCuda<T>::UpdateServer() {
 template<typename T>
 void LinkedListCuda<T>::Release() {
     if (server_ != nullptr && server_.use_count() == 1) {
+        LinkedListCudaKernelCaller<T>::
         ClearLinkedListKernelCaller(*server_);
         CheckCuda(cudaFree(server_->head_node_ptr_));
         CheckCuda(cudaFree(server_->size_));
@@ -109,6 +110,7 @@ void LinkedListCuda<T>::Insert(std::vector<int> &data) {
 
     ArrayCuda<T> data_cuda(data.size());
     data_cuda.Upload(data);
+    LinkedListCudaKernelCaller<T>::
     InsertLinkedListKernelCaller(*server_, *data_cuda.server());
 }
 
@@ -118,6 +120,7 @@ void LinkedListCuda<T>::Find(std::vector<int> &query) {
 
     ArrayCuda<T> query_cuda(query.size());
     query_cuda.Upload(query);
+    LinkedListCudaKernelCaller<T>::
     FindLinkedListKernelCaller(*server_, *query_cuda.server());
 }
 
@@ -127,6 +130,7 @@ void LinkedListCuda<T>::Delete(std::vector<int> &query) {
 
     ArrayCuda<T> query_cuda(query.size());
     query_cuda.Upload(query);
+    LinkedListCudaKernelCaller<T>::
     DeleteLinkedListKernelCaller(*server_, *query_cuda.server());
 }
 
@@ -138,6 +142,7 @@ std::vector<T> LinkedListCuda<T>::Download() {
     if (linked_list_size == 0) return std::vector<T>();
 
     ArrayCuda<T> data(linked_list_size);
+    LinkedListCudaKernelCaller<T>::
     DownloadLinkedListKernelCaller(*server_, *data.server());
     return data.DownloadAll();
 }

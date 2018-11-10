@@ -169,7 +169,8 @@ std::vector<T> ArrayCuda<T>::DownloadAll() {
 template<typename T>
 void ArrayCuda<T>::Fill(const T &val) {
     if (server_ == nullptr) return;
-    FillArrayKernelCaller<T>(*server_, val, max_capacity_);
+    ArrayCudaKernelCaller<T>::FillArrayKernelCaller(
+        *server_, val, max_capacity_);
 }
 
 template<typename T>

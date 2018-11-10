@@ -16,8 +16,9 @@ void InsertLinkedListKernel(LinkedListCudaServer<T> server,
 }
 template<typename T>
 __host__
-void InsertLinkedListKernelCaller(LinkedListCudaServer<T> &server,
-                                  ArrayCudaServer<T> &data) {
+void LinkedListCudaKernelCaller<T>::
+    InsertLinkedListKernelCaller(LinkedListCudaServer<T> &server,
+                                 ArrayCudaServer<T> &data) {
     InsertLinkedListKernel << < 1, 1 >> > (server, data);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
@@ -35,8 +36,9 @@ void FindLinkedListKernel(LinkedListCudaServer<T> server,
 }
 template<typename T>
 __host__
-void FindLinkedListKernelCaller(LinkedListCudaServer<T> &server,
-                                ArrayCudaServer<T> &query) {
+void LinkedListCudaKernelCaller<T>::
+    FindLinkedListKernelCaller(LinkedListCudaServer<T> &server,
+                               ArrayCudaServer<T> &query) {
     FindLinkedListKernel << < 1, 1 >> > (server, query);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
@@ -53,8 +55,9 @@ void DeleteLinkedListKernel(LinkedListCudaServer<T> server,
     }
 }
 template<typename T>
-void DeleteLinkedListKernelCaller(LinkedListCudaServer<T> &server,
-                                  ArrayCudaServer<T> &query) {
+void LinkedListCudaKernelCaller<T>::
+    DeleteLinkedListKernelCaller(LinkedListCudaServer<T> &server,
+                                 ArrayCudaServer<T> &query) {
     DeleteLinkedListKernel << < 1, 1 >> > (server, query);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
@@ -68,7 +71,8 @@ void ClearLinkedListKernel(LinkedListCudaServer<T> server) {
 
 template<typename T>
 __host__
-void ClearLinkedListKernelCaller(LinkedListCudaServer<T> &server) {
+void LinkedListCudaKernelCaller<T>::
+    ClearLinkedListKernelCaller(LinkedListCudaServer<T> &server) {
     ClearLinkedListKernel << < 1, 1 >> > (server);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
@@ -94,7 +98,8 @@ void DownloadLinkedListKernel(LinkedListCudaServer<T> server,
 
 template<typename T>
 __host__
-void DownloadLinkedListKernelCaller(LinkedListCudaServer<T> &server,
+void LinkedListCudaKernelCaller<T>::
+    DownloadLinkedListKernelCaller(LinkedListCudaServer<T> &server,
                                     ArrayCudaServer<T> &data) {
     DownloadLinkedListKernel << < 1, 1 >> > (server, data);
     CheckCuda(cudaDeviceSynchronize());

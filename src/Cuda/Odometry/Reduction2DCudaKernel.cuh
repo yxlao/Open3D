@@ -3,7 +3,7 @@
 //
 
 #include "Reduction2DCuda.cuh"
-#include <Cuda/Geometry/ImageCuda.cuh>
+#include <Cuda/Geometry/ImageCudaDevice.cuh>
 
 namespace open3d {
 

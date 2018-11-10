@@ -5,7 +5,7 @@
 #pragma once
 
 #include "RGBDOdometryCuda.h"
-#include <Cuda/Geometry/ImageCuda.cuh>
+#include <Cuda/Geometry/ImageCudaDevice.cuh>
 #include <Cuda/Container/ArrayCudaDevice.cuh>
 #include <sophus/se3.hpp>
 

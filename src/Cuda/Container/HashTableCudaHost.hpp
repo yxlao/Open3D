@@ -16,6 +16,8 @@
 #include <tuple>
 #include <vector>
 
+#include <Core/Core.h>
+
 namespace open3d {
 /**
  * Client end
@@ -115,6 +117,7 @@ void HashTableCuda<Key, Value, Hasher>::Create(
                          sizeof(int) * bucket_count));
     UpdateServer();
 
+    HashTableCudaKernelCaller<Key, Value, Hasher>::
     CreateHashTableEntriesKernelCaller(*server_, bucket_count_);
 }
 
@@ -124,6 +127,7 @@ void HashTableCuda<Key, Value, Hasher>::Release() {
      * array. They are stored in the memory_heap and will be Releaseed anyway.
      */
     if (server_ != nullptr && server_.use_count() == 1) {
+        HashTableCudaKernelCaller<Key, Value, Hasher>::
         ReleaseHashTableEntriesKernelCaller(*server_, bucket_count_);
         entry_array_.Release();
         entry_list_array_.Release();
@@ -171,6 +175,8 @@ void HashTableCuda<Key, Value, Hasher>::Reset() {
 template<typename Key, typename Value, typename Hasher>
 void HashTableCuda<Key, Value, Hasher>::ResetEntries() {
     assert(server_ != nullptr);
+
+    HashTableCudaKernelCaller<Key, Value, Hasher>::
     ResetHashTableEntriesKernelCaller(*server_, bucket_count_);
 }
 
@@ -187,6 +193,8 @@ void HashTableCuda<Key, Value, Hasher>::GetAssignedEntries() {
 
     /* Reset counter */
     assigned_entry_array_.Clear();
+
+    HashTableCudaKernelCaller<Key, Value, Hasher>::
     GetHashTableAssignedEntriesKernelCaller(*server_, bucket_count_);
 }
 
@@ -200,6 +208,7 @@ void HashTableCuda<Key, Value, Hasher>::New(
     ArrayCuda<Value> values_cuda(values.size());
     values_cuda.Upload(values);
 
+    HashTableCudaKernelCaller<Key, Value, Hasher>::
     InsertHashTableEntriesKernelCaller(*server_,
                                        *keys_cuda.server(), *values_cuda.server(), keys.size(),
                                        bucket_count_);
@@ -213,6 +222,7 @@ void HashTableCuda<Key, Value, Hasher>
     ArrayCuda<Key> keys_cuda(keys.size());
     keys_cuda.Upload(keys);
 
+    HashTableCudaKernelCaller<Key, Value, Hasher>::
     DeleteHashTableEntriesKernelCaller(*server_,
                                        *keys_cuda.server(), keys.size(),
                                        bucket_count_);
@@ -267,6 +277,7 @@ HashTableCuda<Key, Value, Hasher>::Profile() {
     ArrayCuda<int> array_entry_count_cuda(bucket_count_);
     ArrayCuda<int> list_entry_count_cuda(bucket_count_);
 
+    HashTableCudaKernelCaller<Key, Value, Hasher>::
     ProfileHashTableKernelCaller(*server_,
                                  *array_entry_count_cuda.server(),
                                  *list_entry_count_cuda.server(),

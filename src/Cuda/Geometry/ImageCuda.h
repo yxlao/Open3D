@@ -155,43 +155,67 @@ public:
 };
 
 template<typename VecType>
-__GLOBAL__
-void DownsampleImageKernel(ImageCudaServer<VecType> src,
-                           ImageCudaServer<VecType> dst,
-                           DownsampleMethod method);
+class ImageCudaKernelCaller {
+public:
+    static __HOST__ void DownsampleImageKernelCaller(
+        ImageCudaServer<VecType> &src, ImageCudaServer<VecType> &dst,
+        DownsampleMethod method);
+    static __HOST__ void ShiftImageKernelCaller(
+        ImageCudaServer<VecType> &src, ImageCudaServer<VecType> &dst,
+        float dx, float dy, bool with_holes);
+    static __HOST__ void GaussianImageKernelCaller(
+        ImageCudaServer<VecType> &src,ImageCudaServer<VecType> &dst,
+        int kernel_idx, bool with_holes);
+    static __HOST__ void BilateralImageKernelCaller(
+        ImageCudaServer<VecType> &src, ImageCudaServer<VecType> &dst,
+        int kernel_idx, float val_sigma, bool with_holes);
+    static __HOST__ void SobelImageKernelCaller(
+        ImageCudaServer<VecType> &src,
+        ImageCudaServer<typename VecType::VecTypef> &dx,
+        ImageCudaServer<typename VecType::VecTypef> &dy,
+        bool with_holes);
+    static __HOST__ void ToFloatImageKernelCaller(
+        ImageCudaServer<VecType> &src,
+        ImageCudaServer<typename VecType::VecTypef> &dst,
+        float scale, float offset);
+};
 
 template<typename VecType>
 __GLOBAL__
-void ShiftImageKernel(ImageCudaServer<VecType> src,
-                      ImageCudaServer<VecType> dst,
-                      float dx, float dy,
-                      bool with_holes);
+void DownsampleImageKernel(
+    ImageCudaServer<VecType> src, ImageCudaServer<VecType> dst,
+    DownsampleMethod method);
 
 template<typename VecType>
 __GLOBAL__
-void GaussianImageKernel(ImageCudaServer<VecType> src,
-                         ImageCudaServer<VecType> dst,
-                         const int kernel_idx,
-                         bool with_holes);
+void ShiftImageKernel(
+    ImageCudaServer<VecType> src, ImageCudaServer<VecType> dst,
+    float dx, float dy, bool with_holes);
 
 template<typename VecType>
 __GLOBAL__
-void BilateralImageKernel(ImageCudaServer<VecType> src,
-                          ImageCudaServer<VecType> dst,
-                          const int kernel_idx,
-                          float val_sigma,
-                          bool with_holes);
+void GaussianImageKernel(
+    ImageCudaServer<VecType> src,ImageCudaServer<VecType> dst,
+    int kernel_idx, bool with_holes);
 
 template<typename VecType>
 __GLOBAL__
-void SobelImageKernel(ImageCudaServer<VecType> src,
-                      ImageCudaServer<typename VecType::VecTypef> dx,
-                      ImageCudaServer<typename VecType::VecTypef> dy,
-                      bool with_holes);
+void BilateralImageKernel(
+    ImageCudaServer<VecType> src, ImageCudaServer<VecType> dst,
+    int kernel_idx, float val_sigma, bool with_holes);
 
 template<typename VecType>
 __GLOBAL__
-void ToFloatImageKernel(ImageCudaServer<VecType> src,
-                        ImageCudaServer<typename VecType::VecTypef> dst,
-                        float scale, float offset);
+void SobelImageKernel(
+    ImageCudaServer<VecType> src,
+    ImageCudaServer<typename VecType::VecTypef> dx,
+    ImageCudaServer<typename VecType::VecTypef> dy,
+    bool with_holes);
+
+template<typename VecType>
+__GLOBAL__
+void ToFloatImageKernel(
+    ImageCudaServer<VecType> src,
+    ImageCudaServer<typename VecType::VecTypef> dst,
+    float scale, float offset);
 }

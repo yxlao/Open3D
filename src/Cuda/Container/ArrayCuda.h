@@ -80,12 +80,15 @@ public:
     }
 };
 
+/** For less instantiation code! **/
+template<typename T>
+class ArrayCudaKernelCaller {
+public:
+    __HOST__ static void FillArrayKernelCaller(ArrayCudaServer<T> &server,
+                                               const T& val, int max_capacity);
+};
+
 template<typename T>
 __GLOBAL__
 void FillArrayKernel(ArrayCudaServer<T> server, T val);
-
-template<typename T>
-__HOST__
-void FillArrayKernelCaller(ArrayCudaServer<T> &server,
-                           const T& val, int max_capacity);
 }

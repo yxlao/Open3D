@@ -17,7 +17,7 @@ void FillArrayKernel(ArrayCudaServer<T> server, T val) {
 
 template<typename T>
 __host__
-void FillArrayKernelCaller(
+void ArrayCudaKernelCaller<T>::FillArrayKernelCaller(
     ArrayCudaServer<T> &server, const T &val, int max_capacity) {
 
     const int blocks = DIV_CEILING(max_capacity, THREAD_1D_UNIT);

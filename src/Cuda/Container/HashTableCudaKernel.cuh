@@ -34,7 +34,8 @@ void CreateHashTableEntriesKernel(
 
 template<typename Key, typename Value, typename Hasher>
 __host__
-void CreateHashTableEntriesKernelCaller(
+void HashTableCudaKernelCaller<Key, Value, Hasher>::
+    CreateHashTableEntriesKernelCaller(
     HashTableCudaServer<Key, Value, Hasher>& server,
     int bucket_count) {
     const int threads = THREAD_1D_UNIT;
@@ -56,7 +57,8 @@ void ReleaseHashTableEntriesKernel(
 
 template<typename Key, typename Value, typename Hasher>
 __host__
-void ReleaseHashTableEntriesKernelCaller(
+void HashTableCudaKernelCaller<Key, Value, Hasher>::
+    ReleaseHashTableEntriesKernelCaller(
     HashTableCudaServer<Key, Value, Hasher>& server,
     int bucket_count) {
 
@@ -85,7 +87,8 @@ void ResetHashTableEntriesKernel(
 
 template<typename Key, typename Value, typename Hasher>
 __host__
-void ResetHashTableEntriesKernelCaller(
+void  HashTableCudaKernelCaller<Key, Value, Hasher>::
+    ResetHashTableEntriesKernelCaller(
     HashTableCudaServer<Key, Value, Hasher>& server,
     int bucket_count) {
     const int blocks = DIV_CEILING(bucket_count, THREAD_1D_UNIT);
@@ -128,7 +131,8 @@ void GetHashTableAssignedEntriesKernel(
 
 template<typename Key, typename Value, typename Hasher>
 __HOST__
-void GetHashTableAssignedEntriesKernelCaller(
+void  HashTableCudaKernelCaller<Key, Value, Hasher>::
+    GetHashTableAssignedEntriesKernelCaller(
     HashTableCudaServer<Key, Value, Hasher> &server,
     int bucket_count) {
 
@@ -159,7 +163,8 @@ void InsertHashTableEntriesKernel(
 
 template<typename Key, typename Value, typename Hasher>
 __host__
-void InsertHashTableEntriesKernelCaller(
+void  HashTableCudaKernelCaller<Key, Value, Hasher>::
+    InsertHashTableEntriesKernelCaller(
     HashTableCudaServer<Key, Value, Hasher>& server,
     ArrayCudaServer<Key>& keys,
     ArrayCudaServer<Value> &values,
@@ -186,7 +191,8 @@ void DeleteHashTableEntriesKernel(
 
 template<typename Key, typename Value, typename Hasher>
 __host__
-void DeleteHashTableEntriesKernelCaller(
+void  HashTableCudaKernelCaller<Key, Value, Hasher>::
+    DeleteHashTableEntriesKernelCaller(
     HashTableCudaServer<Key, Value, Hasher> &server,
     ArrayCudaServer<Key> &keys,
     int num_keys,
@@ -238,7 +244,8 @@ void ProfileHashTableKernel(
 
 template<typename Key, typename Value, typename Hasher>
 __host__
-void ProfileHashTableKernelCaller(
+void  HashTableCudaKernelCaller<Key, Value, Hasher>::
+    ProfileHashTableKernelCaller(
     HashTableCudaServer<Key, Value, Hasher> &server,
     ArrayCudaServer<int> &array_entry_count,
     ArrayCudaServer<int> &linked_list_entry_count,

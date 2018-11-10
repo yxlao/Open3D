@@ -1,4 +1,4 @@
-#include "ImageCuda.cuh"
+#include "ImageCudaDevice.cuh"
 
 namespace open3d {
 
@@ -30,6 +30,20 @@ void DownsampleImageKernel(ImageCudaServer<VecType> src,
     }
 }
 
+template<typename VecType>
+__host__
+void ImageCudaKernelCaller<VecType>::DownsampleImageKernelCaller(
+    ImageCudaServer<VecType> &src, ImageCudaServer<VecType> &dst,
+    DownsampleMethod method) {
+
+    const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
+                      DIV_CEILING(dst.height_, THREAD_2D_UNIT));
+    const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+    DownsampleImageKernel << < blocks, threads >> > (src, dst, method);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+}
+
 /**
  * Shift
  */
@@ -57,6 +71,20 @@ void ShiftImageKernel(
     }
 }
 
+template<typename VecType>
+__host__
+void ImageCudaKernelCaller<VecType>::ShiftImageKernelCaller(
+    ImageCudaServer<VecType> &src, ImageCudaServer<VecType> &dst,
+    float dx, float dy, bool with_holes) {
+
+    const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
+                      DIV_CEILING(src.height_, THREAD_2D_UNIT));
+    const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+    ShiftImageKernel << < blocks, threads >> > (src, dst, dx, dy, with_holes);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+}
+
 /**
  * Gaussian
  */
@@ -65,8 +93,7 @@ __global__
 void GaussianImageKernel(
     ImageCudaServer<VecType> src,
     ImageCudaServer<VecType> dst,
-    const int kernel_idx,
-    bool with_holes) {
+    int kernel_idx, bool with_holes) {
 
     int u = blockIdx.x * blockDim.x + threadIdx.x;
     int v = blockIdx.y * blockDim.y + threadIdx.y;
@@ -80,6 +107,20 @@ void GaussianImageKernel(
         dst.at(u, v) = src.GaussianFilter(u, v, kernel_idx);
     }
 }
+template<typename VecType>
+__host__
+void ImageCudaKernelCaller<VecType>::GaussianImageKernelCaller(
+    ImageCudaServer<VecType> &src, ImageCudaServer<VecType> &dst,
+    int kernel_idx, bool with_holes) {
+
+    const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
+                      DIV_CEILING(src.height_, THREAD_2D_UNIT));
+    const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+    GaussianImageKernel << < blocks, threads >> > (
+        src, dst, kernel_idx, with_holes);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+}
 
 /**
  * Bilateral
@@ -88,7 +129,7 @@ template<typename VecType>
 __global__
 void BilateralImageKernel(ImageCudaServer<VecType> src,
                           ImageCudaServer<VecType> dst,
-                          const int kernel_idx,
+                          int kernel_idx,
                           float val_sigma,
                           bool with_holes) {
     int u = blockIdx.x * blockDim.x + threadIdx.x;
@@ -103,23 +144,18 @@ void BilateralImageKernel(ImageCudaServer<VecType> src,
         dst.at(u, v) = src.BilateralFilter(u, v, kernel_idx, val_sigma);
     }
 }
-
-/**
- * Conversion
- */
 template<typename VecType>
-__global__
-void ToFloatImageKernel(
-    ImageCudaServer<VecType> src,
-    ImageCudaServer<typename VecType::VecTypef> dst,
-    float scale,
-    float offset) {
-    int u = blockIdx.x * blockDim.x + threadIdx.x;
-    int v = blockIdx.y * blockDim.y + threadIdx.y;
-    if (u >= dst.width_ || v >= dst.height_) return;
-
-    dst.at(u, v) =
-        src.at(u, v).ToVectorf() * scale + VecType::VecTypef(offset);
+__host__
+void ImageCudaKernelCaller<VecType>::BilateralImageKernelCaller(
+    ImageCudaServer<VecType> &src, ImageCudaServer<VecType> &dst,
+    int kernel_idx, float val_sigma, bool with_holes) {
+    const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
+                      DIV_CEILING(src.height_, THREAD_2D_UNIT));
+    const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+    BilateralImageKernel << < blocks, threads >> > (
+        src, dst, kernel_idx, val_sigma, with_holes);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
 }
 
 /**
@@ -151,5 +187,52 @@ void SobelImageKernel(
     }
     dx(u, v) = grad.dx;
     dy(u, v) = grad.dy;
+}
+template<typename VecType>
+__host__
+void ImageCudaKernelCaller<VecType>::SobelImageKernelCaller(
+    ImageCudaServer<VecType> &src,
+    ImageCudaServer<typename VecType::VecTypef> &dx,
+    ImageCudaServer<typename VecType::VecTypef> &dy,
+    bool with_holes) {
+    const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
+                      DIV_CEILING(src.height_, THREAD_2D_UNIT));
+    const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+    SobelImageKernel << < blocks, threads >> > (src, dx, dy, with_holes);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+}
+
+/**
+ * Conversion
+ */
+template<typename VecType>
+__global__
+void ToFloatImageKernel(
+    ImageCudaServer<VecType> src,
+    ImageCudaServer<typename VecType::VecTypef> dst,
+    float scale,
+    float offset) {
+    int u = blockIdx.x * blockDim.x + threadIdx.x;
+    int v = blockIdx.y * blockDim.y + threadIdx.y;
+    if (u >= dst.width_ || v >= dst.height_) return;
+
+    dst.at(u, v) =
+        src.at(u, v).ToVectorf() * scale + VecType::VecTypef(offset);
+}
+
+template<typename VecType>
+__host__
+void ImageCudaKernelCaller<VecType>::ToFloatImageKernelCaller(
+    ImageCudaServer<VecType> &src,
+    ImageCudaServer<typename VecType::VecTypef> &dst,
+    float scale, float offset) {
+    const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
+                      DIV_CEILING(src.height_, THREAD_2D_UNIT));
+    const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+    ToFloatImageKernel << < blocks, threads >> > (
+        src, dst, scale, offset);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
 }
 }
