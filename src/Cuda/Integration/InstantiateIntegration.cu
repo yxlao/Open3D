@@ -9,7 +9,7 @@
 #include "UniformTSDFVolumeCudaKernel.cuh"
 #include "UniformMeshVolumeCudaDevice.cuh"
 #include "UniformMeshVolumeCudaKernel.cuh"
-#include "ScalableTSDFVolumeCuda.cuh"
+#include "ScalableTSDFVolumeCudaDevice.cuh"
 #include "ScalableTSDFVolumeCudaKernel.cuh"
 #include "ScalableMeshVolumeCudaDevice.cuh"
 #include "ScalableMeshVolumeCudaKernel.cuh"
@@ -48,7 +48,7 @@ template class MemoryHeapCuda<UniformTSDFVolumeCudaServer<8>>;
 template class MemoryHeapCudaKernelCaller<UniformTSDFVolumeCudaServer<8>>;
 
 template class ScalableTSDFVolumeCudaServer<8>;
-template class ScalableTSDFVolumeCuda<8>;
+template class ScalableTSDFVolumeCudaKernelCaller<8>;
 
 template class ScalableMeshVolumeCudaServer<8>;
 template class ScalableMeshVolumeCudaKernelCaller<8>;

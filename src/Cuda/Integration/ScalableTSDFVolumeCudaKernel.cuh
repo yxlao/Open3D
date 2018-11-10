@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include "ScalableTSDFVolumeCuda.cuh"
+#include "ScalableTSDFVolumeCudaDevice.cuh"
 
 namespace open3d {
 

@@ -7,7 +7,7 @@
 #include "ScalableMeshVolumeCuda.h"
 #include "MarchingCubesConstCuda.h"
 
-#include "ScalableTSDFVolumeCuda.cuh"
+#include "ScalableTSDFVolumeCudaDevice.cuh"
 
 #include <Core/Core.h>
 
