@@ -49,7 +49,7 @@ TEST(TransformCuda, Transform) {
 
     Vector1f v;
     v(0) = 1.0f;
-    v = 1 * v;
+    v = 1.0f * v;
 }
 
 int main(int argc, char **argv) {

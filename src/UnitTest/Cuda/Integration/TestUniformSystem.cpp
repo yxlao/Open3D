@@ -96,18 +96,7 @@ int main(int argc, char *argv[])
             cv::cvtColor(color, color, cv::COLOR_BGR2RGB);
 
             rgbd.Upload(depth, color);
-
-            Eigen::Matrix<float, 4, 4, Eigen::DontAlign> extrinsicsf;
-            Eigen::Matrix4d extrinsics_from_file =
-                camera_trajectory->extrinsic_[index];
-            for (int i = 0; i < 4; ++i) {
-                for (int j = 0; j < 4; ++j) {
-                    extrinsicsf(i, j) = extrinsics_from_file(i, j);
-                }
-            }
-            extrinsicsf = extrinsicsf.inverse().eval();
-
-            extrinsics.FromEigen(extrinsicsf);
+            extrinsics.FromEigen(camera_trajectory->extrinsic_[index].inverse());
             tsdf_volume.Integrate(rgbd, intrinsics, extrinsics);
 
             mesher.MarchingCubes(tsdf_volume);

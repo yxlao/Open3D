@@ -80,7 +80,7 @@ TEST(ReductionCuda, SumFloat) {
     ImageCuda<Vector1f> imf_cuda;
     im_cuda.Upload(im);
     imf_cuda = im_cuda.ToFloat();
-    cv::Mat imf = imf_cuda.Download();
+    cv::Mat imf = imf_cuda.DownloadMat();
 
     for (int i = 0; i < im.rows; ++i) {
         for (int j = 0; j < im.cols; ++j) {
@@ -99,7 +99,7 @@ TEST(ReductionCuda, SumFloat) {
 
         const float kEpsilon = 1e-3f;
         const float kFactor = 5000.0f;
-        const float kPixelNumbers = imf_cuda.width() * imf_cuda.height();
+        const float kPixelNumbers = imf_cuda.width_ * imf_cuda.height_;
 
         float time_v1 = 0;
         const int test_cases = 10000;
