@@ -65,10 +65,9 @@ TEST(UniformTSDFVolumeCuda, UploadAndDownload) {
 
 TEST(UniformTSDFVolumeCuda, RayCasting) {
     using namespace open3d;
-    cv::Mat depth = cv::imread("../../examples/TestData/RGBD/depth/00000.png",
-                            cv::IMREAD_UNCHANGED);
-    cv::Mat color = cv::imread("../../examples/TestData/RGBD/color/00000.jpg");
-
+    Image depth, color;
+    ReadImage("../../examples/TestData/RGBD/depth/00000.png", depth);
+    ReadImage("../../examples/TestData/RGBD/color/00000.jpg", color);
     RGBDImageCuda rgbd;
     rgbd.Upload(depth, color);
 
@@ -87,7 +86,7 @@ TEST(UniformTSDFVolumeCuda, RayCasting) {
     }
 
     ImageCuda<Vector3f> raycaster;
-    raycaster.Create(depth.cols, depth.rows);
+    raycaster.Create(depth.width_, depth.height_);
 
     Timer timer;
     int iteration_times = 100;

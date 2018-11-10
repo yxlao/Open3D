@@ -179,15 +179,12 @@ public:
     void Release();
     void UpdateServer();
 
-    void Build(ImageCuda<Vector1f> &source_depth,
-               ImageCuda<Vector1f> &source_intensity,
-               ImageCuda<Vector1f> &target_depth,
-               ImageCuda<Vector1f> &target_intensity);
+    void PrepareData(ImageCuda<Vector1f> &source_depth,
+                     ImageCuda<Vector1f> &source_intensity,
+                     ImageCuda<Vector1f> &target_depth,
+                     ImageCuda<Vector1f> &target_intensity);
 
-    void Apply(ImageCuda<Vector1f> &source_depth,
-               ImageCuda<Vector1f> &source_intensity,
-               ImageCuda<Vector1f> &target_depth,
-               ImageCuda<Vector1f> &target_intensity);
+    void Apply();
 
     void ExtractResults(std::vector<float> &results,
                         EigenMatrix6d &JtJ, EigenVector6d &Jtr,

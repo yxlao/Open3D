@@ -14,7 +14,7 @@ void CheckUploadAndDownloadConsistency(std::string path) {
     using namespace open3d;
     cv::Mat image = cv::imread(path, cv::IMREAD_UNCHANGED);
     cv::imshow("raw", image);
-    cv::waitKey(-1);
+    cv::waitKey(10);
 
     Timer timer;
     ImageCuda<T> image_cuda, image_cuda_copy;
@@ -87,7 +87,7 @@ void CheckDownsampling(std::string path) {
               timer.GetDuration());
 
     cv::imshow("downsampled", downloaded);
-    cv::waitKey(-1);
+    cv::waitKey(10);
     cv::destroyAllWindows();
 }
 
@@ -112,7 +112,7 @@ void CheckGaussian(std::string path) {
 
     cv::Mat downloaded = image_cuda_blurred.DownloadMat();
     cv::imshow("Gaussian3x3", downloaded);
-    cv::waitKey(-1);
+    cv::waitKey(10);
 
     timer.Start();
     image_cuda_blurred = image_cuda.Gaussian(Gaussian5x5, false);
@@ -122,7 +122,7 @@ void CheckGaussian(std::string path) {
 
     downloaded = image_cuda_blurred.DownloadMat();
     cv::imshow("Gaussian5x5", downloaded);
-    cv::waitKey(-1);
+    cv::waitKey(10);
 
     timer.Start();
     image_cuda_blurred = image_cuda.Gaussian(Gaussian7x7, false);
@@ -132,7 +132,7 @@ void CheckGaussian(std::string path) {
 
     downloaded = image_cuda_blurred.DownloadMat();
     cv::imshow("Gaussian7x7", downloaded);
-    cv::waitKey(-1);
+    cv::waitKey(10);
     cv::destroyAllWindows();
 }
 
@@ -158,7 +158,7 @@ void CheckBilateral(std::string path) {
     PrintInfo("Sigma: %.3f in  %.3f milliseconds\n",
               val_sigma, timer.GetDuration());
     cv::imshow("Bilateral", downloaded);
-    cv::waitKey(-1);
+    cv::waitKey(10);
 }
 
 template<typename T>
@@ -208,7 +208,7 @@ void CheckToFloatConversion(std::string path, float scale, float offset) {
     }
 
     cv::imshow("converted", downloaded);
-    cv::waitKey(-1);
+    cv::waitKey(10);
     cv::destroyAllWindows();
 }
 
@@ -236,7 +236,7 @@ void CheckGradient(std::string path) {
     cv::Mat downloaded_dy = dy.DownloadMat();
     cv::imshow("dx", downloaded_dx / 255.0f);
     cv::imshow("dy", downloaded_dy / 255.0f);
-    cv::waitKey(-1);
+    cv::waitKey(10);
     cv::destroyAllWindows();
 }
 
@@ -260,7 +260,7 @@ void CheckShift(std::string path) {
 
     cv::Mat downloaded = shifted_image.DownloadMat();
     cv::imshow("shifted", downloaded);
-    cv::waitKey(-1);
+    cv::waitKey(10);
     cv::destroyAllWindows();
 }
 
@@ -299,7 +299,7 @@ void CheckPyramid(std::string path) {
         ss << "level-" << level;
         cv::imshow(ss.str(), downloaded_images[level]);
     }
-    cv::waitKey(-1);
+    cv::waitKey(10);
     cv::destroyAllWindows();
 }
 

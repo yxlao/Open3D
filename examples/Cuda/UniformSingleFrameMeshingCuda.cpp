@@ -9,19 +9,13 @@
 #include <Core/Core.h>
 #include <Eigen/Eigen>
 #include <IO/IO.h>
-
-#include "UnitTest.h"
-
-#include <opencv2/opencv.hpp>
 #include <vector>
 
-TEST(UniformMeshVolumeCuda, MarchingCubes) {
+int main(int argc, char **argv) {
     using namespace open3d;
-    cv::Mat depth = cv::imread("../../examples/TestData/RGBD/depth/00000.png",
-                            cv::IMREAD_UNCHANGED);
-    cv::Mat color = cv::imread("../../examples/TestData/RGBD/color/00000.jpg");
-    cv::cvtColor(color, color, cv::COLOR_BGR2RGB);
-
+    Image depth, color;
+    ReadImage("../../../examples/TestData/RGBD/depth/00000.png", depth);
+    ReadImage("../../../examples/TestData/RGBD/color/00000.jpg", color);
     RGBDImageCuda rgbd(0.1f, 3.0f, 1000.0f);
     rgbd.Upload(depth, color);
 
@@ -36,22 +30,17 @@ TEST(UniformMeshVolumeCuda, MarchingCubes) {
 
     TransformCuda extrinsics = TransformCuda::Identity();
     volume.Integrate(rgbd, intrinsics, extrinsics);
-
-    UniformMeshVolumeCuda<512> mesher(VertexWithNormalAndColor, 100000, 100000);
+    UniformMeshVolumeCuda<512> mesher(VertexWithNormalAndColor, 400000, 800000);
 
     Timer timer;
     timer.Start();
-    for (int i = 0; i < 1; ++i) {
+    int iters = 100;
+    for (int i = 0; i < iters; ++i) {
         mesher.MarchingCubes(volume);
     }
     timer.Stop();
-    PrintInfo("MarchingCubes time: %f milliseconds\n", timer.GetDuration() / 10);
+    PrintInfo("MarchingCubes time: %f milliseconds\n",
+        timer.GetDuration() / iters);
 
-    std::shared_ptr<TriangleMesh> mesh = mesher.mesh().Download();
-    WriteTriangleMeshToPLY("test_uniform.ply", *mesh, true);
-}
-
-int main(int argc, char **argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+    WriteTriangleMeshToPLY("test_uniform.ply", *mesher.mesh().Download());
 }

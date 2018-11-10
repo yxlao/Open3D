@@ -31,11 +31,11 @@
 #include <IO/IO.h>
 #include <Visualization/Visualization.h>
 
-#include <Cuda/Integration/ScalableTSDFVolumeCuda.h>
-#include <Cuda/Integration/ScalableMeshVolumeCuda.h>
+#include <Cuda/Integration/UniformTSDFVolumeCuda.h>
+#include <opencv2/opencv.hpp>
+#include <Cuda/Integration/UniformMeshVolumeCuda.h>
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     using namespace open3d;
 
     std::string match_filename = "/home/wei/Work/data/lounge/data_association.txt";
@@ -55,32 +55,27 @@ int main(int argc, char *argv[])
     int index = 0;
     int save_index = 0;
 
+    FPSTimer timer("Process RGBD stream", (int)camera_trajectory->parameters_.size());
+
     PinholeCameraIntrinsicCuda intrinsics(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault);
 
     float voxel_length = 0.01f;
     TransformCuda extrinsics = TransformCuda::Identity();
-    ScalableTSDFVolumeCuda<8> tsdf_volume(10000, 200000,
-                                          voxel_length, 3 * voxel_length,
-                                          extrinsics);
+    extrinsics.SetTranslation(Vector3f(-voxel_length * 256));
+    UniformTSDFVolumeCuda<512> tsdf_volume(
+        voxel_length, 3 * voxel_length, extrinsics);
+    UniformMeshVolumeCuda<512> mesher(
+        VertexWithNormalAndColor, 4000000, 8000000);
 
-    FPSTimer timer("Process RGBD stream", (int)camera_trajectory->extrinsic_.size());
-
+    Image depth, color;
     RGBDImageCuda rgbd(0.1f, 4.0f, 1000.0f);
 
-    SetVerbosityLevel(VerbosityLevel::VerboseDebug);
-    ScalableMeshVolumeCuda<8> mesher(40000,
-                                     VertexWithNormalAndColor,
-                                     6000000, 12000000);
-
     VisualizerWithCustomAnimation visualizer;
-    if (! visualizer.CreateVisualizerWindow("test", 640, 480, 0, 0)) {
+    if (! visualizer.CreateVisualizerWindow("UniformFusion", 640, 480, 0, 0)) {
         PrintWarning("Failed creating OpenGL window.\n");
         return 0;
     }
-    visualizer.GetRenderOption().show_coordinate_frame_ = true;
-    //visualizer.GetRenderOption().mesh_color_option_
-    //=RenderOption::MeshColorOption::Normal;
     visualizer.GetRenderOption().mesh_show_back_face_ = true;
     visualizer.BuildUtilities();
     visualizer.UpdateWindowTitle();
@@ -88,7 +83,6 @@ int main(int argc, char *argv[])
     std::shared_ptr<TriangleMeshCuda> mesh = std::make_shared<TriangleMeshCuda>();
     visualizer.AddGeometry(mesh);
 
-    Image depth, color;
     while (fgets(buffer, DEFAULT_IO_BUFFER_SIZE, file)) {
         std::vector<std::string> st;
         SplitString(st, buffer, "\t\r\n ");
@@ -96,12 +90,10 @@ int main(int argc, char *argv[])
             PrintDebug("Processing frame %d ...\n", index);
             ReadImage(dir_name + st[0], depth);
             ReadImage(dir_name + st[1], color);
-
             rgbd.Upload(depth, color);
 
-            Eigen::Matrix4d extrinsic = camera_trajectory->extrinsic_[index].inverse();
-
-            extrinsics.FromEigen(extrinsic);
+            extrinsics.FromEigen(
+                camera_trajectory->parameters_[index].extrinsic_.inverse());
             tsdf_volume.Integrate(rgbd, intrinsics, extrinsics);
 
             mesher.MarchingCubes(tsdf_volume);
@@ -110,15 +102,13 @@ int main(int argc, char *argv[])
             visualizer.PollEvents();
             visualizer.UpdateGeometry();
             visualizer.GetViewControl().ConvertFromPinholeCameraParameters(
-                camera_trajectory->intrinsic_,
-                camera_trajectory->extrinsic_[index]);
+                camera_trajectory->parameters_[index]);
 
             index++;
 
-            if (index == (int)camera_trajectory->extrinsic_.size()) {
-                tsdf_volume.GetAllSubvolumes();
+            if (index == (int)camera_trajectory->parameters_.size()) {
                 mesher.MarchingCubes(tsdf_volume);
-                WriteTriangleMeshToPLY("system.ply", *mesher.mesh().Download());
+                WriteTriangleMeshToPLY("uniform-system.ply", *mesher.mesh().Download());
                 save_index++;
             }
             timer.Signal();

@@ -6,14 +6,16 @@
 #include <string>
 #include <vector>
 #include <Core/Core.h>
-#include <iostream>
-#include <opencv2/opencv.hpp>
-#include "UnitTest.h"
+#include <IO/IO.h>
 
-void f() {
+#include <opencv2/opencv.hpp>
+
+int main(int argc, char**argv) {
     using namespace open3d;
 
-    std::string base_path = "../../examples/TestData/RGBD/";
+    SetVerbosityLevel(VerbosityLevel::VerboseDebug);
+
+    std::string base_path = "../../../examples/TestData/RGBD/";
 
     cv::Mat source_color = cv::imread(base_path + "color/00000.jpg");
     cv::cvtColor(source_color, source_color, cv::COLOR_BGR2GRAY);
@@ -44,17 +46,13 @@ void f() {
 
     Timer timer;
     const int num_iters = 100;
-    odometry.Build(source_D, source_I, target_D, target_I);
+
     timer.Start();
+    odometry.PrepareData(source_D, source_I, target_D, target_I);
     for (int i = 0; i < num_iters; ++i) {
         odometry.transform_source_to_target_ = Eigen::Matrix4d::Identity();
-        odometry.Apply(source_D, source_I, target_D, target_I);
+        odometry.Apply();
     }
     timer.Stop();
     PrintInfo("Average odometry time: %f milliseconds.\n",
-        timer.GetDuration() / num_iters);
-}
-
-int main(int argc, char**argv) {
-    f();
-}
+              timer.GetDuration() / num_iters);}

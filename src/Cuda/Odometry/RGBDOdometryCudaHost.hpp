@@ -131,10 +131,10 @@ void RGBDOdometryCuda<N>::ExtractResults(std::vector<float> &results,
 }
 
 template<size_t N>
-void RGBDOdometryCuda<N>::Build(ImageCuda<Vector1f> &source_depth,
-                                ImageCuda<Vector1f> &source_intensity,
-                                ImageCuda<Vector1f> &target_depth,
-                                ImageCuda<Vector1f> &target_intensity) {
+void RGBDOdometryCuda<N>::PrepareData(ImageCuda<Vector1f> &source_depth,
+                                      ImageCuda<Vector1f> &source_intensity,
+                                      ImageCuda<Vector1f> &target_depth,
+                                      ImageCuda<Vector1f> &target_intensity) {
     assert(source_depth.width_ == source_intensity.width_);
     assert(source_depth.height_ == source_intensity.height_);
     assert(target_depth.width_ == target_intensity.width_);
@@ -179,10 +179,7 @@ void RGBDOdometryCuda<N>::Build(ImageCuda<Vector1f> &source_depth,
 }
 
 template<size_t N>
-void RGBDOdometryCuda<N>::Apply(ImageCuda<Vector1f> &source_depth,
-                                ImageCuda<Vector1f> &source_intensity,
-                                ImageCuda<Vector1f> &target_depth,
-                                ImageCuda<Vector1f> &target_intensity) {
+void RGBDOdometryCuda<N>::Apply() {
 
     const int kIterations[] = {3, 5, 10};
     for (int level = (int) (N - 1); level >= 0; --level) {
@@ -213,7 +210,7 @@ void RGBDOdometryCuda<N>::Apply(ImageCuda<Vector1f> &source_depth,
             float error, inliers;
             ExtractResults(results, JtJ, Jtr, error, inliers);
 
-            PrintInfo("> Level %d, iter %d: error = %f, avg_error = %f, "
+            PrintDebug("> Level %d, iter %d: error = %f, avg_error = %f, "
                       "inliers = %.0f\n",
                       level, iter, error, error / inliers, inliers);
 

@@ -5,6 +5,7 @@
 #include <Cuda/Integration/ScalableTSDFVolumeCuda.h>
 #include <Cuda/Geometry/ImageCuda.h>
 #include <Core/Core.h>
+#include <IO/IO.h>
 #include <opencv2/opencv.hpp>
 #include "UnitTest.h"
 
@@ -20,12 +21,10 @@ TEST(ScalableTSDFVolumeCuda, Create) {
 
 TEST(ScalableTSDFVolumeCuda, TouchSubvolumes) {
     using namespace open3d;
-    cv::Mat depth = cv::imread(
-        "../../examples/TestData/RGBD/depth/00000.png",
-        cv::IMREAD_UNCHANGED);
-    cv::Mat color = cv::imread(
-        "../../examples/TestData/RGBD/color/00000.jpg");
-    cv::cvtColor(color, color, cv::COLOR_BGR2RGB);
+
+    Image depth, color;
+    ReadImage("../../examples/TestData/RGBD/depth/00000.png", depth);
+    ReadImage("../../examples/TestData/RGBD/color/00000.jpg", color);
 
     RGBDImageCuda rgbd(0.1f, 3.5f, 1000.0f);
     rgbd.Upload(depth, color);
@@ -54,12 +53,9 @@ TEST(ScalableTSDFVolumeCuda, TouchSubvolumes) {
 
 TEST(ScalableTSDFVolumeCuda, Integration) {
     using namespace open3d;
-    cv::Mat depth = cv::imread(
-        "../../examples/TestData/RGBD/depth/00000.png",
-        cv::IMREAD_UNCHANGED);
-    cv::Mat color = cv::imread(
-        "../../examples/TestData/RGBD/color/00000.jpg");
-    cv::cvtColor(color, color, cv::COLOR_BGR2RGB);
+    Image depth, color;
+    ReadImage("../../examples/TestData/RGBD/depth/00000.png", depth);
+    ReadImage("../../examples/TestData/RGBD/color/00000.jpg", color);
 
     RGBDImageCuda rgbd(0.1f, 3.5f, 1000.0f);
     rgbd.Upload(depth, color);
@@ -97,12 +93,9 @@ TEST(ScalableTSDFVolumeCuda, Integration) {
 
 TEST(ScalableTSDFVolumeCuda, RayCasting) {
     using namespace open3d;
-    cv::Mat depth = cv::imread(
-        "../../examples/TestData/RGBD/depth/00000.png",
-        cv::IMREAD_UNCHANGED);
-    cv::Mat color = cv::imread(
-        "../../examples/TestData/RGBD/color/00000.jpg");
-    cv::cvtColor(color, color, cv::COLOR_BGR2RGB);
+    Image depth, color;
+    ReadImage("../../examples/TestData/RGBD/depth/00000.png", depth);
+    ReadImage("../../examples/TestData/RGBD/color/00000.jpg", color);
 
     RGBDImageCuda rgbd(0.1f, 3.5f, 1000.0f);
     rgbd.Upload(depth, color);
@@ -120,7 +113,7 @@ TEST(ScalableTSDFVolumeCuda, RayCasting) {
                                      voxel_length, 3 * voxel_length,
                                      extrinsics);
 
-    ImageCuda<Vector3f> raycaster(depth.cols, depth.rows);
+    ImageCuda<Vector3f> raycaster(depth.width_, depth.height_);
 
     Timer timer;
     const int iters = 10;

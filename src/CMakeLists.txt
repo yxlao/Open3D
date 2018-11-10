@@ -15,7 +15,6 @@ add_subdirectory(Tools)
 # > temporarily add this line for easier developing
 add_subdirectory(UnitTest)
 
-
 # Unit tests
 if (BUILD_UNIT_TESTS)
     add_subdirectory(UnitTest)
@@ -83,6 +82,8 @@ endfunction()
 
 # build a list of include folders
 SourcePath2InstallPath("${CORE_INCLUDE_DIRS}" INSTALL_CORE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
+# > additional include path
+SourcePath2InstallPath("${CUDA_INCLUDE_DIRS}" INSTALL_CUDA_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
 SourcePath2InstallPath("${IO_INCLUDE_DIRS}" INSTALL_IO_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
 SourcePath2InstallPath("${VISUALIZATION_INCLUDE_DIRS}" INSTALL_VISUALIZATION_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
 SourcePath2InstallPath("${3RDPARTY_INCLUDE_DIRS}" INSTALL_3RDPARTY_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/..)
@@ -91,6 +92,8 @@ SourcePath2InstallPath("${3RDPARTY_INCLUDE_DIRS}" INSTALL_3RDPARTY_INCLUDE_DIRS 
 list(APPEND CONFIG_Open3D_INCLUDE_DIRS
         "${CMAKE_INSTALL_PREFIX}/include/${CMAKE_PROJECT_NAME}"
         ${INSTALL_CORE_INCLUDE_DIRS}
+        # > additonal include path
+        ${INSTALL_CUDA_INCLUDE_DIRS}
         ${INSTALL_IO_INCLUDE_DIRS}
         ${INSTALL_VISUALIZATION_INCLUDE_DIRS}
         ${INSTALL_3RDPARTY_INCLUDE_DIRS})
