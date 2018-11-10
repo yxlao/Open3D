@@ -150,6 +150,7 @@ template<typename T>
 void MemoryHeapCuda<T>::Reset() {
     assert(server_ != nullptr);
 
+    MemoryHeapCudaKernelCaller<T>::
     ResetMemoryHeapKernelCaller(*server_, max_capacity_);
 
     int heap_counter = 0;

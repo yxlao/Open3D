@@ -2,6 +2,8 @@
 // Created by wei on 11/9/18.
 //
 
+#pragma once
+
 #include "ArrayCuda.h"
 #include <Cuda/Common/UtilsCuda.h>
 #include <Cuda/Common/VectorCuda.h>

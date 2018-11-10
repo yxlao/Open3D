@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "ScalableMeshVolumeCuda.cuh"
+#include "ScalableMeshVolumeCudaDevice.cuh"
 
 namespace open3d {
 template<size_t N>
@@ -45,6 +45,23 @@ void MarchingCubesVertexAllocationKernel(
 }
 
 template<size_t N>
+__host__
+void ScalableMeshVolumeCudaKernelCaller<N>::
+    MarchingCubesVertexAllocationKernelCaller(
+    ScalableMeshVolumeCudaServer<N> &server,
+    ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
+    int active_volumes) {
+
+    const dim3 blocks(active_volumes);
+    const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
+    MarchingCubesVertexAllocationKernel << < blocks, threads >> > (
+        server, tsdf_volume);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+}
+
+
+template<size_t N>
 __global__
 void MarchingCubesVertexExtractionKernel(
     ScalableMeshVolumeCudaServer<N> server,
@@ -83,6 +100,23 @@ void MarchingCubesVertexExtractionKernel(
 }
 
 template<size_t N>
+__host__
+void ScalableMeshVolumeCudaKernelCaller<N>::
+    MarchingCubesVertexExtractionKernelCaller(
+    ScalableMeshVolumeCudaServer<N> &server,
+    ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
+    int active_volumes) {
+
+    const dim3 blocks(active_volumes);
+    const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
+    MarchingCubesVertexExtractionKernel << < blocks, threads >> > (
+        server, tsdf_volume);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+
+}
+
+template<size_t N>
 __global__
 void MarchingCubesTriangleExtractionKernel(
     ScalableMeshVolumeCudaServer<N> server,
@@ -113,5 +147,20 @@ void MarchingCubesTriangleExtractionKernel(
     } else {
         server.ExtractTriangle(Xlocal, subvolume_idx);
     }
+}
+
+template<size_t N>
+void ScalableMeshVolumeCudaKernelCaller<N>::
+MarchingCubesTriangleExtractionKernelCaller(
+    ScalableMeshVolumeCudaServer<N> &server,
+    ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
+    int active_volumes) {
+
+    const dim3 blocks(active_volumes);
+    const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
+    MarchingCubesTriangleExtractionKernel << < blocks, threads >> > (
+        server, tsdf_volume);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
 }
 }

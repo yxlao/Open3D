@@ -2,6 +2,8 @@
  * Created by wei on 18-4-21.
  */
 
+#pragma once
+
 #include "HashTableCudaDevice.cuh"
 
 /**

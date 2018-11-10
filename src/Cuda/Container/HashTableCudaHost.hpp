@@ -6,15 +6,17 @@
 
 #include "HashTableCuda.h"
 
-#include "ArrayCuda.h"
-#include "LinkedListCuda.h"
-#include "MemoryHeapCuda.h"
+#include "ArrayCudaHost.hpp"
+#include "LinkedListCudaHost.hpp"
+#include "MemoryHeapCudaHost.hpp"
 
 #include <Cuda/Common/UtilsCuda.h>
 
 #include <cassert>
 #include <tuple>
 #include <vector>
+
+#include <cuda_runtime.h>
 
 #include <Core/Core.h>
 

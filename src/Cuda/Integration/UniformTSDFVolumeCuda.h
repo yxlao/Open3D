@@ -159,6 +159,22 @@ public:
 };
 
 template<size_t N>
+class UniformTSDFVolumeCudaKernelCaller {
+public:
+    static __HOST__ void IntegrateKernelCaller(
+        UniformTSDFVolumeCudaServer<N> &server,
+        RGBDImageCudaServer &rgbd,
+        PinholeCameraIntrinsicCuda &camera,
+        TransformCuda &transform_camera_to_world);
+
+    static __HOST__ void RayCastingKernelCaller(
+        UniformTSDFVolumeCudaServer<N> &server,
+        ImageCudaServer<Vector3f> &image,
+        PinholeCameraIntrinsicCuda &camera,
+        TransformCuda &transform_camera_to_world);
+};
+
+template<size_t N>
 __GLOBAL__
 void IntegrateKernel(UniformTSDFVolumeCudaServer<N> server,
                      RGBDImageCudaServer depth,

@@ -7,7 +7,7 @@
 #include "UniformMeshVolumeCuda.h"
 #include "MarchingCubesConstCuda.h"
 
-#include "UniformTSDFVolumeCuda.cuh"
+#include "UniformTSDFVolumeCudaDevice.cuh"
 
 #include <Core/Core.h>
 

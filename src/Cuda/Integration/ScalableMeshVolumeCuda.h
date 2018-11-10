@@ -150,19 +150,36 @@ public:
     }
 };
 
-template<VertexType type, size_t N>
+template<size_t N>
+class ScalableMeshVolumeCudaKernelCaller {
+public:
+    static __HOST__ void MarchingCubesVertexAllocationKernelCaller(
+        ScalableMeshVolumeCudaServer<N> &server,
+        ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
+        int active_volumes);
+    static __HOST__ void MarchingCubesVertexExtractionKernelCaller(
+        ScalableMeshVolumeCudaServer<N> &server,
+        ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
+        int active_volumes);
+    static __HOST__ void MarchingCubesTriangleExtractionKernelCaller(
+        ScalableMeshVolumeCudaServer<N> &server,
+        ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
+        int active_volumes);
+};
+
+template<size_t N>
 __GLOBAL__
 void MarchingCubesVertexAllocationKernel(
     ScalableMeshVolumeCudaServer<N> server,
     ScalableTSDFVolumeCudaServer<N> tsdf_volume);
 
-template<VertexType type, size_t N>
+template<size_t N>
 __GLOBAL__
 void MarchingCubesVertexExtractionKernel(
     ScalableMeshVolumeCudaServer<N> server,
     ScalableTSDFVolumeCudaServer<N> tsdf_volume);
 
-template<VertexType type, size_t N>
+template<size_t N>
 __GLOBAL__
 void MarchingCubesTriangleExtractionKernel(
     ScalableMeshVolumeCudaServer<N> server,

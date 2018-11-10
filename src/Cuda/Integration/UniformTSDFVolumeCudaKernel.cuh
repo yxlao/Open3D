@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "UniformTSDFVolumeCuda.cuh"
+#include "UniformTSDFVolumeCudaDevice.cuh"
 
 namespace open3d {
 template<size_t N>
@@ -24,6 +24,24 @@ void IntegrateKernel(UniformTSDFVolumeCudaServer<N> server,
 }
 
 template<size_t N>
+__host__
+void UniformTSDFVolumeCudaKernelCaller<N>::IntegrateKernelCaller(
+    UniformTSDFVolumeCudaServer<N> &server,
+    RGBDImageCudaServer &rgbd,
+    PinholeCameraIntrinsicCuda &camera,
+    TransformCuda &transform_camera_to_world) {
+
+    const int num_blocks = DIV_CEILING(N, THREAD_3D_UNIT);
+    const dim3 blocks(num_blocks, num_blocks, num_blocks);
+    const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
+    IntegrateKernel << < blocks, threads >> > (
+        server, rgbd, camera, transform_camera_to_world);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+}
+
+
+template<size_t N>
 __global__
 void RayCastingKernel(UniformTSDFVolumeCudaServer<N> server,
                       ImageCudaServer<Vector3f> image,
@@ -39,5 +57,21 @@ void RayCastingKernel(UniformTSDFVolumeCudaServer<N> server,
 
     image.at(x, y) = (n == Vector3f::Zeros()) ?
         n : Vector3f((n(0) + 1) * 0.5f, (n(1) + 1) * 0.5f, (n(2) + 1) * 0.5f);
+}
+
+template<size_t N>
+void UniformTSDFVolumeCudaKernelCaller<N>::RayCastingKernelCaller(
+    UniformTSDFVolumeCudaServer<N> &server,
+    ImageCudaServer<Vector3f> &image,
+    PinholeCameraIntrinsicCuda &camera,
+    TransformCuda &transform_camera_to_world) {
+
+    const dim3 blocks(DIV_CEILING(image.width_, THREAD_2D_UNIT),
+                      DIV_CEILING(image.height_, THREAD_2D_UNIT));
+    const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+    RayCastingKernel << < blocks, threads >> > (
+        server, image, camera, transform_camera_to_world);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
 }
 }
