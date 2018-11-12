@@ -70,9 +70,9 @@ void RGBDImagePyramidCuda<N>::Build(RGBDImageCuda &rgbd) {
         server_ = std::make_shared<RGBDImagePyramidCudaServer<N>>();
     }
 
-    rgbd_[0].Upload(rgbd.depth(), rgbd.color());
+    rgbd_[0].Upload(rgbd.depthf(), rgbd.color());
     for (size_t i = 1; i < N; ++i) {
-        rgbd_[i - 1].depth().Downsample(rgbd_[i].depth());
+        rgbd_[i - 1].depthf().Downsample(rgbd_[i].depthf());
         rgbd_[i - 1].color().Downsample(rgbd_[i].color());
     }
 

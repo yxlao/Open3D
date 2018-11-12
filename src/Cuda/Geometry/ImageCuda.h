@@ -6,6 +6,7 @@
 
 #include "GeometryClasses.h"
 #include <Cuda/Common/Common.h>
+#include <Cuda/Common/VectorCuda.h>
 #include <Core/Geometry/Image.h>
 
 #include <cstdlib>
@@ -134,10 +135,13 @@ public:
                    float val_sigma = 20.0f,
                    bool with_holes = true);
 
-    ImageCuda<typename VecType::VecTypef> ToFloat(
+    ImageCuda<typename VecType::VecTypef> ConvertToFloat(
         float scale = 1.0f, float offset = 0.0f);
-    void ToFloat(ImageCuda<typename VecType::VecTypef> &image,
-                 float scale = 1.0f, float offset = 0.0f);
+    void ConvertToFloat(ImageCuda<typename VecType::VecTypef> &image,
+                        float scale = 1.0f, float offset = 0.0f);
+
+    ImageCuda<Vector1f> ConvertRGBToIntensity();
+    void ConvertRGBToIntensity(ImageCuda<Vector1f> &image);
 
     void Upload(Image& image);
     std::shared_ptr<Image> DownloadImage();
@@ -174,10 +178,13 @@ public:
         ImageCudaServer<typename VecType::VecTypef> &dx,
         ImageCudaServer<typename VecType::VecTypef> &dy,
         bool with_holes);
-    static __HOST__ void ToFloatImageKernelCaller(
+    static __HOST__ void ConvertToFloatImageKernelCaller (
         ImageCudaServer<VecType> &src,
         ImageCudaServer<typename VecType::VecTypef> &dst,
         float scale, float offset);
+    static __HOST__ void ConvertRGBToIntensityKernelCaller(
+        ImageCudaServer<VecType> &src,
+        ImageCudaServer<Vector1f> &dst);
 };
 
 template<typename VecType>
@@ -214,8 +221,14 @@ void SobelImageKernel(
 
 template<typename VecType>
 __GLOBAL__
-void ToFloatImageKernel(
+void ConvertToFloatImageKernel(
     ImageCudaServer<VecType> src,
     ImageCudaServer<typename VecType::VecTypef> dst,
     float scale, float offset);
+
+template<typename VecType>
+__GLOBAL__
+void ConvertRGBToIntensityImageKernel(
+    ImageCudaServer<VecType> src,
+    ImageCudaServer<Vector1f> dst);
 }

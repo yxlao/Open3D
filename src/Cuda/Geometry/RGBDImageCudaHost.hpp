@@ -12,15 +12,15 @@ RGBDImageCuda::RGBDImageCuda(float depth_near,
       depth_far_(depth_far),
       depth_factor_(depth_factor) {}
 
-RGBDImageCuda::RGBDImageCuda(ImageCuda<Vector1f> &depth,
-                             ImageCuda<Vector3b> &color,
+RGBDImageCuda::RGBDImageCuda(ImageCuda<Vector1s> &depth_raw,
+                             ImageCuda<Vector3b> &color_raw,
                              float depth_near,
                              float depth_far,
                              float depth_factor)
     : depth_near_(depth_near),
       depth_far_(depth_far),
       depth_factor_(depth_factor) {
-    Create(depth, color);
+    Create(depth_raw, color_raw);
 }
 
 RGBDImageCuda::RGBDImageCuda(const open3d::RGBDImageCuda &other) {
@@ -30,7 +30,10 @@ RGBDImageCuda::RGBDImageCuda(const open3d::RGBDImageCuda &other) {
     depth_far_ = other.depth_far_;
     depth_factor_ = other.depth_factor_;
 
-    Create(other.depth(), other.color());
+    depth_raw_ = other.depth_raw();
+    depthf_ = other.depthf();
+    color_ = other.color();
+    intensity_ = other.intensity();
 }
 
 
@@ -42,7 +45,10 @@ RGBDImageCuda& RGBDImageCuda::operator=(const open3d::RGBDImageCuda &other) {
         depth_far_ = other.depth_far_;
         depth_factor_ = other.depth_factor_;
 
-        Create(other.depth(), other.color());
+        depth_raw_ = other.depth_raw();
+        depthf_ = other.depthf();
+        color_ = other.color();
+        intensity_ = other.intensity();
     }
     return *this;
 }
@@ -51,12 +57,15 @@ RGBDImageCuda::~RGBDImageCuda() {
     Release();
 }
 
-void RGBDImageCuda::Create(const ImageCuda<Vector1f> &depth,
-                           const ImageCuda<Vector3b> &color) {
+void RGBDImageCuda::Create(const ImageCuda<Vector1s> &depth_raw,
+                           const ImageCuda<Vector3b> &color_raw) {
     server_ = std::make_shared<RGBDImageCudaServer>();
 
-    depth_ = depth;
-    color_ = color;
+    depth_raw_ = depth_raw;
+    color_ = color_raw;
+
+    depth_raw_.ConvertToFloat(depthf_, 1.0f / depth_factor_);
+    color_.ConvertRGBToIntensity(intensity_);
 
     UpdateServer();
 }
@@ -64,8 +73,11 @@ void RGBDImageCuda::Create(const ImageCuda<Vector1f> &depth,
 void RGBDImageCuda::Release() {
     server_ = nullptr;
 
-    depth_.Release();
+    depth_raw_.Release();
     color_.Release();
+
+    depthf_.Release();
+    intensity_.Release();
 }
 
 void RGBDImageCuda::Upload(cv::Mat &depth, cv::Mat &color) {
@@ -73,39 +85,42 @@ void RGBDImageCuda::Upload(cv::Mat &depth, cv::Mat &color) {
         server_ = std::make_shared<RGBDImageCudaServer>();
     }
 
-    depths_.Upload(depth);
+    depth_raw_.Upload(depth);
     color_.Upload(color);
 
-    depths_.ToFloat(depth_, 1.0f / depth_factor_);
+    depth_raw_.ConvertToFloat(depthf_, 1.0f / depth_factor_);
+    color_.ConvertRGBToIntensity(intensity_);
 
     UpdateServer();
 }
 
-void RGBDImageCuda::Upload(Image &depth, Image &color) {
+void RGBDImageCuda::Upload(Image &depth_raw, Image &color_raw) {
     if (server_ == nullptr) {
         server_ = std::make_shared<RGBDImageCudaServer>();
     }
 
-    depths_.Upload(depth);
-    color_.Upload(color);
+    depth_raw_.Upload(depth_raw);
+    color_.Upload(color_raw);
 
-    depths_.ToFloat(depth_, 1.0f / depth_factor_);
+    depth_raw_.ConvertToFloat(depthf_, 1.0f / depth_factor_);
+    color_.ConvertRGBToIntensity(intensity_);
 
     UpdateServer();
 }
 
 void RGBDImageCuda::Upload(
-    ImageCuda<Vector1f> &depth, ImageCuda<Vector3b> &color) {
-    depth_.CopyFrom(depth);
-    color_.CopyFrom(color);
-
+    ImageCuda<Vector1s> &depth_raw, ImageCuda<Vector3b> &color_raw) {
+    depth_raw_.CopyFrom(depth_raw);
+    color_.CopyFrom(color_raw);
+    depth_raw_.ConvertToFloat(depthf_, 1.0f / depth_factor_);
+    color_.ConvertRGBToIntensity(intensity_);
 }
 
 void RGBDImageCuda::UpdateServer() {
     if (server_ != nullptr) {
+        server_->depth() = *depthf_.server();
         server_->color() = *color_.server();
-        server_->depth() = *depth_.server();
+        server_->intensity() = *intensity_.server();
     }
 }
-
 }

@@ -400,24 +400,47 @@ void ImageCuda<VecType>::Sobel(ImageCuda<typename VecType::VecTypef> &dx,
 }
 
 template<typename VecType>
-ImageCuda<typename VecType::VecTypef> ImageCuda<VecType>::ToFloat(
+ImageCuda<typename VecType::VecTypef> ImageCuda<VecType>::ConvertToFloat(
     float scale, float offset) {
     ImageCuda<typename VecType::VecTypef> dst;
     dst.Create(width_, height_);
-    ToFloat(dst, scale, offset);
+    ConvertToFloat(dst, scale, offset);
     return dst;
 }
 
 template<typename VecType>
-void ImageCuda<VecType>::ToFloat(ImageCuda<typename VecType::VecTypef> &image,
-                                 float scale, float offset) {
+void ImageCuda<VecType>::ConvertToFloat(
+    ImageCuda<typename VecType::VecTypef> &image,
+    float scale, float offset) {
     if (image.server() == nullptr) {
         image.Create(width_, height_);
     } else if (image.width_ != width_ || image.height_ != height_) {
         PrintInfo("Incompatible image size!\n");
         return;
     }
-    ImageCudaKernelCaller<VecType>::ToFloatImageKernelCaller(
+    ImageCudaKernelCaller<VecType>::ConvertToFloatImageKernelCaller(
         *server_, *image.server(), scale, offset);
+}
+
+template<typename VecType>
+ImageCuda<Vector1f> ImageCuda<VecType>::ConvertRGBToIntensity() {
+    assert(typeid(VecType) == typeid(Vector3b));
+
+    ImageCuda<Vector1f> dst;
+    dst.Create(width_, height_);
+    ConvertRGBToIntensity(dst);
+    return dst;
+}
+
+template<typename VecType>
+void ImageCuda<VecType>::ConvertRGBToIntensity(ImageCuda<Vector1f> &image) {
+    if (image.server() == nullptr) {
+        image.Create(width_, height_);
+    } else if (image.width_ != width_ || image.height_ != height_) {
+        PrintInfo("Incompatible image size!\n");
+        return;
+    }
+    ImageCudaKernelCaller<VecType>::ConvertRGBToIntensityKernelCaller(
+        *server_, *image.server());
 }
 }

@@ -79,6 +79,6 @@ void MemoryHeapCudaServer<T>::Free(size_t addr) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(index >= 1);
 #endif
-    heap_[index - 1] = addr;
+    heap_[index - 1] = (int) addr;
 }
 };

@@ -14,13 +14,17 @@ class RGBDImageCudaServer {
 private:
     ImageCudaServer<Vector1f> depth_;
     ImageCudaServer<Vector3b> color_;
+    ImageCudaServer<Vector1f> intensity_;
 
 public:
-    __HOSTDEVICE__ ImageCudaServer<Vector1f>& depth() {
+    __HOSTDEVICE__ ImageCudaServer<Vector1f> &depth() {
         return depth_;
     }
-    __HOSTDEVICE__ ImageCudaServer<Vector3b>& color() {
+    __HOSTDEVICE__ ImageCudaServer<Vector3b> &color() {
         return color_;
+    }
+    __HOSTDEVICE__ ImageCudaServer<Vector1f> &intensity() {
+        return intensity_;
     }
 };
 
@@ -28,10 +32,11 @@ class RGBDImageCuda {
 private:
     std::shared_ptr<RGBDImageCudaServer> server_ = nullptr;
 
-    ImageCuda<Vector1f> depth_;
-    ImageCuda<Vector3b> color_;
+    ImageCuda<Vector1s> depth_raw_;
+    ImageCuda<Vector1f> depthf_;
 
-    ImageCuda<Vector1s> depths_;
+    ImageCuda<Vector3b> color_;
+    ImageCuda<Vector1f> intensity_;
 
 public:
     float depth_near_;
@@ -42,47 +47,40 @@ public:
     RGBDImageCuda(float depth_near = 0.1f,
                   float depth_far = 3.5f,
                   float depth_factor = 1000.0f);
-    RGBDImageCuda(ImageCuda<Vector1f> &depth,
-                  ImageCuda<Vector3b> &color,
+    RGBDImageCuda(ImageCuda<Vector1s> &depth_raw,
+                  ImageCuda<Vector3b> &color_raw,
                   float depth_near = 0.1f,
                   float depth_far = 3.5f,
                   float depth_factor = 1000.0f);
 
     RGBDImageCuda(const RGBDImageCuda &other);
-    RGBDImageCuda &operator = (const RGBDImageCuda &other);
+    RGBDImageCuda &operator=(const RGBDImageCuda &other);
     ~RGBDImageCuda();
 
-    void Create(const ImageCuda<Vector1f> &depth,
-                const ImageCuda<Vector3b> &color);
+    void Create(const ImageCuda<Vector1s> &depth_raw,
+                const ImageCuda<Vector3b> &color_raw);
     void Release();
 
     void UpdateServer();
 
-    void Upload(Image &depth, Image &color);
-    void Upload(ImageCuda<Vector1f> &depth, ImageCuda<Vector3b> &color);
+    void Upload(Image &depth_raw, Image &color_raw);
+    void Upload(ImageCuda<Vector1s> &depth_raw, ImageCuda<Vector3b> &color_raw);
 
     /** Legacy **/
     void Upload(cv::Mat &depth, cv::Mat &color);
 
 public:
-    ImageCuda<Vector1f>& depth() {
-        return depth_;
-    }
-    const ImageCuda<Vector1f>& depth() const {
-        return depth_;
-    }
+    ImageCuda<Vector1s> &depth_raw() { return depth_raw_; }
+    const ImageCuda<Vector1s> &depth_raw() const { return depth_raw_; }
+    ImageCuda<Vector1f> &depthf() { return depthf_; }
+    const ImageCuda<Vector1f> &depthf() const { return depthf_; }
+    ImageCuda<Vector3b> &color() { return color_; }
+    const ImageCuda<Vector3b> &color() const { return color_; }
+    ImageCuda<Vector1f> &intensity() { return intensity_; }
+    const ImageCuda<Vector1f> &intensity() const { return intensity_; }
 
-    ImageCuda<Vector3b>& color() {
-        return color_;
-    }
-    const ImageCuda<Vector3b>& color() const {
-        return color_;
-    }
-
-    std::shared_ptr<RGBDImageCudaServer>& server() {
-        return server_;
-    }
-    const std::shared_ptr<RGBDImageCudaServer>& server() const {
+    std::shared_ptr<RGBDImageCudaServer> &server() { return server_; }
+    const std::shared_ptr<RGBDImageCudaServer> &server() const {
         return server_;
     }
 };

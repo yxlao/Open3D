@@ -177,7 +177,7 @@ void CheckToFloatConversion(std::string path, float scale, float offset) {
     int iter = 100;
     timer.Start();
     for (int i = 0; i < iter; ++i) {
-        imagef_cuda = image_cuda.ToFloat(scale, offset);
+        imagef_cuda = image_cuda.ConvertToFloat(scale, offset);
     }
     timer.Stop();
     PrintInfo("Conversion finished in %.3f milliseconds...\n",
@@ -303,9 +303,31 @@ void CheckPyramid(std::string path) {
     cv::destroyAllWindows();
 }
 
+void CheckRGBToIntensity(std::string path) {
+    using namespace open3d;
+    cv::Mat image = cv::imread(path, cv::IMREAD_UNCHANGED);
+    cv::cvtColor(image, image, cv::COLOR_BGR2RGB);
+
+    cv::Mat intensity;
+    cv::cvtColor(image, intensity, cv::COLOR_RGB2GRAY);
+
+    ImageCuda<Vector3b> image_cuda;
+    image_cuda.Upload(image);
+    ImageCuda<Vector1f> intensity_cuda = image_cuda.ConvertRGBToIntensity();
+
+    cv::imshow("intensity", intensity_cuda.DownloadMat());
+    cv::imshow("intensity cv", intensity);
+    cv::waitKey(-1);
+}
+
 const std::string kDepthPath = "../../examples/TestData/RGBD/other_formats/TUM_depth.png";
 const std::string kColorPath = "../../examples/TestData/RGBD/other_formats/TUM_color.png";
 const std::string kGrayPath  = "../../examples/TestData/lena_gray.jpg";
+
+TEST(ImageCuda, ConvertRGBToIntensity) {
+    using namespace open3d;
+    CheckRGBToIntensity(kColorPath);
+}
 
 TEST(ImageCuda, UploadAndDownload) {
     using namespace open3d;

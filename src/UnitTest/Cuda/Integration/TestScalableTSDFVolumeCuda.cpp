@@ -41,7 +41,7 @@ TEST(ScalableTSDFVolumeCuda, TouchSubvolumes) {
                                      voxel_length, 3 * voxel_length,
                                      extrinsics);
 
-    volume.TouchSubvolumes(rgbd.depth(), intrinsics, extrinsics);
+    volume.TouchSubvolumes(rgbd.depthf(), intrinsics, extrinsics);
     volume.GetSubvolumesInFrustum(intrinsics, extrinsics);
 
     auto entry_vector = volume.active_subvolume_entry_array().Download();

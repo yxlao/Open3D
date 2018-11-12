@@ -79,7 +79,7 @@ TEST(ReductionCuda, SumFloat) {
     ImageCuda<Vector1s> im_cuda;
     ImageCuda<Vector1f> imf_cuda;
     im_cuda.Upload(im);
-    imf_cuda = im_cuda.ToFloat();
+    imf_cuda = im_cuda.ConvertToFloat();
     cv::Mat imf = imf_cuda.DownloadMat();
 
     for (int i = 0; i < im.rows; ++i) {

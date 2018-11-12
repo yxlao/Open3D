@@ -208,7 +208,7 @@ void ImageCudaKernelCaller<VecType>::SobelImageKernelCaller(
  */
 template<typename VecType>
 __global__
-void ToFloatImageKernel(
+void ConvertToFloatImageKernel(
     ImageCudaServer<VecType> src,
     ImageCudaServer<typename VecType::VecTypef> dst,
     float scale,
@@ -223,15 +223,42 @@ void ToFloatImageKernel(
 
 template<typename VecType>
 __host__
-void ImageCudaKernelCaller<VecType>::ToFloatImageKernelCaller(
+void ImageCudaKernelCaller<VecType>::ConvertToFloatImageKernelCaller(
     ImageCudaServer<VecType> &src,
     ImageCudaServer<typename VecType::VecTypef> &dst,
     float scale, float offset) {
     const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
                       DIV_CEILING(src.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
-    ToFloatImageKernel << < blocks, threads >> > (
+    ConvertToFloatImageKernel << < blocks, threads >> > (
         src, dst, scale, offset);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+}
+
+template<typename VecType>
+__global__
+void ConvertRGBToIntensityKernel(
+    ImageCudaServer<VecType> src,
+    ImageCudaServer<Vector1f> dst) {
+
+    int u = blockIdx.x * blockDim.x + threadIdx.x;
+    int v = blockIdx.y * blockDim.y + threadIdx.y;
+    if (u >= dst.width_ || v >= dst.height_) return;
+
+    VecType &rgb = src.at(u, v);
+    dst.at(u, v) = Vector1f(
+        (0.2990f * rgb(0) + 0.5870f * rgb(1) + 0.1140f * rgb(2)) / 255.0f);
+}
+
+template<typename VecType>
+__host__
+void ImageCudaKernelCaller<VecType>::ConvertRGBToIntensityKernelCaller(
+    ImageCudaServer<VecType> &src, ImageCudaServer<Vector1f> &dst) {
+    const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
+                      DIV_CEILING(src.height_, THREAD_2D_UNIT));
+    const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+    ConvertRGBToIntensityKernel<<<blocks, threads>>>(src, dst);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
