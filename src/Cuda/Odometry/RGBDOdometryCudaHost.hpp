@@ -53,18 +53,12 @@ void RGBDOdometryCuda<N>::Create(int width, int height) {
         return;
     }
 
-    target_depth_.Create(width, height);
-    target_depth_dx_.Create(width, height);
-    target_depth_dy_.Create(width, height);
-
-    target_intensity_.Create(width, height);
-    target_intensity_dx_.Create(width, height);
-    target_intensity_dy_.Create(width, height);
-
-    source_depth_.Create(width, height);
-    source_intensity_.Create(width, height);
-
     source_on_target_.Create(width, height);
+
+    source_.Create(width, height);
+    target_.Create(width, height);
+    target_dx_.Create(width, height);
+    target_dy_.Create(width, height);
 
     results_.Create(29);
 
@@ -73,16 +67,10 @@ void RGBDOdometryCuda<N>::Create(int width, int height) {
 
 template<size_t N>
 void RGBDOdometryCuda<N>::Release() {
-    target_depth_.Release();
-    target_depth_dx_.Release();
-    target_depth_dy_.Release();
-
-    target_intensity_.Release();
-    target_intensity_dx_.Release();
-    target_intensity_dy_.Release();
-
-    source_depth_.Release();
-    source_intensity_.Release();
+    source_.Release();
+    target_.Release();
+    target_dx_.Release();
+    target_dy_.Release();
 
     source_on_target_.Release();
 
@@ -92,18 +80,12 @@ void RGBDOdometryCuda<N>::Release() {
 template<size_t N>
 void RGBDOdometryCuda<N>::UpdateServer() {
     if (server_ != nullptr) {
-        server_->target_depth() = *target_depth_.server();
-        server_->target_depth_dx() = *target_depth_dx_.server();
-        server_->target_depth_dy() = *target_depth_dy_.server();
-
-        server_->target_intensity() = *target_intensity_.server();
-        server_->target_intensity_dx() = *target_intensity_dx_.server();
-        server_->target_intensity_dy() = *target_intensity_dy_.server();
-
-        server_->source_depth() = *source_depth_.server();
-        server_->source_intensity() = *source_intensity_.server();
-
         server_->source_on_target() = *source_on_target_.server();
+
+        server_->source() = *source_.server();
+        server_->target() = *target_.server();
+        server_->target_dx() = *target_dx_.server();
+        server_->target_dy() = *target_dy_.server();
 
         server_->results() = *results_.server();
     }
@@ -131,47 +113,34 @@ void RGBDOdometryCuda<N>::ExtractResults(std::vector<float> &results,
 }
 
 template<size_t N>
-void RGBDOdometryCuda<N>::PrepareData(ImageCuda<Vector1f> &source_depth,
-                                      ImageCuda<Vector1f> &source_intensity,
-                                      ImageCuda<Vector1f> &target_depth,
-                                      ImageCuda<Vector1f> &target_intensity) {
-    assert(source_depth.width_ == source_intensity.width_);
-    assert(source_depth.height_ == source_intensity.height_);
-    assert(target_depth.width_ == target_intensity.width_);
-    assert(target_depth.height_ == target_intensity.height_);
+void RGBDOdometryCuda<N>::PrepareData(
+    RGBDImageCuda &source, RGBDImageCuda &target) {
 
-    int source_width = source_depth.width_;
-    int source_height = source_depth.height_;
-    int target_width = target_depth.width_;
-    int target_height = target_depth.height_;
+    int source_width = source.depthf().width_;
+    int source_height = source.depthf().height_;
+    int target_width = target.depthf().width_;
+    int target_height = target.depthf().height_;
     assert(source_width > 0 && source_height > 0);
     assert(target_width > 0 && target_height > 0);
 
-    source_depth_.Build(source_depth);
-    source_intensity_.Build(source_intensity);
-    target_depth_.Build(target_depth);
-    target_intensity_.Build(target_intensity);
+    source_.Build(source);
+    target_.Build(target);
 
-    target_depth_dx_.Create(target_width, target_height);
-    target_depth_dy_.Create(target_width, target_height);
-    target_intensity_dx_.Create(target_width, target_height);
-    target_intensity_dy_.Create(target_width, target_height);
-
+    target_dx_.Create(source_width, source_height);
+    target_dy_.Create(target_width, target_height);
     source_on_target_.Create(source_width, source_height);
 
     for (size_t i = 0; i < N; ++i) {
-        target_depth_[i].Sobel(target_depth_dx_[i],
-                               target_depth_dy_[i],
-                               false);
-        target_intensity_[i].Sobel(target_intensity_dx_[i],
-                                   target_intensity_dy_[i],
-                                   false);
-        source_on_target_[i].CopyFrom(target_intensity_[i]);
+        target_[i].depthf().Sobel(target_dx_[i].depthf(),
+                                  target_dy_[i].depthf(),
+                                  false);
+        target_[i].intensity().Sobel(target_dx_[i].intensity(),
+                                     target_dy_[i].intensity(),
+                                     false);
     }
-    target_depth_dx_.UpdateServer();
-    target_depth_dy_.UpdateServer();
-    target_intensity_dx_.UpdateServer();
-    target_intensity_dy_.UpdateServer();
+
+    target_dx_.UpdateServer();
+    target_dy_.UpdateServer();
     source_on_target_.UpdateServer();
 
     results_.Create(29);
@@ -187,15 +156,15 @@ void RGBDOdometryCuda<N>::Apply() {
             results_.Memset(0);
 
 #ifdef VISUALIZE_ODOMETRY_INLIERS
-            source_on_target_[level].CopyFrom(target_intensity_[level]);
+            source_on_target_[level].CopyFrom(target_[level].intensity());
 #endif
             server_->transform_source_to_target_.FromEigen(
                 transform_source_to_target_);
 
             RGBDOdometryCudaKernelCaller<N>::ApplyRGBDOdometryKernelCaller(
                 *server_, level,
-                source_depth_[level].width_,
-                source_depth_[level].height_);
+                source_[level].depthf().width_,
+                source_[level].depthf().height_);
 
 #ifdef VISUALIZE_ODOMETRY_INLIERS
             cv::Mat im = source_on_target_[level].DownloadMat();
@@ -211,8 +180,8 @@ void RGBDOdometryCuda<N>::Apply() {
             ExtractResults(results, JtJ, Jtr, error, inliers);
 
             PrintDebug("> Level %d, iter %d: error = %f, avg_error = %f, "
-                      "inliers = %.0f\n",
-                      level, iter, error, error / inliers, inliers);
+                       "inliers = %.0f\n",
+                       level, iter, error, error / inliers, inliers);
 
             EigenVector6d dxi = JtJ.ldlt().solve(-Jtr);
             transform_source_to_target_ =

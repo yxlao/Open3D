@@ -34,4 +34,7 @@ template class ImagePyramidCuda<Vector3f, 3>;
 template class ImagePyramidCuda<Vector3f, 4>;
 template class ImagePyramidCuda<Vector1f, 3>;
 template class ImagePyramidCuda<Vector1f, 4>;
+
+template class RGBDImagePyramidCuda<3>;
+template class RGBDImagePyramidCuda<4>;
 }

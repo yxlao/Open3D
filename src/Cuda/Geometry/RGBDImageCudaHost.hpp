@@ -12,15 +12,14 @@ RGBDImageCuda::RGBDImageCuda(float depth_near,
       depth_far_(depth_far),
       depth_factor_(depth_factor) {}
 
-RGBDImageCuda::RGBDImageCuda(ImageCuda<Vector1s> &depth_raw,
-                             ImageCuda<Vector3b> &color_raw,
+RGBDImageCuda::RGBDImageCuda(int width, int height,
                              float depth_near,
                              float depth_far,
                              float depth_factor)
     : depth_near_(depth_near),
       depth_far_(depth_far),
       depth_factor_(depth_factor) {
-    Create(depth_raw, color_raw);
+    Create(width, height);
 }
 
 RGBDImageCuda::RGBDImageCuda(const open3d::RGBDImageCuda &other) {
@@ -39,6 +38,8 @@ RGBDImageCuda::RGBDImageCuda(const open3d::RGBDImageCuda &other) {
 
 RGBDImageCuda& RGBDImageCuda::operator=(const open3d::RGBDImageCuda &other) {
     if (this != &other) {
+        Release();
+
         server_ = other.server();
 
         depth_near_ = other.depth_near_;
@@ -57,15 +58,21 @@ RGBDImageCuda::~RGBDImageCuda() {
     Release();
 }
 
-void RGBDImageCuda::Create(const ImageCuda<Vector1s> &depth_raw,
-                           const ImageCuda<Vector3b> &color_raw) {
+void RGBDImageCuda::Create(int width, int height) {
+    assert(width > 0 && height > 0);
+
+    if (server_ != nullptr) {
+        PrintError("[RGBDImageCuda] Already created, abort!\n");
+        return;
+    }
+
     server_ = std::make_shared<RGBDImageCudaServer>();
 
-    depth_raw_ = depth_raw;
-    color_ = color_raw;
+    depth_raw_.Create(width, height);
+    color_.Create(width, height);
 
-    depth_raw_.ConvertToFloat(depthf_, 1.0f / depth_factor_);
-    color_.ConvertRGBToIntensity(intensity_);
+    depthf_.Create(width, height);
+    intensity_.Create(width, height);
 
     UpdateServer();
 }

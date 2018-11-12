@@ -15,6 +15,7 @@
 #include <Cuda/Common/VectorCuda.h>
 #include <Cuda/Common/TransformCuda.h>
 #include <Cuda/Geometry/ImagePyramidCuda.h>
+#include <Cuda/Geometry/RGBDImagePyramidCuda.h>
 
 #include <Eigen/Eigen>
 
@@ -44,18 +45,10 @@ class RGBDOdometryCudaServer {
 private:
     ImagePyramidCudaServer<Vector1f, N> source_on_target_;
 
-    ImagePyramidCudaServer<Vector1f, N> target_depth_;
-    ImagePyramidCudaServer<Vector1f, N> target_depth_dx_;
-    ImagePyramidCudaServer<Vector1f, N> target_depth_dy_;
-
-    ImagePyramidCudaServer<Vector1f, N> target_intensity_;
-    ImagePyramidCudaServer<Vector1f, N> target_intensity_dx_;
-    ImagePyramidCudaServer<Vector1f, N> target_intensity_dy_;
-    /* ImagePyramidCudaServer<Vector3f, N> source_normal_; */
-
-    ImagePyramidCudaServer<Vector1f, N> source_depth_;
-    ImagePyramidCudaServer<Vector1f, N> source_intensity_;
-    /* ImagePyramidCudaServer<Vector3f, N> target_normal_; */
+    RGBDImagePyramidCudaServer<N> source_;
+    RGBDImagePyramidCudaServer<N> target_;
+    RGBDImagePyramidCudaServer<N> target_dx_;
+    RGBDImagePyramidCudaServer<N> target_dy_;
 
     ArrayCudaServer<float> results_;
 
@@ -98,38 +91,17 @@ public:
     source_on_target() {
         return source_on_target_;
     }
-    __HOSTDEVICE__ inline ImagePyramidCudaServer<Vector1f, N> &
-    target_depth() {
-        return target_depth_;
+    __HOSTDEVICE__ inline RGBDImagePyramidCudaServer<N> &source() {
+        return source_;
     }
-    __HOSTDEVICE__ inline ImagePyramidCudaServer<Vector1f, N> &
-    target_depth_dx() {
-        return target_depth_dx_;
+    __HOSTDEVICE__ inline RGBDImagePyramidCudaServer<N> &target() {
+        return target_;
     }
-    __HOSTDEVICE__ inline ImagePyramidCudaServer<Vector1f, N> &
-    target_depth_dy() {
-        return target_depth_dy_;
+    __HOSTDEVICE__ inline RGBDImagePyramidCudaServer<N> &target_dx() {
+        return target_dx_;
     }
-    __HOSTDEVICE__ inline ImagePyramidCudaServer<Vector1f, N> &
-    target_intensity() {
-        return target_intensity_;
-    }
-    __HOSTDEVICE__ inline ImagePyramidCudaServer<Vector1f, N> &
-    target_intensity_dx() {
-        return target_intensity_dx_;
-    }
-    __HOSTDEVICE__ inline ImagePyramidCudaServer<Vector1f, N> &
-    target_intensity_dy() {
-        return target_intensity_dy_;
-    }
-
-    __HOSTDEVICE__ inline ImagePyramidCudaServer<Vector1f, N> &
-    source_depth() {
-        return source_depth_;
-    }
-    __HOSTDEVICE__ inline ImagePyramidCudaServer<Vector1f, N> &
-    source_intensity() {
-        return source_intensity_;
+    __HOSTDEVICE__ inline RGBDImagePyramidCudaServer<N>& target_dy() {
+        return target_dy_;
     }
 
     __HOSTDEVICE__ inline ArrayCudaServer<float> &results() {
@@ -145,17 +117,10 @@ private:
     std::shared_ptr<RGBDOdometryCudaServer<N>> server_ = nullptr;
 
     ImagePyramidCuda<Vector1f, N> source_on_target_;
-
-    ImagePyramidCuda<Vector1f, N> target_depth_;
-    ImagePyramidCuda<Vector1f, N> target_depth_dx_;
-    ImagePyramidCuda<Vector1f, N> target_depth_dy_;
-
-    ImagePyramidCuda<Vector1f, N> target_intensity_;
-    ImagePyramidCuda<Vector1f, N> target_intensity_dx_;
-    ImagePyramidCuda<Vector1f, N> target_intensity_dy_;
-
-    ImagePyramidCuda<Vector1f, N> source_depth_;
-    ImagePyramidCuda<Vector1f, N> source_intensity_;
+    RGBDImagePyramidCuda<N> source_;
+    RGBDImagePyramidCuda<N> target_;
+    RGBDImagePyramidCuda<N> target_dx_;
+    RGBDImagePyramidCuda<N> target_dy_;
 
     ArrayCuda<float> results_;
 
@@ -179,10 +144,7 @@ public:
     void Release();
     void UpdateServer();
 
-    void PrepareData(ImageCuda<Vector1f> &source_depth,
-                     ImageCuda<Vector1f> &source_intensity,
-                     ImageCuda<Vector1f> &target_depth,
-                     ImageCuda<Vector1f> &target_intensity);
+    void PrepareData(RGBDImageCuda &source, RGBDImageCuda &target);
 
     void Apply();
 

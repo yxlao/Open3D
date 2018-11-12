@@ -17,26 +17,16 @@ int main(int argc, char**argv) {
 
     std::string base_path = "../../../examples/TestData/RGBD/";
 
-    cv::Mat source_color = cv::imread(base_path + "color/00000.jpg");
-    cv::cvtColor(source_color, source_color, cv::COLOR_BGR2GRAY);
-    source_color.convertTo(source_color, CV_32FC1, 1.0f / 255.0f);
+    Image source_color, source_depth, target_color, target_depth;
+    ReadImage(base_path + "color/00000.jpg", source_color);
+    ReadImage(base_path + "depth/00000.png", source_depth);
 
-    cv::Mat target_color = cv::imread(base_path + "color/00001.jpg");
-    cv::cvtColor(target_color, target_color, cv::COLOR_BGR2GRAY);
-    target_color.convertTo(target_color, CV_32FC1, 1.0f / 255.0f);
+    ReadImage(base_path + "color/00001.jpg", target_color);
+    ReadImage(base_path + "depth/00001.png", target_depth);
 
-    cv::Mat source_depth = cv::imread(base_path + "depth/00000.png",
-                                      cv::IMREAD_UNCHANGED);
-    source_depth.convertTo(source_depth, CV_32FC1, 0.001f);
-    cv::Mat target_depth = cv::imread(base_path + "depth/00001.png",
-                                      cv::IMREAD_UNCHANGED);
-    target_depth.convertTo(target_depth, CV_32FC1, 0.001f);
-
-    ImageCuda<Vector1f> source_I, target_I, source_D, target_D;
-    source_I.Upload(source_color);
-    target_I.Upload(target_color);
-    source_D.Upload(source_depth);
-    target_D.Upload(target_depth);
+    RGBDImageCuda source, target;
+    source.Upload(source_depth, source_color);
+    target.Upload(target_depth, target_color);
 
     RGBDOdometryCuda<3> odometry;
     odometry.SetIntrinsics(PinholeCameraIntrinsic(
@@ -48,11 +38,12 @@ int main(int argc, char**argv) {
     const int num_iters = 100;
 
     timer.Start();
-    odometry.PrepareData(source_D, source_I, target_D, target_I);
+    odometry.PrepareData(source, target);
     for (int i = 0; i < num_iters; ++i) {
         odometry.transform_source_to_target_ = Eigen::Matrix4d::Identity();
         odometry.Apply();
     }
     timer.Stop();
     PrintInfo("Average odometry time: %f milliseconds.\n",
-              timer.GetDuration() / num_iters);}
+              timer.GetDuration() / num_iters);
+}

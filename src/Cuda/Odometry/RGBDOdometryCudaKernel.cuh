@@ -24,8 +24,8 @@ void ApplyRGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry, size_t level) {
     local_sum1[tid] = 0;
     local_sum2[tid] = 0;
 
-    if (x >= odometry.source_depth()[level].width_
-        || y >= odometry.source_depth()[level].height_)
+    if (x >= odometry.source()[level].depth().width_
+        || y >= odometry.source()[level].depth().height_)
         return;
 
     /** Compute Jacobian and residual -> 9ms **/

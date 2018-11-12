@@ -23,7 +23,7 @@ RGBDImagePyramidCuda<N>::RGBDImagePyramidCuda(
 }
 
 template<size_t N>
-RGBDImagePyramidCuda<N>& RGBDImagePyramidCuda<N>::operator=(
+RGBDImagePyramidCuda<N> &RGBDImagePyramidCuda<N>::operator=(
     const RGBDImagePyramidCuda<N> &other) {
     if (this != &other) {
         server_ = other.server();
@@ -42,7 +42,7 @@ void RGBDImagePyramidCuda<N>::Create(int width, int height) {
         return;
     }
 
-    server_ = std::make_shared<RGBDImagePyramidCudaServer<N>> ();
+    server_ = std::make_shared<RGBDImagePyramidCudaServer<N>>();
     for (size_t i = 0; i < N; ++i) {
         int w = width >> i;
         int h = height >> i;
@@ -70,10 +70,13 @@ void RGBDImagePyramidCuda<N>::Build(RGBDImageCuda &rgbd) {
         server_ = std::make_shared<RGBDImagePyramidCudaServer<N>>();
     }
 
-    rgbd_[0].Upload(rgbd.depthf(), rgbd.color());
+    rgbd_[0] = rgbd;
     for (size_t i = 1; i < N; ++i) {
+        rgbd_[i].Create(rgbd_[i - 1].depth_raw().width_ / 2,
+                        rgbd_[i - 1].depth_raw().height_ / 2);
         rgbd_[i - 1].depthf().Downsample(rgbd_[i].depthf());
         rgbd_[i - 1].color().Downsample(rgbd_[i].color());
+        rgbd_[i - 1].intensity().Downsample(rgbd_[i].intensity());
     }
 
     UpdateServer();
@@ -83,6 +86,7 @@ template<size_t N>
 void RGBDImagePyramidCuda<N>::UpdateServer() {
     if (server_ != nullptr) {
         for (size_t i = 0; i < N; ++i) {
+            rgbd_[i].UpdateServer();
             (*server_)[i] = *rgbd_[i].server();
         }
     }

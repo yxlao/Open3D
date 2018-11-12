@@ -47,8 +47,7 @@ public:
     RGBDImageCuda(float depth_near = 0.1f,
                   float depth_far = 3.5f,
                   float depth_factor = 1000.0f);
-    RGBDImageCuda(ImageCuda<Vector1s> &depth_raw,
-                  ImageCuda<Vector3b> &color_raw,
+    RGBDImageCuda(int width, int height,
                   float depth_near = 0.1f,
                   float depth_far = 3.5f,
                   float depth_factor = 1000.0f);
@@ -57,8 +56,7 @@ public:
     RGBDImageCuda &operator=(const RGBDImageCuda &other);
     ~RGBDImageCuda();
 
-    void Create(const ImageCuda<Vector1s> &depth_raw,
-                const ImageCuda<Vector3b> &color_raw);
+    void Create(int width, int height);
     void Release();
 
     void UpdateServer();
