@@ -39,9 +39,9 @@ int main(int argc, char *argv[]) {
     SetVerbosityLevel(VerbosityLevel::VerboseDebug);
 
     std::string
-        match_filename = "/home/wei/Work/data/lounge/data_association.txt";
+        match_filename = "/home/wei/Work/data/apartment/data_association.txt";
     std::string
-        log_filename = "/home/wei/Work/data/lounge/lounge_trajectory.log";
+        log_filename = "/home/wei/Work/data/apartment/apartment.log";
 
     auto camera_trajectory = CreatePinholeCameraTrajectoryFromFile(log_filename);
     std::string dir_name = filesystem::GetFileParentDirectory(match_filename).c_str();
@@ -64,12 +64,12 @@ int main(int argc, char *argv[]) {
     float voxel_length = 0.01f;
     TransformCuda extrinsics = TransformCuda::Identity();
     ScalableTSDFVolumeCuda<8> tsdf_volume(
-        10000, 200000, voxel_length, 3 * voxel_length, extrinsics);
+        20000, 400000, voxel_length, 3 * voxel_length, extrinsics);
 
     Image depth, color;
     RGBDImageCuda rgbd(0.1f, 4.0f, 1000.0f);
     ScalableMeshVolumeCuda<8> mesher(
-        40000, VertexWithNormalAndColor, 6000000, 12000000);
+        120000, VertexWithNormalAndColor, 10000000, 20000000);
 
     VisualizerWithCustomAnimation visualizer;
     if (!visualizer.CreateVisualizerWindow("ScalableFusion", 640, 480, 0, 0)) {
@@ -108,10 +108,11 @@ int main(int argc, char *argv[]) {
                 camera_trajectory->parameters_[index]);
             index++;
 
-            if (index == (int) camera_trajectory->parameters_.size()) {
+            if ((index > 0 && index % 2000 == 0)
+            || index == camera_trajectory->parameters_.size()) {
                 tsdf_volume.GetAllSubvolumes();
                 mesher.MarchingCubes(tsdf_volume);
-                WriteTriangleMeshToPLY("scalable-system.ply",
+                WriteTriangleMeshToPLY("fragment-" + std::to_string(save_index) + ".ply",
                                        *mesher.mesh().Download());
                 save_index++;
             }

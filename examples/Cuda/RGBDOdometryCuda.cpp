@@ -20,7 +20,7 @@ void f() {
     std::string
         match_filename = "/home/wei/Work/data/apartment/data_association.txt";
     std::string
-        log_filename = "/home/wei/Work/data/apartment/lounge_trajectory.log";
+        log_filename = "/home/wei/Work/data/apartment/trajectory.log";
 
     auto camera_trajectory = CreatePinholeCameraTrajectoryFromFile(log_filename);
     std::string dir_name = filesystem::GetFileParentDirectory(match_filename).c_str();
@@ -105,18 +105,19 @@ void f() {
             visualizer.GetViewControl().ConvertFromPinholeCameraParameters(params);
             index++;
 
-//            if (index > 1) {
-//                cv::imshow("curr", rgbd_curr.intensity().DownloadMat());
-//                cv::imshow("curr depth", rgbd_curr.depthf().DownloadMat());
-//                cv::imshow("prev", rgbd_prev.intensity().DownloadMat());
-//                cv::imshow("prev depth", rgbd_prev.depthf().DownloadMat());
-//                cv::waitKey(-1);
-//            }
+            if (index > 0 && index % 200 == 0) {
+                tsdf_volume.GetAllSubvolumes();
+                mesher.MarchingCubes(tsdf_volume);
+                WriteTriangleMeshToPLY("fragment-" + std::to_string(save_index) + ".ply",
+                                       *mesher.mesh().Download());
+                save_index++;
+            }
 
             rgbd_prev.CopyFrom(rgbd_curr.depth_raw(), rgbd_curr.color());
             timer.Signal();
         }
     }
+
     fclose(file);
 }
 
