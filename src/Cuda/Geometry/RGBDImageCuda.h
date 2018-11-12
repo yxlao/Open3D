@@ -62,7 +62,8 @@ public:
     void UpdateServer();
 
     void Upload(Image &depth_raw, Image &color_raw);
-    void Upload(ImageCuda<Vector1s> &depth_raw, ImageCuda<Vector3b> &color_raw);
+    void CopyFrom(ImageCuda<Vector1s> &depth_raw,
+                  ImageCuda<Vector3b> &color_raw);
 
     /** Legacy **/
     void Upload(cv::Mat &depth, cv::Mat &color);

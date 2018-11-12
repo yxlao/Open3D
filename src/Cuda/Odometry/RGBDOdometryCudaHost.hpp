@@ -150,7 +150,7 @@ void RGBDOdometryCuda<N>::PrepareData(
 template<size_t N>
 void RGBDOdometryCuda<N>::Apply() {
 
-    const int kIterations[] = {3, 5, 10};
+    const int kIterations[] = {10, 10, 10};
     for (int level = (int) (N - 1); level >= 0; --level) {
         for (int iter = 0; iter < kIterations[level]; ++iter) {
             results_.Memset(0);

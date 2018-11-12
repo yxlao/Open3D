@@ -115,12 +115,18 @@ void RGBDImageCuda::Upload(Image &depth_raw, Image &color_raw) {
     UpdateServer();
 }
 
-void RGBDImageCuda::Upload(
+void RGBDImageCuda::CopyFrom(
     ImageCuda<Vector1s> &depth_raw, ImageCuda<Vector3b> &color_raw) {
+    if (server_ == nullptr) {
+        server_ = std::make_shared<RGBDImageCudaServer>();
+    }
+
     depth_raw_.CopyFrom(depth_raw);
     color_.CopyFrom(color_raw);
     depth_raw_.ConvertToFloat(depthf_, 1.0f / depth_factor_);
     color_.ConvertRGBToIntensity(intensity_);
+
+    UpdateServer();
 }
 
 void RGBDImageCuda::UpdateServer() {
