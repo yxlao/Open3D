@@ -35,25 +35,33 @@ RGBDImagePyramidCuda<N> &RGBDImagePyramidCuda<N>::operator=(
 }
 
 template<size_t N>
-void RGBDImagePyramidCuda<N>::Create(int width, int height) {
+bool RGBDImagePyramidCuda<N>::Create(int width, int height) {
     assert(width > 0 && height > 0);
+
     if (server_ != nullptr) {
-        PrintError("[RGBDImagePyramidCuda] Already created, abort!\n");
-        return;
+        if (rgbd_[0].width_ != width || rgbd_[0].height_ != height) {
+            PrintError("[RGBDImagePyramidCuda] Incompatible image size,"
+                       "@Create aborted.\n");
+            return false;
+        }
+        return true;
+    }
+
+    if ((width >> N) == 0 || (height >> N) == 0) {
+        PrintError("[RGBDImagePyramidCuda] Width %d || height %d too small,"
+                   "@Create aborted.\n", width, height);
+        return false;
     }
 
     server_ = std::make_shared<RGBDImagePyramidCudaServer<N>>();
     for (size_t i = 0; i < N; ++i) {
         int w = width >> i;
         int h = height >> i;
-        if (w == 0 || h == 0) {
-            PrintError("Invalid width %d || height %d at level %d!\n", w, h, i);
-            return;
-        }
         rgbd_[i].Create(w, h);
     }
 
     UpdateServer();
+    return true;
 }
 
 template<size_t N>
@@ -66,20 +74,16 @@ void RGBDImagePyramidCuda<N>::Release() {
 
 template<size_t N>
 void RGBDImagePyramidCuda<N>::Build(RGBDImageCuda &rgbd) {
-    if (server_ == nullptr) {
-        server_ = std::make_shared<RGBDImagePyramidCudaServer<N>>();
+    bool success = Create(rgbd.width_, rgbd.height_);
+    if (success) {
+        rgbd_[0].CopyFrom(rgbd);
+        for (size_t i = 1; i < N; ++i) {
+            rgbd_[i - 1].depthf().Downsample(rgbd_[i].depthf());
+            rgbd_[i - 1].color().Downsample(rgbd_[i].color());
+            rgbd_[i - 1].intensity().Downsample(rgbd_[i].intensity());
+        }
+        UpdateServer();
     }
-
-    rgbd_[0] = rgbd;
-    for (size_t i = 1; i < N; ++i) {
-        rgbd_[i].Create(rgbd_[i - 1].depth_raw().width_ / 2,
-                        rgbd_[i - 1].depth_raw().height_ / 2);
-        rgbd_[i - 1].depthf().Downsample(rgbd_[i].depthf());
-        rgbd_[i - 1].color().Downsample(rgbd_[i].color());
-        rgbd_[i - 1].intensity().Downsample(rgbd_[i].intensity());
-    }
-
-    UpdateServer();
 }
 
 template<size_t N>

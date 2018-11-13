@@ -45,12 +45,11 @@ public:
     RGBDImagePyramidCuda(const RGBDImagePyramidCuda<N> &other);
     RGBDImagePyramidCuda<N>& operator=(const RGBDImagePyramidCuda<N> &other);
 
-    void Create(int width, int height);
+    bool Create(int width, int height);
     void Release();
+    void UpdateServer();
 
     void Build(RGBDImageCuda &rgbd);
-
-    void UpdateServer();
 
     RGBDImageCuda &operator[] (size_t level) {
         assert(level < N);

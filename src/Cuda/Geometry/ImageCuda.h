@@ -89,7 +89,7 @@ private:
 public:
     int width_;
     int height_;
-    int pitch_;
+    int pitch_; /* bytes per row */
 
 public:
     ImageCuda();
@@ -101,18 +101,28 @@ public:
     ~ImageCuda();
     ImageCuda<VecType> &operator=(const ImageCuda<VecType> &other);
 
-    void Create(int width, int height);
+    /**
+     * @return true if already created with desired size, or newly created
+     *         false if size is incompatible
+     */
+    bool Create(int width, int height);
     void Release();
-    void CopyFrom(const ImageCuda<VecType> &other);
+    void UpdateServer();
 
+    void CopyFrom(const ImageCuda<VecType> &other);
+    void Upload(Image& image);
+    std::shared_ptr<Image> DownloadImage();
+
+    /********** Image Processing **********/
     /** 'switch' code in kernel can be slow, manually expand it if needed. **/
-    ImageCuda<VecType> Downsample(DownsampleMethod method = GaussianFilter);
+    ImageCuda<VecType> Downsample(
+        DownsampleMethod method = GaussianFilter);
     void Downsample(ImageCuda<VecType> &image,
                     DownsampleMethod method = GaussianFilter);
 
     std::tuple<ImageCuda<typename VecType::VecTypef>,
-               ImageCuda<typename VecType::VecTypef>> Sobel
-        (bool with_holes = true);
+               ImageCuda<typename VecType::VecTypef>> Sobel(
+                   bool with_holes = true);
     void Sobel(ImageCuda<typename VecType::VecTypef> &dx,
                ImageCuda<typename VecType::VecTypef> &dy,
                bool with_holes = true);
@@ -143,10 +153,7 @@ public:
     ImageCuda<Vector1f> ConvertRGBToIntensity();
     void ConvertRGBToIntensity(ImageCuda<Vector1f> &image);
 
-    void Upload(Image& image);
-    std::shared_ptr<Image> DownloadImage();
-
-    /** Legacy **/
+    /********** Legacy **********/
     void Upload(cv::Mat &m);
     cv::Mat DownloadMat();
 

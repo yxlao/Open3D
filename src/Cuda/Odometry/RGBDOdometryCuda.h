@@ -128,6 +128,11 @@ public:
     typedef Eigen::Matrix<double, 6, 6> EigenMatrix6d;
     typedef Eigen::Matrix<double, 6, 1> EigenVector6d;
 
+    float sigma_;
+    float depth_near_threshold_;
+    float depth_far_threshold_;
+    float depth_diff_threshold_;
+
     PinholeCameraIntrinsic intrinsics_;
     Eigen::Matrix4d transform_source_to_target_;
 
@@ -140,7 +145,7 @@ public:
                        float depth_diff_threshold);
     void SetIntrinsics(PinholeCameraIntrinsic intrinsics);
 
-    void Create(int width, int height);
+    bool Create(int width, int height);
     void Release();
     void UpdateServer();
 

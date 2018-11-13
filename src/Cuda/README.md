@@ -168,18 +168,24 @@ like you are calling a server to connect to some other servers on the server sid
  But there are problems of Cuda's heap size. Working on that.~~ That is too 
  slow and add extra dependencies (cuda driver). Forget it.
 
-## Conventions of Creating Objects 
+## Conventions of Object Memory Allocation 
 
 For the classes such as ImageCuda, there are some conventions to follow:
-- Create some thing when `Create` is directly called
-- When using functions such as `Upload`, `Downsample`, check if the object 
-exists, i.e., if it is with a `server_`. If not, create for it for sure. If 
-not, then we **CHOOSE TO CHECK SIZE**. If size meets then things are fine. If
- not, we **ABORT** and print an error. Note this is just a *strategy* or 
- *convention*. We can also choose to release it and create a new server.
-- Yet functions such as `Resize` should force to release and re-create objects.
- 
+- An object is uninitialized using the default constructor
+- `Create` command ONLY allocate space;
+- `Upload` command copy cpu objects (Image, cv::Mat) to gpu memory. If gpu 
+memory is not allocated, call `Create`; if it is allocated with the same size, 
+directly overwrite the memory with new data; if the size is incompatible, 
+report it as an error. 
+- `CopyFrom` command copy gpu objects (ImageCuda) to gpu memory. Size check 
+is also needed. 
+- Image processing such as `Downsample`, `Gaussian` follow the same 
+convention as `Upload`.  
 
+For the classes built upon ImageCuda, e.g. RGBDImageCuda, ImagePyramidCuda, 
+we only allow to `Build` from ImageCuda. This restriction simplify the 
+logistics.
+ 
 ## TODO
 
 - ~~Add reference-count for the servers? Actually maybe we can enable the 

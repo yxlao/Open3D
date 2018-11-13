@@ -41,7 +41,8 @@ public:
         SetIntrinsics(width, height, fx, fy, cx, cy);
     }
 
-    __HOST__ PinholeCameraIntrinsicCuda(PinholeCameraIntrinsic &intrinsic) {
+    __HOST__ explicit PinholeCameraIntrinsicCuda(
+        PinholeCameraIntrinsic &intrinsic) {
         width_ = intrinsic.width_;
         height_ = intrinsic.height_;
 

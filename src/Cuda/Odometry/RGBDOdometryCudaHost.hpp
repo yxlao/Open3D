@@ -14,14 +14,11 @@ namespace open3d {
  * constructors for such a large system...
  */
 template<size_t N>
-RGBDOdometryCuda<N>::RGBDOdometryCuda() {
-    server_ = std::make_shared<RGBDOdometryCudaServer<N>>();
-}
+RGBDOdometryCuda<N>::RGBDOdometryCuda() : server_(nullptr) {}
 
 template<size_t N>
 RGBDOdometryCuda<N>::~RGBDOdometryCuda() {
     Release();
-    server_ = nullptr;
 }
 
 template<size_t N>
@@ -29,29 +26,33 @@ void RGBDOdometryCuda<N>::SetParameters(float sigma,
                                         float depth_near_threshold,
                                         float depth_far_threshold,
                                         float depth_diff_threshold) {
-    server_->sigma_ = sigma;
-    server_->sqrt_coeff_D_ = sqrtf(sigma);
-    server_->sqrt_coeff_I_ = sqrtf(1 - sigma);
-    server_->depth_diff_threshold_ = depth_near_threshold;
-    server_->depth_far_threshold_ = depth_far_threshold;
-    server_->depth_diff_threshold_ = depth_diff_threshold;
+    sigma_ = sigma;
+    depth_near_threshold_ = depth_near_threshold;
+    depth_far_threshold_ = depth_far_threshold;
+    depth_diff_threshold_ = depth_diff_threshold;
 }
 
 template<size_t N>
 void RGBDOdometryCuda<N>::SetIntrinsics(PinholeCameraIntrinsic intrinsics) {
     intrinsics_ = intrinsics;
-    server_->intrinsics_[0] = PinholeCameraIntrinsicCuda(intrinsics);
-    for (size_t i = 1; i < N; ++i) {
-        server_->intrinsics_[i] = server_->intrinsics_[i - 1].Downsample();
-    }
 }
 
 template<size_t N>
-void RGBDOdometryCuda<N>::Create(int width, int height) {
+bool RGBDOdometryCuda<N>::Create(int width, int height) {
+    assert(width > 0 && height > 0);
+
     if (server_ != nullptr) {
-        PrintError("[RGBDOdometryCuda] Already created, abort!\n");
-        return;
+        if (source_[0].width_ != width || source_[0].height_ != height) {
+            PrintError("[RGBDOdometryCuda] Incompatible image size, "
+                       "width: %d vs %d, height: %d vs %d, "
+                       "@Create aborted.\n",
+                       source_[0].width_, width, source_[0].height_, height);
+            return false;
+        }
+        return true;
     }
+
+    server_ = std::make_shared<RGBDOdometryCudaServer<N>>();
 
     source_on_target_.Create(width, height);
 
@@ -63,6 +64,7 @@ void RGBDOdometryCuda<N>::Create(int width, int height) {
     results_.Create(29);
 
     UpdateServer();
+    return true;
 }
 
 template<size_t N>
@@ -75,19 +77,42 @@ void RGBDOdometryCuda<N>::Release() {
     source_on_target_.Release();
 
     results_.Release();
+
+    server_ = nullptr;
 }
 
 template<size_t N>
 void RGBDOdometryCuda<N>::UpdateServer() {
     if (server_ != nullptr) {
+        source_on_target_.UpdateServer();
         server_->source_on_target() = *source_on_target_.server();
 
+        source_.UpdateServer();
         server_->source() = *source_.server();
+
+        target_.UpdateServer();
         server_->target() = *target_.server();
+
+        target_dx_.UpdateServer();
         server_->target_dx() = *target_dx_.server();
+
+        target_dy_.UpdateServer();
         server_->target_dy() = *target_dy_.server();
 
         server_->results() = *results_.server();
+
+        /** Update parameters **/
+        server_->sigma_ = sigma_;
+        server_->sqrt_coeff_D_ = sqrtf(sigma_);
+        server_->sqrt_coeff_I_ = sqrtf(1 - sigma_);
+        server_->depth_near_threshold_ = depth_near_threshold_;
+        server_->depth_far_threshold_ = depth_far_threshold_;
+        server_->depth_diff_threshold_ = depth_diff_threshold_;
+
+        server_->intrinsics_[0] = PinholeCameraIntrinsicCuda(intrinsics_);
+        for (size_t i = 1; i < N; ++i) {
+            server_->intrinsics_[i] = server_->intrinsics_[i - 1].Downsample();
+        }
     }
 }
 
@@ -115,21 +140,18 @@ void RGBDOdometryCuda<N>::ExtractResults(std::vector<float> &results,
 template<size_t N>
 void RGBDOdometryCuda<N>::PrepareData(
     RGBDImageCuda &source, RGBDImageCuda &target) {
+    assert(source.width_ == target.width_);
+    assert(source.height_ == target.height_);
 
-    int source_width = source.depthf().width_;
-    int source_height = source.depthf().height_;
-    int target_width = target.depthf().width_;
-    int target_height = target.depthf().height_;
-    assert(source_width > 0 && source_height > 0);
-    assert(target_width > 0 && target_height > 0);
+    bool success = Create(source.width_, source.height_);
+    if (! success) {
+        PrintError("[RGBDOdometryCuda] create failed, "
+                   "@PrepareData aborted.\n");
+        return;
+    }
 
     source_.Build(source);
     target_.Build(target);
-
-    target_dx_.Create(source_width, source_height);
-    target_dy_.Create(target_width, target_height);
-    source_on_target_.Create(source_width, source_height);
-
     for (size_t i = 0; i < N; ++i) {
         target_[i].depthf().Sobel(target_dx_[i].depthf(),
                                   target_dy_[i].depthf(),
@@ -138,12 +160,6 @@ void RGBDOdometryCuda<N>::PrepareData(
                                      target_dy_[i].intensity(),
                                      false);
     }
-
-    target_dx_.UpdateServer();
-    target_dy_.UpdateServer();
-    source_on_target_.UpdateServer();
-
-    results_.Create(29);
     UpdateServer();
 }
 

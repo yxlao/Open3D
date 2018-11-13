@@ -20,7 +20,7 @@ void f() {
     std::string
         match_filename = "/home/wei/Work/data/apartment/data_association.txt";
     std::string
-        log_filename = "/home/wei/Work/data/apartment/trajectory.log";
+        log_filename = "/home/wei/Work/data/apartment/apartment.log";
 
     auto camera_trajectory = CreatePinholeCameraTrajectoryFromFile(log_filename);
     std::string dir_name = filesystem::GetFileParentDirectory(match_filename).c_str();
@@ -113,7 +113,7 @@ void f() {
                 save_index++;
             }
 
-            rgbd_prev.CopyFrom(rgbd_curr.depth_raw(), rgbd_curr.color());
+            rgbd_prev.CopyFrom(rgbd_curr);
             timer.Signal();
         }
     }
