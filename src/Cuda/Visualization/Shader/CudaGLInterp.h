@@ -45,7 +45,6 @@ bool RegisterResource(cudaGraphicsResource_t &cuda_graphics_resource,
                       GLuint &opengl_buffer,
                       T *cuda_vector,
                       size_t cuda_vector_size) {
-
     glGenBuffers(1, &opengl_buffer);
     glBindBuffer(opengl_buffer_type, opengl_buffer);
     glBufferData(opengl_buffer_type, sizeof(T) * cuda_vector_size,
