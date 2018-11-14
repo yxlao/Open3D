@@ -8,6 +8,7 @@
 #include "ImagePyramidCudaHost.hpp"
 #include "RGBDImagePyramidCudaHost.hpp"
 
+#include "PointCloudCudaHost.hpp"
 #include "TriangleMeshCudaHost.hpp"
 
 namespace open3d {

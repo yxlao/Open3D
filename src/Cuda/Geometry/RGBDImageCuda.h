@@ -20,6 +20,10 @@ private:
     ImageCudaServer<Vector1f> intensity_;
 
 public:
+    int width_;
+    int height_;
+
+public:
     __HOSTDEVICE__ ImageCudaServer<Vector1f> &depth() { return depth_; }
     __HOSTDEVICE__ ImageCudaServer<Vector3b> &color() { return color_; }
     __HOSTDEVICE__ ImageCudaServer<Vector1f> &intensity() { return intensity_; }

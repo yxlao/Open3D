@@ -34,6 +34,7 @@ enum VertexType {
     VertexWithNormal = 1,
     VertexWithColor = (1 << 1),
     VertexWithNormalAndColor = VertexWithNormal | VertexWithColor,
+    VertexAsSurfel = (1 << 2),
     VertexTypeUnknown = (1 << 30)
 };
 

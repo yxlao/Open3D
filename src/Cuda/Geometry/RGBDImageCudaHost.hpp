@@ -142,6 +142,9 @@ void RGBDImageCuda::Build(
 
 void RGBDImageCuda::UpdateServer() {
     if (server_ != nullptr) {
+        server_->width_ = width_;
+        server_->height_ = height_;
+
         depthf_.UpdateServer();
         server_->depth() = *depthf_.server();
 

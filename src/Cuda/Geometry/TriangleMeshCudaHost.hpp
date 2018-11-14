@@ -35,7 +35,7 @@ TriangleMeshCuda::TriangleMeshCuda(const TriangleMeshCuda &other)
     vertex_colors_ = other.vertex_colors();
 
     type_ = other.type_;
-    max_vertices_ = other.max_triangles_;
+    max_vertices_ = other.max_vertices_;
     max_triangles_ = other.max_triangles_;
 }
 

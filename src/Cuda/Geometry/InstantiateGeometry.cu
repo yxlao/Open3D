@@ -1,5 +1,6 @@
 #include "ImageCudaDevice.cuh"
 #include "ImageCudaKernel.cuh"
+#include "PointCloudCudaKernel.cuh"
 #include "TriangleMeshCudaKernel.cuh"
 #include "VectorCuda.h"
 #include <Cuda/Common/Common.h>
