@@ -45,5 +45,45 @@ bool TriangleMeshCudaRenderer::UpdateGeometry() {
     simpleblack_wireframe_shader_.InvalidateGeometry();
     return true;
 }
+
+
+bool PointCloudCudaRenderer::Render(const RenderOption &option,
+                                    const ViewControl &view) {
+    if (is_visible_ == false || geometry_ptr_->IsEmpty()) return true;
+    const auto &pcl = (const PointCloudCuda &)(*geometry_ptr_);
+    bool success = true;
+    if (pcl.HasNormals()) {
+        if (option.mesh_color_option_ ==
+            RenderOption::MeshColorOption::Normal) {
+            success &= normal_mesh_shader_.Render(pcl, option, view);
+        } else {
+            success &= phong_mesh_shader_.Render(pcl, option, view);
+        }
+    } else {
+        success &= simple_mesh_shader_.Render(pcl, option, view);
+    }
+    if (option.mesh_show_wireframe_) {
+        success &= simpleblack_wireframe_shader_.Render(pcl, option, view);
+    }
+    return success;
+}
+
+bool PointCloudCudaRenderer::AddGeometry(
+    std::shared_ptr<const Geometry> geometry_ptr) {
+    if (geometry_ptr->GetGeometryType() !=
+        Geometry::GeometryType::PointCloudCuda) {
+        return false;
+    }
+    geometry_ptr_ = geometry_ptr;
+    return UpdateGeometry();
+}
+
+bool PointCloudCudaRenderer::UpdateGeometry() {
+    normal_mesh_shader_.InvalidateGeometry();
+    phong_mesh_shader_.InvalidateGeometry();
+    simple_mesh_shader_.InvalidateGeometry();
+    simpleblack_wireframe_shader_.InvalidateGeometry();
+    return true;
+}
 }
 }

@@ -18,4 +18,5 @@ EXAMPLE_CUDA(ScalableSingleFrameMeshingCuda ${CMAKE_PROJECT_NAME})
 EXAMPLE_CUDA(UniformFusionSystemCuda ${CMAKE_PROJECT_NAME})
 EXAMPLE_CUDA(ScalableFusionSystemCuda ${CMAKE_PROJECT_NAME})
 EXAMPLE_CUDA(VisualizerSingleFrameCuda ${CMAKE_PROJECT_NAME})
+EXAMPLE_CUDA(VisualizerPointCloudCuda ${CMAKE_PROJECT_NAME})
 

@@ -28,6 +28,7 @@
 
 #include <GL/glew.h>
 #include <Core/Geometry/Geometry.h>
+#include <Cuda/Geometry/Geometry.h>
 
 #include <Visualization/Visualizer/ViewControl.h>
 #include <Visualization/Visualizer/RenderOption.h>

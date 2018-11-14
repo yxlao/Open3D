@@ -1,7 +1,7 @@
 //
 // Created by wei on 10/11/18.
 //
-
+#pragma once
 
 #include "GeometryClasses.h"
 #include "ImageCuda.h"

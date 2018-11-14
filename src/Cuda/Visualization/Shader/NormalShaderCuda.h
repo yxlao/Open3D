@@ -29,7 +29,6 @@
 #include <vector>
 #include <Eigen/Core>
 #include <Visualization/Shader/ShaderWrapper.h>
-#include <Cuda/Geometry/TriangleMeshCuda.h>
 
 #include <Cuda/Common/UtilsCuda.h>
 #include "CudaGLInterp.h"

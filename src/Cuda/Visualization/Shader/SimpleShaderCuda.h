@@ -49,13 +49,6 @@ protected:
 protected:
     bool Compile() final;
     void Release() final;
-    bool BindGeometry(const Geometry &geometry,
-        const RenderOption &option,
-                      const ViewControl &view) final;
-    bool RenderGeometry(const Geometry &geometry,
-        const RenderOption &option,
-                        const ViewControl &view) final;
-    void UnbindGeometry() final;
 
 protected:
     virtual bool PrepareRendering(const Geometry &geometry,
@@ -74,19 +67,48 @@ protected:
     GLuint vertex_color_buffer_;
     cudaGraphicsResource_t vertex_color_cuda_resource_;
 
-    GLuint triangle_buffer_;
-    cudaGraphicsResource_t triangle_cuda_resource_;
-
     GLuint MVP_;
+};
+
+class SimpleShaderForPointCloudCuda : public SimpleShaderCuda {
+public:
+    SimpleShaderForPointCloudCuda() :
+        SimpleShaderCuda("SimpleShaderForPointCloudCuda") {}
+
+protected:
+    bool BindGeometry(const Geometry &geometry,
+                      const RenderOption &option,
+                      const ViewControl &view) final;
+    bool RenderGeometry(const Geometry &geometry,
+                        const RenderOption &option,
+                        const ViewControl &view) final;
+    void UnbindGeometry() final;
+    bool PrepareRendering(const Geometry &geometry,
+                          const RenderOption &option,
+                          const ViewControl &view) final;
+    bool PrepareBinding(const Geometry &geometry,
+                        const RenderOption &option,
+                        const ViewControl &view) final;
 };
 
 class SimpleShaderForTriangleMeshCuda : public SimpleShaderCuda
 {
+protected:
+    GLuint triangle_buffer_;
+    cudaGraphicsResource_t triangle_cuda_resource_;
+
 public:
     SimpleShaderForTriangleMeshCuda() :
         SimpleShaderCuda("SimpleShaderForTriangleMeshCuda") {}
 
 protected:
+    bool BindGeometry(const Geometry &geometry,
+                              const RenderOption &option,
+                              const ViewControl &view) final;
+    bool RenderGeometry(const Geometry &geometry,
+                                const RenderOption &option,
+                                const ViewControl &view) final;
+    void UnbindGeometry() final;
     bool PrepareRendering(const Geometry &geometry,
                           const RenderOption &option,
                           const ViewControl &view) final;
