@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "RGBDOdometryCuda.h"
+#include "SequentialRGBDOdometryCuda.h"
 
 #include <Cuda/Common/UtilsCuda.h>
 #include <Cuda/Geometry/ImageCudaDevice.cuh>

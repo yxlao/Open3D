@@ -2,7 +2,7 @@
 // Created by wei on 10/4/18.
 //
 
-#include "RGBDOdometryCuda.h"
+#include "SequentialRGBDOdometryCuda.h"
 #include "RGBDOdometryCudaDevice.cuh"
 #include "RGBDOdometryCudaKernel.cuh"
 #include "Reduction2DCudaKernel.cuh"

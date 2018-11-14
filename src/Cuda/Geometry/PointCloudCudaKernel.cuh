@@ -168,12 +168,12 @@ void TransformKernel(PointCloudCudaServer server, TransformCuda transform) {
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
     if (idx >= server.points().size()) return;
 
-    Vector3f &vertex_position = server.points()[idx];
-    vertex_position = transform * vertex_position;
+    Vector3f &position = server.points()[idx];
+    position = transform * position;
 
     if (server.type_ & VertexWithNormal) {
-        Vector3f &vertex_normal = server.normals()[idx];
-        vertex_normal = transform.Rotate(vertex_normal);
+        Vector3f &normal = server.normals()[idx];
+        normal = transform.Rotate(normal);
     }
 }
 

@@ -201,12 +201,23 @@ bool Visualizer::CreateVisualizerWindow(const std::string &window_name/* = "Open
 
 void Visualizer::DestroyVisualizerWindow() {
     is_initialized_ = false;
+    /** Unbind everything BEFORE context is destroyed.
+     * Otherwise CUDA OpenGL interpolation will crash **/
+    for (auto & renderer_ptr : geometry_renderer_ptrs_) {
+        renderer_ptr->UpdateGeometry();
+    }
     glfwDestroyWindow(window_);
 }
 
 void Visualizer::RegisterAnimationCallback(
     std::function<bool(Visualizer *)> callback_func) {
     animation_callback_func_ = callback_func;
+}
+
+void Visualizer::RegisterKeyCallback(
+    int key, std::function<bool(Visualizer *)> callback_func) {
+    custom_key_callback_key_ = key;
+    custom_key_callback_func_ = callback_func;
 }
 
 bool Visualizer::InitViewControl() {

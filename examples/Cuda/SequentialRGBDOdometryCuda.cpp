@@ -6,7 +6,7 @@
 #include <vector>
 #include <Core/Core.h>
 #include <IO/IO.h>
-#include <Cuda/Odometry/RGBDOdometryCuda.h>
+#include <Cuda/Odometry/SequentialRGBDOdometryCuda.h>
 #include <Cuda/Integration/ScalableTSDFVolumeCuda.h>
 #include <Cuda/Integration/ScalableMeshVolumeCuda.h>
 #include <Visualization/Visualization.h>
@@ -18,9 +18,9 @@ void f() {
     SetVerbosityLevel(VerbosityLevel::VerboseDebug);
 
     std::string
-        match_filename = "/home/wei/Work/data/apartment/data_association.txt";
+        match_filename = "/home/wei/Work/data/lounge/data_association.txt";
     std::string
-        log_filename = "/home/wei/Work/data/apartment/apartment.log";
+        log_filename = "/home/wei/Work/data/lounge/lounge_trajectory.log";
 
     auto camera_trajectory = CreatePinholeCameraTrajectoryFromFile(log_filename);
     std::string dir_name = filesystem::GetFileParentDirectory(match_filename).c_str();
@@ -61,7 +61,6 @@ void f() {
         PrintWarning("Failed creating OpenGL window.\n");
         return;
     }
-    visualizer.GetRenderOption().mesh_show_back_face_ = true;
     visualizer.BuildUtilities();
     visualizer.UpdateWindowTitle();
 

@@ -58,11 +58,13 @@ public:
     __DEVICE__
     VecType BoxFilter2x2(int x, int y);
     __DEVICE__
-    VecType BoxFilter2x2WithHoles(int x, int y);
+    VecType BoxFilter2x2WithHoles(int x, int y, float threshold = 0.3f
+        /* workaround for depth images */);
     __DEVICE__
     VecType GaussianFilter(int x, int y, int kernel_idx);
     __DEVICE__
-    VecType GaussianFilterWithHoles(int x, int y, int kernel_idx);
+    VecType GaussianFilterWithHoles(int x, int y, int kernel_idx,
+        float threshold = 0.3f /* workaround for depth images */);
     __DEVICE__
     VecType BilateralFilter(int x, int y, int kernel_idx, float val_sigma);
     __DEVICE__

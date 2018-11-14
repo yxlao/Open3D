@@ -158,6 +158,7 @@ void PointCloudCuda::UpdateServer() {
 
 void PointCloudCuda::Build(RGBDImageCuda &rgbd,
                            PinholeCameraIntrinsicCuda &intrinsic) {
+    Reset();
     PointCloudCudaKernelCaller::BuildFromRGBDImageKernelCaller(
         *server_, *rgbd.server(), intrinsic);
     if (type_ & VertexWithColor) {
@@ -167,6 +168,7 @@ void PointCloudCuda::Build(RGBDImageCuda &rgbd,
 
 void PointCloudCuda::Build(ImageCuda<Vector1f> &depth,
                            PinholeCameraIntrinsicCuda &intrinsic) {
+    Reset();
     PointCloudCudaKernelCaller::BuildFromDepthImageKernelCaller(
         *server_, *depth.server(), intrinsic);
 }

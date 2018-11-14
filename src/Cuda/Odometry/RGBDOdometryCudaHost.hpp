@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "RGBDOdometryCuda.h"
+#include "SequentialRGBDOdometryCuda.h"
 #include <sophus/se3.hpp>
 
 namespace open3d {
@@ -164,45 +164,49 @@ void RGBDOdometryCuda<N>::PrepareData(
 }
 
 template<size_t N>
+void RGBDOdometryCuda<N>::ApplyOneIterationOnLevel(size_t level, int iter) {
+    results_.Memset(0);
+
+#ifdef VISUALIZE_ODOMETRY_INLIERS
+    source_on_target_[level].CopyFrom(target_[level].intensity());
+#endif
+    server_->transform_source_to_target_.FromEigen(
+        transform_source_to_target_);
+
+    RGBDOdometryCudaKernelCaller<N>::ApplyRGBDOdometryKernelCaller(
+        *server_, level,
+        source_[level].depthf().width_,
+        source_[level].depthf().height_);
+
+#ifdef VISUALIZE_ODOMETRY_INLIERS
+    cv::Mat im = source_on_target_[level].DownloadMat();
+        cv::imshow("source_on_target", im);
+        cv::waitKey(-1);
+#endif
+
+    std::vector<float> results = results_.DownloadAll();
+
+    EigenMatrix6d JtJ;
+    EigenVector6d Jtr;
+    float error, inliers;
+    ExtractResults(results, JtJ, Jtr, error, inliers);
+
+    PrintDebug("> Level %d, iter %d: error = %f, avg_error = %f, "
+               "inliers = %.0f\n",
+               level, iter, error, error / inliers, inliers);
+
+    EigenVector6d dxi = JtJ.ldlt().solve(-Jtr);
+    transform_source_to_target_ =
+        Sophus::SE3d::exp(dxi).matrix() * transform_source_to_target_;
+}
+
+template<size_t N>
 void RGBDOdometryCuda<N>::Apply() {
 
     const int kIterations[] = {3, 5, 10};
     for (int level = (int) (N - 1); level >= 0; --level) {
         for (int iter = 0; iter < kIterations[level]; ++iter) {
-            results_.Memset(0);
-
-#ifdef VISUALIZE_ODOMETRY_INLIERS
-            source_on_target_[level].CopyFrom(target_[level].intensity());
-#endif
-            server_->transform_source_to_target_.FromEigen(
-                transform_source_to_target_);
-
-            RGBDOdometryCudaKernelCaller<N>::ApplyRGBDOdometryKernelCaller(
-                *server_, level,
-                source_[level].depthf().width_,
-                source_[level].depthf().height_);
-
-#ifdef VISUALIZE_ODOMETRY_INLIERS
-            cv::Mat im = source_on_target_[level].DownloadMat();
-            cv::imshow("source_on_target", im);
-            cv::waitKey(-1);
-#endif
-
-            std::vector<float> results = results_.DownloadAll();
-
-            EigenMatrix6d JtJ;
-            EigenVector6d Jtr;
-            float error, inliers;
-            ExtractResults(results, JtJ, Jtr, error, inliers);
-
-            PrintDebug("> Level %d, iter %d: error = %f, avg_error = %f, "
-                       "inliers = %.0f\n",
-                       level, iter, error, error / inliers, inliers);
-
-            EigenVector6d dxi = JtJ.ldlt().solve(-Jtr);
-            transform_source_to_target_ =
-                Sophus::SE3d::exp(dxi).matrix() * transform_source_to_target_;
-
+            ApplyOneIterationOnLevel((size_t) level, iter);
         }
     }
 }

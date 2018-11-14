@@ -118,7 +118,8 @@ VecType ImageCudaServer<VecType>::BoxFilter2x2(int x, int y) {
 
 template<typename VecType>
 __device__
-VecType ImageCudaServer<VecType>::BoxFilter2x2WithHoles(int x, int y) {
+VecType ImageCudaServer<VecType>::BoxFilter2x2WithHoles(
+    int x, int y, float threshold) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_);
     assert(y >= 0 && y < height_);
@@ -129,26 +130,32 @@ VecType ImageCudaServer<VecType>::BoxFilter2x2WithHoles(int x, int y) {
 
     auto sum_val = VecType::VecTypef::Zeros();
     float cnt = 0.0;
-    VecType val;
+    bool is_valid;
+    VecType val0, val;
     VecType zero = VecType(0);
 
-    val = at(x, y);
-    sum_val += val.ToVectorf();
-    cnt += (val == zero) ? 0.0f : 1.0f;
+    val0 = at(x, y);
+    if (val0 == zero) return zero;
+    sum_val += val0.ToVectorf();
+    cnt += 1.0f;
 
+    /** Check neighbors **/
     val = at(x, yp1);
-    sum_val += val.ToVectorf();
-    cnt += (val == zero) ? 0.0f : 1.0f;
+    is_valid = (val != zero && (val - val0).norm() < threshold);
+    sum_val += is_valid ? val.ToVectorf() : VecType::VecTypef::Zeros();
+    cnt += is_valid ? 1.0f : 0.0f;
 
     val = at(xp1, y);
-    sum_val += val.ToVectorf();
-    cnt += (val == zero) ? 0.0f : 1.0f;
+    is_valid = (val != zero && (val - val0).norm() < threshold);
+    sum_val += is_valid ? val.ToVectorf() : VecType::VecTypef::Zeros();
+    cnt += is_valid ? 1.0f : 0.0f;
 
     val = at(xp1, yp1);
-    sum_val += val.ToVectorf();
-    cnt += (val == zero) ? 0.0f : 1.0f;
+    is_valid = (val != zero && (val - val0).norm() < threshold);
+    sum_val += is_valid ? val.ToVectorf() : VecType::VecTypef::Zeros();
+    cnt += is_valid ? 1.0f : 0.0f;
 
-    return cnt == 0 ? VecType(0) : VecType::FromVectorf(sum_val / cnt);
+    return VecType::FromVectorf(sum_val / cnt);
 }
 
 template<typename VecType>
@@ -195,7 +202,7 @@ VecType ImageCudaServer<VecType>::GaussianFilter(int x, int y, int kernel_idx) {
 template<typename VecType>
 __device__
 VecType ImageCudaServer<VecType>::GaussianFilterWithHoles(
-    int x, int y, int kernel_idx) {
+    int x, int y, int kernel_idx, float threshold) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_);
     assert(y >= 0 && y < height_);
@@ -210,7 +217,8 @@ VecType ImageCudaServer<VecType>::GaussianFilterWithHoles(
 
     /** If it is already a hole, leave it alone **/
     VecType zero = VecType(0);
-    if (at(x, y) == zero) return zero;
+    auto &val0 = at(x, y);
+    if (val0 == zero) return zero;
 
     const int kernel_size = kernel_sizes[kernel_idx];
     const int kernel_size_2 = kernel_size >> 1;
@@ -228,9 +236,11 @@ VecType ImageCudaServer<VecType>::GaussianFilterWithHoles(
         for (int yy = y_min; yy <= y_max; ++yy) {
             VecType val = at(xx, yy);
             auto valf = val.ToVectorf();
-            float weight = kernel[abs(xx - x)] * kernel[abs(yy - y)];
+
+            float weight = (val == zero || (val - val0).norm() > threshold)
+                           ? 0 : kernel[abs(xx - x)] * kernel[abs(yy - y)];
             sum_val += valf * weight;
-            sum_weight += (val == zero) ? 0 : weight;
+            sum_weight += weight;
         }
     }
 

@@ -223,7 +223,7 @@ void Visualizer::KeyPressCallback(GLFWwindow *window,
             UpdateGeometry();
             PrintDebug("[Visualizer] Color map set to GRAY.\n");
         } else {
-            render_option_ptr_->point_color_option_ = 
+            render_option_ptr_->point_color_option_ =
                     RenderOption::PointColorOption::Default;
             UpdateGeometry();
             PrintDebug("[Visualizer] Point color set to DEFAULT.\n");
@@ -231,7 +231,7 @@ void Visualizer::KeyPressCallback(GLFWwindow *window,
         break;
     case GLFW_KEY_1:
         if (mods & GLFW_MOD_CONTROL) {
-            render_option_ptr_->mesh_color_option_ = 
+            render_option_ptr_->mesh_color_option_ =
                     RenderOption::MeshColorOption::Color;
             UpdateGeometry();
             PrintDebug("[Visualizer] Mesh color set to COLOR.\n");
@@ -312,6 +312,9 @@ void Visualizer::KeyPressCallback(GLFWwindow *window,
         }
         break;
     default:
+        if (key == custom_key_callback_key_) {
+            custom_key_callback_func_(this);
+        }
         break;
     }
 
