@@ -321,7 +321,15 @@ void ScalableMeshVolumeCudaServer<N>::ExtractTriangle(
                 Xlocal(0) + edge_shift[edge][0],
                 Xlocal(1) + edge_shift[edge][1],
                 Xlocal(2) + edge_shift[edge][2]);
-            tri_vertex_indices(vertex) = vertex_indices(
+
+            /**
+             * Image coordinate system is different from OpenGL,
+             * so clockwise becomes counter-clockwise.
+             * Native Open3d use this: 0 1 2 -> 0 2 1
+             * in ScalableTSDFVolume @ExtractTriangleMesh
+             * Similarly, we use this: 0 1 2 -> 2 1 0
+             */
+            tri_vertex_indices(2 - vertex) = vertex_indices(
                 Xlocal_edge_holder, subvolume_idx)(edge_shift[edge][3]);
         }
         mesh_.triangles().push_back(tri_vertex_indices);
@@ -362,7 +370,7 @@ void ScalableMeshVolumeCudaServer<N>::ExtractTriangleOnBoundary(
 #endif
             Vector3i Xlocal_edge_holder_in_neighbor =
                 BoundaryVoxelInNeighbor(Xlocal_edge_holder, dXsv_edge_holder);
-            tri_vertex_indices(vertex) = vertex_indices(
+            tri_vertex_indices(2 - vertex) = vertex_indices(
                 Xlocal_edge_holder_in_neighbor, neighbor_subvolume_idx)(
                 edge_shift[edge][3]);
         }

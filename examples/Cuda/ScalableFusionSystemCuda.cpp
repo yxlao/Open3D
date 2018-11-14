@@ -76,7 +76,6 @@ int main(int argc, char *argv[]) {
         PrintWarning("Failed creating OpenGL window.\n");
         return 0;
     }
-    visualizer.GetRenderOption().mesh_show_back_face_ = true;
     visualizer.BuildUtilities();
     visualizer.UpdateWindowTitle();
 

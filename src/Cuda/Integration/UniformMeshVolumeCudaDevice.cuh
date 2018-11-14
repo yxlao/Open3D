@@ -137,7 +137,15 @@ inline void UniformMeshVolumeCudaServer<N>::ExtractTriangle(
             Vector3i X_edge_holder = Vector3i(X(0) + edge_shift[edge][0],
                                               X(1) + edge_shift[edge][1],
                                               X(2) + edge_shift[edge][2]);
-            tri_vertex_indices(vertex) = vertex_indices(
+
+            /**
+             * Image coordinate system is different from OpenGL,
+             * so clockwise becomes counter-clockwise.
+             * Native Open3d use this: 0 1 2 -> 0 2 1
+             * in ScalableTSDFVolume @ExtractTriangleMesh
+             * Similarly, we use this: 0 1 2 -> 2 1 0.
+             */
+            tri_vertex_indices(2 - vertex) = vertex_indices(
                 X_edge_holder)(edge_shift[edge][3]);
         }
         mesh_.triangles().push_back(tri_vertex_indices);

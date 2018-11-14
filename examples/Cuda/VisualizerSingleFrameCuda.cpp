@@ -78,7 +78,6 @@ int main(int argc, char **argv)
     visualizer.GetRenderOption().show_coordinate_frame_ = true;
     visualizer.GetRenderOption().mesh_color_option_ =
         RenderOption::MeshColorOption::Normal;
-    visualizer.GetRenderOption().mesh_show_back_face_ = true;
     visualizer.BuildUtilities();
     visualizer.UpdateWindowTitle();
 
@@ -87,6 +86,8 @@ int main(int argc, char **argv)
         should_close = !visualizer.PollEvents();
     }
     visualizer.DestroyVisualizerWindow();
+
+    WriteTriangleMeshToPLY("test_face.ply", *mesher.mesh().Download());
 
     return 1;
 }
