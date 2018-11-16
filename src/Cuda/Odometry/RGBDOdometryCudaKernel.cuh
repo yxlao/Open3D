@@ -115,7 +115,7 @@ void ApplyRGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry, size_t level) {
         __syncthreads();
     }
 
-    /** Reduce Sum residual and inlier **/
+    /** Reduce Sum loss and inlier **/
 #define OFFSET2 27
     {
 
@@ -141,8 +141,8 @@ void ApplyRGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry, size_t level) {
         }
 
         if (tid == 0) {
-            atomicAdd(&odometry.results().at(OFFSET2 + 0), local_sum0[0]);
-            atomicAdd(&odometry.results().at(OFFSET2 + 1), local_sum1[0]);
+            atomicAdd(&odometry.results().at(0 + OFFSET2), local_sum0[0]);
+            atomicAdd(&odometry.results().at(1 + OFFSET2), local_sum1[0]);
         }
         __syncthreads();
     }

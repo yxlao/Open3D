@@ -68,7 +68,7 @@ int main(int argc, char **argv)
     std::shared_ptr<TriangleMeshCuda> mesh =
         std::make_shared<TriangleMeshCuda>(mesher.mesh());
 
-    VisualizerWithCustomAnimation visualizer;
+    VisualizerWithKeyCallback visualizer;
     if (! visualizer.CreateVisualizerWindow("Visualizer", 640, 480, 0, 0)) {
         PrintWarning("Failed creating OpenGL window.\n");
         return 0;

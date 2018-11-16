@@ -28,8 +28,8 @@ int main(int argc, char**argv) {
     /** Load data **/
     std::string base_path = "/home/wei/Work/data/lounge/";
     Image source_color, source_depth, target_color, target_depth;
-    ReadImage(base_path + "image/000003.png", source_color);
-    ReadImage(base_path + "depth/000003.png", source_depth);
+    ReadImage(base_path + "image/000004.png", source_color);
+    ReadImage(base_path + "depth/000004.png", source_depth);
     ReadImage(base_path + "image/000001.png", target_color);
     ReadImage(base_path + "depth/000001.png", target_depth);
 
@@ -41,7 +41,7 @@ int main(int argc, char**argv) {
     RGBDOdometryCuda<3> odometry;
     odometry.SetIntrinsics(PinholeCameraIntrinsic(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault));
-    odometry.SetParameters(0.0f, 0.1f, 4.0f, 0.07f);
+    odometry.SetParameters(0.2f, 0.1f, 4.0f, 0.07f);
     odometry.PrepareData(source, target);
     odometry.transform_source_to_target_ = Eigen::Matrix4d::Identity();
 
@@ -56,7 +56,7 @@ int main(int argc, char**argv) {
     pcl_target->colors().Fill(Vector3f(1, 1, 0));
 
     /** Prepare visualizer **/
-    VisualizerWithCustomAnimation visualizer;
+    VisualizerWithKeyCallback visualizer;
     if (!visualizer.CreateVisualizerWindow("ScalableFusion", 640, 480, 0, 0)) {
         PrintWarning("Failed creating OpenGL window.\n");
         return -1;
@@ -66,15 +66,18 @@ int main(int argc, char**argv) {
     visualizer.AddGeometry(pcl_source);
     visualizer.AddGeometry(pcl_target);
 
+    std::vector<float> losses[3];
     visualizer.RegisterKeyCallback(GLFW_KEY_SPACE, [&](Visualizer* vis) {
-        static const int kIterations[] = {3, 5, 10};
+        static const int kIterations[3] = {100, 100, 100};
         static bool finished = false;
         static int level = 2;
         static int iter = kIterations[level];
         static Eigen::Matrix4d prev_transform = Eigen::Matrix4d::Identity();
 
         if (! finished) {
-            odometry.ApplyOneIterationOnLevel(level, iter);
+            float loss = odometry.ApplyOneIterationOnLevel(level, iter);
+            losses[level].push_back(loss);
+
             pcl_source->Transform(
                 odometry.transform_source_to_target_ * prev_transform.inverse());
             prev_transform = odometry.transform_source_to_target_;
@@ -91,7 +94,7 @@ int main(int argc, char**argv) {
             }
         }
 
-        return true;
+        return !finished;
     });
 
     bool should_close = false;

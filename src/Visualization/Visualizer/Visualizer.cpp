@@ -214,12 +214,6 @@ void Visualizer::RegisterAnimationCallback(
     animation_callback_func_ = callback_func;
 }
 
-void Visualizer::RegisterKeyCallback(
-    int key, std::function<bool(Visualizer *)> callback_func) {
-    custom_key_callback_key_ = key;
-    custom_key_callback_func_ = callback_func;
-}
-
 bool Visualizer::InitViewControl() {
     view_control_ptr_ = std::unique_ptr<ViewControl>(new ViewControl);
     ResetViewPoint();

@@ -312,9 +312,6 @@ void Visualizer::KeyPressCallback(GLFWwindow *window,
         }
         break;
     default:
-        if (key == custom_key_callback_key_) {
-            custom_key_callback_func_(this);
-        }
         break;
     }
 

@@ -151,12 +151,12 @@ public:
 
     void PrepareData(RGBDImageCuda &source, RGBDImageCuda &target);
 
-    void ApplyOneIterationOnLevel(size_t level, int iter);
+    float ApplyOneIterationOnLevel(size_t level, int iter);
     void Apply();
 
     void ExtractResults(std::vector<float> &results,
                         EigenMatrix6d &JtJ, EigenVector6d &Jtr,
-                        float &error, float &inliers);
+                        float &loss, float &inliers);
 
     RGBDImagePyramidCuda<N> &source() { return source_; }
     RGBDImagePyramidCuda<N> &target() { return target_; }

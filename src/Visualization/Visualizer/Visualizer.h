@@ -81,11 +81,6 @@ public:
     void RegisterAnimationCallback(
             std::function<bool(Visualizer *)> callback_func);
 
-    /// > Temporary solution by, adding a key callback
-    /// > TODO: check if there is any conflicts.
-    void RegisterKeyCallback(
-        int key, std::function<bool(Visualizer *)> callback_func);
-
     /// Function to activate the window
     /// This function will block the current thread until the window is closed.
     void Run();
@@ -186,9 +181,6 @@ protected:
     // callback function it is still safe.
     std::function<bool(Visualizer *)> animation_callback_func_in_loop_
         = nullptr;
-
-    int custom_key_callback_key_;
-    std::function<bool(Visualizer *)> custom_key_callback_func_ = nullptr;
 
     // control
     MouseControl mouse_control_;

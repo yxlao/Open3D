@@ -120,7 +120,7 @@ template<size_t N>
 void RGBDOdometryCuda<N>::ExtractResults(std::vector<float> &results,
                                          EigenMatrix6d &JtJ,
                                          EigenVector6d &Jtr,
-                                         float &error, float &inliers) {
+                                         float &loss, float &inliers) {
     int cnt = 0;
     for (int i = 0; i < 6; ++i) {
         for (int j = i; j < 6; ++j) {
@@ -132,7 +132,7 @@ void RGBDOdometryCuda<N>::ExtractResults(std::vector<float> &results,
         Jtr(i) = results[cnt];
         ++cnt;
     }
-    error = results[cnt];
+    loss = results[cnt];
     ++cnt;
     inliers = results[cnt];
 }
@@ -164,7 +164,7 @@ void RGBDOdometryCuda<N>::PrepareData(
 }
 
 template<size_t N>
-void RGBDOdometryCuda<N>::ApplyOneIterationOnLevel(size_t level, int iter) {
+float RGBDOdometryCuda<N>::ApplyOneIterationOnLevel(size_t level, int iter) {
     results_.Memset(0);
 
 #ifdef VISUALIZE_ODOMETRY_INLIERS
@@ -188,22 +188,24 @@ void RGBDOdometryCuda<N>::ApplyOneIterationOnLevel(size_t level, int iter) {
 
     EigenMatrix6d JtJ;
     EigenVector6d Jtr;
-    float error, inliers;
-    ExtractResults(results, JtJ, Jtr, error, inliers);
+    float loss, inliers;
+    ExtractResults(results, JtJ, Jtr, loss, inliers);
 
-    PrintDebug("> Level %d, iter %d: error = %f, avg_error = %f, "
+    PrintDebug("> Level %d, iter %d: loss = %f, avg loss = %f, "
                "inliers = %.0f\n",
-               level, iter, error, error / inliers, inliers);
+               level, iter, loss, loss / inliers, inliers);
 
     EigenVector6d dxi = JtJ.ldlt().solve(-Jtr);
     transform_source_to_target_ =
         Sophus::SE3d::exp(dxi).matrix() * transform_source_to_target_;
+
+    return loss;
 }
 
 template<size_t N>
 void RGBDOdometryCuda<N>::Apply() {
 
-    const int kIterations[] = {3, 5, 10};
+    const int kIterations[] = {3, 15, 60};
     for (int level = (int) (N - 1); level >= 0; --level) {
         for (int iter = 0; iter < kIterations[level]; ++iter) {
             ApplyOneIterationOnLevel((size_t) level, iter);

@@ -18,9 +18,12 @@ EXAMPLE_CUDA(ScalableSingleFrameMeshingCuda ${CMAKE_PROJECT_NAME})
 EXAMPLE_CUDA(UniformFusionSystemCuda ${CMAKE_PROJECT_NAME})
 EXAMPLE_CUDA(ScalableFusionSystemCuda ${CMAKE_PROJECT_NAME})
 
-EXAMPLE_CUDA(VisualizerSingleFrameCuda ${CMAKE_PROJECT_NAME})
-EXAMPLE_CUDA(VisualizerPointCloudCuda ${CMAKE_PROJECT_NAME})
-
-EXAMPLE_CPP(TwoFrameRGBDOdometryCuda ${CMAKE_PROJECT_NAME})
 EXAMPLE_CUDA(SequentialRGBDOdometryCuda ${CMAKE_PROJECT_NAME})
+EXAMPLE_CUDA(ProfileRGBDOdometryCuda ${CMAKE_PROJECT_NAME})
+
+EXAMPLE_CUDA(VisualizeSingleFramePointCloudCuda ${CMAKE_PROJECT_NAME})
+EXAMPLE_CUDA(VisualizeSingleFrameMeshingCuda ${CMAKE_PROJECT_NAME})
+EXAMPLE_CPP(VisualizeTwoFrameRGBDOdometryCuda ${CMAKE_PROJECT_NAME})
+
+
 
