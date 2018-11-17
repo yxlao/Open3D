@@ -50,6 +50,8 @@ public:
     ArrayCuda<T> &operator=(const ArrayCuda<T> &other);
     ~ArrayCuda();
 
+    void Resize(int max_capacity);
+
     void Create(int max_capacity);
     void Release();
 

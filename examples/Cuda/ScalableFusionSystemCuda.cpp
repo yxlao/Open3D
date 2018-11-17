@@ -39,9 +39,9 @@ int main(int argc, char *argv[]) {
     SetVerbosityLevel(VerbosityLevel::VerboseDebug);
 
     std::string
-        match_filename = "/home/wei/Work/data/apartment/data_association.txt";
+        match_filename = "/home/wei/Work/data/stanford/lounge/data_association.txt";
     std::string
-        log_filename = "/home/wei/Work/data/apartment/apartment.log";
+        log_filename = "/home/wei/Work/data/stanford/lounge/lounge_trajectory.log";
 
     auto camera_trajectory = CreatePinholeCameraTrajectoryFromFile(log_filename);
     std::string dir_name = filesystem::GetFileParentDirectory(match_filename).c_str();
