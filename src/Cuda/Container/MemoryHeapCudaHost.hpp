@@ -44,6 +44,31 @@ MemoryHeapCuda<T>& MemoryHeapCuda<T>::operator=(
 }
 
 template<typename T>
+void MemoryHeapCuda<T>::Resize(int new_max_capacity) {
+    assert(max_capacity_ < new_max_capacity);
+
+    auto new_server = std::make_shared<MemoryHeapCudaServer<T>>();
+    new_server->max_capacity_ = new_max_capacity;
+    CheckCuda(cudaMalloc(&new_server->heap_counter_, sizeof(int)));
+    CheckCuda(cudaMalloc(&new_server->heap_, sizeof(int) * new_max_capacity));
+    CheckCuda(cudaMalloc(&new_server->data_, sizeof(T) * new_max_capacity));
+
+    MemoryHeapCudaKernelCaller<T>::ResizeMemoryHeapKernelCaller(
+        *server_, *new_server, new_max_capacity);
+
+    CheckCuda(cudaFree(server_->heap_counter_));
+    CheckCuda(cudaFree(server_->heap_));
+    CheckCuda(cudaFree(server_->data_));
+
+    server_->heap_counter_ = new_server->heap_counter();
+    server_->heap_ = new_server->heap();
+    server_->data_ = new_server->data();
+    server_->max_capacity_ = new_max_capacity;
+
+    max_capacity_ = new_max_capacity;
+}
+
+template<typename T>
 void MemoryHeapCuda<T>::Create(int max_capacity) {
     assert(max_capacity > 0);
 
@@ -81,6 +106,8 @@ void MemoryHeapCuda<T>::Reset() {
 
     MemoryHeapCudaKernelCaller<T>::
     ResetMemoryHeapKernelCaller(*server_, max_capacity_);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
 
     int heap_counter = 0;
     CheckCuda(cudaMemcpy(server_->heap_counter_, &heap_counter,

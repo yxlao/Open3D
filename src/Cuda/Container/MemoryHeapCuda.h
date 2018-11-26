@@ -49,6 +49,9 @@ public:
     __HOSTDEVICE__ inline int* heap() {
         return heap_;
     }
+    __HOSTDEVICE__ inline int *heap_counter() {
+        return heap_counter_;
+    }
 
     __DEVICE__ int Malloc();
     __DEVICE__ void Free(size_t addr);
@@ -75,6 +78,7 @@ public:
     MemoryHeapCuda(const MemoryHeapCuda<T> &other);
     MemoryHeapCuda<T> &operator=(const MemoryHeapCuda<T> &other);
 
+    void Resize(int max_capacity);
     void Create(int max_capacity);
     void Release();
     void Reset();
@@ -96,10 +100,19 @@ class MemoryHeapCudaKernelCaller {
 public:
     static __HOST__ void ResetMemoryHeapKernelCaller(
         MemoryHeapCudaServer<T>& server, int max_capacity);
+    static __HOST__ void ResizeMemoryHeapKernelCaller(
+        MemoryHeapCudaServer<T>& server,
+        MemoryHeapCudaServer<T>& dst,
+        int new_max_capacity);
 };
 
 template<class T>
 __GLOBAL__
 void ResetMemoryHeapKernel(MemoryHeapCudaServer<T> server);
+
+template<typename T>
+__GLOBAL__
+void ResizeMemoryHeapKernel(MemoryHeapCudaServer<T> src,
+                            MemoryHeapCudaServer<T> dst);
 
 };

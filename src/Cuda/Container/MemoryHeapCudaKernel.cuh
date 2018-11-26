@@ -26,4 +26,33 @@ void MemoryHeapCudaKernelCaller<T>::ResetMemoryHeapKernelCaller(
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
+
+template<typename T>
+__global__
+void ResizeMemoryHeapKernel(MemoryHeapCudaServer<T> src, /* old size */
+                            MemoryHeapCudaServer<T> dst  /* new size */) {
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i == 0) {
+        *dst.heap_counter() = *src.heap_counter();
+    }
+    if (i < src.max_capacity_) {
+        dst.value_at(i) = src.value_at(i);
+        dst.internal_addr_at(i) = src.internal_addr_at(i);
+    } else if (i < dst.max_capacity_) {
+        dst.value_at(i) = T();
+        dst.internal_addr_at(i) = i;
+    }
+}
+
+template<typename T>
+void MemoryHeapCudaKernelCaller<T>::ResizeMemoryHeapKernelCaller(
+    MemoryHeapCudaServer<T> &server, MemoryHeapCudaServer<T> &dst,
+    int new_max_capacity) {
+    const int blocks = DIV_CEILING(new_max_capacity, THREAD_1D_UNIT);
+    const int threads = THREAD_1D_UNIT;
+
+    ResizeMemoryHeapKernel << < blocks, threads >> > (server, dst);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+}
 }

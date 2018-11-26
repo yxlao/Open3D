@@ -13,6 +13,8 @@
 
 namespace open3d {
 
+/** TODO: implement Cuckoo Hashing **/
+
 /**
  * Taken from Niessner, et al, 2013
  * Real-time 3D Reconstruction at Scale using Voxel Hashing
