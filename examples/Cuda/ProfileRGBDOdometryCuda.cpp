@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
     using namespace open3d;
 
     /** Load data **/
-    std::string base_path = "/home/wei/Work/data/lounge/";
+    std::string base_path = "/home/wei/Work/data/stanford/lounge/";
     Image source_color, source_depth, target_color, target_depth;
 
     /** Prepare odometry **/
@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
             std::stringstream ss;
 
             ss.str("");
-            ss << base_path << "image/"
+            ss << base_path << "color/"
                << std::setw(6) << std::setfill('0') << i << ".png";
             ReadImage(ss.str(), target_color);
 
@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
             ReadImage(ss.str(), target_depth);
 
             ss.str("");
-            ss << base_path << "image/"
+            ss << base_path << "color/"
                << std::setw(6) << std::setfill('0') << i + step << ".png";
             ReadImage(ss.str(), source_color);
 

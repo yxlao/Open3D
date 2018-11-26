@@ -19,18 +19,77 @@
 #include <opencv2/opencv.hpp>
 #include <thread>
 
+using namespace open3d;
 
-int main(int argc, char**argv) {
+std::shared_ptr<RGBDImage> ReadRGBDImage(
+    const char *color_filename, const char *depth_filename,
+    const PinholeCameraIntrinsic &intrinsic,
+    bool visualize) {
+    Image color, depth;
+    ReadImage(color_filename, color);
+    ReadImage(depth_filename, depth);
+    PrintDebug("Reading RGBD image : \n");
+    PrintDebug("     Color : %d x %d x %d (%d bits per channel)\n",
+               color.width_, color.height_,
+               color.num_of_channels_, color.bytes_per_channel_ * 8);
+    PrintDebug("     Depth : %d x %d x %d (%d bits per channel)\n",
+               depth.width_, depth.height_,
+               depth.num_of_channels_, depth.bytes_per_channel_ * 8);
+    double depth_scale = 1000.0, depth_trunc = 3.0;
+    bool convert_rgb_to_intensity = true;
+    std::shared_ptr<RGBDImage> rgbd_image =
+        CreateRGBDImageFromColorAndDepth(color,
+                                         depth,
+                                         depth_scale,
+                                         depth_trunc,
+                                         convert_rgb_to_intensity);
+    if (visualize) {
+        auto pcd = CreatePointCloudFromRGBDImage(*rgbd_image, intrinsic);
+        DrawGeometries({pcd});
+    }
+    return rgbd_image;
+}
+
+int TestNativeRGBDOdometry() {
+    using namespace open3d;
+    PinholeCameraIntrinsic intrinsic = PinholeCameraIntrinsic(
+        PinholeCameraIntrinsicParameters::PrimeSenseDefault);
+    bool visualize = true;
+    std::string base_path = "/home/wei/Work/data/stanford/lounge/";
+    Image source_color, source_depth, target_color, target_depth;
+
+    auto source = ReadRGBDImage((base_path + "color/000004.png").c_str(),
+                                (base_path + "depth/000004.png").c_str(),
+                                intrinsic, visualize);
+    auto target = ReadRGBDImage((base_path + "color/000001.png").c_str(),
+                                (base_path + "depth/000001.png").c_str(),
+                                intrinsic, visualize);
+
+    Eigen::Matrix4d odo_init = Eigen::Matrix4d::Identity();
+    std::tuple<bool, Eigen::Matrix4d, Eigen::Matrix6d> rgbd_odo =
+        ComputeRGBDOdometry(*source, *target, intrinsic, odo_init,
+                            RGBDOdometryJacobianFromHybridTerm(),
+                            OdometryOption({60, 60, 60}));
+    std::cout << "RGBD Odometry" << std::endl;
+    std::cout << std::get<1>(rgbd_odo) << std::endl;
+
+    auto pcl_source = CreatePointCloudFromRGBDImage(*source, intrinsic);
+    auto pcl_target = CreatePointCloudFromRGBDImage(*target, intrinsic);
+    pcl_source->Transform(std::get<1>(rgbd_odo));
+    DrawGeometries({pcl_source, pcl_target});
+}
+
+int TestCudaRGBDOdometry() {
     using namespace open3d;
 
     SetVerbosityLevel(VerbosityLevel::VerboseDebug);
 
     /** Load data **/
-    std::string base_path = "/home/wei/Work/data/lounge/";
+    std::string base_path = "/home/wei/Work/data/stanford/lounge/";
     Image source_color, source_depth, target_color, target_depth;
-    ReadImage(base_path + "image/000004.png", source_color);
+    ReadImage(base_path + "color/000004.png", source_color);
     ReadImage(base_path + "depth/000004.png", source_depth);
-    ReadImage(base_path + "image/000001.png", target_color);
+    ReadImage(base_path + "color/000001.png", target_color);
     ReadImage(base_path + "depth/000001.png", target_depth);
 
     RGBDImageCuda source, target;
@@ -67,26 +126,29 @@ int main(int argc, char**argv) {
     visualizer.AddGeometry(pcl_target);
 
     std::vector<float> losses[3];
-    visualizer.RegisterKeyCallback(GLFW_KEY_SPACE, [&](Visualizer* vis) {
-        static const int kIterations[3] = {100, 100, 100};
+    visualizer.RegisterKeyCallback(GLFW_KEY_SPACE, [&](Visualizer *vis) {
+        static const int kIterations[3] = {60, 60, 60};
         static bool finished = false;
         static int level = 2;
         static int iter = kIterations[level];
         static Eigen::Matrix4d prev_transform = Eigen::Matrix4d::Identity();
 
-        if (! finished) {
+        if (!finished) {
             float loss = odometry.ApplyOneIterationOnLevel(level, iter);
             losses[level].push_back(loss);
 
             pcl_source->Transform(
-                odometry.transform_source_to_target_ * prev_transform.inverse());
+                odometry.transform_source_to_target_
+                    * prev_transform.inverse());
             prev_transform = odometry.transform_source_to_target_;
             vis->UpdateGeometry();
+
+            std::cout << odometry.transform_source_to_target_ << std::endl;
         }
 
-        -- iter;
+        --iter;
         if (iter == 0) {
-            -- level;
+            --level;
             if (level < 0) {
                 finished = true;
             } else {
@@ -98,10 +160,15 @@ int main(int argc, char**argv) {
     });
 
     bool should_close = false;
-    while (! should_close) {
+    while (!should_close) {
         should_close = !visualizer.PollEvents();
     }
     visualizer.DestroyVisualizerWindow();
 
     return 0;
+}
+
+int main(int argc, char **argv) {
+    TestCudaRGBDOdometry();
+    TestNativeRGBDOdometry();
 }
