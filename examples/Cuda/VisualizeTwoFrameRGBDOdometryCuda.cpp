@@ -35,7 +35,7 @@ std::shared_ptr<RGBDImage> ReadRGBDImage(
     PrintDebug("     Depth : %d x %d x %d (%d bits per channel)\n",
                depth.width_, depth.height_,
                depth.num_of_channels_, depth.bytes_per_channel_ * 8);
-    double depth_scale = 1000.0, depth_trunc = 3.0;
+    double depth_scale = 1000.0, depth_trunc = 4.0;
     bool convert_rgb_to_intensity = true;
     std::shared_ptr<RGBDImage> rgbd_image =
         CreateRGBDImageFromColorAndDepth(color,
@@ -58,18 +58,18 @@ int TestNativeRGBDOdometry() {
     std::string base_path = "/home/wei/Work/data/stanford/lounge/";
     Image source_color, source_depth, target_color, target_depth;
 
-    auto source = ReadRGBDImage((base_path + "color/000004.png").c_str(),
-                                (base_path + "depth/000004.png").c_str(),
+    auto source = ReadRGBDImage((base_path + "color/000026.png").c_str(),
+                                (base_path + "depth/000026.png").c_str(),
                                 intrinsic, visualize);
-    auto target = ReadRGBDImage((base_path + "color/000001.png").c_str(),
-                                (base_path + "depth/000001.png").c_str(),
+    auto target = ReadRGBDImage((base_path + "color/000025.png").c_str(),
+                                (base_path + "depth/000025.png").c_str(),
                                 intrinsic, visualize);
 
     Eigen::Matrix4d odo_init = Eigen::Matrix4d::Identity();
     std::tuple<bool, Eigen::Matrix4d, Eigen::Matrix6d> rgbd_odo =
         ComputeRGBDOdometry(*source, *target, intrinsic, odo_init,
                             RGBDOdometryJacobianFromHybridTerm(),
-                            OdometryOption({60, 60, 60}));
+                            OdometryOption({60, 60, 60}, 0.03, 0.0, 3.0));
     std::cout << "RGBD Odometry" << std::endl;
     std::cout << std::get<1>(rgbd_odo) << std::endl;
 
@@ -79,18 +79,21 @@ int TestNativeRGBDOdometry() {
     DrawGeometries({pcl_source, pcl_target});
 }
 
-int TestCudaRGBDOdometry() {
+int TestCudaRGBDOdometry(
+    std::string source_color_path,
+    std::string source_depth_path,
+    std::string target_color_path,
+    std::string target_depth_path) {
     using namespace open3d;
 
     SetVerbosityLevel(VerbosityLevel::VerboseDebug);
 
     /** Load data **/
-    std::string base_path = "/home/wei/Work/data/stanford/lounge/";
     Image source_color, source_depth, target_color, target_depth;
-    ReadImage(base_path + "color/000004.png", source_color);
-    ReadImage(base_path + "depth/000004.png", source_depth);
-    ReadImage(base_path + "color/000001.png", target_color);
-    ReadImage(base_path + "depth/000001.png", target_depth);
+    ReadImage(source_color_path, source_color);
+    ReadImage(source_depth_path, source_depth);
+    ReadImage(target_color_path, target_color);
+    ReadImage(target_depth_path, target_depth);
 
     RGBDImageCuda source, target;
     source.Upload(source_depth, source_color);
@@ -100,7 +103,7 @@ int TestCudaRGBDOdometry() {
     RGBDOdometryCuda<3> odometry;
     odometry.SetIntrinsics(PinholeCameraIntrinsic(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault));
-    odometry.SetParameters(0.2f, 0.1f, 4.0f, 0.07f);
+    odometry.SetParameters(1.0f, 0.01f, 3.0f, 0.03f);
     odometry.PrepareData(source, target);
     odometry.transform_source_to_target_ = Eigen::Matrix4d::Identity();
 
@@ -126,12 +129,12 @@ int TestCudaRGBDOdometry() {
     visualizer.AddGeometry(pcl_target);
 
     std::vector<float> losses[3];
+    const int kIterations[3] = {60, 60, 60};
+    bool finished = false;
+    int level = 2;
+    int iter = kIterations[level];
+    Eigen::Matrix4d prev_transform = Eigen::Matrix4d::Identity();
     visualizer.RegisterKeyCallback(GLFW_KEY_SPACE, [&](Visualizer *vis) {
-        static const int kIterations[3] = {60, 60, 60};
-        static bool finished = false;
-        static int level = 2;
-        static int iter = kIterations[level];
-        static Eigen::Matrix4d prev_transform = Eigen::Matrix4d::Identity();
 
         if (!finished) {
             float loss = odometry.ApplyOneIterationOnLevel(level, iter);
@@ -142,8 +145,6 @@ int TestCudaRGBDOdometry() {
                     * prev_transform.inverse());
             prev_transform = odometry.transform_source_to_target_;
             vis->UpdateGeometry();
-
-            std::cout << odometry.transform_source_to_target_ << std::endl;
         }
 
         --iter;
@@ -169,6 +170,36 @@ int TestCudaRGBDOdometry() {
 }
 
 int main(int argc, char **argv) {
-    TestCudaRGBDOdometry();
+    std::string base_path = "/home/wei/Work/data/stanford/lounge/";
+    TestCudaRGBDOdometry(base_path + "color/000026.png",
+                         base_path + "depth/000026.png",
+                         base_path + "color/000025.png",
+                         base_path + "depth/000025.png");
+//    for (int i = 1; i < 3000; ++i) {
+//        std::stringstream ss;
+//        ss.str("");
+//        ss << base_path << "color/"
+//           << std::setw(6) << std::setfill('0') << i << ".png";
+//        std::string target_color_path = ss.str();
+//
+//        ss.str("");
+//        ss << base_path << "depth/"
+//           << std::setw(6) << std::setfill('0') << i << ".png";
+//        std::string target_depth_path = ss.str();
+//
+//        ss.str("");
+//        ss << base_path << "color/"
+//           << std::setw(6) << std::setfill('0') << i + 1 << ".png";
+//        std::string source_color_path = ss.str();
+//
+//        ss.str("");
+//        ss << base_path << "depth/"
+//           << std::setw(6) << std::setfill('0') << i + 1 << ".png";
+//        std::string source_depth_path = ss.str();
+//
+//        std::cout << target_color_path << std::endl;
+//        TestCudaRGBDOdometry(source_color_path, source_depth_path,
+//            target_color_path, target_depth_path);
+//    }
     TestNativeRGBDOdometry();
 }

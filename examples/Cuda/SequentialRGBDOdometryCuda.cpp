@@ -18,9 +18,10 @@ void f() {
     SetVerbosityLevel(VerbosityLevel::VerboseDebug);
 
     std::string
-        match_filename = "/home/wei/Work/data/apartment/data_association.txt";
+        match_filename = "/home/wei/Work/data/stanford/lounge/data_association"
+                         ".txt";
     std::string
-        log_filename = "/home/wei/Work/data/apratment/apartment.log";
+        log_filename = "/home/wei/Work/data/stanford/lounge/lounge.log";
 
     auto camera_trajectory = CreatePinholeCameraTrajectoryFromFile(log_filename);
     std::string dir_name = filesystem::GetFileParentDirectory(match_filename).c_str();
@@ -54,7 +55,7 @@ void f() {
     RGBDOdometryCuda<3> odometry;
     odometry.SetIntrinsics(PinholeCameraIntrinsic(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault));
-    odometry.SetParameters(0.0f, 0.1f, 4.0f, 0.07f);
+    odometry.SetParameters(0.5f, 0.01f, 4.0f, 0.07f);
 
     VisualizerWithCustomAnimation visualizer;
     if (!visualizer.CreateVisualizerWindow("ScalableFusion", 640, 480, 0, 0)) {

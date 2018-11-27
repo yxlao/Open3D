@@ -33,18 +33,18 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
 
     /** Check 2: reprojected point in image? **/
     Vector3f
-        X = transform_source_to_target_
+        X_target = transform_source_to_target_
         * intrinsics_[level].InverseProjectPixel(
             Vector2i(x, y), d_source);
 
-    Vector2f p_warped = intrinsics_[level].ProjectPoint(X);
+    Vector2f p_warped = intrinsics_[level].ProjectPoint(X_target);
     mask = intrinsics_[level].IsPixelValid(p_warped);
     if (!mask) return false;
 
     /** Check 3: depth valid in target? Occlusion? -> 1ms **/
     float d_target = target_[level].depth().interp_with_holes_at(
         p_warped(0), p_warped(1))(0);
-    mask = IsValidDepth(d_target) && IsValidDepthDiff(d_target - X(2));
+    mask = IsValidDepth(d_target) && IsValidDepthDiff(d_target - X_target(2));
     if (!mask) return false;
 
     /** Checks passed, let's rock! -> 3ms, can be 2ms faster if we don't use
@@ -61,48 +61,59 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
      * J_D = (d D(p_warped) / d p_warped) (d p_warped / d X) (d X / d \xi)
      *     - (d X.z / d X) (d X / d \xi)
      */
-    float dx_I = target_dx_[level].intensity().interp_at(
+    const float kSobelFactor = 0.125f;
+    float dx_I = kSobelFactor * target_dx_[level].intensity().interp_at(
         p_warped(0), p_warped(1))(0);
-    float dy_I = target_dy_[level].intensity().interp_at(
+    float dy_I = kSobelFactor * target_dy_[level].intensity().interp_at(
         p_warped(0), p_warped(1))(0);
-    float dx_D = target_dx_[level].depth().interp_at(
+    float dx_D = kSobelFactor * target_dx_[level].depth().interp_at(
         p_warped(0), p_warped(1))(0);
-    float dy_D = target_dy_[level].depth().interp_at(
+    float dy_D = kSobelFactor * target_dy_[level].depth().interp_at(
         p_warped(0), p_warped(1))(0);
     float fx = intrinsics_[level].fx_;
     float fy = intrinsics_[level].fy_;
-    float inv_Z = 1.0f / X(2);
+    float inv_Z = 1.0f / X_target(2);
     float fx_on_Z = fx * inv_Z;
     float fy_on_Z = fy * inv_Z;
 
     float c0 = dx_I * fx_on_Z;
     float c1 = dy_I * fy_on_Z;
-    float c2 = -(c0 * X(0) + c1 * X(1)) * inv_Z;
+    float c2 = -(c0 * X_target(0) + c1 * X_target(1)) * inv_Z;
     jacobian_I(0) = sqrt_coeff_I_ * c0;
     jacobian_I(1) = sqrt_coeff_I_ * c1;
     jacobian_I(2) = sqrt_coeff_I_ * c2;
-    jacobian_I(3) = sqrt_coeff_I_ * (-X(2) * c1 + X(1) * c2);
-    jacobian_I(4) = sqrt_coeff_I_ * (X(2) * c0 - X(0) * c2);
-    jacobian_I(5) = sqrt_coeff_I_ * (-X(1) * c0 + X(0) * c1);
+    jacobian_I(3) = sqrt_coeff_I_ * (-X_target(2) * c1 + X_target(1) * c2);
+    jacobian_I(4) = sqrt_coeff_I_ * (X_target(2) * c0 - X_target(0) * c2);
+    jacobian_I(5) = sqrt_coeff_I_ * (-X_target(1) * c0 + X_target(0) * c1);
     residual_I = sqrt_coeff_I_ *
         (target_[level].intensity().interp_at(p_warped(0), p_warped(1))(0)
             - source_[level].intensity().at(x, y)(0));
 
     float d0 = dx_D * fx_on_Z;
     float d1 = dy_D * fy_on_Z;
-    float d2 = -(d0 * X(0) + d1 * X(1)) * inv_Z;
+    float d2 = -(d0 * X_target(0) + d1 * X_target(1)) * inv_Z;
     jacobian_D(0) = sqrt_coeff_D_ * d0;
     jacobian_D(1) = sqrt_coeff_D_ * d1;
     jacobian_D(2) = sqrt_coeff_D_ * (d2 - 1.0f);
-    jacobian_D(3) = sqrt_coeff_D_ * ((-X(2) * d1 + X(1) * d2) - X(1));
-    jacobian_D(4) = sqrt_coeff_D_ * ((X(2) * d0 - X(0) * d2) + X(0));
-    jacobian_D(5) = sqrt_coeff_D_ * (-X(1) * d0 + X(0) * d1);
-    residual_D = sqrt_coeff_D_ * (d_target - X(2));
+    jacobian_D(3) = sqrt_coeff_D_ * ((-X_target(2) * d1 + X_target(1) * d2) - X_target(1));
+    jacobian_D(4) = sqrt_coeff_D_ * ((X_target(2) * d0 - X_target(0) * d2) + X_target(0));
+    jacobian_D(5) = sqrt_coeff_D_ * (-X_target(1) * d0 + X_target(0) * d1);
+    residual_D = sqrt_coeff_D_ * (d_target - X_target(2));
 
 #ifdef VISUALIZE_ODOMETRY_INLIERS
     source_on_target()[level].at((int) p_warped(0), (int) p_warped(1))
         = Vector1f(0.0f);
 #endif
+//    printf("(%d %d) -> (%f %f): "
+//           "depth: %f -> %f, residual %f "
+//           "color: %f -> %f, residual %f\n",
+//        x, y, p_warped(0), p_warped(1),
+//        d_source, d_target, residual_D,
+//        source_[level].intensity().at(x, y)(0),
+//        target_[level].intensity().interp_at(p_warped(0), p_warped(1))(0),
+//        residual_I);
+
+
     return true;
 }
 

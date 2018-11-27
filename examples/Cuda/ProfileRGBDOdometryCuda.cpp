@@ -45,11 +45,12 @@ int main(int argc, char **argv) {
     RGBDOdometryCuda<3> odometry;
     odometry.SetIntrinsics(PinholeCameraIntrinsic(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault));
-    odometry.SetParameters(0.2f, 0.1f, 4.0f, 0.07f);
+    odometry.SetParameters(0.986f, 0.01f, 3.0f, 0.03f);
 
-    for (int step = 1; step < 4; ++step) {
+    for (int step = 1; step < 2; ++step) {
         PrintInfo("Step: %d\n", step);
         for (int i = 1; i + step < 3000; ++i) {
+            PrintInfo("%d\n", i);
             std::stringstream ss;
 
             ss.str("");

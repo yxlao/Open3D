@@ -117,6 +117,9 @@ private:
     std::shared_ptr<RGBDOdometryCudaServer<N>> server_ = nullptr;
 
     ImagePyramidCuda<Vector1f, N> source_on_target_;
+    RGBDImagePyramidCuda<N> source_raw_;
+    RGBDImagePyramidCuda<N> target_raw_;
+
     RGBDImagePyramidCuda<N> source_;
     RGBDImagePyramidCuda<N> target_;
     RGBDImagePyramidCuda<N> target_dx_;

@@ -150,9 +150,14 @@ void RGBDOdometryCuda<N>::PrepareData(
         return;
     }
 
-    source_.Build(source);
-    target_.Build(target);
+    source_raw_.Build(source);
+    target_raw_.Build(target);
     for (size_t i = 0; i < N; ++i) {
+        source_raw_[i].depthf().Gaussian(source_[i].depthf(), Gaussian3x3, true);
+        source_raw_[i].intensity().Gaussian(source_[i].intensity(), Gaussian3x3, true);
+        target_raw_[i].depthf().Gaussian(target_[i].depthf(), Gaussian3x3, true);
+        target_raw_[i].intensity().Gaussian(target_[i].intensity(), Gaussian3x3, true);
+
         target_[i].depthf().Sobel(target_dx_[i].depthf(),
                                   target_dy_[i].depthf(),
                                   false);
@@ -205,7 +210,7 @@ float RGBDOdometryCuda<N>::ApplyOneIterationOnLevel(size_t level, int iter) {
 template<size_t N>
 void RGBDOdometryCuda<N>::Apply() {
 
-    const int kIterations[] = {3, 15, 60};
+    const int kIterations[] = {10, 20, 40};
     for (int level = (int) (N - 1); level >= 0; --level) {
         for (int iter = 0; iter < kIterations[level]; ++iter) {
             ApplyOneIterationOnLevel((size_t) level, iter);
