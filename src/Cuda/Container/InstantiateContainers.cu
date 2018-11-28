@@ -19,6 +19,7 @@ namespace open3d {
 template class ArrayCudaServer<int>;
 template class ArrayCudaServer<float>;
 template class ArrayCudaServer<Vector3i>;
+template class ArrayCudaServer<Vector4i>;
 template class ArrayCudaServer<Vector3f>;
 template class ArrayCudaServer<HashEntry<Vector3i>>;
 template class ArrayCudaServer<LinkedListCudaServer<HashEntry<Vector3i>>>;
@@ -26,6 +27,7 @@ template class ArrayCudaServer<LinkedListCudaServer<HashEntry<Vector3i>>>;
 template class ArrayCudaKernelCaller<int>;
 template class ArrayCudaKernelCaller<float>;
 template class ArrayCudaKernelCaller<Vector3i>;
+template class ArrayCudaKernelCaller<Vector4i>;
 template class ArrayCudaKernelCaller<Vector3f>;
 template class ArrayCudaKernelCaller<HashEntry<Vector3i>>;
 template class ArrayCudaKernelCaller<LinkedListCudaServer<HashEntry<Vector3i>>>;

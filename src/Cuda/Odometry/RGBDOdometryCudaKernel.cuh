@@ -11,9 +11,9 @@ __global__
 void ApplyRGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry, size_t level) {
     /** Add more memory blocks if we have **/
     /** TODO: check this version vs 1 __shared__ array version **/
-    static __shared__ float local_sum0[THREAD_2D_UNIT * THREAD_2D_UNIT];
-    static __shared__ float local_sum1[THREAD_2D_UNIT * THREAD_2D_UNIT];
-    static __shared__ float local_sum2[THREAD_2D_UNIT * THREAD_2D_UNIT];
+    __shared__ float local_sum0[THREAD_2D_UNIT * THREAD_2D_UNIT];
+    __shared__ float local_sum1[THREAD_2D_UNIT * THREAD_2D_UNIT];
+    __shared__ float local_sum2[THREAD_2D_UNIT * THREAD_2D_UNIT];
 
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -33,21 +33,21 @@ void ApplyRGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry, size_t level) {
     float residual_I, residual_D;
     bool mask = odometry.ComputePixelwiseJacobiansAndResiduals(
         x, y, level, jacobian_I, jacobian_D, residual_I, residual_D);
-    if (!mask) return;
 
-    /** Compute JtJ and Jtr -> 5ms **/
     HessianCuda<6> JtJ;
     Vector6f Jtr;
-    odometry.ComputePixelwiseJtJAndJtr(jacobian_I, jacobian_D,
-                                       residual_I, residual_D,
-                                       JtJ, Jtr);
+    if (mask) { /** Compute JtJ and Jtr -> 5ms **/
+        odometry.ComputePixelwiseJtJAndJtr(jacobian_I, jacobian_D,
+                                           residual_I, residual_D,
+                                           JtJ, Jtr);
+    }
 
     /** Reduce Sum JtJ -> 2ms **/
 #pragma unroll 1
     for (size_t i = 0; i < 21; i += 3) {
-        local_sum0[tid] = JtJ(i + 0);
-        local_sum1[tid] = JtJ(i + 1);
-        local_sum2[tid] = JtJ(i + 2);
+        local_sum0[tid] = mask ? JtJ(i + 0) : 0;
+        local_sum1[tid] = mask ? JtJ(i + 1) : 0;
+        local_sum2[tid] = mask ? JtJ(i + 2) : 0;
         __syncthreads();
 
         if (tid < 128) {
@@ -82,9 +82,9 @@ void ApplyRGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry, size_t level) {
 #define OFFSET1 21
 #pragma unroll 1
     for (size_t i = 0; i < 6; i += 3) {
-        local_sum0[tid] = Jtr(i + 0);
-        local_sum1[tid] = Jtr(i + 1);
-        local_sum2[tid] = Jtr(i + 2);
+        local_sum0[tid] = mask ? Jtr(i + 0) : 0;
+        local_sum1[tid] = mask ? Jtr(i + 1) : 0;
+        local_sum2[tid] = mask ? Jtr(i + 2) : 0;
         __syncthreads();
 
         if (tid < 128) {
@@ -118,9 +118,9 @@ void ApplyRGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry, size_t level) {
     /** Reduce Sum loss and inlier **/
 #define OFFSET2 27
     {
-
-        local_sum0[tid] = residual_I * residual_I + residual_D * residual_D;
-        local_sum1[tid] = 1;
+        local_sum0[tid] = mask ?
+            residual_I * residual_I + residual_D * residual_D : 0;
+        local_sum1[tid] = mask ? 1 : 0;
         __syncthreads();
 
         if (tid < 128) {

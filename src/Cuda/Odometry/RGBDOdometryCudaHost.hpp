@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "SequentialRGBDOdometryCuda.h"
+#include "RGBDOdometryCuda.h"
 #include <sophus/se3.hpp>
 
 namespace open3d {
@@ -62,6 +62,7 @@ bool RGBDOdometryCuda<N>::Create(int width, int height) {
     target_dy_.Create(width, height);
 
     results_.Create(29);
+    correspondences_.Create(width * height);
 
     UpdateServer();
     return true;
@@ -77,6 +78,7 @@ void RGBDOdometryCuda<N>::Release() {
     source_on_target_.Release();
 
     results_.Release();
+    correspondences_.Release();
 
     server_ = nullptr;
 }
@@ -100,6 +102,7 @@ void RGBDOdometryCuda<N>::UpdateServer() {
         server_->target_dy() = *target_dy_.server();
 
         server_->results() = *results_.server();
+        server_->correspondences() = *correspondences_.server();
 
         /** Update parameters **/
         server_->sigma_ = sigma_;
@@ -153,14 +156,18 @@ void RGBDOdometryCuda<N>::PrepareData(
     source_raw_.Build(source);
     target_raw_.Build(target);
     for (size_t i = 0; i < N; ++i) {
-        source_raw_[i].depthf().Gaussian(source_[i].depthf(), Gaussian3x3, true);
-        source_raw_[i].intensity().Gaussian(source_[i].intensity(), Gaussian3x3, true);
-        target_raw_[i].depthf().Gaussian(target_[i].depthf(), Gaussian3x3, true);
-        target_raw_[i].intensity().Gaussian(target_[i].intensity(), Gaussian3x3, true);
+        source_raw_[i].depthf().Gaussian(source_[i].depthf(), Gaussian3x3,
+            true);
+        source_raw_[i].intensity().Gaussian(source_[i].intensity(),
+            Gaussian3x3, false);
+        target_raw_[i].depthf().Gaussian(target_[i].depthf(), Gaussian3x3,
+            true);
+        target_raw_[i].intensity().Gaussian(target_[i].intensity(),
+            Gaussian3x3, false);
 
         target_[i].depthf().Sobel(target_dx_[i].depthf(),
                                   target_dy_[i].depthf(),
-                                  false);
+                                  true);
         target_[i].intensity().Sobel(target_dx_[i].intensity(),
                                      target_dy_[i].intensity(),
                                      false);
@@ -171,6 +178,7 @@ void RGBDOdometryCuda<N>::PrepareData(
 template<size_t N>
 float RGBDOdometryCuda<N>::ApplyOneIterationOnLevel(size_t level, int iter) {
     results_.Memset(0);
+    correspondences_.set_size(0);
 
 #ifdef VISUALIZE_ODOMETRY_INLIERS
     source_on_target_[level].CopyFrom(target_[level].intensity());
@@ -200,17 +208,19 @@ float RGBDOdometryCuda<N>::ApplyOneIterationOnLevel(size_t level, int iter) {
                "inliers = %.0f\n",
                level, iter, loss, loss / inliers, inliers);
 
-    EigenVector6d dxi = JtJ.ldlt().solve(-Jtr);
-    transform_source_to_target_ =
-        Sophus::SE3d::exp(dxi).matrix() * transform_source_to_target_;
+    bool is_success;
+    Eigen::Matrix4d extrinsic;
+    std::tie(is_success, extrinsic) =
+        SolveJacobianSystemAndObtainExtrinsicMatrix(JtJ, Jtr);
 
+    transform_source_to_target_ = extrinsic * transform_source_to_target_;
     return loss;
 }
 
 template<size_t N>
 void RGBDOdometryCuda<N>::Apply() {
 
-    const int kIterations[] = {10, 20, 40};
+    const int kIterations[] = {60, 60, 60};
     for (int level = (int) (N - 1); level >= 0; --level) {
         for (int iter = 0; iter < kIterations[level]; ++iter) {
             ApplyOneIterationOnLevel((size_t) level, iter);

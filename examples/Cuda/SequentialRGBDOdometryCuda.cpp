@@ -6,7 +6,7 @@
 #include <vector>
 #include <Core/Core.h>
 #include <IO/IO.h>
-#include <Cuda/Odometry/SequentialRGBDOdometryCuda.h>
+#include <Cuda/Odometry/RGBDOdometryCuda.h>
 #include <Cuda/Integration/ScalableTSDFVolumeCuda.h>
 #include <Cuda/Integration/ScalableMeshVolumeCuda.h>
 #include <Visualization/Visualization.h>
@@ -55,7 +55,7 @@ void f() {
     RGBDOdometryCuda<3> odometry;
     odometry.SetIntrinsics(PinholeCameraIntrinsic(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault));
-    odometry.SetParameters(0.5f, 0.01f, 4.0f, 0.07f);
+    odometry.SetParameters(0.5f, 0.01f, 3.0f, 0.03f);
 
     VisualizerWithCustomAnimation visualizer;
     if (!visualizer.CreateVisualizerWindow("ScalableFusion", 640, 480, 0, 0)) {
@@ -90,6 +90,7 @@ void f() {
                 odometry.Apply();
                 target_to_world = target_to_world * odometry.transform_source_to_target_;
             }
+            std::cout << index << std::endl;
 
             extrinsics.FromEigen(target_to_world);
             tsdf_volume.Integrate(rgbd_curr, intrinsics, extrinsics);

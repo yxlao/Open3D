@@ -237,7 +237,8 @@ VecType ImageCudaServer<VecType>::GaussianFilterWithHoles(
             VecType val = at(xx, yy);
             auto valf = val.ToVectorf();
 
-            float weight = (val == zero || (val - val0).norm() > threshold)
+            /** TODO: Check it carefully **/
+            float weight = (val == zero) //|| (val - val0).norm() > threshold
                            ? 0 : kernel[abs(xx - x)] * kernel[abs(yy - y)];
             sum_val += valf * weight;
             sum_weight += weight;

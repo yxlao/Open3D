@@ -7,7 +7,7 @@
 #include <sstream>
 #include <Core/Core.h>
 #include <IO/IO.h>
-#include <Cuda/Odometry/SequentialRGBDOdometryCuda.h>
+#include <Cuda/Odometry/RGBDOdometryCuda.h>
 #include <Cuda/Integration/ScalableTSDFVolumeCuda.h>
 #include <Cuda/Integration/ScalableMeshVolumeCuda.h>
 #include <Cuda/Geometry/PointCloudCuda.h>

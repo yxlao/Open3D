@@ -24,6 +24,7 @@ EXAMPLE_CUDA(ProfileRGBDOdometryCuda ${CMAKE_PROJECT_NAME})
 EXAMPLE_CUDA(VisualizeSingleFramePointCloudCuda ${CMAKE_PROJECT_NAME})
 EXAMPLE_CUDA(VisualizeSingleFrameMeshingCuda ${CMAKE_PROJECT_NAME})
 EXAMPLE_CPP(VisualizeTwoFrameRGBDOdometryCuda ${CMAKE_PROJECT_NAME})
+EXAMPLE_CPP(VisualizeTwoFrameRGBDOdometry ${CMAKE_PROJECT_NAME})
 
 
 

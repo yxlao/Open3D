@@ -51,6 +51,7 @@ private:
     RGBDImagePyramidCudaServer<N> target_dy_;
 
     ArrayCudaServer<float> results_;
+    ArrayCudaServer<Vector4i> correspondences_;
 
 public:
     PinholeCameraIntrinsicCuda intrinsics_[N];
@@ -107,6 +108,9 @@ public:
     __HOSTDEVICE__ inline ArrayCudaServer<float> &results() {
         return results_;
     }
+    __HOSTDEVICE__ inline ArrayCudaServer<Vector4i> &correspondences() {
+        return correspondences_;
+    }
 
     friend class RGBDOdometryCuda<N>;
 };
@@ -126,6 +130,9 @@ private:
     RGBDImagePyramidCuda<N> target_dy_;
 
     ArrayCuda<float> results_;
+
+public:
+    ArrayCuda<Vector4i> correspondences_;
 
 public:
     typedef Eigen::Matrix<double, 6, 6> EigenMatrix6d;
