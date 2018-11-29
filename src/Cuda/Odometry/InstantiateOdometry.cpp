@@ -3,9 +3,12 @@
 //
 
 #include "RGBDOdometryCudaHost.hpp"
+#include "ICRGBDOdometryCudaHost.hpp"
 
 namespace open3d {
 
 template class RGBDOdometryCuda<3>;
+template class ICRGBDOdometryCuda<3>;
+
 
 }

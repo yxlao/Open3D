@@ -14,4 +14,10 @@ class RGBDOdometryCudaServer;
 template<size_t N>
 class RGBDOdometryCuda;
 
+template<size_t N>
+class ICRGBDOdometryCudaServer;
+
+template<size_t N>
+class ICRGBDOdometryCuda;
+
 };
