@@ -4,6 +4,7 @@
 
 #include <string>
 #include <vector>
+#include <fstream>
 #include <sstream>
 #include <Core/Core.h>
 #include <IO/IO.h>
@@ -15,23 +16,21 @@
 
 #include <opencv2/opencv.hpp>
 #include <thread>
+#include "ReadDataAssociation.h"
 
-void WriteLossesToLog(std::string filename,
-                      std::vector<std::vector<float>> &losses) {
-    FILE *f = fopen(filename.c_str(), "w");
-    if (f == NULL) {
-        open3d::PrintError("Unable to open file %s, aborted.\n",
-                           filename.c_str());
-        return;
-    }
+void WriteLossesToLog(
+    std::ofstream& fout,
+    int frame_idx,
+    std::vector<std::vector<float>> &losses) {
+    assert(fout.is_open());
 
-    for (auto &loss : losses) {
-        for (auto &l : loss) {
-            fprintf(f, "%f ", l);
+    fout << frame_idx << "\n";
+    for (auto &losses_on_level : losses) {
+        for (auto &loss : losses_on_level) {
+            fout << loss << " ";
         }
-        fprintf(f, "\n");
+        fout << "\n";
     }
-    fclose(f);
 }
 
 int main(int argc, char **argv) {
@@ -40,57 +39,43 @@ int main(int argc, char **argv) {
     /** Load data **/
     std::string base_path = "/home/wei/Work/data/stanford/lounge/";
     Image source_color, source_depth, target_color, target_depth;
+    auto rgbd_filenames = ReadDataAssociation(
+        base_path + "data_association.txt");
 
     /** Prepare odometry **/
     RGBDOdometryCuda<3> odometry;
     odometry.SetIntrinsics(PinholeCameraIntrinsic(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault));
-    odometry.SetParameters(0.986f, 0.01f, 3.0f, 0.03f);
+    odometry.SetParameters(OdometryOption(), 0.5f);
 
     for (int step = 1; step < 2; ++step) {
+        std::string log_filename =
+            "odometry-step-" + std::to_string(step) + ".log";
+        std::ofstream fout(log_filename);
+        if (!fout.is_open()) {
+            PrintError("Unable to write to log file %s, abort.\n",
+                       log_filename.c_str());
+        }
+
         PrintInfo("Step: %d\n", step);
-        for (int i = 1; i + step < 3000; ++i) {
+        for (int i = 0; i + step < 10; ++i) {
             PrintInfo("%d\n", i);
             std::stringstream ss;
 
-            ss.str("");
-            ss << base_path << "color/"
-               << std::setw(6) << std::setfill('0') << i << ".png";
-            ReadImage(ss.str(), target_color);
-
-            ss.str("");
-            ss << base_path << "depth/"
-               << std::setw(6) << std::setfill('0') << i << ".png";
-            ReadImage(ss.str(), target_depth);
-
-            ss.str("");
-            ss << base_path << "color/"
-               << std::setw(6) << std::setfill('0') << i + step << ".png";
-            ReadImage(ss.str(), source_color);
-
-            ss.str("");
-            ss << base_path << "depth/"
-               << std::setw(6) << std::setfill('0') << i + step << ".png";
-            ReadImage(ss.str(), source_depth);
+            ReadImage(base_path + rgbd_filenames[i].second, target_color);
+            ReadImage(base_path + rgbd_filenames[i].first, target_depth);
+            ReadImage(base_path + rgbd_filenames[i + 1].second, source_color);
+            ReadImage(base_path + rgbd_filenames[i + 1].first, source_depth);
 
             RGBDImageCuda source, target;
             source.Upload(source_depth, source_color);
             target.Upload(target_depth, target_color);
+
             odometry.PrepareData(source, target);
             odometry.transform_source_to_target_ = Eigen::Matrix4d::Identity();
 
-            std::vector<std::vector<float>> losses;
-            losses.resize(3);
-            for (int level = 2; level >= 0; --level) {
-                for (int iter = 0; iter < 100; ++iter) {
-                    float loss = odometry.DoSingleIteration(level, iter);
-                    losses[level].push_back(loss);
-                }
-            }
-
-            ss.str("");
-            ss << "odometry-" << i << "-step-" << step << ".log";
-            WriteLossesToLog(ss.str(), losses);
+            auto result = odometry.ComputeMultiScale();
+            WriteLossesToLog(fout, i, std::get<2>(result));
         }
     }
 

@@ -168,7 +168,7 @@ public:
 
     std::tuple<bool, Eigen::Matrix4d, float>
         DoSingleIteration(size_t level, int iter);
-    std::tuple<bool, Eigen::Matrix4d, std::vector<float>>
+    std::tuple<bool, Eigen::Matrix4d, std::vector<std::vector<float>>>
         ComputeMultiScale();
 
     RGBDImagePyramidCuda<N> &source() { return source_; }

@@ -19,6 +19,8 @@
 #include <opencv2/opencv.hpp>
 #include <thread>
 
+#include "ReadDataAssociation.h"
+
 using namespace open3d;
 
 int TestCudaRGBDOdometry(
@@ -236,43 +238,26 @@ void TestDifferentGaussianKernel(std::string depth_path_refined,
 
 int main(int argc, char **argv) {
     std::string base_path = "/home/wei/Work/data/stanford/lounge/";
+
+    auto rgbd_filenames = ReadDataAssociation(
+        base_path + "data_association.txt");
+
+    for (auto& rgbd_filename : rgbd_filenames) {
+        std::cout << rgbd_filename.first << " "
+                  << rgbd_filename.second << std::endl;
+    }
 //    ProcessGaussianImage(base_path + "depth/000004.png");
 
 //    TestDifferentGaussianKernel("gaussian_normal_filter.png",
 //                                "gaussian_refined_filter.png");
-//
-//    TestCudaRGBDOdometry(base_path + "color/000004.png",
-//                         base_path + "depth/000004.png",
-//                         base_path + "color/000001.png",
-//                         base_path + "depth/000001.png");
-//    TestCudaRGBDOdometry(base_path + "color/000366.png",
-//                         base_path + "depth/000366.png",
-//                         base_path + "color/000365.png",
-//                         base_path + "depth/000365.png");
-    for (int i = 2; i < 3000; ++i) {
-        std::stringstream ss;
-        ss.str("");
-        ss << base_path << "color/"
-           << std::setw(6) << std::setfill('0') << i << ".png";
-        std::string target_color_path = ss.str();
 
-        ss.str("");
-        ss << base_path << "depth/"
-           << std::setw(6) << std::setfill('0') << i << ".png";
-        std::string target_depth_path = ss.str();
-
-        ss.str("");
-        ss << base_path << "color/"
-           << std::setw(6) << std::setfill('0') << i + 1 << ".png";
-        std::string source_color_path = ss.str();
-
-        ss.str("");
-        ss << base_path << "depth/"
-           << std::setw(6) << std::setfill('0') << i + 1 << ".png";
-        std::string source_depth_path = ss.str();
-
-        std::cout << target_color_path << std::endl;
-        TestCudaRGBDOdometry(source_color_path, source_depth_path,
-            target_color_path, target_depth_path);
+    for (int i = 2; i < rgbd_filenames.size(); ++i) {
+        TestCudaRGBDOdometry(
+            base_path + rgbd_filenames[i + 1].second,
+            base_path + rgbd_filenames[i + 1].first,
+            base_path + rgbd_filenames[i].second,
+            base_path + rgbd_filenames[i].first);
     }
+
+    return 0;
 }

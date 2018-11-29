@@ -216,14 +216,16 @@ RGBDOdometryCuda<N>::DoSingleIteration(size_t level, int iter) {
 }
 
 template<size_t N>
-std::tuple<bool, Eigen::Matrix4d, std::vector<float> >
+std::tuple<bool, Eigen::Matrix4d, std::vector<std::vector<float>> >
 RGBDOdometryCuda<N>::ComputeMultiScale() {
     bool is_success;
     Eigen::Matrix4d delta;
     float loss;
 
-    std::vector<float> losses;
+    std::vector<std::vector<float>> losses;
     for (int level = (int) (N - 1); level >= 0; --level) {
+        std::vector<float> losses_on_level;
+
         for (int iter = 0;
              iter < option_.iteration_number_per_pyramid_level_[N - 1 - level];
              ++iter) {
@@ -231,6 +233,7 @@ RGBDOdometryCuda<N>::ComputeMultiScale() {
             std::tie(is_success, delta, loss) =
                 DoSingleIteration((size_t) level, iter);
             transform_source_to_target_ = delta * transform_source_to_target_;
+            losses_on_level.emplace_back(loss);
 
             if (!is_success) {
                 PrintWarning("[ComputeOdometry] no solution!\n");
@@ -239,6 +242,8 @@ RGBDOdometryCuda<N>::ComputeMultiScale() {
                     losses);
             }
         }
+
+        losses.emplace_back(losses_on_level);
     }
 
     return std::make_tuple(true, transform_source_to_target_, losses);

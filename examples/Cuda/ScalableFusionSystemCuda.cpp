@@ -34,24 +34,18 @@
 #include <Cuda/Integration/ScalableTSDFVolumeCuda.h>
 #include <Cuda/Integration/ScalableMeshVolumeCuda.h>
 
+#include "ReadDataAssociation.h"
+
 int main(int argc, char *argv[]) {
     using namespace open3d;
     SetVerbosityLevel(VerbosityLevel::VerboseDebug);
+    std::string base_path = "/home/wei/Work/data/stanford/lounge/";
 
-    std::string
-        match_filename = "/home/wei/Work/data/stanford/lounge/data_association.txt";
-    std::string
-        log_filename = "/home/wei/Work/data/stanford/lounge/lounge_trajectory.log";
+    auto camera_trajectory = CreatePinholeCameraTrajectoryFromFile(
+        base_path + "lounge_trajectory.log");
+    auto rgbd_filenames = ReadDataAssociation(
+        base_path + "data_association.txt");
 
-    auto camera_trajectory = CreatePinholeCameraTrajectoryFromFile(log_filename);
-    std::string dir_name = filesystem::GetFileParentDirectory(match_filename).c_str();
-    FILE *file = fopen(match_filename.c_str(), "r");
-    if (file == NULL) {
-        PrintError("Unable to open file %s\n", match_filename.c_str());
-        fclose(file);
-        return 0;
-    }
-    char buffer[DEFAULT_IO_BUFFER_SIZE];
     int index = 0;
     int save_index = 0;
 
@@ -83,41 +77,39 @@ int main(int argc, char *argv[]) {
         mesh = std::make_shared<TriangleMeshCuda>();
     visualizer.AddGeometry(mesh);
 
-    while (fgets(buffer, DEFAULT_IO_BUFFER_SIZE, file)) {
-        std::vector<std::string> st;
-        SplitString(st, buffer, "\t\r\n ");
-        if (st.size() >= 2) {
-            PrintDebug("Processing frame %d ...\n", index);
-            ReadImage(dir_name + st[0], depth);
-            ReadImage(dir_name + st[1], color);
-            rgbd.Upload(depth, color);
+    for (int i = 0; i < rgbd_filenames.size() - 1; ++i) {
+        PrintDebug("Processing frame %d ...\n", index);
+        ReadImage(base_path + rgbd_filenames[i].first, depth);
+        ReadImage(base_path + rgbd_filenames[i].second, color);
+        rgbd.Upload(depth, color);
 
-            Eigen::Matrix4d extrinsic =
-                camera_trajectory->parameters_[index].extrinsic_.inverse();
+        Eigen::Matrix4d extrinsic =
+            camera_trajectory->parameters_[index].extrinsic_.inverse();
 
-            extrinsics.FromEigen(extrinsic);
-            tsdf_volume.Integrate(rgbd, intrinsics, extrinsics);
+        extrinsics.FromEigen(extrinsic);
+        tsdf_volume.Integrate(rgbd, intrinsics, extrinsics);
 
-            mesher.MarchingCubes(tsdf_volume);
+        mesher.MarchingCubes(tsdf_volume);
 
-            *mesh = mesher.mesh();
-            visualizer.PollEvents();
-            visualizer.UpdateGeometry();
-            visualizer.GetViewControl().ConvertFromPinholeCameraParameters(
-                camera_trajectory->parameters_[index]);
-            index++;
+        *mesh = mesher.mesh();
+        visualizer.PollEvents();
+        visualizer.UpdateGeometry();
+        visualizer.GetViewControl().ConvertFromPinholeCameraParameters(
+            camera_trajectory->parameters_[index]);
+        index++;
 
-            if ((index > 0 && index % 2000 == 0)
+        if ((index > 0 && index % 2000 == 0)
             || index == camera_trajectory->parameters_.size()) {
-                tsdf_volume.GetAllSubvolumes();
-                mesher.MarchingCubes(tsdf_volume);
-                WriteTriangleMeshToPLY("fragment-" + std::to_string(save_index) + ".ply",
-                                       *mesher.mesh().Download());
-                save_index++;
-            }
-            timer.Signal();
+            tsdf_volume.GetAllSubvolumes();
+            mesher.MarchingCubes(tsdf_volume);
+            WriteTriangleMeshToPLY(
+                "fragment-" + std::to_string(save_index) + ".ply",
+                *mesher.mesh().Download());
+            save_index++;
         }
+        timer.Signal();
     }
-    fclose(file);
+
     return 0;
 }
+
