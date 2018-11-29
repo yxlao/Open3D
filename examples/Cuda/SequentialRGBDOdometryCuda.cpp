@@ -13,14 +13,25 @@
 
 #include "ReadDataAssociation.h"
 
+using namespace open3d;
+
+void PrintHelp() {
+    PrintOpen3DVersion();
+    PrintInfo("Usage :\n");
+    PrintInfo("    > SequentialRGBDOdometryCuda [dataset_path]\n");
+}
 
 int main(int argc, char **argv) {
-    using namespace open3d;
+    if (argc != 2 || ProgramOptionExists(argc, argv, "--help")) {
+        PrintHelp();
+        return 1;
+    }
 
     SetVerbosityLevel(VerbosityLevel::VerboseDebug);
-    std::string base_path = "/home/wei/Work/data/stanford/lounge/";
+
+    std::string base_path = argv[1];
     auto rgbd_filenames = ReadDataAssociation(
-        base_path + "data_association.txt");
+        base_path + "/data_association.txt");
 
     int index = 0;
     int save_index = 0;
@@ -47,7 +58,7 @@ int main(int argc, char **argv) {
     odometry.SetParameters(OdometryOption(), 0.5f);
 
     VisualizerWithCustomAnimation visualizer;
-    if (!visualizer.CreateVisualizerWindow("ScalableFusion", 640, 480, 0, 0)) {
+    if (!visualizer.CreateVisualizerWindow("SequentialRGBDOdometryCuda", 640, 480, 0, 0)) {
         PrintWarning("Failed creating OpenGL window.\n");
         return -1;
     }
@@ -64,8 +75,8 @@ int main(int argc, char **argv) {
     params.intrinsic_ = PinholeCameraIntrinsicParameters::PrimeSenseDefault;
 
     for (int i = 0; i < rgbd_filenames.size() - 1; ++i) {
-        ReadImage(base_path + rgbd_filenames[i].first, depth);
-        ReadImage(base_path + rgbd_filenames[i].second, color);
+        ReadImage(base_path + "/" + rgbd_filenames[i].first, depth);
+        ReadImage(base_path + "/" + rgbd_filenames[i].second, color);
         rgbd_curr.Upload(depth, color);
 
         if (index >= 1) {

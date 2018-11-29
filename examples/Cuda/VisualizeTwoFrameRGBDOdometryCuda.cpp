@@ -23,11 +23,17 @@
 
 using namespace open3d;
 
-int TestCudaRGBDOdometry(
-    std::string source_color_path,
+void PrintHelp() {
+    PrintOpen3DVersion();
+    PrintInfo("Usage :\n");
+    PrintInfo("    > VisualizeTwoFrameRGBDOdometryCuda [dataset_path]\n");
+}
+
+int TwoFrameRGBDOdometry(
     std::string source_depth_path,
-    std::string target_color_path,
-    std::string target_depth_path) {
+    std::string source_color_path,
+    std::string target_depth_path,
+    std::string target_color_path) {
     using namespace open3d;
 
     SetVerbosityLevel(VerbosityLevel::VerboseDebug);
@@ -183,80 +189,22 @@ void ProcessGaussianImage(std::string depth_path) {
     cv::imwrite("gaussian_normal_filter.png", mats);
 }
 
-void TestDifferentGaussianKernel(std::string depth_path_refined,
-                                 std::string depth_path_unrefined) {
-    Image depth;
-    ReadImage(depth_path_refined, depth);
-    auto pcl_refined = CreatePointCloudFromDepthImage(
-        depth,
-        PinholeCameraIntrinsic(
-            PinholeCameraIntrinsic(
-                PinholeCameraIntrinsicParameters::PrimeSenseDefault)));
-
-    ReadImage(depth_path_unrefined, depth);
-    auto pcl_unrefined = CreatePointCloudFromDepthImage(
-        depth,
-        PinholeCameraIntrinsic(
-            PinholeCameraIntrinsic(
-                PinholeCameraIntrinsicParameters::PrimeSenseDefault)));
-
-    VisualizerWithKeyCallback visualizer;
-    if (!visualizer.CreateVisualizerWindow("Gaussian", 640, 480, 0, 0)) {
-        PrintWarning("Failed creating OpenGL window.\n");
-        return;
-    }
-    visualizer.BuildUtilities();
-    visualizer.UpdateWindowTitle();
-
-    auto pcl = CreatePointCloudFromDepthImage(
-        depth,
-        PinholeCameraIntrinsic(
-            PinholeCameraIntrinsic(
-                PinholeCameraIntrinsicParameters::PrimeSenseDefault)));
-    visualizer.AddGeometry(pcl);
-
-    bool refined = false;
-    visualizer.RegisterKeyCallback(GLFW_KEY_SPACE, [&](Visualizer *vis) {
-        refined = !refined;
-        if (refined) {
-            pcl->points_ = pcl_refined->points_;
-            pcl->colors_ = pcl_refined->colors_;
-        } else {
-            pcl->points_ = pcl_unrefined->points_;
-            pcl->colors_ = pcl_unrefined->colors_;
-        }
-        vis->UpdateGeometry();
-        return true;
-    });
-
-    bool should_close = false;
-    while (!should_close) {
-        should_close = !visualizer.PollEvents();
-    }
-    visualizer.DestroyVisualizerWindow();
-}
-
 int main(int argc, char **argv) {
-    std::string base_path = "/home/wei/Work/data/stanford/lounge/";
-
-    auto rgbd_filenames = ReadDataAssociation(
-        base_path + "data_association.txt");
-
-    for (auto& rgbd_filename : rgbd_filenames) {
-        std::cout << rgbd_filename.first << " "
-                  << rgbd_filename.second << std::endl;
+    if (argc != 2 || ProgramOptionExists(argc, argv, "--help")) {
+        PrintHelp();
+        return 1;
     }
-//    ProcessGaussianImage(base_path + "depth/000004.png");
 
-//    TestDifferentGaussianKernel("gaussian_normal_filter.png",
-//                                "gaussian_refined_filter.png");
+    std::string base_path = argv[1];
+    auto rgbd_filenames = ReadDataAssociation(
+        base_path + "/data_association.txt");
 
     for (int i = 2; i < rgbd_filenames.size(); ++i) {
-        TestCudaRGBDOdometry(
-            base_path + rgbd_filenames[i + 1].second,
-            base_path + rgbd_filenames[i + 1].first,
-            base_path + rgbd_filenames[i].second,
-            base_path + rgbd_filenames[i].first);
+        TwoFrameRGBDOdometry(
+            base_path + "/" + rgbd_filenames[i + 1].first,
+            base_path + "/" + rgbd_filenames[i + 1].second,
+            base_path + "/" + rgbd_filenames[i].first,
+            base_path + "/" + rgbd_filenames[i].second);
     }
 
     return 0;

@@ -18,8 +18,16 @@
 #include <thread>
 #include "ReadDataAssociation.h"
 
+using namespace open3d;
+
+void PrintHelp() {
+    PrintOpen3DVersion();
+    PrintInfo("Usage :\n");
+    PrintInfo("    > ProfileRGBDOdometryCuda [dataset_path]\n");
+}
+
 void WriteLossesToLog(
-    std::ofstream& fout,
+    std::ofstream &fout,
     int frame_idx,
     std::vector<std::vector<float>> &losses) {
     assert(fout.is_open());
@@ -34,13 +42,16 @@ void WriteLossesToLog(
 }
 
 int main(int argc, char **argv) {
-    using namespace open3d;
+    if (argc == 1 || ProgramOptionExists(argc, argv, "--help")) {
+        PrintHelp();
+        return 1;
+    }
 
     /** Load data **/
-    std::string base_path = "/home/wei/Work/data/stanford/lounge/";
+    std::string base_path = argv[1];
     Image source_color, source_depth, target_color, target_depth;
     auto rgbd_filenames = ReadDataAssociation(
-        base_path + "data_association.txt");
+        base_path + "/data_association.txt");
 
     /** Prepare odometry **/
     RGBDOdometryCuda<3> odometry;
@@ -58,14 +69,18 @@ int main(int argc, char **argv) {
         }
 
         PrintInfo("Step: %d\n", step);
-        for (int i = 0; i + step < 10; ++i) {
+        for (int i = 0; i + step < 20; ++i) {
             PrintInfo("%d\n", i);
             std::stringstream ss;
 
-            ReadImage(base_path + rgbd_filenames[i].second, target_color);
-            ReadImage(base_path + rgbd_filenames[i].first, target_depth);
-            ReadImage(base_path + rgbd_filenames[i + 1].second, source_color);
-            ReadImage(base_path + rgbd_filenames[i + 1].first, source_depth);
+            ReadImage(base_path + "/" + rgbd_filenames[i].second,
+                      target_color);
+            ReadImage(base_path + "/" + rgbd_filenames[i].first,
+                      target_depth);
+            ReadImage(base_path + "/" + rgbd_filenames[i + 1].second,
+                      source_color);
+            ReadImage(base_path + "/" + rgbd_filenames[i + 1].first,
+                      source_depth);
 
             RGBDImageCuda source, target;
             source.Upload(source_depth, source_color);
