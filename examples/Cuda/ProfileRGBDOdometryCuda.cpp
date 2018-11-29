@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
             losses.resize(3);
             for (int level = 2; level >= 0; --level) {
                 for (int iter = 0; iter < 100; ++iter) {
-                    float loss = odometry.ApplyOneIterationOnLevel(level, iter);
+                    float loss = odometry.DoSingleIteration(level, iter);
                     losses[level].push_back(loss);
                 }
             }

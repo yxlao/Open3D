@@ -45,7 +45,7 @@ int TestCudaRGBDOdometry(
     RGBDOdometryCuda<3> odometry;
     odometry.SetIntrinsics(PinholeCameraIntrinsic(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault));
-    odometry.SetParameters(0.5f, 0.001f, 3.0f, 0.03f);
+    odometry.SetParameters(OdometryOption(), 1.0f);
     odometry.PrepareData(source, target);
     odometry.transform_source_to_target_ = Eigen::Matrix4d::Identity();
 
@@ -82,9 +82,16 @@ int TestCudaRGBDOdometry(
     int iter = kIterations[level];
     Eigen::Matrix4d prev_transform = Eigen::Matrix4d::Identity();
 
+
+    bool is_success;
+    Eigen::Matrix4d delta;
+    float loss;
     visualizer.RegisterKeyCallback(GLFW_KEY_SPACE, [&](Visualizer *vis) {
         if (!finished) {
-            float loss = odometry.ApplyOneIterationOnLevel(level, iter);
+            std::tie(is_success, delta, loss) =
+                odometry.DoSingleIteration(level, iter);
+            odometry.transform_source_to_target_ = delta *
+                odometry.transform_source_to_target_;
 
             lines->points_.clear();
             lines->lines_.clear();
@@ -125,10 +132,7 @@ int TestCudaRGBDOdometry(
                 lines->lines_.emplace_back(Eigen::Vector2i(2 * i + 1, 2 * i));
             }
 
-            losses[level].push_back(loss);
-
-            pcl_source->Transform(
-                odometry.transform_source_to_target_);
+            pcl_source->Transform(odometry.transform_source_to_target_);
             prev_transform = odometry.transform_source_to_target_;
             vis->UpdateGeometry();
         }
@@ -234,9 +238,9 @@ int main(int argc, char **argv) {
     std::string base_path = "/home/wei/Work/data/stanford/lounge/";
 //    ProcessGaussianImage(base_path + "depth/000004.png");
 
-    TestDifferentGaussianKernel("gaussian_normal_filter.png",
-                                "gaussian_refined_filter.png");
-
+//    TestDifferentGaussianKernel("gaussian_normal_filter.png",
+//                                "gaussian_refined_filter.png");
+//
 //    TestCudaRGBDOdometry(base_path + "color/000004.png",
 //                         base_path + "depth/000004.png",
 //                         base_path + "color/000001.png",
@@ -245,30 +249,30 @@ int main(int argc, char **argv) {
 //                         base_path + "depth/000366.png",
 //                         base_path + "color/000365.png",
 //                         base_path + "depth/000365.png");
-//    for (int i = 360; i < 3000; ++i) {
-//        std::stringstream ss;
-//        ss.str("");
-//        ss << base_path << "color/"
-//           << std::setw(6) << std::setfill('0') << i << ".png";
-//        std::string target_color_path = ss.str();
-//
-//        ss.str("");
-//        ss << base_path << "depth/"
-//           << std::setw(6) << std::setfill('0') << i << ".png";
-//        std::string target_depth_path = ss.str();
-//
-//        ss.str("");
-//        ss << base_path << "color/"
-//           << std::setw(6) << std::setfill('0') << i + 1 << ".png";
-//        std::string source_color_path = ss.str();
-//
-//        ss.str("");
-//        ss << base_path << "depth/"
-//           << std::setw(6) << std::setfill('0') << i + 1 << ".png";
-//        std::string source_depth_path = ss.str();
-//
-//        std::cout << target_color_path << std::endl;
-//        TestCudaRGBDOdometry(source_color_path, source_depth_path,
-//            target_color_path, target_depth_path);
-//    }
+    for (int i = 2; i < 3000; ++i) {
+        std::stringstream ss;
+        ss.str("");
+        ss << base_path << "color/"
+           << std::setw(6) << std::setfill('0') << i << ".png";
+        std::string target_color_path = ss.str();
+
+        ss.str("");
+        ss << base_path << "depth/"
+           << std::setw(6) << std::setfill('0') << i << ".png";
+        std::string target_depth_path = ss.str();
+
+        ss.str("");
+        ss << base_path << "color/"
+           << std::setw(6) << std::setfill('0') << i + 1 << ".png";
+        std::string source_color_path = ss.str();
+
+        ss.str("");
+        ss << base_path << "depth/"
+           << std::setw(6) << std::setfill('0') << i + 1 << ".png";
+        std::string source_depth_path = ss.str();
+
+        std::cout << target_color_path << std::endl;
+        TestCudaRGBDOdometry(source_color_path, source_depth_path,
+            target_color_path, target_depth_path);
+    }
 }

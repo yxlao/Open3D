@@ -22,14 +22,11 @@ RGBDOdometryCuda<N>::~RGBDOdometryCuda() {
 }
 
 template<size_t N>
-void RGBDOdometryCuda<N>::SetParameters(float sigma,
-                                        float depth_near_threshold,
-                                        float depth_far_threshold,
-                                        float depth_diff_threshold) {
+void RGBDOdometryCuda<N>::SetParameters(
+    const OdometryOption &option, const float sigma) {
+    assert(option_.iteration_number_per_pyramid_level_.size() == N);
+    option_ = option;
     sigma_ = sigma;
-    depth_near_threshold_ = depth_near_threshold;
-    depth_far_threshold_ = depth_far_threshold;
-    depth_diff_threshold_ = depth_diff_threshold;
 }
 
 template<size_t N>
@@ -61,7 +58,7 @@ bool RGBDOdometryCuda<N>::Create(int width, int height) {
     target_dx_.Create(width, height);
     target_dy_.Create(width, height);
 
-    results_.Create(29);
+    results_.Create(29); // 21 + 6 + 2
     correspondences_.Create(width * height);
 
     UpdateServer();
@@ -108,9 +105,9 @@ void RGBDOdometryCuda<N>::UpdateServer() {
         server_->sigma_ = sigma_;
         server_->sqrt_coeff_D_ = sqrtf(sigma_);
         server_->sqrt_coeff_I_ = sqrtf(1 - sigma_);
-        server_->depth_near_threshold_ = depth_near_threshold_;
-        server_->depth_far_threshold_ = depth_far_threshold_;
-        server_->depth_diff_threshold_ = depth_diff_threshold_;
+        server_->depth_near_threshold_ = (float) option_.min_depth_;
+        server_->depth_far_threshold_ = (float) option_.max_depth_;
+        server_->depth_diff_threshold_ = (float) option_.max_depth_diff_;
 
         server_->intrinsics_[0] = PinholeCameraIntrinsicCuda(intrinsics_);
         for (size_t i = 1; i < N; ++i) {
@@ -147,7 +144,7 @@ void RGBDOdometryCuda<N>::PrepareData(
     assert(source.height_ == target.height_);
 
     bool success = Create(source.width_, source.height_);
-    if (! success) {
+    if (!success) {
         PrintError("[RGBDOdometryCuda] create failed, "
                    "@PrepareData aborted.\n");
         return;
@@ -156,29 +153,32 @@ void RGBDOdometryCuda<N>::PrepareData(
     source_raw_.Build(source);
     target_raw_.Build(target);
     for (size_t i = 0; i < N; ++i) {
-        source_raw_[i].depthf().Gaussian(source_[i].depthf(), Gaussian3x3,
-            true);
-        source_raw_[i].intensity().Gaussian(source_[i].intensity(),
-            Gaussian3x3, false);
-        target_raw_[i].depthf().Gaussian(target_[i].depthf(), Gaussian3x3,
-            true);
-        target_raw_[i].intensity().Gaussian(target_[i].intensity(),
-            Gaussian3x3, false);
+        /* Filter raw data */
+        source_raw_[i].depthf().Gaussian(
+            source_[i].depthf(), Gaussian3x3, true);
+        source_raw_[i].intensity().Gaussian(
+            source_[i].intensity(), Gaussian3x3, false);
 
-        target_[i].depthf().Sobel(target_dx_[i].depthf(),
-                                  target_dy_[i].depthf(),
-                                  true);
-        target_[i].intensity().Sobel(target_dx_[i].intensity(),
-                                     target_dy_[i].intensity(),
-                                     false);
+        target_raw_[i].depthf().Gaussian(
+            target_[i].depthf(), Gaussian3x3, true);
+        target_raw_[i].intensity().Gaussian(
+            target_[i].intensity(), Gaussian3x3, false);
+
+        /* Compute gradients */
+        target_[i].depthf().Sobel(
+            target_dx_[i].depthf(), target_dy_[i].depthf(), true);
+        target_[i].intensity().Sobel(
+            target_dx_[i].intensity(), target_dy_[i].intensity(), false);
     }
+
     UpdateServer();
 }
 
 template<size_t N>
-float RGBDOdometryCuda<N>::ApplyOneIterationOnLevel(size_t level, int iter) {
+std::tuple<bool, Eigen::Matrix4d, float>
+RGBDOdometryCuda<N>::DoSingleIteration(size_t level, int iter) {
     results_.Memset(0);
-    correspondences_.set_size(0);
+    correspondences_.set_iterator(0);
 
 #ifdef VISUALIZE_ODOMETRY_INLIERS
     source_on_target_[level].CopyFrom(target_[level].intensity());
@@ -204,8 +204,7 @@ float RGBDOdometryCuda<N>::ApplyOneIterationOnLevel(size_t level, int iter) {
     float loss, inliers;
     ExtractResults(results, JtJ, Jtr, loss, inliers);
 
-    PrintDebug("> Level %d, iter %d: loss = %f, avg loss = %f, "
-               "inliers = %.0f\n",
+    PrintDebug("> Level %d, iter %d: loss = %f, avg loss = %f, inliers = %.0f\n",
                level, iter, loss, loss / inliers, inliers);
 
     bool is_success;
@@ -213,18 +212,35 @@ float RGBDOdometryCuda<N>::ApplyOneIterationOnLevel(size_t level, int iter) {
     std::tie(is_success, extrinsic) =
         SolveJacobianSystemAndObtainExtrinsicMatrix(JtJ, Jtr);
 
-    transform_source_to_target_ = extrinsic * transform_source_to_target_;
-    return loss;
+    return std::make_tuple(is_success, extrinsic, loss);
 }
 
 template<size_t N>
-void RGBDOdometryCuda<N>::Apply() {
+std::tuple<bool, Eigen::Matrix4d, std::vector<float> >
+RGBDOdometryCuda<N>::ComputeMultiScale() {
+    bool is_success;
+    Eigen::Matrix4d delta;
+    float loss;
 
-    const int kIterations[] = {60, 60, 60};
+    std::vector<float> losses;
     for (int level = (int) (N - 1); level >= 0; --level) {
-        for (int iter = 0; iter < kIterations[level]; ++iter) {
-            ApplyOneIterationOnLevel((size_t) level, iter);
+        for (int iter = 0;
+             iter < option_.iteration_number_per_pyramid_level_[N - 1 - level];
+             ++iter) {
+
+            std::tie(is_success, delta, loss) =
+                DoSingleIteration((size_t) level, iter);
+            transform_source_to_target_ = delta * transform_source_to_target_;
+
+            if (!is_success) {
+                PrintWarning("[ComputeOdometry] no solution!\n");
+                return std::make_tuple(
+                    false, Eigen::Matrix4d::Identity(),
+                    losses);
+            }
         }
     }
+
+    return std::make_tuple(true, transform_source_to_target_, losses);
 }
 }

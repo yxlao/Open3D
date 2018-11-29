@@ -219,7 +219,7 @@ int ArrayCuda<T>::size() const {
 }
 
 template<typename T>
-void ArrayCuda<T>::set_size(int iterator_position) {
+void ArrayCuda<T>::set_iterator(int iterator_position) {
     assert(server_ != nullptr);
 
     assert(0 <= iterator_position && iterator_position <= max_capacity_);

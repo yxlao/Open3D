@@ -7,6 +7,8 @@
 #include "OdometryClasses.h"
 #include "JacobianCuda.h"
 
+#include <Core/Odometry/OdometryOption.h>
+
 #include <Cuda/Common/UtilsCuda.h>
 
 #include <Cuda/Camera/PinholeCameraIntrinsicCuda.h>
@@ -20,6 +22,10 @@
 #include <Eigen/Eigen>
 
 namespace open3d {
+
+#define CHECK_ODOMETRY_INLIERS_
+#define CHECK_ODOMETRY_CORRESPONDENCES_
+
 /**
  * We assume that the
  * - depths are **converted** from short
@@ -78,7 +84,7 @@ public:
     }
 
 public:
-    __DEVICE__ bool ComputePixelwiseJacobiansAndResiduals(
+    __DEVICE__ bool ComputePixelwiseJacobianAndResidual(
         int x, int y, size_t level,
         JacobianCuda<6> &jacobian_I, JacobianCuda<6> &jacobian_D,
         float &residual_I, float &residual_D);
@@ -139,10 +145,7 @@ public:
     typedef Eigen::Matrix<double, 6, 1> EigenVector6d;
 
     float sigma_;
-    float depth_near_threshold_;
-    float depth_far_threshold_;
-    float depth_diff_threshold_;
-
+    OdometryOption option_;
     PinholeCameraIntrinsic intrinsics_;
     Eigen::Matrix4d transform_source_to_target_;
 
@@ -150,9 +153,8 @@ public:
     /** Ideally Create and Release should be only called once **/
     RGBDOdometryCuda();
     ~RGBDOdometryCuda();
-    void SetParameters(float sigma,
-                       float depth_near_threshold, float depth_far_threshold,
-                       float depth_diff_threshold);
+
+    void SetParameters(const OdometryOption &option, const float sigma = 0.5f);
     void SetIntrinsics(PinholeCameraIntrinsic intrinsics);
 
     bool Create(int width, int height);
@@ -160,13 +162,14 @@ public:
     void UpdateServer();
 
     void PrepareData(RGBDImageCuda &source, RGBDImageCuda &target);
-
-    float ApplyOneIterationOnLevel(size_t level, int iter);
-    void Apply();
-
     void ExtractResults(std::vector<float> &results,
                         EigenMatrix6d &JtJ, EigenVector6d &Jtr,
                         float &loss, float &inliers);
+
+    std::tuple<bool, Eigen::Matrix4d, float>
+        DoSingleIteration(size_t level, int iter);
+    std::tuple<bool, Eigen::Matrix4d, std::vector<float>>
+        ComputeMultiScale();
 
     RGBDImagePyramidCuda<N> &source() { return source_; }
     RGBDImagePyramidCuda<N> &target() { return target_; }

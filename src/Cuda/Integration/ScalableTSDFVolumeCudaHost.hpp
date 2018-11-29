@@ -260,7 +260,7 @@ void ScalableTSDFVolumeCuda<N>::Integrate(
     assert(server_ != nullptr);
 
     hash_table_.ResetLocks();
-    active_subvolume_entry_array_.set_size(0);
+    active_subvolume_entry_array_.set_iterator(0);
     TouchSubvolumes(rgbd.depthf(), camera, transform_camera_to_world);
 
     ResetActiveSubvolumeIndices();

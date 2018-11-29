@@ -70,18 +70,18 @@ void PointCloudCuda::Reset() {
         PrintError("Unknown vertex type!\n");
     }
 
-    points_.set_size(0);
+    points_.set_iterator(0);
 
     if (type_ & VertexWithNormal) {
-        normals_.set_size(0);
+        normals_.set_iterator(0);
     }
     if (type_ & VertexWithColor) {
-        colors_.set_size(0);
+        colors_.set_iterator(0);
     }
     if (type_ & VertexAsSurfel) {
-        radius_.set_size(0);
-        confidences_.set_size(0);
-        indices_.set_size(0);
+        radius_.set_iterator(0);
+        confidences_.set_iterator(0);
+        indices_.set_iterator(0);
     }
 }
 
@@ -162,7 +162,7 @@ void PointCloudCuda::Build(RGBDImageCuda &rgbd,
     PointCloudCudaKernelCaller::BuildFromRGBDImageKernelCaller(
         *server_, *rgbd.server(), intrinsic);
     if (type_ & VertexWithColor) {
-        colors_.set_size(points_.size());
+        colors_.set_iterator(points_.size());
     }
 }
 

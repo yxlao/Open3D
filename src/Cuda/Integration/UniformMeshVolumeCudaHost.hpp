@@ -179,10 +179,10 @@ void UniformMeshVolumeCuda<N>::MarchingCubes(
     TriangleExtraction();
 
     if (vertex_type_ & VertexWithNormal) {
-        mesh_.vertex_normals().set_size(mesh_.vertices().size());
+        mesh_.vertex_normals().set_iterator(mesh_.vertices().size());
     }
     if (vertex_type_ & VertexWithColor) {
-        mesh_.vertex_colors().set_size(mesh_.vertices().size());
+        mesh_.vertex_colors().set_iterator(mesh_.vertices().size());
     }
 }
 }

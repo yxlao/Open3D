@@ -72,7 +72,7 @@ public:
     void Clear();
 
     int size() const;
-    void set_size(int iterator_position);
+    void set_iterator(int iterator_position);
 
     std::shared_ptr<ArrayCudaServer<T>> &server() {
         return server_;

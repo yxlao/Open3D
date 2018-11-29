@@ -31,7 +31,7 @@ void ApplyRGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry, size_t level) {
     /** Compute Jacobian and residual -> 9ms **/
     JacobianCuda<6> jacobian_I, jacobian_D;
     float residual_I, residual_D;
-    bool mask = odometry.ComputePixelwiseJacobiansAndResiduals(
+    bool mask = odometry.ComputePixelwiseJacobianAndResidual(
         x, y, level, jacobian_I, jacobian_D, residual_I, residual_D);
 
     HessianCuda<6> JtJ;

@@ -55,7 +55,7 @@ void f() {
     RGBDOdometryCuda<3> odometry;
     odometry.SetIntrinsics(PinholeCameraIntrinsic(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault));
-    odometry.SetParameters(0.5f, 0.01f, 3.0f, 0.03f);
+    odometry.SetParameters(OdometryOption(), 0.5f);
 
     VisualizerWithCustomAnimation visualizer;
     if (!visualizer.CreateVisualizerWindow("ScalableFusion", 640, 480, 0, 0)) {
@@ -87,7 +87,7 @@ void f() {
                 odometry.transform_source_to_target_ =
                     Eigen::Matrix4d::Identity();
                 odometry.PrepareData(rgbd_curr, rgbd_prev);
-                odometry.Apply();
+                odometry.ComputeMultiScale();
                 target_to_world = target_to_world * odometry.transform_source_to_target_;
             }
             std::cout << index << std::endl;

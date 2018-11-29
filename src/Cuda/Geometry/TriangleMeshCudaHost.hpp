@@ -67,14 +67,14 @@ void TriangleMeshCuda::Reset() {
         PrintError("Unknown vertex type!\n");
     }
 
-    vertices_.set_size(0);
-    triangles_.set_size(0);
+    vertices_.set_iterator(0);
+    triangles_.set_iterator(0);
 
     if (type_ & VertexWithNormal) {
-        vertex_normals_.set_size(0);
+        vertex_normals_.set_iterator(0);
     }
     if (type_ & VertexWithColor) {
-        vertex_colors_.set_size(0);
+        vertex_colors_.set_iterator(0);
     }
 }
 

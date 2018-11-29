@@ -19,13 +19,14 @@ namespace open3d {
  */
 template<size_t N>
 __device__
-bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
+bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobianAndResidual(
     int x, int y, size_t level,
     JacobianCuda<6> &jacobian_I,
     JacobianCuda<6> &jacobian_D,
     float &residual_I,
     float &residual_D) {
 
+    /********** Phase 1: Projective data association **********/
     /** Check 1: depth valid in source? **/
     float d_source = source_[level].depth().at(x, y)(0);
     bool mask = IsValidDepth(d_source);
@@ -48,6 +49,7 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
     mask = IsValidDepth(d_target) && IsValidDepthDiff(d_target - X_target(2));
     if (!mask) return false;
 
+    /********** Phase 2: Build linear system **********/
     /** Checks passed, let's rock! -> 3ms, can be 2ms faster if we don't use
      * interpolation
      *  \partial D(p_warped) \partial p_warped: [dx_D, dy_D] at p_warped, 1x2
@@ -71,6 +73,7 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
         p_warped(0), p_warped(1))(0);
     float dy_D = kSobelFactor * target_dy_[level].depth().at(
         p_warped(0), p_warped(1))(0);
+
     float fx = intrinsics_[level].fx_;
     float fy = intrinsics_[level].fy_;
     float inv_Z = 1.0f / X_target(2);
@@ -84,7 +87,6 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
     jacobian_I(0) = sqrt_coeff_I_ * (-X_target(2) * c1 + X_target(1) * c2);
     jacobian_I(1) = sqrt_coeff_I_ * (X_target(2) * c0 - X_target(0) * c2);
     jacobian_I(2) = sqrt_coeff_I_ * (-X_target(1) * c0 + X_target(0) * c1);
-
     jacobian_I(3) = sqrt_coeff_I_ * c0;
     jacobian_I(4) = sqrt_coeff_I_ * c1;
     jacobian_I(5) = sqrt_coeff_I_ * c2;
@@ -103,7 +105,6 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
         ((X_target(2) * d0 - X_target(0) * d2) + X_target(0));
     jacobian_D(2) = sqrt_coeff_D_ *
         (-X_target(1) * d0 + X_target(0) * d1);
-
     jacobian_D(3) = sqrt_coeff_D_ * d0;
     jacobian_D(4) = sqrt_coeff_D_ * d1;
     jacobian_D(5) = sqrt_coeff_D_ * (d2 - 1.0f);
@@ -114,14 +115,6 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobiansAndResiduals(
     source_on_target()[level].at((int) p_warped(0), (int) p_warped(1))
         = Vector1f(0.0f);
 #endif
-//    printf("(%d %d) -> (%d %d): "
-//           "depth: %f -> %f, residual %f "
-//           "color: %f -> %f, residual %f\n",
-//        x, y, p_warped(0), p_warped(1),
-//        d_source, d_target, residual_D,
-//        source_[level].intensity().at(x, y)(0),
-//        target_[level].intensity().at(p_warped(0), p_warped(1))(0),
-//        residual_I);
 
     correspondences_.push_back(Vector4i(x, y, p_warped(0), p_warped(1)));
     return true;
