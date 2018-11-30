@@ -37,12 +37,15 @@ namespace open3d {
  */
 template<size_t N>
 class ICRGBDOdometryCudaServer {
-private:
+public:
     ImagePyramidCudaServer<Vector1f, N> source_on_target_;
 
     RGBDImagePyramidCudaServer<N> source_;
     RGBDImagePyramidCudaServer<N> source_dx_;
     RGBDImagePyramidCudaServer<N> source_dy_;
+
+    ImagePyramidCudaServer<Vector6f, N> source_depth_jacobian_;
+    ImagePyramidCudaServer<Vector6f, N> source_intensity_jacobian_;
 
     RGBDImagePyramidCudaServer<N> target_;
 
@@ -74,42 +77,20 @@ public:
     }
 
 public:
-    __DEVICE__ bool ComputePixelwiseJacobianAndResidual(
-        int x, int y, size_t level,
-        JacobianCuda<6> &jacobian_I, JacobianCuda<6> &jacobian_D,
+    __DEVICE__ void ComputePixelwiseJacobian(
+        int x_source, int y_target, size_t level);
+
+    __DEVICE__ bool ComputePixelwiseCorrespondenceAndResidual(
+        int x_target, int y_target, size_t level,
+        int &x_source, int &y_source,
         float &residual_I, float &residual_D);
+
     __DEVICE__ bool ComputePixelwiseJtJAndJtr(
-        JacobianCuda<6> &jacobian_I, JacobianCuda<6> &jacobian_D,
+        Vector6f &jacobian_I, Vector6f &jacobian_D,
         float &residual_I, float &residual_D,
         HessianCuda<6> &JtJ, Vector6f &Jtr);
 
 public:
-    __HOSTDEVICE__ inline ImagePyramidCudaServer<Vector1f, N> &
-    source_on_target() {
-        return source_on_target_;
-    }
-
-    __HOSTDEVICE__ inline RGBDImagePyramidCudaServer<N> &source() {
-        return source_;
-    }
-    __HOSTDEVICE__ inline RGBDImagePyramidCudaServer<N> &source_dx() {
-        return source_dx_;
-    }
-    __HOSTDEVICE__ inline RGBDImagePyramidCudaServer<N>& source_dy() {
-        return source_dy_;
-    }
-
-    __HOSTDEVICE__ inline RGBDImagePyramidCudaServer<N> &target() {
-        return target_;
-    }
-
-    __HOSTDEVICE__ inline ArrayCudaServer<float> &results() {
-        return results_;
-    }
-    __HOSTDEVICE__ inline ArrayCudaServer<Vector4i> &correspondences() {
-        return correspondences_;
-    }
-
     friend class ICRGBDOdometryCuda<N>;
 };
 
@@ -126,6 +107,8 @@ private:
     RGBDImagePyramidCuda<N> target_;
     RGBDImagePyramidCuda<N> source_dx_;
     RGBDImagePyramidCuda<N> source_dy_;
+    ImagePyramidCuda<Vector6f, N> source_depth_jacobian_;
+    ImagePyramidCuda<Vector6f, N> source_intensity_jacobian_;
 
     ArrayCuda<float> results_;
 
@@ -158,6 +141,8 @@ public:
                         EigenMatrix6d &JtJ, EigenVector6d &Jtr,
                         float &loss, float &inliers);
 
+    void PrecomputeJacobians(size_t level);
+
     std::tuple<bool, Eigen::Matrix4d, float>
     DoSingleIteration(size_t level, int iter);
     std::tuple<bool, Eigen::Matrix4d, std::vector<std::vector<float>>>
@@ -180,7 +165,15 @@ public:
     static __HOST__ void ApplyICRGBDOdometryKernelCaller(
         ICRGBDOdometryCudaServer<N>&server, size_t level,
         int width, int height);
+    static __HOST__ void PrecomputeICJacobiansKernelCaller(
+        ICRGBDOdometryCudaServer<N>&server, size_t level,
+        int width, int height);
 };
+
+template<size_t N>
+__GLOBAL__
+void PrecomputeICJacobiansKernel(
+    ICRGBDOdometryCudaServer<N> odometry, size_t level);
 
 template<size_t N>
 __GLOBAL__

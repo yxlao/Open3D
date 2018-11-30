@@ -53,7 +53,7 @@ int TwoFrameRGBDOdometry(
     ICRGBDOdometryCuda<3> odometry;
     odometry.SetIntrinsics(PinholeCameraIntrinsic(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault));
-    odometry.SetParameters(OdometryOption(), 0.5f);
+    odometry.SetParameters(OdometryOption({20, 10, 5}, 0.07), 0.5f);
     odometry.PrepareData(source, target);
     odometry.transform_source_to_target_ = Eigen::Matrix4d::Identity();
 
@@ -96,10 +96,14 @@ int TwoFrameRGBDOdometry(
     float loss;
     visualizer.RegisterKeyCallback(GLFW_KEY_SPACE, [&](Visualizer *vis) {
         if (!finished) {
+            Timer timer;
+            timer.Start();
             std::tie(is_success, delta, loss) =
                 odometry.DoSingleIteration(level, iter);
             odometry.transform_source_to_target_ = delta.inverse() *
                 odometry.transform_source_to_target_;
+            timer.Stop();
+            PrintInfo("Per iteration: %.4f ms\n", timer.GetDuration());
 
             lines->points_.clear();
             lines->lines_.clear();
@@ -178,6 +182,7 @@ int main(int argc, char **argv) {
         base_path + "/data_association.txt");
 
     for (int i = 2; i < rgbd_filenames.size(); ++i) {
+        std::cout << rgbd_filenames[i].first << std::endl;
         TwoFrameRGBDOdometry(
             base_path + "/" + rgbd_filenames[i + 1].first,
             base_path + "/" + rgbd_filenames[i + 1].second,

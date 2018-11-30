@@ -12,6 +12,10 @@
 
 #include "Reduction2DCudaKernel.cuh"
 
+#include <Cuda/Geometry/ImageCudaDevice.cuh>
+#include <Cuda/Geometry/ImageCudaKernel.cuh>
+#include <Cuda/Geometry/ImagePyramidCuda.h>
+
 namespace open3d {
 
 template class RGBDOdometryCudaServer<3>;
@@ -20,6 +24,9 @@ template class RGBDOdometryCudaKernelCaller<3>;
 template class ICRGBDOdometryCudaServer<3>;
 template class ICRGBDOdometryCudaKernelCaller<3>;
 
+template class ImageCudaServer<Vector6f>;
+template class ImageCudaKernelCaller<Vector6f>;
+template class ImagePyramidCudaServer<Vector6f, 3>;
 
 template
 float ReduceSum2D<Vector1f, float>(ImageCuda<Vector1f> &src);

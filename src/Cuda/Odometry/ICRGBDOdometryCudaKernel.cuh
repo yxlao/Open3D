@@ -24,22 +24,28 @@ void ApplyICRGBDOdometryKernel(ICRGBDOdometryCudaServer<N> odometry, size_t leve
     local_sum1[tid] = 0;
     local_sum2[tid] = 0;
 
-    if (x >= odometry.source()[level].depth().width_
-        || y >= odometry.source()[level].depth().height_)
+    if (x >= odometry.target_[level].depth().width_
+        || y >= odometry.target_[level].depth().height_)
         return;
 
     /** Compute Jacobian and residual -> 9ms **/
-    JacobianCuda<6> jacobian_I, jacobian_D;
     float residual_I, residual_D;
-    bool mask = odometry.ComputePixelwiseJacobianAndResidual(
-        x, y, level, jacobian_I, jacobian_D, residual_I, residual_D);
+    int x_source, y_source;
+    bool mask = odometry.ComputePixelwiseCorrespondenceAndResidual(
+        x, y, level,
+        x_source, y_source, residual_I, residual_D);
 
     HessianCuda<6> JtJ;
     Vector6f Jtr;
-    if (mask) { /** Compute JtJ and Jtr -> 5ms **/
-        odometry.ComputePixelwiseJtJAndJtr(jacobian_I, jacobian_D,
-                                           residual_I, residual_D,
-                                           JtJ, Jtr);
+    if (mask) {
+        odometry.correspondences_.push_back(Vector4i(x_source, y_source, x, y));
+
+        /** Access pre-computed pixel-wise jacobians **/
+        odometry.ComputePixelwiseJtJAndJtr(
+            odometry.source_intensity_jacobian_[level].at(x_source, y_source),
+            odometry.source_depth_jacobian_[level].at(x_source, y_source),
+            residual_I, residual_D,
+            JtJ, Jtr);
     }
 
     /** Reduce Sum JtJ -> 2ms **/
@@ -71,9 +77,9 @@ void ApplyICRGBDOdometryKernel(ICRGBDOdometryCudaServer<N> odometry, size_t leve
         }
 
         if (tid == 0) {
-            atomicAdd(&odometry.results().at(i + 0), local_sum0[0]);
-            atomicAdd(&odometry.results().at(i + 1), local_sum1[0]);
-            atomicAdd(&odometry.results().at(i + 2), local_sum2[0]);
+            atomicAdd(&odometry.results_.at(i + 0), local_sum0[0]);
+            atomicAdd(&odometry.results_.at(i + 1), local_sum1[0]);
+            atomicAdd(&odometry.results_.at(i + 2), local_sum2[0]);
         }
         __syncthreads();
     }
@@ -108,9 +114,9 @@ void ApplyICRGBDOdometryKernel(ICRGBDOdometryCudaServer<N> odometry, size_t leve
         }
 
         if (tid == 0) {
-            atomicAdd(&odometry.results().at(i + 0 + OFFSET1), local_sum0[0]);
-            atomicAdd(&odometry.results().at(i + 1 + OFFSET1), local_sum1[0]);
-            atomicAdd(&odometry.results().at(i + 2 + OFFSET1), local_sum2[0]);
+            atomicAdd(&odometry.results_.at(i + 0 + OFFSET1), local_sum0[0]);
+            atomicAdd(&odometry.results_.at(i + 1 + OFFSET1), local_sum1[0]);
+            atomicAdd(&odometry.results_.at(i + 2 + OFFSET1), local_sum2[0]);
         }
         __syncthreads();
     }
@@ -141,8 +147,8 @@ void ApplyICRGBDOdometryKernel(ICRGBDOdometryCudaServer<N> odometry, size_t leve
         }
 
         if (tid == 0) {
-            atomicAdd(&odometry.results().at(0 + OFFSET2), local_sum0[0]);
-            atomicAdd(&odometry.results().at(1 + OFFSET2), local_sum1[0]);
+            atomicAdd(&odometry.results_.at(0 + OFFSET2), local_sum0[0]);
+            atomicAdd(&odometry.results_.at(1 + OFFSET2), local_sum1[0]);
         }
         __syncthreads();
     }
@@ -161,4 +167,30 @@ void ICRGBDOdometryCudaKernelCaller<N>::ApplyICRGBDOdometryKernelCaller(
     CheckCuda(cudaGetLastError());
 }
 
+template<size_t N>
+__global__
+void PrecomputeICJacobiansKernel(
+    ICRGBDOdometryCudaServer<N> odometry, size_t level) {
+    const int x = threadIdx.x + blockIdx.x * blockDim.x;
+    const int y = threadIdx.y + blockIdx.y * blockDim.y;
+
+    if (x >= odometry.source_[level].depth().width_
+        || y >= odometry.source_[level].depth().height_)
+        return;
+
+    odometry.ComputePixelwiseJacobian(x, y, level);
+}
+
+template<size_t N>
+void ICRGBDOdometryCudaKernelCaller<N>::PrecomputeICJacobiansKernelCaller(
+    ICRGBDOdometryCudaServer<N> &server, size_t level,
+    int width, int height){
+
+    const dim3 blocks(DIV_CEILING(width, THREAD_2D_UNIT),
+                      DIV_CEILING(height, THREAD_2D_UNIT));
+    const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+    PrecomputeICJacobiansKernel<< < blocks, threads >> > (server, level);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+}
 }

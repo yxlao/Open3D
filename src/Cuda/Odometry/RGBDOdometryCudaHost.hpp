@@ -5,7 +5,7 @@
 #pragma once
 
 #include "RGBDOdometryCuda.h"
-#include <sophus/se3.hpp>
+#include <Core/Core.h>
 
 namespace open3d {
 /**
@@ -186,10 +186,14 @@ RGBDOdometryCuda<N>::DoSingleIteration(size_t level, int iter) {
     server_->transform_source_to_target_.FromEigen(
         transform_source_to_target_);
 
+    Timer timer;
+    timer.Start();
     RGBDOdometryCudaKernelCaller<N>::ApplyRGBDOdometryKernelCaller(
         *server_, level,
         source_[level].depthf().width_,
         source_[level].depthf().height_);
+    timer.Stop();
+    PrintDebug("Direct: %f\n", timer.GetDuration());
 
 #ifdef VISUALIZE_ODOMETRY_INLIERS
     cv::Mat im = source_on_target_[level].DownloadMat();

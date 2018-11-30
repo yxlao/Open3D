@@ -5,7 +5,7 @@
 #pragma once
 
 #include "ICRGBDOdometryCuda.h"
-#include <sophus/se3.hpp>
+#include <Core/Core.h>
 
 namespace open3d {
 /**
@@ -56,6 +56,9 @@ bool ICRGBDOdometryCuda<N>::Create(int width, int height) {
     source_.Create(width, height);
     source_dx_.Create(width, height);
     source_dy_.Create(width, height);
+    source_intensity_jacobian_.Create(width, height);
+    source_depth_jacobian_.Create(width, height);
+
     target_.Create(width, height);
 
     results_.Create(29); // 21 + 6 + 2
@@ -70,6 +73,8 @@ void ICRGBDOdometryCuda<N>::Release() {
     source_.Release();
     source_dx_.Release();
     source_dy_.Release();
+    source_intensity_jacobian_.Release();
+    source_depth_jacobian_.Release();
 
     target_.Release();
     source_on_target_.Release();
@@ -84,22 +89,29 @@ template<size_t N>
 void ICRGBDOdometryCuda<N>::UpdateServer() {
     if (server_ != nullptr) {
         source_on_target_.UpdateServer();
-        server_->source_on_target() = *source_on_target_.server();
+        server_->source_on_target_ = *source_on_target_.server();
 
         source_.UpdateServer();
-        server_->source() = *source_.server();
+        server_->source_ = *source_.server();
 
         target_.UpdateServer();
-        server_->target() = *target_.server();
+        server_->target_ = *target_.server();
 
         source_dx_.UpdateServer();
-        server_->source_dx() = *source_dx_.server();
+        server_->source_dx_ = *source_dx_.server();
 
         source_dy_.UpdateServer();
-        server_->source_dy() = *source_dy_.server();
+        server_->source_dy_ = *source_dy_.server();
 
-        server_->results() = *results_.server();
-        server_->correspondences() = *correspondences_.server();
+        source_intensity_jacobian_.UpdateServer();
+        server_->source_intensity_jacobian_ =
+            *source_intensity_jacobian_.server();
+        source_depth_jacobian_.UpdateServer();
+        server_->source_depth_jacobian_ =
+            *source_depth_jacobian_.server();
+
+        server_->results_ = *results_.server();
+        server_->correspondences_ = *correspondences_.server();
 
         /** Update parameters **/
         server_->sigma_ = sigma_;
@@ -169,9 +181,19 @@ void ICRGBDOdometryCuda<N>::PrepareData(
             source_dx_[i].depthf(), source_dy_[i].depthf(), true);
         source_[i].intensity().Sobel(
             source_dx_[i].intensity(), source_dy_[i].intensity(), false);
+
+        PrecomputeJacobians(i);
     }
 
     UpdateServer();
+}
+
+template<size_t N>
+void ICRGBDOdometryCuda<N>::PrecomputeJacobians(size_t level) {
+    ICRGBDOdometryCudaKernelCaller<N>::PrecomputeICJacobiansKernelCaller(
+        *server_, level,
+        source_[level].depthf().width_,
+        source_[level].depthf().height_);
 }
 
 template<size_t N>
@@ -186,10 +208,14 @@ ICRGBDOdometryCuda<N>::DoSingleIteration(size_t level, int iter) {
     server_->transform_source_to_target_.FromEigen(
         transform_source_to_target_);
 
+    Timer timer;
+    timer.Start();
     ICRGBDOdometryCudaKernelCaller<N>::ApplyICRGBDOdometryKernelCaller(
         *server_, level,
-        source_[level].depthf().width_,
-        source_[level].depthf().height_);
+        target_[level].depthf().width_,
+        target_[level].depthf().height_);
+    timer.Stop();
+    PrintDebug("IC: %f\n", timer.GetDuration());
 
 #ifdef VISUALIZE_ODOMETRY_INLIERS
     cv::Mat im = source_on_target_[level].DownloadMat();
@@ -233,7 +259,6 @@ ICRGBDOdometryCuda<N>::ComputeMultiScale() {
             std::tie(is_success, delta, loss) =
                 DoSingleIteration((size_t) level, iter);
 
-            // TODO: check which is correct
             transform_source_to_target_ = delta.inverse()
                 * transform_source_to_target_;
             losses_on_level.emplace_back(loss);

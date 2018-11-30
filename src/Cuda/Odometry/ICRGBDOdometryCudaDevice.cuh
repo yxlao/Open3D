@@ -17,36 +17,14 @@ namespace open3d {
 /**
  * Server end
  */
+
 template<size_t N>
 __device__
-bool ICRGBDOdometryCudaServer<N>::ComputePixelwiseJacobianAndResidual(
-    int x, int y, size_t level,
-    JacobianCuda<6> &jacobian_I,
-    JacobianCuda<6> &jacobian_D,
-    float &residual_I,
-    float &residual_D) {
+void ICRGBDOdometryCudaServer<N>::ComputePixelwiseJacobian(
+    int x_source, int y_source, size_t level) {
 
-    /********** Phase 1: Projective data association **********/
-    /** Check 1: depth valid in source? **/
-    float d_target = target_[level].depth().at(x, y)(0);
-    bool mask = IsValidDepth(d_target);
-    if (!mask) return false;
-
-    /** Check 2: reprojected point in image? **/
-    Vector3f X_target_on_source = transform_source_to_target_.Inverse()
-        * intrinsics_[level].InverseProjectPixel(
-            Vector2i(x, y), d_target);
-
-    Vector2f p_warpedf = intrinsics_[level].ProjectPoint(X_target_on_source);
-    mask = intrinsics_[level].IsPixelValid(p_warpedf);
-    if (!mask) return false;
-
-    Vector2i p_warped(int(p_warpedf(0) + 0.5f), int(p_warpedf(1) + 0.5f));
-
-    /** Check 3: depth valid in target? Occlusion? -> 1ms **/
-    float d_source = source_[level].depth().at(p_warped(0), p_warped(1))(0);
-    mask = IsValidDepth(d_source) && IsValidDepthDiff(d_source - X_target_on_source(2));
-    if (!mask) return false;
+    float d_source = source_[level].depth().at(x_source, y_source)(0);
+    if (!IsValidDepth(d_source)) return;
 
     /********** Phase 2: Build linear system **********/
     /** Checks passed, let's rock! -> 3ms, can be 2ms faster if we don't use
@@ -65,16 +43,16 @@ bool ICRGBDOdometryCudaServer<N>::ComputePixelwiseJacobianAndResidual(
      */
     const float kSobelFactor = 0.125f;
     float dx_I = kSobelFactor * source_dx_[level].intensity().at(
-        p_warped(0), p_warped(1))(0);
+        x_source, y_source)(0);
     float dy_I = kSobelFactor * source_dy_[level].intensity().at(
-        p_warped(0), p_warped(1))(0);
+        x_source, y_source)(0);
     float dx_D = kSobelFactor * source_dx_[level].depth().at(
-        p_warped(0), p_warped(1))(0);
+        x_source, y_source)(0);
     float dy_D = kSobelFactor * source_dy_[level].depth().at(
-        p_warped(0), p_warped(1))(0);
-
+        x_source, y_source)(0);
     Vector3f X_source = intrinsics_[level].InverseProjectPixel(
-        p_warped, d_source);
+        Vector2i(x_source, y_source), d_source);
+
     float fx = intrinsics_[level].fx_;
     float fy = intrinsics_[level].fy_;
     float inv_Z = 1.0f / X_source(2);
@@ -85,6 +63,8 @@ bool ICRGBDOdometryCudaServer<N>::ComputePixelwiseJacobianAndResidual(
     float c1 = dy_I * fy_on_Z;
     float c2 = -(c0 * X_source(0) + c1 * X_source(1)) * inv_Z;
 
+    Vector6f &jacobian_I = source_intensity_jacobian_[level].at(
+        x_source, y_source);
     jacobian_I(0) = sqrt_coeff_I_ * (-X_source(2) * c1 + X_source(1) * c2);
     jacobian_I(1) = sqrt_coeff_I_ * (X_source(2) * c0 - X_source(0) * c2);
     jacobian_I(2) = sqrt_coeff_I_ * (-X_source(1) * c0 + X_source(0) * c1);
@@ -92,14 +72,12 @@ bool ICRGBDOdometryCudaServer<N>::ComputePixelwiseJacobianAndResidual(
     jacobian_I(4) = sqrt_coeff_I_ * c1;
     jacobian_I(5) = sqrt_coeff_I_ * c2;
 
-    residual_I = sqrt_coeff_I_ *
-        (source_[level].intensity().at(p_warped(0), p_warped(1))(0)
-            - target_[level].intensity().at(x, y)(0));
-
     float d0 = dx_D * fx_on_Z;
     float d1 = dy_D * fy_on_Z;
     float d2 = -(d0 * X_source(0) + d1 * X_source(1)) * inv_Z;
 
+    Vector6f &jacobian_D = source_depth_jacobian_[level].at(
+        x_source, y_source);
     jacobian_D(0) = sqrt_coeff_D_ *
         ((-X_source(2) * d1 + X_source(1) * d2) - X_source(1));
     jacobian_D(1) = sqrt_coeff_D_ *
@@ -109,22 +87,50 @@ bool ICRGBDOdometryCudaServer<N>::ComputePixelwiseJacobianAndResidual(
     jacobian_D(3) = sqrt_coeff_D_ * d0;
     jacobian_D(4) = sqrt_coeff_D_ * d1;
     jacobian_D(5) = sqrt_coeff_D_ * (d2 - 1.0f);
+}
 
+template<size_t N>
+__device__
+bool ICRGBDOdometryCudaServer<N>::ComputePixelwiseCorrespondenceAndResidual(
+    int x_target, int y_target, size_t level,
+    int &x_source, int &y_source,
+    float &residual_I, float &residual_D) {
+
+    /********** Phase 1: Projective data association **********/
+    /** Check 1: depth valid in source? **/
+    float d_target = target_[level].depth().at(x_target, y_target)(0);
+    bool mask = IsValidDepth(d_target);
+    if (!mask) return false;
+
+    /** Check 2: reprojected point in image? **/
+    Vector3f X_target_on_source = transform_source_to_target_.Inverse()
+        * intrinsics_[level].InverseProjectPixel(
+            Vector2i(x_target, y_target), d_target);
+
+    Vector2f p_warpedf = intrinsics_[level].ProjectPoint(X_target_on_source);
+    mask = intrinsics_[level].IsPixelValid(p_warpedf);
+    if (!mask) return false;
+
+    Vector2i p_warped(int(p_warpedf(0) + 0.5f), int(p_warpedf(1) + 0.5f));
+
+    /** Check 3: depth valid in target? Occlusion? -> 1ms **/
+    float d_source = source_[level].depth().at(p_warped(0), p_warped(1))(0);
+    mask = IsValidDepth(d_source) && IsValidDepthDiff(d_source - X_target_on_source(2));
+    if (!mask) return false;
+
+    x_source = p_warped(0);
+    y_source = p_warped(1);
+    residual_I = sqrt_coeff_I_ *
+        (source_[level].intensity().at(x_source, y_source)(0)
+            - target_[level].intensity().at(x_target, y_target)(0));
     residual_D = sqrt_coeff_D_ * (d_source - X_target_on_source(2));
-
-#ifdef VISUALIZE_ODOMETRY_INLIERS
-    source_on_target()[level].at((int) p_warped(0), (int) p_warped(1))
-        = Vector1f(0.0f);
-#endif
-
-    correspondences_.push_back(Vector4i(p_warped(0), p_warped(1), x, y));
     return true;
 }
 
 template<size_t N>
 __device__
 bool ICRGBDOdometryCudaServer<N>::ComputePixelwiseJtJAndJtr(
-    JacobianCuda<6> &jacobian_I, JacobianCuda<6> &jacobian_D,
+    Vector6f &jacobian_I, Vector6f &jacobian_D,
     float &residual_I, float &residual_D,
     HessianCuda<6> &JtJ, Vector6f &Jtr) {
 
@@ -138,7 +144,6 @@ bool ICRGBDOdometryCudaServer<N>::ComputePixelwiseJtJAndJtr(
         }
         Jtr(i) = jacobian_I(i) * residual_I + jacobian_D(i) * residual_D;
     }
-
     return true;
 }
 }

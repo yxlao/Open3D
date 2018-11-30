@@ -53,7 +53,7 @@ int TwoFrameRGBDOdometry(
     RGBDOdometryCuda<3> odometry;
     odometry.SetIntrinsics(PinholeCameraIntrinsic(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault));
-    odometry.SetParameters(OdometryOption(), 1.0f);
+    odometry.SetParameters(OdometryOption({20, 10, 5}, 0.07), 0.5f);
     odometry.PrepareData(source, target);
     odometry.transform_source_to_target_ = Eigen::Matrix4d::Identity();
 
@@ -96,10 +96,15 @@ int TwoFrameRGBDOdometry(
     float loss;
     visualizer.RegisterKeyCallback(GLFW_KEY_SPACE, [&](Visualizer *vis) {
         if (!finished) {
+
+            Timer timer;
+            timer.Start();
             std::tie(is_success, delta, loss) =
                 odometry.DoSingleIteration(level, iter);
             odometry.transform_source_to_target_ = delta *
                 odometry.transform_source_to_target_;
+            timer.Stop();
+            PrintInfo("Per iteration: %.4f ms\n", timer.GetDuration());
 
             lines->points_.clear();
             lines->lines_.clear();
