@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
             source.Upload(source_depth, source_color);
             target.Upload(target_depth, target_color);
 
-            odometry.PrepareData(source, target);
+            odometry.Initialize(source, target);
             odometry.transform_source_to_target_ = Eigen::Matrix4d::Identity();
 
             auto result = odometry.ComputeMultiScale();

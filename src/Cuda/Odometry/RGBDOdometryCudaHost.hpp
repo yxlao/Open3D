@@ -84,22 +84,22 @@ template<size_t N>
 void RGBDOdometryCuda<N>::UpdateServer() {
     if (server_ != nullptr) {
         source_on_target_.UpdateServer();
-        server_->source_on_target() = *source_on_target_.server();
+        server_->source_on_target_ = *source_on_target_.server();
 
         source_.UpdateServer();
-        server_->source() = *source_.server();
+        server_->source_ = *source_.server();
 
         target_.UpdateServer();
-        server_->target() = *target_.server();
+        server_->target_ = *target_.server();
 
         target_dx_.UpdateServer();
-        server_->target_dx() = *target_dx_.server();
+        server_->target_dx_ = *target_dx_.server();
 
         target_dy_.UpdateServer();
-        server_->target_dy() = *target_dy_.server();
+        server_->target_dy_ = *target_dy_.server();
 
-        server_->results() = *results_.server();
-        server_->correspondences() = *correspondences_.server();
+        server_->results_ = *results_.server();
+        server_->correspondences_ = *correspondences_.server();
 
         /** Update parameters **/
         server_->sigma_ = sigma_;
@@ -138,7 +138,7 @@ void RGBDOdometryCuda<N>::ExtractResults(std::vector<float> &results,
 }
 
 template<size_t N>
-void RGBDOdometryCuda<N>::PrepareData(
+void RGBDOdometryCuda<N>::Initialize(
     RGBDImageCuda &source, RGBDImageCuda &target) {
     assert(source.width_ == target.width_);
     assert(source.height_ == target.height_);
@@ -188,7 +188,7 @@ RGBDOdometryCuda<N>::DoSingleIteration(size_t level, int iter) {
 
     Timer timer;
     timer.Start();
-    RGBDOdometryCudaKernelCaller<N>::ApplyRGBDOdometryKernelCaller(
+    RGBDOdometryCudaKernelCaller<N>::DoSingleIterationKernelCaller(
         *server_, level,
         source_[level].depthf().width_,
         source_[level].depthf().height_);

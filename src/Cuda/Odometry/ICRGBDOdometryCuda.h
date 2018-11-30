@@ -78,16 +78,16 @@ public:
 
 public:
     __DEVICE__ void ComputePixelwiseJacobian(
-        int x_source, int y_target, size_t level);
+        int x_target, int y_target, size_t level);
 
     __DEVICE__ bool ComputePixelwiseCorrespondenceAndResidual(
         int x_target, int y_target, size_t level,
         int &x_source, int &y_source,
         float &residual_I, float &residual_D);
 
-    __DEVICE__ bool ComputePixelwiseJtJAndJtr(
-        Vector6f &jacobian_I, Vector6f &jacobian_D,
-        float &residual_I, float &residual_D,
+    __DEVICE__ void ComputePixelwiseJtJAndJtr(
+        const Vector6f &jacobian_I, const Vector6f &jacobian_D,
+        const float &residual_I, const float &residual_D,
         HessianCuda<6> &JtJ, Vector6f &Jtr);
 
 public:
@@ -136,15 +136,16 @@ public:
     void Release();
     void UpdateServer();
 
-    void PrepareData(RGBDImageCuda &source, RGBDImageCuda &target);
-    void ExtractResults(std::vector<float> &results,
-                        EigenMatrix6d &JtJ, EigenVector6d &Jtr,
-                        float &loss, float &inliers);
+    void Initialize(RGBDImageCuda &source, RGBDImageCuda &target);
 
     void PrecomputeJacobians(size_t level);
+    std::tuple<bool, Eigen::Matrix4d, float> DoSingleIteration(
+        size_t level, int iter);
 
-    std::tuple<bool, Eigen::Matrix4d, float>
-    DoSingleIteration(size_t level, int iter);
+    void ExtractResults(
+        std::vector<float> &results,
+        EigenMatrix6d &JtJ, EigenVector6d &Jtr, float &loss, float &inliers);
+
     std::tuple<bool, Eigen::Matrix4d, std::vector<std::vector<float>>>
     ComputeMultiScale();
 
@@ -162,21 +163,22 @@ public:
 template<size_t N>
 class ICRGBDOdometryCudaKernelCaller {
 public:
-    static __HOST__ void ApplyICRGBDOdometryKernelCaller(
+    static __HOST__ void DoSinlgeIterationKernelCaller(
         ICRGBDOdometryCudaServer<N>&server, size_t level,
         int width, int height);
-    static __HOST__ void PrecomputeICJacobiansKernelCaller(
+    static __HOST__ void PrecomputeJacobiansKernelCaller(
         ICRGBDOdometryCudaServer<N>&server, size_t level,
         int width, int height);
 };
 
 template<size_t N>
 __GLOBAL__
-void PrecomputeICJacobiansKernel(
+void PrecomputeJacobiansKernel(
     ICRGBDOdometryCudaServer<N> odometry, size_t level);
 
 template<size_t N>
 __GLOBAL__
-void ApplyICRGBDOdometryKernel(ICRGBDOdometryCudaServer<N> odometry, size_t level);
+void DoSingleIterationKernel(
+    ICRGBDOdometryCudaServer<N> odometry, size_t level);
 
 }

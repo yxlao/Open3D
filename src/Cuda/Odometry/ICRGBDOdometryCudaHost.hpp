@@ -150,7 +150,7 @@ void ICRGBDOdometryCuda<N>::ExtractResults(std::vector<float> &results,
 }
 
 template<size_t N>
-void ICRGBDOdometryCuda<N>::PrepareData(
+void ICRGBDOdometryCuda<N>::Initialize(
     RGBDImageCuda &source, RGBDImageCuda &target) {
     assert(source.width_ == target.width_);
     assert(source.height_ == target.height_);
@@ -190,7 +190,7 @@ void ICRGBDOdometryCuda<N>::PrepareData(
 
 template<size_t N>
 void ICRGBDOdometryCuda<N>::PrecomputeJacobians(size_t level) {
-    ICRGBDOdometryCudaKernelCaller<N>::PrecomputeICJacobiansKernelCaller(
+    ICRGBDOdometryCudaKernelCaller<N>::PrecomputeJacobiansKernelCaller(
         *server_, level,
         source_[level].depthf().width_,
         source_[level].depthf().height_);
@@ -210,7 +210,7 @@ ICRGBDOdometryCuda<N>::DoSingleIteration(size_t level, int iter) {
 
     Timer timer;
     timer.Start();
-    ICRGBDOdometryCudaKernelCaller<N>::ApplyICRGBDOdometryKernelCaller(
+    ICRGBDOdometryCudaKernelCaller<N>::DoSinlgeIterationKernelCaller(
         *server_, level,
         target_[level].depthf().width_,
         target_[level].depthf().height_);

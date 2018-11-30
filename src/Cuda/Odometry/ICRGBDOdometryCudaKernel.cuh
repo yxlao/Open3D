@@ -8,7 +8,8 @@ namespace open3d {
 
 template<size_t N>
 __global__
-void ApplyICRGBDOdometryKernel(ICRGBDOdometryCudaServer<N> odometry, size_t level) {
+void DoSingleIterationKernel(
+    ICRGBDOdometryCudaServer<N> odometry, size_t level) {
     /** Add more memory blocks if we have **/
     /** TODO: check this version vs 1 __shared__ array version **/
     __shared__ float local_sum0[THREAD_2D_UNIT * THREAD_2D_UNIT];
@@ -155,21 +156,21 @@ void ApplyICRGBDOdometryKernel(ICRGBDOdometryCudaServer<N> odometry, size_t leve
 }
 
 template<size_t N>
-void ICRGBDOdometryCudaKernelCaller<N>::ApplyICRGBDOdometryKernelCaller(
+void ICRGBDOdometryCudaKernelCaller<N>::DoSinlgeIterationKernelCaller(
     ICRGBDOdometryCudaServer<N> &server, size_t level,
     int width, int height) {
 
     const dim3 blocks(DIV_CEILING(width, THREAD_2D_UNIT),
                       DIV_CEILING(height, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
-    ApplyICRGBDOdometryKernel << < blocks, threads >> > (server, level);
+    DoSingleIterationKernel << < blocks, threads >> > (server, level);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
 
 template<size_t N>
 __global__
-void PrecomputeICJacobiansKernel(
+void PrecomputeJacobiansKernel(
     ICRGBDOdometryCudaServer<N> odometry, size_t level) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -182,14 +183,14 @@ void PrecomputeICJacobiansKernel(
 }
 
 template<size_t N>
-void ICRGBDOdometryCudaKernelCaller<N>::PrecomputeICJacobiansKernelCaller(
+void ICRGBDOdometryCudaKernelCaller<N>::PrecomputeJacobiansKernelCaller(
     ICRGBDOdometryCudaServer<N> &server, size_t level,
     int width, int height){
 
     const dim3 blocks(DIV_CEILING(width, THREAD_2D_UNIT),
                       DIV_CEILING(height, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
-    PrecomputeICJacobiansKernel<< < blocks, threads >> > (server, level);
+    PrecomputeJacobiansKernel<< < blocks, threads >> > (server, level);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }

@@ -48,7 +48,7 @@ namespace open3d {
  */
 template<size_t N>
 class RGBDOdometryCudaServer {
-private:
+public:
     ImagePyramidCudaServer<Vector1f, N> source_on_target_;
 
     RGBDImagePyramidCudaServer<N> source_;
@@ -84,40 +84,23 @@ public:
     }
 
 public:
-    __DEVICE__ bool ComputePixelwiseJacobianAndResidual(
-        int x, int y, size_t level,
-        JacobianCuda<6> &jacobian_I, JacobianCuda<6> &jacobian_D,
+    __DEVICE__ bool ComputePixelwiseCorrespondenceAndResidual(
+        int x_source, int y_source, size_t level,
+        int &x_target, int &y_target,
+        Vector3f &X_target,
         float &residual_I, float &residual_D);
-    __DEVICE__ bool ComputePixelwiseJtJAndJtr(
-        JacobianCuda<6> &jacobian_I, JacobianCuda<6> &jacobian_D,
-        float &residual_I, float &residual_D,
+
+    __DEVICE__ void ComputePixelwiseJacobian(
+        int x_target, int y_target, size_t level,
+        const Vector3f &X_target,
+        Vector6f &jacobian_I, Vector6f &jacobian_D);
+
+    __DEVICE__ void ComputePixelwiseJtJAndJtr(
+        const Vector6f &jacobian_I, const Vector6f &jacobian_D,
+        const float &residual_I, const float &residual_D,
         HessianCuda<6> &JtJ, Vector6f &Jtr);
 
 public:
-    __HOSTDEVICE__ inline ImagePyramidCudaServer<Vector1f, N> &
-    source_on_target() {
-        return source_on_target_;
-    }
-    __HOSTDEVICE__ inline RGBDImagePyramidCudaServer<N> &source() {
-        return source_;
-    }
-    __HOSTDEVICE__ inline RGBDImagePyramidCudaServer<N> &target() {
-        return target_;
-    }
-    __HOSTDEVICE__ inline RGBDImagePyramidCudaServer<N> &target_dx() {
-        return target_dx_;
-    }
-    __HOSTDEVICE__ inline RGBDImagePyramidCudaServer<N>& target_dy() {
-        return target_dy_;
-    }
-
-    __HOSTDEVICE__ inline ArrayCudaServer<float> &results() {
-        return results_;
-    }
-    __HOSTDEVICE__ inline ArrayCudaServer<Vector4i> &correspondences() {
-        return correspondences_;
-    }
-
     friend class RGBDOdometryCuda<N>;
 };
 
@@ -161,13 +144,14 @@ public:
     void Release();
     void UpdateServer();
 
-    void PrepareData(RGBDImageCuda &source, RGBDImageCuda &target);
-    void ExtractResults(std::vector<float> &results,
-                        EigenMatrix6d &JtJ, EigenVector6d &Jtr,
-                        float &loss, float &inliers);
+    void Initialize(RGBDImageCuda &source, RGBDImageCuda &target);
 
-    std::tuple<bool, Eigen::Matrix4d, float>
-        DoSingleIteration(size_t level, int iter);
+    std::tuple<bool, Eigen::Matrix4d, float> DoSingleIteration(
+        size_t level,  int iter);
+    void ExtractResults(
+        std::vector<float> &results,
+        EigenMatrix6d &JtJ, EigenVector6d &Jtr, float &loss, float &inliers);
+
     std::tuple<bool, Eigen::Matrix4d, std::vector<std::vector<float>>>
         ComputeMultiScale();
 
@@ -185,13 +169,13 @@ public:
 template<size_t N>
 class RGBDOdometryCudaKernelCaller {
 public:
-    static __HOST__ void ApplyRGBDOdometryKernelCaller(
+    static __HOST__ void DoSingleIterationKernelCaller(
         RGBDOdometryCudaServer<N>&server, size_t level,
         int width, int height);
 };
 
 template<size_t N>
 __GLOBAL__
-void ApplyRGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry, size_t level);
+void DoSingleIterationKernel(RGBDOdometryCudaServer<N> odometry, size_t level);
 
 }

@@ -8,7 +8,7 @@ namespace open3d {
 
 template<size_t N>
 __global__
-void ApplyRGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry, size_t level) {
+void DoSingleIterationKernel(RGBDOdometryCudaServer<N> odometry, size_t level) {
     /** Add more memory blocks if we have **/
     /** TODO: check this version vs 1 __shared__ array version **/
     __shared__ float local_sum0[THREAD_2D_UNIT * THREAD_2D_UNIT];
@@ -24,22 +24,26 @@ void ApplyRGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry, size_t level) {
     local_sum1[tid] = 0;
     local_sum2[tid] = 0;
 
-    if (x >= odometry.source()[level].depth().width_
-        || y >= odometry.source()[level].depth().height_)
+    if (x >= odometry.source_[level].depth().width_
+        || y >= odometry.source_[level].depth().height_)
         return;
 
-    /** Compute Jacobian and residual -> 9ms **/
-    JacobianCuda<6> jacobian_I, jacobian_D;
+    int x_target, y_target;
     float residual_I, residual_D;
-    bool mask = odometry.ComputePixelwiseJacobianAndResidual(
-        x, y, level, jacobian_I, jacobian_D, residual_I, residual_D);
+    Vector3f X_target;
+    bool mask = odometry.ComputePixelwiseCorrespondenceAndResidual(
+        x, y, level, x_target, y_target, X_target, residual_I, residual_D);
 
+    Vector6f jacobian_I, jacobian_D, Jtr;
     HessianCuda<6> JtJ;
-    Vector6f Jtr;
-    if (mask) { /** Compute JtJ and Jtr -> 5ms **/
-        odometry.ComputePixelwiseJtJAndJtr(jacobian_I, jacobian_D,
-                                           residual_I, residual_D,
-                                           JtJ, Jtr);
+    if (mask) {
+        odometry.correspondences_.push_back(Vector4i(x, y, x_target, y_target));
+        odometry.ComputePixelwiseJacobian(
+            x_target, y_target, level, X_target,
+            jacobian_I, jacobian_D);
+        odometry.ComputePixelwiseJtJAndJtr(
+            jacobian_I, jacobian_D, residual_I, residual_D,
+            JtJ, Jtr);
     }
 
     /** Reduce Sum JtJ -> 2ms **/
@@ -71,9 +75,9 @@ void ApplyRGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry, size_t level) {
         }
 
         if (tid == 0) {
-            atomicAdd(&odometry.results().at(i + 0), local_sum0[0]);
-            atomicAdd(&odometry.results().at(i + 1), local_sum1[0]);
-            atomicAdd(&odometry.results().at(i + 2), local_sum2[0]);
+            atomicAdd(&odometry.results_.at(i + 0), local_sum0[0]);
+            atomicAdd(&odometry.results_.at(i + 1), local_sum1[0]);
+            atomicAdd(&odometry.results_.at(i + 2), local_sum2[0]);
         }
         __syncthreads();
     }
@@ -108,9 +112,9 @@ void ApplyRGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry, size_t level) {
         }
 
         if (tid == 0) {
-            atomicAdd(&odometry.results().at(i + 0 + OFFSET1), local_sum0[0]);
-            atomicAdd(&odometry.results().at(i + 1 + OFFSET1), local_sum1[0]);
-            atomicAdd(&odometry.results().at(i + 2 + OFFSET1), local_sum2[0]);
+            atomicAdd(&odometry.results_.at(i + 0 + OFFSET1), local_sum0[0]);
+            atomicAdd(&odometry.results_.at(i + 1 + OFFSET1), local_sum1[0]);
+            atomicAdd(&odometry.results_.at(i + 2 + OFFSET1), local_sum2[0]);
         }
         __syncthreads();
     }
@@ -141,22 +145,22 @@ void ApplyRGBDOdometryKernel(RGBDOdometryCudaServer<N> odometry, size_t level) {
         }
 
         if (tid == 0) {
-            atomicAdd(&odometry.results().at(0 + OFFSET2), local_sum0[0]);
-            atomicAdd(&odometry.results().at(1 + OFFSET2), local_sum1[0]);
+            atomicAdd(&odometry.results_.at(0 + OFFSET2), local_sum0[0]);
+            atomicAdd(&odometry.results_.at(1 + OFFSET2), local_sum1[0]);
         }
         __syncthreads();
     }
 }
 
 template<size_t N>
-void RGBDOdometryCudaKernelCaller<N>::ApplyRGBDOdometryKernelCaller(
+void RGBDOdometryCudaKernelCaller<N>::DoSingleIterationKernelCaller(
     RGBDOdometryCudaServer<N> &server, size_t level,
     int width, int height) {
 
     const dim3 blocks(DIV_CEILING(width, THREAD_2D_UNIT),
                       DIV_CEILING(height, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
-    ApplyRGBDOdometryKernel << < blocks, threads >> > (server, level);
+    DoSingleIterationKernel << < blocks, threads >> > (server, level);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }

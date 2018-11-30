@@ -10,8 +10,6 @@
 #include <Cuda/Geometry/ImageCudaDevice.cuh>
 #include <Cuda/Container/ArrayCudaDevice.cuh>
 
-#include <sophus/se3.hpp>
-
 namespace open3d {
 
 /**
@@ -129,9 +127,9 @@ bool ICRGBDOdometryCudaServer<N>::ComputePixelwiseCorrespondenceAndResidual(
 
 template<size_t N>
 __device__
-bool ICRGBDOdometryCudaServer<N>::ComputePixelwiseJtJAndJtr(
-    Vector6f &jacobian_I, Vector6f &jacobian_D,
-    float &residual_I, float &residual_D,
+void ICRGBDOdometryCudaServer<N>::ComputePixelwiseJtJAndJtr(
+    const Vector6f &jacobian_I, const Vector6f &jacobian_D,
+    const float &residual_I, const float &residual_D,
     HessianCuda<6> &JtJ, Vector6f &Jtr) {
 
     int cnt = 0;
@@ -144,6 +142,5 @@ bool ICRGBDOdometryCudaServer<N>::ComputePixelwiseJtJAndJtr(
         }
         Jtr(i) = jacobian_I(i) * residual_I + jacobian_D(i) * residual_D;
     }
-    return true;
 }
 }

@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
         if (index >= 1) {
             odometry.transform_source_to_target_ =
                 Eigen::Matrix4d::Identity();
-            odometry.PrepareData(rgbd_curr, rgbd_prev);
+            odometry.Initialize(rgbd_curr, rgbd_prev);
             odometry.ComputeMultiScale();
             target_to_world =
                 target_to_world * odometry.transform_source_to_target_;

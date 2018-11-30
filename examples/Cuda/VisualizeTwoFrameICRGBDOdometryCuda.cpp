@@ -53,8 +53,8 @@ int TwoFrameRGBDOdometry(
     ICRGBDOdometryCuda<3> odometry;
     odometry.SetIntrinsics(PinholeCameraIntrinsic(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault));
-    odometry.SetParameters(OdometryOption({20, 10, 5}, 0.07), 0.5f);
-    odometry.PrepareData(source, target);
+    odometry.SetParameters(OdometryOption({20, 10, 5}, 0.03), 0.5f);
+    odometry.Initialize(source, target);
     odometry.transform_source_to_target_ = Eigen::Matrix4d::Identity();
 
     /** Prepare point cloud **/
@@ -181,11 +181,11 @@ int main(int argc, char **argv) {
     auto rgbd_filenames = ReadDataAssociation(
         base_path + "/data_association.txt");
 
-    for (int i = 2; i < rgbd_filenames.size(); ++i) {
+    for (int i = 1; i < rgbd_filenames.size(); ++i) {
         std::cout << rgbd_filenames[i].first << std::endl;
         TwoFrameRGBDOdometry(
-            base_path + "/" + rgbd_filenames[i + 1].first,
-            base_path + "/" + rgbd_filenames[i + 1].second,
+            base_path + "/" + rgbd_filenames[i + 5].first,
+            base_path + "/" + rgbd_filenames[i + 5].second,
             base_path + "/" + rgbd_filenames[i].first,
             base_path + "/" + rgbd_filenames[i].second);
     }

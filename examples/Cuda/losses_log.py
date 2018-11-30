@@ -22,13 +22,25 @@ def load_losses_log(log_path):
 
 
 if __name__ == '__main__':
+    plt.rc('text', usetex=True)
+    plt.rc('font', family='serif')
+
     losses_0, losses_1, losses_2 = load_losses_log(
         '../../cmake-build-release/bin/examples/odometry-step-1.log')
 
     fig, ax = plt.subplots(1, 1)
 
-    nframes, n = losses_1.shape
+    nframes, niters = losses_0.shape
     for i in range(nframes):
-        ax.plot(np.arange(n), np.log(losses_1[i, :]))
+        ax.plot(np.arange(niters), np.log(losses_0[i, :]), linewidth=1)
 
+    ax.grid()
+    ax.set_xlabel(r'\textbf{Iterations}')
+    ax.set_xticks(np.arange(0, niters, 2))
+    ax.set_ylabel(r'\textit{Loss}', fontsize=16)
+    ax.set_title(r"FC Odometry", fontsize=16, color='gray')
+
+    # Make room for the ridiculously large title.
+    plt.subplots_adjust(top=0.8)
+    plt.savefig('fc.png')
     plt.show()

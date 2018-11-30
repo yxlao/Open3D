@@ -5,9 +5,6 @@ find_package(pybind11  QUIET)
 # > additional dependencies
 find_package(CUDA 8.0 REQUIRED)
 find_package(OpenCV REQUIRED)
-find_package(Sophus REQUIRED)
-
-
 
 if (PKGCONFIG_FOUND)
     pkg_search_module(EIGEN3    eigen3>=3.2.7   QUIET)
@@ -228,7 +225,7 @@ list(APPEND 3RDPARTY_INCLUDE_DIRS
 
      ${CUDA_TOOLKIT_INCLUDE} # > additional include files for CUDA
      ${OpenCV_INCLUDE_DIRS}  # > Temporarily used
-     ${Sophus_INCLUDE_DIRS})
+     )
 
 # set 3RDPARTY_LIBRARY_DIRS
 list(APPEND 3RDPARTY_LIBRARY_DIRS
