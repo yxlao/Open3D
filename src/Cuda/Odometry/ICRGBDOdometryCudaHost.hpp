@@ -54,9 +54,9 @@ bool ICRGBDOdometryCuda<N>::Create(int width, int height) {
     source_on_target_.Create(width, height);
 
     source_.Create(width, height);
+    source_dx_.Create(width, height);
+    source_dy_.Create(width, height);
     target_.Create(width, height);
-    target_dx_.Create(width, height);
-    target_dy_.Create(width, height);
 
     results_.Create(29); // 21 + 6 + 2
     correspondences_.Create(width * height);
@@ -68,10 +68,10 @@ bool ICRGBDOdometryCuda<N>::Create(int width, int height) {
 template<size_t N>
 void ICRGBDOdometryCuda<N>::Release() {
     source_.Release();
-    target_.Release();
-    target_dx_.Release();
-    target_dy_.Release();
+    source_dx_.Release();
+    source_dy_.Release();
 
+    target_.Release();
     source_on_target_.Release();
 
     results_.Release();
@@ -92,11 +92,11 @@ void ICRGBDOdometryCuda<N>::UpdateServer() {
         target_.UpdateServer();
         server_->target() = *target_.server();
 
-        target_dx_.UpdateServer();
-        server_->target_dx() = *target_dx_.server();
+        source_dx_.UpdateServer();
+        server_->source_dx() = *source_dx_.server();
 
-        target_dy_.UpdateServer();
-        server_->target_dy() = *target_dy_.server();
+        source_dy_.UpdateServer();
+        server_->source_dy() = *source_dy_.server();
 
         server_->results() = *results_.server();
         server_->correspondences() = *correspondences_.server();
@@ -165,10 +165,10 @@ void ICRGBDOdometryCuda<N>::PrepareData(
             target_[i].intensity(), Gaussian3x3, false);
 
         /* Compute gradients */
-        target_[i].depthf().Sobel(
-            target_dx_[i].depthf(), target_dy_[i].depthf(), true);
-        target_[i].intensity().Sobel(
-            target_dx_[i].intensity(), target_dy_[i].intensity(), false);
+        source_[i].depthf().Sobel(
+            source_dx_[i].depthf(), source_dy_[i].depthf(), true);
+        source_[i].intensity().Sobel(
+            source_dx_[i].intensity(), source_dy_[i].intensity(), false);
     }
 
     UpdateServer();
@@ -232,7 +232,10 @@ ICRGBDOdometryCuda<N>::ComputeMultiScale() {
 
             std::tie(is_success, delta, loss) =
                 DoSingleIteration((size_t) level, iter);
-            transform_source_to_target_ = delta * transform_source_to_target_;
+
+            // TODO: check which is correct
+            transform_source_to_target_ = delta.inverse()
+                * transform_source_to_target_;
             losses_on_level.emplace_back(loss);
 
             if (!is_success) {

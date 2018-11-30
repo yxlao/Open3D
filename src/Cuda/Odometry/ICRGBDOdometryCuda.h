@@ -27,24 +27,13 @@ namespace open3d {
 #define CHECK_ODOMETRY_CORRESPONDENCES_
 
 /**
- * We assume that the
- * - depths are **converted** from short
- * - intensities are **converted** from BGR / RGB ... whatever.
+ * In Inverse Compositional (IC) version of RGBDOdometry, instead of warping
+ * from source to target, we warp target to source
  *
- * Refer to this paper:
- * http://vladlen.info/papers/colored-point-cloud-registration-supplement.pdf
+ * I_{source}[w(0 + \delta xi)] - I_{target}[w(p)]
  *
- * We minimize
- * E(\xi) =
- * \sum_{p}
- *   (1 - sigma) ||I_{target}[g(s(h(p, D_{source}), \xi))] - I_{source}[p]||^2
- * + sigma ||D_{target}[g(s(h(p, D_{source}), \xi))] - s(h(p, D_{source})).z||^2
- *
- * Usually @target frame should be a keyframe, or 'the previous' frame
- *                 it should hold more precomputed information,
- *                 including gradients.
- *         @source frame should be a current frame.
- *         We warp the @source frame to the @target frame.
+ * e.g., see
+ * http://homepages.inf.ed.ac.uk/rbf/CVonline/LOCAL_COPIES/AV0910/zhao.pdf
  */
 template<size_t N>
 class ICRGBDOdometryCudaServer {
@@ -52,9 +41,10 @@ private:
     ImagePyramidCudaServer<Vector1f, N> source_on_target_;
 
     RGBDImagePyramidCudaServer<N> source_;
+    RGBDImagePyramidCudaServer<N> source_dx_;
+    RGBDImagePyramidCudaServer<N> source_dy_;
+
     RGBDImagePyramidCudaServer<N> target_;
-    RGBDImagePyramidCudaServer<N> target_dx_;
-    RGBDImagePyramidCudaServer<N> target_dy_;
 
     ArrayCudaServer<float> results_;
     ArrayCudaServer<Vector4i> correspondences_;
@@ -98,17 +88,19 @@ public:
     source_on_target() {
         return source_on_target_;
     }
+
     __HOSTDEVICE__ inline RGBDImagePyramidCudaServer<N> &source() {
         return source_;
     }
+    __HOSTDEVICE__ inline RGBDImagePyramidCudaServer<N> &source_dx() {
+        return source_dx_;
+    }
+    __HOSTDEVICE__ inline RGBDImagePyramidCudaServer<N>& source_dy() {
+        return source_dy_;
+    }
+
     __HOSTDEVICE__ inline RGBDImagePyramidCudaServer<N> &target() {
         return target_;
-    }
-    __HOSTDEVICE__ inline RGBDImagePyramidCudaServer<N> &target_dx() {
-        return target_dx_;
-    }
-    __HOSTDEVICE__ inline RGBDImagePyramidCudaServer<N>& target_dy() {
-        return target_dy_;
     }
 
     __HOSTDEVICE__ inline ArrayCudaServer<float> &results() {
@@ -132,8 +124,8 @@ private:
 
     RGBDImagePyramidCuda<N> source_;
     RGBDImagePyramidCuda<N> target_;
-    RGBDImagePyramidCuda<N> target_dx_;
-    RGBDImagePyramidCuda<N> target_dy_;
+    RGBDImagePyramidCuda<N> source_dx_;
+    RGBDImagePyramidCuda<N> source_dy_;
 
     ArrayCuda<float> results_;
 

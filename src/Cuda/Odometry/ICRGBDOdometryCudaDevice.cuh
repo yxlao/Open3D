@@ -28,25 +28,24 @@ bool ICRGBDOdometryCudaServer<N>::ComputePixelwiseJacobianAndResidual(
 
     /********** Phase 1: Projective data association **********/
     /** Check 1: depth valid in source? **/
-    float d_source = source_[level].depth().at(x, y)(0);
-    bool mask = IsValidDepth(d_source);
+    float d_target = target_[level].depth().at(x, y)(0);
+    bool mask = IsValidDepth(d_target);
     if (!mask) return false;
 
     /** Check 2: reprojected point in image? **/
-    Vector3f
-        X_target = transform_source_to_target_
+    Vector3f X_target_on_source = transform_source_to_target_.Inverse()
         * intrinsics_[level].InverseProjectPixel(
-            Vector2i(x, y), d_source);
+            Vector2i(x, y), d_target);
 
-    Vector2f p_warpedf = intrinsics_[level].ProjectPoint(X_target);
+    Vector2f p_warpedf = intrinsics_[level].ProjectPoint(X_target_on_source);
     mask = intrinsics_[level].IsPixelValid(p_warpedf);
     if (!mask) return false;
 
     Vector2i p_warped(int(p_warpedf(0) + 0.5f), int(p_warpedf(1) + 0.5f));
 
     /** Check 3: depth valid in target? Occlusion? -> 1ms **/
-    float d_target = target_[level].depth().at(p_warped(0), p_warped(1))(0);
-    mask = IsValidDepth(d_target) && IsValidDepthDiff(d_target - X_target(2));
+    float d_source = source_[level].depth().at(p_warped(0), p_warped(1))(0);
+    mask = IsValidDepth(d_source) && IsValidDepthDiff(d_source - X_target_on_source(2));
     if (!mask) return false;
 
     /********** Phase 2: Build linear system **********/
@@ -65,58 +64,60 @@ bool ICRGBDOdometryCudaServer<N>::ComputePixelwiseJacobianAndResidual(
      *     - (d X.z / d X) (d X / d \xi)
      */
     const float kSobelFactor = 0.125f;
-    float dx_I = kSobelFactor * target_dx_[level].intensity().at(
+    float dx_I = kSobelFactor * source_dx_[level].intensity().at(
         p_warped(0), p_warped(1))(0);
-    float dy_I = kSobelFactor * target_dy_[level].intensity().at(
+    float dy_I = kSobelFactor * source_dy_[level].intensity().at(
         p_warped(0), p_warped(1))(0);
-    float dx_D = kSobelFactor * target_dx_[level].depth().at(
+    float dx_D = kSobelFactor * source_dx_[level].depth().at(
         p_warped(0), p_warped(1))(0);
-    float dy_D = kSobelFactor * target_dy_[level].depth().at(
+    float dy_D = kSobelFactor * source_dy_[level].depth().at(
         p_warped(0), p_warped(1))(0);
 
+    Vector3f X_source = intrinsics_[level].InverseProjectPixel(
+        p_warped, d_source);
     float fx = intrinsics_[level].fx_;
     float fy = intrinsics_[level].fy_;
-    float inv_Z = 1.0f / X_target(2);
+    float inv_Z = 1.0f / X_source(2);
     float fx_on_Z = fx * inv_Z;
     float fy_on_Z = fy * inv_Z;
 
     float c0 = dx_I * fx_on_Z;
     float c1 = dy_I * fy_on_Z;
-    float c2 = -(c0 * X_target(0) + c1 * X_target(1)) * inv_Z;
+    float c2 = -(c0 * X_source(0) + c1 * X_source(1)) * inv_Z;
 
-    jacobian_I(0) = sqrt_coeff_I_ * (-X_target(2) * c1 + X_target(1) * c2);
-    jacobian_I(1) = sqrt_coeff_I_ * (X_target(2) * c0 - X_target(0) * c2);
-    jacobian_I(2) = sqrt_coeff_I_ * (-X_target(1) * c0 + X_target(0) * c1);
+    jacobian_I(0) = sqrt_coeff_I_ * (-X_source(2) * c1 + X_source(1) * c2);
+    jacobian_I(1) = sqrt_coeff_I_ * (X_source(2) * c0 - X_source(0) * c2);
+    jacobian_I(2) = sqrt_coeff_I_ * (-X_source(1) * c0 + X_source(0) * c1);
     jacobian_I(3) = sqrt_coeff_I_ * c0;
     jacobian_I(4) = sqrt_coeff_I_ * c1;
     jacobian_I(5) = sqrt_coeff_I_ * c2;
 
     residual_I = sqrt_coeff_I_ *
-        (target_[level].intensity().at(p_warped(0), p_warped(1))(0)
-            - source_[level].intensity().at(x, y)(0));
+        (source_[level].intensity().at(p_warped(0), p_warped(1))(0)
+            - target_[level].intensity().at(x, y)(0));
 
     float d0 = dx_D * fx_on_Z;
     float d1 = dy_D * fy_on_Z;
-    float d2 = -(d0 * X_target(0) + d1 * X_target(1)) * inv_Z;
+    float d2 = -(d0 * X_source(0) + d1 * X_source(1)) * inv_Z;
 
     jacobian_D(0) = sqrt_coeff_D_ *
-        ((-X_target(2) * d1 + X_target(1) * d2) - X_target(1));
+        ((-X_source(2) * d1 + X_source(1) * d2) - X_source(1));
     jacobian_D(1) = sqrt_coeff_D_ *
-        ((X_target(2) * d0 - X_target(0) * d2) + X_target(0));
+        ((X_source(2) * d0 - X_source(0) * d2) + X_source(0));
     jacobian_D(2) = sqrt_coeff_D_ *
-        (-X_target(1) * d0 + X_target(0) * d1);
+        (-X_source(1) * d0 + X_source(0) * d1);
     jacobian_D(3) = sqrt_coeff_D_ * d0;
     jacobian_D(4) = sqrt_coeff_D_ * d1;
     jacobian_D(5) = sqrt_coeff_D_ * (d2 - 1.0f);
 
-    residual_D = sqrt_coeff_D_ * (d_target - X_target(2));
+    residual_D = sqrt_coeff_D_ * (d_source - X_target_on_source(2));
 
 #ifdef VISUALIZE_ODOMETRY_INLIERS
     source_on_target()[level].at((int) p_warped(0), (int) p_warped(1))
         = Vector1f(0.0f);
 #endif
 
-    correspondences_.push_back(Vector4i(x, y, p_warped(0), p_warped(1)));
+    correspondences_.push_back(Vector4i(p_warped(0), p_warped(1), x, y));
     return true;
 }
 

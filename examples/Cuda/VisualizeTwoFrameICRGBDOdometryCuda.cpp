@@ -53,7 +53,7 @@ int TwoFrameRGBDOdometry(
     ICRGBDOdometryCuda<3> odometry;
     odometry.SetIntrinsics(PinholeCameraIntrinsic(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault));
-    odometry.SetParameters(OdometryOption(), 1.0f);
+    odometry.SetParameters(OdometryOption(), 0.5f);
     odometry.PrepareData(source, target);
     odometry.transform_source_to_target_ = Eigen::Matrix4d::Identity();
 
@@ -98,7 +98,7 @@ int TwoFrameRGBDOdometry(
         if (!finished) {
             std::tie(is_success, delta, loss) =
                 odometry.DoSingleIteration(level, iter);
-            odometry.transform_source_to_target_ = delta *
+            odometry.transform_source_to_target_ = delta.inverse() *
                 odometry.transform_source_to_target_;
 
             lines->points_.clear();
