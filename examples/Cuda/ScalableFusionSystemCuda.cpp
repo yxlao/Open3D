@@ -39,12 +39,13 @@
 int main(int argc, char *argv[]) {
     using namespace open3d;
     SetVerbosityLevel(VerbosityLevel::VerboseDebug);
-    std::string base_path = "/home/wei/Work/data/stanford/lounge/";
+    std::string base_path =
+        "/home/wei/Work/data/tum/rgbd_dataset_freiburg3_long_office_household/";
 
     auto camera_trajectory = CreatePinholeCameraTrajectoryFromFile(
-        base_path + "lounge_trajectory.log");
+        base_path + "/trajectory.log");
     auto rgbd_filenames = ReadDataAssociation(
-        base_path + "data_association.txt");
+        base_path + "/data_association.txt");
 
     int index = 0;
     int save_index = 0;
@@ -61,7 +62,7 @@ int main(int argc, char *argv[]) {
         20000, 400000, voxel_length, 3 * voxel_length, extrinsics);
 
     Image depth, color;
-    RGBDImageCuda rgbd(0.1f, 4.0f, 1000.0f);
+    RGBDImageCuda rgbd(0.1f, 4.0f, 5000.0f);
     ScalableMeshVolumeCuda<8> mesher(
         120000, VertexWithNormalAndColor, 10000000, 20000000);
 

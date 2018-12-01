@@ -33,6 +33,20 @@ int main(int argc, char **argv) {
     auto rgbd_filenames = ReadDataAssociation(
         base_path + "/data_association.txt");
 
+    PinholeCameraTrajectory trajectory_gt;
+
+    /** This API loads camera_to_world and turns to world_to_camera
+     * (with inverse)**/
+    ReadPinholeCameraTrajectoryFromLOG(
+        base_path + "/trajectory.log", trajectory_gt);
+
+    for (auto &param : trajectory_gt.parameters_) {
+        param.extrinsic_ = param.extrinsic_.inverse();
+    }
+
+    /** This API directly saves camera_to_world (without inverse) **/
+    WritePinholeCameraTrajectoryToLOG("trajectory_gt.log", trajectory_gt);
+
     int index = 0;
     int save_index = 0;
 
@@ -69,8 +83,7 @@ int main(int argc, char **argv) {
         mesh = std::make_shared<TriangleMeshCuda>();
     visualizer.AddGeometry(mesh);
 
-    Eigen::Matrix4d target_to_world = Eigen::Matrix4d::Identity();
-
+    Eigen::Matrix4d target_to_world = trajectory_gt.parameters_[0].extrinsic_;
     PinholeCameraTrajectory trajectory;
     for (int i = 0; i < rgbd_filenames.size(); ++i) {
         ReadImage(base_path + "/" + rgbd_filenames[i].first, depth);
@@ -106,14 +119,14 @@ int main(int argc, char **argv) {
         visualizer.GetViewControl().ConvertFromPinholeCameraParameters(params);
         index++;
 
-//        if (index > 0 && index % 200 == 0) {
-//            tsdf_volume.GetAllSubvolumes();
-//            mesher.MarchingCubes(tsdf_volume);
-//            WriteTriangleMeshToPLY(
-//                "fragment-" + std::to_string(save_index) + ".ply",
-//                *mesher.mesh().Download());
-//            save_index++;
-//        }
+        if (index > 0 && index % 200 == 0) {
+            tsdf_volume.GetAllSubvolumes();
+            mesher.MarchingCubes(tsdf_volume);
+            WriteTriangleMeshToPLY(
+                "fragment-" + std::to_string(save_index) + ".ply",
+                *mesher.mesh().Download());
+            save_index++;
+        }
 
         rgbd_prev.CopyFrom(rgbd_curr);
         timer.Signal();

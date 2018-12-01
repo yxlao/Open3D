@@ -37,14 +37,16 @@
 """
 The Kinect provides the color and depth images in an un-synchronized way. This means that the set of time stamps from the color images do not intersect with those of the depth images. Therefore, we need some way of associating color images to depth images.
 
-For this purpose, you can use the ''associate_tum.py'' script. It reads the time stamps from the rgb.txt file and the depth.txt file, and joins them by finding the best matches.
+For this purpose, you can use the ''preprocess_tum.py'' script. It reads the time stamps from the rgb.txt file and the depth.txt file, and joins them by finding the best matches.
 """
 
 import argparse
 import sys
 import os
-import numpy
+import numpy as np
+import quaternion
 
+from process_traj_log import save_traj_log
 
 def read_file_list(filename):
     """
@@ -108,7 +110,7 @@ def associate(first_dict, second_dict, offset, max_difference):
 
 def generate_data_association(dataset_path,
                               first_dict, second_dict, matches,
-                              first_only, offset):
+                              first_only):
     with open(dataset_path + '/data_association.txt', 'w') as fout:
         if first_only:
             for a, b in matches:
@@ -127,7 +129,7 @@ if __name__ == '__main__':
      and generate data association with ground truth trajectory
     ''')
     parser.add_argument('--path', type=str,
-                        default='/home/wei/Work/data/tum/rgbd_dataset_freiburg2_desk')
+                        default='/home/wei/Work/data/tum')
     parser.add_argument('--first_only',
                         help='only output associated lines from first file',
                         action='store_true')
@@ -139,13 +141,51 @@ if __name__ == '__main__':
                         default=0.02)
     args = parser.parse_args()
 
-    first_dict = read_file_list(args.path + '/depth.txt')
-    second_dict = read_file_list(args.path + '/rgb.txt')
+    dataset_paths = os.listdir(args.path)
+    for dataset_path in dataset_paths:
+        print('Processing dataset {}'.format(dataset_path))
+        dataset_absolute_path = args.path + '/' + dataset_path
 
-    matches = associate(first_dict, second_dict,
-                        float(args.offset),
-                        float(args.max_difference))
+        depth_dict = read_file_list(dataset_absolute_path + '/depth.txt')
+        rgb_dict = read_file_list(dataset_absolute_path + '/rgb.txt')
+        gt_dict = read_file_list(dataset_absolute_path + '/groundtruth.txt')
 
-    generate_data_association(args.path,
-                              first_dict, second_dict, matches,
-                              args.first_only, args.offset)
+        matched_depth_and_rgb = associate(depth_dict, rgb_dict,
+                                          float(args.offset),
+                                          float(args.max_difference))
+
+        matched_depth_and_gt = associate(depth_dict, gt_dict,
+                                         float(args.offset),
+                                         float(args.max_difference))
+
+        # (depth, rgb), (gt)
+        matches = []
+        gts = []
+        for a, b in matched_depth_and_rgb:
+            associated_detph_and_gt = \
+                list(filter(lambda x: x[0] == a, matched_depth_and_gt))
+            if len(associated_detph_and_gt) > 0:
+                matches.append((a, b))
+                gts.append(associated_detph_and_gt[0][1])
+
+        generate_data_association(dataset_absolute_path,
+                                  depth_dict, rgb_dict, matches,
+                                  args.first_only)
+
+        trajectory = np.zeros((len(gts), 4, 4))
+        for i, gt in enumerate(gts):
+            pose = list(map(lambda x: float(x), gt_dict[gt]))
+            t = np.array(pose[0:3])
+            q = np.quaternion(pose[6], pose[3], pose[4], pose[5])
+            R = quaternion.as_rotation_matrix(q)
+
+            T = np.zeros((4, 4))
+            T[0:3, 0:3] = R
+            T[0:3, 3] = t
+            T[3, 3] = 1
+            trajectory[i, :, :] = T
+
+        save_traj_log(dataset_absolute_path + '/trajectory.log', trajectory)
+
+        print('{} {} {} -> {}'.format(
+            len(depth_dict), len(rgb_dict), len(gt_dict), len(gts)))

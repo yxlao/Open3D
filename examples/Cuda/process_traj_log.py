@@ -2,8 +2,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-def load_traj_log(log_path):
 
+def save_traj_log(log_path, trajectory): # n x 4 x 4
+    with open(log_path, 'w') as fout:
+        for i in range(0, trajectory.shape[0]):
+            T = trajectory[i, :, :]
+            fout.write('{} {} {}\n'.format(i, i, i + 1))
+
+            for r in range(0, 4):
+                for h in range(0, 4):
+                    fout.write('{} '.format(T[r, h]))
+                fout.write('\n')
+
+
+def load_traj_log(log_path):
     with open(log_path, 'r') as fin:
         lines = fin.read().splitlines()
 
@@ -26,10 +38,17 @@ if __name__ == '__main__':
     #
     trajectory = load_traj_log(
         '../../cmake-build-release/bin/examples/trajectory.log')
+    trajectory_gt = load_traj_log(
+        '../../cmake-build-release/bin/examples/trajectory_gt.log')
+    #
+    # trajectory_gt = load_traj_log(
+    #     '/home/wei/Work/data/tum/rgbd_dataset_freiburg3_long_office_household'
+    #     '/trajectory.log')
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-    ax.plot(trajectory[:, 0], trajectory[:, 1], trajectory[:, 2])
+    ax.plot(trajectory[:, 0], trajectory[:, 1], trajectory[:, 2], 'b')
+    ax.plot(trajectory_gt[:, 0], trajectory_gt[:, 1], trajectory_gt[:, 2], 'r')
     ax.set_xlabel('x')
     ax.set_ylabel('y')
     ax.set_zlabel('z')
