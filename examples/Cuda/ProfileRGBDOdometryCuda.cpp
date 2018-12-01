@@ -53,6 +53,8 @@ int main(int argc, char **argv) {
     auto rgbd_filenames = ReadDataAssociation(
         base_path + "/data_association.txt");
 
+    PinholeCameraTrajectory trajectory;
+    
     /** Prepare odometry **/
     RGBDOdometryCuda<3> odometry;
     odometry.SetIntrinsics(PinholeCameraIntrinsic(

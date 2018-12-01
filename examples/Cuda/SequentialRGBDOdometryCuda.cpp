@@ -47,8 +47,8 @@ int main(int argc, char **argv) {
         10000, 200000, voxel_length, 3 * voxel_length, extrinsics);
 
     Image depth, color;
-    RGBDImageCuda rgbd_prev(0.1f, 4.0f, 1000.0f);
-    RGBDImageCuda rgbd_curr(0.1f, 4.0f, 1000.0f);
+    RGBDImageCuda rgbd_prev(0.1f, 4.0f, 5000.0f);
+    RGBDImageCuda rgbd_curr(0.1f, 4.0f, 5000.0f);
     ScalableMeshVolumeCuda<8> mesher(
         40000, VertexWithNormalAndColor, 6000000, 12000000);
 
@@ -71,10 +71,8 @@ int main(int argc, char **argv) {
 
     Eigen::Matrix4d target_to_world = Eigen::Matrix4d::Identity();
 
-    PinholeCameraParameters params;
-    params.intrinsic_ = PinholeCameraIntrinsicParameters::PrimeSenseDefault;
-
-    for (int i = 0; i < rgbd_filenames.size() - 1; ++i) {
+    PinholeCameraTrajectory trajectory;
+    for (int i = 0; i < rgbd_filenames.size(); ++i) {
         ReadImage(base_path + "/" + rgbd_filenames[i].first, depth);
         ReadImage(base_path + "/" + rgbd_filenames[i].second, color);
         rgbd_curr.Upload(depth, color);
@@ -87,7 +85,12 @@ int main(int argc, char **argv) {
             target_to_world =
                 target_to_world * odometry.transform_source_to_target_;
         }
-        std::cout << index << std::endl;
+
+        PinholeCameraParameters params;
+        params.intrinsic_ = PinholeCameraIntrinsic(
+            PinholeCameraIntrinsicParameters::PrimeSenseDefault);
+        params.extrinsic_ = target_to_world;
+        trajectory.parameters_.emplace_back(params);
 
         extrinsics.FromEigen(target_to_world);
         tsdf_volume.Integrate(rgbd_curr, intrinsics, extrinsics);
@@ -103,18 +106,20 @@ int main(int argc, char **argv) {
         visualizer.GetViewControl().ConvertFromPinholeCameraParameters(params);
         index++;
 
-        if (index > 0 && index % 200 == 0) {
-            tsdf_volume.GetAllSubvolumes();
-            mesher.MarchingCubes(tsdf_volume);
-            WriteTriangleMeshToPLY(
-                "fragment-" + std::to_string(save_index) + ".ply",
-                *mesher.mesh().Download());
-            save_index++;
-        }
+//        if (index > 0 && index % 200 == 0) {
+//            tsdf_volume.GetAllSubvolumes();
+//            mesher.MarchingCubes(tsdf_volume);
+//            WriteTriangleMeshToPLY(
+//                "fragment-" + std::to_string(save_index) + ".ply",
+//                *mesher.mesh().Download());
+//            save_index++;
+//        }
 
         rgbd_prev.CopyFrom(rgbd_curr);
         timer.Signal();
     }
+
+    WritePinholeCameraTrajectoryToLOG("trajectory.log", trajectory);
 
     return 0;
 }
