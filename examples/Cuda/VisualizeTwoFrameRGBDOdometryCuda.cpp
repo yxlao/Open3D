@@ -53,7 +53,7 @@ int TwoFrameRGBDOdometry(
     RGBDOdometryCuda<3> odometry;
     odometry.SetIntrinsics(PinholeCameraIntrinsic(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault));
-    odometry.SetParameters(OdometryOption({20, 10, 5}, 0.03), 0.5f);
+    odometry.SetParameters(OdometryOption({20, 10, 5}, 0.07), 0.5f);
     odometry.Initialize(source, target);
     odometry.transform_source_to_target_ = Eigen::Matrix4d::Identity();
 
@@ -64,7 +64,7 @@ int TwoFrameRGBDOdometry(
 
     /** Prepare visualizer **/
     VisualizerWithKeyCallback visualizer;
-    if (!visualizer.CreateVisualizerWindow("ScalableFusion", 640, 480, 0, 0)) {
+    if (!visualizer.CreateVisualizerWindow("ScalableFusion", 1280, 960, 0, 0)) {
         PrintWarning("Failed creating OpenGL window.\n");
         return -1;
     }
@@ -72,10 +72,10 @@ int TwoFrameRGBDOdometry(
     visualizer.UpdateWindowTitle();
     pcl_source->Build(odometry.source()[0],
                       odometry.server()->intrinsics_[0]);
-    pcl_source->colors().Fill(Vector3f(0, 1, 0));
+//    pcl_source->colors().Fill(Vector3f(0, 1, 0));
     pcl_target->Build(odometry.target()[0],
                       odometry.server()->intrinsics_[0]);
-    pcl_target->colors().Fill(Vector3f(1, 0, 0));
+//    pcl_target->colors().Fill(Vector3f(1, 0, 0));
 
     visualizer.AddGeometry(pcl_source);
     visualizer.AddGeometry(pcl_target);
@@ -104,7 +104,7 @@ int TwoFrameRGBDOdometry(
             odometry.transform_source_to_target_ = delta *
                 odometry.transform_source_to_target_;
             timer.Stop();
-            PrintInfo("Per iteration: %.4f ms\n", timer.GetDuration());
+            //PrintInfo("Per iteration: %.4f ms\n", timer.GetDuration());
 
             lines->points_.clear();
             lines->lines_.clear();
@@ -117,10 +117,10 @@ int TwoFrameRGBDOdometry(
 
             pcl_source->Build(odometry.source()[level],
                               odometry.server()->intrinsics_[level]);
-            pcl_source->colors().Fill(Vector3f(0, 1, 0));
+//            pcl_source->colors().Fill(Vector3f(0, 1, 0));
             pcl_target->Build(odometry.target()[level],
                               odometry.server()->intrinsics_[level]);
-            pcl_target->colors().Fill(Vector3f(1, 0, 0));
+//            pcl_target->colors().Fill(Vector3f(1, 0, 0));
 
             std::shared_ptr<Image> src_depth = odometry.source()[level].depthf()
                 .DownloadImage();
@@ -204,7 +204,8 @@ int main(int argc, char **argv) {
     auto rgbd_filenames = ReadDataAssociation(
         base_path + "/data_association.txt");
 
-    for (int i = 1; i < rgbd_filenames.size(); ++i) {
+    for (int i = 0; i < rgbd_filenames.size(); i+=100) {
+        std::cout << i << std::endl;
         TwoFrameRGBDOdometry(
             base_path + "/" + rgbd_filenames[i + 5].first,
             base_path + "/" + rgbd_filenames[i + 5].second,

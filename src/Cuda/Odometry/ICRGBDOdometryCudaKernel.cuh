@@ -42,10 +42,13 @@ void DoSingleIterationKernel(
         odometry.correspondences_.push_back(Vector4i(x_source, y_source, x, y));
 
         /** Access pre-computed pixel-wise jacobians **/
+        Vector6f &jacobian_I = odometry.source_intensity_jacobian_[level].at(
+            x_source, y_source);
+        Vector6f &jacobian_D = odometry.source_depth_jacobian_[level].at(
+            x_source, y_source);
+
         odometry.ComputePixelwiseJtJAndJtr(
-            odometry.source_intensity_jacobian_[level].at(x_source, y_source),
-            odometry.source_depth_jacobian_[level].at(x_source, y_source),
-            residual_I, residual_D,
+            jacobian_I, jacobian_D, residual_I, residual_D,
             JtJ, Jtr);
     }
 

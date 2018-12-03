@@ -54,16 +54,16 @@ int main(int argc, char **argv) {
         base_path + "/data_association.txt");
 
     PinholeCameraTrajectory trajectory;
-    
+
     /** Prepare odometry **/
     RGBDOdometryCuda<3> odometry;
     odometry.SetIntrinsics(PinholeCameraIntrinsic(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault));
-    odometry.SetParameters(OdometryOption(), 0.5f);
+    odometry.SetParameters(OdometryOption({60, 60, 60}, 0.003, 0.01, 4.0), 0.5f);
 
     for (int step = 1; step < 2; ++step) {
         std::string log_filename =
-            "odometry-step-" + std::to_string(step) + ".log";
+            "odometry_less_assoc_step_" + std::to_string(step) + ".log";
         std::ofstream fout(log_filename);
         if (!fout.is_open()) {
             PrintError("Unable to write to log file %s, abort.\n",
@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
         }
 
         PrintInfo("Step: %d\n", step);
-        for (int i = 0; i + step < 20; ++i) {
+        for (int i = 0; i + step < rgbd_filenames.size(); ++i) {
             PrintInfo("%d\n", i);
             std::stringstream ss;
 
@@ -79,12 +79,13 @@ int main(int argc, char **argv) {
                       target_color);
             ReadImage(base_path + "/" + rgbd_filenames[i].first,
                       target_depth);
-            ReadImage(base_path + "/" + rgbd_filenames[i + 1].second,
+            ReadImage(base_path + "/" + rgbd_filenames[i + step].second,
                       source_color);
-            ReadImage(base_path + "/" + rgbd_filenames[i + 1].first,
+            ReadImage(base_path + "/" + rgbd_filenames[i + step].first,
                       source_depth);
 
-            RGBDImageCuda source, target;
+            RGBDImageCuda source(0.1f, 4.0f, 1000.0f),
+                target(0.1f, 4.0f, 1000.0f);
             source.Upload(source_depth, source_color);
             target.Upload(target_depth, target_color);
 
@@ -92,7 +93,9 @@ int main(int argc, char **argv) {
             odometry.transform_source_to_target_ = Eigen::Matrix4d::Identity();
 
             auto result = odometry.ComputeMultiScale();
-            WriteLossesToLog(fout, i, std::get<2>(result));
+            if (std::get<0>(result)) {
+                WriteLossesToLog(fout, i, std::get<2>(result));
+            }
         }
     }
 

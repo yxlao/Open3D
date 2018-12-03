@@ -164,6 +164,10 @@ void RGBDOdometryCuda<N>::Initialize(
         target_raw_[i].intensity().Gaussian(
             target_[i].intensity(), Gaussian3x3, false);
 
+        /** For visualization **/
+        source_[i].color().CopyFrom(source_raw_[i].color());
+        target_[i].color().CopyFrom(target_raw_[i].color());
+
         /* Compute gradients */
         target_[i].depthf().Sobel(
             target_dx_[i].depthf(), target_dy_[i].depthf(), true);
@@ -216,7 +220,7 @@ RGBDOdometryCuda<N>::DoSingleIteration(size_t level, int iter) {
     std::tie(is_success, extrinsic) =
         SolveJacobianSystemAndObtainExtrinsicMatrix(JtJ, Jtr);
 
-    return std::make_tuple(is_success, extrinsic, loss);
+    return std::make_tuple(is_success, extrinsic, loss / inliers);
 }
 
 template<size_t N>

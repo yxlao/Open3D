@@ -171,10 +171,14 @@ void ICRGBDOdometryCuda<N>::Initialize(
         source_raw_[i].intensity().Gaussian(
             source_[i].intensity(), Gaussian3x3, false);
 
+        source_[i].color().CopyFrom(source_raw_[i].color());
+
         target_raw_[i].depthf().Gaussian(
             target_[i].depthf(), Gaussian3x3, true);
         target_raw_[i].intensity().Gaussian(
             target_[i].intensity(), Gaussian3x3, false);
+
+        target_[i].color().CopyFrom(target_raw_[i].color());
 
         /* Compute gradients */
         source_[i].depthf().Sobel(
@@ -215,7 +219,7 @@ ICRGBDOdometryCuda<N>::DoSingleIteration(size_t level, int iter) {
         target_[level].depthf().width_,
         target_[level].depthf().height_);
     timer.Stop();
-    PrintDebug("IC: %f\n", timer.GetDuration());
+    //PrintDebug("IC: %f\n", timer.GetDuration());
 
 #ifdef VISUALIZE_ODOMETRY_INLIERS
     cv::Mat im = source_on_target_[level].DownloadMat();
@@ -237,6 +241,10 @@ ICRGBDOdometryCuda<N>::DoSingleIteration(size_t level, int iter) {
     Eigen::Matrix4d extrinsic;
     std::tie(is_success, extrinsic) =
         SolveJacobianSystemAndObtainExtrinsicMatrix(JtJ, Jtr);
+    if (! is_success) {
+        std::cout << "det: " << JtJ.determinant() << std::endl;
+        std::cout << JtJ << std::endl;
+    }
 
     return std::make_tuple(is_success, extrinsic, loss);
 }

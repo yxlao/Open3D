@@ -22,7 +22,9 @@ void ICRGBDOdometryCudaServer<N>::ComputePixelwiseJacobian(
     int x_source, int y_source, size_t level) {
 
     float d_source = source_[level].depth().at(x_source, y_source)(0);
-    if (!IsValidDepth(d_source)) return;
+    if (!IsValidDepth(d_source)) {
+        return;
+    };
 
     /********** Phase 2: Build linear system **********/
     /** Checks passed, let's rock! -> 3ms, can be 2ms faster if we don't use

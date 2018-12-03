@@ -34,6 +34,9 @@ namespace open3d {
  *
  * e.g., see
  * http://homepages.inf.ed.ac.uk/rbf/CVonline/LOCAL_COPIES/AV0910/zhao.pdf
+ *
+ * Consider removing this part (as there is no improvement in performance)
+ * or use inheritance to simplify the code
  */
 template<size_t N>
 class ICRGBDOdometryCudaServer {

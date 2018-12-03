@@ -33,40 +33,29 @@ def load_traj_log(log_path):
 
 if __name__ == '__main__':
 
-    plt.rc('text', usetex=False)
-    plt.rc('font', family='serif')
-    #
-    trajectory = load_traj_log(
-        '../../cmake-build-release/bin/examples/trajectory.log')
+    trajectory_ic = load_traj_log(
+        '../../cmake-build-release/bin/examples/trajectory_ic.log')
+    trajectory_fc = load_traj_log(
+        '../../cmake-build-release/bin/examples/trajectory_fc.log')
     trajectory_gt = load_traj_log(
         '../../cmake-build-release/bin/examples/trajectory_gt.log')
-    #
-    # trajectory_gt = load_traj_log(
-    #     '/home/wei/Work/data/tum/rgbd_dataset_freiburg3_long_office_household'
-    #     '/trajectory.log')
+
+    plt.rc('text', usetex=True)
+    plt.rc('font', family='serif')
 
     fig = plt.figure()
+    #ax = fig.add_subplot(111)
     ax = fig.add_subplot(111, projection='3d')
-    ax.plot(trajectory[:, 0], trajectory[:, 1], trajectory[:, 2], 'b')
-    ax.plot(trajectory_gt[:, 0], trajectory_gt[:, 1], trajectory_gt[:, 2], 'r')
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
-    ax.set_zlabel('z')
+    ax.plot(trajectory_fc[:, 0], trajectory_fc[:, 1], trajectory_fc[:, 2],
+            'g', label=r'FC')
+    ax.plot(trajectory_ic[:, 0], trajectory_ic[:, 1], trajectory_ic[:, 2],
+            'b', label=r'IC')
+    ax.plot(trajectory_gt[:, 0], trajectory_gt[:, 1], trajectory_gt[:, 2],
+            'r', label=r'GT')
+
+
+    ax.set_xlabel(r'x', fontsize=16)
+    ax.set_ylabel(r'y', fontsize=16)
+    # ax.set_zlabel('z')
+    plt.legend(fontsize=14)
     plt.show()
-    #
-    # fig, ax = plt.subplots(1, 1)
-    #
-    # nframes, niters = losses_0.shape
-    # for i in range(nframes):
-    #     ax.plot(np.arange(niters), np.log(losses_0[i, :]), linewidth=1)
-    #
-    # ax.grid()
-    # ax.set_xlabel(r'\textbf{Iterations}')
-    # ax.set_xticks(np.arange(0, niters, 2))
-    # ax.set_ylabel(r'\textit{Loss}', fontsize=16)
-    # ax.set_title(r"FC Odometry", fontsize=16, color='gray')
-    #
-    # # Make room for the ridiculously large title.
-    # plt.subplots_adjust(top=0.8)
-    # plt.savefig('fc.png')
-    # plt.show()

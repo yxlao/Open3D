@@ -7,6 +7,7 @@
 #include <Core/Core.h>
 #include <IO/IO.h>
 #include <Cuda/Odometry/RGBDOdometryCuda.h>
+#include <Cuda/Odometry/ICRGBDOdometryCuda.h>
 #include <Cuda/Integration/ScalableTSDFVolumeCuda.h>
 #include <Cuda/Integration/ScalableMeshVolumeCuda.h>
 #include <Visualization/Visualization.h>
@@ -50,8 +51,6 @@ int main(int argc, char **argv) {
     int index = 0;
     int save_index = 0;
 
-    FPSTimer timer("Process RGBD stream", rgbd_filenames.size());
-
     PinholeCameraIntrinsicCuda intrinsics(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault);
 
@@ -66,13 +65,20 @@ int main(int argc, char **argv) {
     ScalableMeshVolumeCuda<8> mesher(
         40000, VertexWithNormalAndColor, 6000000, 12000000);
 
-    RGBDOdometryCuda<3> odometry;
+    ICRGBDOdometryCuda<3> odometry;
+//    odometry.SetIntrinsics(PinholeCameraIntrinsic(
+//        PinholeCameraIntrinsicParameters::PrimeSenseDefault));
     odometry.SetIntrinsics(PinholeCameraIntrinsic(
-        PinholeCameraIntrinsicParameters::PrimeSenseDefault));
-    odometry.SetParameters(OdometryOption(), 0.5f);
+        640, 480, 535.4, 539.2, 320.1, 247.6));
+//    odometry.SetIntrinsics(PinholeCameraIntrinsic(
+//        640, 480, 520.9, 521.0, 325.1, 249.7));
+//    odometry.SetIntrinsics(PinholeCameraIntrinsic(
+//        640, 480, 517.3, 516.5, 318.6, 255.3));
+    odometry.SetParameters(OdometryOption({20, 10, 5}, 0.07, 0.01), 0.5f);
 
-    VisualizerWithCustomAnimation visualizer;
-    if (!visualizer.CreateVisualizerWindow("SequentialRGBDOdometryCuda", 640, 480, 0, 0)) {
+    Visualizer visualizer;
+    if (!visualizer.CreateVisualizerWindow("Sequential IC RGBD Odometry",
+        640, 480, 0, 0)) {
         PrintWarning("Failed creating OpenGL window.\n");
         return -1;
     }
@@ -83,9 +89,14 @@ int main(int argc, char **argv) {
         mesh = std::make_shared<TriangleMeshCuda>();
     visualizer.AddGeometry(mesh);
 
+
     Eigen::Matrix4d target_to_world = trajectory_gt.parameters_[0].extrinsic_;
     PinholeCameraTrajectory trajectory;
+
+    double time = 0;
+    Timer timer;
     for (int i = 0; i < rgbd_filenames.size(); ++i) {
+        std::cout << i << std::endl;
         ReadImage(base_path + "/" + rgbd_filenames[i].first, depth);
         ReadImage(base_path + "/" + rgbd_filenames[i].second, color);
         rgbd_curr.Upload(depth, color);
@@ -94,7 +105,12 @@ int main(int argc, char **argv) {
             odometry.transform_source_to_target_ =
                 Eigen::Matrix4d::Identity();
             odometry.Initialize(rgbd_curr, rgbd_prev);
+            timer.Start();
             odometry.ComputeMultiScale();
+            timer.Stop();
+            time += timer.GetDuration();
+            PrintInfo("%f\n", time / i);
+
             target_to_world =
                 target_to_world * odometry.transform_source_to_target_;
         }
@@ -115,24 +131,23 @@ int main(int argc, char **argv) {
         visualizer.UpdateGeometry();
 
         params.extrinsic_ = extrinsics.ToEigen().inverse();
-        std::cout << params.extrinsic_ << std::endl;
+        //std::cout << params.extrinsic_ << std::endl;
         visualizer.GetViewControl().ConvertFromPinholeCameraParameters(params);
         index++;
 
-        if (index > 0 && index % 200 == 0) {
-            tsdf_volume.GetAllSubvolumes();
-            mesher.MarchingCubes(tsdf_volume);
-            WriteTriangleMeshToPLY(
-                "fragment-" + std::to_string(save_index) + ".ply",
-                *mesher.mesh().Download());
-            save_index++;
-        }
+//        if (index > 0 && index % 200 == 0) {
+//            tsdf_volume.GetAllSubvolumes();
+//            mesher.MarchingCubes(tsdf_volume);
+//            WriteTriangleMeshToPLY(
+//                "fragment-" + std::to_string(save_index) + ".ply",
+//                *mesher.mesh().Download());
+//            save_index++;
+//        }
 
         rgbd_prev.CopyFrom(rgbd_curr);
-        timer.Signal();
     }
 
-    WritePinholeCameraTrajectoryToLOG("trajectory.log", trajectory);
+    WritePinholeCameraTrajectoryToLOG("trajectory_ic.log", trajectory);
 
     return 0;
 }
