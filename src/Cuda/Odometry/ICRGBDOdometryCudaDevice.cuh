@@ -11,6 +11,7 @@
 #include <Cuda/Container/ArrayCudaDevice.cuh>
 
 namespace open3d {
+namespace cuda {
 
 /**
  * Server end
@@ -115,7 +116,8 @@ bool ICRGBDOdometryCudaServer<N>::ComputePixelwiseCorrespondenceAndResidual(
 
     /** Check 3: depth valid in target? Occlusion? -> 1ms **/
     float d_source = source_[level].depth().at(p_warped(0), p_warped(1))(0);
-    mask = IsValidDepth(d_source) && IsValidDepthDiff(d_source - X_target_on_source(2));
+    mask = IsValidDepth(d_source)
+        && IsValidDepthDiff(d_source - X_target_on_source(2));
     if (!mask) return false;
 
     x_source = p_warped(0);
@@ -145,4 +147,5 @@ void ICRGBDOdometryCudaServer<N>::ComputePixelwiseJtJAndJtr(
         Jtr(i) = jacobian_I(i) * residual_I + jacobian_D(i) * residual_D;
     }
 }
-}
+} // cuda
+} // open3d

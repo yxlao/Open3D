@@ -11,6 +11,7 @@
 
 namespace open3d {
 
+namespace cuda {
 /**
  * Server end
  */
@@ -45,4 +46,5 @@ inline T &ArrayCudaServer<T>::operator[](size_t index) {
 
     return data_[index];
 }
-}
+} // cuda
+} // open3d

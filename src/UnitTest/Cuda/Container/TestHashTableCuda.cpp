@@ -14,10 +14,10 @@
 #include <random>
 #include "UnitTest.h"
 
+using namespace open3d;
+using namespace open3d::cuda;
 
 TEST(HashTableCuda, HashTableProfiling) {
-    using namespace open3d;
-
     Timer timer;
     std::random_device rd;
     std::default_random_engine rd_engine(rd());
@@ -100,7 +100,6 @@ TEST(HashTableCuda, HashTableProfiling) {
 }
 
 TEST(HashTableCuda, HashTableInsertionAndDelete) {
-    using namespace open3d;
 
     Timer timer;
     std::random_device rd;

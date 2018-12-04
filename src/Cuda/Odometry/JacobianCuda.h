@@ -9,6 +9,7 @@
 
 namespace open3d {
 
+namespace cuda {
 /** Approximated by JtJ in optimization **/
 template<size_t N>
 class HessianCuda {
@@ -109,4 +110,5 @@ public:
         return jtr;
     }
 };
-}
+} // cuda
+} // open3d

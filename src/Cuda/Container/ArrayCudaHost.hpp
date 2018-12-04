@@ -13,6 +13,8 @@
 #include <cuda_runtime.h>
 
 namespace open3d {
+
+namespace cuda {
 /**
  * Client end
  */
@@ -227,4 +229,5 @@ void ArrayCuda<T>::set_iterator(int iterator_position) {
                          sizeof(int),
                          cudaMemcpyHostToDevice));
 }
-}
+} // cuda
+} // open3d

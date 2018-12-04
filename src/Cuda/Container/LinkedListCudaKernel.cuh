@@ -6,6 +6,8 @@
 #include "ArrayCuda.h"
 
 namespace open3d {
+
+namespace cuda {
 template<typename T>
 __global__
 void InsertLinkedListKernel(LinkedListCudaServer<T> server,
@@ -17,8 +19,8 @@ void InsertLinkedListKernel(LinkedListCudaServer<T> server,
 template<typename T>
 __host__
 void LinkedListCudaKernelCaller<T>::
-    InsertLinkedListKernelCaller(LinkedListCudaServer<T> &server,
-                                 ArrayCudaServer<T> &data) {
+InsertLinkedListKernelCaller(LinkedListCudaServer<T> &server,
+                             ArrayCudaServer<T> &data) {
     InsertLinkedListKernel << < 1, 1 >> > (server, data);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
@@ -37,8 +39,8 @@ void FindLinkedListKernel(LinkedListCudaServer<T> server,
 template<typename T>
 __host__
 void LinkedListCudaKernelCaller<T>::
-    FindLinkedListKernelCaller(LinkedListCudaServer<T> &server,
-                               ArrayCudaServer<T> &query) {
+FindLinkedListKernelCaller(LinkedListCudaServer<T> &server,
+                           ArrayCudaServer<T> &query) {
     FindLinkedListKernel << < 1, 1 >> > (server, query);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
@@ -56,8 +58,8 @@ void DeleteLinkedListKernel(LinkedListCudaServer<T> server,
 }
 template<typename T>
 void LinkedListCudaKernelCaller<T>::
-    DeleteLinkedListKernelCaller(LinkedListCudaServer<T> &server,
-                                 ArrayCudaServer<T> &query) {
+DeleteLinkedListKernelCaller(LinkedListCudaServer<T> &server,
+                             ArrayCudaServer<T> &query) {
     DeleteLinkedListKernel << < 1, 1 >> > (server, query);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
@@ -72,7 +74,7 @@ void ClearLinkedListKernel(LinkedListCudaServer<T> server) {
 template<typename T>
 __host__
 void LinkedListCudaKernelCaller<T>::
-    ClearLinkedListKernelCaller(LinkedListCudaServer<T> &server) {
+ClearLinkedListKernelCaller(LinkedListCudaServer<T> &server) {
     ClearLinkedListKernel << < 1, 1 >> > (server);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
@@ -99,10 +101,11 @@ void DownloadLinkedListKernel(LinkedListCudaServer<T> server,
 template<typename T>
 __host__
 void LinkedListCudaKernelCaller<T>::
-    DownloadLinkedListKernelCaller(LinkedListCudaServer<T> &server,
-                                    ArrayCudaServer<T> &data) {
+DownloadLinkedListKernelCaller(LinkedListCudaServer<T> &server,
+                               ArrayCudaServer<T> &data) {
     DownloadLinkedListKernel << < 1, 1 >> > (server, data);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
-}
+} // cuda
+} // open3d

@@ -31,6 +31,7 @@
 
 namespace open3d {
 
+namespace cuda {
 namespace {
 
 __DEVICE__
@@ -371,4 +372,5 @@ const int edge_to_vert[12][2] = {
     {3, 7},
 };
 }  // unnamed namespace
-}
+} // cuda
+} // open3d

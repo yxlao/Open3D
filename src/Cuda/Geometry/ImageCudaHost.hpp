@@ -15,12 +15,14 @@
 #include <Core/Core.h>
 
 namespace open3d {
+
+namespace cuda {
 /**
  * Client end
  */
 template<typename VecType>
 ImageCuda<VecType>::ImageCuda()
-: width_(-1), height_(-1), pitch_(-1), server_(nullptr) {
+    : width_(-1), height_(-1), pitch_(-1), server_(nullptr) {
 #ifdef HOST_DEBUG_MONITOR_LIFECYCLE
     PrintInfo("Default ImageCuda constructor.\n");
 #endif
@@ -136,7 +138,7 @@ void ImageCuda<VecType>::CopyFrom(const ImageCuda<VecType> &other) {
     if (this == &other) return;
 
     bool success = Create(other.width_, other.height_);
-    if (! success) return;
+    if (!success) return;
 
     CheckCuda(cudaMemcpy2D(server_->data_, (size_t) pitch_,
                            other.server()->data(), (size_t) other.pitch_,
@@ -166,11 +168,14 @@ void ImageCuda<VecType>::Upload(Image &image) {
     }
 
     bool success = Create(image.width_, image.height_);
-    if (! success) return;
+    if (!success) return;
 
-    CheckCuda(cudaMemcpy2D(server_->data_, (size_t) pitch_,
-                           image.data_.data(), (size_t) image.BytesPerLine(),
-                           sizeof(VecType) * image.width_, (size_t)image.height_,
+    CheckCuda(cudaMemcpy2D(server_->data_,
+                           (size_t) pitch_,
+                           image.data_.data(),
+                           (size_t) image.BytesPerLine(),
+                           sizeof(VecType) * image.width_,
+                           (size_t) image.height_,
                            cudaMemcpyHostToDevice));
 }
 
@@ -374,7 +379,7 @@ void ImageCuda<VecType>::Upload(cv::Mat &m) {
     }
 
     bool success = Create(m.cols, m.rows);
-    if (! success) return;
+    if (!success) return;
 
     CheckCuda(cudaMemcpy2D(server_->data_, (size_t) pitch_,
                            m.data, m.step,
@@ -411,10 +416,10 @@ cv::Mat ImageCuda<VecType>::DownloadMat() {
         return m;
     }
 
-
     CheckCuda(cudaMemcpy2D(m.data, m.step, server_->data_, (size_t) pitch_,
                            sizeof(VecType) * width_, (size_t) height_,
                            cudaMemcpyDeviceToHost));
     return m;
 }
-}
+} // cuda
+} // open3d

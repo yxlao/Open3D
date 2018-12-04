@@ -17,7 +17,7 @@
 #include <memory>
 
 namespace open3d {
-
+namespace cuda {
 template<size_t N>
 class UniformTSDFVolumeCudaServer {
 private:
@@ -187,4 +187,5 @@ void RayCastingKernel(UniformTSDFVolumeCudaServer<N> server,
                       ImageCudaServer<Vector3f> image,
                       PinholeCameraIntrinsicCuda camera,
                       TransformCuda transform_camera_to_world);
-}
+} // cuda
+} // open3d

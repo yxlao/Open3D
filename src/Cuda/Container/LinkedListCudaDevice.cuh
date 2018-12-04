@@ -12,8 +12,9 @@
 #include <cassert>
 #include <cstdio>
 
-
 namespace open3d {
+
+namespace cuda {
 /**
  * Server end
  */
@@ -176,4 +177,5 @@ int LinkedListCudaServer<T>::FindAndDelete(T value) {
     (*size_)--;
     return ContainerReturnCode::Success;
 }
-};
+} // cuda
+} // open3d

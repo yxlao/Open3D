@@ -10,6 +10,8 @@
 #include <Core/Core.h>
 
 namespace open3d {
+namespace cuda {
+
 template<typename VecType, size_t N>
 ImagePyramidCuda<VecType, N>::ImagePyramidCuda() : server_(nullptr) {}
 
@@ -102,7 +104,7 @@ void ImagePyramidCuda<VecType, N>::UpdateServer() {
 
 template<typename VecType, size_t N>
 std::vector<std::shared_ptr<Image>> ImagePyramidCuda<VecType, N>::
-    DownloadImages() {
+DownloadImages() {
     std::vector<std::shared_ptr<Image> > result;
     if (server_ == nullptr) {
         PrintWarning("[ImagePyramidCuda] Not initialized,"
@@ -114,7 +116,6 @@ std::vector<std::shared_ptr<Image>> ImagePyramidCuda<VecType, N>::
     }
     return result;
 }
-
 
 template<typename VecType, size_t N>
 std::vector<cv::Mat> ImagePyramidCuda<VecType, N>::DownloadMats() {
@@ -129,5 +130,5 @@ std::vector<cv::Mat> ImagePyramidCuda<VecType, N>::DownloadMats() {
     }
     return result;
 }
-
-}
+} // cuda
+} // open3d

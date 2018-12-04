@@ -12,17 +12,29 @@
 
 namespace open3d {
 
-template class UniformTSDFVolumeCuda<8>;
-template class UniformTSDFVolumeCuda<16>;
-template class UniformTSDFVolumeCuda<256>;
-template class UniformTSDFVolumeCuda<512>;
+namespace cuda {
+template
+class UniformTSDFVolumeCuda<8>;
+template
+class UniformTSDFVolumeCuda<16>;
+template
+class UniformTSDFVolumeCuda<256>;
+template
+class UniformTSDFVolumeCuda<512>;
 
-template class UniformMeshVolumeCuda<8>;
-template class UniformMeshVolumeCuda<16>;
-template class UniformMeshVolumeCuda<256>;
-template class UniformMeshVolumeCuda<512>;
+template
+class UniformMeshVolumeCuda<8>;
+template
+class UniformMeshVolumeCuda<16>;
+template
+class UniformMeshVolumeCuda<256>;
+template
+class UniformMeshVolumeCuda<512>;
 
-template class ScalableMeshVolumeCuda<8>;
-template class ScalableTSDFVolumeCuda<8>;
+template
+class ScalableMeshVolumeCuda<8>;
+template
+class ScalableTSDFVolumeCuda<8>;
 
-}
+} // cuda
+} // open3d

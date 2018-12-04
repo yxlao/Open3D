@@ -12,6 +12,8 @@
 #include <vector>
 
 namespace open3d {
+
+namespace cuda {
 /**
  * Memory allocation and free are expensive on GPU.
  * (And are easy to overflow, I need to check the the reason.)
@@ -43,10 +45,10 @@ public:
     int max_capacity_;
 
 public:
-    __HOSTDEVICE__ inline T* data() {
+    __HOSTDEVICE__ inline T *data() {
         return data_;
     }
-    __HOSTDEVICE__ inline int* heap() {
+    __HOSTDEVICE__ inline int *heap() {
         return heap_;
     }
     __HOSTDEVICE__ inline int *heap_counter() {
@@ -58,7 +60,7 @@ public:
 
     __DEVICE__ int &internal_addr_at(size_t index);
     __DEVICE__ T &value_at(size_t addr);
-    __DEVICE__ const T& value_at(size_t addr) const;
+    __DEVICE__ const T &value_at(size_t addr) const;
 
     friend class MemoryHeapCuda<T>;
 };
@@ -99,10 +101,10 @@ template<typename T>
 class MemoryHeapCudaKernelCaller {
 public:
     static __HOST__ void ResetMemoryHeapKernelCaller(
-        MemoryHeapCudaServer<T>& server, int max_capacity);
+        MemoryHeapCudaServer<T> &server, int max_capacity);
     static __HOST__ void ResizeMemoryHeapKernelCaller(
-        MemoryHeapCudaServer<T>& server,
-        MemoryHeapCudaServer<T>& dst,
+        MemoryHeapCudaServer<T> &server,
+        MemoryHeapCudaServer<T> &dst,
         int new_max_capacity);
 };
 
@@ -115,4 +117,5 @@ __GLOBAL__
 void ResizeMemoryHeapKernel(MemoryHeapCudaServer<T> src,
                             MemoryHeapCudaServer<T> dst);
 
-};
+} // cuda
+} // open3d

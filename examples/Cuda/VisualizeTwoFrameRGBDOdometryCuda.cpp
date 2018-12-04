@@ -45,12 +45,12 @@ int TwoFrameRGBDOdometry(
     ReadImage(target_color_path, target_color);
     ReadImage(target_depth_path, target_depth);
 
-    RGBDImageCuda source, target;
+    cuda::RGBDImageCuda source, target;
     source.Upload(source_depth, source_color);
     target.Upload(target_depth, target_color);
 
     /** Prepare odometry **/
-    RGBDOdometryCuda<3> odometry;
+    cuda::RGBDOdometryCuda<3> odometry;
     odometry.SetIntrinsics(PinholeCameraIntrinsic(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault));
     odometry.SetParameters(OdometryOption({20, 10, 5}, 0.07), 0.5f);
@@ -58,9 +58,11 @@ int TwoFrameRGBDOdometry(
     odometry.transform_source_to_target_ = Eigen::Matrix4d::Identity();
 
     /** Prepare point cloud **/
-    std::shared_ptr<PointCloudCuda>
-        pcl_source = std::make_shared<PointCloudCuda>(VertexWithColor, 300000),
-        pcl_target = std::make_shared<PointCloudCuda>(VertexWithColor, 300000);
+    std::shared_ptr<cuda::PointCloudCuda>
+        pcl_source = std::make_shared<cuda::PointCloudCuda>(
+            cuda::VertexWithColor,  300000),
+        pcl_target = std::make_shared<cuda::PointCloudCuda>(
+            cuda::VertexWithColor, 300000);
 
     /** Prepare visualizer **/
     VisualizerWithKeyCallback visualizer;
@@ -109,10 +111,10 @@ int TwoFrameRGBDOdometry(
             lines->points_.clear();
             lines->lines_.clear();
             lines->colors_.clear();
-            std::vector<Vector4i>
+            std::vector<cuda::Vector4i>
                 correspondences = odometry.correspondences_.Download();
 
-            PinholeCameraIntrinsicCuda intrinsic = odometry.server()
+            cuda::PinholeCameraIntrinsicCuda intrinsic = odometry.server()
                 ->intrinsics_[level];
 
             pcl_source->Build(odometry.source()[level],
@@ -129,15 +131,15 @@ int TwoFrameRGBDOdometry(
 
             for (int i = 0; i < correspondences.size(); ++i) {
                 auto &c = correspondences[i];
-                Vector2i p_src = Vector2i(c(0), c(1));
-                Vector3f X_src = intrinsic.InverseProjectPixel(
+                cuda::Vector2i p_src = cuda::Vector2i(c(0), c(1));
+                cuda::Vector3f X_src = intrinsic.InverseProjectPixel(
                     p_src, *PointerAt<float>(*src_depth, c(0), c(1)));
                 Eigen::Vector4d X_src_h = odometry.transform_source_to_target_ *
                     Eigen::Vector4d(X_src(0), X_src(1), X_src(2), 1.0);
                 lines->points_.emplace_back(X_src_h.hnormalized());
 
-                Vector2i p_tgt = Vector2i(c(2), c(3));
-                Vector3f X_tgt = intrinsic.InverseProjectPixel(
+                cuda::Vector2i p_tgt = cuda::Vector2i(c(2), c(3));
+                cuda::Vector3f X_tgt = intrinsic.InverseProjectPixel(
                     p_tgt, *PointerAt<float>(*tgt_depth, c(2), c(3)));
                 lines->points_.emplace_back(X_tgt(0), X_tgt(1), X_tgt(2));
 
@@ -176,13 +178,13 @@ void ProcessGaussianImage(std::string depth_path) {
     Image depth;
 
     ReadImage(depth_path, depth);
-    ImageCuda<Vector1s> depths;
-    ImageCuda<Vector1f> depthf, gaussian;
+    cuda::ImageCuda<cuda::Vector1s> depths;
+    cuda::ImageCuda<cuda::Vector1f> depthf, gaussian;
 
     depths.Upload(depth);
     depths.ConvertToFloat(depthf, 1.0f / 1000.0f);
 
-    depthf.Gaussian(gaussian, Gaussian3x3, true);
+    depthf.Gaussian(gaussian, cuda::Gaussian3x3, true);
 
     cv::Mat matf = gaussian.DownloadMat();
     cv::Mat mats = cv::Mat(matf.rows, matf.cols, CV_16UC1);

@@ -67,8 +67,8 @@ bool SimpleShaderCuda::BindGeometry(const Geometry &geometry,
     UnbindGeometry();
 
     // Prepare data to be passed to GPU
-    Vector3f *vertices, *colors;
-    Vector3i *triangles;
+    cuda::Vector3f *vertices, *colors;
+    cuda::Vector3i *triangles;
     int vertex_size, triangle_size;
     if (!PrepareBinding(geometry, option, view,
                         vertices, colors, triangles,
@@ -78,7 +78,7 @@ bool SimpleShaderCuda::BindGeometry(const Geometry &geometry,
     }
 
     // Create buffers and bind the geometry
-    auto &pcl = (const PointCloudCuda &) geometry;
+    auto &pcl = (const cuda::PointCloudCuda &) geometry;
     RegisterResource(vertex_position_cuda_resource_,
                      GL_ARRAY_BUFFER, vertex_position_buffer_,
                      vertices, vertex_size);
@@ -170,9 +170,9 @@ bool SimpleShaderForPointCloudCuda::PrepareRendering(const Geometry &geometry,
 bool SimpleShaderForPointCloudCuda::PrepareBinding(const Geometry &geometry,
                                                    const RenderOption &option,
                                                    const ViewControl &view,
-                                                   Vector3f *&vertices,
-                                                   Vector3f *&colors,
-                                                   Vector3i *&triangles,
+                                                   cuda::Vector3f *&vertices,
+                                                   cuda::Vector3f *&colors,
+                                                   cuda::Vector3i *&triangles,
                                                    int &vertex_size,
                                                    int &triangle_size) {
     if (geometry.GetGeometryType() !=
@@ -181,7 +181,7 @@ bool SimpleShaderForPointCloudCuda::PrepareBinding(const Geometry &geometry,
         return false;
     }
 
-    auto &pcl = (const PointCloudCuda &) geometry;
+    auto &pcl = (const cuda::PointCloudCuda &) geometry;
     if (!pcl.HasPoints()) {
         PrintShaderWarning("Binding failed with empty triangle mesh.");
         return false;
@@ -228,9 +228,9 @@ bool SimpleShaderForTriangleMeshCuda::PrepareRendering(const Geometry &geometry,
 bool SimpleShaderForTriangleMeshCuda::PrepareBinding(const Geometry &geometry,
                                                      const RenderOption &option,
                                                      const ViewControl &view,
-                                                     Vector3f *&vertices,
-                                                     Vector3f *&colors,
-                                                     Vector3i *&triangles,
+                                                     cuda::Vector3f *&vertices,
+                                                     cuda::Vector3f *&colors,
+                                                     cuda::Vector3i *&triangles,
                                                      int &vertex_size,
                                                      int &triangle_size) {
     if (geometry.GetGeometryType() !=
@@ -239,7 +239,7 @@ bool SimpleShaderForTriangleMeshCuda::PrepareBinding(const Geometry &geometry,
         return false;
     }
 
-    auto &mesh = (const TriangleMeshCuda &) geometry;
+    auto &mesh = (const cuda::TriangleMeshCuda &) geometry;
     if (!mesh.HasTriangles()) {
         PrintShaderWarning("Binding failed with empty triangle mesh.");
         return false;

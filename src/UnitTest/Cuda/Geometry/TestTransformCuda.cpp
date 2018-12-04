@@ -8,6 +8,9 @@
 
 #include "UnitTest.h"
 
+using namespace open3d;
+using namespace open3d::cuda;
+
 TEST(TransformCuda, Transform) {
     using namespace open3d;
 

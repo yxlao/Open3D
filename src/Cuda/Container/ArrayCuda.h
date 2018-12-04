@@ -14,6 +14,8 @@
 
 namespace open3d {
 
+namespace cuda {
+
 template<typename T>
 class ArrayCudaServer {
 private:
@@ -29,7 +31,7 @@ public:
     __DEVICE__ inline int size() { return *iterator_; }
     __DEVICE__ inline int push_back(T value);
     __DEVICE__ inline T &at(size_t index);
-    __DEVICE__ inline T& operator[] (size_t index);
+    __DEVICE__ inline T &operator[](size_t index);
 
 public:
     friend class ArrayCuda<T>;
@@ -66,7 +68,7 @@ public:
     std::vector<T> DownloadAll();
 
     /** Fill non-trivial values **/
-    void Fill(const T& val);
+    void Fill(const T &val);
     /** Fill trivial values (e.g. 0, 0xff)  **/
     void Memset(int val);
     void Clear();
@@ -87,10 +89,12 @@ template<typename T>
 class ArrayCudaKernelCaller {
 public:
     __HOST__ static void FillArrayKernelCaller(ArrayCudaServer<T> &server,
-                                               const T& val, int max_capacity);
+                                               const T &val, int max_capacity);
 };
 
 template<typename T>
 __GLOBAL__
 void FillArrayKernel(ArrayCudaServer<T> server, T val);
-}
+
+} // cuda
+} // open3d

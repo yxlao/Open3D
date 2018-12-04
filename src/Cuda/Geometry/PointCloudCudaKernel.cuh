@@ -8,6 +8,7 @@
 #include <Cuda/Container/ArrayCudaDevice.cuh>
 
 namespace open3d {
+namespace cuda {
 __global__
 void BuildFromRGBDImageKernel(
     PointCloudCudaServer server,
@@ -73,7 +74,6 @@ void PointCloudCudaKernelCaller::BuildFromDepthImageKernelCaller(
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
-
 
 /** Duplicate of TriangleMesh ... anyway to simplify it? **/
 __global__
@@ -190,4 +190,5 @@ void PointCloudCudaKernelCaller::TransformKernelCaller(
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
-}
+} // cuda
+} // open3d

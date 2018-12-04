@@ -7,6 +7,8 @@
 #include <cstdlib>
 
 namespace open3d {
+
+namespace cuda {
 template<size_t N>
 class UniformTSDFVolumeCudaServer;
 
@@ -31,4 +33,5 @@ class ScalableMeshVolumeCudaServer;
 template<size_t N>
 class ScalableMeshVolumeCuda;
 
-}
+} // cuda
+} // open3d

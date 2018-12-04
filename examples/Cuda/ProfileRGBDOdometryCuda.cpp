@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
     PinholeCameraTrajectory trajectory;
 
     /** Prepare odometry **/
-    RGBDOdometryCuda<3> odometry;
+    cuda::RGBDOdometryCuda<3> odometry;
     odometry.SetIntrinsics(PinholeCameraIntrinsic(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault));
     odometry.SetParameters(OdometryOption({60, 60, 60}, 0.003, 0.01, 4.0), 0.5f);
@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
             ReadImage(base_path + "/" + rgbd_filenames[i + step].first,
                       source_depth);
 
-            RGBDImageCuda source(0.1f, 4.0f, 1000.0f),
+            cuda::RGBDImageCuda source(0.1f, 4.0f, 1000.0f),
                 target(0.1f, 4.0f, 1000.0f);
             source.Upload(source_depth, source_color);
             target.Upload(target_depth, target_color);

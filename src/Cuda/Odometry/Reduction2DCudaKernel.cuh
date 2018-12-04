@@ -8,6 +8,7 @@
 
 namespace open3d {
 
+namespace cuda {
 template<typename VecType, typename T>
 __global__
 void ReduceSum2DKernel(ImageCudaServer<VecType> src, T *sum) {
@@ -147,4 +148,5 @@ T AtomicSum(ImageCuda<VecType> &src) {
     CheckCuda(cudaMemcpy(&ret, sum, sizeof(T), cudaMemcpyDeviceToHost));
     return ret;
 }
-}
+} // cuda
+} // open3d

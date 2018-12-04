@@ -13,6 +13,7 @@
  *  In fusion, we need depth & color
  */
 namespace open3d {
+namespace cuda {
 class RGBDImageCudaServer {
 private:
     ImageCudaServer<Vector1f> depth_;
@@ -87,6 +88,5 @@ public:
     }
 };
 
-}
-
-
+} // cuda
+} // open3d

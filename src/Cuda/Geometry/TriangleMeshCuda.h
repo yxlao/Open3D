@@ -15,7 +15,7 @@
 #include <memory>
 
 namespace open3d {
-
+namespace cuda {
 class TriangleMeshCudaServer {
 private:
     ArrayCudaServer<Vector3f> vertices_;
@@ -134,7 +134,7 @@ public:
         int num_vertices);
 
     static __HOST__ void TransformKernelCaller(
-        TriangleMeshCudaServer& server,
+        TriangleMeshCudaServer &server,
         TransformCuda &transform,
         int num_vertices);
 };
@@ -149,4 +149,5 @@ void GetMaxBoundKernel(TriangleMeshCudaServer server,
 
 __GLOBAL__
 void TransformKernel(TriangleMeshCudaServer, TransformCuda transform);
-}
+} // cuda
+} // open3d

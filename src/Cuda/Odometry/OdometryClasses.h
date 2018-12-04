@@ -7,6 +7,7 @@
 #include <cstdlib>
 
 namespace open3d {
+namespace cuda {
 
 template<size_t N>
 class RGBDOdometryCudaServer;
@@ -20,4 +21,5 @@ class ICRGBDOdometryCudaServer;
 template<size_t N>
 class ICRGBDOdometryCuda;
 
-};
+} // cuda
+} // open3d

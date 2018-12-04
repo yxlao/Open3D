@@ -13,6 +13,7 @@
 
 namespace open3d {
 
+namespace cuda {
 /** If this is on, perform boundary checks! **/
 #define CUDA_DEBUG_ENABLE_ASSERTION_
 #define CUDA_DEBUG_ENABLE_PRINTF_
@@ -112,5 +113,5 @@ inline T WarpReduceSumShuffle(T &sum) {
     return sum;
 }
 #endif
-}
-
+} // cuda
+} // open3d

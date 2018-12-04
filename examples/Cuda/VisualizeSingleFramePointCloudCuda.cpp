@@ -50,14 +50,14 @@ int main(int argc, char **argv)
     ReadImage("../../../examples/TestData/RGBD/depth/00000.png", depth);
     ReadImage("../../../examples/TestData/RGBD/color/00000.jpg", color);
 
-    RGBDImageCuda rgbd(0.1f, 3.5f, 1000.0f);
+    cuda::RGBDImageCuda rgbd(0.1f, 3.5f, 1000.0f);
     rgbd.Upload(depth, color);
 
-    PinholeCameraIntrinsicCuda intrinsics(
+    cuda::PinholeCameraIntrinsicCuda intrinsics(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault);
 
-    std::shared_ptr<PointCloudCuda> pcl
-        = std::make_shared<PointCloudCuda>(VertexWithColor, 300000);
+    std::shared_ptr<cuda::PointCloudCuda> pcl
+        = std::make_shared<cuda::PointCloudCuda>(cuda::VertexWithColor, 300000);
     pcl->Build(rgbd, intrinsics);
 
     VisualizerWithCustomAnimation visualizer;

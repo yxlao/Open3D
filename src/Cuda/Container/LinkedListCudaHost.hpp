@@ -16,6 +16,8 @@
 
 
 namespace open3d {
+
+namespace cuda {
 /**
  * Client end
  */
@@ -146,4 +148,5 @@ std::vector<T> LinkedListCuda<T>::Download() {
     DownloadLinkedListKernelCaller(*server_, *data.server());
     return data.DownloadAll();
 }
-};
+} // cuda
+} // open3d

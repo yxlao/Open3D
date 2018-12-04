@@ -11,7 +11,7 @@
 #include <Cuda/Container/ArrayCudaDevice.cuh>
 
 namespace open3d {
-
+namespace cuda {
 /**
  * Server end
  */
@@ -21,7 +21,7 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseCorrespondenceAndResidual(
     int x_source, int y_source, size_t level,
     int &x_target, int &y_target,
     Vector3f &X_target,
-    float &residual_I,float &residual_D) {
+    float &residual_I, float &residual_D) {
 
     /** Check 1: depth valid in source? **/
     float d_source = source_[level].depth().at(x_source, y_source)(0);
@@ -48,7 +48,7 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseCorrespondenceAndResidual(
     y_target = p_warped(1);
     residual_I = sqrt_coeff_I_ * (
         target_[level].intensity().at(x_target, y_target)(0) -
-             source_[level].intensity().at(x_source, y_source)(0));
+            source_[level].intensity().at(x_source, y_source)(0));
     residual_D = sqrt_coeff_D_ * (d_target - X_target(2));
 
     return true;
@@ -58,7 +58,7 @@ template<size_t N>
 __device__
 bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobian(
     int x_target, int y_target, size_t level,
-    const Vector3f& X_target,
+    const Vector3f &X_target,
     Vector6f &jacobian_I, Vector6f &jacobian_D) {
 
     /********** Phase 2: Build linear system **********/
@@ -142,4 +142,5 @@ void RGBDOdometryCudaServer<N>::ComputePixelwiseJtJAndJtr(
         Jtr(i) = jacobian_I(i) * residual_I + jacobian_D(i) * residual_D;
     }
 }
-}
+} // cuda
+} // open3d

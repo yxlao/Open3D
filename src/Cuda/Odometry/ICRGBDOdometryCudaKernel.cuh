@@ -5,6 +5,7 @@
 #include "ICRGBDOdometryCudaDevice.cuh"
 
 namespace open3d {
+namespace cuda {
 
 template<size_t N>
 __global__
@@ -188,13 +189,14 @@ void PrecomputeJacobiansKernel(
 template<size_t N>
 void ICRGBDOdometryCudaKernelCaller<N>::PrecomputeJacobiansKernelCaller(
     ICRGBDOdometryCudaServer<N> &server, size_t level,
-    int width, int height){
+    int width, int height) {
 
     const dim3 blocks(DIV_CEILING(width, THREAD_2D_UNIT),
                       DIV_CEILING(height, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
-    PrecomputeJacobiansKernel<< < blocks, threads >> > (server, level);
+    PrecomputeJacobiansKernel << < blocks, threads >> > (server, level);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
-}
+} // cuda
+} // open3d

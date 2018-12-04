@@ -9,6 +9,9 @@
 #include <opencv2/opencv.hpp>
 #include "UnitTest.h"
 
+using namespace open3d;
+using namespace open3d::cuda;
+
 TEST(ScalableTSDFVolumeCuda, Create) {
     using namespace open3d;
 

@@ -10,6 +10,7 @@
 #include <Core/Core.h>
 
 namespace open3d {
+namespace cuda {
 /**
  * Client end
  */
@@ -67,7 +68,7 @@ void UniformMeshVolumeCuda<N>::Create(
     assert(max_vertices > 0 && max_triangles > 0);
     assert(type != VertexTypeUnknown);
 
-    server_ = std::make_shared < UniformMeshVolumeCudaServer < N >> ();
+    server_ = std::make_shared<UniformMeshVolumeCudaServer<N >>();
 
     vertex_type_ = type;
     max_triangles_ = max_triangles;
@@ -185,4 +186,5 @@ void UniformMeshVolumeCuda<N>::MarchingCubes(
         mesh_.vertex_colors().set_iterator(mesh_.vertices().size());
     }
 }
-}
+} // cuda
+} // open3d

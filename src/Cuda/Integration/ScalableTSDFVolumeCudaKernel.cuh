@@ -6,6 +6,7 @@
 #include "ScalableTSDFVolumeCudaDevice.cuh"
 
 namespace open3d {
+namespace cuda {
 
 template<size_t N>
 __global__
@@ -14,7 +15,7 @@ void CreateScalableTSDFVolumesKernel(ScalableTSDFVolumeCudaServer<N> server) {
     if (index >= server.value_capacity_) return;
 
     const size_t offset = (N * N * N) * index;
-    UniformTSDFVolumeCudaServer<N> &subvolume = server.hash_table()
+    UniformTSDFVolumeCudaServer < N > &subvolume = server.hash_table()
         .memory_heap_value().value_at(index);
 
     /** Assign memory **/
@@ -33,7 +34,7 @@ void CreateScalableTSDFVolumesKernel(ScalableTSDFVolumeCudaServer<N> server) {
 template<size_t N>
 __host__
 void ScalableTSDFVolumeCudaKernelCaller<N>::
-    CreateScalableTSDFVolumesKernelCaller(
+CreateScalableTSDFVolumesKernelCaller(
     ScalableTSDFVolumeCudaServer<N> &server,
     int value_capacity) {
 
@@ -43,7 +44,6 @@ void ScalableTSDFVolumeCudaKernelCaller<N>::
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
-
 
 template<size_t N>
 __global__
@@ -63,7 +63,7 @@ void TouchSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server,
 template<size_t N>
 __host__
 void ScalableTSDFVolumeCudaKernelCaller<N>::
-    TouchSubvolumesKernelCaller(
+TouchSubvolumesKernelCaller(
     ScalableTSDFVolumeCudaServer<N> &server,
     ImageCudaServer<Vector1f> &depth,
     PinholeCameraIntrinsicCuda &camera,
@@ -104,7 +104,7 @@ void IntegrateSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server,
 template<size_t N>
 __host__
 void ScalableTSDFVolumeCudaKernelCaller<N>::
-    IntegrateSubvolumesKernelCaller(
+IntegrateSubvolumesKernelCaller(
     ScalableTSDFVolumeCudaServer<N> &server,
     RGBDImageCudaServer &rgbd,
     PinholeCameraIntrinsicCuda &camera,
@@ -135,7 +135,8 @@ void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
         HashEntry<Vector3i> &entry = hash_table.entry_array().at(
             bucket_base_idx + i);
         if (entry.internal_addr != NULLPTR_CUDA) {
-            Vector3f X = server.voxelf_local_to_global(Vector3f(0), entry.key);
+            Vector3f
+            X = server.voxelf_local_to_global(Vector3f(0), entry.key);
             if (camera.IsPointInFrustum(
                 transform_camera_to_world.Inverse()
                     * server.voxelf_to_world(X))) {
@@ -152,7 +153,8 @@ void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
             linked_list.get_node(node_ptr);
 
         HashEntry<Vector3i> &entry = linked_list_node.data;
-        Vector3f X = server.voxelf_local_to_global(Vector3f(0), entry.key);
+        Vector3f
+        X = server.voxelf_local_to_global(Vector3f(0), entry.key);
         if (camera.IsPointInFrustum(
             transform_camera_to_world.Inverse() * server.voxelf_to_world(X))) {
             server.ActivateSubvolume(entry);
@@ -165,7 +167,7 @@ void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
 template<size_t N>
 __host__
 void ScalableTSDFVolumeCudaKernelCaller<N>::
-    GetSubvolumesInFrustumKernelCaller(
+GetSubvolumesInFrustumKernelCaller(
     ScalableTSDFVolumeCudaServer<N> &server,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world,
@@ -211,7 +213,7 @@ void GetAllSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server) {
 template<size_t N>
 __host__
 void ScalableTSDFVolumeCudaKernelCaller<N>::
-    GetAllSubvolumesKernelCaller(
+GetAllSubvolumesKernelCaller(
     ScalableTSDFVolumeCudaServer<N> &server,
     int bucket_count) {
 
@@ -234,14 +236,15 @@ void RayCastingKernel(ScalableTSDFVolumeCudaServer<N> server,
     if (x >= normal.width_ || y >= normal.height_) return;
 
     Vector2i p = Vector2i(x, y);
-    Vector3f n = server.RayCasting(p, camera, transform_camera_to_world);
+    Vector3f
+    n = server.RayCasting(p, camera, transform_camera_to_world);
     normal.at(x, y) = (n == Vector3f::Zeros()) ? n : 0.5f * n + Vector3f(0.5f);
 }
 
 template<size_t N>
 __host__
 void ScalableTSDFVolumeCudaKernelCaller<N>::
-    RayCastingKernelCaller(
+RayCastingKernelCaller(
     ScalableTSDFVolumeCudaServer<N> &server,
     ImageCudaServer<Vector3f> &image,
     PinholeCameraIntrinsicCuda &camera,
@@ -254,4 +257,5 @@ void ScalableTSDFVolumeCudaKernelCaller<N>::
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
-}
+} // cuda
+} // open3d

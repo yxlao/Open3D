@@ -10,6 +10,7 @@
 
 namespace open3d {
 
+namespace cuda {
 class TransformCuda {
 private:
     float m_[3][4];
@@ -132,4 +133,5 @@ public:
         return T;
     }
 };
-}
+} // cuda
+} // open3d

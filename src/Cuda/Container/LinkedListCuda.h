@@ -11,6 +11,7 @@
 
 namespace open3d {
 
+namespace cuda {
 /**
  * It is a basic unit, so we DON'T wrap it with server codes
  * otherwise pointer management will make you cry.
@@ -109,17 +110,17 @@ public:
         return max_capacity_;
     }
 
-    MemoryHeap& memory_heap() {
+    MemoryHeap &memory_heap() {
         return memory_heap_;
     }
-    const MemoryHeap& memory_heap() const {
+    const MemoryHeap &memory_heap() const {
         return memory_heap_;
     }
 
     std::shared_ptr<LinkedListCudaServer<T>> &server() {
         return server_;
     }
-    const std::shared_ptr<LinkedListCudaServer<T>>& server() const {
+    const std::shared_ptr<LinkedListCudaServer<T>> &server() const {
         return server_;
     }
 };
@@ -158,4 +159,5 @@ template<typename T>
 __GLOBAL__
 void DownloadLinkedListKernel(
     LinkedListCudaServer<T> server, ArrayCudaServer<T> data);
-}
+} // cuda
+} // open3d

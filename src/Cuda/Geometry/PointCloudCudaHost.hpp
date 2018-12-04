@@ -10,6 +10,8 @@
 #include <Core/Core.h>
 
 namespace open3d {
+
+namespace cuda {
 PointCloudCuda::PointCloudCuda()
     : Geometry3D(Geometry::GeometryType::PointCloudCuda) {
     type_ = VertexTypeUnknown;
@@ -322,4 +324,5 @@ void PointCloudCuda::Transform(const Eigen::Matrix4d &transformation) {
     PointCloudCudaKernelCaller::TransformKernelCaller(
         *server_, transformation_cuda, num_vertices);
 }
-}
+} // cuda
+} // open3d

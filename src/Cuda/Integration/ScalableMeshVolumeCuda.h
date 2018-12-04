@@ -16,6 +16,7 @@
 #include <memory>
 
 namespace open3d {
+namespace cuda {
 /** Almost all the important functions have to be re-written,
  *  so we choose not to reuse UniformMeshVolumeCudaServer.
  */
@@ -31,7 +32,7 @@ private:
 
 public:
     __DEVICE__ inline int IndexOf(const Vector3i &Xlocal,
-        int subvolume_idx) {
+                                  int subvolume_idx) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
         assert(Xlocal(0) >= 0 && Xlocal(1) >= 0 && Xlocal(2) >= 0 &&
             subvolume_idx >= 0);
@@ -82,7 +83,7 @@ public:
 
     __DEVICE__ void ExtractVertexOnBoundary(
         const Vector3i &Xlocal, int subvolume_idx,
-        const Vector3i& Xsv,
+        const Vector3i &Xsv,
         ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
         UniformTSDFVolumeCudaServer<N> **cached_subvolumes);
 
@@ -114,14 +115,16 @@ public:
 public:
     ScalableMeshVolumeCuda();
     ScalableMeshVolumeCuda(int max_subvolumes,
-        VertexType type, int max_vertices, int max_triangles);
+                           VertexType type,
+                           int max_vertices,
+                           int max_triangles);
     ScalableMeshVolumeCuda(const ScalableMeshVolumeCuda<N> &other);
     ScalableMeshVolumeCuda<N> &operator=(
         const ScalableMeshVolumeCuda<N> &other);
     ~ScalableMeshVolumeCuda();
 
     void Create(int max_subvolumes,
-        VertexType type, int max_vertices, int max_triangles);
+                VertexType type, int max_vertices, int max_triangles);
     void Release();
     void Reset();
     void UpdateServer();
@@ -184,4 +187,5 @@ __GLOBAL__
 void MarchingCubesTriangleExtractionKernel(
     ScalableMeshVolumeCudaServer<N> server,
     ScalableTSDFVolumeCudaServer<N> tsdf_volume);
-}
+} // cuda
+} // open3d

@@ -9,9 +9,11 @@
 #include <opencv2/opencv.hpp>
 #include "UnitTest.h"
 
+using namespace open3d;
+using namespace open3d::cuda;
+
 template<typename T>
 void CheckUploadAndDownloadConsistency(std::string path) {
-    using namespace open3d;
     cv::Mat image = cv::imread(path, cv::IMREAD_UNCHANGED);
     cv::imshow("raw", image);
     cv::waitKey(10);

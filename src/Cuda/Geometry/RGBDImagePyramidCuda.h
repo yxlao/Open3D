@@ -8,20 +8,21 @@
 #include "RGBDImageCuda.h"
 
 namespace open3d {
+namespace cuda {
 template<size_t N>
 class RGBDImagePyramidCudaServer {
 private:
     RGBDImageCudaServer rgbd_[N];
 
 public:
-    __HOSTDEVICE__ RGBDImageCudaServer &operator[] (size_t level) {
+    __HOSTDEVICE__ RGBDImageCudaServer &operator[](size_t level) {
 #ifdef DEBUG_CUDA_ENABLE_ASSERTION
         assert(level < N);
 #endif
         return rgbd_[level];
     }
 
-    __HOSTDEVICE__ const RGBDImageCudaServer &operator[] (size_t level) const {
+    __HOSTDEVICE__ const RGBDImageCudaServer &operator[](size_t level) const {
 #ifdef DEBUG_CUDA_ENABLE_ASSERTION
         assert(level < N);
 #endif
@@ -43,7 +44,7 @@ public:
     RGBDImagePyramidCuda();
     ~RGBDImagePyramidCuda();
     RGBDImagePyramidCuda(const RGBDImagePyramidCuda<N> &other);
-    RGBDImagePyramidCuda<N>& operator=(const RGBDImagePyramidCuda<N> &other);
+    RGBDImagePyramidCuda<N> &operator=(const RGBDImagePyramidCuda<N> &other);
 
     bool Create(int width, int height);
     void Release();
@@ -51,11 +52,11 @@ public:
 
     void Build(RGBDImageCuda &rgbd);
 
-    RGBDImageCuda &operator[] (size_t level) {
+    RGBDImageCuda &operator[](size_t level) {
         assert(level < N);
         return rgbd_[level];
     }
-    const RGBDImageCuda &operator[] (size_t level) const {
+    const RGBDImageCuda &operator[](size_t level) const {
         assert(level < N);
         return rgbd_[level];
     }
@@ -63,10 +64,9 @@ public:
     const std::shared_ptr<RGBDImagePyramidCudaServer<N>> &server() const {
         return server_;
     }
-    std::shared_ptr<RGBDImagePyramidCudaServer<N>> & server() {
+    std::shared_ptr<RGBDImagePyramidCudaServer<N>> &server() {
         return server_;
     }
 };
-}
-
-
+} // cuda
+} // open3d

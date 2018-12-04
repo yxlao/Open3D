@@ -49,24 +49,24 @@ int main(int argc, char **argv)
     ReadImage("../../../examples/TestData/RGBD/depth/00000.png", depth);
     ReadImage("../../../examples/TestData/RGBD/color/00000.jpg", color);
 
-    RGBDImageCuda rgbd(0.1f, 3.5f, 1000.0f);
+    cuda::RGBDImageCuda rgbd(0.1f, 3.5f, 1000.0f);
     rgbd.Upload(depth, color);
 
-    PinholeCameraIntrinsicCuda intrinsics(
+    cuda::PinholeCameraIntrinsicCuda intrinsics(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault);
 
     float voxel_length = 0.01f;
-    TransformCuda extrinsics = TransformCuda::Identity();
-    ScalableTSDFVolumeCuda<8> tsdf_volume(
+    cuda::TransformCuda extrinsics = cuda::TransformCuda::Identity();
+    cuda::ScalableTSDFVolumeCuda<8> tsdf_volume(
         10000, 200000, voxel_length, 3 * voxel_length, extrinsics);
     tsdf_volume.Integrate(rgbd, intrinsics, extrinsics);
-    ScalableMeshVolumeCuda<8> mesher(
-        10000, VertexWithNormalAndColor, 100000, 200000);
+    cuda::ScalableMeshVolumeCuda<8> mesher(
+        10000, cuda::VertexWithNormalAndColor, 100000, 200000);
     mesher.active_subvolumes_ = tsdf_volume.active_subvolume_entry_array().size();
     mesher.MarchingCubes(tsdf_volume);
 
-    std::shared_ptr<TriangleMeshCuda> mesh =
-        std::make_shared<TriangleMeshCuda>(mesher.mesh());
+    std::shared_ptr<cuda::TriangleMeshCuda> mesh =
+        std::make_shared<cuda::TriangleMeshCuda>(mesher.mesh());
 
     VisualizerWithKeyCallback visualizer;
     if (! visualizer.CreateVisualizerWindow("Visualizer", 640, 480, 0, 0)) {

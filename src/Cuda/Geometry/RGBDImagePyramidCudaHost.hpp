@@ -5,6 +5,7 @@
 #include "RGBDImagePyramidCuda.h"
 
 namespace open3d {
+namespace cuda {
 template<size_t N>
 RGBDImagePyramidCuda<N>::RGBDImagePyramidCuda() {}
 
@@ -78,7 +79,8 @@ void RGBDImagePyramidCuda<N>::Build(RGBDImageCuda &rgbd) {
     if (success) {
         rgbd_[0].CopyFrom(rgbd);
         for (size_t i = 1; i < N; ++i) {
-            rgbd_[i - 1].depthf().Downsample(rgbd_[i].depthf(), BoxFilterWithHoles);
+            rgbd_[i - 1].depthf().Downsample(rgbd_[i].depthf(),
+                                             BoxFilterWithHoles);
             rgbd_[i - 1].color().Downsample(rgbd_[i].color());
             rgbd_[i - 1].intensity().Downsample(rgbd_[i].intensity());
         }
@@ -95,4 +97,5 @@ void RGBDImagePyramidCuda<N>::UpdateServer() {
         }
     }
 }
-}
+} // cuda
+} // open3d

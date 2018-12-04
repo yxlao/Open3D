@@ -5,6 +5,7 @@
 #include "RGBDImageCuda.h"
 
 namespace open3d {
+namespace cuda {
 RGBDImageCuda::RGBDImageCuda(float depth_near,
                              float depth_far,
                              float depth_factor)
@@ -21,7 +22,7 @@ RGBDImageCuda::RGBDImageCuda(int width, int height,
     Create(width, height);
 }
 
-RGBDImageCuda::RGBDImageCuda(const open3d::RGBDImageCuda &other) {
+RGBDImageCuda::RGBDImageCuda(const RGBDImageCuda &other) {
     server_ = other.server();
 
     depth_near_ = other.depth_near_;
@@ -34,7 +35,7 @@ RGBDImageCuda::RGBDImageCuda(const open3d::RGBDImageCuda &other) {
     intensity_ = other.intensity();
 }
 
-RGBDImageCuda &RGBDImageCuda::operator=(const open3d::RGBDImageCuda &other) {
+RGBDImageCuda &RGBDImageCuda::operator=(const RGBDImageCuda &other) {
     if (this != &other) {
         Release();
 
@@ -173,4 +174,5 @@ void RGBDImageCuda::Upload(cv::Mat &depth, cv::Mat &color) {
         UpdateServer();
     }
 }
-}
+} // cuda
+} // open3d

@@ -8,6 +8,7 @@
 #include <Cuda/Container/ArrayCudaDevice.cuh>
 
 namespace open3d {
+namespace cuda {
 __global__
 void GetMinBoundKernel(TriangleMeshCudaServer server,
                        ArrayCudaServer<Vector3f> min_bound) {
@@ -18,7 +19,7 @@ void GetMinBoundKernel(TriangleMeshCudaServer server,
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
     int tid = threadIdx.x;
     Vector3f vertex = idx < server.vertices().size() ?
-        server.vertices()[idx] : Vector3f(1e10f);
+                      server.vertices()[idx] : Vector3f(1e10f);
 
     local_min_x[tid] = vertex(0);
     local_min_y[tid] = vertex(1);
@@ -50,7 +51,6 @@ void TriangleMeshCudaKernelCaller::GetMinBoundKernelCaller(
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
-
 
 __global__
 void GetMaxBoundKernel(TriangleMeshCudaServer server,
@@ -112,7 +112,7 @@ void TransformKernel(TriangleMeshCudaServer server, TransformCuda transform) {
 
 __host__
 void TriangleMeshCudaKernelCaller::TransformKernelCaller(
-    TriangleMeshCudaServer& server,
+    TriangleMeshCudaServer &server,
     TransformCuda &transform,
     int num_vertices) {
 
@@ -123,4 +123,5 @@ void TriangleMeshCudaKernelCaller::TransformKernelCaller(
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
-}
+} // cuda
+} // open3d

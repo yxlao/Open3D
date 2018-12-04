@@ -9,6 +9,7 @@
 #include <Core/Core.h>
 
 namespace open3d {
+namespace cuda {
 
 /**
  * Client end
@@ -171,11 +172,12 @@ void UniformTSDFVolumeCuda<N>::Integrate(RGBDImageCuda &rgbd,
 }
 
 template<size_t N>
-void UniformTSDFVolumeCuda<N>::RayCasting(ImageCuda<open3d::Vector3f> &image,
+void UniformTSDFVolumeCuda<N>::RayCasting(ImageCuda<Vector3f> &image,
                                           PinholeCameraIntrinsicCuda &camera,
                                           TransformCuda &transform_camera_to_world) {
     assert(server_ != nullptr);
     UniformTSDFVolumeCudaKernelCaller<N>::RayCastingKernelCaller(
         *server_, *image.server(), camera, transform_camera_to_world);
 }
-}
+} // cuda
+} // open3d

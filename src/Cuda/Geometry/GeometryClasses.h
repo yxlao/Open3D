@@ -11,6 +11,7 @@
 
 namespace open3d {
 
+namespace cuda {
 template<typename T>
 class ImageCudaServer;
 template<typename T>
@@ -44,6 +45,6 @@ class TriangleMeshCuda;
 class PointCloudCudaServer;
 class PointCloudCuda;
 
-
-}
+} // cuda
+} // open3d
 #endif //OPEN3D_GEOMETRY_H

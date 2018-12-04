@@ -12,6 +12,7 @@
 #include <Core/Core.h>
 
 namespace open3d {
+namespace cuda {
 /**
  * Server end
  */
@@ -151,4 +152,5 @@ inline void UniformMeshVolumeCudaServer<N>::ExtractTriangle(
         mesh_.triangles().push_back(tri_vertex_indices);
     }
 }
-}
+} // cuda
+} // open3d

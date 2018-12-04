@@ -21,7 +21,7 @@
  *  Also, we don't want the TSDFVolumes to be too heavy.
  *  When we need to do meshing, we attache this MeshVolume to TSDFVolume **/
 namespace open3d {
-
+namespace cuda {
 static const int VERTEX_TO_ALLOCATE = -1;
 
 template<size_t N>
@@ -170,4 +170,5 @@ template<size_t N>
 __GLOBAL__
 void MarchingCubesTriangleExtractionKernel(
     UniformMeshVolumeCudaServer<N> server);
-}
+} // cuda
+} // open3d

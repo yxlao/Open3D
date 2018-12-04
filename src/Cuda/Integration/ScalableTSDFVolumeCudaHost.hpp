@@ -7,6 +7,7 @@
 #include <cuda_runtime.h>
 
 namespace open3d {
+namespace cuda {
 /**
  * Client end
  */
@@ -155,9 +156,9 @@ void ScalableTSDFVolumeCuda<N>::UpdateServer() {
 
 template<size_t N>
 std::pair<std::vector<Vector3i>,
-std::vector<std::tuple<std::vector<float>,
-std::vector<uchar>,
-std::vector<Vector3b>>>>
+          std::vector<std::tuple<std::vector<float>,
+                                 std::vector<uchar>,
+                                 std::vector<Vector3b>>>>
 ScalableTSDFVolumeCuda<N>::DownloadVolumes() {
     assert(server_ != nullptr);
 
@@ -169,8 +170,8 @@ ScalableTSDFVolumeCuda<N>::DownloadVolumes() {
     assert(keys.size() == volume_servers.size());
 
     std::vector<std::tuple<std::vector<float>,
-        std::vector<uchar>,
-        std::vector<Vector3b>>> volumes;
+                           std::vector<uchar>,
+                           std::vector<Vector3b>>> volumes;
     volumes.resize(volume_servers.size());
 
     for (int i = 0; i < volumes.size(); ++i) {
@@ -279,4 +280,5 @@ void ScalableTSDFVolumeCuda<N>::RayCasting(
     RayCastingKernelCaller(
         *server_, *image.server(), camera, transform_camera_to_world);
 }
-}
+} // cuda
+} // open3d

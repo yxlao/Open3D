@@ -16,21 +16,23 @@ int main(int argc, char **argv) {
     Image depth, color;
     ReadImage("../../../examples/TestData/RGBD/depth/00000.png", depth);
     ReadImage("../../../examples/TestData/RGBD/color/00000.jpg", color);
-    RGBDImageCuda rgbd(0.1f, 3.0f, 1000.0f);
+    cuda::RGBDImageCuda rgbd(0.1f, 3.0f, 1000.0f);
     rgbd.Upload(depth, color);
 
-    PinholeCameraIntrinsicCuda intrinsics(
+    cuda::PinholeCameraIntrinsicCuda intrinsics(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault);
 
-    TransformCuda transform = TransformCuda::Identity();
+    cuda::TransformCuda transform = cuda::TransformCuda::Identity();
 
     const float voxel_length = 0.01f;
-    transform.SetTranslation(Vector3f(-voxel_length * 256));
-    UniformTSDFVolumeCuda<512> volume(voxel_length, voxel_length * 3, transform);
+    transform.SetTranslation(cuda::Vector3f(-voxel_length * 256));
+    cuda::UniformTSDFVolumeCuda<512> volume(voxel_length, voxel_length * 3,
+        transform);
 
-    TransformCuda extrinsics = TransformCuda::Identity();
+    cuda::TransformCuda extrinsics = cuda::TransformCuda::Identity();
     volume.Integrate(rgbd, intrinsics, extrinsics);
-    UniformMeshVolumeCuda<512> mesher(VertexWithNormalAndColor, 400000, 800000);
+    cuda::UniformMeshVolumeCuda<512> mesher(
+        cuda::VertexWithNormalAndColor, 400000, 800000);
 
     Timer timer;
     timer.Start();

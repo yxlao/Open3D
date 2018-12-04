@@ -16,6 +16,7 @@
 */
 
 namespace open3d {
+namespace cuda {
 
 #define WARP_SIZE 32
 
@@ -50,4 +51,5 @@ T ReduceSum2DShuffle(ImageCuda<VecType> &src);
 
 template<typename VecType, typename T>
 T AtomicSum(ImageCuda<VecType> &src);
-}
+} // cuda
+} // open3d

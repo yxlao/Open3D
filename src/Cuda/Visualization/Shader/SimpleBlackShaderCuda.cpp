@@ -70,7 +70,8 @@ bool SimpleBlackShaderCuda::BindGeometry(const Geometry &geometry,
     }
 
     // Create buffers and bind the geometry
-    const TriangleMeshCuda &mesh = (const TriangleMeshCuda &) geometry;
+    const cuda::TriangleMeshCuda &mesh =
+        (const cuda::TriangleMeshCuda &) geometry;
     RegisterResource(vertex_position_cuda_resource_,
                      GL_ARRAY_BUFFER, vertex_position_buffer_,
                      mesh.vertices().server()->data(),
@@ -144,7 +145,8 @@ bool SimpleBlackShaderForTriangleMeshCuda::PrepareBinding(
         return false;
     }
 
-    const TriangleMeshCuda &mesh = (const TriangleMeshCuda &) geometry;
+    const cuda::TriangleMeshCuda &mesh =
+        (const cuda::TriangleMeshCuda &) geometry;
     if (mesh.HasTriangles() == false) {
         PrintShaderWarning("Binding failed with empty TriangleMeshCuda.");
         return false;

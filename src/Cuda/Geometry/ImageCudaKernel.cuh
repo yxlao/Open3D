@@ -2,6 +2,7 @@
 
 namespace open3d {
 
+namespace cuda {
 /**
  * Downsampling
  */
@@ -20,11 +21,16 @@ void DownsampleImageKernel(ImageCudaServer<VecType> src,
     switch (method) {
         case BoxFilter: dst.at(u, v) = src.BoxFilter2x2(u << 1, v << 1);
             return;
-        case BoxFilterWithHoles:dst.at(u, v) = src.BoxFilter2x2WithHoles(u << 1, v << 1);
+        case BoxFilterWithHoles:
+            dst.at(u, v) = src.BoxFilter2x2WithHoles(u << 1, v << 1);
             return;
-        case GaussianFilter:dst.at(u, v) = src.GaussianFilter(u << 1, v << 1, Gaussian5x5);
+        case GaussianFilter:
+            dst.at(u, v) = src.GaussianFilter(u << 1, v << 1, Gaussian5x5);
             return;
-        case GaussianFilterWithHoles:dst.at(u, v) = src.GaussianFilterWithHoles(u << 1, v << 1, Gaussian5x5);
+        case GaussianFilterWithHoles:
+            dst.at(u, v) = src.GaussianFilterWithHoles(u << 1,
+                                                       v << 1,
+                                                       Gaussian5x5);
             return;
         default: printf("Unsupported method.\n");
     }
@@ -258,8 +264,9 @@ void ImageCudaKernelCaller<VecType>::ConvertRGBToIntensityKernelCaller(
     const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
                       DIV_CEILING(src.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
-    ConvertRGBToIntensityKernel<<<blocks, threads>>>(src, dst);
+    ConvertRGBToIntensityKernel << < blocks, threads >> > (src, dst);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
-}
+} // cuda
+} // open3d

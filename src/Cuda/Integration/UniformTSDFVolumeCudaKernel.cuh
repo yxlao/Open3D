@@ -7,6 +7,7 @@
 #include "UniformTSDFVolumeCudaDevice.cuh"
 
 namespace open3d {
+namespace cuda {
 template<size_t N>
 __global__
 void IntegrateKernel(UniformTSDFVolumeCudaServer<N> server,
@@ -40,7 +41,6 @@ void UniformTSDFVolumeCudaKernelCaller<N>::IntegrateKernelCaller(
     CheckCuda(cudaGetLastError());
 }
 
-
 template<size_t N>
 __global__
 void RayCastingKernel(UniformTSDFVolumeCudaServer<N> server,
@@ -53,10 +53,13 @@ void RayCastingKernel(UniformTSDFVolumeCudaServer<N> server,
     if (x >= image.width_ || y >= image.height_) return;
 
     Vector2i p = Vector2i(x, y);
-    Vector3f n = server.RayCasting(p, camera, transform_camera_to_world);
+    Vector3f
+    n = server.RayCasting(p, camera, transform_camera_to_world);
 
     image.at(x, y) = (n == Vector3f::Zeros()) ?
-        n : Vector3f((n(0) + 1) * 0.5f, (n(1) + 1) * 0.5f, (n(2) + 1) * 0.5f);
+                     n : Vector3f((n(0) + 1) * 0.5f,
+                                  (n(1) + 1) * 0.5f,
+                                  (n(2) + 1) * 0.5f);
 }
 
 template<size_t N>
@@ -74,4 +77,5 @@ void UniformTSDFVolumeCudaKernelCaller<N>::RayCastingKernelCaller(
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
-}
+} // cuda
+} // open3d

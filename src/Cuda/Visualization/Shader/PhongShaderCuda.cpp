@@ -81,7 +81,8 @@ bool PhongShaderCuda::BindGeometry(const Geometry &geometry,
         return false;
     }
 
-    const TriangleMeshCuda &mesh = (const TriangleMeshCuda &) geometry;
+    const cuda::TriangleMeshCuda &mesh =
+        (const cuda::TriangleMeshCuda &) geometry;
 
     // Create buffers and bind the geometry
     RegisterResource(vertex_position_cuda_resource_,
@@ -236,7 +237,8 @@ bool PhongShaderForTriangleMeshCuda::PrepareBinding(const Geometry &geometry,
         return false;
     }
 
-    const TriangleMeshCuda &mesh = (const TriangleMeshCuda &) geometry;
+    const cuda::TriangleMeshCuda &mesh =
+        (const cuda::TriangleMeshCuda &) geometry;
     if (!mesh.HasTriangles()) {
         PrintShaderWarning("Binding failed with empty triangle mesh.");
         return false;

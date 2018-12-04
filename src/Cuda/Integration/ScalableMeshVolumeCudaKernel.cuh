@@ -7,13 +7,15 @@
 #include "ScalableMeshVolumeCudaDevice.cuh"
 
 namespace open3d {
+namespace cuda {
 template<size_t N>
 __global__
 void MarchingCubesVertexAllocationKernel(
     ScalableMeshVolumeCudaServer<N> server,
     ScalableTSDFVolumeCudaServer<N> tsdf_volume) {
 
-    __shared__ UniformTSDFVolumeCudaServer<N> *neighbor_subvolumes[27];
+    __shared__
+    UniformTSDFVolumeCudaServer<N> *neighbor_subvolumes[27];
     __shared__ int neighbor_subvolume_indices[27];
 
     const int subvolume_idx = blockIdx.x;
@@ -47,7 +49,7 @@ void MarchingCubesVertexAllocationKernel(
 template<size_t N>
 __host__
 void ScalableMeshVolumeCudaKernelCaller<N>::
-    MarchingCubesVertexAllocationKernelCaller(
+MarchingCubesVertexAllocationKernelCaller(
     ScalableMeshVolumeCudaServer<N> &server,
     ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
     int active_volumes) {
@@ -60,14 +62,14 @@ void ScalableMeshVolumeCudaKernelCaller<N>::
     CheckCuda(cudaGetLastError());
 }
 
-
 template<size_t N>
 __global__
 void MarchingCubesVertexExtractionKernel(
     ScalableMeshVolumeCudaServer<N> server,
     ScalableTSDFVolumeCudaServer<N> tsdf_volume) {
 
-    __shared__ UniformTSDFVolumeCudaServer<N> *neighbor_subvolumes[27];
+    __shared__
+    UniformTSDFVolumeCudaServer<N> *neighbor_subvolumes[27];
     __shared__ int neighbor_subvolume_indices[27];
 
     const int subvolume_idx = blockIdx.x;
@@ -102,7 +104,7 @@ void MarchingCubesVertexExtractionKernel(
 template<size_t N>
 __host__
 void ScalableMeshVolumeCudaKernelCaller<N>::
-    MarchingCubesVertexExtractionKernelCaller(
+MarchingCubesVertexExtractionKernelCaller(
     ScalableMeshVolumeCudaServer<N> &server,
     ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
     int active_volumes) {
@@ -122,7 +124,8 @@ void MarchingCubesTriangleExtractionKernel(
     ScalableMeshVolumeCudaServer<N> server,
     ScalableTSDFVolumeCudaServer<N> tsdf_volume) {
 
-    __shared__ UniformTSDFVolumeCudaServer<N> *neighbor_subvolumes[27];
+    __shared__
+    UniformTSDFVolumeCudaServer<N> *neighbor_subvolumes[27];
     __shared__ int neighbor_subvolume_indices[27];
 
     const int subvolume_idx = blockIdx.x;
@@ -163,4 +166,5 @@ MarchingCubesTriangleExtractionKernelCaller(
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
-}
+} // cuda
+} // open3d

@@ -6,6 +6,9 @@
 #include <IO/IO.h>
 #include <Cuda/Geometry/TriangleMeshCuda.h>
 
+using namespace open3d;
+using namespace open3d::cuda;
+
 TEST(TriangleMeshCuda, GetMinMaxBound) {
     using namespace open3d;
 

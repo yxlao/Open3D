@@ -14,6 +14,8 @@
 #include <vector>
 
 namespace open3d {
+
+namespace cuda {
 /**
  * Server end
  */
@@ -49,14 +51,18 @@ int HashTableCudaServer<Key, Value, Hasher>::GetInternalAddrByKey(
 
 template<typename Key, typename Value, typename Hasher>
 __device__
-Value *HashTableCudaServer<Key, Value, Hasher>::GetValuePtrByInternalAddr(
+    Value
+*
+HashTableCudaServer<Key, Value, Hasher>::GetValuePtrByInternalAddr(
     const int addr) {
     return &(memory_heap_value_.value_at(addr));
 }
 
 template<typename Key, typename Value, typename Hasher>
 __device__
-Value *HashTableCudaServer<Key, Value, Hasher>::GetValuePtrByKey(
+    Value
+*
+HashTableCudaServer<Key, Value, Hasher>::GetValuePtrByKey(
     const Key &key) {
     int internal_ptr = GetInternalAddrByKey(key);
     if (internal_ptr == NULLPTR_CUDA) return nullptr;
@@ -65,7 +71,9 @@ Value *HashTableCudaServer<Key, Value, Hasher>::GetValuePtrByKey(
 
 template<typename Key, typename Value, typename Hasher>
 __device__
-Value *HashTableCudaServer<Key, Value, Hasher>::operator[](const Key &key) {
+    Value
+*
+HashTableCudaServer<Key, Value, Hasher>::operator[](const Key &key) {
     return GetValuePtrByKey(key);
 }
 
@@ -156,4 +164,5 @@ int HashTableCudaServer<Key, Value, Hasher>::Delete(const Key &key) {
     atomicExch(&lock_array_.at(bucket_idx), UNLOCKED);
     return ret;
 }
-}
+} // cuda
+} // open3d

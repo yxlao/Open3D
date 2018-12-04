@@ -18,7 +18,7 @@
 #include <memory>
 
 namespace open3d {
-
+namespace cuda {
 class PointCloudCudaServer {
 private:
     ArrayCudaServer<Vector3f> points_;
@@ -113,7 +113,7 @@ public:
     ArrayCuda<Vector3f> &colors() { return colors_; }
     const ArrayCuda<Vector3f> &colors() const { return colors_; }
     ArrayCuda<float> &radius() { return radius_; }
-    const ArrayCuda<float> &radius() const {return radius_; }
+    const ArrayCuda<float> &radius() const { return radius_; }
     ArrayCuda<float> &confidences() { return confidences_; }
     const ArrayCuda<float> &confidences() const { return confidences_; }
     ArrayCuda<int> &indices() { return indices_; }
@@ -140,13 +140,13 @@ public:
         int num_vertices);
 
     static __HOST__ void TransformKernelCaller(
-        PointCloudCudaServer& server,
+        PointCloudCudaServer &server,
         TransformCuda &transform,
         int num_vertices);
 
     static __HOST__ void BuildFromRGBDImageKernelCaller(
-        PointCloudCudaServer& server,
-        RGBDImageCudaServer& rgbd,
+        PointCloudCudaServer &server,
+        RGBDImageCudaServer &rgbd,
         PinholeCameraIntrinsicCuda &intrinsic);
 
     static __HOST__ void BuildFromDepthImageKernelCaller(
@@ -175,4 +175,5 @@ void GetMaxBoundKernel(PointCloudCudaServer server,
 
 __GLOBAL__
 void TransformKernel(PointCloudCudaServer, TransformCuda transform);
-}
+} // cuda
+} // open3d

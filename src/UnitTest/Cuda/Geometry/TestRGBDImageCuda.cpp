@@ -7,8 +7,11 @@
 #include <Cuda/Geometry/RGBDImageCuda.h>
 #include <opencv2/opencv.hpp>
 
+using namespace open3d;
+using namespace open3d::cuda;
+
 TEST(RGBDImageCuda, Reuse) {
-    using namespace open3d;
+
     const std::string kDepthPath = "../../examples/TestData/RGBD/other_formats/TUM_depth.png";
     const std::string kColorPath = "../../examples/TestData/RGBD/other_formats/TUM_color.png";
 

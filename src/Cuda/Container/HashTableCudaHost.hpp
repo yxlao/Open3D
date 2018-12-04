@@ -21,6 +21,8 @@
 #include <Core/Core.h>
 
 namespace open3d {
+
+namespace cuda {
 /**
  * Client end
  */
@@ -212,7 +214,9 @@ void HashTableCuda<Key, Value, Hasher>::New(
 
     HashTableCudaKernelCaller<Key, Value, Hasher>::
     InsertHashTableEntriesKernelCaller(*server_,
-                                       *keys_cuda.server(), *values_cuda.server(), keys.size(),
+                                       *keys_cuda.server(),
+                                       *values_cuda.server(),
+                                       keys.size(),
                                        bucket_count_);
 }
 
@@ -290,4 +294,5 @@ HashTableCuda<Key, Value, Hasher>::Profile() {
 
     return std::make_tuple(array_entry_count, list_entry_count);
 }
-}
+} // cuda
+} // open3d

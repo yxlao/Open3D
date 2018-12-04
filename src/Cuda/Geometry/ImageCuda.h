@@ -18,6 +18,7 @@
 
 namespace open3d {
 
+namespace cuda {
 enum GaussianKernelSize {
     Gaussian3x3 = 0,
     Gaussian5x5 = 1,
@@ -64,11 +65,14 @@ public:
     VecType GaussianFilter(int x, int y, int kernel_idx);
     __DEVICE__
     VecType GaussianFilterWithHoles(int x, int y, int kernel_idx,
-        float threshold = 0.3f /* workaround for depth images */);
+                                    float threshold = 0.3f /* workaround for depth images */);
     __DEVICE__
     VecType BilateralFilter(int x, int y, int kernel_idx, float val_sigma);
     __DEVICE__
-    VecType BilateralFilterWithHoles(int x, int y, int kernel_idx, float val_sigma);
+    VecType BilateralFilterWithHoles(int x,
+                                     int y,
+                                     int kernel_idx,
+                                     float val_sigma);
 
     /** Wish I could use std::pair here... **/
     struct Grad {
@@ -112,7 +116,7 @@ public:
     void UpdateServer();
 
     void CopyFrom(const ImageCuda<VecType> &other);
-    void Upload(Image& image);
+    void Upload(Image &image);
     std::shared_ptr<Image> DownloadImage();
 
     /********** Image Processing **********/
@@ -124,7 +128,7 @@ public:
 
     std::tuple<ImageCuda<typename VecType::VecTypef>,
                ImageCuda<typename VecType::VecTypef>> Sobel(
-                   bool with_holes = true);
+        bool with_holes = true);
     void Sobel(ImageCuda<typename VecType::VecTypef> &dx,
                ImageCuda<typename VecType::VecTypef> &dy,
                bool with_holes = true);
@@ -177,7 +181,7 @@ public:
         ImageCudaServer<VecType> &src, ImageCudaServer<VecType> &dst,
         float dx, float dy, bool with_holes);
     static __HOST__ void GaussianImageKernelCaller(
-        ImageCudaServer<VecType> &src,ImageCudaServer<VecType> &dst,
+        ImageCudaServer<VecType> &src, ImageCudaServer<VecType> &dst,
         int kernel_idx, bool with_holes);
     static __HOST__ void BilateralImageKernelCaller(
         ImageCudaServer<VecType> &src, ImageCudaServer<VecType> &dst,
@@ -187,7 +191,7 @@ public:
         ImageCudaServer<typename VecType::VecTypef> &dx,
         ImageCudaServer<typename VecType::VecTypef> &dy,
         bool with_holes);
-    static __HOST__ void ConvertToFloatImageKernelCaller (
+    static __HOST__ void ConvertToFloatImageKernelCaller(
         ImageCudaServer<VecType> &src,
         ImageCudaServer<typename VecType::VecTypef> &dst,
         float scale, float offset);
@@ -211,7 +215,7 @@ void ShiftImageKernel(
 template<typename VecType>
 __GLOBAL__
 void GaussianImageKernel(
-    ImageCudaServer<VecType> src,ImageCudaServer<VecType> dst,
+    ImageCudaServer<VecType> src, ImageCudaServer<VecType> dst,
     int kernel_idx, bool with_holes);
 
 template<typename VecType>
@@ -240,4 +244,5 @@ __GLOBAL__
 void ConvertRGBToIntensityImageKernel(
     ImageCudaServer<VecType> src,
     ImageCudaServer<Vector1f> dst);
-}
+} // cuda
+} // open3d

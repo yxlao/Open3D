@@ -10,6 +10,8 @@
  * Global code called by Host code
  */
 namespace open3d {
+
+namespace cuda {
 template<typename Key, typename Value, typename Hasher>
 __global__
 void CreateHashTableEntriesKernel(
@@ -37,8 +39,8 @@ void CreateHashTableEntriesKernel(
 template<typename Key, typename Value, typename Hasher>
 __host__
 void HashTableCudaKernelCaller<Key, Value, Hasher>::
-    CreateHashTableEntriesKernelCaller(
-    HashTableCudaServer<Key, Value, Hasher>& server,
+CreateHashTableEntriesKernelCaller(
+    HashTableCudaServer<Key, Value, Hasher> &server,
     int bucket_count) {
     const int threads = THREAD_1D_UNIT;
     const int blocks = DIV_CEILING(bucket_count, THREAD_1D_UNIT);
@@ -60,8 +62,8 @@ void ReleaseHashTableEntriesKernel(
 template<typename Key, typename Value, typename Hasher>
 __host__
 void HashTableCudaKernelCaller<Key, Value, Hasher>::
-    ReleaseHashTableEntriesKernelCaller(
-    HashTableCudaServer<Key, Value, Hasher>& server,
+ReleaseHashTableEntriesKernelCaller(
+    HashTableCudaServer<Key, Value, Hasher> &server,
     int bucket_count) {
 
     const int blocks = DIV_CEILING(bucket_count, THREAD_1D_UNIT);
@@ -89,9 +91,9 @@ void ResetHashTableEntriesKernel(
 
 template<typename Key, typename Value, typename Hasher>
 __host__
-void  HashTableCudaKernelCaller<Key, Value, Hasher>::
-    ResetHashTableEntriesKernelCaller(
-    HashTableCudaServer<Key, Value, Hasher>& server,
+void HashTableCudaKernelCaller<Key, Value, Hasher>::
+ResetHashTableEntriesKernelCaller(
+    HashTableCudaServer<Key, Value, Hasher> &server,
     int bucket_count) {
     const int blocks = DIV_CEILING(bucket_count, THREAD_1D_UNIT);
     const int threads = THREAD_1D_UNIT;
@@ -100,7 +102,6 @@ void  HashTableCudaKernelCaller<Key, Value, Hasher>::
     CheckCuda(cudaGetLastError());
 
 }
-
 
 template<typename Key, typename Value, typename Hasher>
 __global__
@@ -133,8 +134,8 @@ void GetHashTableAssignedEntriesKernel(
 
 template<typename Key, typename Value, typename Hasher>
 __HOST__
-void  HashTableCudaKernelCaller<Key, Value, Hasher>::
-    GetHashTableAssignedEntriesKernelCaller(
+void HashTableCudaKernelCaller<Key, Value, Hasher>::
+GetHashTableAssignedEntriesKernelCaller(
     HashTableCudaServer<Key, Value, Hasher> &server,
     int bucket_count) {
 
@@ -165,16 +166,16 @@ void InsertHashTableEntriesKernel(
 
 template<typename Key, typename Value, typename Hasher>
 __host__
-void  HashTableCudaKernelCaller<Key, Value, Hasher>::
-    InsertHashTableEntriesKernelCaller(
-    HashTableCudaServer<Key, Value, Hasher>& server,
-    ArrayCudaServer<Key>& keys,
+void HashTableCudaKernelCaller<Key, Value, Hasher>::
+InsertHashTableEntriesKernelCaller(
+    HashTableCudaServer<Key, Value, Hasher> &server,
+    ArrayCudaServer<Key> &keys,
     ArrayCudaServer<Value> &values,
     int num_pairs,
     int bucket_count) {
     const int blocks = DIV_CEILING(bucket_count, THREAD_1D_UNIT);
     const int threads = THREAD_1D_UNIT;
-    InsertHashTableEntriesKernel <<< blocks, threads >>> (server,
+    InsertHashTableEntriesKernel << < blocks, threads >> > (server,
         keys, values, num_pairs);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
@@ -193,8 +194,8 @@ void DeleteHashTableEntriesKernel(
 
 template<typename Key, typename Value, typename Hasher>
 __host__
-void  HashTableCudaKernelCaller<Key, Value, Hasher>::
-    DeleteHashTableEntriesKernelCaller(
+void HashTableCudaKernelCaller<Key, Value, Hasher>::
+DeleteHashTableEntriesKernelCaller(
     HashTableCudaServer<Key, Value, Hasher> &server,
     ArrayCudaServer<Key> &keys,
     int num_keys,
@@ -246,8 +247,8 @@ void ProfileHashTableKernel(
 
 template<typename Key, typename Value, typename Hasher>
 __host__
-void  HashTableCudaKernelCaller<Key, Value, Hasher>::
-    ProfileHashTableKernelCaller(
+void HashTableCudaKernelCaller<Key, Value, Hasher>::
+ProfileHashTableKernelCaller(
     HashTableCudaServer<Key, Value, Hasher> &server,
     ArrayCudaServer<int> &array_entry_count,
     ArrayCudaServer<int> &linked_list_entry_count,
@@ -259,4 +260,5 @@ void  HashTableCudaKernelCaller<Key, Value, Hasher>::
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
-}
+} // cuda
+} // open3d

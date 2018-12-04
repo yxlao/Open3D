@@ -8,6 +8,9 @@
 #include <Cuda/Geometry/RGBDImageCuda.h>
 #include <Cuda/Geometry/PointCloudCuda.h>
 
+using namespace open3d;
+using namespace open3d::cuda;
+
 TEST(PointCloudCuda, UploadAndDownload) {
     using namespace open3d;
     const std::string kDepthPath = "../../examples/TestData/RGBD/depth/00000.png";

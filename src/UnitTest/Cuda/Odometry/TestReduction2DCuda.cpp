@@ -10,6 +10,9 @@
 
 const std::string kBasePath = "../../examples/TestData/";
 
+using namespace open3d;
+using namespace open3d::cuda;
+
 TEST(ReductionCuda, SumInt) {
     using namespace open3d;
 

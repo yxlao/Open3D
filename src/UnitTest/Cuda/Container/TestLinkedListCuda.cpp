@@ -13,8 +13,10 @@
 #include <random>
 #include "UnitTest.h"
 
+using namespace open3d;
+using namespace open3d::cuda;
+
 TEST(LinkedListCuda, LinkedListInsertAndDownload) {
-    using namespace open3d;
 
     Timer timer;
     std::random_device rd;
@@ -77,7 +79,6 @@ TEST(LinkedListCuda, LinkedListInsertAndDownload) {
 }
 
 TEST(LinkedListCuda, LinkedListInsertAndDelete) {
-    using namespace open3d;
 
     Timer timer;
     std::random_device rd;

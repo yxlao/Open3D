@@ -6,6 +6,7 @@
 #include "UniformMeshVolumeCudaDevice.cuh"
 
 namespace open3d {
+namespace cuda {
 template<size_t N>
 __global__
 void MarchingCubesVertexAllocationKernel(
@@ -24,7 +25,7 @@ void MarchingCubesVertexAllocationKernel(
 template<size_t N>
 __host__
 void UniformMeshVolumeCudaKernelCaller<N>::
-    MarchingCubesVertexAllocationKernelCaller(
+MarchingCubesVertexAllocationKernelCaller(
     UniformMeshVolumeCudaServer<N> &server,
     UniformTSDFVolumeCudaServer<N> &tsdf_volume) {
 
@@ -53,7 +54,7 @@ void MarchingCubesVertexExtractionKernel(
 template<size_t N>
 __host__
 void UniformMeshVolumeCudaKernelCaller<N>::
-    MarchingCubesVertexExtractionKernelCaller(
+MarchingCubesVertexExtractionKernelCaller(
     UniformMeshVolumeCudaServer<N> &server,
     UniformTSDFVolumeCudaServer<N> &tsdf_volume) {
 
@@ -65,7 +66,6 @@ void UniformMeshVolumeCudaKernelCaller<N>::
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
-
 
 template<size_t N>
 __global__
@@ -84,7 +84,7 @@ void MarchingCubesTriangleExtractionKernel(
 template<size_t N>
 __host__
 void UniformMeshVolumeCudaKernelCaller<N>::
-    MarchingCubesTriangleExtractionKernelCaller(
+MarchingCubesTriangleExtractionKernelCaller(
     UniformMeshVolumeCudaServer<N> &server) {
 
     const int num_blocks = DIV_CEILING(N, THREAD_3D_UNIT);
@@ -94,4 +94,5 @@ void UniformMeshVolumeCudaKernelCaller<N>::
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
-}
+} // cuda
+} // open3d

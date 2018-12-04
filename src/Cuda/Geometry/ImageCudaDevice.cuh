@@ -14,6 +14,7 @@
 
 namespace open3d {
 
+namespace cuda {
 /**
  * Server end
  */
@@ -22,18 +23,22 @@ namespace open3d {
  */
 template<typename VecType>
 __device__
-VecType &ImageCudaServer<VecType>::at(int x, int y) {
+    VecType
+&
+ImageCudaServer<VecType>::at(int x, int y) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_);
     assert(y >= 0 && y < height_);
 #endif
-    VecType *value = (VecType *) ((char *) data_ + y * pitch_) + x;
+    VecType * value = (VecType *) ((char *) data_ + y * pitch_) + x;
     return (*value);
 }
 
 template<typename VecType>
 __device__
-VecType &ImageCudaServer<VecType>::operator()(int x, int y) {
+    VecType
+&
+ImageCudaServer<VecType>::operator()(int x, int y) {
     return at(x, y);
 }
 
@@ -42,7 +47,8 @@ VecType &ImageCudaServer<VecType>::operator()(int x, int y) {
  */
 template<typename VecType>
 __device__
-VecType ImageCudaServer<VecType>::interp_at(float x, float y) {
+    VecType
+ImageCudaServer<VecType>::interp_at(float x, float y) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_ - 1);
     assert(y >= 0 && y < height_ - 1);
@@ -59,7 +65,8 @@ VecType ImageCudaServer<VecType>::interp_at(float x, float y) {
 /** SO many if. If it is slow, fall back to get **/
 template<typename VecType>
 __device__
-VecType ImageCudaServer<VecType>::interp_with_holes_at(float x, float y) {
+    VecType
+ImageCudaServer<VecType>::interp_with_holes_at(float x, float y) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_ - 1);
     assert(y >= 0 && y < height_ - 1);
@@ -97,7 +104,8 @@ VecType ImageCudaServer<VecType>::interp_with_holes_at(float x, float y) {
 
 template<typename VecType>
 __device__
-VecType ImageCudaServer<VecType>::BoxFilter2x2(int x, int y) {
+    VecType
+ImageCudaServer<VecType>::BoxFilter2x2(int x, int y) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_);
     assert(y >= 0 && y < height_);
@@ -118,7 +126,8 @@ VecType ImageCudaServer<VecType>::BoxFilter2x2(int x, int y) {
 
 template<typename VecType>
 __device__
-VecType ImageCudaServer<VecType>::BoxFilter2x2WithHoles(
+    VecType
+ImageCudaServer<VecType>::BoxFilter2x2WithHoles(
     int x, int y, float threshold) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_);
@@ -131,8 +140,10 @@ VecType ImageCudaServer<VecType>::BoxFilter2x2WithHoles(
     auto sum_val = VecType::VecTypef::Zeros();
     float cnt = 0.0;
     bool is_valid;
-    VecType val0, val;
-    VecType zero = VecType(0);
+    VecType
+    val0, val;
+    VecType
+    zero = VecType(0);
 
     val0 = at(x, y);
     if (val0 == zero) return zero;
@@ -160,7 +171,8 @@ VecType ImageCudaServer<VecType>::BoxFilter2x2WithHoles(
 
 template<typename VecType>
 __device__
-VecType ImageCudaServer<VecType>::GaussianFilter(int x, int y, int kernel_idx) {
+    VecType
+ImageCudaServer<VecType>::GaussianFilter(int x, int y, int kernel_idx) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_);
     assert(y >= 0 && y < height_);
@@ -201,7 +213,8 @@ VecType ImageCudaServer<VecType>::GaussianFilter(int x, int y, int kernel_idx) {
 
 template<typename VecType>
 __device__
-VecType ImageCudaServer<VecType>::GaussianFilterWithHoles(
+    VecType
+ImageCudaServer<VecType>::GaussianFilterWithHoles(
     int x, int y, int kernel_idx, float threshold) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_);
@@ -216,7 +229,8 @@ VecType ImageCudaServer<VecType>::GaussianFilterWithHoles(
     };
 
     /** If it is already a hole, leave it alone **/
-    VecType zero = VecType(0);
+    VecType
+    zero = VecType(0);
     auto &val0 = at(x, y);
     if (val0 == zero) return zero;
 
@@ -234,7 +248,8 @@ VecType ImageCudaServer<VecType>::GaussianFilterWithHoles(
 
     for (int xx = x_min; xx <= x_max; ++xx) {
         for (int yy = y_min; yy <= y_max; ++yy) {
-            VecType val = at(xx, yy);
+            VecType
+            val = at(xx, yy);
             auto valf = val.ToVectorf();
 
             /** TODO: Check it carefully **/
@@ -252,7 +267,8 @@ VecType ImageCudaServer<VecType>::GaussianFilterWithHoles(
 
 template<typename VecType>
 __device__
-VecType ImageCudaServer<VecType>::BilateralFilter(
+    VecType
+ImageCudaServer<VecType>::BilateralFilter(
     int x, int y, int kernel_idx, float val_sigma) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_);
@@ -297,7 +313,8 @@ VecType ImageCudaServer<VecType>::BilateralFilter(
 
 template<typename VecType>
 __device__
-VecType ImageCudaServer<VecType>::BilateralFilterWithHoles(
+    VecType
+ImageCudaServer<VecType>::BilateralFilterWithHoles(
     int x, int y, int kernel_idx, float val_sigma) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_);
@@ -311,7 +328,8 @@ VecType ImageCudaServer<VecType>::BilateralFilterWithHoles(
         {0.03125f, 0.109375f, 0.21875f, 0.28125f, 0.21875f, 0.109375f, 0.03125f}
     };
 
-    VecType zero = VecType(0);
+    VecType
+    zero = VecType(0);
     if (at(x, y) == zero) return zero;
 
     const int kernel_size = kernel_sizes[kernel_idx];
@@ -346,7 +364,7 @@ VecType ImageCudaServer<VecType>::BilateralFilterWithHoles(
 
 template<typename VecType>
 __device__
-ImageCudaServer<VecType>::Grad
+    ImageCudaServer<VecType>::Grad
 ImageCudaServer<VecType>::Sobel(int x, int y) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 1 && x < width_ - 1);
@@ -375,7 +393,7 @@ ImageCudaServer<VecType>::Sobel(int x, int y) {
  */
 template<typename VecType>
 __device__
-ImageCudaServer<VecType>::Grad
+    ImageCudaServer<VecType>::Grad
 ImageCudaServer<VecType>::SobelWithHoles(int x, int y) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 1 && x < width_ - 1);
@@ -403,4 +421,5 @@ ImageCudaServer<VecType>::SobelWithHoles(int x, int y) {
         (Iumvp - Iumvm) + (Iu0vp - Iu0vm) * 2 + (Iupvp - Iupvm) : zero
     };
 }
-}
+} // cuda
+} // open3d

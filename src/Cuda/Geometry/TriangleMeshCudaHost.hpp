@@ -10,6 +10,7 @@
 #include <Core/Core.h>
 
 namespace open3d {
+namespace cuda {
 TriangleMeshCuda::TriangleMeshCuda()
     : Geometry3D(Geometry::GeometryType::TriangleMeshCuda) {
     type_ = VertexTypeUnknown;
@@ -320,4 +321,5 @@ void TriangleMeshCuda::Transform(const Eigen::Matrix4d &transformation) {
     TriangleMeshCudaKernelCaller::TransformKernelCaller(
         *server_, transformation_cuda, num_vertices);
 }
-}
+} // cuda
+} // open3d

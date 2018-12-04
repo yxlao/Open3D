@@ -10,7 +10,7 @@ namespace glsl {
 bool TriangleMeshCudaRenderer::Render(const RenderOption &option,
                                       const ViewControl &view) {
     if (is_visible_ == false || geometry_ptr_->IsEmpty()) return true;
-    const auto &mesh = (const TriangleMeshCuda &)(*geometry_ptr_);
+    const auto &mesh = (const cuda::TriangleMeshCuda &)(*geometry_ptr_);
     bool success = true;
     if (mesh.HasVertexNormals()) {
         if (option.mesh_color_option_ ==
@@ -50,7 +50,7 @@ bool TriangleMeshCudaRenderer::UpdateGeometry() {
 bool PointCloudCudaRenderer::Render(const RenderOption &option,
                                     const ViewControl &view) {
     if (is_visible_ == false || geometry_ptr_->IsEmpty()) return true;
-    const auto &pcl = (const PointCloudCuda &)(*geometry_ptr_);
+    const auto &pcl = (const cuda::PointCloudCuda &)(*geometry_ptr_);
     bool success = true;
     if (pcl.HasNormals()) {
         if (option.mesh_color_option_ ==

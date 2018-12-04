@@ -5,7 +5,7 @@
 #include "RGBDOdometryCudaDevice.cuh"
 
 namespace open3d {
-
+namespace cuda {
 template<size_t N>
 __global__
 void DoSingleIterationKernel(RGBDOdometryCudaServer<N> odometry, size_t level) {
@@ -164,5 +164,5 @@ void RGBDOdometryCudaKernelCaller<N>::DoSingleIterationKernelCaller(
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
-
-}
+} // cuda
+} // open3d

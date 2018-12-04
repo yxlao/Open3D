@@ -17,12 +17,13 @@
 #include <memory>
 
 namespace open3d {
+namespace cuda {
 
 template<size_t N>
 class ScalableTSDFVolumeCudaServer {
 public:
     typedef HashTableCudaServer<
-        Vector3i, UniformTSDFVolumeCudaServer<N>, SpatialHasher>
+    Vector3i, UniformTSDFVolumeCudaServer<N>, SpatialHasher>
         SpatialHashTableCudaServer;
 
 private:
@@ -242,7 +243,7 @@ public:
      * We will explicitly deal with the UniformTSDFVolumeCudaServer later
      * **/
     typedef HashTableCuda
-        <Vector3i, UniformTSDFVolumeCudaServer<N>, SpatialHasher>
+    <Vector3i, UniformTSDFVolumeCudaServer<N>, SpatialHasher>
         SpatialHashTableCuda;
 
 private:
@@ -406,4 +407,5 @@ void RayCastingKernel(
     PinholeCameraIntrinsicCuda camera,
     TransformCuda transform_camera_to_world);
 
-}
+} // cuda
+} // open3d

@@ -9,20 +9,34 @@
 
 namespace open3d {
 
-template class ArrayCuda<int>;
-template class ArrayCuda<float>;
-template class ArrayCuda<Vector3i>;
-template class ArrayCuda<Vector4i>;
-template class ArrayCuda<Vector3f>;
-template class ArrayCuda<HashEntry<Vector3i>>;
-template class ArrayCuda<LinkedListCudaServer<HashEntry<Vector3i>>>;
+namespace cuda {
+template
+class ArrayCuda<int>;
+template
+class ArrayCuda<float>;
+template
+class ArrayCuda<Vector3i>;
+template
+class ArrayCuda<Vector4i>;
+template
+class ArrayCuda<Vector3f>;
+template
+class ArrayCuda<HashEntry<Vector3i>>;
+template
+class ArrayCuda<LinkedListCudaServer<HashEntry<Vector3i>>>;
 
-template class MemoryHeapCuda<int>;
-template class MemoryHeapCuda<float>;
-template class MemoryHeapCuda<LinkedListNodeCuda<int>>;
+template
+class MemoryHeapCuda<int>;
+template
+class MemoryHeapCuda<float>;
+template
+class MemoryHeapCuda<LinkedListNodeCuda<int>>;
 
-template class HashTableCuda<Vector3i, int, SpatialHasher>;
+template
+class HashTableCuda<Vector3i, int, SpatialHasher>;
 
-template class LinkedListCuda<int>;
+template
+class LinkedListCuda<int>;
 
-}
+} // cuda
+} // open3d

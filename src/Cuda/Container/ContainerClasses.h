@@ -6,6 +6,7 @@
 
 namespace open3d {
 
+namespace cuda {
 template<typename T>
 class ArrayCudaServer;
 
@@ -42,4 +43,5 @@ enum ContainerReturnCode {
 };
 
 /** TODO: add resize() for containers **/
-}
+} // cuda
+} // open3d

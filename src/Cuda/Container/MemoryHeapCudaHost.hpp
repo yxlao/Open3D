@@ -11,10 +11,11 @@
 #include <cassert>
 
 namespace open3d {
+
+namespace cuda {
 /**
  * Client end
  */
-
 template<typename T>
 MemoryHeapCuda<T>::MemoryHeapCuda() {
     max_capacity_ = -1;
@@ -32,7 +33,7 @@ MemoryHeapCuda<T>::MemoryHeapCuda(const MemoryHeapCuda<T> &other) {
 }
 
 template<typename T>
-MemoryHeapCuda<T>& MemoryHeapCuda<T>::operator=(
+MemoryHeapCuda<T> &MemoryHeapCuda<T>::operator=(
     const MemoryHeapCuda<T> &other) {
     if (this != &other) {
         Release();
@@ -148,4 +149,5 @@ int MemoryHeapCuda<T>::HeapCounter() {
                          cudaMemcpyDeviceToHost));
     return heap_counter;
 }
-};
+} // cuda
+} // open3d

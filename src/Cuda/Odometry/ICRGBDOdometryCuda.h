@@ -22,6 +22,7 @@
 #include <Eigen/Eigen>
 
 namespace open3d {
+namespace cuda {
 
 #define CHECK_ODOMETRY_INLIERS_
 #define CHECK_ODOMETRY_CORRESPONDENCES_
@@ -167,10 +168,10 @@ template<size_t N>
 class ICRGBDOdometryCudaKernelCaller {
 public:
     static __HOST__ void DoSinlgeIterationKernelCaller(
-        ICRGBDOdometryCudaServer<N>&server, size_t level,
+        ICRGBDOdometryCudaServer<N> &server, size_t level,
         int width, int height);
     static __HOST__ void PrecomputeJacobiansKernelCaller(
-        ICRGBDOdometryCudaServer<N>&server, size_t level,
+        ICRGBDOdometryCudaServer<N> &server, size_t level,
         int width, int height);
 };
 
@@ -184,4 +185,5 @@ __GLOBAL__
 void DoSingleIterationKernel(
     ICRGBDOdometryCudaServer<N> odometry, size_t level);
 
-}
+} // cuda
+} // open3d

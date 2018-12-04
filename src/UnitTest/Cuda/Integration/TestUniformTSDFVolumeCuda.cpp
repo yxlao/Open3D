@@ -14,18 +14,21 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 
+using namespace open3d;
+using namespace open3d::cuda;
+
 TEST(UniformTSDFVolumeCuda, UploadAndDownload) {
     //const size_t N = 512;
     const size_t N = 16;
     const size_t NNN = N * N * N;
     std::vector<float> tsdf;
     std::vector<uchar> weight;
-    std::vector<open3d::Vector3b> color;
+    std::vector<Vector3b> color;
     tsdf.resize(NNN);
     weight.resize(NNN);
     color.resize(NNN);
 
-    open3d::UniformTSDFVolumeCuda<N> volume;
+    UniformTSDFVolumeCuda<N> volume;
     volume.Create();
 
     int cnt = 0;
@@ -34,7 +37,7 @@ TEST(UniformTSDFVolumeCuda, UploadAndDownload) {
             for (int k = 0; k < N; ++k) {
                 tsdf[cnt] = i * j * k;
                 weight[cnt] = uchar(fminf(i, 255));
-                color[cnt] = open3d::Vector3b(i, j, k);
+                color[cnt] = Vector3b(i, j, k);
                 ++cnt;
             }
         }
@@ -56,7 +59,7 @@ TEST(UniformTSDFVolumeCuda, UploadAndDownload) {
             for (int k = 0; k < N; ++k) {
                 EXPECT_NEAR(tsdf[cnt], i * j * k, NNN * 1e-6);
                 EXPECT_EQ(weight[cnt], uchar(fminf(i, 255)));
-                EXPECT_EQ(color[cnt], open3d::Vector3b(i, j, k));
+                EXPECT_EQ(color[cnt], Vector3b(i, j, k));
                 ++cnt;
             }
         }

@@ -6,6 +6,7 @@
 
 namespace open3d {
 
+namespace cuda {
 template<typename T>
 __global__
 void FillArrayKernel(ArrayCudaServer<T> server, T val) {
@@ -26,4 +27,5 @@ void ArrayCudaKernelCaller<T>::FillArrayKernelCaller(
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
-}
+} // cuda
+} // open3d

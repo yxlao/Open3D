@@ -13,6 +13,7 @@
 
 namespace open3d {
 
+namespace cuda {
 /** TODO: implement Cuckoo Hashing **/
 
 /**
@@ -126,7 +127,7 @@ public:
 
     /** External interfaces - return nullable object **/
     __DEVICE__ Value *GetValuePtrByKey(const Key &key);
-    __DEVICE__ Value *operator[] (const Key &key);
+    __DEVICE__ Value *operator[](const Key &key);
 
     __DEVICE__ int New(const Key &key);
     __DEVICE__ int Delete(const Key &key);
@@ -135,7 +136,7 @@ public:
         return entry_array_;
     }
     __DEVICE__ inline ArrayCudaServer<LinkedListEntryCudaServer>
-        &entry_list_array() {
+    &entry_list_array() {
         return entry_list_array_;
     }
     __DEVICE__ inline ArrayCudaServer<Entry> &assigned_entry_array() {
@@ -186,8 +187,8 @@ public:
 
 public:
     HashTableCuda();
-    HashTableCuda(const HashTableCuda<Key, Value, Hasher>& other);
-    HashTableCuda<Key, Value, Hasher>& operator = (
+    HashTableCuda(const HashTableCuda<Key, Value, Hasher> &other);
+    HashTableCuda<Key, Value, Hasher> &operator=(
         const HashTableCuda<Key, Value, Hasher> &other);
     ~HashTableCuda();
 
@@ -215,33 +216,35 @@ public:
     const Hasher &hasher() const {
         return hasher_;
     }
-    const ArrayCuda<Entry>& entry_array() const {
+    const ArrayCuda<Entry> &entry_array() const {
         return entry_array_;
     }
-    const ArrayCuda<LinkedListEntryCudaServer> & entry_list_array() const {
+    const ArrayCuda<LinkedListEntryCudaServer> &entry_list_array() const {
         return entry_list_array_;
     }
-    const ArrayCuda<Entry>& assigned_entry_array() const {
+    const ArrayCuda<Entry> &assigned_entry_array() const {
         return assigned_entry_array_;
     };
-    ArrayCuda<Entry>& assigned_entry_array() {
+    ArrayCuda<Entry> &assigned_entry_array() {
         return assigned_entry_array_;
     }
-    const MemoryHeapCuda<LinkedListNodeEntryCuda>&
-        memory_heap_entry_list_node() const {
+    const MemoryHeapCuda<LinkedListNodeEntryCuda> &
+    memory_heap_entry_list_node() const {
         return memory_heap_entry_list_node_;
     }
-    const MemoryHeapCuda<Value>& memory_heap_value() const {
+    const MemoryHeapCuda<Value> &memory_heap_value() const {
         return memory_heap_value_;
     }
-    const ArrayCuda<int>& lock_array() const {
+    const ArrayCuda<int> &lock_array() const {
         return lock_array_;
     }
 
     std::shared_ptr<HashTableCudaServer<Key, Value, Hasher>> &server() {
         return server_;
     }
-    const std::shared_ptr<HashTableCudaServer<Key, Value, Hasher>> &server() const {
+    const std::shared_ptr<HashTableCudaServer<Key,
+                                              Value,
+                                              Hasher>> &server() const {
         return server_;
     }
 };
@@ -250,14 +253,14 @@ template<typename Key, typename Value, typename Hasher>
 class HashTableCudaKernelCaller {
 public:
     static __HOST__ void CreateHashTableEntriesKernelCaller(
-        HashTableCudaServer<Key, Value, Hasher>& server,
+        HashTableCudaServer<Key, Value, Hasher> &server,
         int bucket_count);
     static __HOST__ void ReleaseHashTableEntriesKernelCaller(
-        HashTableCudaServer<Key, Value, Hasher>& server,
+        HashTableCudaServer<Key, Value, Hasher> &server,
         int bucket_count);
 
     static __HOST__ void ResetHashTableEntriesKernelCaller(
-        HashTableCudaServer<Key, Value, Hasher>& server,
+        HashTableCudaServer<Key, Value, Hasher> &server,
         int bucket_count);
 
     static __HOST__ void GetHashTableAssignedEntriesKernelCaller(
@@ -265,8 +268,10 @@ public:
         int bucket_count);
 
     static __HOST__ void InsertHashTableEntriesKernelCaller(
-        HashTableCudaServer<Key, Value, Hasher>& server,
-        ArrayCudaServer<Key>& keys, ArrayCudaServer<Value> &values, int num_pairs,
+        HashTableCudaServer<Key, Value, Hasher> &server,
+        ArrayCudaServer<Key> &keys,
+        ArrayCudaServer<Value> &values,
+        int num_pairs,
         int bucket_count);
 
     static __HOST__ void DeleteHashTableEntriesKernelCaller(
@@ -323,4 +328,5 @@ void ProfileHashTableKernel(
     HashTableCudaServer<Key, Value, Hasher> server,
     ArrayCudaServer<int> array_entry_count,
     ArrayCudaServer<int> linked_list_entry_count);
-}
+} // cuda
+} // open3d

@@ -8,6 +8,7 @@
 #include <Core/Core.h>
 
 namespace open3d {
+namespace cuda {
 /**
  * Client end
  * TODO: Think about how do we use server_ ... we don't want copy
@@ -224,7 +225,7 @@ RGBDOdometryCuda<N>::DoSingleIteration(size_t level, int iter) {
 }
 
 template<size_t N>
-std::tuple<bool, Eigen::Matrix4d, std::vector<std::vector<float>> >
+std::tuple<bool, Eigen::Matrix4d, std::vector<std::vector<float>>>
 RGBDOdometryCuda<N>::ComputeMultiScale() {
     bool is_success;
     Eigen::Matrix4d delta;
@@ -256,4 +257,5 @@ RGBDOdometryCuda<N>::ComputeMultiScale() {
 
     return std::make_tuple(true, transform_source_to_target_, losses);
 }
-}
+} // cuda
+} // open3d

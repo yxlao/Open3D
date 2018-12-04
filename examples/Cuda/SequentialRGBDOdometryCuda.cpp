@@ -51,21 +51,21 @@ int main(int argc, char **argv) {
     int index = 0;
     int save_index = 0;
 
-    PinholeCameraIntrinsicCuda intrinsics(
+    cuda::PinholeCameraIntrinsicCuda intrinsics(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault);
 
     float voxel_length = 0.01f;
-    TransformCuda extrinsics = TransformCuda::Identity();
-    ScalableTSDFVolumeCuda<8> tsdf_volume(
+    cuda::TransformCuda extrinsics = cuda::TransformCuda::Identity();
+    cuda::ScalableTSDFVolumeCuda<8> tsdf_volume(
         10000, 200000, voxel_length, 3 * voxel_length, extrinsics);
 
     Image depth, color;
-    RGBDImageCuda rgbd_prev(0.1f, 4.0f, 5000.0f);
-    RGBDImageCuda rgbd_curr(0.1f, 4.0f, 5000.0f);
-    ScalableMeshVolumeCuda<8> mesher(
-        40000, VertexWithNormalAndColor, 6000000, 12000000);
+    cuda::RGBDImageCuda rgbd_prev(0.1f, 4.0f, 5000.0f);
+    cuda::RGBDImageCuda rgbd_curr(0.1f, 4.0f, 5000.0f);
+    cuda::ScalableMeshVolumeCuda<8> mesher(
+        40000, cuda::VertexWithNormalAndColor, 6000000, 12000000);
 
-    RGBDOdometryCuda<3> odometry;
+    cuda::RGBDOdometryCuda<3> odometry;
 //    odometry.SetIntrinsics(PinholeCameraIntrinsic(
 //        PinholeCameraIntrinsicParameters::PrimeSenseDefault));
     odometry.SetIntrinsics(PinholeCameraIntrinsic(
@@ -85,8 +85,8 @@ int main(int argc, char **argv) {
     visualizer.BuildUtilities();
     visualizer.UpdateWindowTitle();
 
-    std::shared_ptr<TriangleMeshCuda>
-        mesh = std::make_shared<TriangleMeshCuda>();
+    std::shared_ptr<cuda::TriangleMeshCuda>
+        mesh = std::make_shared<cuda::TriangleMeshCuda>();
     visualizer.AddGeometry(mesh);
 
 

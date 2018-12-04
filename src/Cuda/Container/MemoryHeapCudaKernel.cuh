@@ -5,7 +5,7 @@
 #include "MemoryHeapCudaDevice.cuh"
 
 namespace open3d {
-
+namespace cuda {
 template<typename T>
 __global__
 void ResetMemoryHeapKernel(MemoryHeapCudaServer<T> server) {
@@ -55,4 +55,5 @@ void MemoryHeapCudaKernelCaller<T>::ResizeMemoryHeapKernelCaller(
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
-}
+} // cuda
+} // open3d

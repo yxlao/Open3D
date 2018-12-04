@@ -23,6 +23,7 @@
 
 namespace open3d {
 
+namespace cuda {
 #define CHECK_ODOMETRY_INLIERS_
 #define CHECK_ODOMETRY_CORRESPONDENCES_
 
@@ -147,13 +148,13 @@ public:
     void Initialize(RGBDImageCuda &source, RGBDImageCuda &target);
 
     std::tuple<bool, Eigen::Matrix4d, float> DoSingleIteration(
-        size_t level,  int iter);
+        size_t level, int iter);
     void ExtractResults(
         std::vector<float> &results,
         EigenMatrix6d &JtJ, EigenVector6d &Jtr, float &loss, float &inliers);
 
     std::tuple<bool, Eigen::Matrix4d, std::vector<std::vector<float>>>
-        ComputeMultiScale();
+    ComputeMultiScale();
 
     RGBDImagePyramidCuda<N> &source() { return source_; }
     RGBDImagePyramidCuda<N> &target() { return target_; }
@@ -170,7 +171,7 @@ template<size_t N>
 class RGBDOdometryCudaKernelCaller {
 public:
     static __HOST__ void DoSingleIterationKernelCaller(
-        RGBDOdometryCudaServer<N>&server, size_t level,
+        RGBDOdometryCudaServer<N> &server, size_t level,
         int width, int height);
 };
 
@@ -178,4 +179,5 @@ template<size_t N>
 __GLOBAL__
 void DoSingleIterationKernel(RGBDOdometryCudaServer<N> odometry, size_t level);
 
-}
+} // cuda
+} // open3d

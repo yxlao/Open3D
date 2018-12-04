@@ -13,6 +13,7 @@
 
 namespace open3d {
 
+namespace cuda {
 /**
  * Server end
  * In fact we don't know which indices are used and which are freed,
@@ -29,22 +30,27 @@ int &MemoryHeapCudaServer<T>::internal_addr_at(size_t index) {
 
 template<typename T>
 __device__
-T &MemoryHeapCudaServer<T>::value_at(size_t addr) {
+    T
+&
+MemoryHeapCudaServer<T>::value_at(size_t
+addr) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
-    assert(addr < max_capacity_);
+assert(addr < max_capacity_);
 #endif
-    return data_[addr];
+return data_[addr];
 }
 
 template<typename T>
 __device__
-const T &MemoryHeapCudaServer<T>::value_at(size_t addr) const {
+const T
+&
+MemoryHeapCudaServer<T>::value_at(size_t
+addr) const {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
-    assert(addr < max_capacity_);
+assert(addr < max_capacity_);
 #endif
-    return data_[addr];
+return data_[addr];
 }
-
 
 /**
  * The @value array is FIXED.
@@ -81,4 +87,5 @@ void MemoryHeapCudaServer<T>::Free(size_t addr) {
 #endif
     heap_[index - 1] = (int) addr;
 }
-};
+} // cuda
+} // open3d

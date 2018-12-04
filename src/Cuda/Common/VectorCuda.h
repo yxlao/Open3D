@@ -10,7 +10,7 @@
 #include <cassert>
 
 namespace open3d {
-
+namespace cuda {
 /**
  * Eigen is (quite) incompatible with CUDA -- countless warnings.
  * Built-in data structures (int3, float3, ...) does not support generic
@@ -27,9 +27,8 @@ public:
     typedef T ValType;
     typedef VectorCuda<T, N> VecType;
 
-
     typedef VectorCuda<float, N> VecTypef;
-    typedef VectorCuda<int, N>   VecTypei;
+    typedef VectorCuda<int, N> VecTypei;
     typedef VectorCuda<ushort, N> VecTypes;
     typedef VectorCuda<uchar, N> VecTypeb;
 
@@ -415,4 +414,5 @@ typedef VectorCuda<float, 3> Vector3f;
 typedef VectorCuda<float, 4> Vector4f;
 typedef VectorCuda<float, 6> Vector6f;
 
-}
+} // cuda
+} // open3d

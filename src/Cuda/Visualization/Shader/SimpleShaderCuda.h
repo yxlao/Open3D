@@ -64,9 +64,9 @@ protected:
     virtual bool PrepareBinding(const Geometry &geometry,
                                 const RenderOption &option,
                                 const ViewControl &view,
-                                Vector3f* &vertices,
-                                Vector3f* &colors,
-                                Vector3i* &triangles,
+                                cuda::Vector3f* &vertices,
+                                cuda::Vector3f* &colors,
+                                cuda::Vector3i* &triangles,
                                 int &vertex_size,
                                 int &triangle_size) = 0;
 
@@ -98,9 +98,9 @@ protected:
     bool PrepareBinding(const Geometry &geometry,
                         const RenderOption &option,
                         const ViewControl &view,
-                        Vector3f* &vertices,
-                        Vector3f* &colors,
-                        Vector3i* &triangles, /* Place holder */
+                        cuda::Vector3f* &vertices,
+                        cuda::Vector3f* &colors,
+                        cuda::Vector3i* &triangles, /* Place holder */
                         int &vertex_size,
                         int &triangle_size /* Place holder */) final;
 };
@@ -117,9 +117,9 @@ protected:
     bool PrepareBinding(const Geometry &geometry,
                         const RenderOption &option,
                         const ViewControl &view,
-                        Vector3f* &vertices,
-                        Vector3f* &colors,
-                        Vector3i* &triangles,
+                        cuda::Vector3f* &vertices,
+                        cuda::Vector3f* &colors,
+                        cuda::Vector3i* &triangles,
                         int &vertex_size,
                         int &triangle_size) final;
 };

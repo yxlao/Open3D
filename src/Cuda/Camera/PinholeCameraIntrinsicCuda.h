@@ -8,7 +8,7 @@
 #include <Cuda/Common/VectorCuda.h>
 
 namespace open3d {
-
+namespace cuda {
 /**
  * This class should be passed to server, but as it is a storage class, we
  * don't name it as xxxServer
@@ -47,8 +47,10 @@ public:
         height_ = intrinsic.height_;
 
         auto focal_length = intrinsic.GetFocalLength();
-        fx_ = float(focal_length.first); inv_fx_ = 1.0f / fx_;
-        fy_ = float(focal_length.second); inv_fy_ = 1.0f / fy_;
+        fx_ = float(focal_length.first);
+        inv_fx_ = 1.0f / fx_;
+        fy_ = float(focal_length.second);
+        inv_fy_ = 1.0f / fy_;
 
         auto principal_point = intrinsic.GetPrincipalPoint();
         cx_ = float(principal_point.first);
@@ -65,7 +67,12 @@ public:
             SetIntrinsics(512, 424, 254.878f, 205.395f, 365.456f, 365.456f);
         else if (param == PinholeCameraIntrinsicParameters::
         Kinect2ColorCameraDefault)
-            SetIntrinsics(1920, 1080, 1059.9718f, 1059.9718f, 975.7193f, 545.9533f);
+            SetIntrinsics(1920,
+                          1080,
+                          1059.9718f,
+                          1059.9718f,
+                          975.7193f,
+                          545.9533f);
     }
 
     __HOSTDEVICE__ void SetIntrinsics(
@@ -73,15 +80,18 @@ public:
         float fx, float fy, float cx, float cy) {
         width_ = width;
         height_ = height;
-        fx_ = fx; inv_fx_ = 1.0f / fx_;
-        fy_ = fy; inv_fy_ = 1.0f / fy_;
-        cx_ = cx; cy_ = cy;
+        fx_ = fx;
+        inv_fx_ = 1.0f / fx_;
+        fy_ = fy;
+        inv_fy_ = 1.0f / fy_;
+        cx_ = cx;
+        cy_ = cy;
     }
 
     __HOSTDEVICE__ PinholeCameraIntrinsicCuda Downsample() {
         PinholeCameraIntrinsicCuda ret;
         ret.SetIntrinsics(width_ >> 1, height_ >> 1,
-            fx_ * 0.5f, fy_ * 0.5f, cx_ * 0.5f, cy_ * 0.5f);
+                          fx_ * 0.5f, fy_ * 0.5f, cx_ * 0.5f, cy_ * 0.5f);
         return ret;
     };
 
@@ -114,4 +124,5 @@ public:
                         d);
     }
 };
-}
+} // cuda
+} // open3d

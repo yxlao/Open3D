@@ -13,6 +13,7 @@
 #include <cuda_runtime.h>
 
 namespace open3d {
+namespace cuda {
 /**
  * Client end
  */
@@ -201,4 +202,5 @@ void ScalableMeshVolumeCuda<N>::MarchingCubes(
         mesh_.vertex_colors().set_iterator(mesh_.vertices().size());
     }
 }
-}
+} // cuda
+} // open3d

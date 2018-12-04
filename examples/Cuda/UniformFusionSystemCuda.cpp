@@ -57,19 +57,19 @@ int main(int argc, char *argv[]) {
 
     FPSTimer timer("Process RGBD stream", (int)camera_trajectory->parameters_.size());
 
-    PinholeCameraIntrinsicCuda intrinsics(
+    cuda::PinholeCameraIntrinsicCuda intrinsics(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault);
 
     float voxel_length = 0.01f;
-    TransformCuda extrinsics = TransformCuda::Identity();
-    extrinsics.SetTranslation(Vector3f(-voxel_length * 256));
-    UniformTSDFVolumeCuda<512> tsdf_volume(
+    cuda::TransformCuda extrinsics = cuda::TransformCuda::Identity();
+    extrinsics.SetTranslation(cuda::Vector3f(-voxel_length * 256));
+    cuda::UniformTSDFVolumeCuda<512> tsdf_volume(
         voxel_length, 3 * voxel_length, extrinsics);
-    UniformMeshVolumeCuda<512> mesher(
-        VertexWithNormalAndColor, 4000000, 8000000);
+    cuda::UniformMeshVolumeCuda<512> mesher(
+        cuda::VertexWithNormalAndColor, 4000000, 8000000);
 
     Image depth, color;
-    RGBDImageCuda rgbd(0.1f, 4.0f, 1000.0f);
+    cuda::RGBDImageCuda rgbd(0.1f, 4.0f, 1000.0f);
 
     VisualizerWithCustomAnimation visualizer;
     if (! visualizer.CreateVisualizerWindow("UniformFusion", 640, 480, 0, 0)) {
@@ -80,7 +80,8 @@ int main(int argc, char *argv[]) {
     visualizer.BuildUtilities();
     visualizer.UpdateWindowTitle();
 
-    std::shared_ptr<TriangleMeshCuda> mesh = std::make_shared<TriangleMeshCuda>();
+    std::shared_ptr<cuda::TriangleMeshCuda> mesh =
+        std::make_shared<cuda::TriangleMeshCuda>();
     visualizer.AddGeometry(mesh);
 
     while (fgets(buffer, DEFAULT_IO_BUFFER_SIZE, file)) {

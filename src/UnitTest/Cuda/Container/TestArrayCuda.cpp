@@ -13,9 +13,10 @@
 #include <random>
 #include "UnitTest.h"
 
-TEST(ArrayCuda, ArrayFill) {
-    using namespace open3d;
+using namespace open3d;
+using namespace open3d::cuda;
 
+TEST(ArrayCuda, ArrayFill) {
     Timer timer;
     std::random_device rd;
     std::default_random_engine rd_engine(rd());
@@ -38,7 +39,6 @@ TEST(ArrayCuda, ArrayFill) {
 }
 
 TEST(ArrayCuda, ArrayUploadAndDownload) {
-    using namespace open3d;
     Timer timer;
     std::random_device rd;
     std::default_random_engine rd_engine(rd());
@@ -70,7 +70,6 @@ TEST(ArrayCuda, ArrayUploadAndDownload) {
 }
 
 TEST(ArrayCuda, ArrayResize) {
-    using namespace open3d;
     Timer timer;
     std::random_device rd;
     std::default_random_engine rd_engine(rd());

@@ -8,6 +8,8 @@
 #include "ImageCuda.h"
 
 namespace open3d {
+
+namespace cuda {
 template<typename VecType, size_t N>
 class ImagePyramidCudaServer {
 private:
@@ -30,13 +32,13 @@ public:
         return images_[level].height_;
     }
 
-    __HOSTDEVICE__ ImageCudaServer<VecType> &operator[] (size_t level) {
+    __HOSTDEVICE__ ImageCudaServer<VecType> &operator[](size_t level) {
 #ifdef DEBUG_CUDA_ENABLE_ASSERTION
         assert(level < N);
 #endif
         return images_[level];
     }
-    __HOSTDEVICE__ const ImageCudaServer<VecType> &operator[] (size_t level) const {
+    __HOSTDEVICE__ const ImageCudaServer<VecType> &operator[](size_t level) const {
 #ifdef DEBUG_CUDA_ENABLE_ASSERTION
         assert(level < N);
 #endif
@@ -80,11 +82,11 @@ public:
         return images_[level].height_;
     }
 
-    ImageCuda<VecType> & operator[] (size_t level) {
+    ImageCuda<VecType> &operator[](size_t level) {
         assert(level < N);
         return images_[level];
     }
-    const ImageCuda<VecType> &operator[] (size_t level) const {
+    const ImageCuda<VecType> &operator[](size_t level) const {
         assert(level < N);
         return images_[level];
     }
@@ -95,5 +97,5 @@ public:
         return server_;
     }
 };
-}
-
+} // cuda
+} // open3d
