@@ -36,11 +36,11 @@ void DoSingleIterationKernel(RGBDOdometryCudaServer<N> odometry, size_t level) {
 
     Vector6f jacobian_I, jacobian_D, Jtr;
     HessianCuda<6> JtJ;
+    mask = mask && odometry.ComputePixelwiseJacobian(
+        x_target, y_target, level, X_target,
+        jacobian_I, jacobian_D);
     if (mask) {
         odometry.correspondences_.push_back(Vector4i(x, y, x_target, y_target));
-        odometry.ComputePixelwiseJacobian(
-            x_target, y_target, level, X_target,
-            jacobian_I, jacobian_D);
         odometry.ComputePixelwiseJtJAndJtr(
             jacobian_I, jacobian_D, residual_I, residual_D,
             JtJ, Jtr);

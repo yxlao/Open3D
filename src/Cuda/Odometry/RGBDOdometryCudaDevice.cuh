@@ -56,7 +56,7 @@ bool RGBDOdometryCudaServer<N>::ComputePixelwiseCorrespondenceAndResidual(
 
 template<size_t N>
 __device__
-void RGBDOdometryCudaServer<N>::ComputePixelwiseJacobian(
+bool RGBDOdometryCudaServer<N>::ComputePixelwiseJacobian(
     int x_target, int y_target, size_t level,
     const Vector3f& X_target,
     Vector6f &jacobian_I, Vector6f &jacobian_D) {
@@ -81,10 +81,15 @@ void RGBDOdometryCudaServer<N>::ComputePixelwiseJacobian(
         x_target, y_target)(0);
     float dy_I = kSobelFactor * target_dy_[level].intensity().at(
         x_target, y_target)(0);
+
     float dx_D = kSobelFactor * target_dx_[level].depth().at(
         x_target, y_target)(0);
     float dy_D = kSobelFactor * target_dy_[level].depth().at(
         x_target, y_target)(0);
+
+//    printf("%f %f\n", dx_I * dx_I + dy_I * dy_I, dx_D * dx_D + dy_D * dy_D);
+//    if (dx_I * dx_I + dy_I * dy_I < 0.0001f ||
+//    dx_D * dx_D + dy_D * dy_D < 0.0001f) return false;
 
     float fx = intrinsics_[level].fx_;
     float fy = intrinsics_[level].fy_;
@@ -116,6 +121,7 @@ void RGBDOdometryCudaServer<N>::ComputePixelwiseJacobian(
     jacobian_D(3) = sqrt_coeff_D_ * d0;
     jacobian_D(4) = sqrt_coeff_D_ * d1;
     jacobian_D(5) = sqrt_coeff_D_ * (d2 - 1.0f);
+    return true;
 }
 
 template<size_t N>

@@ -33,10 +33,10 @@ def load_traj_log(log_path):
 
 if __name__ == '__main__':
 
-    trajectory_ic = load_traj_log(
-        '../../cmake-build-release/bin/examples/trajectory_ic.log')
-    trajectory_fc = load_traj_log(
-        '../../cmake-build-release/bin/examples/trajectory_fc.log')
+    trajectory_cpp = load_traj_log(
+        '../../cmake-build-release/bin/examples/trajectory_cpp.log')
+    trajectory_cuda = load_traj_log(
+        '../../cmake-build-release/bin/examples/trajectory_cuda.log')
     trajectory_gt = load_traj_log(
         '../../cmake-build-release/bin/examples/trajectory_gt.log')
 
@@ -44,13 +44,16 @@ if __name__ == '__main__':
     plt.rc('font', family='serif')
 
     fig = plt.figure()
-    #ax = fig.add_subplot(111)
+    ax = fig.add_subplot(111)
     ax = fig.add_subplot(111, projection='3d')
-    ax.plot(trajectory_fc[:, 0], trajectory_fc[:, 1], trajectory_fc[:, 2],
-            'g', label=r'FC')
-    ax.plot(trajectory_ic[:, 0], trajectory_ic[:, 1], trajectory_ic[:, 2],
-            'b', label=r'IC')
-    ax.plot(trajectory_gt[:, 0], trajectory_gt[:, 1], trajectory_gt[:, 2],
+    ax.plot(trajectory_cpp[:, 0], trajectory_cpp[:, 1],
+            trajectory_cpp[:, 2],
+            'g', label=r'Cpp')
+    ax.plot(trajectory_cuda[:, 0], trajectory_cuda[:, 1],
+            trajectory_cuda[:, 2],
+            'b', label=r'Cuda')
+    ax.plot(trajectory_gt[:, 0], trajectory_gt[:, 1],
+            trajectory_gt[:, 2],
             'r', label=r'GT')
 
 

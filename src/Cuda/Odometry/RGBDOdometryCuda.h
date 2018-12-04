@@ -90,7 +90,7 @@ public:
         Vector3f &X_target,
         float &residual_I, float &residual_D);
 
-    __DEVICE__ void ComputePixelwiseJacobian(
+    __DEVICE__ bool ComputePixelwiseJacobian(
         int x_target, int y_target, size_t level,
         const Vector3f &X_target,
         Vector6f &jacobian_I, Vector6f &jacobian_D);

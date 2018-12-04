@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
     ScalableMeshVolumeCuda<8> mesher(
         40000, VertexWithNormalAndColor, 6000000, 12000000);
 
-    ICRGBDOdometryCuda<3> odometry;
+    RGBDOdometryCuda<3> odometry;
 //    odometry.SetIntrinsics(PinholeCameraIntrinsic(
 //        PinholeCameraIntrinsicParameters::PrimeSenseDefault));
     odometry.SetIntrinsics(PinholeCameraIntrinsic(
@@ -147,7 +147,7 @@ int main(int argc, char **argv) {
         rgbd_prev.CopyFrom(rgbd_curr);
     }
 
-    WritePinholeCameraTrajectoryToLOG("trajectory_ic.log", trajectory);
+    WritePinholeCameraTrajectoryToLOG("trajectory_cuda.log", trajectory);
 
     return 0;
 }
