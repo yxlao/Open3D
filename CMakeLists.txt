@@ -207,6 +207,14 @@ endmacro(ADD_CUDA_SOURCE_GROUP)
 
 # Handling dependencies
 add_subdirectory(3rdparty)
+
+# > Additional code to incorporate cuda and opencv (TEMPORARY!)
+find_package(CUDA 8.0 REQUIRED)
+find_package(OpenCV REQUIRED)
+list(APPEND 3RDPARTY_INCLUDE_DIRS ${CUDA_TOOLKIT_INCLUDE}
+        ${OpenCV_INCLUDE_DIRS})
+list(APPEND 3RDPARTY_LIBRARIES ${CUDA_LIBRARIES} ${OpenCV_LIBS})
+
 include_directories(${PROJECT_SOURCE_DIR})
 include_directories(${3RDPARTY_INCLUDE_DIRS})
 link_directories(${3RDPARTY_LIBRARY_DIRS})
