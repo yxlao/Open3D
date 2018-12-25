@@ -26,13 +26,30 @@
 
 #pragma once
 
-#include "ClassIO/PointCloudIO.h"
-#include "ClassIO/TriangleMeshIO.h"
-#include "ClassIO/LineSetIO.h"
-#include "ClassIO/ImageIO.h"
-#include "ClassIO/PinholeCameraTrajectoryIO.h"
-#include "ClassIO/IJsonConvertibleIO.h"
-#include "ClassIO/FeatureIO.h"
-#include "ClassIO/PoseGraphIO.h"
+#include <tuple>
+#include <vector>
+#include <Eigen/Core>
 
-#include "../Open3DConfig.h"
+namespace Eigen {
+
+typedef Eigen::Matrix<double, 14, 14> Matrix14d;
+typedef Eigen::Matrix<double, 14, 1> Vector14d;
+typedef Eigen::Matrix<int, 14, 1> Vector14i;
+
+}    // namespace Eigen
+
+namespace open3d {
+
+/// Function to compute JTJ and Jtr
+/// Input: function pointer f and total number of rows of Jacobian matrix
+/// Output: JTJ, JTr, sum of r^2
+/// Note: this function is almost identical to the functions in Utility/Eigen.h/cpp,
+/// but this function takes additional multiplication pattern
+/// that can produce JTJ having hundreds of rows and columns.
+template<typename VecInTypeDouble, typename VecInTypeInt,
+        typename MatOutType, typename VecOutType>
+        std::tuple<MatOutType, VecOutType, double> ComputeJTJandJTr(
+        std::function<void(int, VecInTypeDouble &, double &, VecInTypeInt &)> f,
+        int iteration_num, int nonrigidval, bool verbose = true);
+
+}    // namespace open3d
