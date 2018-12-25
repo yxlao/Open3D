@@ -192,7 +192,11 @@ bool SimpleShaderForLineSet::PrepareRendering(const Geometry &geometry,
         PrintShaderWarning("Rendering type is not LineSet.");
         return false;
     }
+<<<<<<< HEAD
     glLineWidth(5.0f);
+=======
+    glLineWidth(GLfloat(option.line_width_));
+>>>>>>> master
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     return true;

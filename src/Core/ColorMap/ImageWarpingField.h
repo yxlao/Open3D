@@ -26,13 +26,29 @@
 
 #pragma once
 
-#include "ClassIO/PointCloudIO.h"
-#include "ClassIO/TriangleMeshIO.h"
-#include "ClassIO/LineSetIO.h"
-#include "ClassIO/ImageIO.h"
-#include "ClassIO/PinholeCameraTrajectoryIO.h"
-#include "ClassIO/IJsonConvertibleIO.h"
-#include "ClassIO/FeatureIO.h"
-#include "ClassIO/PoseGraphIO.h"
+#include <Core/Utility/IJsonConvertible.h>
 
-#include "../Open3DConfig.h"
+namespace open3d {
+
+class ImageWarpingField : public IJsonConvertible
+{
+public:
+    ImageWarpingField();
+    ImageWarpingField (int width, int height, int number_of_vertical_anchors);
+    void InitializeWarpingFields(int width, int height,
+            int number_of_vertical_anchors);
+    Eigen::Vector2d QueryFlow(int i, int j) const;
+    Eigen::Vector2d GetImageWarpingField(double u, double v) const;
+
+public:
+    bool ConvertToJsonValue(Json::Value &value) const override;
+    bool ConvertFromJsonValue(const Json::Value &value) override;
+
+public:
+    Eigen::VectorXd flow_;
+    int anchor_w_;
+    int anchor_h_;
+    double anchor_step_;
+};
+
+}	// namespace open3d
