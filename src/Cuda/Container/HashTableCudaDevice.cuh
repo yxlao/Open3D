@@ -21,7 +21,7 @@ namespace cuda {
  */
 template<typename Key, typename Value, typename Hasher>
 __device__
-int HashTableCudaServer<Key, Value, Hasher>::GetInternalAddrByKey(
+int HashTableCudaDevice<Key, Value, Hasher>::GetInternalAddrByKey(
     const Key &key) {
     int bucket_idx = hasher_(key);
     int bucket_base_idx = bucket_idx * BUCKET_SIZE;
@@ -53,7 +53,7 @@ template<typename Key, typename Value, typename Hasher>
 __device__
     Value
 *
-HashTableCudaServer<Key, Value, Hasher>::GetValuePtrByInternalAddr(
+HashTableCudaDevice<Key, Value, Hasher>::GetValuePtrByInternalAddr(
     const int addr) {
     return &(memory_heap_value_.value_at(addr));
 }
@@ -62,7 +62,7 @@ template<typename Key, typename Value, typename Hasher>
 __device__
     Value
 *
-HashTableCudaServer<Key, Value, Hasher>::GetValuePtrByKey(
+HashTableCudaDevice<Key, Value, Hasher>::GetValuePtrByKey(
     const Key &key) {
     int internal_ptr = GetInternalAddrByKey(key);
     if (internal_ptr == NULLPTR_CUDA) return nullptr;
@@ -73,13 +73,13 @@ template<typename Key, typename Value, typename Hasher>
 __device__
     Value
 *
-HashTableCudaServer<Key, Value, Hasher>::operator[](const Key &key) {
+HashTableCudaDevice<Key, Value, Hasher>::operator[](const Key &key) {
     return GetValuePtrByKey(key);
 }
 
 template<typename Key, typename Value, typename Hasher>
 __device__
-int HashTableCudaServer<Key, Value, Hasher>::New(
+int HashTableCudaDevice<Key, Value, Hasher>::New(
     const Key &key) {
     int bucket_idx = hasher_(key);
     int bucket_base_idx = bucket_idx * BUCKET_SIZE;
@@ -130,7 +130,7 @@ int HashTableCudaServer<Key, Value, Hasher>::New(
 
 template<typename Key, typename Value, typename Hasher>
 __device__
-int HashTableCudaServer<Key, Value, Hasher>::Delete(const Key &key) {
+int HashTableCudaDevice<Key, Value, Hasher>::Delete(const Key &key) {
     int bucket_idx = hasher_(key);
     int bucket_base_idx = bucket_idx * BUCKET_SIZE;
 

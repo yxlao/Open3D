@@ -8,7 +8,7 @@ namespace open3d {
 namespace cuda {
 template<size_t N>
 __global__
-void DoSingleIterationKernel(RGBDOdometryCudaServer<N> odometry, size_t level) {
+void DoSingleIterationKernel(RGBDOdometryCudaDevice<N> odometry, size_t level) {
     /** Add more memory blocks if we have **/
     /** TODO: check this version vs 1 __shared__ array version **/
     __shared__ float local_sum0[THREAD_2D_UNIT * THREAD_2D_UNIT];
@@ -154,7 +154,7 @@ void DoSingleIterationKernel(RGBDOdometryCudaServer<N> odometry, size_t level) {
 
 template<size_t N>
 void RGBDOdometryCudaKernelCaller<N>::DoSingleIterationKernelCaller(
-    RGBDOdometryCudaServer<N> &server, size_t level,
+    RGBDOdometryCudaDevice<N> &server, size_t level,
     int width, int height) {
 
     const dim3 blocks(DIV_CEILING(width, THREAD_2D_UNIT),

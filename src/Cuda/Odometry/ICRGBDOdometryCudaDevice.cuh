@@ -19,7 +19,7 @@ namespace cuda {
 
 template<size_t N>
 __device__
-void ICRGBDOdometryCudaServer<N>::ComputePixelwiseJacobian(
+void ICRGBDOdometryCudaDevice<N>::ComputePixelwiseJacobian(
     int x_source, int y_source, size_t level) {
 
     float d_source = source_[level].depth().at(x_source, y_source)(0);
@@ -92,7 +92,7 @@ void ICRGBDOdometryCudaServer<N>::ComputePixelwiseJacobian(
 
 template<size_t N>
 __device__
-bool ICRGBDOdometryCudaServer<N>::ComputePixelwiseCorrespondenceAndResidual(
+bool ICRGBDOdometryCudaDevice<N>::ComputePixelwiseCorrespondenceAndResidual(
     int x_target, int y_target, size_t level,
     int &x_source, int &y_source,
     float &residual_I, float &residual_D) {
@@ -131,7 +131,7 @@ bool ICRGBDOdometryCudaServer<N>::ComputePixelwiseCorrespondenceAndResidual(
 
 template<size_t N>
 __device__
-void ICRGBDOdometryCudaServer<N>::ComputePixelwiseJtJAndJtr(
+void ICRGBDOdometryCudaDevice<N>::ComputePixelwiseJtJAndJtr(
     const Vector6f &jacobian_I, const Vector6f &jacobian_D,
     const float &residual_I, const float &residual_D,
     HessianCuda<6> &JtJ, Vector6f &Jtr) {

@@ -10,19 +10,19 @@
 namespace open3d {
 namespace cuda {
 template<size_t N>
-class RGBDImagePyramidCudaServer {
+class RGBDImagePyramidCudaDevice {
 private:
-    RGBDImageCudaServer rgbd_[N];
+    RGBDImageCudaDevice rgbd_[N];
 
 public:
-    __HOSTDEVICE__ RGBDImageCudaServer &operator[](size_t level) {
+    __HOSTDEVICE__ RGBDImageCudaDevice &operator[](size_t level) {
 #ifdef DEBUG_CUDA_ENABLE_ASSERTION
         assert(level < N);
 #endif
         return rgbd_[level];
     }
 
-    __HOSTDEVICE__ const RGBDImageCudaServer &operator[](size_t level) const {
+    __HOSTDEVICE__ const RGBDImageCudaDevice &operator[](size_t level) const {
 #ifdef DEBUG_CUDA_ENABLE_ASSERTION
         assert(level < N);
 #endif
@@ -35,7 +35,7 @@ public:
 template<size_t N>
 class RGBDImagePyramidCuda {
 private:
-    std::shared_ptr<RGBDImagePyramidCudaServer<N>> server_ = nullptr;
+    std::shared_ptr<RGBDImagePyramidCudaDevice<N>> server_ = nullptr;
 
 private:
     RGBDImageCuda rgbd_[N];
@@ -61,10 +61,10 @@ public:
         return rgbd_[level];
     }
 
-    const std::shared_ptr<RGBDImagePyramidCudaServer<N>> &server() const {
+    const std::shared_ptr<RGBDImagePyramidCudaDevice<N>> &server() const {
         return server_;
     }
-    std::shared_ptr<RGBDImagePyramidCudaServer<N>> &server() {
+    std::shared_ptr<RGBDImagePyramidCudaDevice<N>> &server() {
         return server_;
     }
 };

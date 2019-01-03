@@ -48,17 +48,17 @@ namespace cuda {
  *         We warp the @source frame to the @target frame.
  */
 template<size_t N>
-class RGBDOdometryCudaServer {
+class RGBDOdometryCudaDevice {
 public:
-    ImagePyramidCudaServer<Vector1f, N> source_on_target_;
+    ImagePyramidCudaDevice<Vector1f, N> source_on_target_;
 
-    RGBDImagePyramidCudaServer<N> source_;
-    RGBDImagePyramidCudaServer<N> target_;
-    RGBDImagePyramidCudaServer<N> target_dx_;
-    RGBDImagePyramidCudaServer<N> target_dy_;
+    RGBDImagePyramidCudaDevice<N> source_;
+    RGBDImagePyramidCudaDevice<N> target_;
+    RGBDImagePyramidCudaDevice<N> target_dx_;
+    RGBDImagePyramidCudaDevice<N> target_dy_;
 
-    ArrayCudaServer<float> results_;
-    ArrayCudaServer<Vector4i> correspondences_;
+    ArrayCudaDevice<float> results_;
+    ArrayCudaDevice<Vector4i> correspondences_;
 
 public:
     PinholeCameraIntrinsicCuda intrinsics_[N];
@@ -108,7 +108,7 @@ public:
 template<size_t N>
 class RGBDOdometryCuda {
 private:
-    std::shared_ptr<RGBDOdometryCudaServer<N>> server_ = nullptr;
+    std::shared_ptr<RGBDOdometryCudaDevice<N>> server_ = nullptr;
 
     ImagePyramidCuda<Vector1f, N> source_on_target_;
     RGBDImagePyramidCuda<N> source_raw_;
@@ -159,10 +159,10 @@ public:
     RGBDImagePyramidCuda<N> &source() { return source_; }
     RGBDImagePyramidCuda<N> &target() { return target_; }
 
-    std::shared_ptr<RGBDOdometryCudaServer<N>> &server() {
+    std::shared_ptr<RGBDOdometryCudaDevice<N>> &server() {
         return server_;
     }
-    const std::shared_ptr<RGBDOdometryCudaServer<N>> &server() const {
+    const std::shared_ptr<RGBDOdometryCudaDevice<N>> &server() const {
         return server_;
     }
 };
@@ -171,13 +171,13 @@ template<size_t N>
 class RGBDOdometryCudaKernelCaller {
 public:
     static __HOST__ void DoSingleIterationKernelCaller(
-        RGBDOdometryCudaServer<N> &server, size_t level,
+        RGBDOdometryCudaDevice<N> &server, size_t level,
         int width, int height);
 };
 
 template<size_t N>
 __GLOBAL__
-void DoSingleIterationKernel(RGBDOdometryCudaServer<N> odometry, size_t level);
+void DoSingleIterationKernel(RGBDOdometryCudaDevice<N> odometry, size_t level);
 
 } // cuda
 } // open3d

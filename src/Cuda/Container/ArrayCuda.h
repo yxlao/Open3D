@@ -17,7 +17,7 @@ namespace open3d {
 namespace cuda {
 
 template<typename T>
-class ArrayCudaServer {
+class ArrayCudaDevice {
 private:
     /* atomicAdd works on int and unsigned int, so we prefer int than size_t */
     T *data_;
@@ -40,7 +40,7 @@ public:
 template<typename T>
 class ArrayCuda {
 private:
-    std::shared_ptr<ArrayCudaServer<T>> server_ = nullptr;
+    std::shared_ptr<ArrayCudaDevice<T>> server_ = nullptr;
 
 public:
     int max_capacity_;
@@ -76,10 +76,10 @@ public:
     int size() const;
     void set_iterator(int iterator_position);
 
-    std::shared_ptr<ArrayCudaServer<T>> &server() {
+    std::shared_ptr<ArrayCudaDevice<T>> &server() {
         return server_;
     }
-    const std::shared_ptr<ArrayCudaServer<T>> &server() const {
+    const std::shared_ptr<ArrayCudaDevice<T>> &server() const {
         return server_;
     }
 };
@@ -88,13 +88,13 @@ public:
 template<typename T>
 class ArrayCudaKernelCaller {
 public:
-    __HOST__ static void FillArrayKernelCaller(ArrayCudaServer<T> &server,
+    __HOST__ static void FillArrayKernelCaller(ArrayCudaDevice<T> &server,
                                                const T &val, int max_capacity);
 };
 
 template<typename T>
 __GLOBAL__
-void FillArrayKernel(ArrayCudaServer<T> server, T val);
+void FillArrayKernel(ArrayCudaDevice<T> server, T val);
 
 } // cuda
 } // open3d

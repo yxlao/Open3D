@@ -50,7 +50,7 @@ bool ICRGBDOdometryCuda<N>::Create(int width, int height) {
         return true;
     }
 
-    server_ = std::make_shared<ICRGBDOdometryCudaServer<N>>();
+    server_ = std::make_shared<ICRGBDOdometryCudaDevice<N>>();
 
     source_on_target_.Create(width, height);
 

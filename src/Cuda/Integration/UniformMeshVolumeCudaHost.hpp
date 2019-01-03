@@ -68,7 +68,7 @@ void UniformMeshVolumeCuda<N>::Create(
     assert(max_vertices > 0 && max_triangles > 0);
     assert(type != VertexTypeUnknown);
 
-    server_ = std::make_shared<UniformMeshVolumeCudaServer<N >>();
+    server_ = std::make_shared<UniformMeshVolumeCudaDevice<N >>();
 
     vertex_type_ = type;
     max_triangles_ = max_triangles;

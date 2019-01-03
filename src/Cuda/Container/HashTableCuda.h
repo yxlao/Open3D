@@ -74,10 +74,10 @@ typedef HashEntry<Vector3i> SpatialEntry;
  * | | | | | | | --- | | | | | |
  */
 template<typename Key, typename Value, typename Hasher>
-class HashTableCudaServer {
+class HashTableCudaDevice {
 public:
     typedef HashEntry<Key> Entry;
-    typedef LinkedListCudaServer<Entry> LinkedListEntryCudaServer;
+    typedef LinkedListCudaDevice<Entry> LinkedListEntryCudaServer;
     typedef LinkedListNodeCuda<Entry> LinkedListNodeEntryCuda;
     int bucket_count_;
 
@@ -85,17 +85,17 @@ private:
     Hasher hasher_;
 
     /* bucket_count_ x BUCKET_SIZE */
-    ArrayCudaServer<Entry> entry_array_;
+    ArrayCudaDevice<Entry> entry_array_;
     /* bucket_count_ -> LinkedList */
-    ArrayCudaServer<LinkedListEntryCudaServer> entry_list_array_;
+    ArrayCudaDevice<LinkedListEntryCudaServer> entry_list_array_;
     /* Collect assigned entries for parallel processing */
-    ArrayCudaServer<Entry> assigned_entry_array_;
+    ArrayCudaDevice<Entry> assigned_entry_array_;
 
-    ArrayCudaServer<int> lock_array_;
+    ArrayCudaDevice<int> lock_array_;
 
     /* For managing LinkedListNodes and Values */
-    MemoryHeapCudaServer<Value> memory_heap_value_;
-    MemoryHeapCudaServer<LinkedListNodeEntryCuda> memory_heap_entry_list_node_;
+    MemoryHeapCudaDevice<Value> memory_heap_value_;
+    MemoryHeapCudaDevice<LinkedListNodeEntryCuda> memory_heap_entry_list_node_;
 
     /** WARNING!!!
       * When our Cuda containers store SERVERS
@@ -132,21 +132,21 @@ public:
     __DEVICE__ int New(const Key &key);
     __DEVICE__ int Delete(const Key &key);
 
-    __DEVICE__ inline ArrayCudaServer<Entry> &entry_array() {
+    __DEVICE__ inline ArrayCudaDevice<Entry> &entry_array() {
         return entry_array_;
     }
-    __DEVICE__ inline ArrayCudaServer<LinkedListEntryCudaServer>
+    __DEVICE__ inline ArrayCudaDevice<LinkedListEntryCudaServer>
     &entry_list_array() {
         return entry_list_array_;
     }
-    __DEVICE__ inline ArrayCudaServer<Entry> &assigned_entry_array() {
+    __DEVICE__ inline ArrayCudaDevice<Entry> &assigned_entry_array() {
         return assigned_entry_array_;
     }
-    __DEVICE__ inline MemoryHeapCudaServer<LinkedListNodeEntryCuda>
+    __DEVICE__ inline MemoryHeapCudaDevice<LinkedListNodeEntryCuda>
     &memory_heap_entry_list_node() {
         return memory_heap_entry_list_node_;
     }
-    __DEVICE__ inline MemoryHeapCudaServer<Value> &memory_heap_value() {
+    __DEVICE__ inline MemoryHeapCudaDevice<Value> &memory_heap_value() {
         return memory_heap_value_;
     }
     __DEVICE__ inline int *&entry_list_head_node_ptrs_memory_pool() {
@@ -163,7 +163,7 @@ template<typename Key, typename Value, typename Hasher>
 class HashTableCuda {
 public:
     typedef HashEntry<Key> Entry;
-    typedef LinkedListCudaServer<Entry> LinkedListEntryCudaServer;
+    typedef LinkedListCudaDevice<Entry> LinkedListEntryCudaServer;
     typedef LinkedListNodeCuda<Entry> LinkedListNodeEntryCuda;
 
 private:
@@ -178,7 +178,7 @@ private:
     ArrayCuda<int> lock_array_;
 
     /* Wrap all above */
-    std::shared_ptr<HashTableCudaServer<Key, Value, Hasher>> server_ = nullptr;
+    std::shared_ptr<HashTableCudaDevice<Key, Value, Hasher>> server_ = nullptr;
 
 public:
     int bucket_count_;
@@ -239,10 +239,10 @@ public:
         return lock_array_;
     }
 
-    std::shared_ptr<HashTableCudaServer<Key, Value, Hasher>> &server() {
+    std::shared_ptr<HashTableCudaDevice<Key, Value, Hasher>> &server() {
         return server_;
     }
-    const std::shared_ptr<HashTableCudaServer<Key,
+    const std::shared_ptr<HashTableCudaDevice<Key,
                                               Value,
                                               Hasher>> &server() const {
         return server_;
@@ -253,36 +253,36 @@ template<typename Key, typename Value, typename Hasher>
 class HashTableCudaKernelCaller {
 public:
     static __HOST__ void CreateHashTableEntriesKernelCaller(
-        HashTableCudaServer<Key, Value, Hasher> &server,
+        HashTableCudaDevice<Key, Value, Hasher> &server,
         int bucket_count);
     static __HOST__ void ReleaseHashTableEntriesKernelCaller(
-        HashTableCudaServer<Key, Value, Hasher> &server,
+        HashTableCudaDevice<Key, Value, Hasher> &server,
         int bucket_count);
 
     static __HOST__ void ResetHashTableEntriesKernelCaller(
-        HashTableCudaServer<Key, Value, Hasher> &server,
+        HashTableCudaDevice<Key, Value, Hasher> &server,
         int bucket_count);
 
     static __HOST__ void GetHashTableAssignedEntriesKernelCaller(
-        HashTableCudaServer<Key, Value, Hasher> &server,
+        HashTableCudaDevice<Key, Value, Hasher> &server,
         int bucket_count);
 
     static __HOST__ void InsertHashTableEntriesKernelCaller(
-        HashTableCudaServer<Key, Value, Hasher> &server,
-        ArrayCudaServer<Key> &keys,
-        ArrayCudaServer<Value> &values,
+        HashTableCudaDevice<Key, Value, Hasher> &server,
+        ArrayCudaDevice<Key> &keys,
+        ArrayCudaDevice<Value> &values,
         int num_pairs,
         int bucket_count);
 
     static __HOST__ void DeleteHashTableEntriesKernelCaller(
-        HashTableCudaServer<Key, Value, Hasher> &server,
-        ArrayCudaServer<Key> &keys, int num_keys, int
+        HashTableCudaDevice<Key, Value, Hasher> &server,
+        ArrayCudaDevice<Key> &keys, int num_keys, int
         bucket_count);
 
     static __HOST__ void ProfileHashTableKernelCaller(
-        HashTableCudaServer<Key, Value, Hasher> &server,
-        ArrayCudaServer<int> &array_entry_count,
-        ArrayCudaServer<int> &linked_list_entry_count,
+        HashTableCudaDevice<Key, Value, Hasher> &server,
+        ArrayCudaDevice<int> &array_entry_count,
+        ArrayCudaDevice<int> &linked_list_entry_count,
         int bucket_count);
 
 };
@@ -291,42 +291,42 @@ public:
 template<typename Key, typename Value, typename Hasher>
 __GLOBAL__
 void CreateHashTableEntriesKernel(
-    HashTableCudaServer<Key, Value, Hasher> server);
+    HashTableCudaDevice<Key, Value, Hasher> server);
 
 template<typename Key, typename Value, typename Hasher>
 __GLOBAL__
 void ReleaseHashTableEntriesKernel(
-    HashTableCudaServer<Key, Value, Hasher> server);
+    HashTableCudaDevice<Key, Value, Hasher> server);
 
 template<typename Key, typename Value, typename Hasher>
 __GLOBAL__
 void ResetHashTableEntriesKernel(
-    HashTableCudaServer<Key, Value, Hasher> server);
+    HashTableCudaDevice<Key, Value, Hasher> server);
 
 template<typename Key, typename Value, typename Hasher>
 __GLOBAL__
 void GetHashTableAssignedEntriesKernel(
-    HashTableCudaServer<Key, Value, Hasher> server);
+    HashTableCudaDevice<Key, Value, Hasher> server);
 
 /** Insert **/
 template<typename Key, typename Value, typename Hasher>
 __GLOBAL__
 void InsertHashTableEntriesKernel(
-    HashTableCudaServer<Key, Value, Hasher> server,
-    ArrayCudaServer<Key> keys, ArrayCudaServer<Value> values, int num_pairs);
+    HashTableCudaDevice<Key, Value, Hasher> server,
+    ArrayCudaDevice<Key> keys, ArrayCudaDevice<Value> values, int num_pairs);
 
 /** Delete **/
 template<typename Key, typename Value, typename Hasher>
 __GLOBAL__
 void DeleteHashTableEntriesKernel(
-    HashTableCudaServer<Key, Value, Hasher> server, ArrayCudaServer<Key> keys,
+    HashTableCudaDevice<Key, Value, Hasher> server, ArrayCudaDevice<Key> keys,
     int num_keys);
 
 template<typename Key, typename Value, typename Hasher>
 __GLOBAL__
 void ProfileHashTableKernel(
-    HashTableCudaServer<Key, Value, Hasher> server,
-    ArrayCudaServer<int> array_entry_count,
-    ArrayCudaServer<int> linked_list_entry_count);
+    HashTableCudaDevice<Key, Value, Hasher> server,
+    ArrayCudaDevice<int> array_entry_count,
+    ArrayCudaDevice<int> linked_list_entry_count);
 } // cuda
 } // open3d

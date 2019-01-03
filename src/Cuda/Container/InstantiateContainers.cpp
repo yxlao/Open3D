@@ -23,7 +23,7 @@ class ArrayCuda<Vector3f>;
 template
 class ArrayCuda<HashEntry<Vector3i>>;
 template
-class ArrayCuda<LinkedListCudaServer<HashEntry<Vector3i>>>;
+class ArrayCuda<LinkedListCudaDevice<HashEntry<Vector3i>>>;
 
 template
 class MemoryHeapCuda<int>;

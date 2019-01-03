@@ -83,7 +83,7 @@ void ScalableTSDFVolumeCuda<N>::Create(
 
     bucket_count_ = bucket_count;
     value_capacity_ = value_capacity;
-    server_ = std::make_shared<ScalableTSDFVolumeCudaServer<N>>();
+    server_ = std::make_shared<ScalableTSDFVolumeCudaDevice<N>>();
     hash_table_.Create(bucket_count, value_capacity);
     active_subvolume_entry_array_.Create(value_capacity);
 
@@ -164,7 +164,7 @@ ScalableTSDFVolumeCuda<N>::DownloadVolumes() {
 
     auto hash_table = hash_table_.Download();
     std::vector<Vector3i> &keys = std::get<0>(hash_table);
-    std::vector<UniformTSDFVolumeCudaServer<N>>
+    std::vector<UniformTSDFVolumeCudaDevice<N>>
         &volume_servers = std::get<1>(hash_table);
 
     assert(keys.size() == volume_servers.size());

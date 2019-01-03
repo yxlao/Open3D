@@ -99,7 +99,7 @@ void PointCloudCuda::Create(VertexType type, int max_points) {
         return;
     }
 
-    server_ = std::make_shared<PointCloudCudaServer>();
+    server_ = std::make_shared<PointCloudCudaDevice>();
 
     type_ = type;
     max_points_ = max_points;

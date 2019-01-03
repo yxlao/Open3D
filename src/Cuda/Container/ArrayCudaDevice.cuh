@@ -17,7 +17,7 @@ namespace cuda {
  */
 template<typename T>
 __device__
-inline int ArrayCudaServer<T>::push_back(T value) {
+inline int ArrayCudaDevice<T>::push_back(T value) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(*iterator_ < max_capacity_);
 #endif
@@ -29,7 +29,7 @@ inline int ArrayCudaServer<T>::push_back(T value) {
 
 template<typename T>
 __device__
-inline T &ArrayCudaServer<T>::at(size_t index) {
+inline T &ArrayCudaDevice<T>::at(size_t index) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(index <= max_capacity_);
 #endif
@@ -39,7 +39,7 @@ inline T &ArrayCudaServer<T>::at(size_t index) {
 
 template<typename T>
 __device__
-inline T &ArrayCudaServer<T>::operator[](size_t index) {
+inline T &ArrayCudaDevice<T>::operator[](size_t index) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(index <= max_capacity_);
 #endif

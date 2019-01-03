@@ -37,7 +37,7 @@ enum DownsampleMethod {
  * Other templates are regarded as incompatible.
  */
 template<typename VecType>
-class ImageCudaServer {
+class ImageCudaDevice {
 private:
     VecType *data_;
 
@@ -90,7 +90,7 @@ public:
 template<typename VecType>
 class ImageCuda {
 private:
-    std::shared_ptr<ImageCudaServer<VecType>> server_ = nullptr;
+    std::shared_ptr<ImageCudaDevice<VecType>> server_ = nullptr;
 
 public:
     int width_;
@@ -163,10 +163,10 @@ public:
     void Upload(cv::Mat &m);
     cv::Mat DownloadMat();
 
-    std::shared_ptr<ImageCudaServer<VecType>> &server() {
+    std::shared_ptr<ImageCudaDevice<VecType>> &server() {
         return server_;
     }
-    const std::shared_ptr<ImageCudaServer<VecType>> &server() const {
+    const std::shared_ptr<ImageCudaDevice<VecType>> &server() const {
         return server_;
     }
 };
@@ -175,74 +175,74 @@ template<typename VecType>
 class ImageCudaKernelCaller {
 public:
     static __HOST__ void DownsampleImageKernelCaller(
-        ImageCudaServer<VecType> &src, ImageCudaServer<VecType> &dst,
+        ImageCudaDevice<VecType> &src, ImageCudaDevice<VecType> &dst,
         DownsampleMethod method);
     static __HOST__ void ShiftImageKernelCaller(
-        ImageCudaServer<VecType> &src, ImageCudaServer<VecType> &dst,
+        ImageCudaDevice<VecType> &src, ImageCudaDevice<VecType> &dst,
         float dx, float dy, bool with_holes);
     static __HOST__ void GaussianImageKernelCaller(
-        ImageCudaServer<VecType> &src, ImageCudaServer<VecType> &dst,
+        ImageCudaDevice<VecType> &src, ImageCudaDevice<VecType> &dst,
         int kernel_idx, bool with_holes);
     static __HOST__ void BilateralImageKernelCaller(
-        ImageCudaServer<VecType> &src, ImageCudaServer<VecType> &dst,
+        ImageCudaDevice<VecType> &src, ImageCudaDevice<VecType> &dst,
         int kernel_idx, float val_sigma, bool with_holes);
     static __HOST__ void SobelImageKernelCaller(
-        ImageCudaServer<VecType> &src,
-        ImageCudaServer<typename VecType::VecTypef> &dx,
-        ImageCudaServer<typename VecType::VecTypef> &dy,
+        ImageCudaDevice<VecType> &src,
+        ImageCudaDevice<typename VecType::VecTypef> &dx,
+        ImageCudaDevice<typename VecType::VecTypef> &dy,
         bool with_holes);
     static __HOST__ void ConvertToFloatImageKernelCaller(
-        ImageCudaServer<VecType> &src,
-        ImageCudaServer<typename VecType::VecTypef> &dst,
+        ImageCudaDevice<VecType> &src,
+        ImageCudaDevice<typename VecType::VecTypef> &dst,
         float scale, float offset);
     static __HOST__ void ConvertRGBToIntensityKernelCaller(
-        ImageCudaServer<VecType> &src,
-        ImageCudaServer<Vector1f> &dst);
+        ImageCudaDevice<VecType> &src,
+        ImageCudaDevice<Vector1f> &dst);
 };
 
 template<typename VecType>
 __GLOBAL__
 void DownsampleImageKernel(
-    ImageCudaServer<VecType> src, ImageCudaServer<VecType> dst,
+    ImageCudaDevice<VecType> src, ImageCudaDevice<VecType> dst,
     DownsampleMethod method);
 
 template<typename VecType>
 __GLOBAL__
 void ShiftImageKernel(
-    ImageCudaServer<VecType> src, ImageCudaServer<VecType> dst,
+    ImageCudaDevice<VecType> src, ImageCudaDevice<VecType> dst,
     float dx, float dy, bool with_holes);
 
 template<typename VecType>
 __GLOBAL__
 void GaussianImageKernel(
-    ImageCudaServer<VecType> src, ImageCudaServer<VecType> dst,
+    ImageCudaDevice<VecType> src, ImageCudaDevice<VecType> dst,
     int kernel_idx, bool with_holes);
 
 template<typename VecType>
 __GLOBAL__
 void BilateralImageKernel(
-    ImageCudaServer<VecType> src, ImageCudaServer<VecType> dst,
+    ImageCudaDevice<VecType> src, ImageCudaDevice<VecType> dst,
     int kernel_idx, float val_sigma, bool with_holes);
 
 template<typename VecType>
 __GLOBAL__
 void SobelImageKernel(
-    ImageCudaServer<VecType> src,
-    ImageCudaServer<typename VecType::VecTypef> dx,
-    ImageCudaServer<typename VecType::VecTypef> dy,
+    ImageCudaDevice<VecType> src,
+    ImageCudaDevice<typename VecType::VecTypef> dx,
+    ImageCudaDevice<typename VecType::VecTypef> dy,
     bool with_holes);
 
 template<typename VecType>
 __GLOBAL__
 void ConvertToFloatImageKernel(
-    ImageCudaServer<VecType> src,
-    ImageCudaServer<typename VecType::VecTypef> dst,
+    ImageCudaDevice<VecType> src,
+    ImageCudaDevice<typename VecType::VecTypef> dst,
     float scale, float offset);
 
 template<typename VecType>
 __GLOBAL__
 void ConvertRGBToIntensityImageKernel(
-    ImageCudaServer<VecType> src,
-    ImageCudaServer<Vector1f> dst);
+    ImageCudaDevice<VecType> src,
+    ImageCudaDevice<Vector1f> dst);
 } // cuda
 } // open3d

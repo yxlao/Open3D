@@ -20,7 +20,7 @@ namespace cuda {
 /** Reserved for ScalableTSDFVolumeCuda **/
 template<size_t N>
 __device__
-inline void UniformTSDFVolumeCudaServer<N>::Create(
+inline void UniformTSDFVolumeCudaDevice<N>::Create(
     float *tsdf, uchar *weight, Vector3b *color) {
     tsdf_ = tsdf;
     weight_ = weight;
@@ -30,7 +30,7 @@ inline void UniformTSDFVolumeCudaServer<N>::Create(
 /** Coordinate conversions **/
 template<size_t N>
 __device__
-inline bool UniformTSDFVolumeCudaServer<N>::InVolume(const Vector3i &X) {
+inline bool UniformTSDFVolumeCudaDevice<N>::InVolume(const Vector3i &X) {
     return 0 <= X(0) && X(0) < (N - 1)
         && 0 <= X(1) && X(1) < (N - 1)
         && 0 <= X(2) && X(2) < (N - 1);
@@ -38,7 +38,7 @@ inline bool UniformTSDFVolumeCudaServer<N>::InVolume(const Vector3i &X) {
 
 template<size_t N>
 __device__
-inline bool UniformTSDFVolumeCudaServer<N>::InVolumef(const Vector3f &X) {
+inline bool UniformTSDFVolumeCudaDevice<N>::InVolumef(const Vector3f &X) {
     return 0 <= X(0) && X(0) < (N - 1)
         && 0 <= X(1) && X(1) < (N - 1)
         && 0 <= X(2) && X(2) < (N - 1);
@@ -47,14 +47,14 @@ inline bool UniformTSDFVolumeCudaServer<N>::InVolumef(const Vector3f &X) {
 template<size_t N>
 __device__
 inline Vector3f
-UniformTSDFVolumeCudaServer<N>::world_to_voxelf(
+UniformTSDFVolumeCudaDevice<N>::world_to_voxelf(
     const Vector3f &Xw) {
     return volume_to_voxelf(transform_world_to_volume_ * Xw);
 }
 template<size_t N>
 __device__
 inline Vector3f
-UniformTSDFVolumeCudaServer<N>::voxelf_to_world(
+UniformTSDFVolumeCudaDevice<N>::voxelf_to_world(
     const Vector3f &X) {
     return transform_volume_to_world_ * voxelf_to_volume(X);
 }
@@ -62,7 +62,7 @@ UniformTSDFVolumeCudaServer<N>::voxelf_to_world(
 template<size_t N>
 __device__
 inline Vector3f
-UniformTSDFVolumeCudaServer<N>::voxelf_to_volume(
+UniformTSDFVolumeCudaDevice<N>::voxelf_to_volume(
     const Vector3f &X) {
     return Vector3f((X(0) + 0.5f) * voxel_length_,
                     (X(1) + 0.5f) * voxel_length_,
@@ -72,7 +72,7 @@ UniformTSDFVolumeCudaServer<N>::voxelf_to_volume(
 template<size_t N>
 __device__
 inline Vector3f
-UniformTSDFVolumeCudaServer<N>::volume_to_voxelf(
+UniformTSDFVolumeCudaDevice<N>::volume_to_voxelf(
     const Vector3f &Xv) {
     return Vector3f(Xv(0) * inv_voxel_length_ - 0.5f,
                     Xv(1) * inv_voxel_length_ - 0.5f,
@@ -82,7 +82,7 @@ UniformTSDFVolumeCudaServer<N>::volume_to_voxelf(
 template<size_t N>
 __device__
     Vector3f
-UniformTSDFVolumeCudaServer<N>::gradient(const Vector3i &X) {
+UniformTSDFVolumeCudaDevice<N>::gradient(const Vector3i &X) {
     Vector3f
     n = Vector3f::Zeros();
     Vector3i
@@ -102,7 +102,7 @@ UniformTSDFVolumeCudaServer<N>::gradient(const Vector3i &X) {
 /** Ensure it is called within [0, N - 1)^3 **/
 template<size_t N>
 __device__
-float UniformTSDFVolumeCudaServer<N>::TSDFAt(const Vector3f &X) {
+float UniformTSDFVolumeCudaDevice<N>::TSDFAt(const Vector3f &X) {
     Vector3i
     Xi = X.ToVectori();
     Vector3f
@@ -128,7 +128,7 @@ float UniformTSDFVolumeCudaServer<N>::TSDFAt(const Vector3f &X) {
 template<size_t N>
 __device__
     uchar
-UniformTSDFVolumeCudaServer<N>::WeightAt(const Vector3f &X) {
+UniformTSDFVolumeCudaDevice<N>::WeightAt(const Vector3f &X) {
     Vector3i
     Xi = X.ToVectori();
     Vector3f
@@ -154,7 +154,7 @@ UniformTSDFVolumeCudaServer<N>::WeightAt(const Vector3f &X) {
 template<size_t N>
 __device__
     Vector3b
-UniformTSDFVolumeCudaServer<N>::ColorAt(const Vector3f &X) {
+UniformTSDFVolumeCudaDevice<N>::ColorAt(const Vector3f &X) {
     Vector3i
     Xi = X.ToVectori();
     Vector3f
@@ -183,7 +183,7 @@ UniformTSDFVolumeCudaServer<N>::ColorAt(const Vector3f &X) {
 template<size_t N>
 __device__
     Vector3f
-UniformTSDFVolumeCudaServer<N>::GradientAt(const Vector3f &X) {
+UniformTSDFVolumeCudaDevice<N>::GradientAt(const Vector3f &X) {
     Vector3f
     n = Vector3f::Zeros();
 
@@ -206,9 +206,9 @@ UniformTSDFVolumeCudaServer<N>::GradientAt(const Vector3f &X) {
 /** High level methods **/
 template<size_t N>
 __device__
-void UniformTSDFVolumeCudaServer<N>::Integrate(
+void UniformTSDFVolumeCudaDevice<N>::Integrate(
     const Vector3i &X,
-    RGBDImageCudaServer &rgbd,
+    RGBDImageCudaDevice &rgbd,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
 
@@ -247,7 +247,7 @@ void UniformTSDFVolumeCudaServer<N>::Integrate(
 template<size_t N>
 __device__
     Vector3f
-UniformTSDFVolumeCudaServer<N>::RayCasting(
+UniformTSDFVolumeCudaDevice<N>::RayCasting(
     const Vector2i &p,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {

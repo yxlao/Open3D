@@ -5,7 +5,9 @@ guarantee the
  stability or compatibility at all -- I do apologize for it. 
  
 Since I work on my own, I expect to complete the basic functions in one or two
- months (**Christmas 2018** might be a good time to place a milestone). Before 
+ months ~~(**Christmas 2018** might be a good time to place a milestone)~~. 
+I'm slower than expected now... 
+ Before 
  that, I can only ensure it to be compilable on my machine.
  
 Many parts of the code are migrated from my previous projects. They offer 
@@ -109,7 +111,7 @@ file that includes the `.hpp` file.
 - To avoid frequent CUDA memory manipulation, we add reference count for 
 servers. 
 - Basically, every host class (say `ArrayCuda`) is connected to one 
-server (say `ArrayCudaServer`) using a `shared_ptr`. Multiple host objects 
+server (say `ArrayCudaDevice`) using a `shared_ptr`. Multiple host objects 
 can share one server. 
 - The copy constructor or assignment operators will just pass the 
 `shared_ptr`, whose reference count will be monitored by STL.

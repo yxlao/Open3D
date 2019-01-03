@@ -18,13 +18,13 @@ namespace open3d {
 
 namespace cuda {
 template
-class UniformTSDFVolumeCudaServer<8>;
+class UniformTSDFVolumeCudaDevice<8>;
 template
-class UniformTSDFVolumeCudaServer<16>;
+class UniformTSDFVolumeCudaDevice<16>;
 template
-class UniformTSDFVolumeCudaServer<256>;
+class UniformTSDFVolumeCudaDevice<256>;
 template
-class UniformTSDFVolumeCudaServer<512>;
+class UniformTSDFVolumeCudaDevice<512>;
 
 template
 class UniformTSDFVolumeCudaKernelCaller<8>;
@@ -58,17 +58,17 @@ class UniformMeshVolumeCudaKernelCaller<512>;
 /** Oh we can't afford larger chunks **/
 template
 class HashTableCudaKernelCaller
-    <Vector3i, UniformTSDFVolumeCudaServer<8>, SpatialHasher>;
+    <Vector3i, UniformTSDFVolumeCudaDevice<8>, SpatialHasher>;
 template
-class MemoryHeapCudaKernelCaller<UniformTSDFVolumeCudaServer<8>>;
+class MemoryHeapCudaKernelCaller<UniformTSDFVolumeCudaDevice<8>>;
 
 template
-class ScalableTSDFVolumeCudaServer<8>;
+class ScalableTSDFVolumeCudaDevice<8>;
 template
 class ScalableTSDFVolumeCudaKernelCaller<8>;
 
 template
-class ScalableMeshVolumeCudaServer<8>;
+class ScalableMeshVolumeCudaDevice<8>;
 template
 class ScalableMeshVolumeCudaKernelCaller<8>;
 

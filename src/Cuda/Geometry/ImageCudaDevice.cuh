@@ -25,7 +25,7 @@ template<typename VecType>
 __device__
     VecType
 &
-ImageCudaServer<VecType>::at(int x, int y) {
+ImageCudaDevice<VecType>::at(int x, int y) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_);
     assert(y >= 0 && y < height_);
@@ -38,7 +38,7 @@ template<typename VecType>
 __device__
     VecType
 &
-ImageCudaServer<VecType>::operator()(int x, int y) {
+ImageCudaDevice<VecType>::operator()(int x, int y) {
     return at(x, y);
 }
 
@@ -48,7 +48,7 @@ ImageCudaServer<VecType>::operator()(int x, int y) {
 template<typename VecType>
 __device__
     VecType
-ImageCudaServer<VecType>::interp_at(float x, float y) {
+ImageCudaDevice<VecType>::interp_at(float x, float y) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_ - 1);
     assert(y >= 0 && y < height_ - 1);
@@ -66,7 +66,7 @@ ImageCudaServer<VecType>::interp_at(float x, float y) {
 template<typename VecType>
 __device__
     VecType
-ImageCudaServer<VecType>::interp_with_holes_at(float x, float y) {
+ImageCudaDevice<VecType>::interp_with_holes_at(float x, float y) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_ - 1);
     assert(y >= 0 && y < height_ - 1);
@@ -105,7 +105,7 @@ ImageCudaServer<VecType>::interp_with_holes_at(float x, float y) {
 template<typename VecType>
 __device__
     VecType
-ImageCudaServer<VecType>::BoxFilter2x2(int x, int y) {
+ImageCudaDevice<VecType>::BoxFilter2x2(int x, int y) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_);
     assert(y >= 0 && y < height_);
@@ -127,7 +127,7 @@ ImageCudaServer<VecType>::BoxFilter2x2(int x, int y) {
 template<typename VecType>
 __device__
     VecType
-ImageCudaServer<VecType>::BoxFilter2x2WithHoles(
+ImageCudaDevice<VecType>::BoxFilter2x2WithHoles(
     int x, int y, float threshold) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_);
@@ -172,7 +172,7 @@ ImageCudaServer<VecType>::BoxFilter2x2WithHoles(
 template<typename VecType>
 __device__
     VecType
-ImageCudaServer<VecType>::GaussianFilter(int x, int y, int kernel_idx) {
+ImageCudaDevice<VecType>::GaussianFilter(int x, int y, int kernel_idx) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_);
     assert(y >= 0 && y < height_);
@@ -214,7 +214,7 @@ ImageCudaServer<VecType>::GaussianFilter(int x, int y, int kernel_idx) {
 template<typename VecType>
 __device__
     VecType
-ImageCudaServer<VecType>::GaussianFilterWithHoles(
+ImageCudaDevice<VecType>::GaussianFilterWithHoles(
     int x, int y, int kernel_idx, float threshold) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_);
@@ -268,7 +268,7 @@ ImageCudaServer<VecType>::GaussianFilterWithHoles(
 template<typename VecType>
 __device__
     VecType
-ImageCudaServer<VecType>::BilateralFilter(
+ImageCudaDevice<VecType>::BilateralFilter(
     int x, int y, int kernel_idx, float val_sigma) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_);
@@ -314,7 +314,7 @@ ImageCudaServer<VecType>::BilateralFilter(
 template<typename VecType>
 __device__
     VecType
-ImageCudaServer<VecType>::BilateralFilterWithHoles(
+ImageCudaDevice<VecType>::BilateralFilterWithHoles(
     int x, int y, int kernel_idx, float val_sigma) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_);
@@ -364,8 +364,8 @@ ImageCudaServer<VecType>::BilateralFilterWithHoles(
 
 template<typename VecType>
 __device__
-    ImageCudaServer<VecType>::Grad
-ImageCudaServer<VecType>::Sobel(int x, int y) {
+    ImageCudaDevice<VecType>::Grad
+ImageCudaDevice<VecType>::Sobel(int x, int y) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 1 && x < width_ - 1);
     assert(y >= 1 && y < height_ - 1);
@@ -393,8 +393,8 @@ ImageCudaServer<VecType>::Sobel(int x, int y) {
  */
 template<typename VecType>
 __device__
-    ImageCudaServer<VecType>::Grad
-ImageCudaServer<VecType>::SobelWithHoles(int x, int y) {
+    ImageCudaDevice<VecType>::Grad
+ImageCudaDevice<VecType>::SobelWithHoles(int x, int y) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 1 && x < width_ - 1);
     assert(y >= 1 && y < height_ - 1);

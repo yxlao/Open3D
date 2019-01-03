@@ -10,8 +10,8 @@
 namespace open3d {
 namespace cuda {
 __global__
-void GetMinBoundKernel(TriangleMeshCudaServer server,
-                       ArrayCudaServer<Vector3f> min_bound) {
+void GetMinBoundKernel(TriangleMeshCudaDevice server,
+                       ArrayCudaDevice<Vector3f> min_bound) {
     __shared__ float local_min_x[THREAD_1D_UNIT];
     __shared__ float local_min_y[THREAD_1D_UNIT];
     __shared__ float local_min_z[THREAD_1D_UNIT];
@@ -42,8 +42,8 @@ void GetMinBoundKernel(TriangleMeshCudaServer server,
 
 __host__
 void TriangleMeshCudaKernelCaller::GetMinBoundKernelCaller(
-    TriangleMeshCudaServer &server,
-    ArrayCudaServer<Vector3f> &min_bound,
+    TriangleMeshCudaDevice &server,
+    ArrayCudaDevice<Vector3f> &min_bound,
     int num_vertices) {
     const dim3 blocks(DIV_CEILING(num_vertices, THREAD_1D_UNIT));
     const dim3 threads(THREAD_1D_UNIT);
@@ -53,8 +53,8 @@ void TriangleMeshCudaKernelCaller::GetMinBoundKernelCaller(
 }
 
 __global__
-void GetMaxBoundKernel(TriangleMeshCudaServer server,
-                       ArrayCudaServer<Vector3f> max_bound) {
+void GetMaxBoundKernel(TriangleMeshCudaDevice server,
+                       ArrayCudaDevice<Vector3f> max_bound) {
     __shared__ float local_max_x[THREAD_1D_UNIT];
     __shared__ float local_max_y[THREAD_1D_UNIT];
     __shared__ float local_max_z[THREAD_1D_UNIT];
@@ -85,8 +85,8 @@ void GetMaxBoundKernel(TriangleMeshCudaServer server,
 
 __host__
 void TriangleMeshCudaKernelCaller::GetMaxBoundKernelCaller(
-    TriangleMeshCudaServer &server,
-    ArrayCudaServer<Vector3f> &max_bound,
+    TriangleMeshCudaDevice &server,
+    ArrayCudaDevice<Vector3f> &max_bound,
     int num_vertices) {
 
     const dim3 blocks(DIV_CEILING(num_vertices, THREAD_1D_UNIT));
@@ -97,7 +97,7 @@ void TriangleMeshCudaKernelCaller::GetMaxBoundKernelCaller(
 }
 
 __global__
-void TransformKernel(TriangleMeshCudaServer server, TransformCuda transform) {
+void TransformKernel(TriangleMeshCudaDevice server, TransformCuda transform) {
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
     if (idx >= server.vertices().size()) return;
 
@@ -112,7 +112,7 @@ void TransformKernel(TriangleMeshCudaServer server, TransformCuda transform) {
 
 __host__
 void TriangleMeshCudaKernelCaller::TransformKernelCaller(
-    TriangleMeshCudaServer &server,
+    TriangleMeshCudaDevice &server,
     TransformCuda &transform,
     int num_vertices) {
 

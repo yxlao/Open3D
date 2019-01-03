@@ -11,8 +11,8 @@ namespace open3d {
 namespace cuda {
 __global__
 void BuildFromRGBDImageKernel(
-    PointCloudCudaServer server,
-    RGBDImageCudaServer rgbd,
+    PointCloudCudaDevice server,
+    RGBDImageCudaDevice rgbd,
     PinholeCameraIntrinsicCuda intrinsic) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -33,8 +33,8 @@ void BuildFromRGBDImageKernel(
 
 __host__
 void PointCloudCudaKernelCaller::BuildFromRGBDImageKernelCaller(
-    PointCloudCudaServer &server,
-    RGBDImageCudaServer &rgbd,
+    PointCloudCudaDevice &server,
+    RGBDImageCudaDevice &rgbd,
     PinholeCameraIntrinsicCuda &intrinsic) {
     const dim3 blocks(DIV_CEILING(rgbd.width_, THREAD_2D_UNIT),
                       DIV_CEILING(rgbd.height_, THREAD_2D_UNIT));
@@ -47,8 +47,8 @@ void PointCloudCudaKernelCaller::BuildFromRGBDImageKernelCaller(
 
 __global__
 void BuildFromDepthImageKernel(
-    PointCloudCudaServer server,
-    ImageCudaServer<Vector1f> depth,
+    PointCloudCudaDevice server,
+    ImageCudaDevice<Vector1f> depth,
     PinholeCameraIntrinsicCuda intrinsic) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -64,7 +64,7 @@ void BuildFromDepthImageKernel(
 
 __host__
 void PointCloudCudaKernelCaller::BuildFromDepthImageKernelCaller(
-    PointCloudCudaServer &server, ImageCudaServer<Vector1f> &depth,
+    PointCloudCudaDevice &server, ImageCudaDevice<Vector1f> &depth,
     PinholeCameraIntrinsicCuda &intrinsic) {
     const dim3 blocks(DIV_CEILING(depth.width_, THREAD_2D_UNIT),
                       DIV_CEILING(depth.height_, THREAD_2D_UNIT));
@@ -77,8 +77,8 @@ void PointCloudCudaKernelCaller::BuildFromDepthImageKernelCaller(
 
 /** Duplicate of TriangleMesh ... anyway to simplify it? **/
 __global__
-void GetMinBoundKernel(PointCloudCudaServer server,
-                       ArrayCudaServer<Vector3f> min_bound) {
+void GetMinBoundKernel(PointCloudCudaDevice server,
+                       ArrayCudaDevice<Vector3f> min_bound) {
     __shared__ float local_min_x[THREAD_1D_UNIT];
     __shared__ float local_min_y[THREAD_1D_UNIT];
     __shared__ float local_min_z[THREAD_1D_UNIT];
@@ -109,8 +109,8 @@ void GetMinBoundKernel(PointCloudCudaServer server,
 
 __host__
 void PointCloudCudaKernelCaller::GetMinBoundKernelCaller(
-    PointCloudCudaServer &server,
-    ArrayCudaServer<Vector3f> &min_bound,
+    PointCloudCudaDevice &server,
+    ArrayCudaDevice<Vector3f> &min_bound,
     int num_vertices) {
     const dim3 blocks(DIV_CEILING(num_vertices, THREAD_1D_UNIT));
     const dim3 threads(THREAD_1D_UNIT);
@@ -120,8 +120,8 @@ void PointCloudCudaKernelCaller::GetMinBoundKernelCaller(
 }
 
 __global__
-void GetMaxBoundKernel(PointCloudCudaServer server,
-                       ArrayCudaServer<Vector3f> max_bound) {
+void GetMaxBoundKernel(PointCloudCudaDevice server,
+                       ArrayCudaDevice<Vector3f> max_bound) {
     __shared__ float local_max_x[THREAD_1D_UNIT];
     __shared__ float local_max_y[THREAD_1D_UNIT];
     __shared__ float local_max_z[THREAD_1D_UNIT];
@@ -152,8 +152,8 @@ void GetMaxBoundKernel(PointCloudCudaServer server,
 
 __host__
 void PointCloudCudaKernelCaller::GetMaxBoundKernelCaller(
-    PointCloudCudaServer &server,
-    ArrayCudaServer<Vector3f> &max_bound,
+    PointCloudCudaDevice &server,
+    ArrayCudaDevice<Vector3f> &max_bound,
     int num_vertices) {
 
     const dim3 blocks(DIV_CEILING(num_vertices, THREAD_1D_UNIT));
@@ -164,7 +164,7 @@ void PointCloudCudaKernelCaller::GetMaxBoundKernelCaller(
 }
 
 __global__
-void TransformKernel(PointCloudCudaServer server, TransformCuda transform) {
+void TransformKernel(PointCloudCudaDevice server, TransformCuda transform) {
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
     if (idx >= server.points().size()) return;
 
@@ -179,7 +179,7 @@ void TransformKernel(PointCloudCudaServer server, TransformCuda transform) {
 
 __host__
 void PointCloudCudaKernelCaller::TransformKernelCaller(
-    PointCloudCudaServer &server,
+    PointCloudCudaDevice &server,
     TransformCuda &transform,
     int num_vertices) {
 

@@ -94,7 +94,7 @@ bool ImageCuda<VecType>::Create(int width, int height) {
 #ifdef HOST_DEBUG_MONITOR_LIFECYCLE
     PrintInfo("Creating.\n");
 #endif
-    server_ = std::make_shared<ImageCudaServer<VecType>>();
+    server_ = std::make_shared<ImageCudaDevice<VecType>>();
 
     width_ = width;
     height_ = height;

@@ -9,19 +9,19 @@ namespace open3d {
 
 namespace cuda {
 template
-class ImageCudaServer<Vector1s>;
+class ImageCudaDevice<Vector1s>;
 template
-class ImageCudaServer<Vector4b>;
+class ImageCudaDevice<Vector4b>;
 template
-class ImageCudaServer<Vector3b>;
+class ImageCudaDevice<Vector3b>;
 template
-class ImageCudaServer<Vector1b>;
+class ImageCudaDevice<Vector1b>;
 template
-class ImageCudaServer<Vector4f>;
+class ImageCudaDevice<Vector4f>;
 template
-class ImageCudaServer<Vector3f>;
+class ImageCudaDevice<Vector3f>;
 template
-class ImageCudaServer<Vector1f>;
+class ImageCudaDevice<Vector1f>;
 
 template
 class ImageCudaKernelCaller<Vector1s>;

@@ -20,7 +20,7 @@ namespace cuda {
  */
 template<typename T>
 __device__
-void LinkedListCudaServer<T>::Clear() {
+void LinkedListCudaDevice<T>::Clear() {
     int node_ptr = *head_node_ptr_;
     while (node_ptr != NULLPTR_CUDA) {
         int next_node_ptr = memory_heap_.value_at(node_ptr).next_node_ptr;
@@ -37,7 +37,7 @@ void LinkedListCudaServer<T>::Clear() {
 
 template<typename T>
 __device__
-void LinkedListCudaServer<T>::Insert(T value) {
+void LinkedListCudaDevice<T>::Insert(T value) {
     int node_ptr = memory_heap_.Malloc();
 
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
@@ -61,8 +61,8 @@ void LinkedListCudaServer<T>::Insert(T value) {
  */
 template<typename T>
 __device__
-void LinkedListCudaServer<T>::Create(
-    LinkedListCudaServer<T>::MemoryHeapServer &memory_heap_server,
+void LinkedListCudaDevice<T>::Create(
+    LinkedListCudaDevice<T>::MemoryHeapServer &memory_heap_server,
     int *head_node_ptr,
     int *size_ptr) {
     max_capacity_ = memory_heap_server.max_capacity_;
@@ -76,11 +76,11 @@ void LinkedListCudaServer<T>::Create(
 /* Release the assigned pointers externally */
 template<typename T>
 __device__
-void LinkedListCudaServer<T>::Release() {}
+void LinkedListCudaDevice<T>::Release() {}
 
 template<typename T>
 __device__
-int LinkedListCudaServer<T>::Delete(const int node_ptr) {
+int LinkedListCudaDevice<T>::Delete(const int node_ptr) {
     if (*head_node_ptr_ == NULLPTR_CUDA || node_ptr == NULLPTR_CUDA) {
 #ifdef CUDA_DEBUG_ENABLE_PRINTF
         printf("Error: Invalid pointer or linked list!\n");
@@ -119,7 +119,7 @@ int LinkedListCudaServer<T>::Delete(const int node_ptr) {
 
 template<typename T>
 __device__
-int LinkedListCudaServer<T>::Find(T value) const {
+int LinkedListCudaDevice<T>::Find(T value) const {
     int node_ptr = *head_node_ptr_;
     while (node_ptr != NULLPTR_CUDA) {
         if (memory_heap_.value_at(node_ptr).data == value)
@@ -135,7 +135,7 @@ int LinkedListCudaServer<T>::Find(T value) const {
 
 template<class T>
 __device__
-int LinkedListCudaServer<T>::FindAndDelete(T value) {
+int LinkedListCudaDevice<T>::FindAndDelete(T value) {
     if (*head_node_ptr_ == NULLPTR_CUDA) {
 #ifdef CUDA_DEBUG_ENABLE_PRINTF
         printf("Empty linked list!\n");

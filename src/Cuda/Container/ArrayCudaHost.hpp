@@ -77,7 +77,7 @@ void ArrayCuda<T>::Create(int max_capacity) {
         return;
     }
 
-    server_ = std::make_shared<ArrayCudaServer<T >>();
+    server_ = std::make_shared<ArrayCudaDevice<T >>();
     max_capacity_ = max_capacity;
     server_->max_capacity_ = max_capacity;
 

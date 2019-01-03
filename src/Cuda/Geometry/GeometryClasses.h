@@ -13,20 +13,20 @@ namespace open3d {
 
 namespace cuda {
 template<typename T>
-class ImageCudaServer;
+class ImageCudaDevice;
 template<typename T>
 class ImageCuda;
 
 template<typename T, size_t N>
-class ImagePyramidCudaServer;
+class ImagePyramidCudaDevice;
 template<typename T, size_t N>
 class ImagePyramidCuda;
 
-class RGBDImageCudaServer;
+class RGBDImageCudaDevice;
 class RGBDImageCuda;
 
 template<size_t N>
-class RGBDImagePyramidCudaServer;
+class RGBDImagePyramidCudaDevice;
 template<size_t N>
 class RGBDImagePyramidCuda;
 
@@ -39,10 +39,10 @@ enum VertexType {
     VertexTypeUnknown = (1 << 30)
 };
 
-class TriangleMeshCudaServer;
+class TriangleMeshCudaDevice;
 class TriangleMeshCuda;
 
-class PointCloudCudaServer;
+class PointCloudCudaDevice;
 class PointCloudCuda;
 
 } // cuda

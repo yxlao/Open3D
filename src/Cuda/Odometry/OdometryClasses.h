@@ -10,13 +10,13 @@ namespace open3d {
 namespace cuda {
 
 template<size_t N>
-class RGBDOdometryCudaServer;
+class RGBDOdometryCudaDevice;
 
 template<size_t N>
 class RGBDOdometryCuda;
 
 template<size_t N>
-class ICRGBDOdometryCudaServer;
+class ICRGBDOdometryCudaDevice;
 
 template<size_t N>
 class ICRGBDOdometryCuda;

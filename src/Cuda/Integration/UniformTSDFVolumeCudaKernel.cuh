@@ -10,8 +10,8 @@ namespace open3d {
 namespace cuda {
 template<size_t N>
 __global__
-void IntegrateKernel(UniformTSDFVolumeCudaServer<N> server,
-                     RGBDImageCudaServer rgbd,
+void IntegrateKernel(UniformTSDFVolumeCudaDevice<N> server,
+                     RGBDImageCudaDevice rgbd,
                      PinholeCameraIntrinsicCuda camera,
                      TransformCuda transform_camera_to_world) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
@@ -27,8 +27,8 @@ void IntegrateKernel(UniformTSDFVolumeCudaServer<N> server,
 template<size_t N>
 __host__
 void UniformTSDFVolumeCudaKernelCaller<N>::IntegrateKernelCaller(
-    UniformTSDFVolumeCudaServer<N> &server,
-    RGBDImageCudaServer &rgbd,
+    UniformTSDFVolumeCudaDevice<N> &server,
+    RGBDImageCudaDevice &rgbd,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
 
@@ -43,8 +43,8 @@ void UniformTSDFVolumeCudaKernelCaller<N>::IntegrateKernelCaller(
 
 template<size_t N>
 __global__
-void RayCastingKernel(UniformTSDFVolumeCudaServer<N> server,
-                      ImageCudaServer<Vector3f> image,
+void RayCastingKernel(UniformTSDFVolumeCudaDevice<N> server,
+                      ImageCudaDevice<Vector3f> image,
                       PinholeCameraIntrinsicCuda camera,
                       TransformCuda transform_camera_to_world) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
@@ -64,8 +64,8 @@ void RayCastingKernel(UniformTSDFVolumeCudaServer<N> server,
 
 template<size_t N>
 void UniformTSDFVolumeCudaKernelCaller<N>::RayCastingKernelCaller(
-    UniformTSDFVolumeCudaServer<N> &server,
-    ImageCudaServer<Vector3f> &image,
+    UniformTSDFVolumeCudaDevice<N> &server,
+    ImageCudaDevice<Vector3f> &image,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
 

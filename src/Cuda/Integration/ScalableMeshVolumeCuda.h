@@ -18,17 +18,17 @@
 namespace open3d {
 namespace cuda {
 /** Almost all the important functions have to be re-written,
- *  so we choose not to reuse UniformMeshVolumeCudaServer.
+ *  so we choose not to reuse UniformMeshVolumeCudaDevice.
  */
 template<size_t N>
-class ScalableMeshVolumeCudaServer {
+class ScalableMeshVolumeCudaDevice {
 private:
     uchar *table_indices_memory_pool_;
     Vector3i *vertex_indices_memory_pool_;
 
-    /** Refer to UniformMeshVolumeCudaServer to check how do we manage
+    /** Refer to UniformMeshVolumeCudaDevice to check how do we manage
       * vertex indices **/
-    TriangleMeshCudaServer mesh_;
+    TriangleMeshCudaDevice mesh_;
 
 public:
     __DEVICE__ inline int IndexOf(const Vector3i &Xlocal,
@@ -52,7 +52,7 @@ public:
         return vertex_indices_memory_pool_[IndexOf(Xlocal, subvolume_idx)];
     }
 
-    __DEVICE__ inline TriangleMeshCudaServer &mesh() {
+    __DEVICE__ inline TriangleMeshCudaDevice &mesh() {
         return mesh_;
     }
 
@@ -68,24 +68,24 @@ public:
 public:
     __DEVICE__ void AllocateVertex(
         const Vector3i &Xlocal, int subvolume_idx,
-        UniformTSDFVolumeCudaServer<N> *subvolume);
+        UniformTSDFVolumeCudaDevice<N> *subvolume);
 
     __DEVICE__ void AllocateVertexOnBoundary(
         const Vector3i &Xlocal, int subvolume_idx,
         int *cached_subvolume_indices,
-        UniformTSDFVolumeCudaServer<N> **cached_subvolumes);
+        UniformTSDFVolumeCudaDevice<N> **cached_subvolumes);
 
     __DEVICE__ void ExtractVertex(
         const Vector3i &Xlocal, int subvolume_idx,
         const Vector3i &Xsv,
-        ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
-        UniformTSDFVolumeCudaServer<N> *subvolume);
+        ScalableTSDFVolumeCudaDevice<N> &tsdf_volume,
+        UniformTSDFVolumeCudaDevice<N> *subvolume);
 
     __DEVICE__ void ExtractVertexOnBoundary(
         const Vector3i &Xlocal, int subvolume_idx,
         const Vector3i &Xsv,
-        ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
-        UniformTSDFVolumeCudaServer<N> **cached_subvolumes);
+        ScalableTSDFVolumeCudaDevice<N> &tsdf_volume,
+        UniformTSDFVolumeCudaDevice<N> **cached_subvolumes);
 
     __DEVICE__ void ExtractTriangle(const Vector3i &Xlocal, int subvolume_idx);
 
@@ -100,7 +100,7 @@ public:
 template<size_t N>
 class ScalableMeshVolumeCuda {
 private:
-    std::shared_ptr<ScalableMeshVolumeCudaServer<N>> server_ = nullptr;
+    std::shared_ptr<ScalableMeshVolumeCudaDevice<N>> server_ = nullptr;
     TriangleMeshCuda mesh_;
 
 public:
@@ -137,10 +137,10 @@ public:
     void MarchingCubes(ScalableTSDFVolumeCuda<N> &tsdf_volume);
 
 public:
-    std::shared_ptr<ScalableMeshVolumeCudaServer<N>> &server() {
+    std::shared_ptr<ScalableMeshVolumeCudaDevice<N>> &server() {
         return server_;
     }
-    const std::shared_ptr<ScalableMeshVolumeCudaServer<N>> &server()
+    const std::shared_ptr<ScalableMeshVolumeCudaDevice<N>> &server()
     const {
         return server_;
     }
@@ -157,35 +157,35 @@ template<size_t N>
 class ScalableMeshVolumeCudaKernelCaller {
 public:
     static __HOST__ void MarchingCubesVertexAllocationKernelCaller(
-        ScalableMeshVolumeCudaServer<N> &server,
-        ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
+        ScalableMeshVolumeCudaDevice<N> &server,
+        ScalableTSDFVolumeCudaDevice<N> &tsdf_volume,
         int active_volumes);
     static __HOST__ void MarchingCubesVertexExtractionKernelCaller(
-        ScalableMeshVolumeCudaServer<N> &server,
-        ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
+        ScalableMeshVolumeCudaDevice<N> &server,
+        ScalableTSDFVolumeCudaDevice<N> &tsdf_volume,
         int active_volumes);
     static __HOST__ void MarchingCubesTriangleExtractionKernelCaller(
-        ScalableMeshVolumeCudaServer<N> &server,
-        ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
+        ScalableMeshVolumeCudaDevice<N> &server,
+        ScalableTSDFVolumeCudaDevice<N> &tsdf_volume,
         int active_volumes);
 };
 
 template<size_t N>
 __GLOBAL__
 void MarchingCubesVertexAllocationKernel(
-    ScalableMeshVolumeCudaServer<N> server,
-    ScalableTSDFVolumeCudaServer<N> tsdf_volume);
+    ScalableMeshVolumeCudaDevice<N> server,
+    ScalableTSDFVolumeCudaDevice<N> tsdf_volume);
 
 template<size_t N>
 __GLOBAL__
 void MarchingCubesVertexExtractionKernel(
-    ScalableMeshVolumeCudaServer<N> server,
-    ScalableTSDFVolumeCudaServer<N> tsdf_volume);
+    ScalableMeshVolumeCudaDevice<N> server,
+    ScalableTSDFVolumeCudaDevice<N> tsdf_volume);
 
 template<size_t N>
 __GLOBAL__
 void MarchingCubesTriangleExtractionKernel(
-    ScalableMeshVolumeCudaServer<N> server,
-    ScalableTSDFVolumeCudaServer<N> tsdf_volume);
+    ScalableMeshVolumeCudaDevice<N> server,
+    ScalableTSDFVolumeCudaDevice<N> tsdf_volume);
 } // cuda
 } // open3d

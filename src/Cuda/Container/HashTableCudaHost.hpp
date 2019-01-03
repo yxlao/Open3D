@@ -94,7 +94,7 @@ void HashTableCuda<Key, Value, Hasher>::Create(
         return;
     }
 
-    server_ = std::make_shared<HashTableCudaServer<Key, Value, Hasher>>();
+    server_ = std::make_shared<HashTableCudaDevice<Key, Value, Hasher>>();
 
     bucket_count_ = bucket_count; /* (* BUCKET_SIZE), 2D array */
     hasher_ = Hasher(bucket_count);

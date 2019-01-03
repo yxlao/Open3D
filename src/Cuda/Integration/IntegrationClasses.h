@@ -10,25 +10,25 @@ namespace open3d {
 
 namespace cuda {
 template<size_t N>
-class UniformTSDFVolumeCudaServer;
+class UniformTSDFVolumeCudaDevice;
 
 template<size_t N>
 class UniformTSDFVolumeCuda;
 
 template<size_t N>
-class ScalableTSDFVolumeCudaServer;
+class ScalableTSDFVolumeCudaDevice;
 
 template<size_t N>
 class ScalableTSDFVolumeCuda;
 
 template<size_t N>
-class UniformMeshVolumeCudaServer;
+class UniformMeshVolumeCudaDevice;
 
 template<size_t N>
 class UniformMeshVolumeCuda;
 
 template<size_t N>
-class ScalableMeshVolumeCudaServer;
+class ScalableMeshVolumeCudaDevice;
 
 template<size_t N>
 class ScalableMeshVolumeCuda;

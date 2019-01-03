@@ -21,7 +21,7 @@ namespace cuda {
  */
 template<typename T>
 __device__
-int &MemoryHeapCudaServer<T>::internal_addr_at(size_t index) {
+int &MemoryHeapCudaDevice<T>::internal_addr_at(size_t index) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(index < max_capacity_);
 #endif
@@ -32,7 +32,7 @@ template<typename T>
 __device__
     T
 &
-MemoryHeapCudaServer<T>::value_at(size_t
+MemoryHeapCudaDevice<T>::value_at(size_t
 addr) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
 assert(addr < max_capacity_);
@@ -44,7 +44,7 @@ template<typename T>
 __device__
 const T
 &
-MemoryHeapCudaServer<T>::value_at(size_t
+MemoryHeapCudaDevice<T>::value_at(size_t
 addr) const {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
 assert(addr < max_capacity_);
@@ -70,7 +70,7 @@ return data_[addr];
  */
 template<class T>
 __device__
-int MemoryHeapCudaServer<T>::Malloc() {
+int MemoryHeapCudaDevice<T>::Malloc() {
     int index = atomicAdd(heap_counter_, 1);
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(index < max_capacity_);
@@ -80,7 +80,7 @@ int MemoryHeapCudaServer<T>::Malloc() {
 
 template<class T>
 __device__
-void MemoryHeapCudaServer<T>::Free(size_t addr) {
+void MemoryHeapCudaDevice<T>::Free(size_t addr) {
     int index = atomicSub(heap_counter_, 1);
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(index >= 1);

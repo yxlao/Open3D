@@ -19,19 +19,19 @@ namespace cuda {
 
 /** ArrayCuda **/
 template
-class ArrayCudaServer<int>;
+class ArrayCudaDevice<int>;
 template
-class ArrayCudaServer<float>;
+class ArrayCudaDevice<float>;
 template
-class ArrayCudaServer<Vector3i>;
+class ArrayCudaDevice<Vector3i>;
 template
-class ArrayCudaServer<Vector4i>;
+class ArrayCudaDevice<Vector4i>;
 template
-class ArrayCudaServer<Vector3f>;
+class ArrayCudaDevice<Vector3f>;
 template
-class ArrayCudaServer<HashEntry<Vector3i>>;
+class ArrayCudaDevice<HashEntry<Vector3i>>;
 template
-class ArrayCudaServer<LinkedListCudaServer<HashEntry<Vector3i>>>;
+class ArrayCudaDevice<LinkedListCudaDevice<HashEntry<Vector3i>>>;
 
 template
 class ArrayCudaKernelCaller<int>;
@@ -46,17 +46,17 @@ class ArrayCudaKernelCaller<Vector3f>;
 template
 class ArrayCudaKernelCaller<HashEntry<Vector3i>>;
 template
-class ArrayCudaKernelCaller<LinkedListCudaServer<HashEntry<Vector3i>>>;
+class ArrayCudaKernelCaller<LinkedListCudaDevice<HashEntry<Vector3i>>>;
 
 /** Memory Heap **/
 template
-class MemoryHeapCudaServer<int>;
+class MemoryHeapCudaDevice<int>;
 template
-class MemoryHeapCudaServer<float>;
+class MemoryHeapCudaDevice<float>;
 template
-class MemoryHeapCudaServer<LinkedListNodeCuda<int>>;
+class MemoryHeapCudaDevice<LinkedListNodeCuda<int>>;
 template
-class MemoryHeapCudaServer<LinkedListNodeCuda<HashEntry<Vector3i>>>;
+class MemoryHeapCudaDevice<LinkedListNodeCuda<HashEntry<Vector3i>>>;
 
 template
 class MemoryHeapCudaKernelCaller<int>;
@@ -69,13 +69,13 @@ class MemoryHeapCudaKernelCaller<LinkedListNodeCuda<HashEntry<Vector3i>>>;
 
 /** LinkedList **/
 template
-class LinkedListCudaServer<int>;
+class LinkedListCudaDevice<int>;
 template
 class LinkedListCudaKernelCaller<int>;
 
 /** HashTable **/
 template
-class HashTableCudaServer<Vector3i, int, SpatialHasher>;
+class HashTableCudaDevice<Vector3i, int, SpatialHasher>;
 template
 class HashTableCudaKernelCaller<Vector3i, int, SpatialHasher>;
 } // cuda

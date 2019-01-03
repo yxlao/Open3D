@@ -11,12 +11,12 @@ namespace open3d {
 
 namespace cuda {
 template<typename VecType, size_t N>
-class ImagePyramidCudaServer {
+class ImagePyramidCudaDevice {
 private:
     /** Unfortunately, we cannot use shared_ptr for CUDA data structures **/
     /** We even cannot use CPU pointers **/
     /** -- We have to call ConnectSubServers() to explicitly link them. **/
-    ImageCudaServer<VecType> images_[N];
+    ImageCudaDevice<VecType> images_[N];
 
 public:
     __HOSTDEVICE__ int width(size_t level) const {
@@ -32,13 +32,13 @@ public:
         return images_[level].height_;
     }
 
-    __HOSTDEVICE__ ImageCudaServer<VecType> &operator[](size_t level) {
+    __HOSTDEVICE__ ImageCudaDevice<VecType> &operator[](size_t level) {
 #ifdef DEBUG_CUDA_ENABLE_ASSERTION
         assert(level < N);
 #endif
         return images_[level];
     }
-    __HOSTDEVICE__ const ImageCudaServer<VecType> &operator[](size_t level) const {
+    __HOSTDEVICE__ const ImageCudaDevice<VecType> &operator[](size_t level) const {
 #ifdef DEBUG_CUDA_ENABLE_ASSERTION
         assert(level < N);
 #endif
@@ -51,7 +51,7 @@ public:
 template<typename VecType, size_t N>
 class ImagePyramidCuda {
 private:
-    std::shared_ptr<ImagePyramidCudaServer<VecType, N>> server_ = nullptr;
+    std::shared_ptr<ImagePyramidCudaDevice<VecType, N>> server_ = nullptr;
 
 private:
     ImageCuda<VecType> images_[N];
@@ -90,10 +90,10 @@ public:
         assert(level < N);
         return images_[level];
     }
-    std::shared_ptr<ImagePyramidCudaServer<VecType, N>> &server() {
+    std::shared_ptr<ImagePyramidCudaDevice<VecType, N>> &server() {
         return server_;
     }
-    const std::shared_ptr<ImagePyramidCudaServer<VecType, N>> &server() const {
+    const std::shared_ptr<ImagePyramidCudaDevice<VecType, N>> &server() const {
         return server_;
     }
 };

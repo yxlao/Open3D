@@ -28,9 +28,9 @@ struct LinkedListNodeCuda {
  * Manually add LOCKs per linked list if you want to read / write in parallel.
  */
 template<typename T>
-class LinkedListCudaServer {
+class LinkedListCudaDevice {
 private:
-    typedef MemoryHeapCudaServer<LinkedListNodeCuda<T>> MemoryHeapServer;
+    typedef MemoryHeapCudaDevice<LinkedListNodeCuda<T>> MemoryHeapServer;
     int *head_node_ptr_;
     int *size_;
 
@@ -82,7 +82,7 @@ class LinkedListCuda {
 private:
     typedef MemoryHeapCuda<LinkedListNodeCuda<T>> MemoryHeap;
 
-    std::shared_ptr<LinkedListCudaServer<T>> server_ = nullptr;
+    std::shared_ptr<LinkedListCudaDevice<T>> server_ = nullptr;
     MemoryHeap memory_heap_;
 
 public:
@@ -117,10 +117,10 @@ public:
         return memory_heap_;
     }
 
-    std::shared_ptr<LinkedListCudaServer<T>> &server() {
+    std::shared_ptr<LinkedListCudaDevice<T>> &server() {
         return server_;
     }
-    const std::shared_ptr<LinkedListCudaServer<T>> &server() const {
+    const std::shared_ptr<LinkedListCudaDevice<T>> &server() const {
         return server_;
     }
 };
@@ -129,35 +129,35 @@ template<typename T>
 class LinkedListCudaKernelCaller {
 public:
     static __HOST__ void InsertLinkedListKernelCaller(
-        LinkedListCudaServer<T> &server, ArrayCudaServer<T> &data);
+        LinkedListCudaDevice<T> &server, ArrayCudaDevice<T> &data);
     static __HOST__ void FindLinkedListKernelCaller(
-        LinkedListCudaServer<T> &server, ArrayCudaServer<T> &query);
+        LinkedListCudaDevice<T> &server, ArrayCudaDevice<T> &query);
     static __HOST__ void DeleteLinkedListKernelCaller(
-        LinkedListCudaServer<T> &server, ArrayCudaServer<T> &query);
+        LinkedListCudaDevice<T> &server, ArrayCudaDevice<T> &query);
     static __HOST__ void ClearLinkedListKernelCaller(
-        LinkedListCudaServer<T> &server);
+        LinkedListCudaDevice<T> &server);
     static __HOST__ void DownloadLinkedListKernelCaller(
-        LinkedListCudaServer<T> &server, ArrayCudaServer<T> &data);
+        LinkedListCudaDevice<T> &server, ArrayCudaDevice<T> &data);
 };
 
 template<typename T>
 __GLOBAL__
 void InsertLinkedListKernel(
-    LinkedListCudaServer<T> server, ArrayCudaServer<T> data);
+    LinkedListCudaDevice<T> server, ArrayCudaDevice<T> data);
 template<typename T>
 __GLOBAL__
 void FindLinkedListKernel(
-    LinkedListCudaServer<T> server, ArrayCudaServer<T> query);
+    LinkedListCudaDevice<T> server, ArrayCudaDevice<T> query);
 template<typename T>
 __GLOBAL__
 void DeleteLinkedListKernel(
-    LinkedListCudaServer<T> server, ArrayCudaServer<T> query);
+    LinkedListCudaDevice<T> server, ArrayCudaDevice<T> query);
 template<typename T>
 __GLOBAL__
-void ClearLinkedListKernel(LinkedListCudaServer<T> server);
+void ClearLinkedListKernel(LinkedListCudaDevice<T> server);
 template<typename T>
 __GLOBAL__
 void DownloadLinkedListKernel(
-    LinkedListCudaServer<T> server, ArrayCudaServer<T> data);
+    LinkedListCudaDevice<T> server, ArrayCudaDevice<T> data);
 } // cuda
 } // open3d

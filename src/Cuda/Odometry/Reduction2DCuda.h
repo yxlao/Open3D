@@ -33,15 +33,15 @@ inline T WarpReduceSumShuffle(T &sum);
 
 template<typename VecType, typename T>
 __GLOBAL__
-void ReduceSum2DKernel(ImageCudaServer<VecType> src, T *sum);
+void ReduceSum2DKernel(ImageCudaDevice<VecType> src, T *sum);
 
 template<typename VecType, typename T>
 __GLOBAL__
-void ReduceSum2DShuffleKernel(ImageCudaServer<VecType> src, T *sum);
+void ReduceSum2DShuffleKernel(ImageCudaDevice<VecType> src, T *sum);
 
 template<typename VecType, typename T>
 __GLOBAL__
-void AtomicSumKernel(ImageCudaServer<VecType> src, T *sum);
+void AtomicSumKernel(ImageCudaDevice<VecType> src, T *sum);
 
 template<typename VecType, typename T>
 T ReduceSum2D(ImageCuda<VecType> &src);

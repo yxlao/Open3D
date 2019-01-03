@@ -61,7 +61,7 @@ void LinkedListCuda<T>::Create(int max_capacity,
         return;
     }
 
-    server_ = std::make_shared<LinkedListCudaServer<T>>();
+    server_ = std::make_shared<LinkedListCudaDevice<T>>();
     max_capacity_ = max_capacity;
     memory_heap_ = memory_heap;
 

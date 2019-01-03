@@ -10,8 +10,8 @@ namespace cuda {
 template<size_t N>
 __global__
 void MarchingCubesVertexAllocationKernel(
-    UniformMeshVolumeCudaServer<N> server,
-    UniformTSDFVolumeCudaServer<N> tsdf_volume) {
+    UniformMeshVolumeCudaDevice<N> server,
+    UniformTSDFVolumeCudaDevice<N> tsdf_volume) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
     const int z = threadIdx.z + blockIdx.z * blockDim.z;
@@ -26,8 +26,8 @@ template<size_t N>
 __host__
 void UniformMeshVolumeCudaKernelCaller<N>::
 MarchingCubesVertexAllocationKernelCaller(
-    UniformMeshVolumeCudaServer<N> &server,
-    UniformTSDFVolumeCudaServer<N> &tsdf_volume) {
+    UniformMeshVolumeCudaDevice<N> &server,
+    UniformTSDFVolumeCudaDevice<N> &tsdf_volume) {
 
     const int num_blocks = DIV_CEILING(N, THREAD_3D_UNIT);
     const dim3 blocks(num_blocks, num_blocks, num_blocks);
@@ -41,8 +41,8 @@ MarchingCubesVertexAllocationKernelCaller(
 template<size_t N>
 __global__
 void MarchingCubesVertexExtractionKernel(
-    UniformMeshVolumeCudaServer<N> server,
-    UniformTSDFVolumeCudaServer<N> tsdf_volume) {
+    UniformMeshVolumeCudaDevice<N> server,
+    UniformTSDFVolumeCudaDevice<N> tsdf_volume) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
     const int z = threadIdx.z + blockIdx.z * blockDim.z;
@@ -55,8 +55,8 @@ template<size_t N>
 __host__
 void UniformMeshVolumeCudaKernelCaller<N>::
 MarchingCubesVertexExtractionKernelCaller(
-    UniformMeshVolumeCudaServer<N> &server,
-    UniformTSDFVolumeCudaServer<N> &tsdf_volume) {
+    UniformMeshVolumeCudaDevice<N> &server,
+    UniformTSDFVolumeCudaDevice<N> &tsdf_volume) {
 
     const int num_blocks = DIV_CEILING(N, THREAD_3D_UNIT);
     const dim3 blocks(num_blocks, num_blocks, num_blocks);
@@ -70,7 +70,7 @@ MarchingCubesVertexExtractionKernelCaller(
 template<size_t N>
 __global__
 void MarchingCubesTriangleExtractionKernel(
-    UniformMeshVolumeCudaServer<N> server) {
+    UniformMeshVolumeCudaDevice<N> server) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
     const int z = threadIdx.z + blockIdx.z * blockDim.z;
@@ -85,7 +85,7 @@ template<size_t N>
 __host__
 void UniformMeshVolumeCudaKernelCaller<N>::
 MarchingCubesTriangleExtractionKernelCaller(
-    UniformMeshVolumeCudaServer<N> &server) {
+    UniformMeshVolumeCudaDevice<N> &server) {
 
     const int num_blocks = DIV_CEILING(N, THREAD_3D_UNIT);
     const dim3 blocks(num_blocks, num_blocks, num_blocks);

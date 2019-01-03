@@ -20,11 +20,11 @@ namespace open3d {
 namespace cuda {
 
 template<size_t N>
-class ScalableTSDFVolumeCudaServer {
+class ScalableTSDFVolumeCudaDevice {
 public:
-    typedef HashTableCudaServer<
-    Vector3i, UniformTSDFVolumeCudaServer<N>, SpatialHasher>
-        SpatialHashTableCudaServer;
+    typedef HashTableCudaDevice<
+    Vector3i, UniformTSDFVolumeCudaDevice<N>, SpatialHasher>
+        SpatialHashTableCudaDevice;
 
 private:
     /** (N * N * N) * value_capacity **/
@@ -38,7 +38,7 @@ private:
     uchar weight_dummy_ = 0;
     Vector3b color_dummy_ = Vector3b(0);
 
-    SpatialHashTableCudaServer hash_table_;
+    SpatialHashTableCudaDevice hash_table_;
 
     /** Below are the extended part of the hash table.
      *  The essential idea is that we wish to
@@ -48,7 +48,7 @@ private:
      *     active subvolumes given the 3D index.
      *  Refer to function @ActivateSubvolume **/
     /** f: R -> R^3. Given index, query subvolume coordinate **/
-    ArrayCudaServer<HashEntry<Vector3i>> active_subvolume_entry_array_;
+    ArrayCudaDevice<HashEntry<Vector3i>> active_subvolume_entry_array_;
     /** f: R^3 -> R -> R. Given subvolume coordinate, query index **/
     int *active_subvolume_indices_;
 
@@ -63,7 +63,7 @@ public:
     TransformCuda transform_world_to_volume_;
 
 public:
-    __HOSTDEVICE__ inline SpatialHashTableCudaServer &hash_table() {
+    __HOSTDEVICE__ inline SpatialHashTableCudaDevice &hash_table() {
         return hash_table_;
     }
 
@@ -77,7 +77,7 @@ public:
         return color_memory_pool_;
     }
 
-    __HOSTDEVICE__ inline ArrayCudaServer<HashEntry<Vector3i>> &
+    __HOSTDEVICE__ inline ArrayCudaDevice<HashEntry<Vector3i>> &
     active_subvolume_entry_array() {
         return active_subvolume_entry_array_;
     }
@@ -116,7 +116,7 @@ public:
     __DEVICE__ inline Vector3f voxelf_local_to_global(
         const Vector3f &Xlocal, const Vector3i &Xsv);
 
-    __DEVICE__ UniformTSDFVolumeCudaServer<N> *QuerySubvolume(
+    __DEVICE__ UniformTSDFVolumeCudaDevice<N> *QuerySubvolume(
         const Vector3i &Xsv);
 
     /** Unoptimized access and interpolation
@@ -196,35 +196,35 @@ public:
     __DEVICE__ void CacheNeighborSubvolumes(
         const Vector3i &Xsv, const Vector3i &dXsv,
         int *cached_subvolume_indices,
-        UniformTSDFVolumeCudaServer<N> **cached_subvolumes);
+        UniformTSDFVolumeCudaDevice<N> **cached_subvolumes);
 
     /** In these functions range of input indices are [-1, N+1)
      * (xlocal, ylocal, zlocal) is inside
      * cached_subvolumes[IndexOfNeighborSubvolumes(0, 0, 0)] **/
     __DEVICE__ Vector3f gradient(
         const Vector3i &Xlocal,
-        UniformTSDFVolumeCudaServer<N> **cached_subvolumes);
+        UniformTSDFVolumeCudaDevice<N> **cached_subvolumes);
     __DEVICE__ float TSDFOnBoundaryAt(
         const Vector3f &Xlocal,
-        UniformTSDFVolumeCudaServer<N> **cached_subvolumes);
+        UniformTSDFVolumeCudaDevice<N> **cached_subvolumes);
     __DEVICE__ uchar WeightOnBoundaryAt(
         const Vector3f &Xlocal,
-        UniformTSDFVolumeCudaServer<N> **cached_subvolumes);
+        UniformTSDFVolumeCudaDevice<N> **cached_subvolumes);
     __DEVICE__ Vector3b ColorOnBoundaryAt(
         const Vector3f &Xlocal,
-        UniformTSDFVolumeCudaServer<N> **cached_subvolumes);
+        UniformTSDFVolumeCudaDevice<N> **cached_subvolumes);
     __DEVICE__ Vector3f GradientOnBoundaryAt(
         const Vector3f &Xlocal,
-        UniformTSDFVolumeCudaServer<N> **cached_subvolumes);
+        UniformTSDFVolumeCudaDevice<N> **cached_subvolumes);
 
 public:
     __DEVICE__ void TouchSubvolume(const Vector2i &p,
-                                   ImageCudaServer<Vector1f> &depth,
+                                   ImageCudaDevice<Vector1f> &depth,
                                    PinholeCameraIntrinsicCuda &camera,
                                    TransformCuda &transform_camera_to_world);
     __DEVICE__ void Integrate(const Vector3i &Xlocal,
                               HashEntry<Vector3i> &target_subvolume_entry,
-                              RGBDImageCudaServer &rgbd,
+                              RGBDImageCudaDevice &rgbd,
                               PinholeCameraIntrinsicCuda &camera,
                               TransformCuda &transform_camera_to_world);
     __DEVICE__ Vector3f RayCasting(const Vector2i &p,
@@ -239,15 +239,15 @@ template<size_t N>
 class ScalableTSDFVolumeCuda {
 public:
     /** Note here the template is exactly the same as the
-     * SpatialHashTableCudaServer.
-     * We will explicitly deal with the UniformTSDFVolumeCudaServer later
+     * SpatialHashTableCudaDevice.
+     * We will explicitly deal with the UniformTSDFVolumeCudaDevice later
      * **/
     typedef HashTableCuda
-    <Vector3i, UniformTSDFVolumeCudaServer<N>, SpatialHasher>
+    <Vector3i, UniformTSDFVolumeCudaDevice<N>, SpatialHasher>
         SpatialHashTableCuda;
 
 private:
-    std::shared_ptr<ScalableTSDFVolumeCudaServer<N>> server_ = nullptr;
+    std::shared_ptr<ScalableTSDFVolumeCudaDevice<N>> server_ = nullptr;
     SpatialHashTableCuda hash_table_;
     ArrayCuda<HashEntry<Vector3i>> active_subvolume_entry_array_;
 
@@ -269,7 +269,7 @@ public:
     ~ScalableTSDFVolumeCuda();
 
     /** BE CAREFUL, we have to rewrite some
-     * non-wrapped allocation stuff here for UniformTSDFVolumeCudaServer **/
+     * non-wrapped allocation stuff here for UniformTSDFVolumeCudaDevice **/
     void Create(int bucket_count, int value_capacity);
     void Release();
     void Reset();
@@ -322,10 +322,10 @@ public:
     const ArrayCuda<HashEntry<Vector3i>> &active_subvolume_entry_array() const {
         return active_subvolume_entry_array_;
     }
-    std::shared_ptr<ScalableTSDFVolumeCudaServer<N>> &server() {
+    std::shared_ptr<ScalableTSDFVolumeCudaDevice<N>> &server() {
         return server_;
     }
-    const std::shared_ptr<ScalableTSDFVolumeCudaServer<N>> &server() const {
+    const std::shared_ptr<ScalableTSDFVolumeCudaDevice<N>> &server() const {
         return server_;
     }
 };
@@ -334,34 +334,34 @@ template<size_t N>
 class ScalableTSDFVolumeCudaKernelCaller {
 public:
     static __HOST__ void CreateScalableTSDFVolumesKernelCaller(
-        ScalableTSDFVolumeCudaServer<N> &server, int value_capacity);
+        ScalableTSDFVolumeCudaDevice<N> &server, int value_capacity);
 
     static __HOST__ void TouchSubvolumesKernelCaller(
-        ScalableTSDFVolumeCudaServer<N> &server,
-        ImageCudaServer<Vector1f> &depth,
+        ScalableTSDFVolumeCudaDevice<N> &server,
+        ImageCudaDevice<Vector1f> &depth,
         PinholeCameraIntrinsicCuda &camera,
         TransformCuda &transform_camera_to_world);
 
     static __HOST__ void IntegrateSubvolumesKernelCaller(
-        ScalableTSDFVolumeCudaServer<N> &server,
-        RGBDImageCudaServer &rgbd,
+        ScalableTSDFVolumeCudaDevice<N> &server,
+        RGBDImageCudaDevice &rgbd,
         PinholeCameraIntrinsicCuda &camera,
         TransformCuda &transform_camera_to_world,
         int active_subvolumes);
 
     static __HOST__ void GetSubvolumesInFrustumKernelCaller(
-        ScalableTSDFVolumeCudaServer<N> &server,
+        ScalableTSDFVolumeCudaDevice<N> &server,
         PinholeCameraIntrinsicCuda &camera,
         TransformCuda &transform_camera_to_world,
         int bucket_count);
 
     static __HOST__ void GetAllSubvolumesKernelCaller(
-        ScalableTSDFVolumeCudaServer<N> &server,
+        ScalableTSDFVolumeCudaDevice<N> &server,
         int bucket_count);
 
     static __HOST__ void RayCastingKernelCaller(
-        ScalableTSDFVolumeCudaServer<N> &server,
-        ImageCudaServer<Vector3f> &normal,
+        ScalableTSDFVolumeCudaDevice<N> &server,
+        ImageCudaDevice<Vector3f> &normal,
         PinholeCameraIntrinsicCuda &camera,
         TransformCuda &transform_camera_to_world);
 };
@@ -369,41 +369,41 @@ public:
 template<size_t N>
 __GLOBAL__
 void CreateScalableTSDFVolumesKernel(
-    ScalableTSDFVolumeCudaServer<N> server);
+    ScalableTSDFVolumeCudaDevice<N> server);
 
 template<size_t N>
 __GLOBAL__
 void TouchSubvolumesKernel(
-    ScalableTSDFVolumeCudaServer<N> server,
-    ImageCudaServer<Vector1f> depth,
+    ScalableTSDFVolumeCudaDevice<N> server,
+    ImageCudaDevice<Vector1f> depth,
     PinholeCameraIntrinsicCuda camera,
     TransformCuda transform_camera_to_world);
 
 template<size_t N>
 __GLOBAL__
 void IntegrateSubvolumesKernel(
-    ScalableTSDFVolumeCudaServer<N> server,
-    RGBDImageCudaServer depth,
+    ScalableTSDFVolumeCudaDevice<N> server,
+    RGBDImageCudaDevice depth,
     PinholeCameraIntrinsicCuda camera,
     TransformCuda transform_camera_to_world);
 
 template<size_t N>
 __GLOBAL__
 void GetSubvolumesInFrustumKernel(
-    ScalableTSDFVolumeCudaServer<N> server,
+    ScalableTSDFVolumeCudaDevice<N> server,
     PinholeCameraIntrinsicCuda camera,
     TransformCuda transform_camera_to_world);
 
 template<size_t N>
 __GLOBAL__
 void GetAllSubvolumesKernel(
-    ScalableTSDFVolumeCudaServer<N> server);
+    ScalableTSDFVolumeCudaDevice<N> server);
 
 template<size_t N>
 __GLOBAL__
 void RayCastingKernel(
-    ScalableTSDFVolumeCudaServer<N> server,
-    ImageCudaServer<Vector3f> normal,
+    ScalableTSDFVolumeCudaDevice<N> server,
+    ImageCudaDevice<Vector3f> normal,
     PinholeCameraIntrinsicCuda camera,
     TransformCuda transform_camera_to_world);
 

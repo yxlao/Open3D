@@ -10,12 +10,12 @@ namespace cuda {
 
 template<size_t N>
 __global__
-void CreateScalableTSDFVolumesKernel(ScalableTSDFVolumeCudaServer<N> server) {
+void CreateScalableTSDFVolumesKernel(ScalableTSDFVolumeCudaDevice<N> server) {
     const size_t index = blockIdx.x * blockDim.x + threadIdx.x;
     if (index >= server.value_capacity_) return;
 
     const size_t offset = (N * N * N) * index;
-    UniformTSDFVolumeCudaServer < N > &subvolume = server.hash_table()
+    UniformTSDFVolumeCudaDevice < N > &subvolume = server.hash_table()
         .memory_heap_value().value_at(index);
 
     /** Assign memory **/
@@ -35,7 +35,7 @@ template<size_t N>
 __host__
 void ScalableTSDFVolumeCudaKernelCaller<N>::
 CreateScalableTSDFVolumesKernelCaller(
-    ScalableTSDFVolumeCudaServer<N> &server,
+    ScalableTSDFVolumeCudaDevice<N> &server,
     int value_capacity) {
 
     const dim3 threads(THREAD_1D_UNIT);
@@ -47,8 +47,8 @@ CreateScalableTSDFVolumesKernelCaller(
 
 template<size_t N>
 __global__
-void TouchSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server,
-                           ImageCudaServer<Vector1f> depth,
+void TouchSubvolumesKernel(ScalableTSDFVolumeCudaDevice<N> server,
+                           ImageCudaDevice<Vector1f> depth,
                            PinholeCameraIntrinsicCuda camera,
                            TransformCuda transform_camera_to_world) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
@@ -64,8 +64,8 @@ template<size_t N>
 __host__
 void ScalableTSDFVolumeCudaKernelCaller<N>::
 TouchSubvolumesKernelCaller(
-    ScalableTSDFVolumeCudaServer<N> &server,
-    ImageCudaServer<Vector1f> &depth,
+    ScalableTSDFVolumeCudaDevice<N> &server,
+    ImageCudaDevice<Vector1f> &depth,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
 
@@ -80,8 +80,8 @@ TouchSubvolumesKernelCaller(
 
 template<size_t N>
 __global__
-void IntegrateSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server,
-                               RGBDImageCudaServer rgbd,
+void IntegrateSubvolumesKernel(ScalableTSDFVolumeCudaDevice<N> server,
+                               RGBDImageCudaDevice rgbd,
                                PinholeCameraIntrinsicCuda camera,
                                TransformCuda transform_camera_to_world) {
 
@@ -105,8 +105,8 @@ template<size_t N>
 __host__
 void ScalableTSDFVolumeCudaKernelCaller<N>::
 IntegrateSubvolumesKernelCaller(
-    ScalableTSDFVolumeCudaServer<N> &server,
-    RGBDImageCudaServer &rgbd,
+    ScalableTSDFVolumeCudaDevice<N> &server,
+    RGBDImageCudaDevice &rgbd,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world,
     int active_subvolumes) {
@@ -121,7 +121,7 @@ IntegrateSubvolumesKernelCaller(
 
 template<size_t N>
 __global__
-void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
+void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaDevice<N> server,
                                   PinholeCameraIntrinsicCuda camera,
                                   TransformCuda transform_camera_to_world) {
     const int bucket_idx = threadIdx.x + blockIdx.x * blockDim.x;
@@ -145,7 +145,7 @@ void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaServer<N> server,
         }
     }
 
-    LinkedListCudaServer<HashEntry<Vector3i>> &linked_list =
+    LinkedListCudaDevice<HashEntry<Vector3i>> &linked_list =
         hash_table.entry_list_array().at(bucket_idx);
     int node_ptr = linked_list.head_node_ptr();
     while (node_ptr != NULLPTR_CUDA) {
@@ -168,7 +168,7 @@ template<size_t N>
 __host__
 void ScalableTSDFVolumeCudaKernelCaller<N>::
 GetSubvolumesInFrustumKernelCaller(
-    ScalableTSDFVolumeCudaServer<N> &server,
+    ScalableTSDFVolumeCudaDevice<N> &server,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world,
     int bucket_count) {
@@ -183,7 +183,7 @@ GetSubvolumesInFrustumKernelCaller(
 
 template<size_t N>
 __global__
-void GetAllSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server) {
+void GetAllSubvolumesKernel(ScalableTSDFVolumeCudaDevice<N> server) {
     const int bucket_idx = threadIdx.x + blockIdx.x * blockDim.x;
     if (bucket_idx >= server.bucket_count_) return;
 
@@ -199,7 +199,7 @@ void GetAllSubvolumesKernel(ScalableTSDFVolumeCudaServer<N> server) {
         }
     }
 
-    LinkedListCudaServer<HashEntry<Vector3i>> &linked_list =
+    LinkedListCudaDevice<HashEntry<Vector3i>> &linked_list =
         hash_table.entry_list_array().at(bucket_idx);
     int node_ptr = linked_list.head_node_ptr();
     while (node_ptr != NULLPTR_CUDA) {
@@ -214,7 +214,7 @@ template<size_t N>
 __host__
 void ScalableTSDFVolumeCudaKernelCaller<N>::
 GetAllSubvolumesKernelCaller(
-    ScalableTSDFVolumeCudaServer<N> &server,
+    ScalableTSDFVolumeCudaDevice<N> &server,
     int bucket_count) {
 
     const dim3 blocks(bucket_count);
@@ -226,8 +226,8 @@ GetAllSubvolumesKernelCaller(
 
 template<size_t N>
 __global__
-void RayCastingKernel(ScalableTSDFVolumeCudaServer<N> server,
-                      ImageCudaServer<Vector3f> normal,
+void RayCastingKernel(ScalableTSDFVolumeCudaDevice<N> server,
+                      ImageCudaDevice<Vector3f> normal,
                       PinholeCameraIntrinsicCuda camera,
                       TransformCuda transform_camera_to_world) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
@@ -245,8 +245,8 @@ template<size_t N>
 __host__
 void ScalableTSDFVolumeCudaKernelCaller<N>::
 RayCastingKernelCaller(
-    ScalableTSDFVolumeCudaServer<N> &server,
-    ImageCudaServer<Vector3f> &image,
+    ScalableTSDFVolumeCudaDevice<N> &server,
+    ImageCudaDevice<Vector3f> &image,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
     const dim3 blocks(DIV_CEILING(image.width_, THREAD_2D_UNIT),

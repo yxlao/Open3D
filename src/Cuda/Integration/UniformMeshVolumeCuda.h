@@ -25,7 +25,7 @@ namespace cuda {
 static const int VERTEX_TO_ALLOCATE = -1;
 
 template<size_t N>
-class UniformMeshVolumeCudaServer {
+class UniformMeshVolumeCudaDevice {
 private:
     uchar *table_indices_;
     Vector3i *vertex_indices_;
@@ -50,7 +50,7 @@ private:
      *    -- the interleaved storage will require non-trivial efforts to
      *       transfer data into TriangleMesh, or OpenGL handles, for rendering.
      **/
-    TriangleMeshCudaServer mesh_;
+    TriangleMeshCudaDevice mesh_;
 
 public:
     __DEVICE__ inline Vector3i Vectorize(size_t index) {
@@ -77,15 +77,15 @@ public:
     __DEVICE__ inline Vector3i &vertex_indices(const Vector3i &X) {
         return vertex_indices_[IndexOf(X)];
     }
-    __DEVICE__ inline TriangleMeshCudaServer mesh() {
+    __DEVICE__ inline TriangleMeshCudaDevice mesh() {
         return mesh_;
     }
 
 public:
     __DEVICE__ void AllocateVertex(
-        const Vector3i &X, UniformTSDFVolumeCudaServer<N> &tsdf_volume);
+        const Vector3i &X, UniformTSDFVolumeCudaDevice<N> &tsdf_volume);
     __DEVICE__ void ExtractVertex(
-        const Vector3i &X, UniformTSDFVolumeCudaServer<N> &tsdf_volume);
+        const Vector3i &X, UniformTSDFVolumeCudaDevice<N> &tsdf_volume);
     __DEVICE__ void ExtractTriangle(const Vector3i &X);
 
 public:
@@ -95,7 +95,7 @@ public:
 template<size_t N>
 class UniformMeshVolumeCuda {
 private:
-    std::shared_ptr<UniformMeshVolumeCudaServer<N> > server_ = nullptr;
+    std::shared_ptr<UniformMeshVolumeCudaDevice<N> > server_ = nullptr;
     TriangleMeshCuda mesh_;
 
 public:
@@ -124,10 +124,10 @@ public:
     void MarchingCubes(UniformTSDFVolumeCuda<N> &tsdf_volume);
 
 public:
-    std::shared_ptr<UniformMeshVolumeCudaServer<N>> &server() {
+    std::shared_ptr<UniformMeshVolumeCudaDevice<N>> &server() {
         return server_;
     }
-    const std::shared_ptr<UniformMeshVolumeCudaServer<N>> &server() const {
+    const std::shared_ptr<UniformMeshVolumeCudaDevice<N>> &server() const {
         return server_;
     }
 
@@ -143,32 +143,32 @@ template<size_t N>
 class UniformMeshVolumeCudaKernelCaller {
 public:
     static __HOST__ void MarchingCubesVertexAllocationKernelCaller(
-        UniformMeshVolumeCudaServer<N> &server,
-        UniformTSDFVolumeCudaServer<N> &tsdf_volume);
+        UniformMeshVolumeCudaDevice<N> &server,
+        UniformTSDFVolumeCudaDevice<N> &tsdf_volume);
 
     static __HOST__ void MarchingCubesVertexExtractionKernelCaller(
-        UniformMeshVolumeCudaServer<N> &server,
-        UniformTSDFVolumeCudaServer<N> &tsdf_volume);
+        UniformMeshVolumeCudaDevice<N> &server,
+        UniformTSDFVolumeCudaDevice<N> &tsdf_volume);
 
     static __HOST__ void MarchingCubesTriangleExtractionKernelCaller(
-        UniformMeshVolumeCudaServer<N> &server);
+        UniformMeshVolumeCudaDevice<N> &server);
 };
 
 template<size_t N>
 __GLOBAL__
 void MarchingCubesVertexAllocationKernel(
-    UniformMeshVolumeCudaServer<N> server,
-    UniformTSDFVolumeCudaServer<N> tsdf_volume);
+    UniformMeshVolumeCudaDevice<N> server,
+    UniformTSDFVolumeCudaDevice<N> tsdf_volume);
 
 template<size_t N>
 __GLOBAL__
 void MarchingCubesVertexExtractionKernel(
-    UniformMeshVolumeCudaServer<N> server,
-    UniformTSDFVolumeCudaServer<N> tsdf_volume);
+    UniformMeshVolumeCudaDevice<N> server,
+    UniformTSDFVolumeCudaDevice<N> tsdf_volume);
 
 template<size_t N>
 __GLOBAL__
 void MarchingCubesTriangleExtractionKernel(
-    UniformMeshVolumeCudaServer<N> server);
+    UniformMeshVolumeCudaDevice<N> server);
 } // cuda
 } // open3d

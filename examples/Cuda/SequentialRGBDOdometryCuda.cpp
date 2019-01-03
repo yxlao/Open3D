@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
     /** This API loads camera_to_world and turns to world_to_camera
      * (with inverse)**/
     ReadPinholeCameraTrajectoryFromLOG(
-        base_path + "/trajectory.log", trajectory_gt);
+        base_path + "/lounge_trajectory.log", trajectory_gt);
 
     for (auto &param : trajectory_gt.parameters_) {
         param.extrinsic_ = param.extrinsic_.inverse();
@@ -60,8 +60,8 @@ int main(int argc, char **argv) {
         10000, 200000, voxel_length, 3 * voxel_length, extrinsics);
 
     Image depth, color;
-    cuda::RGBDImageCuda rgbd_prev(0.1f, 4.0f, 5000.0f);
-    cuda::RGBDImageCuda rgbd_curr(0.1f, 4.0f, 5000.0f);
+    cuda::RGBDImageCuda rgbd_prev(0.1f, 4.0f, 1000.0f);
+    cuda::RGBDImageCuda rgbd_curr(0.1f, 4.0f, 1000.0f);
     cuda::ScalableMeshVolumeCuda<8> mesher(
         40000, cuda::VertexWithNormalAndColor, 6000000, 12000000);
 

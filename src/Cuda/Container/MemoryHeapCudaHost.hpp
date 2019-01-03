@@ -48,7 +48,7 @@ template<typename T>
 void MemoryHeapCuda<T>::Resize(int new_max_capacity) {
     assert(max_capacity_ < new_max_capacity);
 
-    auto new_server = std::make_shared<MemoryHeapCudaServer<T>>();
+    auto new_server = std::make_shared<MemoryHeapCudaDevice<T>>();
     new_server->max_capacity_ = new_max_capacity;
     CheckCuda(cudaMalloc(&new_server->heap_counter_, sizeof(int)));
     CheckCuda(cudaMalloc(&new_server->heap_, sizeof(int) * new_max_capacity));
@@ -78,7 +78,7 @@ void MemoryHeapCuda<T>::Create(int max_capacity) {
         return;
     }
 
-    server_ = std::make_shared<MemoryHeapCudaServer<T>>();
+    server_ = std::make_shared<MemoryHeapCudaDevice<T>>();
     max_capacity_ = max_capacity;
     server_->max_capacity_ = max_capacity;
 

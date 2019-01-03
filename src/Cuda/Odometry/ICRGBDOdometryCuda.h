@@ -40,21 +40,21 @@ namespace cuda {
  * or use inheritance to simplify the code
  */
 template<size_t N>
-class ICRGBDOdometryCudaServer {
+class ICRGBDOdometryCudaDevice {
 public:
-    ImagePyramidCudaServer<Vector1f, N> source_on_target_;
+    ImagePyramidCudaDevice<Vector1f, N> source_on_target_;
 
-    RGBDImagePyramidCudaServer<N> source_;
-    RGBDImagePyramidCudaServer<N> source_dx_;
-    RGBDImagePyramidCudaServer<N> source_dy_;
+    RGBDImagePyramidCudaDevice<N> source_;
+    RGBDImagePyramidCudaDevice<N> source_dx_;
+    RGBDImagePyramidCudaDevice<N> source_dy_;
 
-    ImagePyramidCudaServer<Vector6f, N> source_depth_jacobian_;
-    ImagePyramidCudaServer<Vector6f, N> source_intensity_jacobian_;
+    ImagePyramidCudaDevice<Vector6f, N> source_depth_jacobian_;
+    ImagePyramidCudaDevice<Vector6f, N> source_intensity_jacobian_;
 
-    RGBDImagePyramidCudaServer<N> target_;
+    RGBDImagePyramidCudaDevice<N> target_;
 
-    ArrayCudaServer<float> results_;
-    ArrayCudaServer<Vector4i> correspondences_;
+    ArrayCudaDevice<float> results_;
+    ArrayCudaDevice<Vector4i> correspondences_;
 
 public:
     PinholeCameraIntrinsicCuda intrinsics_[N];
@@ -101,7 +101,7 @@ public:
 template<size_t N>
 class ICRGBDOdometryCuda {
 private:
-    std::shared_ptr<ICRGBDOdometryCudaServer<N>> server_ = nullptr;
+    std::shared_ptr<ICRGBDOdometryCudaDevice<N>> server_ = nullptr;
 
     ImagePyramidCuda<Vector1f, N> source_on_target_;
     RGBDImagePyramidCuda<N> source_raw_;
@@ -156,10 +156,10 @@ public:
     RGBDImagePyramidCuda<N> &source() { return source_; }
     RGBDImagePyramidCuda<N> &target() { return target_; }
 
-    std::shared_ptr<ICRGBDOdometryCudaServer<N>> &server() {
+    std::shared_ptr<ICRGBDOdometryCudaDevice<N>> &server() {
         return server_;
     }
-    const std::shared_ptr<ICRGBDOdometryCudaServer<N>> &server() const {
+    const std::shared_ptr<ICRGBDOdometryCudaDevice<N>> &server() const {
         return server_;
     }
 };
@@ -168,22 +168,22 @@ template<size_t N>
 class ICRGBDOdometryCudaKernelCaller {
 public:
     static __HOST__ void DoSinlgeIterationKernelCaller(
-        ICRGBDOdometryCudaServer<N> &server, size_t level,
+        ICRGBDOdometryCudaDevice<N> &server, size_t level,
         int width, int height);
     static __HOST__ void PrecomputeJacobiansKernelCaller(
-        ICRGBDOdometryCudaServer<N> &server, size_t level,
+        ICRGBDOdometryCudaDevice<N> &server, size_t level,
         int width, int height);
 };
 
 template<size_t N>
 __GLOBAL__
 void PrecomputeJacobiansKernel(
-    ICRGBDOdometryCudaServer<N> odometry, size_t level);
+    ICRGBDOdometryCudaDevice<N> odometry, size_t level);
 
 template<size_t N>
 __GLOBAL__
 void DoSingleIterationKernel(
-    ICRGBDOdometryCudaServer<N> odometry, size_t level);
+    ICRGBDOdometryCudaDevice<N> odometry, size_t level);
 
 } // cuda
 } // open3d

@@ -19,7 +19,7 @@
 namespace open3d {
 namespace cuda {
 template<size_t N>
-class UniformTSDFVolumeCudaServer {
+class UniformTSDFVolumeCudaDevice {
 private:
     /** [N * N * N] **/
     float *tsdf_;
@@ -92,13 +92,13 @@ public:
 
 public:
     /** WARNING!!! DO NOT USE IT!!!
-      * This method is reserved for ScalableTSDFVolumeCudaServer
+      * This method is reserved for ScalableTSDFVolumeCudaDevice
       * That class requires us to initialize memory ON GPU. */
     __DEVICE__ void Create(float *tsdf, uchar *weight, Vector3b *color);
 
 public:
     __DEVICE__ void Integrate(const Vector3i &X,
-                              RGBDImageCudaServer &rgbd,
+                              RGBDImageCudaDevice &rgbd,
                               PinholeCameraIntrinsicCuda &camera,
                               TransformCuda &transform_camera_to_world);
 
@@ -114,7 +114,7 @@ public:
 template<size_t N>
 class UniformTSDFVolumeCuda {
 private:
-    std::shared_ptr<UniformTSDFVolumeCudaServer<N>> server_ = nullptr;
+    std::shared_ptr<UniformTSDFVolumeCudaDevice<N>> server_ = nullptr;
 
 public:
     float voxel_length_;
@@ -150,10 +150,10 @@ public:
                     TransformCuda &transform_camera_to_world);
 
 public:
-    std::shared_ptr<UniformTSDFVolumeCudaServer<N>> &server() {
+    std::shared_ptr<UniformTSDFVolumeCudaDevice<N>> &server() {
         return server_;
     }
-    const std::shared_ptr<UniformTSDFVolumeCudaServer<N>> &server() const {
+    const std::shared_ptr<UniformTSDFVolumeCudaDevice<N>> &server() const {
         return server_;
     }
 };
@@ -162,29 +162,29 @@ template<size_t N>
 class UniformTSDFVolumeCudaKernelCaller {
 public:
     static __HOST__ void IntegrateKernelCaller(
-        UniformTSDFVolumeCudaServer<N> &server,
-        RGBDImageCudaServer &rgbd,
+        UniformTSDFVolumeCudaDevice<N> &server,
+        RGBDImageCudaDevice &rgbd,
         PinholeCameraIntrinsicCuda &camera,
         TransformCuda &transform_camera_to_world);
 
     static __HOST__ void RayCastingKernelCaller(
-        UniformTSDFVolumeCudaServer<N> &server,
-        ImageCudaServer<Vector3f> &image,
+        UniformTSDFVolumeCudaDevice<N> &server,
+        ImageCudaDevice<Vector3f> &image,
         PinholeCameraIntrinsicCuda &camera,
         TransformCuda &transform_camera_to_world);
 };
 
 template<size_t N>
 __GLOBAL__
-void IntegrateKernel(UniformTSDFVolumeCudaServer<N> server,
-                     RGBDImageCudaServer depth,
+void IntegrateKernel(UniformTSDFVolumeCudaDevice<N> server,
+                     RGBDImageCudaDevice depth,
                      PinholeCameraIntrinsicCuda camera,
                      TransformCuda transform_camera_to_world);
 
 template<size_t N>
 __GLOBAL__
-void RayCastingKernel(UniformTSDFVolumeCudaServer<N> server,
-                      ImageCudaServer<Vector3f> image,
+void RayCastingKernel(UniformTSDFVolumeCudaDevice<N> server,
+                      ImageCudaDevice<Vector3f> image,
                       PinholeCameraIntrinsicCuda camera,
                       TransformCuda transform_camera_to_world);
 } // cuda

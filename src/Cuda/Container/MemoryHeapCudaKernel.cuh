@@ -8,7 +8,7 @@ namespace open3d {
 namespace cuda {
 template<typename T>
 __global__
-void ResetMemoryHeapKernel(MemoryHeapCudaServer<T> server) {
+void ResetMemoryHeapKernel(MemoryHeapCudaDevice<T> server) {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < server.max_capacity_) {
         server.value_at(i) = T(); /* This is not necessary. */
@@ -18,7 +18,7 @@ void ResetMemoryHeapKernel(MemoryHeapCudaServer<T> server) {
 
 template<typename T>
 void MemoryHeapCudaKernelCaller<T>::ResetMemoryHeapKernelCaller(
-    MemoryHeapCudaServer<T> &server, int max_capacity) {
+    MemoryHeapCudaDevice<T> &server, int max_capacity) {
     const int blocks = DIV_CEILING(max_capacity, THREAD_1D_UNIT);
     const int threads = THREAD_1D_UNIT;
 
@@ -29,8 +29,8 @@ void MemoryHeapCudaKernelCaller<T>::ResetMemoryHeapKernelCaller(
 
 template<typename T>
 __global__
-void ResizeMemoryHeapKernel(MemoryHeapCudaServer<T> src, /* old size */
-                            MemoryHeapCudaServer<T> dst  /* new size */) {
+void ResizeMemoryHeapKernel(MemoryHeapCudaDevice<T> src, /* old size */
+                            MemoryHeapCudaDevice<T> dst  /* new size */) {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i == 0) {
         *dst.heap_counter() = *src.heap_counter();
@@ -46,7 +46,7 @@ void ResizeMemoryHeapKernel(MemoryHeapCudaServer<T> src, /* old size */
 
 template<typename T>
 void MemoryHeapCudaKernelCaller<T>::ResizeMemoryHeapKernelCaller(
-    MemoryHeapCudaServer<T> &server, MemoryHeapCudaServer<T> &dst,
+    MemoryHeapCudaDevice<T> &server, MemoryHeapCudaDevice<T> &dst,
     int new_max_capacity) {
     const int blocks = DIV_CEILING(new_max_capacity, THREAD_1D_UNIT);
     const int threads = THREAD_1D_UNIT;

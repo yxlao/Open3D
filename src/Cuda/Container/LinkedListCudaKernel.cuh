@@ -10,8 +10,8 @@ namespace open3d {
 namespace cuda {
 template<typename T>
 __global__
-void InsertLinkedListKernel(LinkedListCudaServer<T> server,
-                            ArrayCudaServer<T> data) {
+void InsertLinkedListKernel(LinkedListCudaDevice<T> server,
+                            ArrayCudaDevice<T> data) {
     for (int i = 0; i < data.max_capacity_; ++i) {
         server.Insert(data[i]);
     }
@@ -19,8 +19,8 @@ void InsertLinkedListKernel(LinkedListCudaServer<T> server,
 template<typename T>
 __host__
 void LinkedListCudaKernelCaller<T>::
-InsertLinkedListKernelCaller(LinkedListCudaServer<T> &server,
-                             ArrayCudaServer<T> &data) {
+InsertLinkedListKernelCaller(LinkedListCudaDevice<T> &server,
+                             ArrayCudaDevice<T> &data) {
     InsertLinkedListKernel << < 1, 1 >> > (server, data);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
@@ -28,8 +28,8 @@ InsertLinkedListKernelCaller(LinkedListCudaServer<T> &server,
 
 template<typename T>
 __global__
-void FindLinkedListKernel(LinkedListCudaServer<T> server,
-                          ArrayCudaServer<T> query) {
+void FindLinkedListKernel(LinkedListCudaDevice<T> server,
+                          ArrayCudaDevice<T> query) {
     for (int i = 0; i < query.max_capacity_; ++i) {
         if (NULLPTR_CUDA == server.Find(query[i])) {
             printf("val[%d] Not found!\n", i);
@@ -39,8 +39,8 @@ void FindLinkedListKernel(LinkedListCudaServer<T> server,
 template<typename T>
 __host__
 void LinkedListCudaKernelCaller<T>::
-FindLinkedListKernelCaller(LinkedListCudaServer<T> &server,
-                           ArrayCudaServer<T> &query) {
+FindLinkedListKernelCaller(LinkedListCudaDevice<T> &server,
+                           ArrayCudaDevice<T> &query) {
     FindLinkedListKernel << < 1, 1 >> > (server, query);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
@@ -48,8 +48,8 @@ FindLinkedListKernelCaller(LinkedListCudaServer<T> &server,
 
 template<typename T>
 __global__
-void DeleteLinkedListKernel(LinkedListCudaServer<T> server,
-                            ArrayCudaServer<T> query) {
+void DeleteLinkedListKernel(LinkedListCudaDevice<T> server,
+                            ArrayCudaDevice<T> query) {
     for (int i = 0; i < query.max_capacity_; ++i) {
         if (SUCCESS != server.FindAndDelete(query[i])) {
             printf("val[%d] Not found!\n", i);
@@ -58,8 +58,8 @@ void DeleteLinkedListKernel(LinkedListCudaServer<T> server,
 }
 template<typename T>
 void LinkedListCudaKernelCaller<T>::
-DeleteLinkedListKernelCaller(LinkedListCudaServer<T> &server,
-                             ArrayCudaServer<T> &query) {
+DeleteLinkedListKernelCaller(LinkedListCudaDevice<T> &server,
+                             ArrayCudaDevice<T> &query) {
     DeleteLinkedListKernel << < 1, 1 >> > (server, query);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
@@ -67,14 +67,14 @@ DeleteLinkedListKernelCaller(LinkedListCudaServer<T> &server,
 
 template<typename T>
 __global__
-void ClearLinkedListKernel(LinkedListCudaServer<T> server) {
+void ClearLinkedListKernel(LinkedListCudaDevice<T> server) {
     server.Clear();
 }
 
 template<typename T>
 __host__
 void LinkedListCudaKernelCaller<T>::
-ClearLinkedListKernelCaller(LinkedListCudaServer<T> &server) {
+ClearLinkedListKernelCaller(LinkedListCudaDevice<T> &server) {
     ClearLinkedListKernel << < 1, 1 >> > (server);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
@@ -82,8 +82,8 @@ ClearLinkedListKernelCaller(LinkedListCudaServer<T> &server) {
 
 template<typename T>
 __global__
-void DownloadLinkedListKernel(LinkedListCudaServer<T> server,
-                              ArrayCudaServer<T> data) {
+void DownloadLinkedListKernel(LinkedListCudaDevice<T> server,
+                              ArrayCudaDevice<T> data) {
     int node_ptr = server.head_node_ptr();
 
     int cnt = 0;
@@ -101,8 +101,8 @@ void DownloadLinkedListKernel(LinkedListCudaServer<T> server,
 template<typename T>
 __host__
 void LinkedListCudaKernelCaller<T>::
-DownloadLinkedListKernelCaller(LinkedListCudaServer<T> &server,
-                               ArrayCudaServer<T> &data) {
+DownloadLinkedListKernelCaller(LinkedListCudaDevice<T> &server,
+                               ArrayCudaDevice<T> &data) {
     DownloadLinkedListKernel << < 1, 1 >> > (server, data);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());

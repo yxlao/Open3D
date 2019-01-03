@@ -77,7 +77,7 @@ void ScalableMeshVolumeCuda<N>::Create(
 
     assert(max_subvolumes > 0 && max_vertices > 0 && max_triangles > 0);
 
-    server_ = std::make_shared<ScalableMeshVolumeCudaServer<N>>();
+    server_ = std::make_shared<ScalableMeshVolumeCudaDevice<N>>();
     max_subvolumes_ = max_subvolumes;
 
     vertex_type_ = type;

@@ -11,7 +11,7 @@ namespace open3d {
 namespace cuda {
 template<typename VecType, typename T>
 __global__
-void ReduceSum2DKernel(ImageCudaServer<VecType> src, T *sum) {
+void ReduceSum2DKernel(ImageCudaDevice<VecType> src, T *sum) {
     __shared__ T local_sum[THREAD_2D_UNIT * THREAD_2D_UNIT];
 
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
@@ -67,7 +67,7 @@ inline T blockReduceSumShuffle(T sum) {
 
 template<typename VecType, typename T>
 __global__
-void ReduceSum2DShuffleKernel(ImageCudaServer<VecType> src, T *sum_total) {
+void ReduceSum2DShuffleKernel(ImageCudaDevice<VecType> src, T *sum_total) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
 
@@ -83,7 +83,7 @@ void ReduceSum2DShuffleKernel(ImageCudaServer<VecType> src, T *sum_total) {
 /** Why is it so fast ??? **/
 template<typename VecType, typename T>
 __global__
-void AtomicSumKernel(ImageCudaServer<VecType> src, T *sum_total) {
+void AtomicSumKernel(ImageCudaDevice<VecType> src, T *sum_total) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
 

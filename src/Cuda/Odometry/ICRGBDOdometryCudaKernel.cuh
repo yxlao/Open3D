@@ -10,7 +10,7 @@ namespace cuda {
 template<size_t N>
 __global__
 void DoSingleIterationKernel(
-    ICRGBDOdometryCudaServer<N> odometry, size_t level) {
+    ICRGBDOdometryCudaDevice<N> odometry, size_t level) {
     /** Add more memory blocks if we have **/
     /** TODO: check this version vs 1 __shared__ array version **/
     __shared__ float local_sum0[THREAD_2D_UNIT * THREAD_2D_UNIT];
@@ -161,7 +161,7 @@ void DoSingleIterationKernel(
 
 template<size_t N>
 void ICRGBDOdometryCudaKernelCaller<N>::DoSinlgeIterationKernelCaller(
-    ICRGBDOdometryCudaServer<N> &server, size_t level,
+    ICRGBDOdometryCudaDevice<N> &server, size_t level,
     int width, int height) {
 
     const dim3 blocks(DIV_CEILING(width, THREAD_2D_UNIT),
@@ -175,7 +175,7 @@ void ICRGBDOdometryCudaKernelCaller<N>::DoSinlgeIterationKernelCaller(
 template<size_t N>
 __global__
 void PrecomputeJacobiansKernel(
-    ICRGBDOdometryCudaServer<N> odometry, size_t level) {
+    ICRGBDOdometryCudaDevice<N> odometry, size_t level) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
 
@@ -188,7 +188,7 @@ void PrecomputeJacobiansKernel(
 
 template<size_t N>
 void ICRGBDOdometryCudaKernelCaller<N>::PrecomputeJacobiansKernelCaller(
-    ICRGBDOdometryCudaServer<N> &server, size_t level,
+    ICRGBDOdometryCudaDevice<N> &server, size_t level,
     int width, int height) {
 
     const dim3 blocks(DIV_CEILING(width, THREAD_2D_UNIT),

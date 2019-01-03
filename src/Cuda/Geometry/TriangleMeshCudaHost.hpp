@@ -106,7 +106,7 @@ void TriangleMeshCuda::Create(
         vertex_colors_.Create(max_vertices_);
     }
 
-    server_ = std::make_shared<TriangleMeshCudaServer>();
+    server_ = std::make_shared<TriangleMeshCudaDevice>();
     UpdateServer();
 }
 

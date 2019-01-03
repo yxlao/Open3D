@@ -19,37 +19,37 @@
 
 namespace open3d {
 namespace cuda {
-class PointCloudCudaServer {
+class PointCloudCudaDevice {
 private:
-    ArrayCudaServer<Vector3f> points_;
-    ArrayCudaServer<Vector3f> normals_;
-    ArrayCudaServer<Vector3f> colors_;
+    ArrayCudaDevice<Vector3f> points_;
+    ArrayCudaDevice<Vector3f> normals_;
+    ArrayCudaDevice<Vector3f> colors_;
 
-    ArrayCudaServer<float> radius_;
-    ArrayCudaServer<float> confidences_;
-    ArrayCudaServer<int> indices_;
+    ArrayCudaDevice<float> radius_;
+    ArrayCudaDevice<float> confidences_;
+    ArrayCudaDevice<int> indices_;
 
 public:
     VertexType type_;
     int max_points_;
 
 public:
-    __HOSTDEVICE__ inline ArrayCudaServer<Vector3f> &points() {
+    __HOSTDEVICE__ inline ArrayCudaDevice<Vector3f> &points() {
         return points_;
     }
-    __HOSTDEVICE__ inline ArrayCudaServer<Vector3f> &normals() {
+    __HOSTDEVICE__ inline ArrayCudaDevice<Vector3f> &normals() {
         return normals_;
     }
-    __HOSTDEVICE__ inline ArrayCudaServer<Vector3f> &colors() {
+    __HOSTDEVICE__ inline ArrayCudaDevice<Vector3f> &colors() {
         return colors_;
     }
-    __HOSTDEVICE__ inline ArrayCudaServer<float> &radius() {
+    __HOSTDEVICE__ inline ArrayCudaDevice<float> &radius() {
         return radius_;
     }
-    __HOSTDEVICE__ inline ArrayCudaServer<float> &confidences() {
+    __HOSTDEVICE__ inline ArrayCudaDevice<float> &confidences() {
         return confidences_;
     }
-    __HOSTDEVICE__ inline ArrayCudaServer<int> &indices() {
+    __HOSTDEVICE__ inline ArrayCudaDevice<int> &indices() {
         return indices_;
     }
 
@@ -59,7 +59,7 @@ public:
 
 class PointCloudCuda : public Geometry3D {
 private:
-    std::shared_ptr<PointCloudCudaServer> server_ = nullptr;
+    std::shared_ptr<PointCloudCudaDevice> server_ = nullptr;
     ArrayCuda<Vector3f> points_;
     ArrayCuda<Vector3f> normals_;
     ArrayCuda<Vector3f> colors_;
@@ -119,10 +119,10 @@ public:
     ArrayCuda<int> &indices() { return indices_; }
     const ArrayCuda<int> &indices() const { return indices_; }
 
-    std::shared_ptr<PointCloudCudaServer> &server() {
+    std::shared_ptr<PointCloudCudaDevice> &server() {
         return server_;
     }
-    const std::shared_ptr<PointCloudCudaServer> &server() const {
+    const std::shared_ptr<PointCloudCudaDevice> &server() const {
         return server_;
     }
 };
@@ -130,50 +130,50 @@ public:
 class PointCloudCudaKernelCaller {
 public:
     static __HOST__ void GetMinBoundKernelCaller(
-        PointCloudCudaServer &server,
-        ArrayCudaServer<Vector3f> &min_bound,
+        PointCloudCudaDevice &server,
+        ArrayCudaDevice<Vector3f> &min_bound,
         int num_vertices);
 
     static __HOST__ void GetMaxBoundKernelCaller(
-        PointCloudCudaServer &server,
-        ArrayCudaServer<Vector3f> &max_bound,
+        PointCloudCudaDevice &server,
+        ArrayCudaDevice<Vector3f> &max_bound,
         int num_vertices);
 
     static __HOST__ void TransformKernelCaller(
-        PointCloudCudaServer &server,
+        PointCloudCudaDevice &server,
         TransformCuda &transform,
         int num_vertices);
 
     static __HOST__ void BuildFromRGBDImageKernelCaller(
-        PointCloudCudaServer &server,
-        RGBDImageCudaServer &rgbd,
+        PointCloudCudaDevice &server,
+        RGBDImageCudaDevice &rgbd,
         PinholeCameraIntrinsicCuda &intrinsic);
 
     static __HOST__ void BuildFromDepthImageKernelCaller(
-        PointCloudCudaServer &server,
-        ImageCudaServer<Vector1f> &depth,
+        PointCloudCudaDevice &server,
+        ImageCudaDevice<Vector1f> &depth,
         PinholeCameraIntrinsicCuda &intrinsic);
 };
 
 __GLOBAL__
-void BuildFromRGBDImageKernel(PointCloudCudaServer server,
-                              RGBDImageCudaServer rgbd,
+void BuildFromRGBDImageKernel(PointCloudCudaDevice server,
+                              RGBDImageCudaDevice rgbd,
                               PinholeCameraIntrinsicCuda intrinsic);
 
 __GLOBAL__
-void BuildFromDepthImageKernel(PointCloudCudaServer server,
-                               ImageCudaServer<Vector1f> depth,
+void BuildFromDepthImageKernel(PointCloudCudaDevice server,
+                               ImageCudaDevice<Vector1f> depth,
                                PinholeCameraIntrinsicCuda intrinsic);
 
 __GLOBAL__
-void GetMinBoundKernel(PointCloudCudaServer server,
-                       ArrayCudaServer<Vector3f> min_bound);
+void GetMinBoundKernel(PointCloudCudaDevice server,
+                       ArrayCudaDevice<Vector3f> min_bound);
 
 __GLOBAL__
-void GetMaxBoundKernel(PointCloudCudaServer server,
-                       ArrayCudaServer<Vector3f> max_bound);
+void GetMaxBoundKernel(PointCloudCudaDevice server,
+                       ArrayCudaDevice<Vector3f> max_bound);
 
 __GLOBAL__
-void TransformKernel(PointCloudCudaServer, TransformCuda transform);
+void TransformKernel(PointCloudCudaDevice, TransformCuda transform);
 } // cuda
 } // open3d

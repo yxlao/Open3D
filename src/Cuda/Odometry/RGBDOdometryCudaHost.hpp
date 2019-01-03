@@ -50,7 +50,7 @@ bool RGBDOdometryCuda<N>::Create(int width, int height) {
         return true;
     }
 
-    server_ = std::make_shared<RGBDOdometryCudaServer<N>>();
+    server_ = std::make_shared<RGBDOdometryCudaDevice<N>>();
 
     source_on_target_.Create(width, height);
 

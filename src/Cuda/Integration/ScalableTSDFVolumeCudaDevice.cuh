@@ -21,7 +21,7 @@ namespace cuda {
 template<size_t N>
 __device__
 inline Vector3f
-ScalableTSDFVolumeCudaServer<N>::world_to_voxelf(
+ScalableTSDFVolumeCudaDevice<N>::world_to_voxelf(
     const Vector3f &Xw) {
     return volume_to_voxelf(transform_world_to_volume_ * Xw);
 }
@@ -29,7 +29,7 @@ ScalableTSDFVolumeCudaServer<N>::world_to_voxelf(
 template<size_t N>
 __device__
 inline Vector3f
-ScalableTSDFVolumeCudaServer<N>::voxelf_to_world(
+ScalableTSDFVolumeCudaDevice<N>::voxelf_to_world(
     const Vector3f &X) {
     return transform_volume_to_world_ * voxelf_to_volume(X);
 }
@@ -37,7 +37,7 @@ ScalableTSDFVolumeCudaServer<N>::voxelf_to_world(
 template<size_t N>
 __device__
 inline Vector3f
-ScalableTSDFVolumeCudaServer<N>::voxelf_to_volume(
+ScalableTSDFVolumeCudaDevice<N>::voxelf_to_volume(
     const Vector3f &X) {
     return Vector3f((X(0) + 0.5f) * voxel_length_,
                     (X(1) + 0.5f) * voxel_length_,
@@ -47,7 +47,7 @@ ScalableTSDFVolumeCudaServer<N>::voxelf_to_volume(
 template<size_t N>
 __device__
 inline Vector3f
-ScalableTSDFVolumeCudaServer<N>::volume_to_voxelf(
+ScalableTSDFVolumeCudaDevice<N>::volume_to_voxelf(
     const Vector3f &Xv) {
     return Vector3f(Xv(0) * inv_voxel_length_ - 0.5f,
                     Xv(1) * inv_voxel_length_ - 0.5f,
@@ -58,7 +58,7 @@ ScalableTSDFVolumeCudaServer<N>::volume_to_voxelf(
 template<size_t N>
 __device__
 inline Vector3i
-ScalableTSDFVolumeCudaServer<N>::voxel_locate_subvolume(
+ScalableTSDFVolumeCudaDevice<N>::voxel_locate_subvolume(
     const Vector3i &X) {
     return Vector3i((X(0) < 0 ? X(0) - (int(N) - 1) : X(0)) / int(N),
                     (X(1) < 0 ? X(1) - (int(N) - 1) : X(1)) / int(N),
@@ -68,7 +68,7 @@ ScalableTSDFVolumeCudaServer<N>::voxel_locate_subvolume(
 template<size_t N>
 __device__
 inline Vector3i
-ScalableTSDFVolumeCudaServer<N>::voxelf_locate_subvolume(
+ScalableTSDFVolumeCudaDevice<N>::voxelf_locate_subvolume(
     const Vector3f &X) {
     return Vector3i(int(floor(X(0) / N)),
                     int(floor(X(1) / N)),
@@ -78,7 +78,7 @@ ScalableTSDFVolumeCudaServer<N>::voxelf_locate_subvolume(
 template<size_t N>
 __device__
 inline Vector3i
-ScalableTSDFVolumeCudaServer<N>::voxel_global_to_local(
+ScalableTSDFVolumeCudaDevice<N>::voxel_global_to_local(
     const Vector3i &X, const Vector3i &Xsv) {
     return Vector3i(X(0) - Xsv(0) * int(N),
                     X(1) - Xsv(1) * int(N),
@@ -88,7 +88,7 @@ ScalableTSDFVolumeCudaServer<N>::voxel_global_to_local(
 template<size_t N>
 __device__
 inline Vector3f
-ScalableTSDFVolumeCudaServer<N>::voxelf_global_to_local(
+ScalableTSDFVolumeCudaDevice<N>::voxelf_global_to_local(
     const Vector3f &X, const Vector3i &Xsv) {
     return Vector3f(X(0) - Xsv(0) * int(N),
                     X(1) - Xsv(1) * int(N),
@@ -98,7 +98,7 @@ ScalableTSDFVolumeCudaServer<N>::voxelf_global_to_local(
 template<size_t N>
 __device__
 inline Vector3i
-ScalableTSDFVolumeCudaServer<N>::voxel_local_to_global(
+ScalableTSDFVolumeCudaDevice<N>::voxel_local_to_global(
     const Vector3i &Xlocal, const Vector3i &Xsv) {
     return Vector3i(Xlocal(0) + Xsv(0) * int(N),
                     Xlocal(1) + Xsv(1) * int(N),
@@ -108,7 +108,7 @@ ScalableTSDFVolumeCudaServer<N>::voxel_local_to_global(
 template<size_t N>
 __device__
 inline Vector3f
-ScalableTSDFVolumeCudaServer<N>::voxelf_local_to_global(
+ScalableTSDFVolumeCudaDevice<N>::voxelf_local_to_global(
     const Vector3f &Xlocal, const Vector3i &Xsv) {
     return Vector3f(Xlocal(0) + Xsv(0) * int(N),
                     Xlocal(1) + Xsv(1) * int(N),
@@ -118,9 +118,9 @@ ScalableTSDFVolumeCudaServer<N>::voxelf_local_to_global(
 /** Query **/
 template<size_t N>
 __device__
-    UniformTSDFVolumeCudaServer<N>
+    UniformTSDFVolumeCudaDevice<N>
 *
-ScalableTSDFVolumeCudaServer<N>::QuerySubvolume(
+ScalableTSDFVolumeCudaDevice<N>::QuerySubvolume(
     const Vector3i &Xsv) {
     return hash_table_[Xsv];
 }
@@ -128,10 +128,10 @@ ScalableTSDFVolumeCudaServer<N>::QuerySubvolume(
 /** Unoptimized access and interpolation **/
 template<size_t N>
 __device__
-float &ScalableTSDFVolumeCudaServer<N>::tsdf(const Vector3i &X) {
+float &ScalableTSDFVolumeCudaDevice<N>::tsdf(const Vector3i &X) {
     Vector3i
     Xsv = voxel_locate_subvolume(X);
-    UniformTSDFVolumeCudaServer<N> * subvolume = QuerySubvolume(Xsv);
+    UniformTSDFVolumeCudaDevice<N> * subvolume = QuerySubvolume(Xsv);
     return subvolume == nullptr ?
            tsdf_dummy_ : subvolume->tsdf(voxel_global_to_local(X, Xsv));
 }
@@ -140,10 +140,10 @@ template<size_t N>
 __device__
     uchar
 &
-ScalableTSDFVolumeCudaServer<N>::weight(const Vector3i &X) {
+ScalableTSDFVolumeCudaDevice<N>::weight(const Vector3i &X) {
     Vector3i
     Xsv = voxel_locate_subvolume(X);
-    UniformTSDFVolumeCudaServer<N> * subvolume = QuerySubvolume(Xsv);
+    UniformTSDFVolumeCudaDevice<N> * subvolume = QuerySubvolume(Xsv);
 
     return subvolume == nullptr ?
            weight_dummy_ : subvolume->weight(voxel_global_to_local(X, Xsv));
@@ -153,10 +153,10 @@ template<size_t N>
 __device__
     Vector3b
 &
-ScalableTSDFVolumeCudaServer<N>::color(const Vector3i &X) {
+ScalableTSDFVolumeCudaDevice<N>::color(const Vector3i &X) {
     Vector3i
     Xsv = voxel_locate_subvolume(X);
-    UniformTSDFVolumeCudaServer<N> * subvolume = QuerySubvolume(Xsv);
+    UniformTSDFVolumeCudaDevice<N> * subvolume = QuerySubvolume(Xsv);
 
     return subvolume == nullptr ?
            color_dummy_ : subvolume->color(voxel_global_to_local(X, Xsv));
@@ -164,7 +164,7 @@ ScalableTSDFVolumeCudaServer<N>::color(const Vector3i &X) {
 
 template<size_t N>
 __device__
-float ScalableTSDFVolumeCudaServer<N>::TSDFAt(const Vector3f &X) {
+float ScalableTSDFVolumeCudaDevice<N>::TSDFAt(const Vector3f &X) {
     Vector3i
     Xi = X.ToVectori();
     Vector3f
@@ -190,7 +190,7 @@ float ScalableTSDFVolumeCudaServer<N>::TSDFAt(const Vector3f &X) {
 template<size_t N>
 __device__
     uchar
-ScalableTSDFVolumeCudaServer<N>::WeightAt(const Vector3f &X) {
+ScalableTSDFVolumeCudaDevice<N>::WeightAt(const Vector3f &X) {
     Vector3i
     Xi = X.ToVectori();
     Vector3f
@@ -216,7 +216,7 @@ ScalableTSDFVolumeCudaServer<N>::WeightAt(const Vector3f &X) {
 template<size_t N>
 __device__
     Vector3b
-ScalableTSDFVolumeCudaServer<N>::ColorAt(const Vector3f &X) {
+ScalableTSDFVolumeCudaDevice<N>::ColorAt(const Vector3f &X) {
     Vector3i
     Xi = X.ToVectori();
     Vector3f
@@ -245,7 +245,7 @@ ScalableTSDFVolumeCudaServer<N>::ColorAt(const Vector3f &X) {
 template<size_t N>
 __device__
     Vector3f
-ScalableTSDFVolumeCudaServer<N>::GradientAt(
+ScalableTSDFVolumeCudaDevice<N>::GradientAt(
     const Vector3f &X) {
     Vector3f
     n = Vector3f::Zeros();
@@ -269,7 +269,7 @@ ScalableTSDFVolumeCudaServer<N>::GradientAt(
 /** Optimized access and interpolation **/
 template<size_t N>
 __device__
-inline bool ScalableTSDFVolumeCudaServer<N>::OnBoundary(
+inline bool ScalableTSDFVolumeCudaDevice<N>::OnBoundary(
     const Vector3i &Xlocal, bool for_gradient) {
     return for_gradient ?
            (Xlocal(0) == 0 || Xlocal(1) == 0 || Xlocal(2) == 0
@@ -281,7 +281,7 @@ inline bool ScalableTSDFVolumeCudaServer<N>::OnBoundary(
 
 template<size_t N>
 __device__
-inline bool ScalableTSDFVolumeCudaServer<N>::OnBoundaryf(
+inline bool ScalableTSDFVolumeCudaDevice<N>::OnBoundaryf(
     const Vector3f &Xlocal, bool for_gradient) {
     return for_gradient ?
            (Xlocal(0) < 1 || Xlocal(1) < 1 || Xlocal(2) < 1
@@ -294,7 +294,7 @@ inline bool ScalableTSDFVolumeCudaServer<N>::OnBoundaryf(
 template<size_t N>
 __device__
 inline Vector3i
-ScalableTSDFVolumeCudaServer<N>::NeighborOffsetOfBoundaryVoxel(
+ScalableTSDFVolumeCudaDevice<N>::NeighborOffsetOfBoundaryVoxel(
     const Vector3i &Xlocal) {
     return Vector3i(Xlocal(0) < 0 ? -1 : (Xlocal(0) >= N ? 1 : 0),
                     Xlocal(1) < 0 ? -1 : (Xlocal(1) >= N ? 1 : 0),
@@ -303,7 +303,7 @@ ScalableTSDFVolumeCudaServer<N>::NeighborOffsetOfBoundaryVoxel(
 
 template<size_t N>
 __device__
-inline int ScalableTSDFVolumeCudaServer<N>::LinearizeNeighborOffset(
+inline int ScalableTSDFVolumeCudaDevice<N>::LinearizeNeighborOffset(
     const Vector3i &dXsv) {
     //return (dz + 1) * 9 + (dy + 1) * 3 + (dx + 1);
     return 9 * dXsv(2) + 3 * dXsv(1) + dXsv(0) + 13;
@@ -312,7 +312,7 @@ inline int ScalableTSDFVolumeCudaServer<N>::LinearizeNeighborOffset(
 template<size_t N>
 __device__
 inline Vector3i
-ScalableTSDFVolumeCudaServer<N>::BoundaryVoxelInNeighbor(
+ScalableTSDFVolumeCudaDevice<N>::BoundaryVoxelInNeighbor(
     const Vector3i &Xlocal, const Vector3i &dXsv) {
     return Vector3i(Xlocal(0) - dXsv(0) * int(N),
                     Xlocal(1) - dXsv(1) * int(N),
@@ -322,9 +322,9 @@ ScalableTSDFVolumeCudaServer<N>::BoundaryVoxelInNeighbor(
 template<size_t N>
 __device__
 inline Vector3f
-ScalableTSDFVolumeCudaServer<N>::gradient(
+ScalableTSDFVolumeCudaDevice<N>::gradient(
     const Vector3i &Xlocal,
-    UniformTSDFVolumeCudaServer<N> **cached_subvolumes) {
+    UniformTSDFVolumeCudaDevice<N> **cached_subvolumes) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(-1 <= Xlocal(0) && Xlocal(0) <= N);
     assert(-1 <= Xlocal(1) && Xlocal(1) <= N);
@@ -345,9 +345,9 @@ ScalableTSDFVolumeCudaServer<N>::gradient(
         Vector3i
         dXsv1 = NeighborOffsetOfBoundaryVoxel(X1);
 
-        UniformTSDFVolumeCudaServer<N> * subvolume0 =
+        UniformTSDFVolumeCudaDevice<N> * subvolume0 =
             cached_subvolumes[LinearizeNeighborOffset(dXsv0)];
-        UniformTSDFVolumeCudaServer<N> * subvolume1 =
+        UniformTSDFVolumeCudaDevice<N> * subvolume1 =
             cached_subvolumes[LinearizeNeighborOffset(dXsv1)];
         float tsdf0 = (subvolume0 == nullptr) ?
                       0 : subvolume0->tsdf(BoundaryVoxelInNeighbor(X0, dXsv0));
@@ -363,9 +363,9 @@ ScalableTSDFVolumeCudaServer<N>::gradient(
 
 template<size_t N>
 __device__
-float ScalableTSDFVolumeCudaServer<N>::TSDFOnBoundaryAt(
+float ScalableTSDFVolumeCudaDevice<N>::TSDFOnBoundaryAt(
     const Vector3f &Xlocal,
-    UniformTSDFVolumeCudaServer<N> **cached_subvolumes) {
+    UniformTSDFVolumeCudaDevice<N> **cached_subvolumes) {
 
     /** X in range: [-1, N + 1) **/
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
@@ -393,7 +393,7 @@ float ScalableTSDFVolumeCudaServer<N>::TSDFOnBoundaryAt(
 
         Vector3i
         dXsv_k = NeighborOffsetOfBoundaryVoxel(Xlocali_k);
-        UniformTSDFVolumeCudaServer<N> * subvolume =
+        UniformTSDFVolumeCudaDevice<N> * subvolume =
             cached_subvolumes[LinearizeNeighborOffset(dXsv_k)];
 
         float tsdf_k = (subvolume == nullptr) ? 0.0f :
@@ -417,9 +417,9 @@ float ScalableTSDFVolumeCudaServer<N>::TSDFOnBoundaryAt(
 template<size_t N>
 __device__
     uchar
-ScalableTSDFVolumeCudaServer<N>::WeightOnBoundaryAt(
+ScalableTSDFVolumeCudaDevice<N>::WeightOnBoundaryAt(
     const Vector3f &Xlocal,
-    UniformTSDFVolumeCudaServer<N> **cached_subvolumes) {
+    UniformTSDFVolumeCudaDevice<N> **cached_subvolumes) {
 
     /** X in range: [-1, N + 1) **/
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
@@ -446,7 +446,7 @@ ScalableTSDFVolumeCudaServer<N>::WeightOnBoundaryAt(
 
         Vector3i
         dXsv_k = NeighborOffsetOfBoundaryVoxel(Xlocali_k);
-        UniformTSDFVolumeCudaServer<N> * subvolume =
+        UniformTSDFVolumeCudaDevice<N> * subvolume =
             cached_subvolumes[LinearizeNeighborOffset(dXsv_k)];
 
         float weight_k = (subvolume == nullptr) ? 0.0f :
@@ -471,9 +471,9 @@ ScalableTSDFVolumeCudaServer<N>::WeightOnBoundaryAt(
 template<size_t N>
 __device__
     Vector3b
-ScalableTSDFVolumeCudaServer<N>::ColorOnBoundaryAt(
+ScalableTSDFVolumeCudaDevice<N>::ColorOnBoundaryAt(
     const Vector3f &Xlocal,
-    UniformTSDFVolumeCudaServer<N> **cached_subvolumes) {
+    UniformTSDFVolumeCudaDevice<N> **cached_subvolumes) {
 
     /** X in range: [-1, N + 1) **/
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
@@ -501,7 +501,7 @@ ScalableTSDFVolumeCudaServer<N>::ColorOnBoundaryAt(
 
         Vector3i
         dXsv_k = NeighborOffsetOfBoundaryVoxel(Xlocali_k);
-        UniformTSDFVolumeCudaServer<N> * subvolume =
+        UniformTSDFVolumeCudaDevice<N> * subvolume =
             cached_subvolumes[LinearizeNeighborOffset(dXsv_k)];
 
         Vector3f
@@ -527,9 +527,9 @@ ScalableTSDFVolumeCudaServer<N>::ColorOnBoundaryAt(
 template<size_t N>
 __device__
     Vector3f
-ScalableTSDFVolumeCudaServer<N>::GradientOnBoundaryAt(
+ScalableTSDFVolumeCudaDevice<N>::GradientOnBoundaryAt(
     const Vector3f &Xlocal,
-    UniformTSDFVolumeCudaServer<N> **cached_subvolumes) {
+    UniformTSDFVolumeCudaDevice<N> **cached_subvolumes) {
 
     Vector3f
     n = Vector3f::Zeros();
@@ -551,7 +551,7 @@ ScalableTSDFVolumeCudaServer<N>::GradientOnBoundaryAt(
 
 template<size_t N>
 __device__
-void ScalableTSDFVolumeCudaServer<N>::ActivateSubvolume(
+void ScalableTSDFVolumeCudaDevice<N>::ActivateSubvolume(
     const HashEntry<Vector3i> &entry) {
     int index = active_subvolume_entry_array_.push_back(entry);
     active_subvolume_indices_[entry.internal_addr] = index;
@@ -559,7 +559,7 @@ void ScalableTSDFVolumeCudaServer<N>::ActivateSubvolume(
 
 template<size_t N>
 __device__
-int ScalableTSDFVolumeCudaServer<N>::QueryActiveSubvolumeIndex(
+int ScalableTSDFVolumeCudaDevice<N>::QueryActiveSubvolumeIndex(
     const Vector3i &key) {
     int internal_addr = hash_table_.GetInternalAddrByKey(key);
     return internal_addr == NULLPTR_CUDA ?
@@ -568,10 +568,10 @@ int ScalableTSDFVolumeCudaServer<N>::QueryActiveSubvolumeIndex(
 
 template<size_t N>
 __device__
-void ScalableTSDFVolumeCudaServer<N>::CacheNeighborSubvolumes(
+void ScalableTSDFVolumeCudaDevice<N>::CacheNeighborSubvolumes(
     const Vector3i &Xsv, const Vector3i &dXsv,
     int *cached_subvolume_indices,
-    UniformTSDFVolumeCudaServer<N> **cached_subvolumes) {
+    UniformTSDFVolumeCudaDevice<N> **cached_subvolumes) {
 
     Vector3i
     Xsv_neighbor = Xsv + dXsv;
@@ -608,9 +608,9 @@ void ScalableTSDFVolumeCudaServer<N>::CacheNeighborSubvolumes(
 /** High level functions **/
 template<size_t N>
 __device__
-void ScalableTSDFVolumeCudaServer<N>::TouchSubvolume(
+void ScalableTSDFVolumeCudaDevice<N>::TouchSubvolume(
     const Vector2i &p,
-    ImageCudaServer<Vector1f> &depth,
+    ImageCudaDevice<Vector1f> &depth,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
 
@@ -666,10 +666,10 @@ void ScalableTSDFVolumeCudaServer<N>::TouchSubvolume(
 
 template<size_t N>
 __device__
-void ScalableTSDFVolumeCudaServer<N>::Integrate(
+void ScalableTSDFVolumeCudaDevice<N>::Integrate(
     const Vector3i &Xlocal,
     HashEntry<Vector3i> &entry,
-    RGBDImageCudaServer &rgbd,
+    RGBDImageCudaDevice &rgbd,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
 
@@ -693,7 +693,7 @@ void ScalableTSDFVolumeCudaServer<N>::Integrate(
     Vector3b
     color = rgbd.color().at(int(p(0)), int(p(1)));
 
-    UniformTSDFVolumeCudaServer<N> * subvolume = hash_table_
+    UniformTSDFVolumeCudaDevice<N> * subvolume = hash_table_
         .GetValuePtrByInternalAddr(entry.internal_addr);
 
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
@@ -717,7 +717,7 @@ void ScalableTSDFVolumeCudaServer<N>::Integrate(
 template<size_t N>
 __device__
     Vector3f
-ScalableTSDFVolumeCudaServer<N>::RayCasting(
+ScalableTSDFVolumeCudaDevice<N>::RayCasting(
     const Vector2i &p,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
@@ -740,7 +740,7 @@ ScalableTSDFVolumeCudaServer<N>::RayCasting(
     float t_prev = 0, tsdf_prev = 0;
     Vector3i
     Xsv_prev = Vector3i(INT_MIN, INT_MIN, INT_MIN);
-    UniformTSDFVolumeCudaServer<N> * subvolume = nullptr;
+    UniformTSDFVolumeCudaDevice<N> * subvolume = nullptr;
 
     /** Do NOT use #pragma unroll: it will make it slow **/
     float t_curr = t_min;

@@ -54,7 +54,7 @@ bool RGBDImagePyramidCuda<N>::Create(int width, int height) {
         return false;
     }
 
-    server_ = std::make_shared<RGBDImagePyramidCudaServer<N>>();
+    server_ = std::make_shared<RGBDImagePyramidCudaDevice<N>>();
     for (size_t i = 0; i < N; ++i) {
         int w = width >> i;
         int h = height >> i;

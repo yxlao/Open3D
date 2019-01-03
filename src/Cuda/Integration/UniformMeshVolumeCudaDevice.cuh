@@ -18,9 +18,9 @@ namespace cuda {
  */
 template<size_t N>
 __device__
-void UniformMeshVolumeCudaServer<N>::AllocateVertex(
+void UniformMeshVolumeCudaDevice<N>::AllocateVertex(
     const Vector3i &X,
-    UniformTSDFVolumeCudaServer<N> &tsdf_volume) {
+    UniformTSDFVolumeCudaDevice<N> &tsdf_volume) {
 
     uchar &table_index = table_indices(X);
     table_index = 0;
@@ -60,9 +60,9 @@ void UniformMeshVolumeCudaServer<N>::AllocateVertex(
 
 template<size_t N>
 __device__
-void UniformMeshVolumeCudaServer<N>::ExtractVertex(
+void UniformMeshVolumeCudaDevice<N>::ExtractVertex(
     const Vector3i &X,
-    UniformTSDFVolumeCudaServer<N> &tsdf_volume) {
+    UniformTSDFVolumeCudaDevice<N> &tsdf_volume) {
 
     Vector3i &voxel_vertex_indices = vertex_indices(X);
     if (voxel_vertex_indices(0) != VERTEX_TO_ALLOCATE
@@ -119,7 +119,7 @@ void UniformMeshVolumeCudaServer<N>::ExtractVertex(
 
 template<size_t N>
 __device__
-inline void UniformMeshVolumeCudaServer<N>::ExtractTriangle(
+inline void UniformMeshVolumeCudaDevice<N>::ExtractTriangle(
     const Vector3i &X) {
 
     const uchar table_index = table_indices(X);

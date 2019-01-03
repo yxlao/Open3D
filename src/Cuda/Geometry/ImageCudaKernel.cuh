@@ -8,8 +8,8 @@ namespace cuda {
  */
 template<typename VecType>
 __global__
-void DownsampleImageKernel(ImageCudaServer<VecType> src,
-                           ImageCudaServer<VecType> dst,
+void DownsampleImageKernel(ImageCudaDevice<VecType> src,
+                           ImageCudaDevice<VecType> dst,
                            DownsampleMethod method) {
     int u = blockIdx.x * blockDim.x + threadIdx.x;
     int v = blockIdx.y * blockDim.y + threadIdx.y;
@@ -39,7 +39,7 @@ void DownsampleImageKernel(ImageCudaServer<VecType> src,
 template<typename VecType>
 __host__
 void ImageCudaKernelCaller<VecType>::DownsampleImageKernelCaller(
-    ImageCudaServer<VecType> &src, ImageCudaServer<VecType> &dst,
+    ImageCudaDevice<VecType> &src, ImageCudaDevice<VecType> &dst,
     DownsampleMethod method) {
 
     const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
@@ -56,8 +56,8 @@ void ImageCudaKernelCaller<VecType>::DownsampleImageKernelCaller(
 template<typename VecType>
 __global__
 void ShiftImageKernel(
-    ImageCudaServer<VecType> src,
-    ImageCudaServer<VecType> dst,
+    ImageCudaDevice<VecType> src,
+    ImageCudaDevice<VecType> dst,
     float dx, float dy, bool with_holes) {
     int u = blockIdx.x * blockDim.x + threadIdx.x;
     int v = blockIdx.y * blockDim.y + threadIdx.y;
@@ -80,7 +80,7 @@ void ShiftImageKernel(
 template<typename VecType>
 __host__
 void ImageCudaKernelCaller<VecType>::ShiftImageKernelCaller(
-    ImageCudaServer<VecType> &src, ImageCudaServer<VecType> &dst,
+    ImageCudaDevice<VecType> &src, ImageCudaDevice<VecType> &dst,
     float dx, float dy, bool with_holes) {
 
     const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
@@ -97,8 +97,8 @@ void ImageCudaKernelCaller<VecType>::ShiftImageKernelCaller(
 template<typename VecType>
 __global__
 void GaussianImageKernel(
-    ImageCudaServer<VecType> src,
-    ImageCudaServer<VecType> dst,
+    ImageCudaDevice<VecType> src,
+    ImageCudaDevice<VecType> dst,
     int kernel_idx, bool with_holes) {
 
     int u = blockIdx.x * blockDim.x + threadIdx.x;
@@ -116,7 +116,7 @@ void GaussianImageKernel(
 template<typename VecType>
 __host__
 void ImageCudaKernelCaller<VecType>::GaussianImageKernelCaller(
-    ImageCudaServer<VecType> &src, ImageCudaServer<VecType> &dst,
+    ImageCudaDevice<VecType> &src, ImageCudaDevice<VecType> &dst,
     int kernel_idx, bool with_holes) {
 
     const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
@@ -133,8 +133,8 @@ void ImageCudaKernelCaller<VecType>::GaussianImageKernelCaller(
  */
 template<typename VecType>
 __global__
-void BilateralImageKernel(ImageCudaServer<VecType> src,
-                          ImageCudaServer<VecType> dst,
+void BilateralImageKernel(ImageCudaDevice<VecType> src,
+                          ImageCudaDevice<VecType> dst,
                           int kernel_idx,
                           float val_sigma,
                           bool with_holes) {
@@ -153,7 +153,7 @@ void BilateralImageKernel(ImageCudaServer<VecType> src,
 template<typename VecType>
 __host__
 void ImageCudaKernelCaller<VecType>::BilateralImageKernelCaller(
-    ImageCudaServer<VecType> &src, ImageCudaServer<VecType> &dst,
+    ImageCudaDevice<VecType> &src, ImageCudaDevice<VecType> &dst,
     int kernel_idx, float val_sigma, bool with_holes) {
     const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
                       DIV_CEILING(src.height_, THREAD_2D_UNIT));
@@ -170,9 +170,9 @@ void ImageCudaKernelCaller<VecType>::BilateralImageKernelCaller(
 template<typename VecType>
 __global__
 void SobelImageKernel(
-    ImageCudaServer<VecType> src,
-    ImageCudaServer<typename VecType::VecTypef> dx,
-    ImageCudaServer<typename VecType::VecTypef> dy,
+    ImageCudaDevice<VecType> src,
+    ImageCudaDevice<typename VecType::VecTypef> dx,
+    ImageCudaDevice<typename VecType::VecTypef> dy,
     bool with_holes) {
 
     int u = blockIdx.x * blockDim.x + threadIdx.x;
@@ -185,7 +185,7 @@ void SobelImageKernel(
         return;
     }
 
-    typename ImageCudaServer<VecType>::Grad grad;
+    typename ImageCudaDevice<VecType>::Grad grad;
     if (with_holes) {
         grad = src.SobelWithHoles(u, v);
     } else {
@@ -197,9 +197,9 @@ void SobelImageKernel(
 template<typename VecType>
 __host__
 void ImageCudaKernelCaller<VecType>::SobelImageKernelCaller(
-    ImageCudaServer<VecType> &src,
-    ImageCudaServer<typename VecType::VecTypef> &dx,
-    ImageCudaServer<typename VecType::VecTypef> &dy,
+    ImageCudaDevice<VecType> &src,
+    ImageCudaDevice<typename VecType::VecTypef> &dx,
+    ImageCudaDevice<typename VecType::VecTypef> &dy,
     bool with_holes) {
     const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
                       DIV_CEILING(src.height_, THREAD_2D_UNIT));
@@ -215,8 +215,8 @@ void ImageCudaKernelCaller<VecType>::SobelImageKernelCaller(
 template<typename VecType>
 __global__
 void ConvertToFloatImageKernel(
-    ImageCudaServer<VecType> src,
-    ImageCudaServer<typename VecType::VecTypef> dst,
+    ImageCudaDevice<VecType> src,
+    ImageCudaDevice<typename VecType::VecTypef> dst,
     float scale,
     float offset) {
     int u = blockIdx.x * blockDim.x + threadIdx.x;
@@ -230,8 +230,8 @@ void ConvertToFloatImageKernel(
 template<typename VecType>
 __host__
 void ImageCudaKernelCaller<VecType>::ConvertToFloatImageKernelCaller(
-    ImageCudaServer<VecType> &src,
-    ImageCudaServer<typename VecType::VecTypef> &dst,
+    ImageCudaDevice<VecType> &src,
+    ImageCudaDevice<typename VecType::VecTypef> &dst,
     float scale, float offset) {
     const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
                       DIV_CEILING(src.height_, THREAD_2D_UNIT));
@@ -245,8 +245,8 @@ void ImageCudaKernelCaller<VecType>::ConvertToFloatImageKernelCaller(
 template<typename VecType>
 __global__
 void ConvertRGBToIntensityKernel(
-    ImageCudaServer<VecType> src,
-    ImageCudaServer<Vector1f> dst) {
+    ImageCudaDevice<VecType> src,
+    ImageCudaDevice<Vector1f> dst) {
 
     int u = blockIdx.x * blockDim.x + threadIdx.x;
     int v = blockIdx.y * blockDim.y + threadIdx.y;
@@ -260,7 +260,7 @@ void ConvertRGBToIntensityKernel(
 template<typename VecType>
 __host__
 void ImageCudaKernelCaller<VecType>::ConvertRGBToIntensityKernelCaller(
-    ImageCudaServer<VecType> &src, ImageCudaServer<Vector1f> &dst) {
+    ImageCudaDevice<VecType> &src, ImageCudaDevice<Vector1f> &dst) {
     const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
                       DIV_CEILING(src.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);

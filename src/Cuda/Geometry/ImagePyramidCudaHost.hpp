@@ -60,7 +60,7 @@ bool ImagePyramidCuda<VecType, N>::Create(int width, int height) {
         return false;
     }
 
-    server_ = std::make_shared<ImagePyramidCudaServer<VecType, N>>();
+    server_ = std::make_shared<ImagePyramidCudaDevice<VecType, N>>();
     for (size_t i = 0; i < N; ++i) {
         int w = width >> i;
         int h = height >> i;

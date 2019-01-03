@@ -8,13 +8,13 @@ namespace open3d {
 
 namespace cuda {
 template<typename T>
-class ArrayCudaServer;
+class ArrayCudaDevice;
 
 template<typename T>
 class ArrayCuda;
 
 template<typename T>
-class MemoryHeapCudaServer;
+class MemoryHeapCudaDevice;
 
 template<typename T>
 class MemoryHeapCuda;
@@ -23,7 +23,7 @@ template<typename T>
 class LinkedListNodeCuda;
 
 template<typename T>
-class LinkedListCudaServer;
+class LinkedListCudaDevice;
 
 template<typename T>
 class LinkedListCuda;

@@ -29,6 +29,3 @@ EXAMPLE_CPP(VisualizeTwoFrameRGBDOdometryCuda ${CMAKE_PROJECT_NAME})
 EXAMPLE_CPP(VisualizeTwoFrameRGBDOdometry ${CMAKE_PROJECT_NAME})
 EXAMPLE_CPP(VisualizeTwoDepthFrames ${CMAKE_PROJECT_NAME})
 EXAMPLE_CPP(VisualizeTwoFrameICRGBDOdometryCuda ${CMAKE_PROJECT_NAME})
-
-
-

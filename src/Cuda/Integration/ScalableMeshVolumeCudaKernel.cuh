@@ -11,11 +11,11 @@ namespace cuda {
 template<size_t N>
 __global__
 void MarchingCubesVertexAllocationKernel(
-    ScalableMeshVolumeCudaServer<N> server,
-    ScalableTSDFVolumeCudaServer<N> tsdf_volume) {
+    ScalableMeshVolumeCudaDevice<N> server,
+    ScalableTSDFVolumeCudaDevice<N> tsdf_volume) {
 
     __shared__
-    UniformTSDFVolumeCudaServer<N> *neighbor_subvolumes[27];
+    UniformTSDFVolumeCudaDevice<N> *neighbor_subvolumes[27];
     __shared__ int neighbor_subvolume_indices[27];
 
     const int subvolume_idx = blockIdx.x;
@@ -50,8 +50,8 @@ template<size_t N>
 __host__
 void ScalableMeshVolumeCudaKernelCaller<N>::
 MarchingCubesVertexAllocationKernelCaller(
-    ScalableMeshVolumeCudaServer<N> &server,
-    ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
+    ScalableMeshVolumeCudaDevice<N> &server,
+    ScalableTSDFVolumeCudaDevice<N> &tsdf_volume,
     int active_volumes) {
 
     const dim3 blocks(active_volumes);
@@ -65,11 +65,11 @@ MarchingCubesVertexAllocationKernelCaller(
 template<size_t N>
 __global__
 void MarchingCubesVertexExtractionKernel(
-    ScalableMeshVolumeCudaServer<N> server,
-    ScalableTSDFVolumeCudaServer<N> tsdf_volume) {
+    ScalableMeshVolumeCudaDevice<N> server,
+    ScalableTSDFVolumeCudaDevice<N> tsdf_volume) {
 
     __shared__
-    UniformTSDFVolumeCudaServer<N> *neighbor_subvolumes[27];
+    UniformTSDFVolumeCudaDevice<N> *neighbor_subvolumes[27];
     __shared__ int neighbor_subvolume_indices[27];
 
     const int subvolume_idx = blockIdx.x;
@@ -105,8 +105,8 @@ template<size_t N>
 __host__
 void ScalableMeshVolumeCudaKernelCaller<N>::
 MarchingCubesVertexExtractionKernelCaller(
-    ScalableMeshVolumeCudaServer<N> &server,
-    ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
+    ScalableMeshVolumeCudaDevice<N> &server,
+    ScalableTSDFVolumeCudaDevice<N> &tsdf_volume,
     int active_volumes) {
 
     const dim3 blocks(active_volumes);
@@ -121,11 +121,11 @@ MarchingCubesVertexExtractionKernelCaller(
 template<size_t N>
 __global__
 void MarchingCubesTriangleExtractionKernel(
-    ScalableMeshVolumeCudaServer<N> server,
-    ScalableTSDFVolumeCudaServer<N> tsdf_volume) {
+    ScalableMeshVolumeCudaDevice<N> server,
+    ScalableTSDFVolumeCudaDevice<N> tsdf_volume) {
 
     __shared__
-    UniformTSDFVolumeCudaServer<N> *neighbor_subvolumes[27];
+    UniformTSDFVolumeCudaDevice<N> *neighbor_subvolumes[27];
     __shared__ int neighbor_subvolume_indices[27];
 
     const int subvolume_idx = blockIdx.x;
@@ -155,8 +155,8 @@ void MarchingCubesTriangleExtractionKernel(
 template<size_t N>
 void ScalableMeshVolumeCudaKernelCaller<N>::
 MarchingCubesTriangleExtractionKernelCaller(
-    ScalableMeshVolumeCudaServer<N> &server,
-    ScalableTSDFVolumeCudaServer<N> &tsdf_volume,
+    ScalableMeshVolumeCudaDevice<N> &server,
+    ScalableTSDFVolumeCudaDevice<N> &tsdf_volume,
     int active_volumes) {
 
     const dim3 blocks(active_volumes);

@@ -15,7 +15,7 @@ namespace cuda {
 template<typename Key, typename Value, typename Hasher>
 __global__
 void CreateHashTableEntriesKernel(
-    HashTableCudaServer<Key, Value, Hasher> server) {
+    HashTableCudaDevice<Key, Value, Hasher> server) {
     const int bucket_idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (bucket_idx >= server.bucket_count_) return;
 
@@ -40,7 +40,7 @@ template<typename Key, typename Value, typename Hasher>
 __host__
 void HashTableCudaKernelCaller<Key, Value, Hasher>::
 CreateHashTableEntriesKernelCaller(
-    HashTableCudaServer<Key, Value, Hasher> &server,
+    HashTableCudaDevice<Key, Value, Hasher> &server,
     int bucket_count) {
     const int threads = THREAD_1D_UNIT;
     const int blocks = DIV_CEILING(bucket_count, THREAD_1D_UNIT);
@@ -52,7 +52,7 @@ CreateHashTableEntriesKernelCaller(
 template<typename Key, typename Value, typename Hasher>
 __global__
 void ReleaseHashTableEntriesKernel(
-    HashTableCudaServer<Key, Value, Hasher> server) {
+    HashTableCudaDevice<Key, Value, Hasher> server) {
     const int bucket_idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (bucket_idx >= server.bucket_count_) return;
 
@@ -63,7 +63,7 @@ template<typename Key, typename Value, typename Hasher>
 __host__
 void HashTableCudaKernelCaller<Key, Value, Hasher>::
 ReleaseHashTableEntriesKernelCaller(
-    HashTableCudaServer<Key, Value, Hasher> &server,
+    HashTableCudaDevice<Key, Value, Hasher> &server,
     int bucket_count) {
 
     const int blocks = DIV_CEILING(bucket_count, THREAD_1D_UNIT);
@@ -77,7 +77,7 @@ ReleaseHashTableEntriesKernelCaller(
 template<typename Key, typename Value, typename Hasher>
 __global__
 void ResetHashTableEntriesKernel(
-    HashTableCudaServer<Key, Value, Hasher> server) {
+    HashTableCudaDevice<Key, Value, Hasher> server) {
     const int bucket_idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (bucket_idx >= server.bucket_count_) return;
 
@@ -93,7 +93,7 @@ template<typename Key, typename Value, typename Hasher>
 __host__
 void HashTableCudaKernelCaller<Key, Value, Hasher>::
 ResetHashTableEntriesKernelCaller(
-    HashTableCudaServer<Key, Value, Hasher> &server,
+    HashTableCudaDevice<Key, Value, Hasher> &server,
     int bucket_count) {
     const int blocks = DIV_CEILING(bucket_count, THREAD_1D_UNIT);
     const int threads = THREAD_1D_UNIT;
@@ -106,7 +106,7 @@ ResetHashTableEntriesKernelCaller(
 template<typename Key, typename Value, typename Hasher>
 __global__
 void GetHashTableAssignedEntriesKernel(
-    HashTableCudaServer<Key, Value, Hasher> server) {
+    HashTableCudaDevice<Key, Value, Hasher> server) {
     typedef HashEntry<Key> Entry;
 
     const int bucket_idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -121,7 +121,7 @@ void GetHashTableAssignedEntriesKernel(
         }
     }
 
-    LinkedListCudaServer<Entry> &linked_list =
+    LinkedListCudaDevice<Entry> &linked_list =
         server.entry_list_array().at(bucket_idx);
     int node_ptr = linked_list.head_node_ptr();
     while (node_ptr != NULLPTR_CUDA) {
@@ -136,7 +136,7 @@ template<typename Key, typename Value, typename Hasher>
 __HOST__
 void HashTableCudaKernelCaller<Key, Value, Hasher>::
 GetHashTableAssignedEntriesKernelCaller(
-    HashTableCudaServer<Key, Value, Hasher> &server,
+    HashTableCudaDevice<Key, Value, Hasher> &server,
     int bucket_count) {
 
     const int blocks = DIV_CEILING(bucket_count, THREAD_1D_UNIT);
@@ -149,8 +149,8 @@ GetHashTableAssignedEntriesKernelCaller(
 template<typename Key, typename Value, typename Hasher>
 __global__
 void InsertHashTableEntriesKernel(
-    HashTableCudaServer<Key, Value, Hasher> server,
-    ArrayCudaServer<Key> keys, ArrayCudaServer<Value> values, int num_pairs) {
+    HashTableCudaDevice<Key, Value, Hasher> server,
+    ArrayCudaDevice<Key> keys, ArrayCudaDevice<Value> values, int num_pairs) {
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
     if (idx < num_pairs) {
         int value_internal_ptr = server.New(keys[idx]);
@@ -168,9 +168,9 @@ template<typename Key, typename Value, typename Hasher>
 __host__
 void HashTableCudaKernelCaller<Key, Value, Hasher>::
 InsertHashTableEntriesKernelCaller(
-    HashTableCudaServer<Key, Value, Hasher> &server,
-    ArrayCudaServer<Key> &keys,
-    ArrayCudaServer<Value> &values,
+    HashTableCudaDevice<Key, Value, Hasher> &server,
+    ArrayCudaDevice<Key> &keys,
+    ArrayCudaDevice<Value> &values,
     int num_pairs,
     int bucket_count) {
     const int blocks = DIV_CEILING(bucket_count, THREAD_1D_UNIT);
@@ -184,8 +184,8 @@ InsertHashTableEntriesKernelCaller(
 template<typename Key, typename Value, typename Hasher>
 __global__
 void DeleteHashTableEntriesKernel(
-    HashTableCudaServer<Key, Value, Hasher> server,
-    ArrayCudaServer<Key> keys, int num_keys) {
+    HashTableCudaDevice<Key, Value, Hasher> server,
+    ArrayCudaDevice<Key> keys, int num_keys) {
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
     if (idx < num_keys) {
         int ret = server.Delete(keys[idx]);
@@ -196,8 +196,8 @@ template<typename Key, typename Value, typename Hasher>
 __host__
 void HashTableCudaKernelCaller<Key, Value, Hasher>::
 DeleteHashTableEntriesKernelCaller(
-    HashTableCudaServer<Key, Value, Hasher> &server,
-    ArrayCudaServer<Key> &keys,
+    HashTableCudaDevice<Key, Value, Hasher> &server,
+    ArrayCudaDevice<Key> &keys,
     int num_keys,
     int bucket_count) {
     const int blocks = DIV_CEILING(bucket_count, THREAD_1D_UNIT);
@@ -212,9 +212,9 @@ DeleteHashTableEntriesKernelCaller(
 template<typename Key, typename Value, typename Hasher>
 __global__
 void ProfileHashTableKernel(
-    HashTableCudaServer<Key, Value, Hasher> server,
-    ArrayCudaServer<int> array_entry_count,
-    ArrayCudaServer<int> linked_list_entry_count) {
+    HashTableCudaDevice<Key, Value, Hasher> server,
+    ArrayCudaDevice<int> array_entry_count,
+    ArrayCudaDevice<int> linked_list_entry_count) {
     typedef HashEntry<Key> Entry;
 
     int bucket_idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -228,7 +228,7 @@ void ProfileHashTableKernel(
         }
     }
 
-    LinkedListCudaServer<Entry> &linked_list =
+    LinkedListCudaDevice<Entry> &linked_list =
         server.entry_list_array().at(bucket_idx);
 
     int linked_list_entry_cnt = 0;
@@ -249,9 +249,9 @@ template<typename Key, typename Value, typename Hasher>
 __host__
 void HashTableCudaKernelCaller<Key, Value, Hasher>::
 ProfileHashTableKernelCaller(
-    HashTableCudaServer<Key, Value, Hasher> &server,
-    ArrayCudaServer<int> &array_entry_count,
-    ArrayCudaServer<int> &linked_list_entry_count,
+    HashTableCudaDevice<Key, Value, Hasher> &server,
+    ArrayCudaDevice<int> &array_entry_count,
+    ArrayCudaDevice<int> &linked_list_entry_count,
     int bucket_count) {
     const int threads = THREAD_1D_UNIT;
     const int blocks = DIV_CEILING(bucket_count, THREAD_1D_UNIT);

@@ -35,7 +35,7 @@ namespace cuda {
  */
 
 template<typename T>
-class MemoryHeapCudaServer {
+class MemoryHeapCudaDevice {
 private:
     T *data_;   /* [N] */
     int *heap_; /* [N] */
@@ -68,7 +68,7 @@ public:
 template<typename T>
 class MemoryHeapCuda {
 private:
-    std::shared_ptr<MemoryHeapCudaServer<T>> server_ = nullptr;
+    std::shared_ptr<MemoryHeapCudaDevice<T>> server_ = nullptr;
     int HeapCounter();
 
 public:
@@ -89,10 +89,10 @@ public:
     std::vector<int> DownloadHeap();
     std::vector<T> DownloadValue();
 
-    std::shared_ptr<MemoryHeapCudaServer<T>> &server() {
+    std::shared_ptr<MemoryHeapCudaDevice<T>> &server() {
         return server_;
     }
-    const std::shared_ptr<MemoryHeapCudaServer<T>> &server() const {
+    const std::shared_ptr<MemoryHeapCudaDevice<T>> &server() const {
         return server_;
     }
 };
@@ -101,21 +101,21 @@ template<typename T>
 class MemoryHeapCudaKernelCaller {
 public:
     static __HOST__ void ResetMemoryHeapKernelCaller(
-        MemoryHeapCudaServer<T> &server, int max_capacity);
+        MemoryHeapCudaDevice<T> &server, int max_capacity);
     static __HOST__ void ResizeMemoryHeapKernelCaller(
-        MemoryHeapCudaServer<T> &server,
-        MemoryHeapCudaServer<T> &dst,
+        MemoryHeapCudaDevice<T> &server,
+        MemoryHeapCudaDevice<T> &dst,
         int new_max_capacity);
 };
 
 template<class T>
 __GLOBAL__
-void ResetMemoryHeapKernel(MemoryHeapCudaServer<T> server);
+void ResetMemoryHeapKernel(MemoryHeapCudaDevice<T> server);
 
 template<typename T>
 __GLOBAL__
-void ResizeMemoryHeapKernel(MemoryHeapCudaServer<T> src,
-                            MemoryHeapCudaServer<T> dst);
+void ResizeMemoryHeapKernel(MemoryHeapCudaDevice<T> src,
+                            MemoryHeapCudaDevice<T> dst);
 
 } // cuda
 } // open3d

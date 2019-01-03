@@ -69,7 +69,7 @@ bool RGBDImageCuda::Create(int width, int height) {
         return true;
     }
 
-    server_ = std::make_shared<RGBDImageCudaServer>();
+    server_ = std::make_shared<RGBDImageCudaDevice>();
 
     width_ = width;
     height_ = height;

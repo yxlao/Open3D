@@ -63,7 +63,7 @@ void UniformTSDFVolumeCuda<N>::Create() {
         return;
     }
 
-    server_ = std::make_shared<UniformTSDFVolumeCudaServer<N>>();
+    server_ = std::make_shared<UniformTSDFVolumeCudaDevice<N>>();
     const size_t NNN = N * N * N;
     CheckCuda(cudaMalloc(&(server_->tsdf_), sizeof(float) * NNN));
     CheckCuda(cudaMalloc(&(server_->weight_), sizeof(uchar) * NNN));

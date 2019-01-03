@@ -14,25 +14,25 @@
  */
 namespace open3d {
 namespace cuda {
-class RGBDImageCudaServer {
+class RGBDImageCudaDevice {
 private:
-    ImageCudaServer<Vector1f> depth_;
-    ImageCudaServer<Vector3b> color_;
-    ImageCudaServer<Vector1f> intensity_;
+    ImageCudaDevice<Vector1f> depth_;
+    ImageCudaDevice<Vector3b> color_;
+    ImageCudaDevice<Vector1f> intensity_;
 
 public:
     int width_;
     int height_;
 
 public:
-    __HOSTDEVICE__ ImageCudaServer<Vector1f> &depth() { return depth_; }
-    __HOSTDEVICE__ ImageCudaServer<Vector3b> &color() { return color_; }
-    __HOSTDEVICE__ ImageCudaServer<Vector1f> &intensity() { return intensity_; }
+    __HOSTDEVICE__ ImageCudaDevice<Vector1f> &depth() { return depth_; }
+    __HOSTDEVICE__ ImageCudaDevice<Vector3b> &color() { return color_; }
+    __HOSTDEVICE__ ImageCudaDevice<Vector1f> &intensity() { return intensity_; }
 };
 
 class RGBDImageCuda {
 private:
-    std::shared_ptr<RGBDImageCudaServer> server_ = nullptr;
+    std::shared_ptr<RGBDImageCudaDevice> server_ = nullptr;
 
     /* Raw input */
     ImageCuda<Vector1s> depth_raw_;
@@ -82,8 +82,8 @@ public:
     ImageCuda<Vector1f> &intensity() { return intensity_; }
     const ImageCuda<Vector1f> &intensity() const { return intensity_; }
 
-    std::shared_ptr<RGBDImageCudaServer> &server() { return server_; }
-    const std::shared_ptr<RGBDImageCudaServer> &server() const {
+    std::shared_ptr<RGBDImageCudaDevice> &server() { return server_; }
+    const std::shared_ptr<RGBDImageCudaDevice> &server() const {
         return server_;
     }
 };
