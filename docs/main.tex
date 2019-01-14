@@ -1,0 +1,103 @@
+\documentclass{article}
+\usepackage[a4paper]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[colorlinks=true,citecolor=blue]{hyperref}
+
+\title{Literature Review of Semantic Scene Reconstruction and Completion}
+\author{Wei Dong}
+\date{January 2019}
+
+\begin{document}
+
+\maketitle
+
+Our target is to reconstruct indoor scenes with accurate geometric structures
+and semantic labels given RGB-D videos.
+In addition, we seek to complete the scenes, such that the holes upon the
+surfaces will be filled at the level of objects.
+The scenes will remain geometrically completed, even if object instances such
+as tables and vases are removed.
+
+The ultimate task can be disassembled into several sub-tasks, including
+object detection, geometric reconstruction, and 3D completion or inpainting.
+There have been several studies that combine several of them, but as far as
+we concern there is no work that has involved all the aspects.
+
+We believe semantically completed reconstructed scenes are fully functional for
+interaction and simulation, hence will be beneficial for research and industry.
+
+\section{Related Work}
+\subsection{Object Detection}
+Semantic object detection has benefited from the rapid development of deep
+neural networks. The state-of-the-art framework \textit{Mask R-CNN}
+\cite{He-et-al-ICCV-2017} has gained its popularity for efficient object
+proposal and accurate pixel-level segmentation on RGB images. It can be
+regarded as a blackbox and has been utilized in several reconstruction
+systems such as \cite{McCormac-et-al-3DV-2018, Runz-and-Agapito-ISMAR-2018}.
+In contrast to \textit{Mask R-CNN} that generates 2D bounding boxes on images,
+\textit{3D-SIS} \cite{Ji-et-al-arxiv-2018} learns to find 3D objects
+in reconstructed scenes. By combining 2D image features and 3D geometry,
+\textit{3D-SIS} outputs accurate 3D bounding boxes in reconstructed scenes.
+
+\subsection{Semantic Dense Scene Reconstruction}
+Dense scene reconstruction has been a well studied topic in the past 10 years
+\cite{Newcombe-et-al-ISMAR-2011, Niessner-et-al-TOG-2013,
+Whelan-et-al-RAS-2012, Dai-et-al-TOG-2017}. In a naive perspective,
+semantic dense reconstruction estimates labels jointly with reconstructed
+geometry structures.
+
+Before deep learning is applicable to real-world object
+segmentation, initial studies for semantic reconstrucion has been proposed by
+incorporating priors. \textit{SLAM++} \cite{Salas-Moreno-et-al-CVPR-2013}
+uses random forest to detect 3D shapes in reconstructed scenes;
+\textit{Dense Planar SLAM} \cite{Salas-Moreno-et-al-ISMAR-2014} finds
+planes and segments 3D scenes accordingly.
+
+Recently, more sophisticated SLAM systems begin to integrate state-of-the-art
+image-based segmentation networks for dense 3D label fusion.
+\textit{Fusion++} \cite{McCormac-et-al-3DV-2018} and its
+ancestor \textit{SemanticFusion}\cite{McCormac-et-al-ICRA-2017} use
+\textit{RGB-CNN} and \textit{Mask R-CNN} respectively as front-ends for
+probabilistic object mask generation; the masks are later fused into
+maintained 3D models via Bayesian
+updates. \textit{MaskFusion} \cite{Runz-and-Agapito-ISMAR-2018} in addition
+considers moving objects.
+
+The idea of fusing object labels is able to complete 3D object labels given
+several partial scans and corresponding segmentations.
+As pointed out in \textit{Fusion++}, it also helps to improve
+the camera localization accuracy when object-level pose graphs are
+created and optimized.
+
+\subsection{Scene Completion}
+3D models reconstructed from real-world RGB-D sequences are usually imperfect
+due to noise, missing data, and occlusions. Priors on 2D depth images or 3D
+models can be exploited to improve the reconstruction.
+
+In 2D depth images, local smoothness is usually considered to inpaint missing
+raw data. \cite{Xue-et-al-TIP-2017} used low gradient regularization for
+depth inpainting; equipped with deep neural networks, learning-based
+methods have shown their power in single depth or RGB-D
+image completion\cite{Song-et-al-CVPR-2017,
+Zhang-and-Funkhouser-CVPR-2018, Atapour-Abarghouei-and-Breckon-BMVC-2017}.
+
+It is also possible to directly complete the reconstructed 3D scenes. At the
+lowest level, \cite{Zach-et-al-ICCV-2007} uses variational approach to
+ensure local smoothness, such that holes upon object surfaces can be fixed.
+\cite{Dzitsiuk-et-al-ICRA-2017} uses planar priors to denoise the model
+during data fusion, and fixes the holes by fitting planes in regions semantically
+annotated as walls and floors. \cite{Sahay-and-Rajagopalan-CVPRW-2015}
+assumes local smoothness in 3D shapes, in assistance with self
+similarity revealed in the precomputed depth dictionary.
+
+3D deep learning is memory and computational expensive, especially at the
+level of scenes. Nevertheless, attempts have also been made in scene
+completion.
+\textit{ScanComplete} \cite{Dai-et-al-CVPR-2018} seeks to semantically complete
+the voxelized scenes in an end-to-end fashion. As an early study, the 3D
+representation may be improved for more precise geometry structures.
+
+\bibliographystyle{plain}
+\bibliography{ref}
+
+\end{document}

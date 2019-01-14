@@ -14,6 +14,12 @@ template<typename T>
 class ArrayCuda;
 
 template<typename T>
+class MatrixCudaDevice;
+
+template<typename T>
+class MatrixCuda;
+
+template<typename T>
 class MemoryHeapCudaDevice;
 
 template<typename T>

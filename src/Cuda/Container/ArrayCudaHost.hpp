@@ -15,9 +15,6 @@
 namespace open3d {
 
 namespace cuda {
-/**
- * Client end
- */
 template<typename T>
 ArrayCuda<T>::ArrayCuda() {
     max_capacity_ = -1;

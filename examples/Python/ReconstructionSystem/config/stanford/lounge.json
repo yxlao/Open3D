@@ -1,6 +1,6 @@
 {
     "name": "Open3D reconstruction tutorial http://open3d.org/docs/tutorial/ReconstructionSystem/system_overview.html",
-    "path_dataset": "dataset/stanford/lounge/",
+    "path_dataset": "/home/wei/Work/data/stanford/lounge/",
     "path_intrinsic": "",
     "max_depth": 3.0,
     "voxel_size": 0.05,
@@ -10,5 +10,5 @@
     "tsdf_cubic_size": 3.0,
     "icp_method": "color",
     "global_registration": "ransac",
-    "python_multi_threading": true
+    "python_multi_threading": false
 }

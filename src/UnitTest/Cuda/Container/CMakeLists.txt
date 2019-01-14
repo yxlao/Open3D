@@ -11,3 +11,7 @@ target_link_libraries(TestArrayCuda ${CMAKE_PROJECT_NAME}
 add_executable(TestLinkedListCuda TestLinkedListCuda.cpp)
 target_link_libraries(TestLinkedListCuda ${CMAKE_PROJECT_NAME}
         ${GTEST_LIBRARIES} pthread)
+
+add_executable(TestMatrixCuda TestMatrixCuda.cpp)
+target_link_libraries(TestMatrixCuda ${CMAKE_PROJECT_NAME}
+        ${GTEST_LIBRARIES} pthread)

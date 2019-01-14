@@ -1,0 +1,859 @@
+%%% Inpainting and Completion
+%% Andrew Davison -- Completion from FUSION of RGB-D videos
+@inproceedings{McCormac-et-al-3DV-2018,
+  title={Fusion++: Volumetric object-level slam},
+  author={McCormac, John and Clark, Ronald and Bloesch, Michael and Davison, Andrew and Leutenegger, Stefan},
+  booktitle={Proceedings of 3DV},
+  pages={32--41},
+  year={2018},
+  organization={IEEE}
+}
+
+@inproceedings{McCormac-et-al-ICRA-2017,
+  title={SemanticFusion: Dense 3d semantic mapping with convolutional neural networks},
+  author={McCormac, John and Handa, Ankur and Davison, Andrew and Leutenegger, Stefan},
+  booktitle={Proceedings of ICRA},
+  pages={4628--4635},
+  year={2017},
+  organization={IEEE}
+}
+
+@inproceedings{Runz-and-Agapito-ISMAR-2018,
+  title={MaskFusion: Real-Time Recognition, Tracking and Reconstruction of Multiple Moving Objects},
+  author={R{\"u}nz, Martin and Agapito, Lourdes},
+  booktitle={Proceedings of ISMAR},
+  year={2018}
+}
+
+%% Mattias Niessner -- Completion from ENTIRE scenes
+@article{Ji-et-al-arxiv-2018,
+    title={3D-SIS: 3D Semantic Instance Segmentation of RGB-D Scans},
+    author={Ji, Hou and Dai, Angela and Nie{\ss}ner, Matthias},
+    journal={arXiv 2018},
+    year={2018}
+}
+
+@inproceedings{Dai-et-al-CVPR-2018,
+    title={ScanComplete: Large-Scale Scene Completion and Semantic Segmentation for 3D Scans},
+    author={Dai, Angela and Ritchie, Daniel and Bokeloh, Martin and Reed, Scott and Sturm, J{\"u}rgen and Nie{\ss}ner, Matthias},
+    booktitle = {Proceedings of CVPR},
+    year = {2018}
+}
+
+@article{Avetisyan-et-al-arxiv-2018,
+    title={Scan2CAD: Learning CAD Model Alignment in RGB-D Scans},
+    author={Avetisyan, Armen and Dahnert, Manuel and Dai, Angela, and Savva, Manolis and Chang, Angel X. and Nie{\ss}ner, Matthias},
+    journal={arXiv 2018},
+    year={2018}
+}
+
+%% Princeton -- Completion from SINGLE views
+@inproceedings{Song-et-al-CVPR-2017,
+  title={Semantic scene completion from a single depth image},
+  author={Song, Shuran and Yu, Fisher and Zeng, Andy and Chang, Angel X and Savva, Manolis and Funkhouser, Thomas},
+  booktitle={Proceedings of CVPR},
+  pages={190--198},
+  year={2017},
+  organization={IEEE}
+}
+
+@inproceedings{Zhang-and-Funkhouser-CVPR-2018,
+  title={Deep Depth Completion of a Single RGB-D Image},
+  author={Zhang, Yinda and Funkhouser, Thomas},
+  booktitle={Proceedings of CVPR},
+  year={2018}
+}
+
+@article{Xue-et-al-TIP-2017,
+  title={Depth image inpainting: Improving low rank matrix completion with low gradient regularization},
+  author={Xue, Hongyang and Zhang, Shengming and Cai, Deng},
+  journal={IEEE Transactions on Image Processing},
+  volume={26},
+  number={9},
+  pages={4311--4320},
+  year={2017},
+  publisher={IEEE}
+}
+
+@inproceedings{Atapour-Abarghouei-and-Breckon-BMVC-2017,
+  title={DepthComp: real-time depth image completion based on prior semantic scene segmentation.},
+  author={Atapour-Abarghouei, Amir and Breckon, Toby P.},
+  booktitle={Proceedings of BMVC},
+  year={2017},
+  publisher={BMVA}
+}
+
+%% Others
+% Contour detection
+@inproceedings{Zhou-and-Koltun-CVPR-2015,
+  title={Depth camera tracking with contour cues},
+  author={Zhou, Qian-Yi and Koltun, Vladlen},
+  booktitle={Proceedings of CVPR},
+  pages={632--638},
+  year={2015}
+}
+
+% 1Self-similar
+@inproceedings{Sahay-and-Rajagopalan-CVPRW-2015,
+  title={Geometric inpainting of 3D structures},
+  author={Sahay, Pratyush and Rajagopalan, AN},
+  booktitle={Proceedings of CVPR Workshops},
+  pages={1--7},
+  year={2015}
+}
+
+% TSDF Hole filling
+@inproceedings{Dzitsiuk-et-al-ICRA-2017,
+  title={De-noising, stabilizing and completing 3D reconstructions on-the-go using plane priors},
+  author={Dzitsiuk, Maksym and Sturm, J{\"u}rgen and Maier, Robert and Ma, Lingni and Cremers, Daniel},
+  booktitle={Proceedings of ICRA},
+  pages={3976--3983},
+  year={2017},
+  organization={IEEE}
+}
+
+% Variational TSDF filling
+@inproceedings{Zach-et-al-ICCV-2007,
+  title={A globally optimal algorithm for robust TV-L 1 range image integration},
+  author={Zach, Christopher and Pock, Thomas and Bischof, Horst},
+  booktitle={Proceedings of ICCV},
+  pages={1--8},
+  year={2007},
+  organization={IEEE}
+}
+
+@article{He-et-al-2011-AAPR,
+  title={Object removal by depth-guided inpainting},
+  author={He, Liu and Bleyer, Michael and Gelautz, Margrit},
+  journal={Austrian Association for Pattern Recognition},
+  volume={2},
+  year={2011}
+}
+
+%%% Segmentation and Object Detection
+@inproceedings{He-et-al-ICCV-2017,
+  title={Mask {R-CNN}},
+  author={He, Kaiming and Gkioxari, Georgia and Doll{\'a}r, Piotr and Girshick, Ross},
+  booktitle={Proceedings of ICCV},
+  pages={2980--2988},
+  year={2017},
+  organization={IEEE}
+}
+
+%%% Datasets
+@article{Chang-et-al-3DV-2017,
+  title={{Matterport3D}: Learning from {RGB-D} Data in Indoor Environments},
+  author={Chang, Angel and Dai, Angela and Funkhouser, Thomas and Halber, Maciej and Niessner, Matthias and Savva, Manolis and Song, Shuran and Zeng, Andy and Zhang, Yinda},
+  journal={Proceedings of 3DV},
+  year={2017}
+}
+
+@inproceedings{Dai-et-al-CVPR-2017,
+  title={ScanNet: Richly-Annotated 3D Reconstructions of Indoor Scenes.},
+  author={Dai, Angela and Chang, Angel X and Savva, Manolis and Halber, Maciej and Funkhouser, Thomas A and Nie{\ss}ner, Matthias},
+  booktitle={Proceedings of CVPR},
+  volume={2},
+  pages={10},
+  year={2017}
+}
+
+@inproceedings{Xiao-et-al-ICCV-2013,
+  title={Sun3d: A database of big spaces reconstructed using sfm and object labels},
+  author={Xiao, Jianxiong and Owens, Andrew and Torralba, Antonio},
+  booktitle={Proceedings of ICCV},
+  pages={1625--1632},
+  year={2013}
+}
+
+@inproceedings{Silberman-et-al-ECCV-2012,
+  title={Indoor segmentation and support inference from rgbd images},
+  author={Silberman, Nathan and Hoiem, Derek and Kohli, Pushmeet and Fergus, Rob},
+  booktitle={Proceedings of ECCV},
+  pages={746--760},
+  year={2012},
+  organization={Springer}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% TSDF %%%
+%% Formulation
+@inproceedings{Curless-and-Levoy-SIGGRAPH-1996,
+  author = {Curless, Brian and Levoy, Marc},
+  booktitle = {Proceedings of ACM SIGGRAPH},
+  pages = {303--312},
+  title = {{A Volumetric Method for Building Complex Models from Range Images}},
+  year = {1996},
+  language = {english}
+}
+@article{Tanner-Lecture-2016,
+  author={Tanner-Schmidt},
+  booktitle = {Lecture Notes},
+  title={Signed Distance Function Representation, Tracking, and Mapping},
+  year={2016}
+}
+
+%% Data structure
+% Plain array
+@inproceedings{Newcombe-et-al-ISMAR-2011,
+  author = {Newcombe, Richard A. and Molyneaux, David and Kim, David and Davison, Andrew J. and Shotton, Jamie and Hodges, Steve and Fitzgibbon, Andrew and Izadi, Shahram and Hilliges, Otmar and Molyneaux, David and Kim, David and Davison, Andrew J. and Kohli, Pushmeet and Shotton, Jamie and Hodges, Steve and Fitzgibbon, Andrew},
+  booktitle = {Proceedings of IEEE and ACM International Symposium on Mixed and Augmented Reality},
+  pages = {127--136},
+  title = {{KinectFusion: Real-Time Dense Surface Mapping and Tracking}},
+  year = {2011}
+}
+
+% Octree
+@article{Zeng-et-al-GM-2013,
+  author = {Zeng, Ming and Zhao, Fukai and Zheng, Jiaxiang and Liu, Xinguo},
+  journal = {Graphical Models},
+  number = {3},
+  pages = {126--136},
+  title = {{Octree-based Fusion for Real-time 3D Reconstruction}},
+  volume = {75},
+  year = {2013}
+}
+
+@inproceedings{Steinbrucker-et-al-ICRA-2014,
+  author = {Steinbr{\"{u}}cker, Frank and Sturm, J{\"{u}}rgen and Cremers, Daniel},
+  booktitle = {Proceedings of IEEE International Conference on Robotics and Automation},
+  pages = {2021--2028},
+  title = {{Volumetric 3D Mapping in Real-time on a CPU}},
+  year = {2014}
+}
+
+% Moving blocks
+@article{Whelan-et-al-IJRR-2015,
+  title={{Real-time Large-scale Dense RGB-D SLAM with Volumetric Fusion}},
+  author={Whelan, Thomas and Kaess, Michael and Johannsson, Hordur and Fallon, Maurice and Leonard, John J. and McDonald, John},
+  journal={The International Journal of Robotics Research},
+  volume={34},
+  number={4-5},
+  pages={598--626},
+  year={2015},
+}
+
+@article{Whelan-et-al-RAS-2012,
+  title={{Kintinuous: Spatially Extended KinectFusion}},
+  author={Whelan, Thomas and Kaess, Michael and Fallon, Maurice and Johannsson, Hordur and Leonard, John J. and Mcdonald, John},
+  journal={Robotics and Autonomous Systems},
+  volume={69},
+  number={C},
+  pages={3-14},
+  year={2012},
+}
+
+% Voxel-Hashing
+@inproceedings{Teschner-et-al-VMV-2003,
+  title={Optimized Spatial Hashing for Collision Detection of Deformable Objects.},
+  author={Teschner, Matthias and Heidelberger, Bruno and M{\"u}ller, Matthias and Pomerantes, Danat and Gross, Markus H},
+  booktitle={International Symposium on Vision, Modeling and Visualization},
+  volume={3},
+  pages={47--54},
+  year={2003}
+}
+
+@article{Niessner-et-al-TOG-2013,
+  author = {Nie{\upshape{\ss}}ner, Matthias and Zollh{\"{o}}fer, Michael and Izadi, Shahram and Stamminger, Marc},
+  journal = {ACM Transactions on Graphics},
+  pages = {169},
+  title = {{Real-time 3D Reconstruction at Scale using Voxel Hashing}},
+  volume = {32},
+  number ={6},
+  year = {2013}
+}
+
+% 2-Level Hashing
+@article{Kahler-et-al-RAL-2016,
+  title={{Hierarchical Voxel Block Hashing for Efficient Integration of Depth Images}},
+  author={K{\"a}hler, Olaf and Prisacariu, Victor Adrian and Valentin, Julien and Murray, David},
+  journal={IEEE Robotics and Automation Letters},
+  volume={1},
+  number={1},
+  pages={192--197},
+  year={2016}
+}
+
+@article{Kahler-et-al-TVCG-2015,
+  title={{Very High Frame Rate Volumetric Integration of Depth Images on Mobile Devices}},
+  author={K{\"a}hler, Olaf and Prisacariu, Victor Adrian and Ren, Carl Yuheng and Sun, Xin and Torr, Philip and Murray, David},
+  journal={IEEE Transactions on Visualization and Computer Graphics},
+  volume={21},
+  number={11},
+  pages={1241--1250},
+  year={2015}
+}
+
+%% Operations
+% Bundle-Fusion: De-integration
+@article{Dai-et-al-TOG-2017,
+  title={{BundleFusion: Real-time Globally Consistent 3D Reconstruction using On-the-fly Surface Reintegration}},
+  author={Dai, Angela and Nie{\ss}ner, Matthias and Zollh{\"o}fer, Michael and Izadi, Shahram and Theobalt, Christian},
+  journal={ACM Transactions on Graphics},
+  volume={36},
+  number={3},
+  pages={24},
+  year={2017}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Occupancy grids
+@article{Elfes-Computer-1989,
+  title={{Using Occupancy Grids for Mobile Robot Perception and Navigation}},
+  author={Elfes, Alberto},
+  journal={IEEE Computer},
+  volume={22},
+  number={6},
+  pages={46--57},
+  year={1989}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Surfel
+@article{Prisacariu-et-al-Arxiv-2017,
+  author = {Prisacariu, Victor Adrian and K{\"a}hler, Olaf and Golodetz, Stuart and Sapienza, Michael and Cavallari, Tommaso and Torr, Philip H. S. and Murray, David},
+  title = {{InfiniTAM v3: A Framework for Large-Scale 3D Reconstruction with Loop Closure}},
+  journal = {ArXiv e-prints},
+  eprint = {1708.00783},
+  year = 2017,
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Meshing
+@inproceedings{Lorensen-and-Cline-SIGGRAPH-1987,
+  author = {Lorensen, William E. and Cline, Harvey E.},
+  booktitle = {Proceedings of ACM SIGGRAPH},
+  pages = {7--9},
+  title = {{Marching Cubes : A High Resolution 3D Surface Construction Algorithm}},
+  volume = {6},
+  year = {1987}
+}
+
+@article{Newman-Yi-CG-2006,
+  title={{A Survey of the Marching Cubes Algorithm}},
+  author={Newman, Timothy S. and Yi, Hong},
+  journal={Computers and Graphics},
+  volume={30},
+  number={5},
+  pages={854--879},
+  year={2006}
+}
+
+@misc{Zirr-URL-2011,
+  author = {Tobias Zirr},
+  title = {{Simplistic Marching Cubes Optimization}},
+  howpublished = {\url{http://alphanew.net/index.php?section=articles&site=marchoptim&lang=eng}}
+}
+
+% Mesh from volume
+@inproceedings{Klingensmith-et-al-RSS-2015,
+  author = {Klingensmith, Matthew and Dryanovski, Ivan and Srinivasa, Siddhartha S. and Xiao, Jizhong},
+  booktitle = {Prceedings of Robotics: Science and Systems},
+  pages = {1--8},
+  title = {{CHISEL: Real Time Large Scale 3D Reconstruction Onboard a Mobile Device using Spatially-Hashed Signed Distance Fields}},
+  year = {2015}
+}
+
+% Mesh from point-cloud
+@inproceedings{Marton-et-al-ICRA-2009,
+  title={{On Fast Surface Reconstruction Methods for Large and Noisy Point Clouds}},
+  author={Marton, Zoltan Csaba and Rusu, Radu Bogdan and Beetz, Michael},
+  booktitle={Proceedings of IEEE International Conference on Robotics and Automation},
+  pages={3218--3223},
+  year={2009}
+}
+
+% Mesh as hightmap
+@inproceedings{Zienkiewicz-et-al-3DV-2016,
+  author = {Zienkiewicz, Jacek and Tsiotsios, Akis and Davison, Andrew J. and Leutenegger, Stefan},
+  booktitle = {Proceedings of International Conference on 3D Vision},
+  pages = {37--46},
+  title = {{Monocular, Real-time Surface Reconstruction using Dynamic Level of Detail}},
+  year = {2016}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Libraries
+@misc{Eigen-URL-2010,
+  author = {Ga\"{e}l Guennebaud and Beno\^{i}t Jacob and others},
+  title = {Eigen v3},
+  howpublished = {\url{http://eigen.tuxfamily.org}},
+  year = {2010}
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Priors
+@article{Vogiatzis-and-Hernandez-IVC-2011,
+  title={{Video-based, Real-time Multi-view Stereo}},
+  author={Vogiatzis, George and Hern{\'a}ndez, Carlos},
+  journal={Image and Vision Computing},
+  volume={29},
+  number={7},
+  pages={434--441},
+  year={2011},
+}
+
+@inproceedings{Forster-et-al-ICRA-2014,
+  title={{SVO: Fast Semi-direct Monocular Visual Odometry}},
+  author={Forster, Christian and Pizzoli, Matia and Scaramuzza, Davide},
+  booktitle={Proceedings of IEEE International Conference on Robotics and Automation},
+  pages={15--22},
+  year={2014}
+}
+
+@inproceedings{Dzitsiuk-et-al-ICRA-2017,
+  title={{De-noising, Stabilizing and Completing 3D Reconstructions On-the-go using Plane Priors}},
+  author={Dzitsiuk, Maksym and Sturm, J{\"u}rgen and Maier, Robert and Ma, Lingni and Cremers, Daniel},
+  booktitle={Proceedings of IEEE International Conference on Robotics and Automation},
+  pages={3976--3983},
+  year={2017}
+}
+
+@inproceedings{Salas-Moreno-et-al-ISMAR-2014,
+  author={Salas-Moreno, Renato F. and
+	Glocker, Ben and
+	Kelly, Paul H. J. and
+	Davison, Andrew J.},
+  title={{Dense Planar SLAM}},
+  booktitle={Proceedings of IEEE and ACM International Symposium on Mixed and Augmented Reality},
+  year={2014}
+}
+
+% 3D-Lite
+@article{Huang-et-al-TOG-2017,
+  title={{3DLite: Towards Commodity 3D Scanning for Content Creation}},
+  author={Jingwei Huang and Angela Dai and Leonidas Guibas and Matthias Nie{\ss}ner},
+  journal={ACM Transactions on Graphics},
+  pages={203:1--203:14},
+  year={2017}
+}
+
+@inproceedings{Tanskanen-et-al-ICCV-2013,
+  title={{Live Metric 3D Reconstruction on Mobile Phones}},
+  author={Tanskanen, Petri and Kolev, Kalin and Meier, Lorenz and Camposeco, Federico and Saurer, Olivier and Pollefeys, Marc},
+  booktitle={Proceedings of the IEEE International Conference on Computer Vision},
+  pages={65--72},
+  year={2013}
+}
+@inproceedings{Kolev-et-al-CVPR-2014,
+  author = {Kolev, Kalin and Tanskanen, Petri and Speciale, Pablo and Pollefeys, Marc},
+  booktitle = {Proceedings of IEEE Conference on Computer Vision and Pattern Recognition},
+  pages = {3946--3953},
+  title = {{Turning Mobile Phones into 3D Scanners}},
+  year = {2014}
+}
+
+@inproceedings{Nguyen-et-al-3DIMPVT-2012,
+  author = {Nguyen, Chuong V. and Izadi, Shahram and Lovell, David},
+  title = {{Modeling Kinect Sensor Noise for Improved 3D Reconstruction and Tracking}},
+  booktitle = {Proceedings of IEEE International Conference on 3D Imaging, Modeling, Processing, Visualization, and Transmission},
+  year = {2012},
+  pages={524-530}
+}
+
+@inproceedings{Woodford-and-Vogiatzis-ECCV-2012,
+  author = {Woodford, Oliver J. and Vogiatzis, George},
+  title = {{A Generative Model for Online Depth Fusion}},
+  booktitle = {Proceedings of European Conference on Computer Vision},
+  year = {2012},
+  pages={144--157}
+}
+
+%%% Occupancy Grids
+@article{Hornung-et-al-AutoRobot-2013,
+  author = {Hornung, Armin and Wurm, Kai M. and Bennewitz, Maren and Stachniss, Cyrill and Burgard, Wolfram},
+  title = {{OctoMap: an Efficient Probabilistic 3D Mapping Framework based on Octrees}},
+  journal = {Autonomous Robots},
+  year = {2013},
+  volume = {34},
+  number = {3},
+  pages = {189--206}
+}
+
+@inproceedings{Hess-et-al-ICRA-2016,
+  title={{Real-time Loop Closure in 2D LIDAR SLAM}},
+  author={Hess, Wolfgang and Kohler, Damon and Rapp, Holger and Andor, Daniel},
+  booktitle={Proceedings of IEEE International Conference on Robotics and Automation},
+  pages={1271--1278},
+  year={2016}
+}
+
+@inproceedings{Ulusoy-et-al-3DV-2015,
+  title={{Towards Probabilistic Volumetric Reconstruction using Ray Potentials}},
+  author={Ulusoy, Ali Osman and Geiger, Andreas and Black, Michael J.},
+  booktitle={Proceedings of International Conference on 3D Vision},
+  pages={10--18},
+  year={2015}
+}
+
+@inproceedings{Ulusoy-et-al-CVPR-2016,
+  title = {{Patches, Planes and Probabilities: A Non-local Prior for Volumetric {3D} Reconstruction}},
+  author = {Ulusoy, Ali Osman and Black, Michael J. and Geiger, Andreas},
+  booktitle = {Proceedings of IEEE Conference on Computer Vision and Pattern Recognition},
+  pages={3280--3289},
+  year = {2016}
+}
+
+@inproceedings{Keller-et-al-3DV-2013,
+  author = {Keller, Maik and Lefloch, Damien and Lambers, Martin and Weyrich, Tim and Kolb, Andreas},
+  booktitle = {Proceedings of International Conference on 3D Vision},
+  pages = {1--8},
+  title = {{Real-time 3D Reconstruction in Dynamic Scenes using Point-based Fusion}},
+  year = {2013}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Benchmarks
+@InProceedings{Handa-et-al-ICRA-2014,
+  author = {Handa, Ankur and Whelan, Thomas and Mcdonald, John and Davison, Andrew J.},
+  title = {{A Benchmark for {RGB-D} Visual Odometry, {3D} Reconstruction and {SLAM}}},
+  booktitle = {Proceedings of IEEE International Conference on Robotics and Automation},
+  pages={1524--1531},
+  year = {2014}
+}
+
+@InProceedings{Sturm-et-al-IROS-2012,
+  author = {Sturm, Jurgen and Engelhard, Nikolas and Endres, Felix and Burgard, Wolfram and Cremers, Daniel},
+  title = {{A Benchmark for the Evaluation of RGB-D SLAM Systems}},
+  booktitle = {Procedings of International Conference on Intelligent Robot Systems},
+  pages={573--580},
+  year = {2012}
+}
+
+@article{Zhou-and-Koltun-TOG-2013,
+  author = {Zhou, Qianyi and Koltun, Vladlen},
+  journal = {ACM Transactions on Graphics},
+  volume={32},
+  number={4},
+  pages={112},
+  title = {{Dense Scene Reconstruction with Points of Interest}},
+  year = {2013}
+}
+
+@inproceedings{Choi-et-al-CVPR-2015,
+  title={Robust reconstruction of indoor scenes},
+  author={Choi, Sungjoon and Zhou, Qian-Yi and Koltun, Vladlen},
+  booktitle={Proceedings of CVPR},
+  pages={5556--5565},
+  year={2015}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Misc
+% Render from Volume
+@article{Drebin-et-al-SIGGRAPH-1988,
+  author = {Drebin, Robert A and Carpenter, Loren and Hanrahan, Pat},
+  journal = {Proceedings of ACM SIGGRAPH},
+  pages = {65--74},
+  title = {{Volume Rendering}},
+  volume = {22},
+  year = {1988}
+}
+
+% Render from PCL
+@inproceedings{Botsch-and-Kobbelt-PCGA-2003,
+  author = {Botsch, Mario and Kobbelt, Leif},
+  booktitle = {Proceedings of Pacific Conference on Computer Graphics and Applications},
+  pages = {335--343},
+  title = {{High-quality Point-based Rendering on Modern GPUs}},
+  year = {2003}
+}
+
+@inproceedings{Pfister-et-al-CGIT-2000,
+  title={Surfels: Surface elements as rendering primitives},
+  author={Pfister, Hanspeter and Zwicker, Matthias and Van Baar, Jeroen and Gross, Markus},
+  booktitle={Proceedings of the Conference on Computer Graphics and Interactive Techniques},
+  pages={335--342},
+  year={2000},
+}
+
+% Usage of Mesh
+@inproceedings{Salas-Moreno-et-al-CVPR-2013,
+  author = {Salas-Moreno, Renato F. and Newcombe, Richard A. and Strasdat, Hauke and Kelly, Paul H. J. and Davison, Andrew J.},
+  booktitle = {Proceedings of IEEE Conference on Computer Vision and Pattern Recognition},
+  pages = {1352--1359},
+  title = {{SLAM++: Simultaneous Localisation and Mapping at the Level of Objects}},
+  year = {2013}
+}
+
+@inproceedings{Newcombe-et-al-CVPR-2015,
+  author = {Newcombe, Richard A. and Fox, Dieter and Seitz, Steven M.},
+  booktitle = {Proceedings of IEEE Conference on Computer Vision and Pattern Recognition},
+  title = {{DynamicFusion: Reconstruction and Tracking of Non-rigid Scenes in Real-time}},
+  pages={343--352},
+  year = {2015}
+}
+
+@inproceedings{Sumner-et-al-TOG-2007,
+  title={{Embedded Deformation for Shape Manipulation}},
+  author={Sumner, Robert W. and Schmid, Johannes and Pauly, Mark},
+  booktitle={ACM Transactions on Graphics},
+  volume={26},
+  number={3},
+  pages={80},
+  year={2007}
+}
+
+@book{Newcombe-Thesis-2012,
+  title={{Dense Visual SLAM}},
+  author={Newcombe, Richard A.},
+  year={2012},
+  booktitle={PhD Thesis},
+  publisher={Imperial College London, UK}
+}
+
+% Tracking
+@inproceedings{Canelhas-et-al-IROS-2013,
+  title={{SDF Tracker: A Parallel Algorithm for Online Pose Estimation and Scene Reconstruction from Depth Images}},
+  author={Canelhas, Daniel R and Stoyanov, Todor and Lilienthal, Achim J.},
+  booktitle={Proceedings of IEEE/RSJ International Conference on Intelligent Robots and Systems},
+  pages={3671--3676},
+  year={2013},
+  organization={IEEE}
+}
+
+@inproceedings{Bylow-et-al-RSS-2013,
+  title={{Real-Time Camera Tracking and 3D Reconstruction using Signed Distance Functions}},
+  author={Bylow, Erik and Sturm, J{\"u}rgen and Kerl, Christian and Kahl, Fredrik and Cremers, Daniel},
+  booktitle={Proceedings Robotics: Science and Systems},
+  volume={2},
+  year={2013}
+}
+
+@inproceedings{Kerl-et-al-IROS-2013,
+  title={{Dense Visual SLAM for RGB-D Cameras}},
+  author={Kerl, Christian and Sturm, Jurgen and Cremers, Daniel},
+  booktitle={Proceedings of IEEE/RSJ International Conference on Intelligent Robots and Systems},
+  pages={2100--2106},
+  year={2013},
+  organization={IEEE}
+}
+
+@inproceedings{Engel-et-al-ECCV-2014,
+  title={{LSD-SLAM: Large-scale Direct Monocular SLAM}},
+  author={Engel, Jakob and Sch{\"o}ps, Thomas and Cremers, Daniel},
+  booktitle={Proceedings of European Conference on Computer Vision},
+  pages={834--849},
+  year={2014},
+  organization={Springer}
+}
+
+@inproceedings{Engel-et-al-ICCV-2013,
+  author = {Engel, Jakob and Sturm, Jurgen and Cremers, Daniel},
+  booktitle = {Proceedings of IEEE International Conference on Computer Vision},
+  pages = {1449--1456},
+  title = {{Semi-dense Visual Odometry for a Monocular Camera}},
+  year = {2013}
+}
+
+@article{Galvez-and-Tard-TRO-2012,
+  author={G\'alvez-L\'opez, Dorian and Tard\'os, J. D.},
+  journal={IEEE Transactions on Robotics},
+  title={{Bags of Binary Words for Fast Place Recognition in Image Sequences}},
+  year={2012},
+  month={October},
+  volume={28},
+  number={5},
+  pages={1188--1197},
+}
+
+@article{Grisetti-et-al-ITSM-2010,
+  title={{A Tutorial on Graph-based SLAM}},
+  author={Grisetti, Giorgio and Kummerle, Rainer and Stachniss, Cyrill and Burgard, Wolfram},
+  journal={IEEE Intelligent Transportation Systems Magazine},
+  volume={2},
+  number={4},
+  pages={31--43},
+  year={2010},
+  publisher={IEEE}
+}
+
+@inproceedings{Kummerle-et-al-ICRA-2011,
+  author = {Kmmerle, Rainer and Grisetti, Giorgio and Strasdat, Hauke and Konolige, Kurt and Burgard, Wolfram},
+  booktitle = {Proceedings of IEEE International Conference on Robotics and Automation},
+  pages = {3607--3613},
+  title = {{g$^2$o: A General Framework for Graph Optimization}},
+  year = {2011}
+}
+
+@article{Agarwal-et-al-URL,
+  author = {Agarwal, Sameer and Mierle, Keir and Others},
+  title = {Ceres Solver},
+  journal = {http://ceres-solver.org},
+  year={2012}
+}
+
+@article{CloudCompare-URL,
+  author = {CloundCompare-Project},
+  title = {Cloud Compare},
+  journal = {http://www.cloudcompare.org}
+}
+
+@article{Eade-URL-2013,
+  title={{Lie Groups for 2D and 3D Transformations}},
+  author={Eade, Ethan},
+  journal={http://ethaneade.com/lie.pdf},
+  year={2013}
+}
+
+@inproceedings{Carlone-et-al-ICRA-2015,
+  title={{Initialization Techniques for 3D SLAM: A Survey on Rotation Estimation and its use in Pose Graph Optimization}},
+  author={Carlone, Luca and Tron, Roberto and Daniilidis, Kostas and Dellaert, Frank},
+  booktitle={Proceedings of IEEE International Conference on Robotics and Automation},
+  pages={4597--4604},
+  year={2015},
+  organization={IEEE}
+}
+
+@inproceedings{Klein-and-Murray-ISMAR-2007,
+  title={{Parallel Tracking and Mapping for Small AR Workspaces}},
+  author={Klein, Georg and Murray, David},
+  booktitle={Proceedings of IEEE and ACM International Symposium on Mixed and Augmented Reality},
+  pages={225--234},
+  year={2007},
+  organization={IEEE}
+}
+
+@article{Davison-et-al-TPAMI-2007,
+  author = {Davison, Andrew J. and Reid, Ian D. and Molton, Nicholas D. and Stasse, Olivier},
+  journal = {IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  number = {6},
+  pages = {1052--1067},
+  title = {{MonoSLAM: Real-time single camera SLAM}},
+  volume = {29},
+  year = {2007}
+}
+
+@book{Triggs-et-al-IWVA-2000,
+  author = {Triggs, Bill and Mclauchlan, Philip and Hartley, Richard and Fitzgibbon, Andrew},
+  booktitle = {International Workshop on Vision Algorithms},
+  pages = {298--372},
+  title = {{Bundle Adjustment – A Modern Synthesis}},
+  volume = {1883},
+  year = {2000}
+}
+
+@article{Forster-et-al-TRO-2017,
+  author = {Forster, Christian and Zhang, Zichao and Gassner, Michael and Werlberger, Manuel and Scaramuzza, Davide},
+  journal = {IEEE Transactions on Robotics},
+  number = {2},
+  pages = {249--265},
+  title = {{SVO: Semidirect Visual Odometry for Monocular and Multicamera Systems}},
+  volume = {33},
+  year = {2017}
+}
+
+@inproceedings{Wang-et-al-BMVC-2016,
+  title={{Edge Enhanced Direct Visual Odometry}},
+  author={Wang, Xin and Dong, Wei and Zhou, Mingcai and Li, Renju and Zha, Hongbin},
+  year={2016},
+  booktitle={Proceedings of the British Machine Vision Conference}
+}
+
+@inproceedings{Slavcheva-et-al-ECCV-2016,
+  author = {Slavcheva, Miroslava and Kehl, Wadim and Navab, Nassir and Ilic, Slobodan},
+  booktitle = {Proceedings of European Conference on Computer Vision},
+  pages = {680--696},
+  title = {{SDF-2-SDF: Highly Accurate 3D Object Reconstruction}},
+  year = {2016}
+}
+
+@article{Besl-and-Mckay-TMAPI-1992,
+  title={{A Method for Registration of 3-D Shapes}},
+  author={Besl, Paul J. and McKay, Neil D.},
+  journal={IEEE Transactions on pattern analysis and machine intelligence},
+  volume={14},
+  number={2},
+  pages={239--256},
+  year={1992}
+}
+
+% Backup
+@article{Mur-artal-et-al-TRO-2015,
+  author = {Mur-Artal, Ra\'ul and Montiel, J.M.M. and Tardos, Juan D.},
+  journal = {IEEE Transactions on Robotics},
+  number = {5},
+  pages = {1147--1163},
+  title = {{ORB-SLAM: A Versatile and Accurate Monocular SLAM System}},
+  volume = {31},
+  year = {2015}
+}
+
+@article{Mur-Artal-and-Tardos-Arxiv-2016,
+  title={{ORB-SLAM2: An Open-Source {SLAM} System for Monocular, Stereo and {RGB-D} Cameras}},
+  author={Mur-Artal, Ra\'ul and Tard\'os, Juan D.},
+  journal={IEEE Transactions on Robotics},
+  volume={33},
+  number={5},
+  pages={1255--1262},
+  doi = {10.1109/TRO.2017.2705103},
+  year={2017}
+}
+
+@inproceedings{Cabezas-et-al-CVPR-2014,
+  author = {Cabezas, Randi and Freifeld, Oren and Rosman, Guy and Fisher, John W.},
+  title = {{Aerial Reconstructions via Probabilistic Data Fusion}},
+  booktitle = {Proceedings of IEEE Conference on Computer Vision and Pattern Recognition},
+  year = {2014},
+  pages={4010-4017}
+}
+
+@article{Harris-SC-2007,
+  author={Harris, Mark},
+  title={{Optimizing CUDA}},
+  journal={SC07: High Performance Computing With CUDA},
+  year={2007},
+  pages={1}
+}
+
+@book{De-Loera-et-al-Springer-2010,
+  title={Triangulations Structures for algorithms and applications},
+  author={De Loera, Jes{\'u}s A and Rambau, J{\"o}rg and Santos, Francisco},
+  year={2010},
+  publisher={Springer}
+}
+
+@inproceedings{Rublee-et-al-ICCV-2011,
+  title={{ORB: An efficient alternative to SIFT or SURF}},
+  author={Rublee, Ethan and Rabaud, Vincent and Konolige, Kurt and Bradski, Gary},
+  booktitle={Proceedings of IEEE International Conference on Computer Vision},
+  pages={2564--2571},
+  year={2011},
+  organization={IEEE}
+}
+
+@article{Low-Report-2004,
+  title={{Linear Least-Squares Optimization for Point-to-Plane ICP Surface Registration}},
+  author={Low, Kok-Lim},
+  journal={Technical Report TR04-004},
+  year={2004}
+}
+
+@inproceedings{Tomasi-and-Maduchi-ICCV-1998,
+  author = {Tomasi, Carlo and Manduchi, Roberto},
+  year = {1998},
+  month = {02},
+  pages = {839-846},
+  title = {{Bilateral Filtering for Gray and Color Images}},
+  volume = {98},
+  isbn = {81-7319-221-9},
+  booktitle = {Proceedings of the International Conference on Computer Vision}
+}
+
+@ARTICLE{Shen-et-al-RA-M-2013,
+  author={S. Shen and N. Michael and V. Kumar},
+  journal={IEEE Robotics Automation Magazine},
+  title={{Obtaining Liftoff Indoors: Autonomous Navigation in Confined Indoor Environments}},
+  year={2013},
+  volume={20},
+  number={4},
+  pages={40-48},
+}
+
+@inproceedings{Park-et-al-ICCV-2017,
+  title={Colored point cloud registration revisited},
+  author={Park, Jaesik and Zhou, Qian-Yi and Koltun, Vladlen},
+  booktitle={Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition},
+  pages={143--152},
+  year={2017}
+}

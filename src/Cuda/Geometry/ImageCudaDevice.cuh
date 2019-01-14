@@ -23,9 +23,7 @@ namespace cuda {
  */
 template<typename VecType>
 __device__
-    VecType
-&
-ImageCudaDevice<VecType>::at(int x, int y) {
+VecType& ImageCudaDevice<VecType>::at(int x, int y) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_);
     assert(y >= 0 && y < height_);
@@ -36,9 +34,7 @@ ImageCudaDevice<VecType>::at(int x, int y) {
 
 template<typename VecType>
 __device__
-    VecType
-&
-ImageCudaDevice<VecType>::operator()(int x, int y) {
+VecType& ImageCudaDevice<VecType>::operator()(int x, int y) {
     return at(x, y);
 }
 
@@ -47,8 +43,7 @@ ImageCudaDevice<VecType>::operator()(int x, int y) {
  */
 template<typename VecType>
 __device__
-    VecType
-ImageCudaDevice<VecType>::interp_at(float x, float y) {
+VecType ImageCudaDevice<VecType>::interp_at(float x, float y) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(x >= 0 && x < width_ - 1);
     assert(y >= 0 && y < height_ - 1);
