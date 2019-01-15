@@ -90,7 +90,11 @@ void MatrixCuda<T>::UpdateServer() {
 template<typename T>
 void MatrixCuda<T>::Upload(
     Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> &matrix) {
-    assert(matrix.rows() == max_rows_ && matrix.cols() == max_cols_);
+    if (server_ != nullptr) {
+        assert(matrix.rows() == max_rows_ && matrix.cols() == max_cols_);
+    } else {
+        Create(matrix.rows(), matrix.cols());
+    }
 
     CheckCuda(cudaMemcpy2D(server_->data_, pitch_,
                            matrix.data(), sizeof(T) * max_cols_,

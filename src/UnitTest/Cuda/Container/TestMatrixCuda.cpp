@@ -38,7 +38,6 @@ TEST(Eigen, UploadAndDownload) {
     matrix_cuda.Create(rows, cols);
     matrix_cuda.Upload(matrix);
 
-    assert(matrix_cuda.Download() == matrix);
     EXPECT_EQ(matrix_cuda.Download(), matrix);
 }
 

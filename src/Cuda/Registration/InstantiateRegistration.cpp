@@ -4,3 +4,4 @@
 
 //#include "RegistrationCudaHost.hpp"
 //#include "ColoredICPCudaHost.hpp"
+#include "CorrespondenceSetCudaHost.hpp"

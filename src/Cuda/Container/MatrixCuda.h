@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <memory>
 #include <vector>
+#include <Eigen/Eigen>
 
 namespace open3d {
 namespace cuda {

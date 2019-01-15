@@ -41,7 +41,7 @@ T& MatrixCudaDevice<T>::at(int r, int c) {
 template<typename T>
 __device__
 T& MatrixCudaDevice<T>::operator() (int r, int c) {
-    return at(x, y);
+    return at(r, c);
 }
 }
 }

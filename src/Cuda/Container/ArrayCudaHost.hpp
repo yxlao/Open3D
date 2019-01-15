@@ -49,20 +49,24 @@ ArrayCuda<T>::~ArrayCuda() {
 
 template<typename T>
 void ArrayCuda<T>::Resize(int max_capacity) {
-    assert(max_capacity_ < max_capacity);
+    if (server_ == nullptr) {
+        Create(max_capacity);
+    } else {
+        assert(max_capacity_ < max_capacity);
 
-    T *resized_data;
-    CheckCuda(cudaMalloc(&(resized_data), sizeof(T) * max_capacity));
+        T *resized_data;
+        CheckCuda(cudaMalloc(&(resized_data), sizeof(T) * max_capacity));
 
-    int used_data_count = size();
-    CheckCuda(cudaMemcpy(resized_data, server_->data_,
-                         sizeof(T) * used_data_count,
-                         cudaMemcpyDeviceToDevice));
-    CheckCuda(cudaFree(server_->data_));
-    server_->data_ = resized_data;
+        int used_data_count = size();
+        CheckCuda(cudaMemcpy(resized_data, server_->data_,
+                             sizeof(T) * used_data_count,
+                             cudaMemcpyDeviceToDevice));
+        CheckCuda(cudaFree(server_->data_));
+        server_->data_ = resized_data;
 
-    max_capacity_ = max_capacity;
-    server_->max_capacity_ = max_capacity;
+        max_capacity_ = max_capacity;
+        server_->max_capacity_ = max_capacity;
+    }
 }
 
 template<typename T>
@@ -163,6 +167,8 @@ std::vector<T> ArrayCuda<T>::Download() {
     std::vector<T> ret;
     int iterator_count = size();
     ret.resize(iterator_count);
+
+    if (iterator_count == 0) return ret;
 
     CheckCuda(cudaMemcpy(ret.data(), server_->data_,
                          sizeof(T) * iterator_count,
