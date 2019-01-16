@@ -14,7 +14,7 @@
 #include <Cuda/Camera/PinholeCameraIntrinsicCuda.h>
 #include <Cuda/Container/ArrayCuda.h>
 
-#include <Cuda/Common/VectorCuda.h>
+#include <Cuda/Common/LinearAlgebraCuda.h>
 #include <Cuda/Common/TransformCuda.h>
 #include <Cuda/Geometry/ImagePyramidCuda.h>
 #include <Cuda/Geometry/RGBDImagePyramidCuda.h>

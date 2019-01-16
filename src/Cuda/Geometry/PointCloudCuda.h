@@ -7,7 +7,7 @@
 #include "ImageCuda.h"
 #include "RGBDImageCuda.h"
 
-#include <Cuda/Common/VectorCuda.h>
+#include <Cuda/Common/LinearAlgebraCuda.h>
 #include <Cuda/Common/TransformCuda.h>
 
 #include <Cuda/Camera/PinholeCameraIntrinsicCuda.h>

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "MatrixCuda.h"
+#include "Array2DCuda.h"
 #include <Cuda/Common/UtilsCuda.h>
 
 namespace open3d {
@@ -12,13 +12,13 @@ namespace cuda {
 
 template<typename T>
 __device__
-T* MatrixCudaDevice<T>::row(int r) {
+T* Array2DCudaDevice<T>::row(int r) {
     return (T *) ((char *) data_ + pitch_ * r);
 }
 
 template<typename T>
 __device__
-int MatrixCudaDevice<T>::expand_rows(int num) {
+int Array2DCudaDevice<T>::expand_rows(int num) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(*iterator_rows_ < max_rows_);
 #endif
@@ -29,7 +29,7 @@ int MatrixCudaDevice<T>::expand_rows(int num) {
 
 template<typename T>
 __device__
-T& MatrixCudaDevice<T>::at(int r, int c) {
+T& Array2DCudaDevice<T>::at(int r, int c) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(r >= 0 && r < max_rows_);
     assert(c >= 0 && c < max_cols_);
@@ -40,7 +40,7 @@ T& MatrixCudaDevice<T>::at(int r, int c) {
 
 template<typename T>
 __device__
-T& MatrixCudaDevice<T>::operator() (int r, int c) {
+T& Array2DCudaDevice<T>::operator() (int r, int c) {
     return at(r, c);
 }
 }

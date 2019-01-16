@@ -36,7 +36,7 @@ public:
     RegistrationResultCuda ComputeResultsAndTransformation(
         const PointCloudCuda &source,
         const PointCloudCuda &target,
-        const CorrespondenceSetCuda &corres) const override;
+        const CorrespondenceSetCuda &corres) const override {};
 
     /** Computes color gradients
      * 1. Get correspondence matrix on CPU
@@ -44,13 +44,14 @@ public:
      * 3. Use the compressed correspondence matrix to build linear systems
      * and compute color gradients.
      * **/
-    void InitializePointCloudForColoredICP(
+    void InitializeColorGradients(
         PointCloud &target,
         KDTreeFlann &kdtree,
-        KDTreeSearchParamHybrid &search_param);
+        const KDTreeSearchParamHybrid &search_param);
 
 public:
     float lambda_geometric_;
+
     ArrayCuda<Vector3f> color_gradient_;
     ArrayCuda<float> results_;
 
@@ -59,6 +60,19 @@ private:
         TransformationEstimationType::ColoredICP;
 };
 
+class TransformationEstimationCudaForColoredICPKernelCaller {
+public:
+    static void ComputeColorGradeintKernelCaller(
+        PointCloudCuda &points,
+        CorrespondenceSetCuda& corres,
+        ArrayCuda<Vector3f> &color_gradient);
+};
+
+__GLOBAL__
+void ComputeColorGradientKernel(
+    PointCloudCudaDevice points,
+    CorrespondenceSetCudaDevice corres,
+    ArrayCudaDevice<Vector3f> color_gradient);
 }
 }
 

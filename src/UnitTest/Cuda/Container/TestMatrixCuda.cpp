@@ -6,7 +6,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <random>
-#include <Cuda/Container/MatrixCuda.h>
+#include <Cuda/Container/Array2DCuda.h>
 
 TEST(Eigen, RawData) {
     Eigen::Matrix<float, 3, 5, Eigen::RowMajor> matrix;
@@ -34,7 +34,7 @@ TEST(Eigen, UploadAndDownload) {
         }
     }
 
-    open3d::cuda::MatrixCuda<float> matrix_cuda;
+    open3d::cuda::Array2DCuda<float> matrix_cuda;
     matrix_cuda.Create(rows, cols);
     matrix_cuda.Upload(matrix);
 

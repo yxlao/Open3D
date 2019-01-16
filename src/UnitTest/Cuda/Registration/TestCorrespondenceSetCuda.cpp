@@ -17,10 +17,9 @@ TEST(CorrespondenceSetCuda, Comress) {
     }
 
     correspondence_set.SetCorrespondenceMatrix(corres_cpu);
-    correspondence_set.Compress();
 
     std::vector<int> corres_indices =
-        correspondence_set.corres_indices_.Download();
+        correspondence_set.indices_.Download();
     EXPECT_EQ(corres_indices.size(), corres_cpu.rows() >> 1);
 
     for (auto &index : corres_indices) {

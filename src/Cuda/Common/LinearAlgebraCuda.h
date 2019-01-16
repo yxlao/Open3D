@@ -414,5 +414,166 @@ typedef VectorCuda<float, 3> Vector3f;
 typedef VectorCuda<float, 4> Vector4f;
 typedef VectorCuda<float, 6> Vector6f;
 
+template<typename T, size_t M, size_t N>
+class LDLT;
+
+template<typename T, size_t M, size_t N>
+class MatrixCuda {
+public:
+    T v[M * N];
+
+public:
+    __HOSTDEVICE__ MatrixCuda() {}
+
+    __HOSTDEVICE__ explicit MatrixCuda(const T &val) {
+#ifdef __CUDACC__
+#pragma unroll 1
+#endif
+        for (int i = 0; i < M * N; ++i) {
+            v[i] = val;
+        }
+    }
+
+    __HOSTDEVICE__ T &at(size_t i, size_t j) {
+        return v[i * N + j];
+    }
+
+    __HOSTDEVICE__ const T& at(size_t i, size_t j) const {
+        return v[i * N + j];
+    }
+
+    __HOSTDEVICE__ T &operator()(size_t i, size_t j) {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+        assert(i < M && j < N);
+#endif
+        return v[i * N + j];
+    }
+
+    __HOSTDEVICE__ const T& operator() (size_t i, size_t j) const {
+#ifdef CUDA_DEBUG_ENABLE_ASSERTION
+        assert(i < M && j < N);
+#endif
+        return v[i * N + j];
+    }
+
+    __HOSTDEVICE__ MatrixCuda<T, M, N> &operator=(
+        const MatrixCuda<T, M, N> &other) {
+#ifdef __CUDACC__
+#pragma unroll 1
+#endif
+        for (int i = 0; i < M * N; ++i) {
+            v[i] = other.v[i];
+        }
+
+        return *this;
+    }
+
+    __HOSTDEVICE__ VectorCuda<T, M> &operator*(const VectorCuda<T, N> &vec) {
+        VectorCuda<T, M> res(0);
+#ifdef __CUDACC__
+#pragma unroll 1
+#endif
+        for (int i = 0; i < M; ++i) {
+            for (int j = 0; j < N; ++j) {
+                res(i) += at(i, j) * vec(j);
+            }
+        }
+        return res;
+    }
+
+    __HOSTDEVICE__ LDLT<T, M, N> ldlt() {
+        return LDLT<T, M, N>(*this);
+    }
+
+    /* CPU code */
+    void FromEigen(const Eigen::Matrix<double, M, N> &other) {
+        for (int i = 0; i < M; ++i) {
+            for (int j = 0; j < N; ++j) {
+                at(i, j) = T(other(i, j));
+            }
+        }
+    }
+
+    Eigen::Matrix<double, M, N> ToEigen() {
+        Eigen::Matrix<double, M, N> ret;
+        for (int i = 0; i < M; ++i) {
+            for (int j = 0; j < N; ++j) {
+                ret(i, j) = double(at(i, j));
+            }
+        }
+        return ret;
+    }
+};
+
+template<typename T, size_t M, size_t N>
+class LDLT {
+public:
+    bool valid = true;
+    MatrixCuda<T, N, N> L;
+    VectorCuda<T, N> D;
+
+    /* https://en.wikipedia.org/wiki/Cholesky_decomposition#LDL_decomposition */
+    /* http://mathforcollege.com/nm/mws/gen/04sle/mws_gen_sle_txt_cholesky.pdf */
+    /* A = LDL^T */
+    __HOSTDEVICE__ LDLT(const MatrixCuda<T, M, N> &A) {
+        static_assert(M == N, "M != N");
+
+        for (int i = 0; i < N; ++i) {
+            /* Update L */
+            for (int j = 0; j < i; ++j) {
+                float s = 0;
+                for (int k = 0; k < j; ++k) {
+                    s += L(i, k) * L(j, k) * D(k);
+                }
+                L(i, j) = 1.0f / D(j) * (A(i, j) - s);
+            }
+
+            /* Initialize rest of the row */
+            L(i, i) = 1.0f;
+            for (int j = i + 1; j < N; ++j) {
+                L(i, j) = 0;
+            }
+
+            /* Update D */
+            float s = 0;
+            for (int k = 0; k < i; ++k) {
+                s += L(i, k) * L(i, k) * D(k);
+            }
+            D(i) = A(i, i) - s;
+
+            /* Singular condition */
+            if (fabs(D(i)) < 1e-4f) {
+                valid = false;
+                return;
+            }
+        }
+    }
+
+    /* LDL^T = b */
+    __HOSTDEVICE__ VectorCuda<float, N> Solve(const VectorCuda<float, N> &b) {
+        /* Solve Ly = b */
+        VectorCuda<float, N> y, x;
+        for (int i = 0; i < N; ++i) {
+            y(i) = b(i);
+            for (int j = 0; j < i; ++j) {
+                y(i) -= L(i, j) * y(j);
+            }
+        }
+
+        /* Solve D L^T x = y */
+        for (int i = int(N - 1); i >= 0; --i) {
+            x(i) = y(i) / D(i);
+            for (int j = i + 1; j < N; ++j) {
+                x(i) -= L(j, i) * x(j);
+            }
+        }
+
+        return x;
+    }
+};
+
+typedef MatrixCuda<float, 3, 3> Matrix3f;
+typedef LDLT<float, 3, 3> LDLT3;
+
 } // cuda
 } // open3d

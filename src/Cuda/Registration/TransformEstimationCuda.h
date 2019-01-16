@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <Cuda/Common/VectorCuda.h>
+#include <Cuda/Common/LinearAlgebraCuda.h>
 #include <Cuda/Container/ArrayCuda.h>
 #include <Cuda/Geometry/PointCloudCuda.h>
 #include <Cuda/Registration/CorrespondenceSetCuda.h>
@@ -40,7 +40,7 @@ public:
     virtual RegistrationResultCuda ComputeResultsAndTransformation(
         const PointCloudCuda &source,
         const PointCloudCuda &target,
-        const CorrespondenceSetCuda &corres) const;
+        const CorrespondenceSetCuda &corres) const {};
 };
 
 class TransformationEstimationPointToPointCuda :

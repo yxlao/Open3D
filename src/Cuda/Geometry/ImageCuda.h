@@ -6,7 +6,7 @@
 
 #include "GeometryClasses.h"
 #include <Cuda/Common/Common.h>
-#include <Cuda/Common/VectorCuda.h>
+#include <Cuda/Common/LinearAlgebraCuda.h>
 #include <Core/Geometry/Image.h>
 
 #include <cstdlib>

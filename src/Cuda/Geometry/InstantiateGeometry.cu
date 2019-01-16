@@ -2,7 +2,7 @@
 #include "ImageCudaKernel.cuh"
 #include "PointCloudCudaKernel.cuh"
 #include "TriangleMeshCudaKernel.cuh"
-#include "VectorCuda.h"
+#include "LinearAlgebraCuda.h"
 #include <Cuda/Common/Common.h>
 
 namespace open3d {

@@ -2,7 +2,7 @@
 // Created by wei on 1/14/19.
 //
 
-#include "MatrixCuda.h"
+#include "Array2DCuda.h"
 #include <Cuda/Common/UtilsCuda.h>
 
 namespace open3d {
@@ -10,17 +10,17 @@ namespace open3d {
 namespace cuda {
 
 template<typename T>
-MatrixCuda<T>::MatrixCuda() {
+Array2DCuda<T>::Array2DCuda() {
     max_rows_ = max_cols_ = pitch_ = -1;
 }
 
 template<typename T>
-MatrixCuda<T>::MatrixCuda(int max_rows, int max_cols) {
+Array2DCuda<T>::Array2DCuda(int max_rows, int max_cols) {
     Create(max_rows, max_cols);
 }
 
 template<typename T>
-MatrixCuda<T>::MatrixCuda(const MatrixCuda<T> &other) {
+Array2DCuda<T>::Array2DCuda(const Array2DCuda<T> &other) {
     server_ = other.server();
     max_rows_ = other.max_rows_;
     max_cols_ = other.max_cols_;
@@ -28,7 +28,7 @@ MatrixCuda<T>::MatrixCuda(const MatrixCuda<T> &other) {
 }
 
 template<typename T>
-MatrixCuda<T> &MatrixCuda<T>::operator=(const MatrixCuda<T> &other) {
+Array2DCuda<T> &Array2DCuda<T>::operator=(const Array2DCuda<T> &other) {
     if (this != &other) {
         Release();
         server_ = other.server();
@@ -40,19 +40,19 @@ MatrixCuda<T> &MatrixCuda<T>::operator=(const MatrixCuda<T> &other) {
 }
 
 template<typename T>
-MatrixCuda<T>::~MatrixCuda() {
+Array2DCuda<T>::~Array2DCuda() {
     Release();
 }
 
 template<typename T>
-void MatrixCuda<T>::Create(int max_rows, int max_cols) {
+void Array2DCuda<T>::Create(int max_rows, int max_cols) {
     assert(max_rows > 0 && max_cols > 0);
     if (server_ != nullptr) {
-        PrintError("[MatrixCuda]: Already created, abort!\n");
+        PrintError("[Array2DCuda]: Already created, abort!\n");
         return;
     }
 
-    server_ = std::make_shared<MatrixCudaDevice<T>>();
+    server_ = std::make_shared<Array2DCudaDevice<T>>();
     max_rows_ = max_rows;
     max_cols_ = max_cols;
 
@@ -69,7 +69,7 @@ void MatrixCuda<T>::Create(int max_rows, int max_cols) {
 }
 
 template<typename T>
-void MatrixCuda<T>::Release() {
+void Array2DCuda<T>::Release() {
     if (server_ != nullptr && server_.use_count() == 1) {
         CheckCuda(cudaFree(server_->data_));
         CheckCuda(cudaFree(server_->iterator_rows_));
@@ -80,7 +80,7 @@ void MatrixCuda<T>::Release() {
 }
 
 template<typename T>
-void MatrixCuda<T>::UpdateServer() {
+void Array2DCuda<T>::UpdateServer() {
     assert(server_ != nullptr);
     server_->max_rows_ = max_rows_;
     server_->max_cols_ = max_cols_;
@@ -88,7 +88,7 @@ void MatrixCuda<T>::UpdateServer() {
 }
 
 template<typename T>
-void MatrixCuda<T>::Upload(
+void Array2DCuda<T>::Upload(
     Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> &matrix) {
     if (server_ != nullptr) {
         assert(matrix.rows() == max_rows_ && matrix.cols() == max_cols_);
@@ -104,7 +104,7 @@ void MatrixCuda<T>::Upload(
 
 template<typename T>
 Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-MatrixCuda<T>::Download() {
+Array2DCuda<T>::Download() {
     Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         matrix(max_rows_, max_cols_);
     CheckCuda(cudaMemcpy2D(matrix.data(), sizeof(T) * max_cols_,
@@ -115,15 +115,15 @@ MatrixCuda<T>::Download() {
 }
 
 template<typename T>
-void MatrixCuda<T>::Fill(const T &val) {}
+void Array2DCuda<T>::Fill(const T &val) {}
 
 template<typename T>
-void MatrixCuda<T>::Memset(int val) {
+void Array2DCuda<T>::Memset(int val) {
     CheckCuda(cudaMemset2D(server_->data_, pitch_, val, max_rows_, max_cols_));
 }
 
 template<typename T>
-int MatrixCuda<T>::rows() const {
+int Array2DCuda<T>::rows() const {
     int rows;
     CheckCuda(cudaMemcpy(&rows, server_->iterator_rows_, sizeof(int),
         cudaMemcpyDeviceToHost));
@@ -131,7 +131,7 @@ int MatrixCuda<T>::rows() const {
 }
 
 template<typename T>
-void MatrixCuda<T>::set_iterator_rows(int row_position) {
+void Array2DCuda<T>::set_iterator_rows(int row_position) {
     CheckCuda(cudaMemcpy(server_->iterator_rows_, &row_position, sizeof(int),
         cudaMemcpyHostToDevice));
 }

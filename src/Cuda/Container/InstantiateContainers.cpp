@@ -3,7 +3,7 @@
 //
 
 #include "ArrayCudaHost.hpp"
-#include "MatrixCudaHost.hpp"
+#include "Array2DCudaHost.hpp"
 #include "HashTableCudaHost.hpp"
 #include "MemoryHeapCudaHost.hpp"
 #include "LinkedListCudaHost.hpp"
@@ -27,9 +27,9 @@ template
 class ArrayCuda<LinkedListCudaDevice<HashEntry<Vector3i>>>;
 
 template
-class MatrixCuda<int>;
+class Array2DCuda<int>;
 template
-class MatrixCuda<float>;
+class Array2DCuda<float>;
 
 template
 class MemoryHeapCuda<int>;

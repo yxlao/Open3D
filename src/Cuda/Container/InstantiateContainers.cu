@@ -11,7 +11,7 @@
 #include "HashTableCudaDevice.cuh"
 #include "HashTableCudaKernel.cuh"
 
-#include <Cuda/Common/VectorCuda.h>
+#include <Cuda/Common/LinearAlgebraCuda.h>
 
 namespace open3d {
 

@@ -12,6 +12,8 @@
 
 #include <Core/Utility/Timer.h>
 #include <Core/Registration/ColoredICP.h>
+#include <Cuda/Registration/ColoredICPCuda.h>
+
 #include "ReadDataAssociation.h"
 
 std::vector<int> GetCorrespondences(
@@ -119,24 +121,22 @@ int main(int argc, char **argv) {
     auto source = open3d::VoxelDownSample(*source_origin, 0.05);
     auto target = open3d::VoxelDownSample(*target_origin, 0.05);
 
-//    std::vector<int> source_corr = GetCorrespondences(*source, *source);
-//    for (int i = 0; i < source_corr.size(); ++i) {
-//        if (source_corr[i] != i) {
-//            open3d::PrintInfo("Source mismatch: %d %d\n", i, source_corr[i]);
-//        }
-//    }
+    open3d::KDTreeFlann kdtree;
+    kdtree.SetGeometry(*target);
 
-//    std::vector<int> target_corr = GetCorrespondences(*target, *target);
-//    for (int i = 0; i < target_corr.size(); ++i) {
-//        if (target_corr[i] != i) {
-//            open3d::PrintInfo("Target mismatch: %d %d\n", i, target_corr[i]);
-//        }
-//    }
-    auto registration_result = open3d::RegistrationColoredICP(
-        *source, *target, 0.07,
-        Eigen::Matrix4d::Identity(),
-        open3d::ICPConvergenceCriteria(),
-        0.968);
-    VisualizeRegistration(*source, *target, registration_result.transformation_);
-    return 0;
+    open3d::cuda::TransformationEstimationCudaForColoredICP colored_icp;
+    open3d::Timer timer;
+    timer.Start();
+    colored_icp.InitializeColorGradients(*target, kdtree,
+        open3d::KDTreeSearchParamHybrid(0.07 * 2.0, 30));
+    timer.Stop();
+    open3d::PrintInfo("Query color nn takes %f ms", timer.GetDuration());
+
+//    auto registration_result = open3d::RegistrationColoredICP(
+//        *source, *target, 0.07,
+//        Eigen::Matrix4d::Identity(),
+//        open3d::ICPConvergenceCriteria(),
+//        0.968);
+//    VisualizeRegistration(*source, *target, registration_result.transformation_);
+//    return 0;
 }

@@ -17,7 +17,7 @@ namespace cuda {
 
 /** We assume rows are extendable, while colume sizes are fixed **/
 template<typename T>
-class MatrixCudaDevice {
+class Array2DCudaDevice {
 private:
     T *data_;
     int *iterator_rows_;
@@ -37,13 +37,13 @@ public:
     __DEVICE__ T &operator()(int r, int c);
 
 public:
-    friend class MatrixCuda<T>;
+    friend class Array2DCuda<T>;
 };
 
 template<typename T>
-class MatrixCuda {
+class Array2DCuda {
 private:
-    std::shared_ptr<MatrixCudaDevice<T>> server_ = nullptr;
+    std::shared_ptr<Array2DCudaDevice<T>> server_ = nullptr;
 
 public:
     int max_rows_;
@@ -51,11 +51,11 @@ public:
     int pitch_;
 
 public:
-    MatrixCuda();
-    MatrixCuda(int max_rows, int max_cols);
-    MatrixCuda(const MatrixCuda<T> &other);
-    MatrixCuda<T> &operator=(const MatrixCuda<T> &other);
-    ~MatrixCuda();
+    Array2DCuda();
+    Array2DCuda(int max_rows, int max_cols);
+    Array2DCuda(const Array2DCuda<T> &other);
+    Array2DCuda<T> &operator=(const Array2DCuda<T> &other);
+    ~Array2DCuda();
 
     void Create(int max_rows, int max_cols);
     void Release();
@@ -73,10 +73,10 @@ public:
     int rows() const;
     void set_iterator_rows(int row_position);
 
-    std::shared_ptr<MatrixCudaDevice<T>> &server() {
+    std::shared_ptr<Array2DCudaDevice<T>> &server() {
         return server_;
     }
-    const std::shared_ptr<MatrixCudaDevice<T>> &server() const {
+    const std::shared_ptr<Array2DCudaDevice<T>> &server() const {
         return server_;
     }
 };

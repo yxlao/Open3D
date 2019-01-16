@@ -5,7 +5,7 @@
 #include <Core/Core.h>
 #include <Cuda/Geometry/ImageCuda.h>
 #include <Cuda/Geometry/ImagePyramidCuda.h>
-#include <Cuda/Common/VectorCuda.h>
+#include <Cuda/Common/LinearAlgebraCuda.h>
 #include <opencv2/opencv.hpp>
 #include "UnitTest.h"
 

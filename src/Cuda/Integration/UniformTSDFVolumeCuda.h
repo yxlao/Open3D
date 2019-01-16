@@ -11,7 +11,7 @@
 #include <Cuda/Geometry/RGBDImageCuda.h>
 #include <Cuda/Common/TransformCuda.h>
 #include <Cuda/Geometry/TriangleMeshCuda.h>
-#include <Cuda/Common/VectorCuda.h>
+#include <Cuda/Common/LinearAlgebraCuda.h>
 
 #include <cstdlib>
 #include <memory>

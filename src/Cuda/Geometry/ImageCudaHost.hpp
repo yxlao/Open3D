@@ -5,7 +5,7 @@
 #pragma once
 
 #include "ImageCuda.h"
-#include <Cuda/Common/VectorCuda.h>
+#include <Cuda/Common/LinearAlgebraCuda.h>
 #include <Cuda/Common/UtilsCuda.h>
 
 #include <cuda_runtime.h>

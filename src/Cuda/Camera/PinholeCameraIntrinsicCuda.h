@@ -5,7 +5,7 @@
 #pragma once
 
 #include <Core/Camera/PinholeCameraIntrinsic.h>
-#include <Cuda/Common/VectorCuda.h>
+#include <Cuda/Common/LinearAlgebraCuda.h>
 
 namespace open3d {
 namespace cuda {

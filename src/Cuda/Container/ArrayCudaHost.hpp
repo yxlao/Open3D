@@ -6,7 +6,7 @@
 
 #include "ArrayCuda.h"
 #include <Cuda/Common/UtilsCuda.h>
-#include <Cuda/Common/VectorCuda.h>
+#include <Cuda/Common/LinearAlgebraCuda.h>
 
 #include <Core/Core.h>
 

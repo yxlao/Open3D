@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "VectorCuda.h"
+#include "LinearAlgebraCuda.h"
 
 #include <Eigen/Eigen>
 

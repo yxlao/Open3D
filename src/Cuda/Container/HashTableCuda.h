@@ -9,7 +9,7 @@
 #include "MemoryHeapCuda.h"
 
 #include <Cuda/Common/Common.h>
-#include <Cuda/Common/VectorCuda.h>
+#include <Cuda/Common/LinearAlgebraCuda.h>
 
 namespace open3d {
 
