@@ -3,6 +3,7 @@
 //
 
 #include "ColoredICPCuda.h"
+#include <Core/Core.h>
 
 namespace open3d {
 namespace cuda {
@@ -39,16 +40,32 @@ void TransformationEstimationCudaForColoredICP::InitializeColorGradients(
     }
 #endif
 
+    /** CPU matrix to CUDA Array2D **/
+    Timer timer;
+    timer.Start();
     CorrespondenceSetCuda corres;
     corres.SetCorrespondenceMatrix(corres_matrix);
+    timer.Stop();
+    PrintInfo("Setting correspondences takes %f ms\n", timer.GetDuration());
+
+    timer.Start();
     corres.Compress();
+    timer.Stop();
+    PrintInfo("Compression takes %f ms\n", timer.GetDuration());
 
     PointCloudCuda pcl;
+    timer.Start();
+    pcl.Create(VertexWithNormalAndColor, target.points_.size());
     pcl.Upload(target);
+    timer.Stop();
+    PrintInfo("Upload takes %f ms\n", timer.GetDuration());
 
+    timer.Start();
     color_gradient_.Resize(target.points_.size());
     TransformationEstimationCudaForColoredICPKernelCaller::
     ComputeColorGradeintKernelCaller(pcl, corres, color_gradient_);
+    timer.Stop();
+    PrintInfo("Compute gradient takes %f ms\n", timer.GetDuration());
 }
 } // cuda
 } // open3d

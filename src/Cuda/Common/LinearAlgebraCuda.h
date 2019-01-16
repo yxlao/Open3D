@@ -553,6 +553,9 @@ public:
     __HOSTDEVICE__ VectorCuda<float, N> Solve(const VectorCuda<float, N> &b) {
         /* Solve Ly = b */
         VectorCuda<float, N> y, x;
+
+        if (!valid) return VectorCuda<float, N>(0);
+
         for (int i = 0; i < N; ++i) {
             y(i) = b(i);
             for (int j = 0; j < i; ++j) {

@@ -63,14 +63,14 @@ private:
 class TransformationEstimationCudaForColoredICPKernelCaller {
 public:
     static void ComputeColorGradeintKernelCaller(
-        PointCloudCuda &points,
+        PointCloudCuda &pcl,
         CorrespondenceSetCuda& corres,
         ArrayCuda<Vector3f> &color_gradient);
 };
 
 __GLOBAL__
 void ComputeColorGradientKernel(
-    PointCloudCudaDevice points,
+    PointCloudCudaDevice pcl,
     CorrespondenceSetCudaDevice corres,
     ArrayCudaDevice<Vector3f> color_gradient);
 }

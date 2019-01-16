@@ -84,15 +84,89 @@ std::shared_ptr<open3d::RGBDImage> ReadRGBDImage(
 }
 
 void VisualizeRegistration(const open3d::PointCloud &source,
-                           const open3d::PointCloud &target, const Eigen::Matrix4d &Transformation)
-{
+                           const open3d::PointCloud &target,
+                           const Eigen::Matrix4d &Transformation) {
     using namespace open3d;
     std::shared_ptr<PointCloud> source_transformed_ptr(new PointCloud);
     std::shared_ptr<PointCloud> target_ptr(new PointCloud);
     *source_transformed_ptr = source;
     *target_ptr = target;
     source_transformed_ptr->Transform(Transformation);
-    DrawGeometries({ source_transformed_ptr, target_ptr }, "Registration result");
+    DrawGeometries({source_transformed_ptr, target_ptr}, "Registration result");
+}
+
+class PointCloudForColoredICP : public open3d::PointCloud {
+public:
+    std::vector<Eigen::Vector3d> color_gradient_;
+};
+
+std::shared_ptr<PointCloudForColoredICP>
+InitializePointCloudForColoredICP(const open3d::PointCloud &target,
+                                  const open3d::KDTreeSearchParamHybrid
+                                  &search_param) {
+    using namespace open3d;
+    PrintDebug("InitializePointCloudForColoredICP\n");
+
+    KDTreeFlann tree;
+    tree.SetGeometry(target);
+
+    auto output = std::make_shared<PointCloudForColoredICP>();
+    output->colors_ = target.colors_;
+    output->normals_ = target.normals_;
+    output->points_ = target.points_;
+
+    size_t n_points = output->points_.size();
+    output->color_gradient_.resize(n_points, Eigen::Vector3d::Zero());
+
+    for (auto k = 0; k < n_points; k++) {
+        const Eigen::Vector3d &vt = output->points_[k];
+        const Eigen::Vector3d &nt = output->normals_[k];
+        double it = (output->colors_[k](0) + output->colors_[k](1)
+            + output->colors_[k](2)) / 3.0;
+
+        std::vector<int> point_idx;
+        std::vector<double> point_squared_distance;
+
+        if (tree.SearchHybrid(vt,
+                              search_param.radius_,
+                              search_param.max_nn_,
+                              point_idx,
+                              point_squared_distance) >= 3) {
+            // approximate image gradient of vt's tangential plane
+            size_t nn = point_idx.size();
+            Eigen::MatrixXd A(nn, 3);
+            Eigen::MatrixXd b(nn, 1);
+            A.setZero();
+            b.setZero();
+            for (auto i = 1; i < nn; i++) {
+                int P_adj_idx = point_idx[i];
+                Eigen::Vector3d vt_adj = output->points_[P_adj_idx];
+                Eigen::Vector3d vt_proj =
+                    vt_adj - (vt_adj - vt).dot(nt) * nt;
+                double it_adj = (output->colors_[P_adj_idx](0)
+                    + output->colors_[P_adj_idx](1)
+                    + output->colors_[P_adj_idx](2)) / 3.0;
+                A(i - 1, 0) = (vt_proj(0) - vt(0));
+                A(i - 1, 1) = (vt_proj(1) - vt(1));
+                A(i - 1, 2) = (vt_proj(2) - vt(2));
+                b(i - 1, 0) = (it_adj - it);
+            }
+            // adds orthogonal constraint
+            A(nn - 1, 0) = (nn - 1) * nt(0);
+            A(nn - 1, 1) = (nn - 1) * nt(1);
+            A(nn - 1, 2) = (nn - 1) * nt(2);
+            b(nn - 1, 0) = 0;
+            // solving linear equation
+            bool is_success;
+            Eigen::MatrixXd x;
+            std::tie(is_success, x) = SolveLinearSystem(
+                A.transpose() * A, A.transpose() * b);
+            if (is_success) {
+                output->color_gradient_[k] = x;
+            }
+        }
+    }
+    return output;
 }
 
 int main(int argc, char **argv) {
@@ -123,14 +197,26 @@ int main(int argc, char **argv) {
 
     open3d::KDTreeFlann kdtree;
     kdtree.SetGeometry(*target);
+    auto colored_pcl = InitializePointCloudForColoredICP(
+        *target, open3d::KDTreeSearchParamHybrid(0.07 * 2.0, 30));
+    for (int i = 0; i < colored_pcl->color_gradient_.size(); ++i) {
+        std::cout << i << ": " << colored_pcl->color_gradient_[i].transpose()
+                  << std::endl;
+    }
+    std::cout << "<<<<<<<<<<" << std::endl;
 
-    open3d::cuda::TransformationEstimationCudaForColoredICP colored_icp;
     open3d::Timer timer;
     timer.Start();
+    open3d::cuda::TransformationEstimationCudaForColoredICP colored_icp;
     colored_icp.InitializeColorGradients(*target, kdtree,
-        open3d::KDTreeSearchParamHybrid(0.07 * 2.0, 30));
+                                         open3d::KDTreeSearchParamHybrid(
+                                             0.07 * 2.0, 30));
     timer.Stop();
-    open3d::PrintInfo("Query color nn takes %f ms", timer.GetDuration());
+    open3d::PrintInfo("Computing color gradients takes %f ms",
+                      timer.GetDuration() / 100.0f);
+
+
+
 
 //    auto registration_result = open3d::RegistrationColoredICP(
 //        *source, *target, 0.07,

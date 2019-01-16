@@ -56,8 +56,7 @@ void Array2DCuda<T>::Create(int max_rows, int max_cols) {
     max_rows_ = max_rows;
     max_cols_ = max_cols;
 
-    size_t
-    pitch_size_t;
+    size_t pitch_size_t;
     CheckCuda(cudaMallocPitch(&server_->data_, &pitch_size_t,
                               sizeof(T) * max_cols_, max_rows_));
     pitch_ = (int) pitch_size_t;

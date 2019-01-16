@@ -54,11 +54,17 @@ void CorrespondenceSetCuda::SetCorrespondenceMatrix(
         Create();
     }
 
+    Timer timer;
+    timer.Start();
     matrix_.Upload(corres_matrix);
-    indices_.Resize(matrix_.max_rows_);
-    UpdateServer();
+    timer.Stop();
+    PrintInfo("matrix_.Upload takes %f ms\n", timer.GetDuration());
 
-    Compress();
+    timer.Start();
+    indices_.Resize(matrix_.max_rows_);
+    timer.Stop();
+    PrintInfo("indices_.Resize takes %f ms\n", timer.GetDuration());
+    UpdateServer();
 }
 
 void CorrespondenceSetCuda::Compress() {
