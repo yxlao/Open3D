@@ -87,10 +87,6 @@ bool RGBDOdometryCudaDevice<N>::ComputePixelwiseJacobian(
     float dy_D = kSobelFactor * target_dy_[level].depth().at(
         x_target, y_target)(0);
 
-//    printf("%f %f\n", dx_I * dx_I + dy_I * dy_I, dx_D * dx_D + dy_D * dy_D);
-//    if (dx_I * dx_I + dy_I * dy_I < 0.0001f ||
-//    dx_D * dx_D + dy_D * dy_D < 0.0001f) return false;
-
     float fx = intrinsics_[level].fx_;
     float fy = intrinsics_[level].fy_;
     float inv_Z = 1.0f / X_target(2);

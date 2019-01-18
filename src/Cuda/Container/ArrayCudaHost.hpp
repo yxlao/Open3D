@@ -52,6 +52,8 @@ void ArrayCuda<T>::Resize(int max_capacity) {
     if (server_ == nullptr) {
         Create(max_capacity);
     } else {
+        if (max_capacity_ == max_capacity) return;
+
         assert(max_capacity_ < max_capacity);
 
         T *resized_data;

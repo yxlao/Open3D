@@ -21,13 +21,14 @@ private:
     std::shared_ptr<CorrespondenceSetCudaDevice> server_ = nullptr;
 
 public:
-    CorrespondenceSetCuda() {};
+    CorrespondenceSetCuda() { server_ = nullptr; };
     CorrespondenceSetCuda(const CorrespondenceSetCuda &other);
     CorrespondenceSetCuda& operator=(const CorrespondenceSetCuda &other);
     ~CorrespondenceSetCuda();
 
-    void Create();
+    void Create(int max_rows, int max_cols);
     void Release();
+    void UpdateServer();
 
     Array2DCuda<int> matrix_;
 
@@ -38,8 +39,6 @@ public:
         Eigen::Matrix<int, -1, -1, Eigen::RowMajor> &corres_matrix);
 
     void Compress();
-
-    void UpdateServer();
 
 public:
     std::shared_ptr<CorrespondenceSetCudaDevice> server() {

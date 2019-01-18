@@ -9,7 +9,7 @@
 #include <Cuda/Geometry/PointCloudCuda.h>
 #include <Cuda/Registration/CorrespondenceSetCuda.h>
 #include <Core/Registration/TransformationEstimation.h>
-
+#include <Core/Geometry/KDTreeFlann.h>
 
 namespace open3d {
 namespace cuda {
@@ -23,69 +23,98 @@ public:
 
 public:
     Eigen::Matrix4d transformation_;
-    CorrespondenceSetCuda correspondence_set_;
+    CorrespondenceSetCuda correspondences_;
     float inlier_rmse_;
     float fitness_;
 };
 
-class TransformationEstimationCuda {
+class TransformEstimationCuda {
 public:
-    TransformationEstimationCuda() {}
-    virtual ~TransformationEstimationCuda() {}
+    TransformEstimationCuda() {}
+    virtual ~TransformEstimationCuda() {}
 
 public:
     virtual TransformationEstimationType
     GetTransformationEstimationType() const = 0;
 
-    virtual RegistrationResultCuda ComputeResultsAndTransformation(
-        const PointCloudCuda &source,
-        const PointCloudCuda &target,
-        const CorrespondenceSetCuda &corres) const {};
+    virtual void Initialize(
+        PointCloud &source, PointCloud &target,
+        float max_correspondence_distance) = 0;
+
+    virtual void GetCorrespondences() = 0;
+    virtual RegistrationResultCuda ComputeResultsAndTransformation() = 0;
+
+    virtual void TransformSourcePointCloud(
+        const Eigen::Matrix4d &source_to_target) = 0;
+
+public:
+    /** For GPU **/
+    PointCloudCuda source_;
+    PointCloudCuda target_;
+
+    /** 1-nn, source x 1 (in target) **/
+    CorrespondenceSetCuda correspondences_;
+    float max_correspondence_distance_;
+
+    /** For CPU NN search **/
+    PointCloud source_cpu_;
+    PointCloud target_cpu_;
+    KDTreeFlann kdtree_;
 };
-
-class TransformationEstimationPointToPointCuda :
-    public TransformationEstimationCuda {
-
-public:
-    TransformationEstimationPointToPointCuda(bool with_scaling = false) :
-        with_scaling_(with_scaling) {}
-    ~TransformationEstimationPointToPointCuda() override {}
-
-public:
-    TransformationEstimationType GetTransformationEstimationType()
-    const override { return type_; };
-
-    RegistrationResultCuda ComputeResultsAndTransformation(
-        const PointCloudCuda &source,
-        const PointCloudCuda &target,
-        const CorrespondenceSetCuda &corres) const override;
-
-public:
-    bool with_scaling_ = false;
-
-private:
-    const TransformationEstimationType type_ =
-        TransformationEstimationType::PointToPoint;
-};
-
-class TransformationEstimationPointToPlaneCuda :
-    public TransformationEstimationCuda {
-
-public:
-    TransformationEstimationPointToPlaneCuda();
-    ~TransformationEstimationPointToPlaneCuda() override {}
-
-public:
-    TransformationEstimationType GetTransformationEstimationType()
-    const override { return type_; };
-    RegistrationResultCuda ComputeResultsAndTransformation(
-        const PointCloudCuda &source,
-        const PointCloudCuda &target,
-        const CorrespondenceSetCuda &corres) const override;
-
-private:
-    const TransformationEstimationType type_ =
-        TransformationEstimationType::PointToPlane;
-};
+//
+//class TransformEstimationPointToPointCuda : public TransformEstimationCuda {
+//
+//public:
+//    TransformEstimationPointToPointCuda(bool with_scaling = false) :
+//        with_scaling_(with_scaling) {}
+//    ~TransformEstimationPointToPointCuda() override {}
+//
+//public:
+//    TransformationEstimationType GetTransformationEstimationType()
+//    const override { return type_; };
+//
+//    void Initialize(
+//        PointCloud &source, PointCloud &target,
+//        float max_correspondence_distance) override;
+//
+//    void GetCorrespondences() override;
+//    RegistrationResultCuda ComputeResultsAndTransformation() override;
+//
+//    void TransformSourcePointCloud(
+//        const Eigen::Matrix4d &source_to_target) override;
+//
+//
+//public:
+//    bool with_scaling_ = false;
+//
+//private:
+//    const TransformationEstimationType type_ =
+//        TransformationEstimationType::PointToPoint;
+//};
+//
+//class TransformEstimationPointToPlaneCuda : public TransformEstimationCuda {
+//
+//public:
+//    TransformEstimationPointToPlaneCuda();
+//    ~TransformEstimationPointToPlaneCuda() override {}
+//
+//public:
+//    TransformationEstimationType GetTransformationEstimationType()
+//    const override { return type_; };
+//
+//    void Initialize(
+//        PointCloud &source, PointCloud &target,
+//        float max_correspondence_distance) override;
+//
+//    void GetCorrespondences() override;
+//    RegistrationResultCuda ComputeResultsAndTransformation() override;
+//
+//    void TransformSourcePointCloud(
+//        const Eigen::Matrix4d &source_to_target) override;
+//
+//private:
+//    const TransformationEstimationType type_ =
+//        TransformationEstimationType::PointToPlane;
+//};
 }
 }

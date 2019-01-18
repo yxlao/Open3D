@@ -322,7 +322,7 @@ public:
     }
 
     /** Linear algebraic operations **/
-    __HOSTDEVICE__ inline VectorCuda<T, N + 1> homogeneous() {
+    __HOSTDEVICE__ inline VectorCuda<T, N + 1> homogeneous() const {
         VectorCuda<T, N + 1> ret;
 #ifdef __CUDACC__
 #pragma unroll 1
@@ -334,7 +334,7 @@ public:
         return ret;
     }
 
-    __HOSTDEVICE__ inline VectorCuda<T, N - 1> hnormalized() {
+    __HOSTDEVICE__ inline VectorCuda<T, N - 1> hnormalized() const {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
         assert(N > 1);
 #endif
@@ -349,7 +349,7 @@ public:
         return ret;
     }
 
-    __HOSTDEVICE__ inline float dot(const VecType &other) {
+    __HOSTDEVICE__ inline float dot(const VecType &other) const {
         float sum = 0;
 #ifdef __CUDACC__
 #pragma unroll 1
@@ -360,11 +360,11 @@ public:
         return sum;
     }
 
-    __HOSTDEVICE__ inline float norm() {
+    __HOSTDEVICE__ inline float norm() const {
         return sqrtf(dot(*this));
     }
 
-    __HOSTDEVICE__ inline VectorCuda<T, N> normalized() {
+    __HOSTDEVICE__ inline VectorCuda<T, N> normalized() const {
         float n = norm();
         VectorCuda<T, N> ret;
 #ifdef __CUDACC__

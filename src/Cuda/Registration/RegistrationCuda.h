@@ -10,6 +10,7 @@
 
 #include <Cuda/Container/ArrayCuda.h>
 #include <Cuda/Geometry/PointCloudCuda.h>
+#include <Cuda/Registration/ColoredICPCuda.h>
 #include <Cuda/Registration/TransformEstimationCuda.h>
 
 namespace open3d {
@@ -30,51 +31,31 @@ public:
     int max_iteration_;
 };
 
-class RegistrationCudaDevice {
-public:
-    PointCloudCudaDevice source_;
-    PointCloudCudaDevice target_;
-    CorrespondenceSetCuda correspondences_;
-};
-
+/** Basically it doesn't involve cuda functions. It
+ *  - collects correspondences on CPU and uploads them to CorrespondenceSetCuda
+ *  - initializes and calls TransformEstimationCuda with cuda functions.
+ **/
 class RegistrationCuda {
-private:
-    std::shared_ptr<RegistrationCudaDevice> server_ = nullptr;
-
-    /** Used for knn search **/
-    PointCloud source_;
-    PointCloud target_;
-    KDTreeFlann target_kdtree_;
-
-    PointCloudCuda source_cuda_;
-    PointCloudCuda target_cuda_;
-
-    CorrespondenceSetCuda correspondences_;
+public:
     Eigen::Matrix4d transform_source_to_target_;
+    std::shared_ptr<TransformEstimationCudaForColoredICP> estimator_;
 
 public:
+    explicit RegistrationCuda(const TransformationEstimationType &type);
+    ~RegistrationCuda() {};
+
+public:
+    /* Preparation */
     void Initialize(
         PointCloud &source, PointCloud &target,
+        float max_correspondence_distance,
         const Eigen::Matrix4d &init = Eigen::Matrix4d::Identity());
 
-    void SetParameters(
-        float max_correspondence_distance,
-        const TransformationEstimationCuda &estimation =
-        TransformationEstimationCuda(),
-        const ICPConvergenceCriteria &criteria = ICPConvergenceCriteria());
-
+    /* ICP computations */
     RegistrationResultCuda DoSingleIteration(int iter);
+
+    /* Wrapper of multiple iterations */
     RegistrationResultCuda ComputeICP();
-
-public:
-    /** Iterations **/
-    /* CPU */
-    void GetCorrespondences();
-
-    /* GPU */
-    RegistrationResultCuda ComputeRegistrationResult();
-    /* ... and estimation.ComputeTransform */
-
 };
 }
 }

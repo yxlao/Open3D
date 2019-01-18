@@ -7,71 +7,40 @@
 namespace open3d {
 namespace cuda {
 
-void RegistrationCuda::Initialize(open3d::PointCloud &source,
-                                  open3d::PointCloud &target,
-                                  const Eigen::Matrix<double, 4, 4> &init) {
-
+RegistrationCuda::RegistrationCuda(const TransformationEstimationType &type) {
+    if (type == TransformationEstimationType::ColoredICP) {
+        estimator_ = std::make_shared<TransformEstimationCudaForColoredICP>();
+    }
 }
 
-RegistrationResultCuda RegistrationCuda::ICP(
-    PointCloud &source,
-    PointCloud &target,
-    double max_correspondence_distance,
-    const Eigen::Matrix<double, 4, 4> &init,
-    const TransformationEstimationCuda &estimation,
-    const ICPConvergenceCriteria &criteria) {
+void RegistrationCuda::Initialize(
+    PointCloud &source, PointCloud &target,
+    float max_correspondence_distance,
+    const Eigen::Matrix<double, 4, 4> &init) {
+    estimator_->Initialize(source, target, max_correspondence_distance);
 
-    if (max_correspondence_distance <= 0.0) {
-        PrintError("Error: Invalid max_correspondence_distance.\n");
-        return RegistrationResultCuda(init);
+    transform_source_to_target_ = init;
+    if (!init.isIdentity()) {
+        estimator_->TransformSourcePointCloud(init);
     }
-    if (estimation.GetTransformationEstimationType() ==
-        TransformationEstimationType::PointToPlane &&
-        (!source.HasNormals() || !target.HasNormals())) {
-        PrintError(
-            "Error: TransformationEstimationPointToPlane requires pre-computed normal vectors.\n");
-        return RegistrationResultCuda(init);
-    }
+}
 
-    Eigen::Matrix4d transformation = init;
-    KDTreeFlann kdtree;
-    kdtree.SetGeometry(target);
-    PointCloudCuda source_cuda, target_cuda;
-    target_cuda.Upload(source);
-    source_cuda.Upload(target);
+RegistrationResultCuda RegistrationCuda::DoSingleIteration(int iter) {
+    estimator_->GetCorrespondences();
+    auto result = estimator_->ComputeResultsAndTransformation();
 
-    PointCloud pcd = source;
-    if (init.isIdentity() == false) {
-        source_cuda.Transform(init);
-        pcd = *source_cuda.Download();
-    }
+    estimator_->TransformSourcePointCloud(result.transformation_);
+    transform_source_to_target_ = result.transformation_ *
+        transform_source_to_target_;
 
-    RegistrationResultCuda result;
-    GetCorrespondences(pcd, target, kdtree, transformation);
-    result = ComputeRegistrationResult(source_cuda, target_cuda,
-        max_correspondence_distance, result.correspondence_set_);
-
-    for (int i = 0; i < criteria.max_iteration_; i++) {
-        PrintDebug("ICP Iteration #%d: Fitness %.4f, RMSE %.4f\n", i,
-                   result.fitness_, result.inlier_rmse_);
-        Eigen::Matrix4d update = estimation.ComputeTransformation(
-            source_cuda, target_cuda, result.correspondence_set_);
-        transformation = update * transformation;
-        pcd.Transform(update);
-
-        RegistrationResultCuda backup = result;
-        GetCorrespondences(pcd, target, kdtree, transformation);
-        result = ComputeRegistrationResult(
-            source_cuda, target_cuda, max_correspondence_distance,
-            correspondences_);
-        if (std::abs(backup.fitness_ - result.fitness_) <
-            criteria.relative_fitness_ && std::abs(backup.inlier_rmse_ -
-            result.inlier_rmse_) < criteria.relative_rmse_) {
-            break;
-        }
-    }
+    PrintInfo("Iteration %d: inlier rmse = %f, fitness = %f\n",
+        iter, result.inlier_rmse_, result.fitness_);
 
     return result;
+}
+
+RegistrationResultCuda RegistrationCuda::ComputeICP() {
+
 }
 }
 }

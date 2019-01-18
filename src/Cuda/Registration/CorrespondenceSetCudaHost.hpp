@@ -32,11 +32,15 @@ CorrespondenceSetCuda::~CorrespondenceSetCuda() {
     Release();
 }
 
-void CorrespondenceSetCuda::Create() {
+void CorrespondenceSetCuda::Create(int max_rows, int max_cols) {
     if (server_ != nullptr) {
         PrintError("[CorrespondenceSetCuda] Already created, abort.\n");
+        return;
     }
+
     server_ = std::make_shared<CorrespondenceSetCudaDevice>();
+    matrix_.Create(max_rows, max_cols);
+    indices_.Create(max_rows);
 }
 
 void CorrespondenceSetCuda::Release() {
@@ -51,19 +55,11 @@ void CorrespondenceSetCuda::Release() {
 void CorrespondenceSetCuda::SetCorrespondenceMatrix(
     Eigen::Matrix<int, -1, -1, Eigen::RowMajor> &corres_matrix) {
     if (server_ == nullptr) {
-        Create();
+        Create(corres_matrix.rows(), corres_matrix.cols());
     }
 
-    Timer timer;
-    timer.Start();
     matrix_.Upload(corres_matrix);
-    timer.Stop();
-    PrintInfo("matrix_.Upload takes %f ms\n", timer.GetDuration());
-
-    timer.Start();
     indices_.Resize(matrix_.max_rows_);
-    timer.Stop();
-    PrintInfo("indices_.Resize takes %f ms\n", timer.GetDuration());
     UpdateServer();
 }
 

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <Cuda/Common/JacobianCuda.h>
 #include <Cuda/Geometry/PointCloudCuda.h>
 #include <Cuda/Registration/TransformEstimationCuda.h>
 #include <Core/Geometry/KDTreeFlann.h>
@@ -11,48 +12,86 @@
 namespace open3d {
 namespace cuda {
 
-class TransformationEstimationCudaForColoredICPDevice {
+/* We don't want inheritance for cuda classes */
+class TransformEstimationCudaForColoredICPDevice {
+public:
+    PointCloudCudaDevice source_;
+    PointCloudCudaDevice target_;
+    ArrayCudaDevice<Vector3f> target_color_gradient_;
+
+    ArrayCudaDevice<float> results_;
+    CorrespondenceSetCudaDevice correspondences_;
+
+    TransformCuda transform_source_to_target_;
+
+public:
+    /* We need some coefficients here */
+    float lambda_geometric_;
+    float sqrt_coeff_I_;
+    float sqrt_coeff_G_;
+
+public:
+    __DEVICE__ void ComputePointwiseJacobianAndResidual(
+        int source_idx, int target_idx,
+        Vector6f& jacobian_I, Vector6f &jacobian_G,
+        float &residual_I, float &residual_G);
+
+    __DEVICE__ void ComputePointwiseJtJAndJtr(
+        const Vector6f &jacobian_I, const Vector6f &jacobian_G,
+        const float &residual_I, const float &residual_G,
+        HessianCuda<6> &JtJ, Vector6f &Jtr);
 
 };
 
-class TransformationEstimationCudaForColoredICP
-    : public TransformationEstimationCuda {
+class TransformEstimationCudaForColoredICP : public TransformEstimationCuda {
+public:
+    std::shared_ptr<TransformEstimationCudaForColoredICPDevice>
+        server_ = nullptr;
 
 public:
     TransformationEstimationType GetTransformationEstimationType()
     const override { return type_; };
 
-    TransformationEstimationCudaForColoredICP(
-        float lambda_geometric = 0.968f) :
-        lambda_geometric_(lambda_geometric) {
-        if (lambda_geometric_ < 0 || lambda_geometric_ > 1.0)
-            lambda_geometric_ = 0.968f;
-    }
-    ~TransformationEstimationCudaForColoredICP() override {}
+    TransformEstimationCudaForColoredICP(
+        float lambda_geometric = 0.968f);
+    ~TransformEstimationCudaForColoredICP() override;
+
+    void Create();
+    void Release();
+    void UpdateServer();
+
+    /** TODO: copy constructors **/
 
 public:
-    /** 1. Evaluate fitness and rmse of the previous transformation,
-     *  2. Build linear system to solve for updated transformation **/
-    RegistrationResultCuda ComputeResultsAndTransformation(
-        const PointCloudCuda &source,
-        const PointCloudCuda &target,
-        const CorrespondenceSetCuda &corres) const override {};
+    void Initialize(
+        PointCloud &source, PointCloud &target,
+        float max_correspondence_distance) override;
 
+    void GetCorrespondences() override;
+
+    RegistrationResultCuda ComputeResultsAndTransformation() override;
+
+    void TransformSourcePointCloud(
+        const Eigen::Matrix4d &source_to_target);
+
+public:
     /** Computes color gradients
      * 1. Get correspondence matrix on CPU
      * 2. Compress the correspondence matrix
      * 3. Use the compressed correspondence matrix to build linear systems
      * and compute color gradients.
      * **/
-    void InitializeColorGradients(
-        PointCloud &target,
-        KDTreeFlann &kdtree,
-        const KDTreeSearchParamHybrid &search_param);
+    void ComputeColorGradients(PointCloud &target,
+                               KDTreeFlann &kdtree,
+                               const KDTreeSearchParamHybrid &search_param);
+
+    void ExtractResults(
+        Eigen::Matrix6d &JtJ, Eigen::Vector6d &Jtr, float &rmse);
 
 public:
     float lambda_geometric_;
 
-    ArrayCuda<Vector3f> color_gradient_;
+    ArrayCuda<Vector3f> target_color_gradient_;
     ArrayCuda<float> results_;
 
 private:
@@ -60,20 +99,24 @@ private:
         TransformationEstimationType::ColoredICP;
 };
 
-class TransformationEstimationCudaForColoredICPKernelCaller {
+class TransformEstimationCudaForColoredICPKernelCaller {
 public:
     static void ComputeColorGradeintKernelCaller(
-        PointCloudCuda &pcl,
-        CorrespondenceSetCuda& corres,
-        ArrayCuda<Vector3f> &color_gradient);
+        TransformEstimationCudaForColoredICP &estimation,
+        CorrespondenceSetCuda &corres_for_color_gradient);
+
+    static void ComputeResultsAndTransformationKernelCaller(
+        TransformEstimationCudaForColoredICP &estimation);
 };
 
 __GLOBAL__
 void ComputeColorGradientKernel(
-    PointCloudCudaDevice pcl,
-    CorrespondenceSetCudaDevice corres,
-    ArrayCudaDevice<Vector3f> color_gradient);
-}
-}
+    TransformEstimationCudaForColoredICPDevice estimation,
+    CorrespondenceSetCudaDevice corres_for_color_gradient);
 
+__GLOBAL__
+void ComputeResultsAndTransformationKernel(
+    TransformEstimationCudaForColoredICPDevice estimation);
 
+} // cuda
+} // open3d

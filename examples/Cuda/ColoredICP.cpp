@@ -13,6 +13,7 @@
 #include <Core/Utility/Timer.h>
 #include <Core/Registration/ColoredICP.h>
 #include <Cuda/Registration/ColoredICPCuda.h>
+#include <Cuda/Registration/RegistrationCuda.h>
 
 #include "ReadDataAssociation.h"
 
@@ -183,8 +184,8 @@ int main(int argc, char **argv) {
         intrinsic,
         false);
     auto rgbd_target = ReadRGBDImage(
-        (base_path + "/" + rgbd_filenames[7].second).c_str(),
-        (base_path + "/" + rgbd_filenames[7].first).c_str(),
+        (base_path + "/" + rgbd_filenames[3].second).c_str(),
+        (base_path + "/" + rgbd_filenames[3].first).c_str(),
         intrinsic,
         false);
     auto source_origin = CreatePointCloudFromRGBDImage(*rgbd_source, intrinsic);
@@ -195,34 +196,78 @@ int main(int argc, char **argv) {
     auto source = open3d::VoxelDownSample(*source_origin, 0.05);
     auto target = open3d::VoxelDownSample(*target_origin, 0.05);
 
-    open3d::KDTreeFlann kdtree;
-    kdtree.SetGeometry(*target);
-    auto colored_pcl = InitializePointCloudForColoredICP(
-        *target, open3d::KDTreeSearchParamHybrid(0.07 * 2.0, 30));
-    for (int i = 0; i < colored_pcl->color_gradient_.size(); ++i) {
-        std::cout << i << ": " << colored_pcl->color_gradient_[i].transpose()
-                  << std::endl;
+//    open3d::KDTreeFlann kdtree;
+//    kdtree.SetGeometry(*target);
+//    auto colored_pcl = InitializePointCloudForColoredICP(
+//        *target, open3d::KDTreeSearchParamHybrid(0.07 * 2.0, 30));
+//
+//    open3d::Timer timer;
+//    timer.Start();
+//
+    open3d::cuda::RegistrationCuda registration(
+        open3d::TransformationEstimationType::ColoredICP);
+    registration.Initialize(*source, *target, 0.07f);
+//    timer.Stop();
+//    open3d::PrintInfo("Computing color gradients takes %f ms",
+//                      timer.GetDuration() / 100.0f);
+//
+//    auto res = registration.estimator_->target_color_gradient_.DownloadAll();
+//
+//    int _2digit = 0, _3digit = 0, _4digit = 0, _5digit = 0;
+//    assert(colored_pcl->color_gradient_.size() == res.size());
+//    for (int i = 0; i < res.size(); ++i) {
+//        Eigen::Vector3d version_cpu = colored_pcl->color_gradient_[i];
+//        Eigen::Vector3d version_cuda = res[i].ToEigen();
+//        double norm = (version_cpu - version_cuda).norm();
+//
+//        if (norm < 1e-3) _3digit ++;
+//        if (norm < 1e-4) _4digit ++;
+//        if (norm < 1e-5) _5digit ++;
+//
+//        if (norm < 1e-2) {
+//            _2digit ++;
+//        } else {
+//            std::cout << i << std::endl;
+//            std::cout << version_cpu.transpose() << std::endl
+//                      << version_cuda.transpose() << std::endl;
+//        }
+//    }
+//
+//    open3d::PrintInfo("%f < 1e-2, %f < 1e-3, %f < 1e-4, %f < 1e-5\n",
+//                      float(_2digit) / res.size(),
+//                      float(_3digit) / res.size(),
+//                      float(_4digit) / res.size(),
+//                      float(_5digit) / res.size());
+//
+//    // registration.DoSingleIteration(0);
+//    registration.estimator_->GetCorrespondences();
+//    auto matrix = registration.estimator_->correspondences_.matrix_.Download();
+////    for (int i = 0; i < matrix.rows(); ++i) {
+////        std::cout << i << ": " << matrix(i, 0) << std::endl;
+////    }
+//
+//    auto indices = registration.estimator_->correspondences_.indices_
+//        .Download();
+////    for (int i = 0; i < indices.size(); ++i) {
+////        std::cout << indices[i] << " " << matrix(indices[i], 0) << std::endl;
+////    }
+
+    VisualizeRegistration(*source, *target, registration
+        .transform_source_to_target_);
+    for (int i = 0; i < 40; ++i) {
+        auto result = registration.DoSingleIteration(i);
     }
-    std::cout << "<<<<<<<<<<" << std::endl;
-
-    open3d::Timer timer;
-    timer.Start();
-    open3d::cuda::TransformationEstimationCudaForColoredICP colored_icp;
-    colored_icp.InitializeColorGradients(*target, kdtree,
-                                         open3d::KDTreeSearchParamHybrid(
-                                             0.07 * 2.0, 30));
-    timer.Stop();
-    open3d::PrintInfo("Computing color gradients takes %f ms",
-                      timer.GetDuration() / 100.0f);
-
-
-
+    VisualizeRegistration(*source, *target, registration
+        .transform_source_to_target_);
+//    auto result = registration.estimator_->ComputeResultsAndTransformation();
+//    registration.estimator_->TransformSourcePointCloud(result.transformation_);
+//    transform_source_to_target_ = result.transformation_ *
+//        transform_source_to_target_;
 
 //    auto registration_result = open3d::RegistrationColoredICP(
 //        *source, *target, 0.07,
 //        Eigen::Matrix4d::Identity(),
 //        open3d::ICPConvergenceCriteria(),
 //        0.968);
-//    VisualizeRegistration(*source, *target, registration_result.transformation_);
 //    return 0;
 }
