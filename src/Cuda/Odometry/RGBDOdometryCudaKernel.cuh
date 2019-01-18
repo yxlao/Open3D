@@ -41,8 +41,7 @@ void DoSingleIterationKernel(RGBDOdometryCudaDevice<N> odometry, size_t level) {
         jacobian_I, jacobian_D);
     if (mask) {
         odometry.correspondences_.push_back(Vector4i(x, y, x_target, y_target));
-        odometry.ComputePixelwiseJtJAndJtr(
-            jacobian_I, jacobian_D, residual_I, residual_D,
+        ComputeJtJAndJtr(jacobian_I, jacobian_D, residual_I, residual_D,
             JtJ, Jtr);
     }
 

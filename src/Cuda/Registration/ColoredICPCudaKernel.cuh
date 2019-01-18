@@ -117,8 +117,7 @@ void ComputeResultsAndTransformationKernel(
 
     estimation.ComputePointwiseJacobianAndResidual(
         source_idx, target_idx, jacobian_I, jacobian_G, residual_I, residual_G);
-    estimation.ComputePointwiseJtJAndJtr(
-        jacobian_I, jacobian_G, residual_I, residual_G, JtJ, Jtr);
+    ComputeJtJAndJtr(jacobian_I, jacobian_G, residual_I, residual_G, JtJ, Jtr);
 
     /** Reduce Sum JtJ **/
 #pragma unroll 1

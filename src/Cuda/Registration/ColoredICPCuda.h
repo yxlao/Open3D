@@ -35,12 +35,6 @@ public:
         int source_idx, int target_idx,
         Vector6f& jacobian_I, Vector6f &jacobian_G,
         float &residual_I, float &residual_G);
-
-    __DEVICE__ void ComputePointwiseJtJAndJtr(
-        const Vector6f &jacobian_I, const Vector6f &jacobian_G,
-        const float &residual_I, const float &residual_G,
-        HessianCuda<6> &JtJ, Vector6f &Jtr);
-
 };
 
 class TransformEstimationCudaForColoredICP : public TransformEstimationCuda {

@@ -46,23 +46,5 @@ ComputePointwiseJacobianAndResidual(
     jacobian_I(5) = sqrt_coeff_I_ * ditM(2);
     residual_I    = sqrt_coeff_I_ * (is - is0_proj);
 }
-
-__device__
-void TransformEstimationCudaForColoredICPDevice::ComputePointwiseJtJAndJtr(
-    const Vector6f &jacobian_I, const Vector6f &jacobian_G,
-    const float &residual_I, const float &residual_G,
-    HessianCuda<6> &JtJ, Vector6f &Jtr) {
-
-    int cnt = 0;
-#pragma unroll 1
-    for (int i = 0; i < 6; ++i) {
-#pragma unroll 1
-        for (int j = i; j < 6; ++j) {
-            JtJ(cnt++) = jacobian_I(i) * jacobian_I(j)
-                + jacobian_G(i) * jacobian_G(j);
-        }
-        Jtr(i) = jacobian_I(i) * residual_I + jacobian_G(i) * residual_G;
-    }
-}
 } // cuda
 } // open3d

@@ -10,6 +10,7 @@
 namespace open3d {
 
 namespace cuda {
+
 /** Approximated by JtJ in optimization **/
 template<size_t N>
 class HessianCuda {
@@ -38,77 +39,51 @@ public:
 #endif
         return h_[i];
     }
-
-    inline __HOSTDEVICE__ HessianCuda<N> operator+(
-        const HessianCuda<N> &other) {
-        HessianCuda<N> ret;
-#ifdef __CUDACC__
-#pragma unroll 1
-#endif
-        for (int i = 0; i < (N + 1) * N / 2; ++i) {
-            ret(i) = other(i) + h_[i];
-        }
-        return ret;
-    }
-
-    inline __HOSTDEVICE__ HessianCuda<N> &operator+=(
-        const HessianCuda<N> &other) {
-#ifdef __CUDACC__
-#pragma unroll 1
-#endif
-        for (int i = 0; i < (N + 1) * N / 2; ++i) {
-            h_[i] += other(i);
-        }
-        return (*this);
-    }
 };
 
-template<size_t N>
-class JacobianCuda {
-private:
-    float j_[N];
+namespace {
+/** Joint terms **/
+__HOSTDEVICE__ void ComputeJtJAndJtr(
+    const Vector6f &jacobian_I, const Vector6f &jacobian_G,
+    const float &residual_I, const float &residual_G,
+    HessianCuda<6> &JtJ, Vector6f &Jtr) {
 
-public:
-    inline __HOSTDEVICE__ float &operator()(size_t i) {
-#ifdef CUDA_DEBUG_ENABLE_ASSERTION
-        assert(i < N);
-#endif
-        return j_[i];
-    }
-    inline __HOSTDEVICE__ const float &operator()(size_t i) const {
-#ifdef CUDA_DEBUG_ENABLE_ASSERTION
-        assert(i < N);
-#endif
-        return j_[i];
-    }
-
-    inline __HOSTDEVICE__ HessianCuda<N> ComputeJtJ() {
-        HessianCuda<N> h;
-        int cnt = 0;
+    int cnt = 0;
 #ifdef __CUDACC__
 #pragma unroll 1
 #endif
-        for (int i = 0; i < N; ++i) {
+    for (int i = 0; i < 6; ++i) {
 #ifdef __CUDACC__
 #pragma unroll 1
 #endif
-            for (int j = i; j < N; ++j) {
-                h(cnt++) = j_[i] * j_[j];
-            }
+        for (int j = i; j < 6; ++j) {
+            JtJ(cnt++) = jacobian_I(i) * jacobian_I(j)
+                + jacobian_G(i) * jacobian_G(j);
         }
-        return h;
+        Jtr(i) = jacobian_I(i) * residual_I + jacobian_G(i) * residual_G;
     }
+}
 
-    inline __HOSTDEVICE__ Vector6f ComputeJtr(float residual) {
-        Vector6f jtr;
+/** Single term **/
+__HOSTDEVICE__ void ComputeJtJAndJtr(
+    const Vector6f &jacobian_I, const float &residual_I,
+    HessianCuda<6> &JtJ, Vector6f &Jtr) {
+
+    int cnt = 0;
 #ifdef __CUDACC__
 #pragma unroll 1
 #endif
-        for (int i = 0; i < N; ++i) {
-            jtr(i) = j_[i] * residual;
+    for (int i = 0; i < 6; ++i) {
+#ifdef __CUDACC__
+#pragma unroll 1
+#endif
+        for (int j = i; j < 6; ++j) {
+            JtJ(cnt++) = jacobian_I(i) * jacobian_I(j);
         }
-        return jtr;
+        Jtr(i) = jacobian_I(i) * residual_I;
     }
-};
+}
+} // unnamed namespace
+
 } // cuda
 } // open3d

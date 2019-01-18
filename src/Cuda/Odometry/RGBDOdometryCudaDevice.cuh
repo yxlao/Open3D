@@ -119,24 +119,5 @@ bool RGBDOdometryCudaDevice<N>::ComputePixelwiseJacobian(
     jacobian_D(5) = sqrt_coeff_D_ * (d2 - 1.0f);
     return true;
 }
-
-template<size_t N>
-__device__
-void RGBDOdometryCudaDevice<N>::ComputePixelwiseJtJAndJtr(
-    const Vector6f &jacobian_I, const Vector6f &jacobian_D,
-    const float &residual_I, const float &residual_D,
-    HessianCuda<6> &JtJ, Vector6f &Jtr) {
-
-    int cnt = 0;
-#pragma unroll 1
-    for (int i = 0; i < 6; ++i) {
-#pragma unroll 1
-        for (int j = i; j < 6; ++j) {
-            JtJ(cnt++) = jacobian_I(i) * jacobian_I(j)
-                + jacobian_D(i) * jacobian_D(j);
-        }
-        Jtr(i) = jacobian_I(i) * residual_I + jacobian_D(i) * residual_D;
-    }
-}
 } // cuda
 } // open3d

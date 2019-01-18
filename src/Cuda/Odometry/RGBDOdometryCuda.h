@@ -96,11 +96,6 @@ public:
         const Vector3f &X_target,
         Vector6f &jacobian_I, Vector6f &jacobian_D);
 
-    __DEVICE__ void ComputePixelwiseJtJAndJtr(
-        const Vector6f &jacobian_I, const Vector6f &jacobian_D,
-        const float &residual_I, const float &residual_D,
-        HessianCuda<6> &JtJ, Vector6f &Jtr);
-
 public:
     friend class RGBDOdometryCuda<N>;
 };
