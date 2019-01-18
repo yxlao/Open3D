@@ -3,6 +3,7 @@
 //
 
 #include "RegistrationCuda.h"
+#include <Core/Core.h>
 
 namespace open3d {
 namespace cuda {
@@ -28,7 +29,6 @@ void RegistrationCuda::Initialize(
 RegistrationResultCuda RegistrationCuda::DoSingleIteration(int iter) {
     estimator_->GetCorrespondences();
     auto result = estimator_->ComputeResultsAndTransformation();
-
     estimator_->TransformSourcePointCloud(result.transformation_);
     transform_source_to_target_ = result.transformation_ *
         transform_source_to_target_;

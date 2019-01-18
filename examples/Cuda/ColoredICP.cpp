@@ -171,6 +171,8 @@ InitializePointCloudForColoredICP(const open3d::PointCloud &target,
 }
 
 int main(int argc, char **argv) {
+    open3d::SetVerbosityLevel(open3d::VerbosityLevel::VerboseDebug);
+
     std::string base_path = "/home/wei/Work/data/stanford/lounge/";
     auto rgbd_filenames = ReadDataAssociation(
         base_path + "data_association.txt");
@@ -204,9 +206,40 @@ int main(int argc, char **argv) {
 //    open3d::Timer timer;
 //    timer.Start();
 //
+
+    open3d::Timer timer;
+    timer.Start();
+    for (int cases = 0; cases < 20; ++cases) {
+        open3d::RegistrationColoredICP(*source, *target, 0.07);
+    }
+    timer.Stop();
+    float avg_time_cpu = timer.GetDuration() / 20;
+
+    timer.Start();
+    for (int cases = 0; cases < 20; ++cases) {
+        open3d::cuda::RegistrationCuda registration(
+            open3d::TransformationEstimationType::ColoredICP);
+        registration.Initialize(*source, *target, 0.07f);
+        for (int i = 0; i < 20; ++i) {
+            auto result = registration.DoSingleIteration(i);
+        }
+    }
+    timer.Stop();
+    float avg_time_cuda = timer.GetDuration() / 20;
+    std::cout << avg_time_cuda << " " << avg_time_cpu << " "
+              << avg_time_cuda / avg_time_cpu << std::endl;
+
+
     open3d::cuda::RegistrationCuda registration(
         open3d::TransformationEstimationType::ColoredICP);
+
     registration.Initialize(*source, *target, 0.07f);
+    VisualizeRegistration(*source, *target, registration.transform_source_to_target_);
+    for (int i = 0; i < 20; ++i) {
+        auto result = registration.DoSingleIteration(i);
+    }
+    VisualizeRegistration(*source, *target, registration.transform_source_to_target_);
+
 //    timer.Stop();
 //    open3d::PrintInfo("Computing color gradients takes %f ms",
 //                      timer.GetDuration() / 100.0f);
@@ -252,14 +285,12 @@ int main(int argc, char **argv) {
 ////        std::cout << indices[i] << " " << matrix(indices[i], 0) << std::endl;
 ////    }
 
-    VisualizeRegistration(*source, *target, registration
-        .transform_source_to_target_);
-    for (int i = 0; i < 40; ++i) {
-        auto result = registration.DoSingleIteration(i);
-    }
-    VisualizeRegistration(*source, *target, registration
-        .transform_source_to_target_);
-//    auto result = registration.estimator_->ComputeResultsAndTransformation();
+//    VisualizeRegistration(*source, *target, registration
+//        .transform_source_to_target_);
+//
+//    VisualizeRegistration(*source, *target, registration
+//        .transform_source_to_target_);
+////    auto result = registration.estimator_->ComputeResultsAndTransformation();
 //    registration.estimator_->TransformSourcePointCloud(result.transformation_);
 //    transform_source_to_target_ = result.transformation_ *
 //        transform_source_to_target_;
@@ -270,4 +301,5 @@ int main(int argc, char **argv) {
 //        open3d::ICPConvergenceCriteria(),
 //        0.968);
 //    return 0;
+    std::cout << source->points_.size() << std::endl;
 }

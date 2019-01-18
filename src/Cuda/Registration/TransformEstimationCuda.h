@@ -36,16 +36,18 @@ public:
 public:
     virtual TransformationEstimationType
     GetTransformationEstimationType() const = 0;
+    virtual void UpdateServer() = 0;
+    virtual RegistrationResultCuda ComputeResultsAndTransformation() = 0;
 
     virtual void Initialize(
         PointCloud &source, PointCloud &target,
-        float max_correspondence_distance) = 0;
-
-    virtual void GetCorrespondences() = 0;
-    virtual RegistrationResultCuda ComputeResultsAndTransformation() = 0;
-
+        float max_correspondence_distance);
+    virtual void GetCorrespondences();
     virtual void TransformSourcePointCloud(
-        const Eigen::Matrix4d &source_to_target) = 0;
+        const Eigen::Matrix4d &source_to_target);
+
+    virtual void ExtractResults(
+        Eigen::Matrix6d &JtJ, Eigen::Vector6d &Jtr, float &rmse);
 
 public:
     /** For GPU **/
@@ -60,6 +62,10 @@ public:
     PointCloud source_cpu_;
     PointCloud target_cpu_;
     KDTreeFlann kdtree_;
+    Eigen::Matrix<int, -1, -1, Eigen::RowMajor> corres_matrix_;
+
+    /** Build linear system **/
+    ArrayCuda<float> results_;
 };
 //
 //class TransformEstimationPointToPointCuda : public TransformEstimationCuda {

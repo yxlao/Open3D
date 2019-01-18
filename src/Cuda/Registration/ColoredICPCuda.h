@@ -52,27 +52,19 @@ public:
     TransformationEstimationType GetTransformationEstimationType()
     const override { return type_; };
 
-    TransformEstimationCudaForColoredICP(
-        float lambda_geometric = 0.968f);
+    TransformEstimationCudaForColoredICP(float lambda_geometric = 0.968f);
     ~TransformEstimationCudaForColoredICP() override;
 
     void Create();
     void Release();
-    void UpdateServer();
+    void UpdateServer() override;
 
     /** TODO: copy constructors **/
 
 public:
-    void Initialize(
-        PointCloud &source, PointCloud &target,
-        float max_correspondence_distance) override;
-
-    void GetCorrespondences() override;
-
+    void Initialize(PointCloud &source, PointCloud &target,
+                    float max_correspondence_distance) override;
     RegistrationResultCuda ComputeResultsAndTransformation() override;
-
-    void TransformSourcePointCloud(
-        const Eigen::Matrix4d &source_to_target);
 
 public:
     /** Computes color gradients
@@ -85,14 +77,9 @@ public:
                                KDTreeFlann &kdtree,
                                const KDTreeSearchParamHybrid &search_param);
 
-    void ExtractResults(
-        Eigen::Matrix6d &JtJ, Eigen::Vector6d &Jtr, float &rmse);
-
 public:
     float lambda_geometric_;
-
     ArrayCuda<Vector3f> target_color_gradient_;
-    ArrayCuda<float> results_;
 
 private:
     const TransformationEstimationType type_ =

@@ -56,41 +56,30 @@ void TransformEstimationCudaForColoredICP::UpdateServer() {
 
 void TransformEstimationCudaForColoredICP::Initialize(
     PointCloud &source, PointCloud &target, float max_correspondence_distance) {
-    /** GPU part **/
-    source_.Create(VertexWithNormalAndColor, source.points_.size());
-    source_.Upload(source);
 
-    target_.Create(VertexWithNormalAndColor, target.points_.size());
-    target_.Upload(target);
-
-    correspondences_.Create(source.points_.size(), 1);
+    /** Resize it first -- in super.Initialize, UpdateServer will be called,
+     * where target_color_gradient will be updated **/
     target_color_gradient_.Resize(target.points_.size());
 
-    UpdateServer();
+    TransformEstimationCuda::Initialize(
+        source, target, max_correspondence_distance);
 
-    /** CPU part **/
-    max_correspondence_distance_ = max_correspondence_distance;
-    source_cpu_ = source;
-    target_cpu_ = target;
-    kdtree_.SetGeometry(target_cpu_);
-
-    /** Colored ICP specific **/
     ComputeColorGradients(target_cpu_, kdtree_,
-                          KDTreeSearchParamHybrid(
-                              max_correspondence_distance_ * 2, 30));
+        KDTreeSearchParamHybrid(max_correspondence_distance_ * 2, 30));
 }
 
 void TransformEstimationCudaForColoredICP::ComputeColorGradients(
     PointCloud &target,
     KDTreeFlann &kdtree, const KDTreeSearchParamHybrid &search_param) {
 
-    /** Initialize correspondence matrix **/
+    /** Initialize correspondence matrix for neighbors **/
     Eigen::Matrix<int, -1, -1, Eigen::RowMajor> corres_matrix
         = Eigen::Matrix<int, -1, -1, Eigen::RowMajor>::Constant(
             target.points_.size(), search_param.max_nn_, -1);
 
     /** OpenMP parallel K-NN search **/
 #ifdef _OPENMP
+#pragma omp parallel
     {
 #endif
 #ifdef _OPENMP
@@ -101,7 +90,8 @@ void TransformEstimationCudaForColoredICP::ComputeColorGradients(
             std::vector<double> dists(search_param.max_nn_);
 
             if (kdtree.SearchHybrid(target.points_[i],
-                                    search_param.radius_, search_param.max_nn_,
+                                    search_param.radius_,
+                                    search_param.max_nn_,
                                     indices, dists) >= 3) {
                 corres_matrix.block(i, 0, 1, indices.size()) =
                     Eigen::Map<Eigen::RowVectorXi>(
@@ -120,35 +110,6 @@ void TransformEstimationCudaForColoredICP::ComputeColorGradients(
     /** Run GPU color_gradient intialization **/
     TransformEstimationCudaForColoredICPKernelCaller::
     ComputeColorGradeintKernelCaller(*this, corres_for_color_gradient);
-}
-
-void TransformEstimationCudaForColoredICP::GetCorrespondences() {
-    Eigen::Matrix<int, -1, -1, Eigen::RowMajor> corres_matrix
-        = Eigen::Matrix<int, -1, -1, Eigen::RowMajor>::Constant(
-            source_cpu_.points_.size(), 1, -1);
-#ifdef _OPENMP
-    {
-#endif
-#ifdef _OPENMP
-#pragma omp for nowait
-#endif
-        for (int i = 0; i < source_cpu_.points_.size(); ++i) {
-            std::vector<int> indices(1);
-            std::vector<double> dists(1);
-
-            if (kdtree_.SearchHybrid(source_cpu_.points_[i],
-                                     max_correspondence_distance_, 1,
-                                     indices, dists) > 0) {
-                corres_matrix(i, 0) = indices[0];
-            }
-        }
-#ifdef _OPENMP
-    }
-#endif
-    correspondences_.SetCorrespondenceMatrix(corres_matrix);
-    correspondences_.Compress();
-
-    UpdateServer();
 }
 
 RegistrationResultCuda TransformEstimationCudaForColoredICP::
@@ -178,27 +139,5 @@ ComputeResultsAndTransformation() {
     return result;
 }
 
-void TransformEstimationCudaForColoredICP::
-ExtractResults(Eigen::Matrix6d &JtJ, Eigen::Vector6d &Jtr, float &rmse) {
-    std::vector<float> downloaded_result = results_.DownloadAll();
-    int cnt = 0;
-    for (int i = 0; i < 6; ++i) {
-        for (int j = i; j < 6; ++j) {
-            JtJ(i, j) = JtJ(j, i) = downloaded_result[cnt];
-            ++cnt;
-        }
-    }
-    for (int i = 0; i < 6; ++i) {
-        Jtr(i) = downloaded_result[cnt];
-        ++cnt;
-    }
-    rmse = downloaded_result[cnt];
-}
-
-void TransformEstimationCudaForColoredICP::TransformSourcePointCloud(
-    const Eigen::Matrix4d &source_to_target) {
-    source_.Transform(source_to_target);
-    source_cpu_.Transform(source_to_target);
-}
 } // cuda
 } // open3d
