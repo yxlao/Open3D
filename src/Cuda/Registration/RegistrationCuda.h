@@ -38,7 +38,7 @@ public:
 class RegistrationCuda {
 public:
     Eigen::Matrix4d transform_source_to_target_;
-    std::shared_ptr<TransformEstimationCudaForColoredICP> estimator_;
+    std::shared_ptr<TransformEstimationCuda> estimator_;
 
 public:
     explicit RegistrationCuda(const TransformationEstimationType &type);

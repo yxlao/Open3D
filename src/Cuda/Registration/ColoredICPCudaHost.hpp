@@ -33,6 +33,7 @@ void TransformEstimationCudaForColoredICP::Release() {
 
         source_.Release();
         target_.Release();
+        correspondences_.Release();
         results_.Release();
     }
     server_ = nullptr;

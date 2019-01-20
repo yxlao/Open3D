@@ -5,3 +5,5 @@
 #include "ColoredICPCudaDevice.cuh"
 #include "ColoredICPCudaKernel.cuh"
 #include "CorrespondenceSetCudaKernel.cuh"
+#include "TransformEstimationCudaDevice.cuh"
+#include "TransformEstimationCudaKernel.cuh"

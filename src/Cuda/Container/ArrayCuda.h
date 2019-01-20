@@ -85,6 +85,7 @@ public:
 };
 
 /** For less instantiation code! **/
+/** TODO figure out template sum reduce, especially for Vectors **/
 template<typename T>
 class ArrayCudaKernelCaller {
 public:

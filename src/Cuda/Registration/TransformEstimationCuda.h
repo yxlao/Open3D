@@ -36,12 +36,14 @@ public:
 public:
     virtual TransformationEstimationType
     GetTransformationEstimationType() const = 0;
+
+    virtual void Create() = 0;
+    virtual void Release() = 0;
     virtual void UpdateServer() = 0;
     virtual RegistrationResultCuda ComputeResultsAndTransformation() = 0;
 
-    virtual void Initialize(
-        PointCloud &source, PointCloud &target,
-        float max_correspondence_distance);
+    virtual void Initialize(PointCloud &source, PointCloud &target,
+                            float max_correspondence_distance);
     virtual void GetCorrespondences();
     virtual void TransformSourcePointCloud(
         const Eigen::Matrix4d &source_to_target);
@@ -67,60 +69,102 @@ public:
     /** Build linear system **/
     ArrayCuda<float> results_;
 };
-//
-//class TransformEstimationPointToPointCuda : public TransformEstimationCuda {
-//
-//public:
-//    TransformEstimationPointToPointCuda(bool with_scaling = false) :
-//        with_scaling_(with_scaling) {}
-//    ~TransformEstimationPointToPointCuda() override {}
-//
-//public:
-//    TransformationEstimationType GetTransformationEstimationType()
-//    const override { return type_; };
-//
-//    void Initialize(
-//        PointCloud &source, PointCloud &target,
-//        float max_correspondence_distance) override;
-//
-//    void GetCorrespondences() override;
-//    RegistrationResultCuda ComputeResultsAndTransformation() override;
-//
-//    void TransformSourcePointCloud(
-//        const Eigen::Matrix4d &source_to_target) override;
-//
-//
-//public:
-//    bool with_scaling_ = false;
-//
-//private:
-//    const TransformationEstimationType type_ =
-//        TransformationEstimationType::PointToPoint;
-//};
-//
-//class TransformEstimationPointToPlaneCuda : public TransformEstimationCuda {
-//
-//public:
-//    TransformEstimationPointToPlaneCuda();
-//    ~TransformEstimationPointToPlaneCuda() override {}
-//
-//public:
-//    TransformationEstimationType GetTransformationEstimationType()
-//    const override { return type_; };
-//
-//    void Initialize(
-//        PointCloud &source, PointCloud &target,
-//        float max_correspondence_distance) override;
-//
-//    void GetCorrespondences() override;
-//    RegistrationResultCuda ComputeResultsAndTransformation() override;
-//
-//    void TransformSourcePointCloud(
-//        const Eigen::Matrix4d &source_to_target) override;
-//
-//private:
-//    const TransformationEstimationType type_ =
-//        TransformationEstimationType::PointToPlane;
-//};
+
+/* Only the CPU interface uses inheritance
+ * vtable will face problems on the device side.
+ * So the device classes looks a little bit redundant */
+/** Point to Point **/
+class TransformEstimationPointToPointCudaDevice {
+public:
+    PointCloudCudaDevice source_;
+    PointCloudCudaDevice target_;
+    CorrespondenceSetCudaDevice correspondences_;
+
+    ArrayCudaDevice<float> results_;
+    TransformCuda transform_source_to_target_;
+
+    bool with_scale_;
+
+public:
+    __DEVICE__ void ComputePointwiseJacobianAndResidual(
+        int source_idx, int target_idx,
+        Vector6f &jacobian, float &residual);
+};
+
+class TransformEstimationPointToPointCuda : public TransformEstimationCuda {
+public:
+    TransformEstimationPointToPointCuda(bool with_scaling = false) :
+        with_scaling_(with_scaling) {}
+    ~TransformEstimationPointToPointCuda() override {}
+
+public:
+    TransformationEstimationType GetTransformationEstimationType()
+    const override { return type_; };
+
+    void Create() override;
+    void Release() override;
+    void UpdateServer() override;
+
+    void Initialize(
+        PointCloud &source, PointCloud &target,
+        float max_correspondence_distance) override;
+    RegistrationResultCuda ComputeResultsAndTransformation() override;
+
+public:
+    bool with_scaling_ = false;
+
+private:
+    const TransformationEstimationType type_ =
+        TransformationEstimationType::PointToPoint;
+};
+
+/** PointToPlane **/
+class TransformEstimationPointToPlaneCudaDevice {
+public:
+    PointCloudCudaDevice source_;
+    PointCloudCudaDevice target_;
+    CorrespondenceSetCudaDevice correspondences_;
+
+    ArrayCudaDevice<float> results_;
+    TransformCuda transform_source_to_target_;
+
+public:
+    __DEVICE__ void ComputePointwiseJacobianAndResidual(
+        int source_idx, int target_idx,
+        Vector6f& jacobian, float &residual);
+};
+
+class TransformEstimationPointToPlaneCuda : public TransformEstimationCuda {
+public:
+    std::shared_ptr<TransformEstimationPointToPlaneCudaDevice> server_
+        = nullptr;
+public:
+    TransformEstimationPointToPlaneCuda() { Create(); };
+    ~TransformEstimationPointToPlaneCuda() override { Release(); }
+
+public:
+    TransformationEstimationType GetTransformationEstimationType()
+    const override { return type_; };
+
+    void Create() override;
+    void Release() override;
+    void UpdateServer() override;
+
+    RegistrationResultCuda ComputeResultsAndTransformation() override;
+
+private:
+    const TransformationEstimationType type_ =
+        TransformationEstimationType::PointToPlane;
+};
+
+class TransformEstimationPointToPlaneCudaKernelCaller {
+public:
+    static void ComputeResultsAndTransformationKernelCaller(
+        TransformEstimationPointToPlaneCuda &estimation);
+};
+
+__GLOBAL__
+void ComputeResultsAndTransformationKernel(
+    TransformEstimationPointToPlaneCudaDevice estimation);
 }
 }

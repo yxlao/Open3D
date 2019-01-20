@@ -81,5 +81,60 @@ void TransformEstimationCuda::ExtractResults(
     }
     rmse = downloaded_result[cnt];
 }
+
+/** TransformEstimationPointToPlaneCuda **/
+void TransformEstimationPointToPlaneCuda::Create() {
+    server_ = std::make_shared<TransformEstimationPointToPlaneCudaDevice>();
+    results_.Create(28);
+}
+
+void TransformEstimationPointToPlaneCuda::Release() {
+    if (server_ != nullptr && server_.use_count() == 1) {
+        source_.Release();
+        target_.Release();
+        correspondences_.Release();
+
+        results_.Release();
+    }
+    server_ = nullptr;
+}
+
+void TransformEstimationPointToPlaneCuda::UpdateServer() {
+    if (server_ != nullptr) {
+        server_->source_ = *source_.server();
+        server_->target_ = *target_.server();
+
+        server_->correspondences_ = *correspondences_.server();
+
+        server_->results_ = *results_.server();
+    }
+}
+
+RegistrationResultCuda TransformEstimationPointToPlaneCuda::
+ComputeResultsAndTransformation() {
+    RegistrationResultCuda result;
+
+    results_.Memset(0);
+    TransformEstimationPointToPlaneCudaKernelCaller::
+    ComputeResultsAndTransformationKernelCaller(*this);
+
+    Eigen::Matrix6d JtJ;
+    Eigen::Vector6d Jtr;
+    float rmse;
+    ExtractResults(JtJ, Jtr, rmse);
+
+    bool is_success;
+    Eigen::Matrix4d extrinsic;
+    std::tie(is_success, extrinsic) =
+        SolveJacobianSystemAndObtainExtrinsicMatrix(JtJ, Jtr);
+
+    int inliers = correspondences_.indices_.size();
+    result.fitness_ = float(inliers) / target_.points().size();
+    result.inlier_rmse_ = rmse / inliers;
+    result.transformation_ = extrinsic;
+    // result.correspondences_ = correspondences_;
+
+    return result;
+}
 }
 }

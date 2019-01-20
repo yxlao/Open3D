@@ -101,7 +101,7 @@ void ComputeResultsAndTransformationKernel(
     const int idx = threadIdx.x + blockIdx.x * blockDim.x;
     if (idx >= estimation.correspondences_.indices_.size()) return;
 
-    const int tid = threadIdx.x + threadIdx.y * blockDim.x;
+    const int tid = threadIdx.x;
 
     /** Proper initialization **/
     local_sum0[tid] = 0;

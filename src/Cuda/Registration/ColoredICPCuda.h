@@ -49,8 +49,8 @@ public:
     TransformEstimationCudaForColoredICP(float lambda_geometric = 0.968f);
     ~TransformEstimationCudaForColoredICP() override;
 
-    void Create();
-    void Release();
+    void Create() override;
+    void Release() override;
     void UpdateServer() override;
 
     /** TODO: copy constructors **/
