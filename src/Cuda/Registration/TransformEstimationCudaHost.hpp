@@ -115,75 +115,44 @@ void TransformEstimationPointToPointCuda::UpdateServer() {
 RegistrationResultCuda TransformEstimationPointToPointCuda::
 ComputeResultsAndTransformation() {
     RegistrationResultCuda result;
-
-    Eigen::Matrix3d Sigma;
-    Eigen::Vector3d mean_source, mean_target;
-    float sigma_x2, rmse;
-
     results_.Memset(0);
-    TransformEstimationPointToPointCudaKernelCaller::
-    ComputeMeansKernelCaller(*this);
-
-    UnpackResults(Sigma, mean_source, mean_target, sigma_x2, rmse);
     int inliers = correspondences_.indices_.size();
-    mean_source /= inliers;
-    mean_target /= inliers;
-    server_->source_mean_.FromEigen(mean_source);
-    server_->target_mean_.FromEigen(mean_target);
 
-    Eigen::MatrixXd source_mat(3, inliers);
-    Eigen::MatrixXd target_mat(3, inliers);
+    /** Pass 1: sum reduction means **/
+    TransformEstimationPointToPointCudaKernelCaller::
+    ComputeSumsKernelCaller(*this);
 
-    int cnt = 0;
-    for (size_t i = 0; i < corres_matrix_.rows(); i++) {
-        if (corres_matrix_(i, 0) == -1) continue;
-        source_mat.block<3, 1>(0, cnt)
-            = source_cpu_.points_[i];
-        target_mat.block<3, 1>(0, cnt)
-            = target_cpu_.points_[corres_matrix_(i, 0)];
-        ++cnt;
-    }
-    assert(cnt == inliers);
-//    std::cout << mean_source.transpose()
-//              << " vs "
-//              << source_mat.rowwise().mean().transpose()
-//              << std::endl;
-//    std::cout << mean_target.transpose()
-//              << " vs "
-//              << target_mat.rowwise().mean().transpose()
-//              << std::endl;
+    Eigen::Vector3d source_mean, target_mean;
+    UnpackSums(source_mean, target_mean);
+    source_mean /= inliers;
+    target_mean /= inliers;
+    server_->source_mean_.FromEigen(source_mean);
+    server_->target_mean_.FromEigen(target_mean);
 
-    Eigen::MatrixXd X = source_mat.colwise() - source_mat.rowwise().mean();
-    Eigen::MatrixXd Y = target_mat.colwise() - target_mat.rowwise().mean();
-
-//    std::cout << X << std::endl;
-
-    Eigen::Matrix3d XYt = Y * X.transpose() / inliers;
-
+    /** Pass 2: sum reduction Sigma **/
     TransformEstimationPointToPointCudaKernelCaller::
     ComputeResultsAndTransformationKernelCaller(*this);
 
-    UnpackResults(Sigma, mean_source, mean_target, sigma_x2, rmse);
+    Eigen::Matrix3d Sigma;
+    float source_sigma2, rmse;
+    UnpackSigmasAndRmse(Sigma, source_sigma2, rmse);
     Sigma /= inliers;
-    mean_source /= inliers;
-    mean_target /= inliers;
-    sigma_x2 /= inliers;
+    source_sigma2 /= inliers;
 
-//    std::cout << XYt << std::endl;
-//    std::cout << Sigma << std::endl;
-
+    /** Solve linear system **/
     Eigen::JacobiSVD<Eigen::Matrix3d> svd(Sigma,
         Eigen::ComputeFullU | Eigen::ComputeFullV);
-    Eigen::Matrix3d U = svd.matrixU(), V = svd.matrixV();
-    Eigen::Vector3d d = svd.singularValues();
+    const Eigen::Matrix3d &U = svd.matrixU();
+    const Eigen::Matrix3d &V = svd.matrixV();
+    const Eigen::Vector3d &d = svd.singularValues();
     Eigen::Matrix3d S = Eigen::Matrix3d::Identity();
     S(2, 2) = Sigma.determinant() >= 0 ? 1 : -1;
 
     Eigen::Matrix3d R = U * S * (V.transpose());
     double scale = with_scaling_ ?
-                   (1.0 / sigma_x2) * (S * d).sum()
+                   (1.0 / source_sigma2) * (S * d).sum()
                    : 1.0;
-    Eigen::Vector3d t = mean_target - scale * R * mean_source;
+    Eigen::Vector3d t = target_mean - scale * R * source_mean;
 
     Eigen::Matrix4d extrinsic = Eigen::Matrix4d::Identity();
     extrinsic.block<3, 3>(0, 0) = scale * R;
@@ -197,13 +166,27 @@ ComputeResultsAndTransformation() {
     return result;
 }
 
-void TransformEstimationPointToPointCuda::UnpackResults(
-    Eigen::Matrix3d &Sigma,
-    Eigen::Vector3d &mean_source,
-    Eigen::Vector3d &mean_target,
-    float &sigma_source2, float &rmse) {
+void TransformEstimationPointToPointCuda::UnpackSums(
+    Eigen::Vector3d &sum_source, Eigen::Vector3d &sum_target) {
 
     std::vector<float> downloaded_result = results_.DownloadAll();
+
+    int cnt = 9;
+    for (int i = 0; i < 3; ++i) {
+        sum_source(i) = downloaded_result[cnt];
+        ++cnt;
+    }
+    for (int i = 0; i < 3; ++i) {
+        sum_target(i) = downloaded_result[cnt];
+        ++cnt;
+    }
+}
+
+void TransformEstimationPointToPointCuda::UnpackSigmasAndRmse(
+    Eigen::Matrix3d &Sigma, float &source_sigma2, float &rmse) {
+
+    std::vector<float> downloaded_result = results_.DownloadAll();
+
     int cnt = 0;
     for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 3; ++j) {
@@ -211,15 +194,9 @@ void TransformEstimationPointToPointCuda::UnpackResults(
             ++cnt;
         }
     }
-    for (int i = 0; i < 3; ++i) {
-        mean_source(i) = downloaded_result[cnt];
-        ++cnt;
-    }
-    for (int i = 0; i < 3; ++i) {
-        mean_target(i) = downloaded_result[cnt];
-        ++cnt;
-    }
-    sigma_source2 = downloaded_result[cnt]; ++cnt;
+
+    cnt = 15;
+    source_sigma2 = downloaded_result[cnt]; ++cnt;
     rmse = downloaded_result[cnt];
 }
 

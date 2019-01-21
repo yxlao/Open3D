@@ -8,7 +8,7 @@
 namespace open3d {
 namespace cuda {
 __global__
-void ComputeMeansKernel(
+void ComputeSumsKernel(
     TransformEstimationPointToPointCudaDevice estimation) {
     __shared__ float local_sum0[THREAD_1D_UNIT];
     __shared__ float local_sum1[THREAD_1D_UNIT];
@@ -197,13 +197,13 @@ void ComputeResultsAndTransformationKernel(
 
 
 void TransformEstimationPointToPointCudaKernelCaller::
-ComputeMeansKernelCaller(TransformEstimationPointToPointCuda &estimation){
+ComputeSumsKernelCaller(TransformEstimationPointToPointCuda &estimation){
 
     const dim3 blocks(DIV_CEILING(estimation.correspondences_.indices_.size(),
                                   THREAD_1D_UNIT));
     const dim3 threads(THREAD_1D_UNIT);
 
-    ComputeMeansKernel<< < blocks, threads >> > (*estimation.server_);
+    ComputeSumsKernel << < blocks, threads >> > (*estimation.server_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }

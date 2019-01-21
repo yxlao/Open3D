@@ -114,10 +114,10 @@ public:
     RegistrationResultCuda ComputeResultsAndTransformation() override;
 
     /* A Different linear system */
-    void UnpackResults(Eigen::Matrix3d &Sigma,
-        Eigen::Vector3d &mean_source,
-        Eigen::Vector3d &mean_target,
-        float &sigma_source2, float &rmse);
+    void UnpackSums(Eigen::Vector3d &source_sum,
+                    Eigen::Vector3d &target_sum);
+    void UnpackSigmasAndRmse(Eigen::Matrix3d &Sigma,
+                             float &source_sigma2, float &rmse);
 
 public:
     bool with_scaling_ = false;
@@ -129,14 +129,14 @@ private:
 
 class TransformEstimationPointToPointCudaKernelCaller {
 public:
-    static void ComputeMeansKernelCaller(
+    static void ComputeSumsKernelCaller(
         TransformEstimationPointToPointCuda &estimation);
     static void ComputeResultsAndTransformationKernelCaller(
         TransformEstimationPointToPointCuda &estimation);
 };
 
 __GLOBAL__
-void ComputeMeansKernel(
+void ComputeSumsKernel(
     TransformEstimationPointToPointCudaDevice estimation);
 __GLOBAL__
 void ComputeResultsAndTransformationKernel(
