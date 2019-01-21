@@ -90,7 +90,7 @@ void DoSingleIterationKernel(
     }
 
     /** Reduce Sum Jtr **/
-#define OFFSET1 21
+    const int OFFSET1 = 21;
 #pragma unroll 1
     for (size_t i = 0; i < 6; i += 3) {
         local_sum0[tid] = mask ? Jtr(i + 0) : 0;
@@ -127,7 +127,7 @@ void DoSingleIterationKernel(
     }
 
     /** Reduce Sum loss and inlier **/
-#define OFFSET2 27
+    const int OFFSET2 = 27;
     {
         local_sum0[tid] = mask ?
                           residual_I * residual_I + residual_D * residual_D : 0;

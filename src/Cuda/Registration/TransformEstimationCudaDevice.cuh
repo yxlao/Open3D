@@ -3,17 +3,36 @@
 //
 
 #include "TransformEstimationCuda.h"
+#include <Cuda/Common/JacobianCuda.h>
 
 namespace open3d {
 namespace cuda {
 __device__
 void TransformEstimationPointToPointCudaDevice
-::ComputePointwiseJacobianAndResidual(
+::ComputePointwiseStatistics(
     int source_idx, int target_idx,
-    Vector6f &jacobian, float &residual) {
-    /* Re-implement umeyama
-     * http://edge.cs.drexel.edu/Dmitriy/Matching_and_Metrics/Umeyama/um.pdf */
+    Matrix3f &Sigma, float &source_sigma2, float &residual) {
+    const Vector3f &vs = source_.points()[source_idx];
+    const Vector3f &vt = target_.points()[target_idx];
 
+    const Vector3f ds(vs(0) - source_mean_(0),
+                      vs(1) - source_mean_(1),
+                      vs(2) - source_mean_(2));
+    const Vector3f dt(vt(0) - target_mean_(0),
+                      vt(1) - target_mean_(1),
+                      vt(2) - target_mean_(2));
+    const Vector3f dst(vs(0) - vt(0), vs(1) - vt(1), vs(2) - vt(2));
+
+#pragma unroll 1
+    for (int i = 0; i < 3; ++i) {
+#pragma unroll 1
+        for (int j = 0; j < 3; ++j) {
+            Sigma(i, j) = dt(i) * ds(j);
+        }
+    }
+
+    source_sigma2 = ds.dot(ds);
+    residual = dst.dot(dst);
 }
 
 __device__

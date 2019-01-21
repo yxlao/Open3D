@@ -67,13 +67,13 @@ int main(int argc, char **argv) {
     open3d::PinholeCameraIntrinsic intrinsic = open3d::PinholeCameraIntrinsic(
         open3d::PinholeCameraIntrinsicParameters::PrimeSenseDefault);
     auto rgbd_source = ReadRGBDImage(
-        (base_path + "/" + rgbd_filenames[0].second).c_str(),
-        (base_path + "/" + rgbd_filenames[0].first).c_str(),
+        (base_path + "/" + rgbd_filenames[3].second).c_str(),
+        (base_path + "/" + rgbd_filenames[3].first).c_str(),
         intrinsic,
         false);
     auto rgbd_target = ReadRGBDImage(
-        (base_path + "/" + rgbd_filenames[3].second).c_str(),
-        (base_path + "/" + rgbd_filenames[3].first).c_str(),
+        (base_path + "/" + rgbd_filenames[5].second).c_str(),
+        (base_path + "/" + rgbd_filenames[5].first).c_str(),
         intrinsic,
         false);
     auto source_origin = CreatePointCloudFromRGBDImage(*rgbd_source, intrinsic);
@@ -84,16 +84,19 @@ int main(int argc, char **argv) {
     auto source = open3d::VoxelDownSample(*source_origin, 0.05);
     auto target = open3d::VoxelDownSample(*target_origin, 0.05);
 
+    auto result = open3d::RegistrationICP(*source, *target, 0.07);
+
     open3d::cuda::RegistrationCuda registration(
-        open3d::TransformationEstimationType::PointToPlane);
+        open3d::TransformationEstimationType::PointToPoint);
 
     registration.Initialize(*source, *target, 0.07f);
 
     VisualizeRegistration(*source, *target, registration.transform_source_to_target_);
-    for (int i = 0; i < 120; ++i) {
+    for (int i = 0; i < 30; ++i) {
         auto result = registration.DoSingleIteration(i);
     }
     VisualizeRegistration(*source, *target, registration.transform_source_to_target_);
+    VisualizeRegistration(*source, *target, result.transformation_);
 
     std::cout << source->points_.size() << std::endl;
 }

@@ -156,7 +156,7 @@ void ComputeResultsAndTransformationKernel(
     }
 
     /** Reduce Sum Jtr **/
-#define OFFSET1 21
+    const int OFFSET1 = 21;
 #pragma unroll 1
     for (size_t i = 0; i < 6; i += 3) {
         local_sum0[tid] = Jtr(i + 0);
@@ -193,7 +193,7 @@ void ComputeResultsAndTransformationKernel(
     }
 
     /** Reduce Sum rmse **/
-#define OFFSET2 27
+    const int OFFSET2 = 27;
     {
         local_sum0[tid] = residual_I * residual_I + residual_G * residual_G;
         __syncthreads();

@@ -13,6 +13,8 @@ RegistrationCuda::RegistrationCuda(const TransformationEstimationType &type) {
         estimator_ = std::make_shared<TransformEstimationCudaForColoredICP>();
     } else if (type == TransformationEstimationType::PointToPlane) {
         estimator_ = std::make_shared<TransformEstimationPointToPlaneCuda>();
+    } else if (type == TransformationEstimationType::PointToPoint) {
+        estimator_ = std::make_shared<TransformEstimationPointToPointCuda>();
     }
 }
 

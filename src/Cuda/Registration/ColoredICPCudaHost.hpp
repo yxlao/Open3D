@@ -132,8 +132,8 @@ ComputeResultsAndTransformation() {
         SolveJacobianSystemAndObtainExtrinsicMatrix(JtJ, Jtr);
 
     int inliers = correspondences_.indices_.size();
-    result.fitness_ = float(inliers) / target_.points().size();
-    result.inlier_rmse_ = rmse / inliers;
+    result.fitness_ = float(inliers) / source_.points().size();
+    result.inlier_rmse_ = sqrt(rmse / inliers);
     result.transformation_ = extrinsic;
     // result.correspondences_ = correspondences_;
 

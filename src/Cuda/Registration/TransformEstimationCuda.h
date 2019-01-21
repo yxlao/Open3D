@@ -73,6 +73,7 @@ public:
 /* Only the CPU interface uses inheritance
  * vtable will face problems on the device side.
  * So the device classes looks a little bit redundant */
+/***************************************/
 /** Point to Point **/
 class TransformEstimationPointToPointCudaDevice {
 public:
@@ -83,19 +84,24 @@ public:
     ArrayCudaDevice<float> results_;
     TransformCuda transform_source_to_target_;
 
-    bool with_scale_;
+    Vector3f source_mean_;
+    Vector3f target_mean_;
 
 public:
-    __DEVICE__ void ComputePointwiseJacobianAndResidual(
+    __DEVICE__ void ComputePointwiseStatistics(
         int source_idx, int target_idx,
-        Vector6f &jacobian, float &residual);
+        Matrix3f &Sigma, float &source_sigma2, float &residual);
 };
 
 class TransformEstimationPointToPointCuda : public TransformEstimationCuda {
 public:
+    std::shared_ptr<TransformEstimationPointToPointCudaDevice> server_
+        = nullptr;
+
+public:
     TransformEstimationPointToPointCuda(bool with_scaling = false) :
-        with_scaling_(with_scaling) {}
-    ~TransformEstimationPointToPointCuda() override {}
+        with_scaling_(with_scaling) { Create(); }
+    ~TransformEstimationPointToPointCuda() override { Release(); }
 
 public:
     TransformationEstimationType GetTransformationEstimationType()
@@ -105,10 +111,13 @@ public:
     void Release() override;
     void UpdateServer() override;
 
-    void Initialize(
-        PointCloud &source, PointCloud &target,
-        float max_correspondence_distance) override;
     RegistrationResultCuda ComputeResultsAndTransformation() override;
+
+    /* A Different linear system */
+    void UnpackResults(Eigen::Matrix3d &Sigma,
+        Eigen::Vector3d &mean_source,
+        Eigen::Vector3d &mean_target,
+        float &sigma_source2, float &rmse);
 
 public:
     bool with_scaling_ = false;
@@ -118,6 +127,22 @@ private:
         TransformationEstimationType::PointToPoint;
 };
 
+class TransformEstimationPointToPointCudaKernelCaller {
+public:
+    static void ComputeMeansKernelCaller(
+        TransformEstimationPointToPointCuda &estimation);
+    static void ComputeResultsAndTransformationKernelCaller(
+        TransformEstimationPointToPointCuda &estimation);
+};
+
+__GLOBAL__
+void ComputeMeansKernel(
+    TransformEstimationPointToPointCudaDevice estimation);
+__GLOBAL__
+void ComputeResultsAndTransformationKernel(
+    TransformEstimationPointToPointCudaDevice estimation);
+
+/***************************************/
 /** PointToPlane **/
 class TransformEstimationPointToPlaneCudaDevice {
 public:

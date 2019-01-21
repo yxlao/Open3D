@@ -40,7 +40,7 @@ void TransformEstimationCuda::GetCorrespondences() {
 #ifdef _OPENMP
 #pragma omp for nowait
 #endif
-        for (int i = 0; i < (int)source_cpu_.points_.size(); ++i) {
+        for (int i = 0; i < (int) source_cpu_.points_.size(); ++i) {
             std::vector<int> indices(1);
             std::vector<double> dists(1);
 
@@ -79,6 +79,147 @@ void TransformEstimationCuda::ExtractResults(
         Jtr(i) = downloaded_result[cnt];
         ++cnt;
     }
+    rmse = downloaded_result[cnt];
+}
+
+/** TransformEstimationPointToPointCuda **/
+void TransformEstimationPointToPointCuda::Create() {
+    server_ = std::make_shared<TransformEstimationPointToPointCudaDevice>();
+
+    /** 9 + 3 + 3 + 1 + 1 **/
+    results_.Create(17);
+}
+
+void TransformEstimationPointToPointCuda::Release() {
+    if (server_ != nullptr && server_.use_count() == 1) {
+        source_.Release();
+        target_.Release();
+        correspondences_.Release();
+
+        results_.Release();
+    }
+    server_ = nullptr;
+}
+
+void TransformEstimationPointToPointCuda::UpdateServer() {
+    if (server_ != nullptr) {
+        server_->source_ = *source_.server();
+        server_->target_ = *target_.server();
+
+        server_->correspondences_ = *correspondences_.server();
+
+        server_->results_ = *results_.server();
+    }
+}
+
+RegistrationResultCuda TransformEstimationPointToPointCuda::
+ComputeResultsAndTransformation() {
+    RegistrationResultCuda result;
+
+    Eigen::Matrix3d Sigma;
+    Eigen::Vector3d mean_source, mean_target;
+    float sigma_x2, rmse;
+
+    results_.Memset(0);
+    TransformEstimationPointToPointCudaKernelCaller::
+    ComputeMeansKernelCaller(*this);
+
+    UnpackResults(Sigma, mean_source, mean_target, sigma_x2, rmse);
+    int inliers = correspondences_.indices_.size();
+    mean_source /= inliers;
+    mean_target /= inliers;
+    server_->source_mean_.FromEigen(mean_source);
+    server_->target_mean_.FromEigen(mean_target);
+
+    Eigen::MatrixXd source_mat(3, inliers);
+    Eigen::MatrixXd target_mat(3, inliers);
+
+    int cnt = 0;
+    for (size_t i = 0; i < corres_matrix_.rows(); i++) {
+        if (corres_matrix_(i, 0) == -1) continue;
+        source_mat.block<3, 1>(0, cnt)
+            = source_cpu_.points_[i];
+        target_mat.block<3, 1>(0, cnt)
+            = target_cpu_.points_[corres_matrix_(i, 0)];
+        ++cnt;
+    }
+    assert(cnt == inliers);
+//    std::cout << mean_source.transpose()
+//              << " vs "
+//              << source_mat.rowwise().mean().transpose()
+//              << std::endl;
+//    std::cout << mean_target.transpose()
+//              << " vs "
+//              << target_mat.rowwise().mean().transpose()
+//              << std::endl;
+
+    Eigen::MatrixXd X = source_mat.colwise() - source_mat.rowwise().mean();
+    Eigen::MatrixXd Y = target_mat.colwise() - target_mat.rowwise().mean();
+
+//    std::cout << X << std::endl;
+
+    Eigen::Matrix3d XYt = Y * X.transpose() / inliers;
+
+    TransformEstimationPointToPointCudaKernelCaller::
+    ComputeResultsAndTransformationKernelCaller(*this);
+
+    UnpackResults(Sigma, mean_source, mean_target, sigma_x2, rmse);
+    Sigma /= inliers;
+    mean_source /= inliers;
+    mean_target /= inliers;
+    sigma_x2 /= inliers;
+
+//    std::cout << XYt << std::endl;
+//    std::cout << Sigma << std::endl;
+
+    Eigen::JacobiSVD<Eigen::Matrix3d> svd(Sigma,
+        Eigen::ComputeFullU | Eigen::ComputeFullV);
+    Eigen::Matrix3d U = svd.matrixU(), V = svd.matrixV();
+    Eigen::Vector3d d = svd.singularValues();
+    Eigen::Matrix3d S = Eigen::Matrix3d::Identity();
+    S(2, 2) = Sigma.determinant() >= 0 ? 1 : -1;
+
+    Eigen::Matrix3d R = U * S * (V.transpose());
+    double scale = with_scaling_ ?
+                   (1.0 / sigma_x2) * (S * d).sum()
+                   : 1.0;
+    Eigen::Vector3d t = mean_target - scale * R * mean_source;
+
+    Eigen::Matrix4d extrinsic = Eigen::Matrix4d::Identity();
+    extrinsic.block<3, 3>(0, 0) = scale * R;
+    extrinsic.block<3, 1>(0, 3) = t;
+
+    result.fitness_ = float(inliers) / source_.points().size();
+    result.inlier_rmse_ = sqrt(rmse / inliers);
+    result.transformation_ = extrinsic;
+    // result.correspondences_ = correspondences_;
+
+    return result;
+}
+
+void TransformEstimationPointToPointCuda::UnpackResults(
+    Eigen::Matrix3d &Sigma,
+    Eigen::Vector3d &mean_source,
+    Eigen::Vector3d &mean_target,
+    float &sigma_source2, float &rmse) {
+
+    std::vector<float> downloaded_result = results_.DownloadAll();
+    int cnt = 0;
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            Sigma(i, j) = downloaded_result[cnt];
+            ++cnt;
+        }
+    }
+    for (int i = 0; i < 3; ++i) {
+        mean_source(i) = downloaded_result[cnt];
+        ++cnt;
+    }
+    for (int i = 0; i < 3; ++i) {
+        mean_target(i) = downloaded_result[cnt];
+        ++cnt;
+    }
+    sigma_source2 = downloaded_result[cnt]; ++cnt;
     rmse = downloaded_result[cnt];
 }
 
@@ -129,12 +270,13 @@ ComputeResultsAndTransformation() {
         SolveJacobianSystemAndObtainExtrinsicMatrix(JtJ, Jtr);
 
     int inliers = correspondences_.indices_.size();
-    result.fitness_ = float(inliers) / target_.points().size();
-    result.inlier_rmse_ = rmse / inliers;
+    result.fitness_ = float(inliers) / source_.points().size();
+    result.inlier_rmse_ = sqrt(rmse / inliers);
     result.transformation_ = extrinsic;
     // result.correspondences_ = correspondences_;
 
     return result;
 }
-}
-}
+
+} // cuda
+} // open3d
