@@ -58,7 +58,7 @@ MarchingCubesVertexAllocationKernelCaller(
     const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
     MarchingCubesVertexAllocationKernel << < blocks, threads >> > (
         server, tsdf_volume);
-    CheckCuda(cudaDeviceSynchronize());
+//    CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
 
@@ -113,7 +113,7 @@ MarchingCubesVertexExtractionKernelCaller(
     const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
     MarchingCubesVertexExtractionKernel << < blocks, threads >> > (
         server, tsdf_volume);
-    CheckCuda(cudaDeviceSynchronize());
+//    CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 
 }
@@ -163,7 +163,7 @@ MarchingCubesTriangleExtractionKernelCaller(
     const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
     MarchingCubesTriangleExtractionKernel << < blocks, threads >> > (
         server, tsdf_volume);
-    CheckCuda(cudaDeviceSynchronize());
+//    CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
 } // cuda

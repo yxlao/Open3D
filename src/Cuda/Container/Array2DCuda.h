@@ -33,8 +33,8 @@ public:
 
     __DEVICE__ inline int expand_rows(int num);
     __DEVICE__ inline T *row(int r);
-    __DEVICE__ T &at(int r, int c);
-    __DEVICE__ T &operator()(int r, int c);
+    __DEVICE__ inline T &at(int r, int c);
+    __DEVICE__ inline T &operator()(int r, int c);
 
 public:
     friend class Array2DCuda<T>;

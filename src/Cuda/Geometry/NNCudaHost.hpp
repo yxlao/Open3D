@@ -40,14 +40,14 @@ void NNCuda::NNSearch(
 
     Timer timer;
     timer.Start();
-    NNCudaKernelCaller::ComputeAndReduceDistancesKernelCaller(*this);
+    NNCudaKernelCaller::ComputeDistancesKernelCaller(*this);
     timer.Stop();
     PrintInfo("Compute takes %f ms\n", timer.GetDuration());
 
     timer.Start();
-    NNCudaKernelCaller::ReduceBlockwiseDistancesKernelCaller(*this);
+    NNCudaKernelCaller::FindNNKernelCaller(*this);
     timer.Stop();
-    PrintInfo("Reduce takes %f ms\n", timer.GetDuration());
+    PrintInfo("FindNN takes %f ms\n", timer.GetDuration());
 }
 } // cuda
 } // open3d

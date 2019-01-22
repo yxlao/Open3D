@@ -50,20 +50,20 @@ public:
 
     Array2DCuda<float> distance_matrix_;
 
+    int query_blocks_;
     int ref_blocks_;
 };
 
 class NNCudaKernelCaller {
 public:
-    static void ComputeAndReduceDistancesKernelCaller(NNCuda &nn);
-    static void ReduceBlockwiseDistancesKernelCaller(NNCuda &nn);
+    static void ComputeDistancesKernelCaller(NNCuda &nn);
+    static void FindNNKernelCaller(NNCuda &nn);
 };
 
 __GLOBAL__
-void ComputeAndReduceDistancesKernel(NNCudaDevice nn);
-
+void ComputeDistancesKernel(NNCudaDevice nn);
 __GLOBAL__
-void ReduceBlockwiseDistancesKernel(NNCudaDevice nn, int ref_blocks);
+void FindNNKernel(NNCudaDevice nn);
 
 } // cuda
 } // open3d

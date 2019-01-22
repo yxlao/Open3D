@@ -14,102 +14,100 @@ namespace cuda {
  * (query_rows, ref_rows / 256) x (1, 256)
  **/
 __global__
-void ComputeAndReduceDistancesKernel(NNCudaDevice nn) {
-    const int query_idx = blockIdx.x;
-    const int ref_idx = blockIdx.y * blockDim.y + threadIdx.y;
+void ComputeDistancesKernel(NNCudaDevice nn) {
+    __shared__ float shared_query[THREAD_2D_UNIT][THREAD_2D_UNIT];
+    __shared__ float shared_ref[THREAD_2D_UNIT][THREAD_2D_UNIT];
 
-    if (ref_idx >= nn.ref_.max_rows_)
-        return;
-
-    /** Compute distance **/
-    float ssd = 0;
+    const int query_max_row = nn.query_.max_rows_;
     const int feature_size = nn.query_.max_cols_;
-    float *query = &nn.query_(query_idx, 0);
-    float *ref = &nn.ref_(ref_idx, 0);
-    for (int i = 0; i < feature_size; ++i) {
-        float diff = nn.query_(query_idx, i) - nn.ref_(ref_idx, i);
-        ssd += diff * diff;
-    }
-    nn.distance_matrix_(query_idx, ref_idx) = ssd;
-    __syncthreads();
+    const int ref_max_row = nn.ref_.max_rows_;
 
-    /** Pure loop
-     *  We can use reduction with global memory,
-     *  but it eats twice the memory **/
-    if (threadIdx.y == 0) {
-        int nn_idx = ref_idx;
-        float nn_dist = ssd;
+    const int tx = threadIdx.x, ty = threadIdx.y;
 
-        for (int i = 1; i < 256; ++i) {
-            int ref_idx_i = ref_idx + i;
-            if (ref_idx_i >= nn.ref_.max_rows_) break;
-            const float dist_i = nn.distance_matrix_(query_idx, ref_idx_i);
-            if (dist_i < nn_dist) {
-                nn_dist = dist_i;
-                nn_idx = ref_idx_i;
+    int query_base = blockIdx.x * blockDim.x;
+    int ref_base = blockIdx.y * blockDim.y;
+
+    int query_idx = query_base + tx;
+    int ref_idx_local = ref_base + tx;
+    int ref_idx_global = ref_base + ty;
+
+    bool mask_query = query_idx < query_max_row;
+    bool mask_ref_local = ref_idx_local < ref_max_row;
+    bool mask_ref_global = ref_idx_global < ref_max_row;
+
+    float ssd = 0;
+    float *query = nn.query_.row(query_idx);
+    float *ref = nn.ref_.row(ref_idx_local);
+
+    for (int feature_batch = 0;
+         feature_batch < feature_size;
+         feature_batch += THREAD_2D_UNIT) {
+
+        /* Here ty denotes feature idx */
+        int feature_idx = feature_batch + ty;
+        bool mask_feature = feature_idx < feature_size;
+
+        shared_query[ty][tx] = (mask_query && mask_feature) ?
+            query[feature_idx] : 0;
+        shared_ref[ty][tx] = (mask_ref_local && mask_feature) ?
+            ref[feature_idx] : 0;
+        __syncthreads();
+
+        /* Here ty denotes reference entry index */
+        if (mask_query && mask_ref_global) {
+            for (int j = 0; j < THREAD_2D_UNIT; ++j) {
+                float diff = shared_query[j][tx] - shared_ref[j][ty];
+                ssd += diff * diff;
             }
         }
-
-        nn.nn_dist_(query_idx, blockIdx.y) = nn_dist;
-        nn.nn_idx_(query_idx, blockIdx.y) = nn_idx;
-    }
-}
-
-/** (query_rows) x (256) **/
-__global__
-void ReduceBlockwiseDistancesKernel(NNCudaDevice nn, int ref_blocks) {
-    __shared__ float nn_dist[256];
-    __shared__ int nn_idx[256];
-
-    const int query_idx = blockIdx.x;
-    const int tid = threadIdx.x;
-
-    nn_dist[tid] = 1e10;
-    nn_idx[tid] = 0;
-
-    if (tid >= ref_blocks) return;
-
-    nn_dist[tid] = nn.nn_dist_(query_idx, tid);
-    nn_idx[tid] = nn.nn_idx_(query_idx, tid);
-    __syncthreads();
-
-    /** Local reduction **/
-#pragma unroll 1
-    for (int shift = 7; shift >= 0; --shift) {
-        int offset = (1 << shift);
-        if (nn_dist[tid + offset] < nn_dist[tid]) {
-            nn_dist[tid] = nn_dist[tid + offset];
-            nn_idx[tid] = nn_idx[tid + offset];
-        }
-        /* If operations are not synchronized in a warp */
         __syncthreads();
     }
 
-    if (tid == 0) {
-        nn.nn_dist_(query_idx, 0) = nn_dist[0];
-        nn.nn_idx_(query_idx, 0) = nn_idx[0];
+    if (mask_query && mask_ref_global) {
+        nn.distance_matrix_.at(query_idx, ref_idx_global) = ssd;
     }
 }
 
-void NNCudaKernelCaller::ComputeAndReduceDistancesKernelCaller(NNCuda &nn) {
-    /** reference_.max_rows_ should not > 256 x 256 = 65536.
-      * Otherwise the second reduction will not be runnable **/
-    assert(nn.reference_.max_rows_ <= 65536);
-
-    nn.ref_blocks_ = DIV_CEILING(nn.reference_.max_rows_, 256);
-    const dim3 blocks(nn.query_.max_rows_, nn.ref_blocks_);
-    const dim3 threads(1, 256);
-    ComputeAndReduceDistancesKernel<<<blocks, threads>>>(*nn.server_);
-    CheckCuda(cudaDeviceSynchronize());
+void NNCudaKernelCaller::ComputeDistancesKernelCaller(NNCuda &nn) {
+    const dim3 blocks(DIV_CEILING(nn.query_.max_rows_, THREAD_2D_UNIT),
+                      DIV_CEILING(nn.reference_.max_rows_, THREAD_2D_UNIT));
+    const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+    ComputeDistancesKernel<<<blocks, threads>>>(*nn.server_);
+    //CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
 
-void NNCudaKernelCaller::ReduceBlockwiseDistancesKernelCaller(NNCuda &nn) {
-    const dim3 blocks(nn.query_.max_rows_);
+
+/** (query_rows) x (256) **/
+__global__
+void FindNNKernel(NNCudaDevice nn) {
+    const int query_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    const int ref_count = nn.ref_.max_rows_;
+
+    if (query_idx >= nn.query_.max_rows_) return;
+
+    float *dists = nn.distance_matrix_.row(query_idx);
+
+    int nn_idx = 0;
+    float nn_dist = dists[0];
+    for (int i = 1; i < ref_count; ++i) {
+        float dist = dists[i];
+        if (dist < nn_dist) {
+            nn_dist = dist;
+            nn_idx = i;
+        }
+    }
+
+    nn.nn_idx_(query_idx, 0) = nn_idx;
+    nn.nn_dist_(query_idx, 0) = nn_dist;
+}
+
+void NNCudaKernelCaller::FindNNKernelCaller(NNCuda &nn) {
+    const dim3 blocks(DIV_CEILING(nn.query_.max_rows_, 256));
     const dim3 threads(256);
 
-    ReduceBlockwiseDistancesKernel<<<blocks, threads>>>(*nn.server_, nn.ref_blocks_);
-    CheckCuda(cudaDeviceSynchronize());
+    FindNNKernel<<<blocks, threads>>>(*nn.server_);
+    //CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
 

@@ -4,6 +4,8 @@
 #include "TriangleMeshCudaKernel.cuh"
 #include "NNCudaKernel.cuh"
 
+#include "KNNCuda.cuh"
+
 #include "LinearAlgebraCuda.h"
 #include <Cuda/Common/Common.h>
 
