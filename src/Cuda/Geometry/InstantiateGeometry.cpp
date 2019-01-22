@@ -11,6 +11,8 @@
 #include "PointCloudCudaHost.hpp"
 #include "TriangleMeshCudaHost.hpp"
 
+#include "NNCudaHost.hpp"
+
 namespace open3d {
 
 namespace cuda {

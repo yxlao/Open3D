@@ -18,3 +18,7 @@ target_link_libraries(TestTriangleMeshCuda ${CMAKE_PROJECT_NAME}
 add_executable(TestPointCloudCuda TestPointCloudCuda.cpp)
 target_link_libraries(TestPointCloudCuda ${CMAKE_PROJECT_NAME}
         ${GTEST_LIBRARIES} pthread)
+
+add_executable(TestNNCuda TestNNCuda.cpp)
+target_link_libraries(TestNNCuda ${CMAKE_PROJECT_NAME}
+        ${GTEST_LIBRARIES} pthread)
