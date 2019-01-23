@@ -32,9 +32,33 @@ void NNCuda::NNSearch(
     query_.Upload(query);
     reference_.Upload(reference);
 
-    nn_idx_.Create(query_.max_rows_, 256);
-    nn_dist_.Create(query_.max_rows_, 256);
-    distance_matrix_.Create(query_.max_rows_, reference_.max_rows_);
+    nn_idx_.Create(1, query_.max_cols_);
+    nn_dist_.Create(1, query_.max_cols_);
+    distance_matrix_.Create(reference_.max_cols_, query_.max_cols_);
+
+    UpdateServer();
+
+    Timer timer;
+    timer.Start();
+    NNCudaKernelCaller::ComputeDistancesKernelCaller(*this);
+    timer.Stop();
+//    PrintInfo("Compute takes %f ms\n", timer.GetDuration());
+
+    timer.Start();
+    NNCudaKernelCaller::FindNNKernelCaller(*this);
+    timer.Stop();
+//    PrintInfo("FindNN takes %f ms\n", timer.GetDuration());
+}
+
+void NNCuda::NNSearch(
+    Array2DCuda<float> &query,
+    Array2DCuda<float> &reference) {
+    query_ = query;
+    reference_ = reference;
+
+    nn_idx_.Create(1, query_.max_cols_);
+    nn_dist_.Create(1, query_.max_cols_);
+    distance_matrix_.Create(reference_.max_cols_, query_.max_cols_);
 
     UpdateServer();
 

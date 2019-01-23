@@ -37,15 +37,21 @@ public:
     ~NNCuda();
     void UpdateServer();
 
+    /** Should be feature_size x feature_count
+     *  This will encourage cache hits in parallel kernels
+     **/
     void NNSearch(
         Eigen::Matrix<float, -1, -1, Eigen::RowMajor> &query,
         Eigen::Matrix<float, -1, -1, Eigen::RowMajor> &reference);
+
+    void NNSearch(Array2DCuda<float> &query,
+                  Array2DCuda<float> &reference);
 
 public:
     Array2DCuda<float> query_;
     Array2DCuda<float> reference_;
 
-    Array2DCuda<int> nn_idx_;
+    Array2DCuda<int>   nn_idx_;
     Array2DCuda<float> nn_dist_;
 
     Array2DCuda<float> distance_matrix_;

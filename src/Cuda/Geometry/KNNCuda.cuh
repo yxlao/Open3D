@@ -383,6 +383,7 @@ bool knn_cuda_global(const float * ref,
     dim3 grid1(query_nb / 256, 1, 1);
     if (query_nb % 256 != 0) grid1.x += 1;
     modified_insertion_sort<<<grid1, block1>>>(dist_dev, dist_pitch, index_dev, index_pitch, query_nb, ref_nb, k);
+    cudaDeviceSynchronize();
     if (cudaGetLastError() != cudaSuccess) {
         printf("ERROR: Unable to execute kernel\n");
         cudaFree(ref_dev);
