@@ -7,3 +7,5 @@
 #include "CorrespondenceSetCudaKernel.cuh"
 #include "TransformEstimationCudaDevice.cuh"
 #include "TransformEstimationCudaKernel.cuh"
+#include "FeatureCudaDevice.cuh"
+#include "FeatureCudaKernel.cuh"

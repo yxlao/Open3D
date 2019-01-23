@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
 
     std::string filepath = "/home/wei/Work/data/stanford/lounge/fragments";
     source_origin = CreatePointCloudFromFile(filepath + "/fragment_000.ply");
-    target_origin = CreatePointCloudFromFile(filepath + "/fragment_004.ply");
+    target_origin = CreatePointCloudFromFile(filepath + "/fragment_003.ply");
 
     auto source = open3d::VoxelDownSample(*source_origin, 0.05);
     auto target = open3d::VoxelDownSample(*target_origin, 0.05);

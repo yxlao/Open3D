@@ -209,14 +209,14 @@ int main(int argc, char **argv) {
 
     open3d::Timer timer;
     timer.Start();
-    for (int cases = 0; cases < 20; ++cases) {
+    for (int cases = 0; cases < 1; ++cases) {
         open3d::RegistrationColoredICP(*source, *target, 0.07);
     }
     timer.Stop();
     float avg_time_cpu = timer.GetDuration() / 20;
 
     timer.Start();
-    for (int cases = 0; cases < 20; ++cases) {
+    for (int cases = 0; cases < 1; ++cases) {
         open3d::cuda::RegistrationCuda registration(
             open3d::TransformationEstimationType::ColoredICP);
         registration.Initialize(*source, *target, 0.07f);

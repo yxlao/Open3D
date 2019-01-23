@@ -91,8 +91,8 @@ int main(int argc, char **argv) {
     open3d::EstimateNormals(*target_origin);
 
     std::string filepath = "/home/wei/Work/data/stanford/lounge/fragments";
-    source_origin = CreatePointCloudFromFile(filepath + "/fragment_008.ply");
-    target_origin = CreatePointCloudFromFile(filepath + "/fragment_027.ply");
+    source_origin = CreatePointCloudFromFile(filepath + "/fragment_003.ply");
+    target_origin = CreatePointCloudFromFile(filepath + "/fragment_012.ply");
 
     auto source = open3d::VoxelDownSample(*source_origin, 0.05);
     auto target = open3d::VoxelDownSample(*target_origin, 0.05);
@@ -106,30 +106,6 @@ int main(int argc, char **argv) {
 
     KDTreeFlann source_feature_tree(*source_feature);
     KDTreeFlann target_feature_tree(*target_feature);
-
-    Eigen::Matrix<float, -1, -1, Eigen::RowMajor>
-        source_feature_rowwise(source_feature->Dimension(),
-                               source_feature->Num());
-    Eigen::Matrix<float, -1, -1, Eigen::RowMajor>
-        target_feature_rowwise(target_feature->Dimension(),
-                               target_feature->Num());
-    for (int i = 0; i < source_feature->Num(); ++i) {
-        source_feature_rowwise.col(i) =
-            source_feature->data_.col(i).cast<float>();
-    }
-    for (int i = 0; i < target_feature->Num(); ++i) {
-        target_feature_rowwise.col(i) =
-            target_feature->data_.col(i).cast<float>();
-    }
-
-//    std::cout << source_feature_rowwise.col(0).transpose() << std::endl;
-//    std::cout << source_feature->data_.col(0).cast<float>().transpose() <<
-//              std::endl;
-//
-//    std::cout << target_feature_rowwise.col(0).transpose() << std::endl;
-//    std::cout << target_feature->data_.col(0).cast<float>().transpose() <<
-//              std::endl;
-
 
     for (int i = 0; i < 100; ++i) {
         std::vector<int> correspondences;
@@ -149,7 +125,7 @@ int main(int argc, char **argv) {
 
         timer.Start();
         open3d::cuda::NNCuda nn;
-        nn.NNSearch(source_feature_rowwise, target_feature_rowwise);
+        nn.NNSearch(source_feature->data_, target_feature->data_);
         timer.Stop();
         PrintInfo("cuda knn takes %f ms\n", timer.GetDuration());
 
@@ -160,14 +136,11 @@ int main(int argc, char **argv) {
             int correspondence_cuda = correspondences_cuda(0, i);
             if (correspondence_cpu != correspondence_cuda) {
                 ++inconsistency;
-//                PrintInfo("Inconsistent feature matching: "
-//                          "(%d %d) vs (%d %d)\n",
-//                          i, correspondence_cpu,
-//                          i, correspondence_cuda);
             }
         }
-        PrintInfo("Consistency: %f\n", 1 - (float) inconsistency
-            / source_feature->Num());
+        PrintInfo("Consistency: %f (%d / %d)\n",
+            1 - (float) inconsistency / source_feature->Num(),
+            source_feature->Num() - inconsistency, source_feature->Num());
     }
     return 0;
 }

@@ -87,8 +87,7 @@ void Array2DCuda<T>::UpdateServer() {
 }
 
 template<typename T>
-void Array2DCuda<T>::Upload(
-    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> &matrix) {
+void Array2DCuda<T>::Upload(Eigen::Matrix<T, -1, -1, Eigen::RowMajor> &matrix) {
     if (server_ != nullptr) {
         assert(matrix.rows() == max_rows_ && matrix.cols() == max_cols_);
     } else {
@@ -102,9 +101,8 @@ void Array2DCuda<T>::Upload(
 }
 
 template<typename T>
-Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-Array2DCuda<T>::Download() {
-    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+Eigen::Matrix<T, -1, -1, Eigen::RowMajor> Array2DCuda<T>::Download() {
+    Eigen::Matrix<T, -1, -1, Eigen::RowMajor>
         matrix(max_rows_, max_cols_);
     CheckCuda(cudaMemcpy2D(matrix.data(), sizeof(T) * max_cols_,
                            server_->data_, pitch_,

@@ -40,9 +40,8 @@ public:
     /** Should be feature_size x feature_count
      *  This will encourage cache hits in parallel kernels
      **/
-    void NNSearch(
-        Eigen::Matrix<float, -1, -1, Eigen::RowMajor> &query,
-        Eigen::Matrix<float, -1, -1, Eigen::RowMajor> &reference);
+    void NNSearch(Eigen::MatrixXd &query,
+                  Eigen::MatrixXd &reference);
 
     void NNSearch(Array2DCuda<float> &query,
                   Array2DCuda<float> &reference);

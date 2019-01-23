@@ -61,11 +61,9 @@ public:
     void Release();
     void UpdateServer();
 
-    void Upload(
-        Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> &
-        matrix);
-    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-    Download();
+    /** Memcpy requires the same type and row-wise storage **/
+    void Upload(Eigen::Matrix<T, -1, -1, Eigen::RowMajor> &matrix);
+    Eigen::Matrix<T, -1, -1, Eigen::RowMajor> Download();
 
     void Fill(const T &val);
     void Memset(int val);

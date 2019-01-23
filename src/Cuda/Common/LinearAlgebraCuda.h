@@ -360,6 +360,15 @@ public:
         return sum;
     }
 
+    __HOSTDEVICE__ inline VecType cross(const VecType &other) const {
+        static_assert(N == 3, "Invalid vector dimension");
+
+        return VecType(
+            v[1] * other.v[2] - v[2] * other.v[1],
+            v[2] * other.v[0] - v[0] * other.v[2],
+            v[0] * other.v[1] - v[1] * other.v[0]);
+    }
+
     __HOSTDEVICE__ inline float norm() const {
         return sqrtf(dot(*this));
     }

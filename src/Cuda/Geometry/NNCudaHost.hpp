@@ -25,12 +25,16 @@ void NNCuda::UpdateServer() {
     }
 }
 
-void NNCuda::NNSearch(
-    Eigen::Matrix<float, -1, -1, Eigen::RowMajor> &query,
-    Eigen::Matrix<float, -1, -1, Eigen::RowMajor> &reference) {
+void NNCuda::NNSearch(Eigen::MatrixXd &query, Eigen::MatrixXd &reference) {
 
-    query_.Upload(query);
-    reference_.Upload(reference);
+    /** Change storage format for Array2DCuda **/
+    Eigen::Matrix<float, -1, -1, Eigen::RowMajor> query_rowmajor;
+    Eigen::Matrix<float, -1, -1, Eigen::RowMajor> reference_rowmajor;
+    query_rowmajor = query.cast<float>();
+    reference_rowmajor = reference.cast<float>();
+
+    query_.Upload(query_rowmajor);
+    reference_.Upload(reference_rowmajor);
 
     nn_idx_.Create(1, query_.max_cols_);
     nn_dist_.Create(1, query_.max_cols_);
@@ -38,21 +42,12 @@ void NNCuda::NNSearch(
 
     UpdateServer();
 
-    Timer timer;
-    timer.Start();
     NNCudaKernelCaller::ComputeDistancesKernelCaller(*this);
-    timer.Stop();
-//    PrintInfo("Compute takes %f ms\n", timer.GetDuration());
-
-    timer.Start();
     NNCudaKernelCaller::FindNNKernelCaller(*this);
-    timer.Stop();
-//    PrintInfo("FindNN takes %f ms\n", timer.GetDuration());
 }
 
-void NNCuda::NNSearch(
-    Array2DCuda<float> &query,
-    Array2DCuda<float> &reference) {
+void NNCuda::NNSearch(Array2DCuda<float> &query,
+                      Array2DCuda<float> &reference) {
     query_ = query;
     reference_ = reference;
 
