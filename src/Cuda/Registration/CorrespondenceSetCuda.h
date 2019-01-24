@@ -17,7 +17,7 @@ public:
 };
 
 class CorrespondenceSetCuda {
-private:
+public:
     std::shared_ptr<CorrespondenceSetCudaDevice> server_ = nullptr;
 
 public:
@@ -30,23 +30,14 @@ public:
     void Release();
     void UpdateServer();
 
+    /* Dimensions: correspondences x queries */
     Array2DCuda<int> matrix_;
 
     /* Row indices of correpsondences (no need to be ordered) */
     ArrayCuda<int> indices_;
 
-    void SetCorrespondenceMatrix(
-        Eigen::Matrix<int, -1, -1, Eigen::RowMajor> &corres_matrix);
-
+    void SetCorrespondenceMatrix(Eigen::MatrixXi &corres_matrix);
     void Compress();
-
-public:
-    std::shared_ptr<CorrespondenceSetCudaDevice> server() {
-        return server_;
-    }
-    const std::shared_ptr<CorrespondenceSetCudaDevice> server() const {
-        return server_;
-    }
 };
 
 class CorrespondenceSetCudaKernelCaller {

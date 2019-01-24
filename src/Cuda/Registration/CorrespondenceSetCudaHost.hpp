@@ -10,7 +10,7 @@ namespace cuda {
 
 CorrespondenceSetCuda::CorrespondenceSetCuda(
     const CorrespondenceSetCuda &other) {
-    server_ = other.server();
+    server_ = other.server_;
 
     matrix_ = other.matrix_;
     indices_ = other.indices_;
@@ -19,7 +19,7 @@ CorrespondenceSetCuda::CorrespondenceSetCuda(
 CorrespondenceSetCuda& CorrespondenceSetCuda::operator=(
     const CorrespondenceSetCuda &other) {
     if (this != &other) {
-        server_ = other.server();
+        server_ = other.server_;
 
         matrix_ = other.matrix_;
         indices_ = other.indices_;
@@ -53,18 +53,25 @@ void CorrespondenceSetCuda::Release() {
 }
 
 void CorrespondenceSetCuda::SetCorrespondenceMatrix(
-    Eigen::Matrix<int, -1, -1, Eigen::RowMajor> &corres_matrix) {
+    Eigen::MatrixXi &corres_matrix) {
+
+    Eigen::Matrix<int, -1, -1, Eigen::RowMajor>
+        corres_matrix_rowmajor = corres_matrix;
+
     if (server_ == nullptr) {
         Create(corres_matrix.rows(), corres_matrix.cols());
+    } else {
+        assert(corres_matrix.rows() == matrix_.max_rows_
+                   && corres_matrix.cols() == matrix_.max_cols_);
     }
 
-    matrix_.Upload(corres_matrix);
-    indices_.Resize(matrix_.max_rows_);
+    matrix_.Upload(corres_matrix_rowmajor);
+    indices_.Resize(matrix_.max_cols_);
     UpdateServer();
 }
 
 void CorrespondenceSetCuda::Compress() {
-    assert(matrix_.max_rows_ > 0);
+    assert(matrix_.max_cols_ > 0);
 
     CorrespondenceSetCudaKernelCaller::
     CompressCorrespondenceKernelCaller(*this);

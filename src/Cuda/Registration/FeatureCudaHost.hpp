@@ -47,7 +47,7 @@ void FeatureCuda::Release() {
 
 void FeatureCuda::UpdateServer() {
     if (server_ != nullptr) {
-        server_->neighbors_ = *neighbors_.server();
+        server_->neighbors_ = *neighbors_.server_;
         server_->spfh_features_ = *spfh_features_.server();
         server_->fpfh_features_ = *fpfh_features_.server();
     }

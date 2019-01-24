@@ -45,7 +45,7 @@ void TransformEstimationCudaForColoredICP::UpdateServer() {
         server_->target_ = *target_.server();
         server_->target_color_gradient_ = *target_color_gradient_.server();
 
-        server_->correspondences_ = *correspondences_.server();
+        server_->correspondences_ = *correspondences_.server_;
 
         server_->results_ = *results_.server();
 
@@ -74,9 +74,8 @@ void TransformEstimationCudaForColoredICP::ComputeColorGradients(
     KDTreeFlann &kdtree, const KDTreeSearchParamHybrid &search_param) {
 
     /** Initialize correspondence matrix for neighbors **/
-    Eigen::Matrix<int, -1, -1, Eigen::RowMajor> corres_matrix
-        = Eigen::Matrix<int, -1, -1, Eigen::RowMajor>::Constant(
-            target.points_.size(), search_param.max_nn_, -1);
+    Eigen::MatrixXi corres_matrix = Eigen::MatrixXi::Constant(
+        search_param.max_nn_, target.points_.size(), -1);
 
     /** OpenMP parallel K-NN search **/
 #ifdef _OPENMP
@@ -94,8 +93,8 @@ void TransformEstimationCudaForColoredICP::ComputeColorGradients(
                                     search_param.radius_,
                                     search_param.max_nn_,
                                     indices, dists) >= 3) {
-                corres_matrix.block(i, 0, 1, indices.size()) =
-                    Eigen::Map<Eigen::RowVectorXi>(
+                corres_matrix.block(0, i, indices.size(), 1) =
+                    Eigen::Map<Eigen::VectorXi>(
                         indices.data(), indices.size());
             }
         }

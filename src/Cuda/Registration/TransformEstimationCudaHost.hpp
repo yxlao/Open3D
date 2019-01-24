@@ -19,15 +19,14 @@ void TransformEstimationCuda::Initialize(PointCloud &source,
     target_.Create(VertexWithNormalAndColor, target.points_.size());
     target_.Upload(target);
 
-    correspondences_.Create(source.points_.size(), 1);
+    correspondences_.Create(1, source.points_.size());
 
     /** CPU part **/
     max_correspondence_distance_ = max_correspondence_distance;
     source_cpu_ = source;
     target_cpu_ = target;
     kdtree_.SetGeometry(target_cpu_);
-    corres_matrix_ = Eigen::Matrix<int, -1, -1, Eigen::RowMajor>(
-        source_cpu_.points_.size(), 1);
+    corres_matrix_ = Eigen::MatrixXi(1, source.points_.size());
 
     UpdateServer();
 }
@@ -47,12 +46,11 @@ void TransformEstimationCuda::GetCorrespondences() {
             bool found = kdtree_.SearchHybrid(source_cpu_.points_[i],
                                               max_correspondence_distance_, 1,
                                               indices, dists) > 0;
-            corres_matrix_(i, 0) = found ? indices[0] : -1;
+            corres_matrix_(0, i) = found ? indices[0] : -1;
         }
 #ifdef _OPENMP
     }
 #endif
-
     correspondences_.SetCorrespondenceMatrix(corres_matrix_);
     correspondences_.Compress();
 
@@ -106,7 +104,7 @@ void TransformEstimationPointToPointCuda::UpdateServer() {
         server_->source_ = *source_.server();
         server_->target_ = *target_.server();
 
-        server_->correspondences_ = *correspondences_.server();
+        server_->correspondences_ = *correspondences_.server_;
 
         server_->results_ = *results_.server();
     }
@@ -222,7 +220,7 @@ void TransformEstimationPointToPlaneCuda::UpdateServer() {
         server_->source_ = *source_.server();
         server_->target_ = *target_.server();
 
-        server_->correspondences_ = *correspondences_.server();
+        server_->correspondences_ = *correspondences_.server_;
 
         server_->results_ = *results_.server();
     }

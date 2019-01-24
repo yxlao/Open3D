@@ -102,8 +102,7 @@ void Array2DCuda<T>::Upload(Eigen::Matrix<T, -1, -1, Eigen::RowMajor> &matrix) {
 
 template<typename T>
 Eigen::Matrix<T, -1, -1, Eigen::RowMajor> Array2DCuda<T>::Download() {
-    Eigen::Matrix<T, -1, -1, Eigen::RowMajor>
-        matrix(max_rows_, max_cols_);
+    Eigen::Matrix<T, -1, -1, Eigen::RowMajor> matrix(max_rows_, max_cols_);
     CheckCuda(cudaMemcpy2D(matrix.data(), sizeof(T) * max_cols_,
                            server_->data_, pitch_,
                            sizeof(T) * max_cols_, max_rows_,

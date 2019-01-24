@@ -181,13 +181,13 @@ int main(int argc, char **argv) {
     open3d::PinholeCameraIntrinsic intrinsic = open3d::PinholeCameraIntrinsic(
         open3d::PinholeCameraIntrinsicParameters::PrimeSenseDefault);
     auto rgbd_source = ReadRGBDImage(
-        (base_path + "/" + rgbd_filenames[0].second).c_str(),
-        (base_path + "/" + rgbd_filenames[0].first).c_str(),
+        (base_path + "/" + rgbd_filenames[3].second).c_str(),
+        (base_path + "/" + rgbd_filenames[3].first).c_str(),
         intrinsic,
         false);
     auto rgbd_target = ReadRGBDImage(
-        (base_path + "/" + rgbd_filenames[3].second).c_str(),
-        (base_path + "/" + rgbd_filenames[3].first).c_str(),
+        (base_path + "/" + rgbd_filenames[5].second).c_str(),
+        (base_path + "/" + rgbd_filenames[5].first).c_str(),
         intrinsic,
         false);
     auto source_origin = CreatePointCloudFromRGBDImage(*rgbd_source, intrinsic);

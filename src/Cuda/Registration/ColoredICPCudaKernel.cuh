@@ -31,9 +31,9 @@ void ComputeColorGradientKernel(
     Matrix3f AtA(0);
     Vector3f Atb(0);
 
-    int nn = 0, max_nn = corres.matrix_.max_cols_;
+    int nn = 0, max_nn = corres.matrix_.max_rows_;
     for (int j = 1; j < max_nn; ++j) {
-        int adj_idx = corres.matrix_(i, j);
+        int adj_idx = corres.matrix_(j, i);
         if (adj_idx == -1) break;
 
         Vector3f &vt_adj = pcl.points()[adj_idx];
@@ -86,7 +86,7 @@ void TransformEstimationCudaForColoredICPKernelCaller
     const dim3 threads(THREAD_1D_UNIT);
 
     ComputeColorGradientKernel << < blocks, threads >> > (
-        *estimation.server_, *corres_for_color_gradient.server());
+        *estimation.server_, *corres_for_color_gradient.server_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
@@ -109,7 +109,7 @@ void ComputeResultsAndTransformationKernel(
     local_sum2[tid] = 0;
 
     int source_idx = estimation.correspondences_.indices_[idx];
-    int target_idx = estimation.correspondences_.matrix_(source_idx, 0);
+    int target_idx = estimation.correspondences_.matrix_(0, source_idx);
 
     Vector6f jacobian_I, jacobian_G, Jtr;
     float residual_I, residual_G;
@@ -227,7 +227,8 @@ ComputeResultsAndTransformationKernelCaller(
                                   THREAD_1D_UNIT));
     const dim3 threads(THREAD_1D_UNIT);
 
-    ComputeResultsAndTransformationKernel<< < blocks, threads >> > (*estimation.server_);
+    ComputeResultsAndTransformationKernel<< < blocks, threads >> > (
+        *estimation.server_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }

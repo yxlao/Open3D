@@ -25,7 +25,7 @@ void ComputeSumsKernel(
     local_sum2[tid] = 0;
 
     int source_idx = estimation.correspondences_.indices_[idx];
-    int target_idx = estimation.correspondences_.matrix_(source_idx, 0);
+    int target_idx = estimation.correspondences_.matrix_(0, source_idx);
 
     Vector3f &source = estimation.source_.points()[source_idx];
     Vector3f &target = estimation.target_.points()[target_idx];
@@ -118,7 +118,7 @@ void ComputeResultsAndTransformationKernel(
     local_sum2[tid] = 0;
 
     int source_idx = estimation.correspondences_.indices_[idx];
-    int target_idx = estimation.correspondences_.matrix_(source_idx, 0);
+    int target_idx = estimation.correspondences_.matrix_(0, source_idx);
 
     Matrix3f Sigma;
     float sigma_source2, rmse;
@@ -242,7 +242,7 @@ void ComputeResultsAndTransformationKernel(
     local_sum2[tid] = 0;
 
     int source_idx = estimation.correspondences_.indices_[idx];
-    int target_idx = estimation.correspondences_.matrix_(source_idx, 0);
+    int target_idx = estimation.correspondences_.matrix_(0, source_idx);
 
     Vector6f jacobian, Jtr;
     float residual;

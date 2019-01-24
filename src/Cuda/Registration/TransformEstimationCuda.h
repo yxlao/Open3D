@@ -64,7 +64,7 @@ public:
     PointCloud source_cpu_;
     PointCloud target_cpu_;
     KDTreeFlann kdtree_;
-    Eigen::Matrix<int, -1, -1, Eigen::RowMajor> corres_matrix_;
+    Eigen::MatrixXi corres_matrix_;
 
     /** Build linear system **/
     ArrayCuda<float> results_;

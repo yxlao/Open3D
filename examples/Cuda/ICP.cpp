@@ -84,10 +84,12 @@ int main(int argc, char **argv) {
     auto source = open3d::VoxelDownSample(*source_origin, 0.05);
     auto target = open3d::VoxelDownSample(*target_origin, 0.05);
 
-    auto result = open3d::RegistrationICP(*source, *target, 0.07);
+    auto result = open3d::RegistrationICP(*source, *target, 0.07,
+                                          Eigen::Matrix4d::Identity(),
+                                          open3d::TransformationEstimationPointToPlane());
 
     open3d::cuda::RegistrationCuda registration(
-        open3d::TransformationEstimationType::PointToPoint);
+        open3d::TransformationEstimationType::PointToPlane);
 
     registration.Initialize(*source, *target, 0.07f);
 
