@@ -51,33 +51,61 @@ Vector4f FeatureCudaDevice::ComputePairFeature(int i, int j) {
 
 __device__
 void FeatureCudaDevice::ComputeSPFHFeature(int i) {
-    int nn = 0, max_nn = neighbors_.matrix_.max_cols_;
-//
-//    for (int j = 1; j < max_nn; ++j) {
-//        int adj_idx = corres.matrix_(i, j);
-//        if (adj_idx == -1) break;
-//
-//        Vector3f &vt_adj = pcl.points()[adj_idx];
-//        Vector3f vt_proj = vt_adj - (vt_adj - vt).dot(nt) * nt;
-//        Vector3f &color_adj = pcl.colors()[adj_idx];
-//        float it_adj = (color_adj(0) + color_adj(1) + color_adj(2)) / 3.0f;
-//
-//        float a0 = vt_proj(0) - vt(0);
-//        float a1 = vt_proj(1) - vt(1);
-//        float a2 = vt_proj(2) - vt(2);
-//        float b = it_adj - it;
-//
-//        AtA(0, 0) += a0 * a0;
-//        AtA(0, 1) += a0 * a1;
-//        AtA(0, 2) += a0 * a2;
-//        AtA(1, 1) += a1 * a1;
-//        AtA(1, 2) += a1 * a2;
-//        AtA(2, 2) += a2 * a2;
-//        Atb(0) += a0 * b;
-//        Atb(1) += a1 * b;
-//        Atb(2) += a2 * b;
-//
-//        ++nn;
+    int max_nn = neighbors_.matrix_.max_cols_;
+
+    for (int k = 1; k < max_nn; ++k) {
+        int j = neighbors_.matrix_(k, i);
+        if (j == -1) break;
+
+        float hist_incr = 1.0f; // 100.0f / nn
+        Vector4f pf = ComputePairFeature(i, j);
+        int h_index = (int)(floorf(11.0f * (pf(0) + M_PIf) / (2.0f * M_PIf)));
+        if (h_index < 0) h_index = 0;
+        if (h_index >= 11) h_index = 10;
+        spfh_features_(h_index, i) += hist_incr;
+        h_index = (int)(floor(11 * (pf(1) + 1.0) * 0.5));
+        if (h_index < 0) h_index = 0;
+        if (h_index >= 11) h_index = 10;
+        spfh_features_(h_index + 11, i) += hist_incr;
+        h_index = (int)(floor(11 * (pf(2) + 1.0) * 0.5));
+        if (h_index < 0) h_index = 0;
+        if (h_index >= 11) h_index = 10;
+        spfh_features_(h_index + 22, i) += hist_incr;
+    }
+}
+
+__device__
+void FeatureCudaDevice::ComputeFPFHFeature(int i) {
+    int max_nn = neighbors_.matrix_.max_cols_;
+
+    float sum[3] = {0, 0, 0};
+    Vector3f &pi = pcl_.points()[i];
+
+    /** Add up neighbor's spfh **/
+    for (int k = 1; k < max_nn; ++k) {
+        int j = neighbors_.matrix_(k, i);
+        if (j == -1) break;
+
+        Vector3f &pj = pcl_.points()[j];
+        Vector3f pij = pi - pj;
+        float dist = pij.dot(pij);
+
+        if (dist == 0) continue;
+        for (int f = 0; f < 11; ++f) {
+            float val = spfh_features_(f, j) / dist;
+            sum[f / 11] += val;
+            fpfh_features_(f, i) += val;
+        }
+    }
+
+    sum[0] = sum[0] != 0 ? 100.0f / sum[0] : 0;
+    sum[1] = sum[1] != 0 ? 100.0f / sum[1] : 0;
+    sum[2] = sum[2] != 0 ? 100.0f / sum[2] : 0;
+
+    for (int f = 0; f < 33; ++f) {
+        fpfh_features_(f, i) *= sum[f / 11];
+        fpfh_features_(f, i) += spfh_features_(f, i);
+    }
 }
 } // cuda
 } // open3d
