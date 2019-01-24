@@ -14,6 +14,7 @@ class CorrespondenceSetCudaDevice {
 public:
     Array2DCudaDevice<int> matrix_;
     ArrayCudaDevice<int> indices_;
+    ArrayCudaDevice<int> nn_count_;
 };
 
 class CorrespondenceSetCuda {
@@ -35,6 +36,7 @@ public:
 
     /* Row indices of correpsondences (no need to be ordered) */
     ArrayCuda<int> indices_;
+    ArrayCuda<int> nn_count_;
 
     void SetCorrespondenceMatrix(Eigen::MatrixXi &corres_matrix);
     void Compress();

@@ -31,7 +31,7 @@ void ComputeColorGradientKernel(
     Matrix3f AtA(0);
     Vector3f Atb(0);
 
-    int nn = 0, max_nn = corres.matrix_.max_rows_;
+    int nn = 0, max_nn = corres.nn_count_[idx];
     for (int j = 1; j < max_nn; ++j) {
         int adj_idx = corres.matrix_(j, i);
         if (adj_idx == -1) break;

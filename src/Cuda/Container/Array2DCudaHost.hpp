@@ -115,7 +115,8 @@ void Array2DCuda<T>::Fill(const T &val) {}
 
 template<typename T>
 void Array2DCuda<T>::Memset(int val) {
-    CheckCuda(cudaMemset2D(server_->data_, pitch_, val, max_rows_, max_cols_));
+    CheckCuda(cudaMemset2D(server_->data_, pitch_, val,
+        sizeof(T) * max_cols_, max_rows_));
 }
 
 template<typename T>

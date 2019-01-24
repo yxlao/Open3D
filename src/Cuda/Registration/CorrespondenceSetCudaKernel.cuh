@@ -18,8 +18,17 @@ void CompressCorrespondencesKernel(CorrespondenceSetCudaDevice corres) {
 
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if (i < corres.matrix_.max_cols_ && corres.matrix_(0, i) != -1) {
-        corres.indices_.push_back(i);
+    if (i >= corres.matrix_.max_cols_) return;
+
+    int nn = 0;
+    for (int j = 0; j < corres.matrix_.max_rows_; ++j) {
+        if (corres.matrix_(j, i) == -1) break;
+        ++nn;
+    }
+
+    if (nn > 0) {
+        int addr = corres.indices_.push_back(i);
+        corres.nn_count_[addr] = nn; // Trick for asynchronization
     }
 }
 
@@ -33,6 +42,8 @@ void CorrespondenceSetCudaKernelCaller::CompressCorrespondenceKernelCaller(
     CompressCorrespondencesKernel << < blocks, threads >> > (*corres.server_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
+
+    corres.nn_count_.set_iterator(corres.indices_.size());
 }
 }
 }

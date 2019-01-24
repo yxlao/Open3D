@@ -24,9 +24,9 @@ public:
     __DEVICE__
     Vector4f ComputePairFeature(int i, int j);
     __DEVICE__
-    void ComputeSPFHFeature(int i);
+    void ComputeSPFHFeature(int i, int max_nn);
     __DEVICE__
-    void ComputeFPFHFeature(int i);
+    void ComputeFPFHFeature(int i, int max_nn);
 };
 
 class FeatureCuda {
@@ -44,7 +44,7 @@ public:
     void UpdateServer();
 
 public:
-    void Compute(PointCloud &pcl, const KDTreeSearchParam &param);
+    void Compute(PointCloud &pcl, const KDTreeSearchParamHybrid &param);
 
 public:
     PointCloudCuda pcl_;
@@ -61,9 +61,9 @@ public:
 };
 
 __GLOBAL__
-void ComputeSPFHFeature(FeatureCudaDevice server);
+void ComputeSPFHFeatureKernel(FeatureCudaDevice server);
 __GLOBAL__
-void ComputeFPFHFeature(FeatureCudaDevice server);
+void ComputeFPFHFeatureKernel(FeatureCudaDevice server);
 
 }
 }

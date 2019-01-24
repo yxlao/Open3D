@@ -50,48 +50,50 @@ Vector4f FeatureCudaDevice::ComputePairFeature(int i, int j) {
 }
 
 __device__
-void FeatureCudaDevice::ComputeSPFHFeature(int i) {
-    int max_nn = neighbors_.matrix_.max_cols_;
-
+void FeatureCudaDevice::ComputeSPFHFeature(int i, int max_nn) {
     for (int k = 1; k < max_nn; ++k) {
         int j = neighbors_.matrix_(k, i);
-        if (j == -1) break;
 
-        float hist_incr = 1.0f; // 100.0f / nn
+        float hist_incr = 100.0f / (max_nn - 1);
         Vector4f pf = ComputePairFeature(i, j);
         int h_index = (int)(floorf(11.0f * (pf(0) + M_PIf) / (2.0f * M_PIf)));
         if (h_index < 0) h_index = 0;
         if (h_index >= 11) h_index = 10;
         spfh_features_(h_index, i) += hist_incr;
-        h_index = (int)(floor(11 * (pf(1) + 1.0) * 0.5));
+        h_index = (int)(floorf(11.0f * (pf(1) + 1.0f) * 0.5f));
         if (h_index < 0) h_index = 0;
         if (h_index >= 11) h_index = 10;
         spfh_features_(h_index + 11, i) += hist_incr;
-        h_index = (int)(floor(11 * (pf(2) + 1.0) * 0.5));
+        h_index = (int)(floorf(11.0f * (pf(2) + 1.0f) * 0.5f));
         if (h_index < 0) h_index = 0;
         if (h_index >= 11) h_index = 10;
         spfh_features_(h_index + 22, i) += hist_incr;
     }
+
+//    if (i == 0) {
+//        printf("gpu-max_nn: %d\n", max_nn);
+//        printf("spfh of 0\n");
+//        for (int f = 0; f < 33; ++f) {
+//            printf("gpu-%d: %.3f\n", f, spfh_features_(f, i));
+//        }
+//    }
 }
 
 __device__
-void FeatureCudaDevice::ComputeFPFHFeature(int i) {
-    int max_nn = neighbors_.matrix_.max_cols_;
-
+void FeatureCudaDevice::ComputeFPFHFeature(int i, int max_nn) {
     float sum[3] = {0, 0, 0};
     Vector3f &pi = pcl_.points()[i];
 
     /** Add up neighbor's spfh **/
     for (int k = 1; k < max_nn; ++k) {
         int j = neighbors_.matrix_(k, i);
-        if (j == -1) break;
 
         Vector3f &pj = pcl_.points()[j];
         Vector3f pij = pi - pj;
         float dist = pij.dot(pij);
 
         if (dist == 0) continue;
-        for (int f = 0; f < 11; ++f) {
+        for (int f = 0; f < 33; ++f) {
             float val = spfh_features_(f, j) / dist;
             sum[f / 11] += val;
             fpfh_features_(f, i) += val;
