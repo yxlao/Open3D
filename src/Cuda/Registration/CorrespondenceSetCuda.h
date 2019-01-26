@@ -39,6 +39,7 @@ public:
     ArrayCuda<int> nn_count_;
 
     void SetCorrespondenceMatrix(Eigen::MatrixXi &corres_matrix);
+    void SetCorrespondenceMatrix(Array2DCuda<int> &corres_matrix);
     void Compress();
 };
 

@@ -42,6 +42,33 @@ public:
 };
 
 namespace {
+/** Triple term **/
+__HOSTDEVICE__ void ComputeJtJAndJtr(
+    const Vector6f &jacobian_x,
+    const Vector6f &jacobian_y,
+    const Vector6f &jacobian_z,
+    const Vector3f &residual,
+    HessianCuda<6> &JtJ, Vector6f &Jtr) {
+
+    int cnt = 0;
+#ifdef __CUDACC__
+#pragma unroll 1
+#endif
+    for (int i = 0; i < 6; ++i) {
+#ifdef __CUDACC__
+#pragma unroll 1
+#endif
+        for (int j = i; j < 6; ++j) {
+            JtJ(cnt++) = jacobian_x(i) * jacobian_x(j)
+                + jacobian_y(i) * jacobian_y(j)
+                + jacobian_z(i) * jacobian_z(j);
+        }
+        Jtr(i) = jacobian_x(i) * residual(0)
+            + jacobian_y(i) * residual(1)
+            + jacobian_z(i) * residual(2);
+    }
+}
+
 /** Joint terms **/
 __HOSTDEVICE__ void ComputeJtJAndJtr(
     const Vector6f &jacobian_I, const Vector6f &jacobian_G,

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "FeatureCuda.h"
+#include "FeatureExtractorCuda.h"
 
 namespace open3d {
 namespace cuda {

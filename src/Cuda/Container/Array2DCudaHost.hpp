@@ -87,6 +87,26 @@ void Array2DCuda<T>::UpdateServer() {
 }
 
 template<typename T>
+void Array2DCuda<T>::CopyTo(Array2DCuda<T> &other) {
+    assert(server_ != nullptr);
+
+    if (this == &other) return;
+
+    if (other.server_ == nullptr) {
+        other.Create(max_rows_, max_cols_);
+    } else if (other.max_rows_ < max_rows_ || other.max_cols_ < max_cols_) {
+        PrintError("[Array2DCuda]: Dimension mismatch: (%d %d) vs (%d %d)\n",
+                   other.max_rows_, other.max_cols_, max_rows_, max_cols_);
+        return;
+    }
+
+    CheckCuda(cudaMemcpy2D(other.server_->data_, other.pitch_,
+                           server_->data_, pitch_,
+                           sizeof(T) * max_cols_, max_rows_,
+                           cudaMemcpyDeviceToDevice));
+}
+
+template<typename T>
 void Array2DCuda<T>::Upload(Eigen::Matrix<T, -1, -1, Eigen::RowMajor> &matrix) {
     if (server_ != nullptr) {
         assert(matrix.rows() == max_rows_ && matrix.cols() == max_cols_);

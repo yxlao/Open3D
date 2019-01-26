@@ -29,15 +29,15 @@ public:
     void ComputeFPFHFeature(int i, int max_nn);
 };
 
-class FeatureCuda {
+class FeatureExtractorCuda {
 public:
     std::shared_ptr<FeatureCudaDevice> server_ = nullptr;
 
 public:
-    FeatureCuda();
-    ~FeatureCuda();
-    FeatureCuda(const FeatureCuda &other);
-    FeatureCuda& operator=(const FeatureCuda &other);
+    FeatureExtractorCuda();
+    ~FeatureExtractorCuda();
+    FeatureExtractorCuda(const FeatureExtractorCuda &other);
+    FeatureExtractorCuda& operator=(const FeatureExtractorCuda &other);
 
     void Create();
     void Release();
@@ -56,8 +56,8 @@ public:
 
 class FeatureCudaKernelCaller {
 public:
-    static void ComputeSPFHFeature(FeatureCuda &feature);
-    static void ComputeFPFHFeature(FeatureCuda &feature);
+    static void ComputeSPFHFeature(FeatureExtractorCuda &feature);
+    static void ComputeFPFHFeature(FeatureExtractorCuda &feature);
 };
 
 __GLOBAL__

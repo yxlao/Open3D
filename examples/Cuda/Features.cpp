@@ -13,7 +13,7 @@
 #include <Core/Registration/ColoredICP.h>
 #include <iostream>
 #include <Cuda/Geometry/NNCuda.h>
-#include <Cuda/Registration/FeatureCuda.h>
+#include <Cuda/Registration/FeatureExtractorCuda.h>
 #include "ReadDataAssociation.h"
 
 using namespace open3d;
@@ -55,17 +55,22 @@ int main(int argc, char **argv) {
         PrintInfo("Feature extraction takes %f ms\n", timer.GetDuration());
 
         timer.Start();
-        open3d::cuda::FeatureCuda fpfh_feature;
+        open3d::cuda::FeatureExtractorCuda fpfh_feature;
         fpfh_feature.Compute(*source, KDTreeSearchParamHybrid(0.25, 100));
         timer.Stop();
         PrintInfo("Feature extraction cuda takes %f ms\n", timer.GetDuration());
     }
 
     auto source_feature = PreprocessPointCloud(*source);
+    auto target_feature = PreprocessPointCloud(*target);
 
-    open3d::cuda::FeatureCuda fpfh_feature;
-    fpfh_feature.Compute(*source, KDTreeSearchParamHybrid(0.25, 100));
-    auto source_feature_cuda = fpfh_feature.fpfh_features_.Download();
+    open3d::cuda::FeatureExtractorCuda source_fpfh_feature;
+    source_fpfh_feature.Compute(*source, KDTreeSearchParamHybrid(0.25, 100));
+    auto source_feature_cuda = source_fpfh_feature.fpfh_features_.Download();
+
+    open3d::cuda::FeatureExtractorCuda target_fpfh_feature;
+    target_fpfh_feature.Compute(*target, KDTreeSearchParamHybrid(0.25, 100));
+    auto target_feature_cuda = target_fpfh_feature.fpfh_features_.Download();
 
     for (int i = 0; i < source_feature->Num(); ++i) {
         float norm =
@@ -76,5 +81,36 @@ int main(int argc, char **argv) {
 //            std::cout << source_feature_cuda.col(i).transpose() << std::endl;
 //        }
     }
+
+    KDTreeFlann target_feature_tree(*target_feature);
+    std::vector<int> correspondences;
+    std::vector<int> indices(1);
+    std::vector<double> dist(1);
+
+    for (int i = 0; i < source_feature->Num(); ++i) {
+        target_feature_tree.SearchKNN(
+            Eigen::VectorXd(source_feature->data_.col(i)),
+            1,
+            indices,
+            dist);
+        correspondences.push_back(indices.size() > 0 ? indices[0] : -1);
+    }
+    open3d::cuda::NNCuda nn;
+    nn.NNSearch(source_fpfh_feature.fpfh_features_,
+                target_fpfh_feature.fpfh_features_);
+
+    auto correspondences_cuda = nn.nn_idx_.Download();
+    int inconsistency = 0;
+    for (int i = 0; i < source_feature->Num(); ++i) {
+        int correspondence_cpu = correspondences[i];
+        int correspondence_cuda = correspondences_cuda(0, i);
+        if (correspondence_cpu != correspondence_cuda) {
+            ++inconsistency;
+        }
+    }
+    PrintInfo("Consistency: %f (%d / %d)\n",
+              1 - (float) inconsistency / source_feature->Num(),
+              source_feature->Num() - inconsistency, source_feature->Num());
+
     return 0;
 }

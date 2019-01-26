@@ -22,6 +22,8 @@ class ArrayCuda<Vector4i>;
 template
 class ArrayCuda<Vector3f>;
 template
+class ArrayCuda<Vector2i>;
+template
 class ArrayCuda<HashEntry<Vector3i>>;
 template
 class ArrayCuda<LinkedListCudaDevice<HashEntry<Vector3i>>>;

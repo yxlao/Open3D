@@ -29,6 +29,8 @@ class ArrayCudaDevice<Vector4i>;
 template
 class ArrayCudaDevice<Vector3f>;
 template
+class ArrayCudaDevice<Vector2i>;
+template
 class ArrayCudaDevice<HashEntry<Vector3i>>;
 template
 class ArrayCudaDevice<LinkedListCudaDevice<HashEntry<Vector3i>>>;
@@ -43,6 +45,8 @@ template
 class ArrayCudaKernelCaller<Vector4i>;
 template
 class ArrayCudaKernelCaller<Vector3f>;
+template
+class ArrayCudaKernelCaller<Vector2i>;
 template
 class ArrayCudaKernelCaller<HashEntry<Vector3i>>;
 template

@@ -75,6 +75,21 @@ void CorrespondenceSetCuda::SetCorrespondenceMatrix(
     UpdateServer();
 }
 
+void CorrespondenceSetCuda::SetCorrespondenceMatrix(
+    Array2DCuda<int> &corres_matrix) {
+    if (server_ == nullptr) {
+        Create(corres_matrix.max_rows_, corres_matrix.max_cols_);
+    } else {
+        assert(corres_matrix.max_rows_ == matrix_.max_rows_);
+        assert(corres_matrix.max_cols_ == matrix_.max_cols_);
+    }
+
+    corres_matrix.CopyTo(matrix_);
+    indices_.Resize(matrix_.max_cols_);
+    nn_count_.Resize(matrix_.max_cols_);
+    UpdateServer();
+}
+
 void CorrespondenceSetCuda::Compress() {
     assert(matrix_.max_cols_ > 0);
 

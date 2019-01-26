@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
     VisualizeRegistration(*source, *target, Eigen::Matrix4d::Identity());
     auto registration_result = open3d::FastGlobalRegistration(*source, *target,
         *source_feature, *target_feature);
-    registration_result = open3d::RegistrationColoredICP(*source, *target, 0.07,
-        registration_result.transformation_);
+//    registration_result = open3d::RegistrationColoredICP(*source, *target, 0.07,
+//        registration_result.transformation_);
     VisualizeRegistration(*source, *target, registration_result.transformation_);
 }

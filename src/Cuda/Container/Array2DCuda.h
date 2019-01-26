@@ -62,6 +62,7 @@ public:
     void UpdateServer();
 
     /** Memcpy requires the same type and row-wise storage **/
+    void CopyTo(Array2DCuda<T> &other);
     void Upload(Eigen::Matrix<T, -1, -1, Eigen::RowMajor> &matrix);
     Eigen::Matrix<T, -1, -1, Eigen::RowMajor> Download();
 

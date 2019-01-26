@@ -2,20 +2,20 @@
 // Created by wei on 1/23/19.
 //
 
-#include "FeatureCuda.h"
+#include "FeatureExtractorCuda.h"
 
 namespace open3d {
 namespace cuda {
 
-FeatureCuda::FeatureCuda() {
+FeatureExtractorCuda::FeatureExtractorCuda() {
     Create();
 }
 
-FeatureCuda::~FeatureCuda() {
+FeatureExtractorCuda::~FeatureExtractorCuda() {
     Release();
 }
 
-FeatureCuda::FeatureCuda(const FeatureCuda &other) {
+FeatureExtractorCuda::FeatureExtractorCuda(const FeatureExtractorCuda &other) {
     server_ = other.server_;
     neighbors_ = other.neighbors_;
     spfh_features_ = other.spfh_features_;
@@ -23,7 +23,7 @@ FeatureCuda::FeatureCuda(const FeatureCuda &other) {
     pcl_ = other.pcl_;
 }
 
-FeatureCuda& FeatureCuda::operator=(const FeatureCuda &other) {
+FeatureExtractorCuda& FeatureExtractorCuda::operator=(const FeatureExtractorCuda &other) {
     if (this != &other) {
         server_ = other.server_;
         neighbors_ = other.neighbors_;
@@ -34,13 +34,13 @@ FeatureCuda& FeatureCuda::operator=(const FeatureCuda &other) {
     return *this;
 }
 
-void FeatureCuda::Create() {
+void FeatureExtractorCuda::Create() {
     if (server_ == nullptr) {
         server_ = std::make_shared<FeatureCudaDevice>();
     }
 }
 
-void FeatureCuda::Release() {
+void FeatureExtractorCuda::Release() {
     if (server_ != nullptr && server_.use_count() == 1) {
         pcl_.Release();
         neighbors_.Release();
@@ -51,7 +51,7 @@ void FeatureCuda::Release() {
     server_ = nullptr;
 }
 
-void FeatureCuda::UpdateServer() {
+void FeatureExtractorCuda::UpdateServer() {
     if (server_ != nullptr) {
         server_->pcl_ = *pcl_.server();
         server_->neighbors_ = *neighbors_.server_;
@@ -60,7 +60,7 @@ void FeatureCuda::UpdateServer() {
     }
 }
 
-void FeatureCuda::Compute(
+void FeatureExtractorCuda::Compute(
     PointCloud &pcl, const KDTreeSearchParamHybrid &param) {
     pcl_.Create(VertexWithNormal, pcl.points_.size());
     pcl_.Upload(pcl);

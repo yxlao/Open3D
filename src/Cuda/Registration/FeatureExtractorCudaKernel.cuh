@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "FeatureCuda.h"
-#include "FeatureCudaDevice.cuh"
+#include "FeatureExtractorCuda.h"
+#include "FeatureExtractorCudaDevice.cuh"
 
 namespace open3d {
 namespace cuda {
@@ -19,7 +19,7 @@ void ComputeSPFHFeatureKernel(FeatureCudaDevice server) {
     server.ComputeSPFHFeature(i, max_nn);
 }
 
-void FeatureCudaKernelCaller::ComputeSPFHFeature(FeatureCuda &feature) {
+void FeatureCudaKernelCaller::ComputeSPFHFeature(FeatureExtractorCuda &feature) {
     const dim3 blocks(DIV_CEILING(feature.neighbors_.indices_.size(),
         THREAD_1D_UNIT));
     const dim3 threads(THREAD_1D_UNIT);
@@ -38,7 +38,7 @@ void ComputeFPFHFeatureKernel(FeatureCudaDevice server) {
     server.ComputeFPFHFeature(i, max_nn);
 }
 
-void FeatureCudaKernelCaller::ComputeFPFHFeature(FeatureCuda &feature) {
+void FeatureCudaKernelCaller::ComputeFPFHFeature(FeatureExtractorCuda &feature) {
     const dim3 blocks(DIV_CEILING(feature.neighbors_.indices_.size(),
         THREAD_1D_UNIT));
     const dim3 threads(THREAD_1D_UNIT);

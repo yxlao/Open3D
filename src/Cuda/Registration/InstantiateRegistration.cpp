@@ -6,4 +6,5 @@
 #include "ColoredICPCudaHost.hpp"
 #include "CorrespondenceSetCudaHost.hpp"
 #include "TransformEstimationCudaHost.hpp"
-#include "FeatureCudaHost.hpp"
+#include "FeatureExtractorCudaHost.hpp"
+#include "FastGlobalRegistrationCudaHost.hpp"
