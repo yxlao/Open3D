@@ -188,10 +188,10 @@ RegistrationResultCuda FastGlobalRegistrationCuda::DoSingleIteration(int iter) {
     result.inlier_rmse_ = rmse;
     PrintInfo("iter: %d, rmse: %f\n", iter, rmse);
 
-//    if (iter % 4 == 0 && server_->par_ > 0.0f) {
-//        server_->par_ /= 1.4f;
-//        std::cout << "gpu par: " << server_->par_ << std::endl;
-//    }
+    if (iter % 4 == 0 && server_->par_ > 0.0f) {
+        server_->par_ /= 1.4f;
+        std::cout << "gpu par: " << server_->par_ << std::endl;
+    }
 
     return result;
 };

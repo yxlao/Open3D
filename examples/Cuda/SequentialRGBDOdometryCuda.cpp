@@ -12,7 +12,7 @@
 #include <Cuda/Integration/ScalableMeshVolumeCuda.h>
 #include <Visualization/Visualization.h>
 
-#include "ReadDataAssociation.h"
+#include "Utils.h"
 
 using namespace open3d;
 
@@ -23,34 +23,21 @@ void PrintHelp() {
 }
 
 int main(int argc, char **argv) {
-    if (argc != 2 || ProgramOptionExists(argc, argv, "--help")) {
-        PrintHelp();
-        return 1;
-    }
-
     SetVerbosityLevel(VerbosityLevel::VerboseDebug);
 
-    std::string base_path = argv[1];
+    std::string base_path = "/home/wei/Work/data/stanford/lounge";
     auto rgbd_filenames = ReadDataAssociation(
         base_path + "/data_association.txt");
 
     PinholeCameraTrajectory trajectory_gt;
-
-    /** This API loads camera_to_world and turns to world_to_camera
-     * (with inverse)**/
     ReadPinholeCameraTrajectoryFromLOG(
         base_path + "/lounge_trajectory.log", trajectory_gt);
-
     for (auto &param : trajectory_gt.parameters_) {
         param.extrinsic_ = param.extrinsic_.inverse();
     }
-
-    /** This API directly saves camera_to_world (without inverse) **/
     WritePinholeCameraTrajectoryToLOG("trajectory_gt.log", trajectory_gt);
 
     int index = 0;
-    int save_index = 0;
-
     cuda::PinholeCameraIntrinsicCuda intrinsics(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault);
 
@@ -77,18 +64,16 @@ int main(int argc, char **argv) {
     odometry.SetParameters(OdometryOption({20, 10, 5}, 0.07, 0.01), 0.5f);
 
     Visualizer visualizer;
-    if (!visualizer.CreateVisualizerWindow("Sequential IC RGBD Odometry",
-        640, 480, 0, 0)) {
+    if (!visualizer.CreateVisualizerWindow("RGBD Odometry", 640, 480, 0, 0)) {
         PrintWarning("Failed creating OpenGL window.\n");
         return -1;
     }
     visualizer.BuildUtilities();
     visualizer.UpdateWindowTitle();
 
-    std::shared_ptr<cuda::TriangleMeshCuda>
-        mesh = std::make_shared<cuda::TriangleMeshCuda>();
+    std::shared_ptr<cuda::TriangleMeshCuda> mesh
+        = std::make_shared<cuda::TriangleMeshCuda>();
     visualizer.AddGeometry(mesh);
-
 
     Eigen::Matrix4d target_to_world = trajectory_gt.parameters_[0].extrinsic_;
     PinholeCameraTrajectory trajectory;

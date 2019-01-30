@@ -57,16 +57,8 @@ void NNCuda::NNSearch(Array2DCuda<float> &query,
 
     UpdateServer();
 
-    Timer timer;
-    timer.Start();
     NNCudaKernelCaller::ComputeDistancesKernelCaller(*this);
-    timer.Stop();
-    PrintInfo("Compute takes %f ms\n", timer.GetDuration());
-
-    timer.Start();
     NNCudaKernelCaller::FindNNKernelCaller(*this);
-    timer.Stop();
-    PrintInfo("FindNN takes %f ms\n", timer.GetDuration());
 }
 } // cuda
 } // open3d

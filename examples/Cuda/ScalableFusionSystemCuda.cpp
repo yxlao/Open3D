@@ -34,7 +34,7 @@
 #include <Cuda/Integration/ScalableTSDFVolumeCuda.h>
 #include <Cuda/Integration/ScalableMeshVolumeCuda.h>
 
-#include "ReadDataAssociation.h"
+#include "Utils.h"
 
 int main(int argc, char *argv[]) {
     using namespace open3d;
