@@ -148,36 +148,25 @@ public:
 template<size_t N>
 class ScalableMeshVolumeCudaKernelCaller {
 public:
-    static __HOST__ void MarchingCubesVertexAllocationKernelCaller(
-        ScalableMeshVolumeCudaDevice<N> &server,
-        ScalableTSDFVolumeCudaDevice<N> &tsdf_volume,
-        int active_volumes);
-    static __HOST__ void MarchingCubesVertexExtractionKernelCaller(
-        ScalableMeshVolumeCudaDevice<N> &server,
-        ScalableTSDFVolumeCudaDevice<N> &tsdf_volume,
-        int active_volumes);
-    static __HOST__ void MarchingCubesTriangleExtractionKernelCaller(
-        ScalableMeshVolumeCudaDevice<N> &server,
-        ScalableTSDFVolumeCudaDevice<N> &tsdf_volume,
-        int active_volumes);
+    static void VertexAllocation(ScalableMeshVolumeCuda<N> &server,
+                                 ScalableTSDFVolumeCuda<N> &tsdf_volume);
+    static void VertexExtraction(ScalableMeshVolumeCuda<N> &server,
+                                 ScalableTSDFVolumeCuda<N> &tsdf_volume);
+    static void TriangleExtraction(ScalableMeshVolumeCuda<N> &server,
+                                   ScalableTSDFVolumeCuda<N> &tsdf_volume);
 };
 
 template<size_t N>
 __GLOBAL__
-void MarchingCubesVertexAllocationKernel(
-    ScalableMeshVolumeCudaDevice<N> server,
-    ScalableTSDFVolumeCudaDevice<N> tsdf_volume);
-
+void VertexAllocationKernel(ScalableMeshVolumeCudaDevice<N> server,
+                            ScalableTSDFVolumeCudaDevice<N> tsdf_volume);
 template<size_t N>
 __GLOBAL__
-void MarchingCubesVertexExtractionKernel(
-    ScalableMeshVolumeCudaDevice<N> server,
-    ScalableTSDFVolumeCudaDevice<N> tsdf_volume);
-
+void VertexExtractionKernel(ScalableMeshVolumeCudaDevice<N> server,
+                            ScalableTSDFVolumeCudaDevice<N> tsdf_volume);
 template<size_t N>
 __GLOBAL__
-void MarchingCubesTriangleExtractionKernel(
-    ScalableMeshVolumeCudaDevice<N> server,
-    ScalableTSDFVolumeCudaDevice<N> tsdf_volume);
+void TriangleExtractionKernel(ScalableMeshVolumeCudaDevice<N> server,
+                              ScalableTSDFVolumeCudaDevice<N> tsdf_volume);
 } // cuda
 } // open3d

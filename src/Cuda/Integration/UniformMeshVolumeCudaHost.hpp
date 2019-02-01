@@ -130,9 +130,7 @@ void UniformMeshVolumeCuda<N>::VertexAllocation(
     Timer timer;
     timer.Start();
 
-    UniformMeshVolumeCudaKernelCaller<N>::
-    MarchingCubesVertexAllocationKernelCaller(
-        *device_, *tsdf_volume.device_);
+    UniformMeshVolumeCudaKernelCaller<N>::VertexAllocation(*this, tsdf_volume);
 
     timer.Stop();
     PrintInfo("Allocation takes %f milliseconds\n", timer.GetDuration());
@@ -146,9 +144,7 @@ void UniformMeshVolumeCuda<N>::VertexExtraction(
     Timer timer;
     timer.Start();
 
-    UniformMeshVolumeCudaKernelCaller<N>::
-    MarchingCubesVertexExtractionKernelCaller(
-        *device_, *tsdf_volume.device_);
+    UniformMeshVolumeCudaKernelCaller<N>::VertexExtraction(*this, tsdf_volume);
     timer.Stop();
     PrintInfo("Extraction takes %f milliseconds\n", timer.GetDuration());
 }
@@ -160,8 +156,7 @@ void UniformMeshVolumeCuda<N>::TriangleExtraction() {
     Timer timer;
     timer.Start();
 
-    UniformMeshVolumeCudaKernelCaller<N>::
-    MarchingCubesTriangleExtractionKernelCaller(*device_);
+    UniformMeshVolumeCudaKernelCaller<N>::TriangleExtraction(*this);
 
     timer.Stop();
     PrintInfo("Triangulation takes %f milliseconds\n", timer.GetDuration());

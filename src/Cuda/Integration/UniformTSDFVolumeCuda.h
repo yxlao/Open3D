@@ -153,15 +153,15 @@ public:
 template<size_t N>
 class UniformTSDFVolumeCudaKernelCaller {
 public:
-    static __HOST__ void IntegrateKernelCaller(
-        UniformTSDFVolumeCudaDevice<N> &server,
-        RGBDImageCudaDevice &rgbd,
+    static void Integrate(
+        UniformTSDFVolumeCuda<N> &volume,
+        RGBDImageCuda &rgbd,
         PinholeCameraIntrinsicCuda &camera,
         TransformCuda &transform_camera_to_world);
 
-    static __HOST__ void RayCastingKernelCaller(
-        UniformTSDFVolumeCudaDevice<N> &server,
-        ImageCudaDevice<Vector3f> &image,
+    static void RayCasting(
+        UniformTSDFVolumeCuda<N> &volume,
+        ImageCuda<Vector3f> &image,
         PinholeCameraIntrinsicCuda &camera,
         TransformCuda &transform_camera_to_world);
 };

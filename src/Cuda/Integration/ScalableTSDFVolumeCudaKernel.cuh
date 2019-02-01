@@ -10,7 +10,7 @@ namespace cuda {
 
 template<size_t N>
 __global__
-void CreateScalableTSDFVolumesKernel(ScalableTSDFVolumeCudaDevice<N> server) {
+void CreateKernel(ScalableTSDFVolumeCudaDevice<N> server) {
     const size_t index = blockIdx.x * blockDim.x + threadIdx.x;
     if (index >= server.value_capacity_) return;
 
@@ -33,14 +33,12 @@ void CreateScalableTSDFVolumesKernel(ScalableTSDFVolumeCudaDevice<N> server) {
 
 template<size_t N>
 __host__
-void ScalableTSDFVolumeCudaKernelCaller<N>::
-CreateScalableTSDFVolumesKernelCaller(
-    ScalableTSDFVolumeCudaDevice<N> &server,
-    int value_capacity) {
+void ScalableTSDFVolumeCudaKernelCaller<N>::Create(
+    ScalableTSDFVolumeCuda<N> &volume) {
 
     const dim3 threads(THREAD_1D_UNIT);
-    const dim3 blocks(DIV_CEILING(value_capacity, THREAD_1D_UNIT));
-    CreateScalableTSDFVolumesKernel << < blocks, threads >> > (server);
+    const dim3 blocks(DIV_CEILING(volume.value_capacity_, THREAD_1D_UNIT));
+    CreateKernel << < blocks, threads >> > (*volume.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
@@ -62,10 +60,9 @@ void TouchSubvolumesKernel(ScalableTSDFVolumeCudaDevice<N> server,
 
 template<size_t N>
 __host__
-void ScalableTSDFVolumeCudaKernelCaller<N>::
-TouchSubvolumesKernelCaller(
-    ScalableTSDFVolumeCudaDevice<N> &server,
-    ImageCudaDevice<Vector1f> &depth,
+void ScalableTSDFVolumeCudaKernelCaller<N>::TouchSubvolumes(
+    ScalableTSDFVolumeCuda<N> &volume,
+    ImageCuda<Vector1f> &depth,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
 
@@ -73,7 +70,7 @@ TouchSubvolumesKernelCaller(
                       DIV_CEILING(depth.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
     TouchSubvolumesKernel << < blocks, threads >> > (
-        server, depth, camera, transform_camera_to_world);
+        *volume.device_, *depth.device_, camera, transform_camera_to_world);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
@@ -103,18 +100,16 @@ void IntegrateSubvolumesKernel(ScalableTSDFVolumeCudaDevice<N> server,
 
 template<size_t N>
 __host__
-void ScalableTSDFVolumeCudaKernelCaller<N>::
-IntegrateSubvolumesKernelCaller(
-    ScalableTSDFVolumeCudaDevice<N> &server,
-    RGBDImageCudaDevice &rgbd,
+void ScalableTSDFVolumeCudaKernelCaller<N>::IntegrateSubvolumes(
+    ScalableTSDFVolumeCuda<N> &volume,
+    RGBDImageCuda &rgbd,
     PinholeCameraIntrinsicCuda &camera,
-    TransformCuda &transform_camera_to_world,
-    int active_subvolumes) {
+    TransformCuda &transform_camera_to_world) {
 
-    const dim3 blocks(active_subvolumes);
+    const dim3 blocks(volume.active_subvolume_entry_array().size());
     const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
     IntegrateSubvolumesKernel << < blocks, threads >> > (
-        server, rgbd, camera, transform_camera_to_world);
+        *volume.device_, *rgbd.device_, camera, transform_camera_to_world);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
@@ -166,17 +161,15 @@ void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaDevice<N> server,
 
 template<size_t N>
 __host__
-void ScalableTSDFVolumeCudaKernelCaller<N>::
-GetSubvolumesInFrustumKernelCaller(
-    ScalableTSDFVolumeCudaDevice<N> &server,
+void ScalableTSDFVolumeCudaKernelCaller<N>::GetSubvolumesInFrustum(
+    ScalableTSDFVolumeCuda<N> &volume,
     PinholeCameraIntrinsicCuda &camera,
-    TransformCuda &transform_camera_to_world,
-    int bucket_count) {
+    TransformCuda &transform_camera_to_world) {
 
-    const dim3 blocks(bucket_count);
+    const dim3 blocks(volume.bucket_count_);
     const dim3 threads(THREAD_1D_UNIT);
     GetSubvolumesInFrustumKernel << < blocks, threads >> > (
-        server, camera, transform_camera_to_world);
+        *volume.device_, camera, transform_camera_to_world);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
@@ -212,14 +205,12 @@ void GetAllSubvolumesKernel(ScalableTSDFVolumeCudaDevice<N> server) {
 
 template<size_t N>
 __host__
-void ScalableTSDFVolumeCudaKernelCaller<N>::
-GetAllSubvolumesKernelCaller(
-    ScalableTSDFVolumeCudaDevice<N> &server,
-    int bucket_count) {
+void ScalableTSDFVolumeCudaKernelCaller<N>::GetAllSubvolumes(
+    ScalableTSDFVolumeCuda<N> &volume) {
 
-    const dim3 blocks(bucket_count);
+    const dim3 blocks(volume.bucket_count_);
     const dim3 threads(THREAD_1D_UNIT);
-    GetAllSubvolumesKernel << < blocks, threads >> > (server);
+    GetAllSubvolumesKernel << < blocks, threads >> > (*volume.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
@@ -243,17 +234,16 @@ void RayCastingKernel(ScalableTSDFVolumeCudaDevice<N> server,
 
 template<size_t N>
 __host__
-void ScalableTSDFVolumeCudaKernelCaller<N>::
-RayCastingKernelCaller(
-    ScalableTSDFVolumeCudaDevice<N> &server,
-    ImageCudaDevice<Vector3f> &image,
+void ScalableTSDFVolumeCudaKernelCaller<N>::RayCasting(
+    ScalableTSDFVolumeCuda<N> &volume,
+    ImageCuda<Vector3f> &image,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
     const dim3 blocks(DIV_CEILING(image.width_, THREAD_2D_UNIT),
                       DIV_CEILING(image.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
     RayCastingKernel << < blocks, threads >> > (
-        server, image, camera, transform_camera_to_world);
+        *volume.device_, *image.device_, camera, transform_camera_to_world);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }

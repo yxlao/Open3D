@@ -102,9 +102,7 @@ void ScalableTSDFVolumeCuda<N>::Create(
     UpdateDevice();
     Reset();
 
-    ScalableTSDFVolumeCudaKernelCaller<N>::
-    CreateScalableTSDFVolumesKernelCaller(
-        *device_, value_capacity_);
+    ScalableTSDFVolumeCudaKernelCaller<N>::Create(*this);
 }
 
 template<size_t N>
@@ -208,9 +206,8 @@ void ScalableTSDFVolumeCuda<N>::TouchSubvolumes(
     TransformCuda &transform_camera_to_world) {
     assert(device_ != nullptr);
 
-    ScalableTSDFVolumeCudaKernelCaller<N>::
-    TouchSubvolumesKernelCaller(
-        *device_, *depth.device_, camera, transform_camera_to_world);
+    ScalableTSDFVolumeCudaKernelCaller<N>::TouchSubvolumes(
+        *this, depth, camera, transform_camera_to_world);
 }
 
 template<size_t N>
@@ -219,16 +216,14 @@ void ScalableTSDFVolumeCuda<N>::GetSubvolumesInFrustum(
     TransformCuda &transform_camera_to_world) {
     assert(device_ != nullptr);
 
-    ScalableTSDFVolumeCudaKernelCaller<N>::
-    GetSubvolumesInFrustumKernelCaller(
-        *device_, camera, transform_camera_to_world, bucket_count_);
+    ScalableTSDFVolumeCudaKernelCaller<N>::GetSubvolumesInFrustum(
+        *this, camera, transform_camera_to_world);
 }
 
 template<size_t N>
 void ScalableTSDFVolumeCuda<N>::GetAllSubvolumes() {
     assert(device_ != nullptr);
-    ScalableTSDFVolumeCudaKernelCaller<N>::
-    GetAllSubvolumesKernelCaller(*device_, bucket_count_);
+    ScalableTSDFVolumeCudaKernelCaller<N>::GetAllSubvolumes(*this);
 }
 
 template<size_t N>
@@ -238,11 +233,8 @@ void ScalableTSDFVolumeCuda<N>::IntegrateSubvolumes(
     TransformCuda &transform_camera_to_world) {
     assert(device_ != nullptr);
 
-    const int active_subvolumes = active_subvolume_entry_array_.size();
-    ScalableTSDFVolumeCudaKernelCaller<N>::
-    IntegrateSubvolumesKernelCaller(
-        *device_, *rgbd.device_, camera, transform_camera_to_world,
-        active_subvolumes);
+    ScalableTSDFVolumeCudaKernelCaller<N>::IntegrateSubvolumes(
+        *this, rgbd, camera, transform_camera_to_world);
 }
 
 template<size_t N>
@@ -276,9 +268,8 @@ void ScalableTSDFVolumeCuda<N>::RayCasting(
     TransformCuda &transform_camera_to_world) {
     assert(device_ != nullptr);
 
-    ScalableTSDFVolumeCudaKernelCaller<N>::
-    RayCastingKernelCaller(
-        *device_, *image.device_, camera, transform_camera_to_world);
+    ScalableTSDFVolumeCudaKernelCaller<N>::RayCasting(
+        *this, image, camera, transform_camera_to_world);
 }
 } // cuda
 } // open3d

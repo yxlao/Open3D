@@ -167,8 +167,8 @@ void UniformTSDFVolumeCuda<N>::Integrate(RGBDImageCuda &rgbd,
                                          PinholeCameraIntrinsicCuda &camera,
                                          TransformCuda &transform_camera_to_world) {
     assert(device_ != nullptr);
-    UniformTSDFVolumeCudaKernelCaller<N>::IntegrateKernelCaller(
-        *device_, *rgbd.device_, camera, transform_camera_to_world);
+    UniformTSDFVolumeCudaKernelCaller<N>::Integrate(
+        *this, rgbd, camera, transform_camera_to_world);
 }
 
 template<size_t N>
@@ -176,8 +176,8 @@ void UniformTSDFVolumeCuda<N>::RayCasting(ImageCuda<Vector3f> &image,
                                           PinholeCameraIntrinsicCuda &camera,
                                           TransformCuda &transform_camera_to_world) {
     assert(device_ != nullptr);
-    UniformTSDFVolumeCudaKernelCaller<N>::RayCastingKernelCaller(
-        *device_, *image.device_, camera, transform_camera_to_world);
+    UniformTSDFVolumeCudaKernelCaller<N>::RayCasting(
+        *this, image, camera, transform_camera_to_world);
 }
 } // cuda
 } // open3d

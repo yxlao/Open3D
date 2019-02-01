@@ -135,9 +135,7 @@ void ScalableMeshVolumeCuda<N>::VertexAllocation(
     Timer timer;
     timer.Start();
 
-    ScalableMeshVolumeCudaKernelCaller<N>::
-    MarchingCubesVertexAllocationKernelCaller(
-        *device_, *tsdf_volume.device_, active_subvolumes_);
+    ScalableMeshVolumeCudaKernelCaller<N>::VertexAllocation(*this, tsdf_volume);
 
     timer.Stop();
     PrintDebug("Allocation takes %f milliseconds\n", timer.GetDuration());
@@ -151,9 +149,7 @@ void ScalableMeshVolumeCuda<N>::VertexExtraction(
     Timer timer;
     timer.Start();
 
-    ScalableMeshVolumeCudaKernelCaller<N>::
-    MarchingCubesVertexExtractionKernelCaller(
-        *device_, *tsdf_volume.device_, active_subvolumes_);
+    ScalableMeshVolumeCudaKernelCaller<N>::VertexExtraction(*this, tsdf_volume);
 
     timer.Stop();
     PrintDebug("Extraction takes %f milliseconds\n", timer.GetDuration());
@@ -167,9 +163,8 @@ void ScalableMeshVolumeCuda<N>::TriangleExtraction(
     Timer timer;
     timer.Start();
 
-    ScalableMeshVolumeCudaKernelCaller<N>::
-    MarchingCubesTriangleExtractionKernelCaller(
-        *device_, *tsdf_volume.device_, active_subvolumes_);
+    ScalableMeshVolumeCudaKernelCaller<N>::TriangleExtraction(
+        *this, tsdf_volume);
 
     timer.Stop();
     PrintDebug("Triangulation takes %f milliseconds\n", timer.GetDuration());

@@ -135,33 +135,33 @@ public:
 template<size_t N>
 class UniformMeshVolumeCudaKernelCaller {
 public:
-    static __HOST__ void MarchingCubesVertexAllocationKernelCaller(
-        UniformMeshVolumeCudaDevice<N> &server,
-        UniformTSDFVolumeCudaDevice<N> &tsdf_volume);
+    static void VertexAllocation(
+        UniformMeshVolumeCuda<N> &mesher,
+        UniformTSDFVolumeCuda<N> &tsdf_volume);
 
-    static __HOST__ void MarchingCubesVertexExtractionKernelCaller(
-        UniformMeshVolumeCudaDevice<N> &server,
-        UniformTSDFVolumeCudaDevice<N> &tsdf_volume);
+    static __HOST__ void VertexExtraction(
+        UniformMeshVolumeCuda<N> &mesher,
+        UniformTSDFVolumeCuda<N> &tsdf_volume);
 
-    static __HOST__ void MarchingCubesTriangleExtractionKernelCaller(
-        UniformMeshVolumeCudaDevice<N> &server);
+    static __HOST__ void TriangleExtraction(
+        UniformMeshVolumeCuda<N> &mesher);
 };
 
 template<size_t N>
 __GLOBAL__
-void MarchingCubesVertexAllocationKernel(
+void VertexAllocationKernel(
     UniformMeshVolumeCudaDevice<N> server,
     UniformTSDFVolumeCudaDevice<N> tsdf_volume);
 
 template<size_t N>
 __GLOBAL__
-void MarchingCubesVertexExtractionKernel(
+void VertexExtractionKernel(
     UniformMeshVolumeCudaDevice<N> server,
     UniformTSDFVolumeCudaDevice<N> tsdf_volume);
 
 template<size_t N>
 __GLOBAL__
-void MarchingCubesTriangleExtractionKernel(
+void TriangleExtractionKernel(
     UniformMeshVolumeCudaDevice<N> server);
 } // cuda
 } // open3d

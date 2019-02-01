@@ -10,7 +10,7 @@ namespace open3d {
 namespace cuda {
 template<size_t N>
 __global__
-void MarchingCubesVertexAllocationKernel(
+void VertexAllocationKernel(
     ScalableMeshVolumeCudaDevice<N> server,
     ScalableTSDFVolumeCudaDevice<N> tsdf_volume) {
 
@@ -48,23 +48,21 @@ void MarchingCubesVertexAllocationKernel(
 
 template<size_t N>
 __host__
-void ScalableMeshVolumeCudaKernelCaller<N>::
-MarchingCubesVertexAllocationKernelCaller(
-    ScalableMeshVolumeCudaDevice<N> &server,
-    ScalableTSDFVolumeCudaDevice<N> &tsdf_volume,
-    int active_volumes) {
+void ScalableMeshVolumeCudaKernelCaller<N>::VertexAllocation(
+    ScalableMeshVolumeCuda<N> &mesher,
+    ScalableTSDFVolumeCuda<N> &tsdf_volume) {
 
-    const dim3 blocks(active_volumes);
+    const dim3 blocks(mesher.active_subvolumes_);
     const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
-    MarchingCubesVertexAllocationKernel << < blocks, threads >> > (
-        server, tsdf_volume);
-//    CheckCuda(cudaDeviceSynchronize());
+    VertexAllocationKernel << < blocks, threads >> > (
+        *mesher.device_, *tsdf_volume.device_);
+    CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
 
 template<size_t N>
 __global__
-void MarchingCubesVertexExtractionKernel(
+void VertexExtractionKernel(
     ScalableMeshVolumeCudaDevice<N> server,
     ScalableTSDFVolumeCudaDevice<N> tsdf_volume) {
 
@@ -103,29 +101,26 @@ void MarchingCubesVertexExtractionKernel(
 
 template<size_t N>
 __host__
-void ScalableMeshVolumeCudaKernelCaller<N>::
-MarchingCubesVertexExtractionKernelCaller(
-    ScalableMeshVolumeCudaDevice<N> &server,
-    ScalableTSDFVolumeCudaDevice<N> &tsdf_volume,
-    int active_volumes) {
+void ScalableMeshVolumeCudaKernelCaller<N>::VertexExtraction(
+    ScalableMeshVolumeCuda<N> &mesher,
+    ScalableTSDFVolumeCuda<N> &tsdf_volume) {
 
-    const dim3 blocks(active_volumes);
+    const dim3 blocks(mesher.active_subvolumes_);
     const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
-    MarchingCubesVertexExtractionKernel << < blocks, threads >> > (
-        server, tsdf_volume);
-//    CheckCuda(cudaDeviceSynchronize());
+    VertexExtractionKernel << < blocks, threads >> > (
+        *mesher.device_, *tsdf_volume.device_);
+    CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 
 }
 
 template<size_t N>
 __global__
-void MarchingCubesTriangleExtractionKernel(
+void TriangleExtractionKernel(
     ScalableMeshVolumeCudaDevice<N> server,
     ScalableTSDFVolumeCudaDevice<N> tsdf_volume) {
 
-    __shared__
-    UniformTSDFVolumeCudaDevice<N> *neighbor_subvolumes[27];
+    __shared__ UniformTSDFVolumeCudaDevice<N> *neighbor_subvolumes[27];
     __shared__ int neighbor_subvolume_indices[27];
 
     const int subvolume_idx = blockIdx.x;
@@ -153,17 +148,15 @@ void MarchingCubesTriangleExtractionKernel(
 }
 
 template<size_t N>
-void ScalableMeshVolumeCudaKernelCaller<N>::
-MarchingCubesTriangleExtractionKernelCaller(
-    ScalableMeshVolumeCudaDevice<N> &server,
-    ScalableTSDFVolumeCudaDevice<N> &tsdf_volume,
-    int active_volumes) {
+void ScalableMeshVolumeCudaKernelCaller<N>::TriangleExtraction(
+    ScalableMeshVolumeCuda<N> &mesher,
+    ScalableTSDFVolumeCuda<N> &tsdf_volume) {
 
-    const dim3 blocks(active_volumes);
+    const dim3 blocks(mesher.active_subvolumes_);
     const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
-    MarchingCubesTriangleExtractionKernel << < blocks, threads >> > (
-        server, tsdf_volume);
-//    CheckCuda(cudaDeviceSynchronize());
+    TriangleExtractionKernel << < blocks, threads >> > (
+        *mesher.device_, *tsdf_volume.device_);
+    CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
 } // cuda
