@@ -89,7 +89,7 @@ void UniformMeshVolumeCudaDevice<N>::ExtractVertex(
             float tsdf_axis = tsdf_volume.tsdf(X_axis);
             float mu = (0 - tsdf_0) / (tsdf_axis - tsdf_0);
 
-            voxel_vertex_indices(axis) = mesh_.vertices().push_back(
+            voxel_vertex_indices(axis) = mesh_.vertices_.push_back(
                 tsdf_volume.voxelf_to_world(
                     Vector3f(X(0) + mu * axis_offset(0),
                              X(1) + mu * axis_offset(1),
@@ -97,7 +97,7 @@ void UniformMeshVolumeCudaDevice<N>::ExtractVertex(
 
             /** Note we share the vertex indices **/
             if (mesh_.type_ & VertexWithNormal) {
-                mesh_.vertex_normals()[voxel_vertex_indices(axis)] =
+                mesh_.vertex_normals_[voxel_vertex_indices(axis)] =
                     tsdf_volume.transform_volume_to_world_.Rotate(
                         (1 - mu) * gradient_0
                             + mu * tsdf_volume.gradient(X_axis)).normalized();
@@ -106,7 +106,7 @@ void UniformMeshVolumeCudaDevice<N>::ExtractVertex(
             if (mesh_.type_ & VertexWithColor) {
                 assert(mu >= 0 && mu <= 1);
                 Vector3b &color_axis = tsdf_volume.color(X_axis);
-                mesh_.vertex_colors()[voxel_vertex_indices(axis)] = Vector3f(
+                mesh_.vertex_colors_[voxel_vertex_indices(axis)] = Vector3f(
                     ((1 - mu) * color_0(0) + mu * color_axis(0)) / 255.0f,
                     ((1 - mu) * color_0(1) + mu * color_axis(1)) / 255.0f,
                     ((1 - mu) * color_0(2) + mu * color_axis(2)) / 255.0f);
@@ -149,7 +149,7 @@ inline void UniformMeshVolumeCudaDevice<N>::ExtractTriangle(
             tri_vertex_indices(2 - vertex) = vertex_indices(
                 X_edge_holder)(edge_shift[edge][3]);
         }
-        mesh_.triangles().push_back(tri_vertex_indices);
+        mesh_.triangles_.push_back(tri_vertex_indices);
     }
 }
 } // cuda

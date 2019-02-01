@@ -67,8 +67,8 @@ public:
 
 template<typename T>
 class MemoryHeapCuda {
-private:
-    std::shared_ptr<MemoryHeapCudaDevice<T>> server_ = nullptr;
+public:
+    std::shared_ptr<MemoryHeapCudaDevice<T>> device_ = nullptr;
     int HeapCounter();
 
 public:
@@ -88,13 +88,6 @@ public:
     /* Hopefully this is only used for debugging. */
     std::vector<int> DownloadHeap();
     std::vector<T> DownloadValue();
-
-    std::shared_ptr<MemoryHeapCudaDevice<T>> &server() {
-        return server_;
-    }
-    const std::shared_ptr<MemoryHeapCudaDevice<T>> &server() const {
-        return server_;
-    }
 };
 
 template<typename T>

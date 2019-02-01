@@ -28,7 +28,7 @@ void TransformEstimationCuda::Initialize(PointCloud &source,
     kdtree_.SetGeometry(target_cpu_);
     corres_matrix_ = Eigen::MatrixXi(1, source.points_.size());
 
-    UpdateServer();
+    UpdateDevice();
 }
 
 void TransformEstimationCuda::GetCorrespondences() {
@@ -54,7 +54,7 @@ void TransformEstimationCuda::GetCorrespondences() {
     correspondences_.SetCorrespondenceMatrix(corres_matrix_);
     correspondences_.Compress();
 
-    UpdateServer();
+    UpdateDevice();
 }
 
 void TransformEstimationCuda::TransformSourcePointCloud(
@@ -82,31 +82,31 @@ void TransformEstimationCuda::ExtractResults(
 
 /** TransformEstimationPointToPointCuda **/
 void TransformEstimationPointToPointCuda::Create() {
-    server_ = std::make_shared<TransformEstimationPointToPointCudaDevice>();
+    device_ = std::make_shared<TransformEstimationPointToPointCudaDevice>();
 
     /** 9 + 3 + 3 + 1 + 1 **/
     results_.Create(17);
 }
 
 void TransformEstimationPointToPointCuda::Release() {
-    if (server_ != nullptr && server_.use_count() == 1) {
+    if (device_ != nullptr && device_.use_count() == 1) {
         source_.Release();
         target_.Release();
         correspondences_.Release();
 
         results_.Release();
     }
-    server_ = nullptr;
+    device_ = nullptr;
 }
 
-void TransformEstimationPointToPointCuda::UpdateServer() {
-    if (server_ != nullptr) {
-        server_->source_ = *source_.server();
-        server_->target_ = *target_.server();
+void TransformEstimationPointToPointCuda::UpdateDevice() {
+    if (device_ != nullptr) {
+        device_->source_ = *source_.device_;
+        device_->target_ = *target_.device_;
 
-        server_->correspondences_ = *correspondences_.server_;
+        device_->correspondences_ = *correspondences_.device_;
 
-        server_->results_ = *results_.server();
+        device_->results_ = *results_.device_;
     }
 }
 
@@ -124,8 +124,8 @@ ComputeResultsAndTransformation() {
     UnpackSums(source_mean, target_mean);
     source_mean /= inliers;
     target_mean /= inliers;
-    server_->source_mean_.FromEigen(source_mean);
-    server_->target_mean_.FromEigen(target_mean);
+    device_->source_mean_.FromEigen(source_mean);
+    device_->target_mean_.FromEigen(target_mean);
 
     /** Pass 2: sum reduction Sigma **/
     TransformEstimationPointToPointCudaKernelCaller::
@@ -156,7 +156,7 @@ ComputeResultsAndTransformation() {
     extrinsic.block<3, 3>(0, 0) = scale * R;
     extrinsic.block<3, 1>(0, 3) = t;
 
-    result.fitness_ = float(inliers) / source_.points().size();
+    result.fitness_ = float(inliers) / source_.points_.size();
     result.inlier_rmse_ = sqrt(rmse / inliers);
     result.transformation_ = extrinsic;
     // result.correspondences_ = correspondences_;
@@ -200,29 +200,29 @@ void TransformEstimationPointToPointCuda::UnpackSigmasAndRmse(
 
 /** TransformEstimationPointToPlaneCuda **/
 void TransformEstimationPointToPlaneCuda::Create() {
-    server_ = std::make_shared<TransformEstimationPointToPlaneCudaDevice>();
+    device_ = std::make_shared<TransformEstimationPointToPlaneCudaDevice>();
     results_.Create(28);
 }
 
 void TransformEstimationPointToPlaneCuda::Release() {
-    if (server_ != nullptr && server_.use_count() == 1) {
+    if (device_ != nullptr && device_.use_count() == 1) {
         source_.Release();
         target_.Release();
         correspondences_.Release();
 
         results_.Release();
     }
-    server_ = nullptr;
+    device_ = nullptr;
 }
 
-void TransformEstimationPointToPlaneCuda::UpdateServer() {
-    if (server_ != nullptr) {
-        server_->source_ = *source_.server();
-        server_->target_ = *target_.server();
+void TransformEstimationPointToPlaneCuda::UpdateDevice() {
+    if (device_ != nullptr) {
+        device_->source_ = *source_.device_;
+        device_->target_ = *target_.device_;
 
-        server_->correspondences_ = *correspondences_.server_;
+        device_->correspondences_ = *correspondences_.device_;
 
-        server_->results_ = *results_.server();
+        device_->results_ = *results_.device_;
     }
 }
 
@@ -245,7 +245,7 @@ ComputeResultsAndTransformation() {
         SolveJacobianSystemAndObtainExtrinsicMatrix(JtJ, Jtr);
 
     int inliers = correspondences_.indices_.size();
-    result.fitness_ = float(inliers) / source_.points().size();
+    result.fitness_ = float(inliers) / source_.points_.size();
     result.inlier_rmse_ = sqrt(rmse / inliers);
     result.transformation_ = extrinsic;
     // result.correspondences_ = correspondences_;

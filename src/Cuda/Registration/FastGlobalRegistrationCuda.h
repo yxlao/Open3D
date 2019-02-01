@@ -30,8 +30,6 @@ public:
 
     ArrayCudaDevice<float> results_;
 
-    ArrayCudaDevice<float> l_;
-
     float par_;
     float scale_global_;
 
@@ -44,7 +42,7 @@ public:
 
 class FastGlobalRegistrationCuda {
 public:
-    std::shared_ptr<FastGlobalRegistrationCudaDevice> server_ = nullptr;
+    std::shared_ptr<FastGlobalRegistrationCudaDevice> device_ = nullptr;
 
 public:
     FastGlobalRegistrationCuda() { Create(); }
@@ -52,7 +50,7 @@ public:
     void Create();
     void Release();
 
-    void UpdateServer();
+    void UpdateDevice();
     void ExtractResults(
         Eigen::Matrix6d &JtJ, Eigen::Vector6d &Jtr, float &rmse);
 
@@ -82,8 +80,6 @@ public:
     ArrayCuda<Vector2i> corres_final_;
 
     ArrayCuda<float> results_;
-
-    ArrayCuda<float> l_;
 
     Eigen::Vector3d mean_source_;
     Eigen::Vector3d mean_target_;

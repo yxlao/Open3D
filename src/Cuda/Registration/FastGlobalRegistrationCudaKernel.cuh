@@ -33,7 +33,7 @@ void FastGlobalRegistrationCudaKernelCaller::ReciprocityTest(
         DIV_CEILING(fgr.corres_source_to_target_.indices_.size(),
             THREAD_1D_UNIT));
     const dim3 threads(THREAD_1D_UNIT);
-    ReciprocityTestKernel<<<blocks, threads>>>(*fgr.server_);
+    ReciprocityTestKernel<<<blocks, threads>>>(*fgr.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
@@ -55,17 +55,17 @@ void TupleTestKernel(FastGlobalRegistrationCudaDevice server,
     Vector2i &pair2 = server.corres_mutual_[rand2];
 
     // collect 3 points from i-th fragment
-    Vector3f &pti0 = server.source_.points()[pair0(0)];
-    Vector3f &pti1 = server.source_.points()[pair1(0)];
-    Vector3f &pti2 = server.source_.points()[pair2(0)];
+    Vector3f &pti0 = server.source_.points_[pair0(0)];
+    Vector3f &pti1 = server.source_.points_[pair1(0)];
+    Vector3f &pti2 = server.source_.points_[pair2(0)];
     float li0 = (pti0 - pti1).norm();
     float li1 = (pti1 - pti2).norm();
     float li2 = (pti2 - pti0).norm();
 
     // collect 3 points from j-th fragment
-    Vector3f &ptj0 = server.target_.points()[pair0(1)];
-    Vector3f &ptj1 = server.target_.points()[pair1(1)];
-    Vector3f &ptj2 = server.target_.points()[pair2(1)];
+    Vector3f &ptj0 = server.target_.points_[pair0(1)];
+    Vector3f &ptj1 = server.target_.points_[pair1(1)];
+    Vector3f &ptj2 = server.target_.points_[pair2(1)];
     float lj0 = (ptj0 - ptj1).norm();
     float lj1 = (ptj1 - ptj2).norm();
     float lj2 = (ptj2 - ptj0).norm();
@@ -92,14 +92,14 @@ void FastGlobalRegistrationCudaKernelCaller::TupleTest(
     curandGenerator_t gen;
     curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT);
     curandSetPseudoRandomGeneratorSeed(gen, (unsigned int) std::time(0));
-    curandGenerateUniform(gen, random_numbers.server()->data(), n);
+    curandGenerateUniform(gen, random_numbers.device_->data(), n);
     curandDestroyGenerator(gen);
 
     const dim3 blocks(DIV_CEILING(tuple_tests, THREAD_1D_UNIT));
     const dim3 threads(THREAD_1D_UNIT);
 
     TupleTestKernel << < blocks, threads >> > (
-        *fgr.server_, *random_numbers.server(), tuple_tests);
+        *fgr.device_, *random_numbers.device_, tuple_tests);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
@@ -112,7 +112,7 @@ void ComputeMeanKernel(PointCloudCudaDevice server,
     __shared__ float local_sum2[THREAD_1D_UNIT];
 
     const int idx = threadIdx.x + blockIdx.x * blockDim.x;
-    if (idx >= server.points().size()) return;
+    if (idx >= server.points_.size()) return;
 
     const int tid = threadIdx.x;
 
@@ -121,7 +121,7 @@ void ComputeMeanKernel(PointCloudCudaDevice server,
     local_sum1[tid] = 0;
     local_sum2[tid] = 0;
 
-    Vector3f &vertex = server.points()[idx];
+    Vector3f &vertex = server.points_[idx];
     local_sum0[tid] = vertex(0);
     local_sum1[tid] = vertex(1);
     local_sum2[tid] = vertex(2);
@@ -162,9 +162,9 @@ Eigen::Vector3d FastGlobalRegistrationCudaKernelCaller::ComputePointCloudSum(
     mean.Create(1);
     mean.Memset(0);
 
-    const dim3 blocks(DIV_CEILING(pcl.points().size(), THREAD_1D_UNIT));
+    const dim3 blocks(DIV_CEILING(pcl.points_.size(), THREAD_1D_UNIT));
     const dim3 threads(THREAD_1D_UNIT);
-    ComputeMeanKernel<<<blocks, threads>>>(*pcl.server(), *mean.server());
+    ComputeMeanKernel<<<blocks, threads>>>(*pcl.device_, *mean.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 
@@ -182,9 +182,9 @@ void NormalizePointCloudKernel(PointCloudCudaDevice server,
     local_max[tid] = 0;
 
     const int idx = threadIdx.x + blockIdx.x * blockDim.x;
-    if (idx >= server.points().size()) return;
+    if (idx >= server.points_.size()) return;
 
-    Vector3f &vertex = server.points()[idx];
+    Vector3f &vertex = server.points_[idx];
     vertex -= mean;
 
     local_max[tid] = vertex.norm();
@@ -219,10 +219,10 @@ double FastGlobalRegistrationCudaKernelCaller::NormalizePointCloud(
     Vector3f mean_cuda;
     mean_cuda.FromEigen(mean);
 
-    const dim3 blocks(DIV_CEILING(pcl.points().size(), THREAD_1D_UNIT));
+    const dim3 blocks(DIV_CEILING(pcl.points_.size(), THREAD_1D_UNIT));
     const dim3 threads(THREAD_1D_UNIT);
     NormalizePointCloudKernel<<<blocks, threads>>>(
-        *pcl.server(), mean_cuda, *scale.server());
+        *pcl.device_, mean_cuda, *scale.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 
@@ -233,17 +233,17 @@ double FastGlobalRegistrationCudaKernelCaller::NormalizePointCloud(
 __global__
 void RescalePointCloudKernel(PointCloudCudaDevice server, float scale) {
     const int idx = threadIdx.x + blockIdx.x * blockDim.x;
-    if (idx >= server.points().size()) return;
+    if (idx >= server.points_.size()) return;
 
-    Vector3f &vertex = server.points()[idx];
+    Vector3f &vertex = server.points_[idx];
     vertex /= scale;
 }
 
 void FastGlobalRegistrationCudaKernelCaller::
 RescalePointCloud(open3d::cuda::PointCloudCuda &pcl, double scale){
-    const dim3 blocks(DIV_CEILING(pcl.points().size(), THREAD_1D_UNIT));
+    const dim3 blocks(DIV_CEILING(pcl.points_.size(), THREAD_1D_UNIT));
     const dim3 threads(THREAD_1D_UNIT);
-    RescalePointCloudKernel<<<blocks, threads>>>(*pcl.server(), (float) scale);
+    RescalePointCloudKernel<<<blocks, threads>>>(*pcl.device_, (float) scale);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
@@ -280,12 +280,8 @@ void ComputeResultsAndTransformationKernel(
     ComputeJtJAndJtr(jacobian_x, jacobian_y, jacobian_z,
         residual, JtJ, Jtr);
 
-    float rmse = residual.dot(residual)
-        + fgr.par_ * (1 - lij) * (1 - lij);
-//
-//    printf("gpu- (%d %d): (%f %f %f %f %f %f), %f\n",
-//        source_idx, target_idx,
-//        Jtr(0), Jtr(1), Jtr(2), Jtr(3), Jtr(4), Jtr(5), rmse);
+    float rmse = residual.dot(residual) + fgr.par_ * (1 - lij) * (1 - lij);
+
     /** Reduce Sum JtJ **/
 #pragma unroll 1
     for (size_t i = 0; i < 21; i += 3) {
@@ -392,7 +388,7 @@ void FastGlobalRegistrationCudaKernelCaller::ComputeResultsAndTransformation(
     const dim3 blocks(DIV_CEILING(fgr.corres_final_.size(), THREAD_1D_UNIT));
     const dim3 threads(THREAD_1D_UNIT);
     ComputeResultsAndTransformationKernel<<<blocks, threads>>>(
-        *fgr.server_);
+        *fgr.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }

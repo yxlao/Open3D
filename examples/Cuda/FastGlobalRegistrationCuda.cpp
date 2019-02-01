@@ -16,15 +16,16 @@
 #include <Cuda/Registration/FastGlobalRegistrationCuda.h>
 #include "Utils.h"
 
-using namespace open3d;
 int main(int argc, char **argv) {
+    using namespace open3d;
+
     SetVerbosityLevel(VerbosityLevel::VerboseDebug);
 
     std::string filepath = "/home/wei/Work/data/stanford/lounge/fragments";
     auto source_origin = CreatePointCloudFromFile(
-        filepath + "/fragment_000.ply");
+        filepath + "/fragment_005.ply");
     auto target_origin = CreatePointCloudFromFile(
-        filepath + "/fragment_003.ply");
+        filepath + "/fragment_008.ply");
 
     auto source = VoxelDownSample(*source_origin, 0.05);
     auto target = VoxelDownSample(*target_origin, 0.05);

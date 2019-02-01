@@ -89,8 +89,8 @@ public:
 
 template<typename VecType>
 class ImageCuda {
-private:
-    std::shared_ptr<ImageCudaDevice<VecType>> server_ = nullptr;
+public:
+    std::shared_ptr<ImageCudaDevice<VecType>> device_ = nullptr;
 
 public:
     int width_;
@@ -113,7 +113,7 @@ public:
      */
     bool Create(int width, int height);
     void Release();
-    void UpdateServer();
+    void UpdateDevice();
 
     void CopyFrom(const ImageCuda<VecType> &other);
     void Upload(Image &image);
@@ -162,13 +162,6 @@ public:
     /********** Legacy **********/
     void Upload(cv::Mat &m);
     cv::Mat DownloadMat();
-
-    std::shared_ptr<ImageCudaDevice<VecType>> &server() {
-        return server_;
-    }
-    const std::shared_ptr<ImageCudaDevice<VecType>> &server() const {
-        return server_;
-    }
 };
 
 template<typename VecType>

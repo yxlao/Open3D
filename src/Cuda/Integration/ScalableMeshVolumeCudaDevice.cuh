@@ -218,11 +218,11 @@ void ScalableMeshVolumeCudaDevice<N>::ExtractVertex(
                          Xlocal(2) + mu * axis_offset(2)),
                 Xsv);
 
-            voxel_vertex_indices(axis) = mesh_.vertices().push_back(
+            voxel_vertex_indices(axis) = mesh_.vertices_.push_back(
                 tsdf_volume.voxelf_to_world(Xlocal_interp_axis));
 
             if (mesh_.type_ & VertexWithNormal) {
-                mesh_.vertex_normals()[voxel_vertex_indices(axis)] =
+                mesh_.vertex_normals_[voxel_vertex_indices(axis)] =
                     tsdf_volume.transform_volume_to_world_.Rotate(
                             (1 - mu) * gradient_0
                                 + mu * subvolume->gradient(Xlocal_axis))
@@ -230,9 +230,8 @@ void ScalableMeshVolumeCudaDevice<N>::ExtractVertex(
             }
 
             if (mesh_.type_ & VertexWithColor) {
-                Vector3b
-                color_axis = subvolume->color(Xlocal_axis);
-                mesh_.vertex_colors()[voxel_vertex_indices(axis)] = Vector3f(
+                Vector3b color_axis = subvolume->color(Xlocal_axis);
+                mesh_.vertex_colors_[voxel_vertex_indices(axis)] = Vector3f(
                     ((1 - mu) * color_0(0) + mu * color_axis(0)) / 255.0f,
                     ((1 - mu) * color_0(1) + mu * color_axis(1)) / 255.0f,
                     ((1 - mu) * color_0(2) + mu * color_axis(2)) / 255.0f);
@@ -304,11 +303,11 @@ void ScalableMeshVolumeCudaDevice<N>::ExtractVertexOnBoundary(
                          Xlocal(2) + mu * axis_offset(2)),
                 Xsv);
 
-            voxel_vertex_indices(axis) = mesh_.vertices().push_back(
+            voxel_vertex_indices(axis) = mesh_.vertices_.push_back(
                 tsdf_volume.voxelf_to_world(Xlocal_interp_axis));
 
             if (mesh_.type_ & VertexWithNormal) {
-                mesh_.vertex_normals()[voxel_vertex_indices(axis)] =
+                mesh_.vertex_normals_[voxel_vertex_indices(axis)] =
                     tsdf_volume.transform_volume_to_world_.Rotate(
                         (1 - mu) * gradient_0
                             + mu * tsdf_volume.gradient(
@@ -316,7 +315,7 @@ void ScalableMeshVolumeCudaDevice<N>::ExtractVertexOnBoundary(
             }
 
             if (mesh_.type_ & VertexWithColor) {
-                mesh_.vertex_colors()[voxel_vertex_indices(axis)] = Vector3f(
+                mesh_.vertex_colors_[voxel_vertex_indices(axis)] = Vector3f(
                     ((1 - mu) * color_0(0) + mu * color_axis(0)) / 255.0f,
                     ((1 - mu) * color_0(1) + mu * color_axis(1)) / 255.0f,
                     ((1 - mu) * color_0(2) + mu * color_axis(2)) / 255.0f);
@@ -363,7 +362,7 @@ void ScalableMeshVolumeCudaDevice<N>::ExtractTriangle(
             tri_vertex_indices(2 - vertex) = vertex_indices(
                 Xlocal_edge_holder, subvolume_idx)(edge_shift[edge][3]);
         }
-        mesh_.triangles().push_back(tri_vertex_indices);
+        mesh_.triangles_.push_back(tri_vertex_indices);
     }
 }
 
@@ -409,7 +408,7 @@ void ScalableMeshVolumeCudaDevice<N>::ExtractTriangleOnBoundary(
                 Xlocal_edge_holder_in_neighbor, neighbor_subvolume_idx)(
                 edge_shift[edge][3]);
         }
-        mesh_.triangles().push_back(tri_vertex_indices);
+        mesh_.triangles_.push_back(tri_vertex_indices);
     }
 }
 } // cuda

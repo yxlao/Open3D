@@ -35,7 +35,7 @@ ScalableTSDFVolumeCuda<N>::ScalableTSDFVolumeCuda(
 template<size_t N>
 ScalableTSDFVolumeCuda<N>::ScalableTSDFVolumeCuda(
     const ScalableTSDFVolumeCuda<N> &other) {
-    server_ = other.server();
+    device_ = other.device_;
     hash_table_ = other.hash_table();
 
     bucket_count_ = other.bucket_count_;
@@ -52,7 +52,7 @@ ScalableTSDFVolumeCuda<N> &ScalableTSDFVolumeCuda<N>::operator=(
     if (this != &other) {
         Release();
 
-        server_ = other.server();
+        device_ = other.device_;
         hash_table_ = other.hash_table();
 
         bucket_count_ = other.bucket_count_;
@@ -76,80 +76,80 @@ void ScalableTSDFVolumeCuda<N>::Create(
     int bucket_count, int value_capacity) {
     assert(bucket_count > 0 && value_capacity > 0);
 
-    if (server_ != nullptr) {
+    if (device_ != nullptr) {
         PrintError("[ScalableTSDFVolumeCuda] Already created, abort!\n");
         return;
     }
 
     bucket_count_ = bucket_count;
     value_capacity_ = value_capacity;
-    server_ = std::make_shared<ScalableTSDFVolumeCudaDevice<N>>();
+    device_ = std::make_shared<ScalableTSDFVolumeCudaDevice<N>>();
     hash_table_.Create(bucket_count, value_capacity);
     active_subvolume_entry_array_.Create(value_capacity);
 
     /** Comparing to 512^3, we can hold (sparsely) at most (512^2) 8^3 cubes.
      *  That is 262144. **/
     const int NNN = N * N * N;
-    CheckCuda(cudaMalloc(&server_->tsdf_memory_pool_,
+    CheckCuda(cudaMalloc(&device_->tsdf_memory_pool_,
                          sizeof(float) * NNN * value_capacity));
-    CheckCuda(cudaMalloc(&server_->weight_memory_pool_,
+    CheckCuda(cudaMalloc(&device_->weight_memory_pool_,
                          sizeof(uchar) * NNN * value_capacity));
-    CheckCuda(cudaMalloc(&server_->color_memory_pool_,
+    CheckCuda(cudaMalloc(&device_->color_memory_pool_,
                          sizeof(Vector3b) * NNN * value_capacity));
 
-    CheckCuda(cudaMalloc(&server_->active_subvolume_indices_,
+    CheckCuda(cudaMalloc(&device_->active_subvolume_indices_,
                          sizeof(int) * value_capacity));
-    UpdateServer();
+    UpdateDevice();
     Reset();
 
     ScalableTSDFVolumeCudaKernelCaller<N>::
     CreateScalableTSDFVolumesKernelCaller(
-        *server_, value_capacity_);
+        *device_, value_capacity_);
 }
 
 template<size_t N>
 void ScalableTSDFVolumeCuda<N>::Reset() {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     const int NNN = N * N * N;
-    CheckCuda(cudaMemset(server_->tsdf_memory_pool_, 0,
+    CheckCuda(cudaMemset(device_->tsdf_memory_pool_, 0,
                          sizeof(float) * NNN * value_capacity_));
-    CheckCuda(cudaMemset(server_->weight_memory_pool_, 0,
+    CheckCuda(cudaMemset(device_->weight_memory_pool_, 0,
                          sizeof(uchar) * NNN * value_capacity_));
-    CheckCuda(cudaMemset(server_->color_memory_pool_, 0,
+    CheckCuda(cudaMemset(device_->color_memory_pool_, 0,
                          sizeof(Vector3b) * NNN * value_capacity_));
 }
 
 template<size_t N>
 void ScalableTSDFVolumeCuda<N>::Release() {
-    if (server_ != nullptr && server_.use_count() == 1) {
-        CheckCuda(cudaFree(server_->tsdf_memory_pool_));
-        CheckCuda(cudaFree(server_->weight_memory_pool_));
-        CheckCuda(cudaFree(server_->color_memory_pool_));
-        CheckCuda(cudaFree(server_->active_subvolume_indices_));
+    if (device_ != nullptr && device_.use_count() == 1) {
+        CheckCuda(cudaFree(device_->tsdf_memory_pool_));
+        CheckCuda(cudaFree(device_->weight_memory_pool_));
+        CheckCuda(cudaFree(device_->color_memory_pool_));
+        CheckCuda(cudaFree(device_->active_subvolume_indices_));
     }
 
-    server_ = nullptr;
+    device_ = nullptr;
     hash_table_.Release();
     active_subvolume_entry_array_.Release();
 }
 
 template<size_t N>
-void ScalableTSDFVolumeCuda<N>::UpdateServer() {
-    if (server_ != nullptr) {
-        server_->hash_table_ = *hash_table_.server();
-        server_->active_subvolume_entry_array_ =
-            *active_subvolume_entry_array_.server();
+void ScalableTSDFVolumeCuda<N>::UpdateDevice() {
+    if (device_ != nullptr) {
+        device_->hash_table_ = *hash_table_.device_;
+        device_->active_subvolume_entry_array_ =
+            *active_subvolume_entry_array_.device_;
 
-        server_->bucket_count_ = bucket_count_;
-        server_->value_capacity_ = value_capacity_;
+        device_->bucket_count_ = bucket_count_;
+        device_->value_capacity_ = value_capacity_;
 
-        server_->voxel_length_ = voxel_length_;
-        server_->inv_voxel_length_ = 1.0f / voxel_length_;
-        server_->sdf_trunc_ = sdf_trunc_;
-        server_->transform_volume_to_world_ =
+        device_->voxel_length_ = voxel_length_;
+        device_->inv_voxel_length_ = 1.0f / voxel_length_;
+        device_->sdf_trunc_ = sdf_trunc_;
+        device_->transform_volume_to_world_ =
             transform_volume_to_world_;
-        server_->transform_world_to_volume_ =
+        device_->transform_world_to_volume_ =
             transform_volume_to_world_.Inverse();
     }
 }
@@ -160,7 +160,7 @@ std::pair<std::vector<Vector3i>,
                                  std::vector<uchar>,
                                  std::vector<Vector3b>>>>
 ScalableTSDFVolumeCuda<N>::DownloadVolumes() {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     auto hash_table = hash_table_.Download();
     std::vector<Vector3i> &keys = std::get<0>(hash_table);
@@ -206,29 +206,29 @@ void ScalableTSDFVolumeCuda<N>::TouchSubvolumes(
     ImageCuda<Vector1f> &depth,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     ScalableTSDFVolumeCudaKernelCaller<N>::
     TouchSubvolumesKernelCaller(
-        *server_, *depth.server(), camera, transform_camera_to_world);
+        *device_, *depth.device_, camera, transform_camera_to_world);
 }
 
 template<size_t N>
 void ScalableTSDFVolumeCuda<N>::GetSubvolumesInFrustum(
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     ScalableTSDFVolumeCudaKernelCaller<N>::
     GetSubvolumesInFrustumKernelCaller(
-        *server_, camera, transform_camera_to_world, bucket_count_);
+        *device_, camera, transform_camera_to_world, bucket_count_);
 }
 
 template<size_t N>
 void ScalableTSDFVolumeCuda<N>::GetAllSubvolumes() {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
     ScalableTSDFVolumeCudaKernelCaller<N>::
-    GetAllSubvolumesKernelCaller(*server_, bucket_count_);
+    GetAllSubvolumesKernelCaller(*device_, bucket_count_);
 }
 
 template<size_t N>
@@ -236,20 +236,20 @@ void ScalableTSDFVolumeCuda<N>::IntegrateSubvolumes(
     RGBDImageCuda &rgbd,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     const int active_subvolumes = active_subvolume_entry_array_.size();
     ScalableTSDFVolumeCudaKernelCaller<N>::
     IntegrateSubvolumesKernelCaller(
-        *server_, *rgbd.server(), camera, transform_camera_to_world,
+        *device_, *rgbd.device_, camera, transform_camera_to_world,
         active_subvolumes);
 }
 
 template<size_t N>
 void ScalableTSDFVolumeCuda<N>::ResetActiveSubvolumeIndices() {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
-    CheckCuda(cudaMemset(server_->active_subvolume_indices_, 0xff,
+    CheckCuda(cudaMemset(device_->active_subvolume_indices_, 0xff,
                          sizeof(int) * value_capacity_));
 }
 
@@ -258,11 +258,11 @@ void ScalableTSDFVolumeCuda<N>::Integrate(
     RGBDImageCuda &rgbd,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     hash_table_.ResetLocks();
     active_subvolume_entry_array_.set_iterator(0);
-    TouchSubvolumes(rgbd.depthf(), camera, transform_camera_to_world);
+    TouchSubvolumes(rgbd.depthf_, camera, transform_camera_to_world);
 
     ResetActiveSubvolumeIndices();
     GetSubvolumesInFrustum(camera, transform_camera_to_world);
@@ -274,11 +274,11 @@ void ScalableTSDFVolumeCuda<N>::RayCasting(
     ImageCuda<Vector3f> &image,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     ScalableTSDFVolumeCudaKernelCaller<N>::
     RayCastingKernelCaller(
-        *server_, *image.server(), camera, transform_camera_to_world);
+        *device_, *image.device_, camera, transform_camera_to_world);
 }
 } // cuda
 } // open3d

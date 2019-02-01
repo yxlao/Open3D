@@ -39,7 +39,7 @@ public:
 
     virtual void Create() = 0;
     virtual void Release() = 0;
-    virtual void UpdateServer() = 0;
+    virtual void UpdateDevice() = 0;
     virtual RegistrationResultCuda ComputeResultsAndTransformation() = 0;
 
     virtual void Initialize(PointCloud &source, PointCloud &target,
@@ -95,7 +95,7 @@ public:
 
 class TransformEstimationPointToPointCuda : public TransformEstimationCuda {
 public:
-    std::shared_ptr<TransformEstimationPointToPointCudaDevice> server_
+    std::shared_ptr<TransformEstimationPointToPointCudaDevice> device_
         = nullptr;
 
 public:
@@ -109,7 +109,7 @@ public:
 
     void Create() override;
     void Release() override;
-    void UpdateServer() override;
+    void UpdateDevice() override;
 
     RegistrationResultCuda ComputeResultsAndTransformation() override;
 
@@ -161,7 +161,7 @@ public:
 
 class TransformEstimationPointToPlaneCuda : public TransformEstimationCuda {
 public:
-    std::shared_ptr<TransformEstimationPointToPlaneCudaDevice> server_
+    std::shared_ptr<TransformEstimationPointToPlaneCudaDevice> device_
         = nullptr;
 public:
     TransformEstimationPointToPlaneCuda() { Create(); };
@@ -173,7 +173,7 @@ public:
 
     void Create() override;
     void Release() override;
-    void UpdateServer() override;
+    void UpdateDevice() override;
 
     RegistrationResultCuda ComputeResultsAndTransformation() override;
 

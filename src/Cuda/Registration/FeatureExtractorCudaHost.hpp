@@ -16,7 +16,7 @@ FeatureExtractorCuda::~FeatureExtractorCuda() {
 }
 
 FeatureExtractorCuda::FeatureExtractorCuda(const FeatureExtractorCuda &other) {
-    server_ = other.server_;
+    device_ = other.device_;
     neighbors_ = other.neighbors_;
     spfh_features_ = other.spfh_features_;
     fpfh_features_ = other.fpfh_features_;
@@ -25,7 +25,7 @@ FeatureExtractorCuda::FeatureExtractorCuda(const FeatureExtractorCuda &other) {
 
 FeatureExtractorCuda& FeatureExtractorCuda::operator=(const FeatureExtractorCuda &other) {
     if (this != &other) {
-        server_ = other.server_;
+        device_ = other.device_;
         neighbors_ = other.neighbors_;
         spfh_features_ = other.spfh_features_;
         fpfh_features_ = other.fpfh_features_;
@@ -35,28 +35,28 @@ FeatureExtractorCuda& FeatureExtractorCuda::operator=(const FeatureExtractorCuda
 }
 
 void FeatureExtractorCuda::Create() {
-    if (server_ == nullptr) {
-        server_ = std::make_shared<FeatureCudaDevice>();
+    if (device_ == nullptr) {
+        device_ = std::make_shared<FeatureCudaDevice>();
     }
 }
 
 void FeatureExtractorCuda::Release() {
-    if (server_ != nullptr && server_.use_count() == 1) {
+    if (device_ != nullptr && device_.use_count() == 1) {
         pcl_.Release();
         neighbors_.Release();
         spfh_features_.Release();
         fpfh_features_.Release();
     }
 
-    server_ = nullptr;
+    device_ = nullptr;
 }
 
-void FeatureExtractorCuda::UpdateServer() {
-    if (server_ != nullptr) {
-        server_->pcl_ = *pcl_.server();
-        server_->neighbors_ = *neighbors_.server_;
-        server_->spfh_features_ = *spfh_features_.server();
-        server_->fpfh_features_ = *fpfh_features_.server();
+void FeatureExtractorCuda::UpdateDevice() {
+    if (device_ != nullptr) {
+        device_->pcl_ = *pcl_.device_;
+        device_->neighbors_ = *neighbors_.device_;
+        device_->spfh_features_ = *spfh_features_.device_;
+        device_->fpfh_features_ = *fpfh_features_.device_;
     }
 }
 
@@ -102,7 +102,7 @@ void FeatureExtractorCuda::Compute(
 
     neighbors_.SetCorrespondenceMatrix(corres_matrix);
     neighbors_.Compress();
-    UpdateServer();
+    UpdateDevice();
 
     FeatureCudaKernelCaller::ComputeSPFHFeature(*this);
     FeatureCudaKernelCaller::ComputeFPFHFeature(*this);

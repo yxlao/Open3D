@@ -187,11 +187,11 @@ bool SimpleShaderForPointCloudCuda::PrepareBinding(const Geometry &geometry,
         return false;
     }
 
-    vertices = pcl.points().server()->data();
-    colors = pcl.colors().server()->data();
+    vertices = pcl.points_.device_->data();
+    colors = pcl.colors_.device_->data();
     triangles = nullptr;
 
-    vertex_size = pcl.points().size();
+    vertex_size = pcl.points_.size();
     triangle_size = 0;
 
     draw_arrays_mode_ = GL_POINTS;
@@ -245,12 +245,12 @@ bool SimpleShaderForTriangleMeshCuda::PrepareBinding(const Geometry &geometry,
         return false;
     }
 
-    vertices = mesh.vertices().server()->data();
-    colors = mesh.vertex_colors().server()->data();
-    triangles = mesh.triangles().server()->data();
+    vertices = mesh.vertices_.device_->data();
+    colors = mesh.vertex_colors_.device_->data();
+    triangles = mesh.triangles_.device_->data();
 
-    vertex_size = mesh.vertices().size();
-    triangle_size = mesh.triangles().size();
+    vertex_size = mesh.vertices_.size();
+    triangle_size = mesh.triangles_.size();
 
     draw_arrays_mode_ = GL_TRIANGLES;
     draw_arrays_size_ = GLsizei(triangle_size * 3);

@@ -20,7 +20,7 @@
 namespace open3d {
 namespace cuda {
 class PointCloudCudaDevice {
-private:
+public:
     ArrayCudaDevice<Vector3f> points_;
     ArrayCudaDevice<Vector3f> normals_;
     ArrayCudaDevice<Vector3f> colors_;
@@ -32,34 +32,11 @@ private:
 public:
     VertexType type_;
     int max_points_;
-
-public:
-    __HOSTDEVICE__ inline ArrayCudaDevice<Vector3f> &points() {
-        return points_;
-    }
-    __HOSTDEVICE__ inline ArrayCudaDevice<Vector3f> &normals() {
-        return normals_;
-    }
-    __HOSTDEVICE__ inline ArrayCudaDevice<Vector3f> &colors() {
-        return colors_;
-    }
-    __HOSTDEVICE__ inline ArrayCudaDevice<float> &radius() {
-        return radius_;
-    }
-    __HOSTDEVICE__ inline ArrayCudaDevice<float> &confidences() {
-        return confidences_;
-    }
-    __HOSTDEVICE__ inline ArrayCudaDevice<int> &indices() {
-        return indices_;
-    }
-
-public:
-    friend class PointCloudCuda;
 };
 
 class PointCloudCuda : public Geometry3D {
-private:
-    std::shared_ptr<PointCloudCudaDevice> server_ = nullptr;
+public:
+    std::shared_ptr<PointCloudCudaDevice> device_ = nullptr;
     ArrayCuda<Vector3f> points_;
     ArrayCuda<Vector3f> normals_;
     ArrayCuda<Vector3f> colors_;
@@ -81,7 +58,7 @@ public:
     ~PointCloudCuda() override;
 
     void Reset();
-    void UpdateServer();
+    void UpdateDevice();
 
     void Create(VertexType type, int max_points);
     void Release();
@@ -104,27 +81,6 @@ public:
     Eigen::Vector3d GetMinBound() const override;
     Eigen::Vector3d GetMaxBound() const override;
     void Transform(const Eigen::Matrix4d &transformation) override;
-
-public:
-    ArrayCuda<Vector3f> &points() { return points_; }
-    const ArrayCuda<Vector3f> &points() const { return points_; }
-    ArrayCuda<Vector3f> &normals() { return normals_; }
-    const ArrayCuda<Vector3f> &normals() const { return normals_; }
-    ArrayCuda<Vector3f> &colors() { return colors_; }
-    const ArrayCuda<Vector3f> &colors() const { return colors_; }
-    ArrayCuda<float> &radius() { return radius_; }
-    const ArrayCuda<float> &radius() const { return radius_; }
-    ArrayCuda<float> &confidences() { return confidences_; }
-    const ArrayCuda<float> &confidences() const { return confidences_; }
-    ArrayCuda<int> &indices() { return indices_; }
-    const ArrayCuda<int> &indices() const { return indices_; }
-
-    std::shared_ptr<PointCloudCudaDevice> &server() {
-        return server_;
-    }
-    const std::shared_ptr<PointCloudCudaDevice> &server() const {
-        return server_;
-    }
 };
 
 class PointCloudCudaKernelCaller {

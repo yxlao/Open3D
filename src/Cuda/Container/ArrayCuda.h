@@ -39,8 +39,8 @@ public:
 
 template<typename T>
 class ArrayCuda {
-private:
-    std::shared_ptr<ArrayCudaDevice<T>> server_ = nullptr;
+public:
+    std::shared_ptr<ArrayCudaDevice<T>> device_ = nullptr;
 
 public:
     int max_capacity_;
@@ -75,13 +75,6 @@ public:
 
     int size() const;
     void set_iterator(int iterator_position);
-
-    std::shared_ptr<ArrayCudaDevice<T>> &server() {
-        return server_;
-    }
-    const std::shared_ptr<ArrayCudaDevice<T>> &server() const {
-        return server_;
-    }
 };
 
 /** For less instantiation code! **/

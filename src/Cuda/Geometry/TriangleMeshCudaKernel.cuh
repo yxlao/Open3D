@@ -18,8 +18,8 @@ void GetMinBoundKernel(TriangleMeshCudaDevice server,
 
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
     int tid = threadIdx.x;
-    Vector3f vertex = idx < server.vertices().size() ?
-                      server.vertices()[idx] : Vector3f(1e10f);
+    Vector3f vertex = idx < server.vertices_.size() ?
+                      server.vertices_[idx] : Vector3f(1e10f);
 
     local_min_x[tid] = vertex(0);
     local_min_y[tid] = vertex(1);
@@ -61,8 +61,8 @@ void GetMaxBoundKernel(TriangleMeshCudaDevice server,
 
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
     int tid = threadIdx.x;
-    Vector3f vertex = idx < server.vertices().size() ?
-                      server.vertices()[idx] : Vector3f(-1e10f);
+    Vector3f vertex = idx < server.vertices_.size() ?
+                      server.vertices_[idx] : Vector3f(-1e10f);
 
     local_max_x[tid] = vertex(0);
     local_max_y[tid] = vertex(1);
@@ -99,13 +99,13 @@ void TriangleMeshCudaKernelCaller::GetMaxBoundKernelCaller(
 __global__
 void TransformKernel(TriangleMeshCudaDevice server, TransformCuda transform) {
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
-    if (idx >= server.vertices().size()) return;
+    if (idx >= server.vertices_.size()) return;
 
-    Vector3f &vertex_position = server.vertices()[idx];
+    Vector3f &vertex_position = server.vertices_[idx];
     vertex_position = transform * vertex_position;
 
     if (server.type_ & VertexWithNormal) {
-        Vector3f &vertex_normal = server.vertex_normals()[idx];
+        Vector3f &vertex_normal = server.vertex_normals_[idx];
         vertex_normal = transform.Rotate(vertex_normal);
     }
 }

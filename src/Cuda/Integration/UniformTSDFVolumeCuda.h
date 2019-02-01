@@ -113,8 +113,8 @@ public:
 
 template<size_t N>
 class UniformTSDFVolumeCuda {
-private:
-    std::shared_ptr<UniformTSDFVolumeCudaDevice<N>> server_ = nullptr;
+public:
+    std::shared_ptr<UniformTSDFVolumeCudaDevice<N>> device_ = nullptr;
 
 public:
     float voxel_length_;
@@ -131,7 +131,7 @@ public:
 
     void Create();
     void Release();
-    void UpdateServer();
+    void UpdateDevice();
 
     void Reset();
 
@@ -148,14 +148,6 @@ public:
     void RayCasting(ImageCuda<Vector3f> &image,
                     PinholeCameraIntrinsicCuda &camera,
                     TransformCuda &transform_camera_to_world);
-
-public:
-    std::shared_ptr<UniformTSDFVolumeCudaDevice<N>> &server() {
-        return server_;
-    }
-    const std::shared_ptr<UniformTSDFVolumeCudaDevice<N>> &server() const {
-        return server_;
-    }
 };
 
 template<size_t N>

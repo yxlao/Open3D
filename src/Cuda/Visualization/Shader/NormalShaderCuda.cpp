@@ -75,18 +75,18 @@ bool NormalShaderCuda::BindGeometry(const Geometry &geometry,
     // Create buffers and bind the geometry
     RegisterResource(vertex_position_cuda_resource_,
                      GL_ARRAY_BUFFER, vertex_position_buffer_,
-                     mesh.vertices().server()->data(),
-                     mesh.vertices().size());
+                     mesh.vertices_.device_->data(),
+                     mesh.vertices_.size());
 
     RegisterResource(vertex_normal_cuda_resource_,
                      GL_ARRAY_BUFFER, vertex_normal_buffer_,
-                     mesh.vertex_normals().server()->data(),
-                     mesh.vertex_normals().size());
+                     mesh.vertex_normals_.device_->data(),
+                     mesh.vertex_normals_.size());
 
     RegisterResource(triangle_cuda_resource_,
                      GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_,
-                     mesh.triangles().server()->data(),
-                     mesh.triangles().size());
+                     mesh.triangles_.device_->data(),
+                     mesh.triangles_.size());
 
     bound_ = true;
     return true;
@@ -178,7 +178,7 @@ bool NormalShaderForTriangleMeshCuda::PrepareBinding(const Geometry &geometry,
     }
 
     draw_arrays_mode_ = GL_TRIANGLES;
-    draw_arrays_size_ = GLsizei(mesh.triangles().size() * 3);
+    draw_arrays_size_ = GLsizei(mesh.triangles_.size() * 3);
     return true;
 }
 

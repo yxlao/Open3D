@@ -11,11 +11,11 @@ namespace open3d {
 namespace cuda {
 /**
  * Client end
- * TODO: Think about how do we use server_ ... we don't want copy
+ * TODO: Think about how do we use device_ ... we don't want copy
  * constructors for such a large system...
  */
 template<size_t N>
-ICRGBDOdometryCuda<N>::ICRGBDOdometryCuda() : server_(nullptr) {}
+ICRGBDOdometryCuda<N>::ICRGBDOdometryCuda() : device_(nullptr) {}
 
 template<size_t N>
 ICRGBDOdometryCuda<N>::~ICRGBDOdometryCuda() {
@@ -39,7 +39,7 @@ template<size_t N>
 bool ICRGBDOdometryCuda<N>::Create(int width, int height) {
     assert(width > 0 && height > 0);
 
-    if (server_ != nullptr) {
+    if (device_ != nullptr) {
         if (source_[0].width_ != width || source_[0].height_ != height) {
             PrintError("[ICRGBDOdometryCuda] Incompatible image size, "
                        "width: %d vs %d, height: %d vs %d, "
@@ -50,7 +50,7 @@ bool ICRGBDOdometryCuda<N>::Create(int width, int height) {
         return true;
     }
 
-    server_ = std::make_shared<ICRGBDOdometryCudaDevice<N>>();
+    device_ = std::make_shared<ICRGBDOdometryCudaDevice<N>>();
 
     source_on_target_.Create(width, height);
 
@@ -65,7 +65,7 @@ bool ICRGBDOdometryCuda<N>::Create(int width, int height) {
     results_.Create(29); // 21 + 6 + 2
     correspondences_.Create(width * height);
 
-    UpdateServer();
+    UpdateDevice();
     return true;
 }
 
@@ -83,48 +83,48 @@ void ICRGBDOdometryCuda<N>::Release() {
     results_.Release();
     correspondences_.Release();
 
-    server_ = nullptr;
+    device_ = nullptr;
 }
 
 template<size_t N>
-void ICRGBDOdometryCuda<N>::UpdateServer() {
-    if (server_ != nullptr) {
-        source_on_target_.UpdateServer();
-        server_->source_on_target_ = *source_on_target_.server();
+void ICRGBDOdometryCuda<N>::UpdateDevice() {
+    if (device_ != nullptr) {
+        source_on_target_.UpdateDevice();
+        device_->source_on_target_ = *source_on_target_.device_;
 
-        source_.UpdateServer();
-        server_->source_ = *source_.server();
+        source_.UpdateDevice();
+        device_->source_ = *source_.device_;
 
-        target_.UpdateServer();
-        server_->target_ = *target_.server();
+        target_.UpdateDevice();
+        device_->target_ = *target_.device_;
 
-        source_dx_.UpdateServer();
-        server_->source_dx_ = *source_dx_.server();
+        source_dx_.UpdateDevice();
+        device_->source_dx_ = *source_dx_.device_;
 
-        source_dy_.UpdateServer();
-        server_->source_dy_ = *source_dy_.server();
+        source_dy_.UpdateDevice();
+        device_->source_dy_ = *source_dy_.device_;
 
-        source_intensity_jacobian_.UpdateServer();
-        server_->source_intensity_jacobian_ =
-            *source_intensity_jacobian_.server();
-        source_depth_jacobian_.UpdateServer();
-        server_->source_depth_jacobian_ =
-            *source_depth_jacobian_.server();
+        source_intensity_jacobian_.UpdateDevice();
+        device_->source_intensity_jacobian_ =
+            *source_intensity_jacobian_.device_;
+        source_depth_jacobian_.UpdateDevice();
+        device_->source_depth_jacobian_ =
+            *source_depth_jacobian_.device_;
 
-        server_->results_ = *results_.server();
-        server_->correspondences_ = *correspondences_.server();
+        device_->results_ = *results_.device_;
+        device_->correspondences_ = *correspondences_.device_;
 
         /** Update parameters **/
-        server_->sigma_ = sigma_;
-        server_->sqrt_coeff_D_ = sqrtf(sigma_);
-        server_->sqrt_coeff_I_ = sqrtf(1 - sigma_);
-        server_->depth_near_threshold_ = (float) option_.min_depth_;
-        server_->depth_far_threshold_ = (float) option_.max_depth_;
-        server_->depth_diff_threshold_ = (float) option_.max_depth_diff_;
+        device_->sigma_ = sigma_;
+        device_->sqrt_coeff_D_ = sqrtf(sigma_);
+        device_->sqrt_coeff_I_ = sqrtf(1 - sigma_);
+        device_->depth_near_threshold_ = (float) option_.min_depth_;
+        device_->depth_far_threshold_ = (float) option_.max_depth_;
+        device_->depth_diff_threshold_ = (float) option_.max_depth_diff_;
 
-        server_->intrinsics_[0] = PinholeCameraIntrinsicCuda(intrinsics_);
+        device_->intrinsics_[0] = PinholeCameraIntrinsicCuda(intrinsics_);
         for (size_t i = 1; i < N; ++i) {
-            server_->intrinsics_[i] = server_->intrinsics_[i - 1].Downsample();
+            device_->intrinsics_[i] = device_->intrinsics_[i - 1].Downsample();
         }
     }
 }
@@ -167,38 +167,38 @@ void ICRGBDOdometryCuda<N>::Initialize(
     target_raw_.Build(target);
     for (size_t i = 0; i < N; ++i) {
         /* Filter raw data */
-        source_raw_[i].depthf().Gaussian(
-            source_[i].depthf(), Gaussian3x3, true);
-        source_raw_[i].intensity().Gaussian(
-            source_[i].intensity(), Gaussian3x3, false);
+        source_raw_[i].depthf_.Gaussian(
+            source_[i].depthf_, Gaussian3x3, true);
+        source_raw_[i].intensity_.Gaussian(
+            source_[i].intensity_, Gaussian3x3, false);
 
-        source_[i].color().CopyFrom(source_raw_[i].color());
+        source_[i].color_.CopyFrom(source_raw_[i].color_);
 
-        target_raw_[i].depthf().Gaussian(
-            target_[i].depthf(), Gaussian3x3, true);
-        target_raw_[i].intensity().Gaussian(
-            target_[i].intensity(), Gaussian3x3, false);
+        target_raw_[i].depthf_.Gaussian(
+            target_[i].depthf_, Gaussian3x3, true);
+        target_raw_[i].intensity_.Gaussian(
+            target_[i].intensity_, Gaussian3x3, false);
 
-        target_[i].color().CopyFrom(target_raw_[i].color());
+        target_[i].color_.CopyFrom(target_raw_[i].color_);
 
         /* Compute gradients */
-        source_[i].depthf().Sobel(
-            source_dx_[i].depthf(), source_dy_[i].depthf(), true);
-        source_[i].intensity().Sobel(
-            source_dx_[i].intensity(), source_dy_[i].intensity(), false);
+        source_[i].depthf_.Sobel(
+            source_dx_[i].depthf_, source_dy_[i].depthf_, true);
+        source_[i].intensity_.Sobel(
+            source_dx_[i].intensity_, source_dy_[i].intensity_, false);
 
         PrecomputeJacobians(i);
     }
 
-    UpdateServer();
+    UpdateDevice();
 }
 
 template<size_t N>
 void ICRGBDOdometryCuda<N>::PrecomputeJacobians(size_t level) {
     ICRGBDOdometryCudaKernelCaller<N>::PrecomputeJacobiansKernelCaller(
-        *server_, level,
-        source_[level].depthf().width_,
-        source_[level].depthf().height_);
+        *device_, level,
+        source_[level].depthf_.width_,
+        source_[level].depthf_.height_);
 }
 
 template<size_t N>
@@ -210,15 +210,15 @@ ICRGBDOdometryCuda<N>::DoSingleIteration(size_t level, int iter) {
 #ifdef VISUALIZE_ODOMETRY_INLIERS
     source_on_target_[level].CopyFrom(target_[level].intensity());
 #endif
-    server_->transform_source_to_target_.FromEigen(
+    device_->transform_source_to_target_.FromEigen(
         transform_source_to_target_);
 
     Timer timer;
     timer.Start();
     ICRGBDOdometryCudaKernelCaller<N>::DoSinlgeIterationKernelCaller(
-        *server_, level,
-        target_[level].depthf().width_,
-        target_[level].depthf().height_);
+        *device_, level,
+        target_[level].depthf_.width_,
+        target_[level].depthf_.height_);
     timer.Stop();
     //PrintDebug("IC: %f\n", timer.GetDuration());
 

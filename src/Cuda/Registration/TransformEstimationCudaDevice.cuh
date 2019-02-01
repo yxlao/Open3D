@@ -12,8 +12,8 @@ void TransformEstimationPointToPointCudaDevice
 ::ComputePointwiseStatistics(
     int source_idx, int target_idx,
     Matrix3f &Sigma, float &source_sigma2, float &residual) {
-    const Vector3f &vs = source_.points()[source_idx];
-    const Vector3f &vt = target_.points()[target_idx];
+    const Vector3f &vs = source_.points_[source_idx];
+    const Vector3f &vt = target_.points_[target_idx];
 
     const Vector3f ds(vs(0) - source_mean_(0),
                       vs(1) - source_mean_(1),
@@ -41,10 +41,10 @@ void TransformEstimationPointToPlaneCudaDevice
     int source_idx, int target_idx,
     Vector6f &jacobian, float &residual) {
 
-    const Vector3f &vs = source_.points()[source_idx];
+    const Vector3f &vs = source_.points_[source_idx];
 
-    const Vector3f &vt = target_.points()[target_idx];
-    const Vector3f &nt = target_.normals()[target_idx];
+    const Vector3f &vt = target_.points_[target_idx];
+    const Vector3f &nt = target_.normals_[target_idx];
 
     jacobian(0) = (-vs(2) * nt(1) + vs(1) * nt(2));
     jacobian(1) = (vs(2) * nt(0) - vs(0) * nt(2));

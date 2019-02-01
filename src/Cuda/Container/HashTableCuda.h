@@ -178,7 +178,8 @@ private:
     ArrayCuda<int> lock_array_;
 
     /* Wrap all above */
-    std::shared_ptr<HashTableCudaDevice<Key, Value, Hasher>> server_ = nullptr;
+public:
+    std::shared_ptr<HashTableCudaDevice<Key, Value, Hasher>> device_ = nullptr;
 
 public:
     int bucket_count_;
@@ -194,7 +195,7 @@ public:
 
     void Create(int bucket_count, int value_capacity);
     void Release();
-    void UpdateServer();
+    void UpdateDevice();
 
     void Reset();
     void ResetEntries();
@@ -237,15 +238,6 @@ public:
     }
     const ArrayCuda<int> &lock_array() const {
         return lock_array_;
-    }
-
-    std::shared_ptr<HashTableCudaDevice<Key, Value, Hasher>> &server() {
-        return server_;
-    }
-    const std::shared_ptr<HashTableCudaDevice<Key,
-                                              Value,
-                                              Hasher>> &server() const {
-        return server_;
     }
 };
 

@@ -15,7 +15,7 @@
 namespace open3d {
 namespace cuda {
 class RGBDImageCudaDevice {
-private:
+public:
     ImageCudaDevice<Vector1f> depth_;
     ImageCudaDevice<Vector3b> color_;
     ImageCudaDevice<Vector1f> intensity_;
@@ -23,16 +23,11 @@ private:
 public:
     int width_;
     int height_;
-
-public:
-    __HOSTDEVICE__ ImageCudaDevice<Vector1f> &depth() { return depth_; }
-    __HOSTDEVICE__ ImageCudaDevice<Vector3b> &color() { return color_; }
-    __HOSTDEVICE__ ImageCudaDevice<Vector1f> &intensity() { return intensity_; }
 };
 
 class RGBDImageCuda {
-private:
-    std::shared_ptr<RGBDImageCudaDevice> server_ = nullptr;
+public:
+    std::shared_ptr<RGBDImageCudaDevice> device_ = nullptr;
 
     /* Raw input */
     ImageCuda<Vector1s> depth_raw_;
@@ -62,7 +57,7 @@ public:
 
     bool Create(int width, int height);
     void Release();
-    void UpdateServer();
+    void UpdateDevice();
 
     void CopyFrom(RGBDImageCuda &other);
     void Build(ImageCuda<Vector1s> &depth_raw,
@@ -71,21 +66,6 @@ public:
 
     /** Legacy **/
     void Upload(cv::Mat &depth, cv::Mat &color);
-
-public:
-    ImageCuda<Vector1s> &depth_raw() { return depth_raw_; }
-    const ImageCuda<Vector1s> &depth_raw() const { return depth_raw_; }
-    ImageCuda<Vector1f> &depthf() { return depthf_; }
-    const ImageCuda<Vector1f> &depthf() const { return depthf_; }
-    ImageCuda<Vector3b> &color() { return color_; }
-    const ImageCuda<Vector3b> &color() const { return color_; }
-    ImageCuda<Vector1f> &intensity() { return intensity_; }
-    const ImageCuda<Vector1f> &intensity() const { return intensity_; }
-
-    std::shared_ptr<RGBDImageCudaDevice> &server() { return server_; }
-    const std::shared_ptr<RGBDImageCudaDevice> &server() const {
-        return server_;
-    }
 };
 
 } // cuda

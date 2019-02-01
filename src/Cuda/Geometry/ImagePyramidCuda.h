@@ -50,8 +50,8 @@ public:
 
 template<typename VecType, size_t N>
 class ImagePyramidCuda {
-private:
-    std::shared_ptr<ImagePyramidCudaDevice<VecType, N>> server_ = nullptr;
+public:
+    std::shared_ptr<ImagePyramidCudaDevice<VecType, N>> device_ = nullptr;
 
 private:
     ImageCuda<VecType> images_[N];
@@ -65,7 +65,7 @@ public:
 
     bool Create(int width, int height);
     void Release();
-    void UpdateServer();
+    void UpdateDevice();
 
     void Build(const ImageCuda<VecType> &image);
     std::vector<std::shared_ptr<Image>> DownloadImages();
@@ -89,12 +89,6 @@ public:
     const ImageCuda<VecType> &operator[](size_t level) const {
         assert(level < N);
         return images_[level];
-    }
-    std::shared_ptr<ImagePyramidCudaDevice<VecType, N>> &server() {
-        return server_;
-    }
-    const std::shared_ptr<ImagePyramidCudaDevice<VecType, N>> &server() const {
-        return server_;
     }
 };
 } // cuda

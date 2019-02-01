@@ -47,10 +47,10 @@ HashTableCuda<Key, Value, Hasher>::HashTableCuda(
     max_linked_list_node_capacity_ = other.max_linked_list_node_capacity_;
     hasher_ = other.hasher();
 
-    server_ = other.server();
+    device_ = other.device_;
 
-    /** No need to call UpdateServer(), they should have been copied to
-     * other.server() and assigned to server_; */
+    /** No need to call UpdateDevice(), they should have been copied to
+     * other.device_ and assigned to device_; */
 
     memory_heap_entry_list_node_ = other.memory_heap_entry_list_node();
     memory_heap_value_ = other.memory_heap_value();
@@ -70,7 +70,7 @@ HashTableCuda<Key, Value, Hasher> &HashTableCuda<Key, Value, Hasher>::operator=(
         max_linked_list_node_capacity_ = other.max_linked_list_node_capacity_;
         hasher_ = other.hasher();
 
-        server_ = other.server();
+        device_ = other.device_;
 
         memory_heap_entry_list_node_ = other.memory_heap_entry_list_node();
         memory_heap_value_ = other.memory_heap_value();
@@ -89,12 +89,12 @@ void HashTableCuda<Key, Value, Hasher>::Create(
     int bucket_count, int value_capacity) {
     assert(bucket_count > 0 && value_capacity > 0);
 
-    if (server_ != nullptr) {
+    if (device_ != nullptr) {
         PrintError("[HashTableCuda] Already created, abort!\n");
         return;
     }
 
-    server_ = std::make_shared<HashTableCudaDevice<Key, Value, Hasher>>();
+    device_ = std::make_shared<HashTableCudaDevice<Key, Value, Hasher>>();
 
     bucket_count_ = bucket_count; /* (* BUCKET_SIZE), 2D array */
     hasher_ = Hasher(bucket_count);
@@ -115,14 +115,14 @@ void HashTableCuda<Key, Value, Hasher>::Create(
      * are initialized on CUDA (they don't have corresponding clients, so let
      * HashTable class be its client)
      */
-    CheckCuda(cudaMalloc(&server_->entry_list_head_node_ptrs_memory_pool_,
+    CheckCuda(cudaMalloc(&device_->entry_list_head_node_ptrs_memory_pool_,
                          sizeof(int) * bucket_count));
-    CheckCuda(cudaMalloc(&server_->entry_list_size_ptrs_memory_pool_,
+    CheckCuda(cudaMalloc(&device_->entry_list_size_ptrs_memory_pool_,
                          sizeof(int) * bucket_count));
-    UpdateServer();
+    UpdateDevice();
 
     HashTableCudaKernelCaller<Key, Value, Hasher>::
-    CreateHashTableEntriesKernelCaller(*server_, bucket_count_);
+    CreateHashTableEntriesKernelCaller(*device_, bucket_count_);
 }
 
 template<typename Key, typename Value, typename Hasher>
@@ -130,9 +130,9 @@ void HashTableCuda<Key, Value, Hasher>::Release() {
     /** Since we Release, we don't care about the content of the linked list
      * array. They are stored in the memory_heap and will be Releaseed anyway.
      */
-    if (server_ != nullptr && server_.use_count() == 1) {
+    if (device_ != nullptr && device_.use_count() == 1) {
         HashTableCudaKernelCaller<Key, Value, Hasher>::
-        ReleaseHashTableEntriesKernelCaller(*server_, bucket_count_);
+        ReleaseHashTableEntriesKernelCaller(*device_, bucket_count_);
         entry_array_.Release();
         entry_list_array_.Release();
         lock_array_.Release();
@@ -140,35 +140,35 @@ void HashTableCuda<Key, Value, Hasher>::Release() {
 
         memory_heap_entry_list_node_.Release();
         memory_heap_value_.Release();
-        CheckCuda(cudaFree(server_->entry_list_head_node_ptrs_memory_pool_));
-        CheckCuda(cudaFree(server_->entry_list_size_ptrs_memory_pool_));
+        CheckCuda(cudaFree(device_->entry_list_head_node_ptrs_memory_pool_));
+        CheckCuda(cudaFree(device_->entry_list_size_ptrs_memory_pool_));
     }
 
-    server_ = nullptr;
+    device_ = nullptr;
     bucket_count_ = -1;
     max_value_capacity_ = -1;
     max_linked_list_node_capacity_ = -1;
 }
 
 template<typename Key, typename Value, typename Hasher>
-void HashTableCuda<Key, Value, Hasher>::UpdateServer() {
-    if (server_ != nullptr) {
-        server_->hasher_ = hasher_;
-        server_->bucket_count_ = bucket_count_;
+void HashTableCuda<Key, Value, Hasher>::UpdateDevice() {
+    if (device_ != nullptr) {
+        device_->hasher_ = hasher_;
+        device_->bucket_count_ = bucket_count_;
 
-        server_->memory_heap_entry_list_node_ =
-            *memory_heap_entry_list_node_.server();
-        server_->memory_heap_value_ = *memory_heap_value_.server();
-        server_->entry_array_ = *entry_array_.server();
-        server_->entry_list_array_ = *entry_list_array_.server();
-        server_->lock_array_ = *lock_array_.server();
-        server_->assigned_entry_array_ = *assigned_entry_array_.server();
+        device_->memory_heap_entry_list_node_ =
+            *memory_heap_entry_list_node_.device_;
+        device_->memory_heap_value_ = *memory_heap_value_.device_;
+        device_->entry_array_ = *entry_array_.device_;
+        device_->entry_list_array_ = *entry_list_array_.device_;
+        device_->lock_array_ = *lock_array_.device_;
+        device_->assigned_entry_array_ = *assigned_entry_array_.device_;
     }
 }
 
 template<typename Key, typename Value, typename Hasher>
 void HashTableCuda<Key, Value, Hasher>::Reset() {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     memory_heap_entry_list_node_.Reset();
     memory_heap_value_.Reset();
@@ -178,34 +178,34 @@ void HashTableCuda<Key, Value, Hasher>::Reset() {
 
 template<typename Key, typename Value, typename Hasher>
 void HashTableCuda<Key, Value, Hasher>::ResetEntries() {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     HashTableCudaKernelCaller<Key, Value, Hasher>::
-    ResetHashTableEntriesKernelCaller(*server_, bucket_count_);
+    ResetHashTableEntriesKernelCaller(*device_, bucket_count_);
 }
 
 template<typename Key, typename Value, typename Hasher>
 void HashTableCuda<Key, Value, Hasher>::ResetLocks() {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     lock_array_.Memset(0);
 }
 
 template<typename Key, typename Value, typename Hasher>
 void HashTableCuda<Key, Value, Hasher>::GetAssignedEntries() {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     /* Reset counter */
     assigned_entry_array_.Clear();
 
     HashTableCudaKernelCaller<Key, Value, Hasher>::
-    GetHashTableAssignedEntriesKernelCaller(*server_, bucket_count_);
+    GetHashTableAssignedEntriesKernelCaller(*device_, bucket_count_);
 }
 
 template<typename Key, typename Value, typename Hasher>
 void HashTableCuda<Key, Value, Hasher>::New(
     std::vector<Key> &keys, std::vector<Value> &values) {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     ArrayCuda<Key> keys_cuda(keys.size());
     keys_cuda.Upload(keys);
@@ -213,9 +213,9 @@ void HashTableCuda<Key, Value, Hasher>::New(
     values_cuda.Upload(values);
 
     HashTableCudaKernelCaller<Key, Value, Hasher>::
-    InsertHashTableEntriesKernelCaller(*server_,
-                                       *keys_cuda.server(),
-                                       *values_cuda.server(),
+    InsertHashTableEntriesKernelCaller(*device_,
+                                       *keys_cuda.device_,
+                                       *values_cuda.device_,
                                        keys.size(),
                                        bucket_count_);
 }
@@ -223,21 +223,21 @@ void HashTableCuda<Key, Value, Hasher>::New(
 template<typename Key, typename Value, typename Hasher>
 void HashTableCuda<Key, Value, Hasher>
 ::Delete(std::vector<Key> &keys) {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     ArrayCuda<Key> keys_cuda(keys.size());
     keys_cuda.Upload(keys);
 
     HashTableCudaKernelCaller<Key, Value, Hasher>::
-    DeleteHashTableEntriesKernelCaller(*server_,
-                                       *keys_cuda.server(), keys.size(),
+    DeleteHashTableEntriesKernelCaller(*device_,
+                                       *keys_cuda.device_, keys.size(),
                                        bucket_count_);
 }
 
 template<typename Key, typename Value, typename Hasher>
 std::tuple<std::vector<Key>, std::vector<Value>>
 HashTableCuda<Key, Value, Hasher>::Download() {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     std::vector<Key> keys;
     std::vector<Value> values;
@@ -267,7 +267,7 @@ HashTableCuda<Key, Value, Hasher>::Download() {
 template<typename Key, typename Value, typename Hasher>
 std::vector<HashEntry<Key>> HashTableCuda<Key, Value, Hasher>
 ::DownloadAssignedEntries() {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     std::vector<Entry> ret;
     int assigned_entry_array_size = assigned_entry_array_.size();
@@ -278,15 +278,15 @@ std::vector<HashEntry<Key>> HashTableCuda<Key, Value, Hasher>
 template<typename Key, typename Value, typename Hasher>
 std::tuple<std::vector<int>, std::vector<int>>
 HashTableCuda<Key, Value, Hasher>::Profile() {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     ArrayCuda<int> array_entry_count_cuda(bucket_count_);
     ArrayCuda<int> list_entry_count_cuda(bucket_count_);
 
     HashTableCudaKernelCaller<Key, Value, Hasher>::
-    ProfileHashTableKernelCaller(*server_,
-                                 *array_entry_count_cuda.server(),
-                                 *list_entry_count_cuda.server(),
+    ProfileHashTableKernelCaller(*device_,
+                                 *array_entry_count_cuda.device_,
+                                 *list_entry_count_cuda.device_,
                                  bucket_count_);
 
     std::vector<int> array_entry_count = array_entry_count_cuda.DownloadAll();

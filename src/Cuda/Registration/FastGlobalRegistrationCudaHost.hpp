@@ -8,14 +8,14 @@
 namespace open3d {
 namespace cuda {
 void FastGlobalRegistrationCuda::Create() {
-    if (server_ == nullptr) {
-        server_ = std::make_shared<FastGlobalRegistrationCudaDevice>();
+    if (device_ == nullptr) {
+        device_ = std::make_shared<FastGlobalRegistrationCudaDevice>();
         results_.Create(28);
     }
 }
 
 void FastGlobalRegistrationCuda::Release() {
-    if (server_ == nullptr && server_.use_count() == 1) {
+    if (device_ == nullptr && device_.use_count() == 1) {
         results_.Release();
         source_.Release();
         target_.Release();
@@ -24,20 +24,20 @@ void FastGlobalRegistrationCuda::Release() {
         corres_mutual_.Release();
         corres_final_.Release();
     }
-    server_ = nullptr;
+    device_ = nullptr;
 }
 
-void FastGlobalRegistrationCuda::UpdateServer() {
-    if (server_ == nullptr) {
+void FastGlobalRegistrationCuda::UpdateDevice() {
+    if (device_ == nullptr) {
         PrintError("Server not initialized!\n");
         return;
     }
 
-    server_->results_ = *results_.server();
-    server_->source_ = *source_.server();
-    server_->target_ = *target_.server();
-    server_->corres_source_to_target_ = *corres_source_to_target_.server_;
-    server_->corres_target_to_source_ = *corres_target_to_source_.server_;
+    device_->results_ = *results_.device_;
+    device_->source_ = *source_.device_;
+    device_->target_ = *target_.device_;
+    device_->corres_source_to_target_ = *corres_source_to_target_.device_;
+    device_->corres_target_to_source_ = *corres_target_to_source_.device_;
 }
 
 void FastGlobalRegistrationCuda::ExtractResults(
@@ -83,7 +83,7 @@ void FastGlobalRegistrationCuda::Initialize(PointCloud &source,
     corres_target_to_source_.SetCorrespondenceMatrix(
         nn_target_to_source_.nn_idx_);
     corres_target_to_source_.Compress();
-    UpdateServer();
+    UpdateDevice();
 
     PrintInfo("(%d x %d, %d) - (%d x %d, %d)\n",
               corres_source_to_target_.matrix_.max_rows_,
@@ -95,20 +95,16 @@ void FastGlobalRegistrationCuda::Initialize(PointCloud &source,
 
     /* 2) Reciprocity Test */
     corres_mutual_.Create(source.points_.size());
-    server_->corres_mutual_ = *corres_mutual_.server();
+    device_->corres_mutual_ = *corres_mutual_.device_;
     FastGlobalRegistrationCudaKernelCaller::ReciprocityTest(*this);
 
     corres_final_.Create(corres_mutual_.size());
-    server_->corres_final_ = *corres_final_.server();
+    device_->corres_final_ = *corres_final_.device_;
     FastGlobalRegistrationCudaKernelCaller::TupleTest(*this);
 
-    l_.Create(corres_final_.size());
-    l_.Fill(1.0f);
-    server_->l_ = *l_.server();
-
     double scale_global = NormalizePointClouds();
-    server_->scale_global_ = (float) scale_global;
-    server_->par_ = (float) scale_global;
+    device_->scale_global_ = (float) scale_global;
+    device_->par_ = (float) scale_global;
 
     transform_normalized_source_to_target_ = Eigen::Matrix4d::Identity();
 }
@@ -117,7 +113,7 @@ double FastGlobalRegistrationCuda::NormalizePointClouds() {
     mean_source_ =
         FastGlobalRegistrationCudaKernelCaller::ComputePointCloudSum(
             source_);
-    mean_source_ /= source_.points().size();
+    mean_source_ /= source_.points_.size();
     double scale_source =
         FastGlobalRegistrationCudaKernelCaller::NormalizePointCloud(
             source_, mean_source_);
@@ -125,7 +121,7 @@ double FastGlobalRegistrationCuda::NormalizePointClouds() {
     mean_target_ =
         FastGlobalRegistrationCudaKernelCaller::ComputePointCloudSum(
             target_);
-    mean_target_ /= target_.points().size();
+    mean_target_ /= target_.points_.size();
     double scale_target =
         FastGlobalRegistrationCudaKernelCaller::NormalizePointCloud(
             target_, mean_target_);
@@ -184,13 +180,13 @@ RegistrationResultCuda FastGlobalRegistrationCuda::DoSingleIteration(int iter) {
 
     result.transformation_ = GetTransformationOriginalScale(
         transform_normalized_source_to_target_, mean_source_, mean_target_,
-        server_->scale_global_);
+        device_->scale_global_);
     result.inlier_rmse_ = rmse;
     PrintInfo("iter: %d, rmse: %f\n", iter, rmse);
 
-    if (iter % 4 == 0 && server_->par_ > 0.0f) {
-        server_->par_ /= 1.4f;
-        std::cout << "gpu par: " << server_->par_ << std::endl;
+    if (iter % 4 == 0 && device_->par_ > 0.0f) {
+        device_->par_ /= 1.4f;
+        std::cout << "gpu par: " << device_->par_ << std::endl;
     }
 
     return result;

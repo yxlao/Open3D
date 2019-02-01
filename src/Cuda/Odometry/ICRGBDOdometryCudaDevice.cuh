@@ -22,7 +22,7 @@ __device__
 void ICRGBDOdometryCudaDevice<N>::ComputePixelwiseJacobian(
     int x_source, int y_source, size_t level) {
 
-    float d_source = source_[level].depth().at(x_source, y_source)(0);
+    float d_source = source_[level].depth_.at(x_source, y_source)(0);
     if (!IsValidDepth(d_source)) {
         return;
     };
@@ -43,13 +43,13 @@ void ICRGBDOdometryCudaDevice<N>::ComputePixelwiseJacobian(
      *     - (d X.z / d X) (d X / d \xi)
      */
     const float kSobelFactor = 0.125f;
-    float dx_I = kSobelFactor * source_dx_[level].intensity().at(
+    float dx_I = kSobelFactor * source_dx_[level].intensity_.at(
         x_source, y_source)(0);
-    float dy_I = kSobelFactor * source_dy_[level].intensity().at(
+    float dy_I = kSobelFactor * source_dy_[level].intensity_.at(
         x_source, y_source)(0);
-    float dx_D = kSobelFactor * source_dx_[level].depth().at(
+    float dx_D = kSobelFactor * source_dx_[level].depth_.at(
         x_source, y_source)(0);
-    float dy_D = kSobelFactor * source_dy_[level].depth().at(
+    float dy_D = kSobelFactor * source_dy_[level].depth_.at(
         x_source, y_source)(0);
     Vector3f X_source = intrinsics_[level].InverseProjectPixel(
         Vector2i(x_source, y_source), d_source);
@@ -99,7 +99,7 @@ bool ICRGBDOdometryCudaDevice<N>::ComputePixelwiseCorrespondenceAndResidual(
 
     /********** Phase 1: Projective data association **********/
     /** Check 1: depth valid in source? **/
-    float d_target = target_[level].depth().at(x_target, y_target)(0);
+    float d_target = target_[level].depth_.at(x_target, y_target)(0);
     bool mask = IsValidDepth(d_target);
     if (!mask) return false;
 
@@ -115,7 +115,7 @@ bool ICRGBDOdometryCudaDevice<N>::ComputePixelwiseCorrespondenceAndResidual(
     Vector2i p_warped(int(p_warpedf(0) + 0.5f), int(p_warpedf(1) + 0.5f));
 
     /** Check 3: depth valid in target? Occlusion? -> 1ms **/
-    float d_source = source_[level].depth().at(p_warped(0), p_warped(1))(0);
+    float d_source = source_[level].depth_.at(p_warped(0), p_warped(1))(0);
     mask = IsValidDepth(d_source)
         && IsValidDepthDiff(d_source - X_target_on_source(2));
     if (!mask) return false;
@@ -123,8 +123,8 @@ bool ICRGBDOdometryCudaDevice<N>::ComputePixelwiseCorrespondenceAndResidual(
     x_source = p_warped(0);
     y_source = p_warped(1);
     residual_I = sqrt_coeff_I_ *
-        (source_[level].intensity().at(x_source, y_source)(0)
-            - target_[level].intensity().at(x_target, y_target)(0));
+        (source_[level].intensity_.at(x_source, y_source)(0)
+            - target_[level].intensity_.at(x_target, y_target)(0));
     residual_D = sqrt_coeff_D_ * (d_source - X_target_on_source(2));
     return true;
 }

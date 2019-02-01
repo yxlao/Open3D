@@ -39,7 +39,7 @@ void CorrespondenceSetCudaKernelCaller::CompressCorrespondenceKernelCaller(
 
     const dim3 blocks(DIV_CEILING(corres.matrix_.max_cols_, THREAD_1D_UNIT));
     const dim3 threads(THREAD_1D_UNIT);
-    CompressCorrespondencesKernel << < blocks, threads >> > (*corres.server_);
+    CompressCorrespondencesKernel << < blocks, threads >> > (*corres.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 

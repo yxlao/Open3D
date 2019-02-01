@@ -23,9 +23,9 @@ void ComputeColorGradientKernel(
     int i = corres.indices_[idx];
 
     PointCloudCudaDevice &pcl = estimation.target_;
-    Vector3f &vt = pcl.points()[i];
-    Vector3f &nt = pcl.normals()[i];
-    Vector3f &color = pcl.colors()[i];
+    Vector3f &vt = pcl.points_[i];
+    Vector3f &nt = pcl.normals_[i];
+    Vector3f &color = pcl.colors_[i];
     float it = (color(0) + color(1) + color(2)) / 3.0f;
 
     Matrix3f AtA(0);
@@ -36,9 +36,9 @@ void ComputeColorGradientKernel(
         int adj_idx = corres.matrix_(j, i);
         if (adj_idx == -1) break;
 
-        Vector3f &vt_adj = pcl.points()[adj_idx];
+        Vector3f &vt_adj = pcl.points_[adj_idx];
         Vector3f vt_proj = vt_adj - (vt_adj - vt).dot(nt) * nt;
-        Vector3f &color_adj = pcl.colors()[adj_idx];
+        Vector3f &color_adj = pcl.colors_[adj_idx];
         float it_adj = (color_adj(0) + color_adj(1) + color_adj(2)) / 3.0f;
 
         float a0 = vt_proj(0) - vt(0);
@@ -82,11 +82,11 @@ void TransformEstimationCudaForColoredICPKernelCaller
     CorrespondenceSetCuda &corres_for_color_gradient) {
 
     const dim3 blocks(
-        DIV_CEILING(estimation.target_.points().size(), THREAD_1D_UNIT));
+        DIV_CEILING(estimation.target_.points_.size(), THREAD_1D_UNIT));
     const dim3 threads(THREAD_1D_UNIT);
 
     ComputeColorGradientKernel << < blocks, threads >> > (
-        *estimation.server_, *corres_for_color_gradient.server_);
+        *estimation.device_, *corres_for_color_gradient.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
@@ -228,7 +228,7 @@ ComputeResultsAndTransformationKernelCaller(
     const dim3 threads(THREAD_1D_UNIT);
 
     ComputeResultsAndTransformationKernel<< < blocks, threads >> > (
-        *estimation.server_);
+        *estimation.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }

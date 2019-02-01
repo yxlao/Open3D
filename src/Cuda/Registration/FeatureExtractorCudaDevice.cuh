@@ -12,16 +12,16 @@ __device__
 Vector4f FeatureCudaDevice::ComputePairFeature(int i, int j) {
     Vector4f result(0);
 
-    const Vector3f &p1 = pcl_.points()[i];
-    const Vector3f &p2 = pcl_.points()[j];
+    const Vector3f &p1 = pcl_.points_[i];
+    const Vector3f &p2 = pcl_.points_[j];
     Vector3f dp2p1 = p2 - p1;
     result(3) = dp2p1.norm();
     if (result(3) == 0.0) {
         return result;
     }
 
-    const Vector3f &n1 = pcl_.normals()[i];
-    const Vector3f &n2 = pcl_.normals()[j];
+    const Vector3f &n1 = pcl_.normals_[i];
+    const Vector3f &n2 = pcl_.normals_[j];
     Vector3f n1_copy = n1;
     Vector3f n2_copy = n2;
     float angle1 = n1_copy.dot(dp2p1) / result(3);
@@ -69,26 +69,18 @@ void FeatureCudaDevice::ComputeSPFHFeature(int i, int max_nn) {
         if (h_index >= 11) h_index = 10;
         spfh_features_(h_index + 22, i) += hist_incr;
     }
-
-//    if (i == 0) {
-//        printf("gpu-max_nn: %d\n", max_nn);
-//        printf("spfh of 0\n");
-//        for (int f = 0; f < 33; ++f) {
-//            printf("gpu-%d: %.3f\n", f, spfh_features_(f, i));
-//        }
-//    }
 }
 
 __device__
 void FeatureCudaDevice::ComputeFPFHFeature(int i, int max_nn) {
     float sum[3] = {0, 0, 0};
-    Vector3f &pi = pcl_.points()[i];
+    Vector3f &pi = pcl_.points_[i];
 
     /** Add up neighbor's spfh **/
     for (int k = 1; k < max_nn; ++k) {
         int j = neighbors_.matrix_(k, i);
 
-        Vector3f &pj = pcl_.points()[j];
+        Vector3f &pj = pcl_.points_[j];
         Vector3f pij = pi - pj;
         float dist = pij.dot(pij);
 

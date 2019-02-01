@@ -221,14 +221,14 @@ void UniformTSDFVolumeCudaDevice<N>::Integrate(
 
     /** TSDF **/
     if (!camera.IsPixelValid(p)) return;
-    float d = rgbd.depth().interp_at(p(0), p(1))(0);
+    float d = rgbd.depth_.interp_at(p(0), p(1))(0);
 
     float tsdf = d - Xc(2);
     if (tsdf <= -sdf_trunc_) return;
     tsdf = fminf(tsdf, sdf_trunc_);
 
     Vector3b
-    color = rgbd.color().at(int(p(0)), int(p(1)));
+    color = rgbd.color_.at(int(p(0)), int(p(1)));
 
     float &tsdf_sum = this->tsdf(X);
     uchar & weight_sum = this->weight(X);

@@ -100,9 +100,10 @@ public:
 
 template<size_t N>
 class ICRGBDOdometryCuda {
-private:
-    std::shared_ptr<ICRGBDOdometryCudaDevice<N>> server_ = nullptr;
+public:
+    std::shared_ptr<ICRGBDOdometryCudaDevice<N>> device_ = nullptr;
 
+private:
     ImagePyramidCuda<Vector1f, N> source_on_target_;
     RGBDImagePyramidCuda<N> source_raw_;
     RGBDImagePyramidCuda<N> target_raw_;
@@ -138,7 +139,7 @@ public:
 
     bool Create(int width, int height);
     void Release();
-    void UpdateServer();
+    void UpdateDevice();
 
     void Initialize(RGBDImageCuda &source, RGBDImageCuda &target);
 
@@ -155,13 +156,6 @@ public:
 
     RGBDImagePyramidCuda<N> &source() { return source_; }
     RGBDImagePyramidCuda<N> &target() { return target_; }
-
-    std::shared_ptr<ICRGBDOdometryCudaDevice<N>> &server() {
-        return server_;
-    }
-    const std::shared_ptr<ICRGBDOdometryCudaDevice<N>> &server() const {
-        return server_;
-    }
 };
 
 template<size_t N>

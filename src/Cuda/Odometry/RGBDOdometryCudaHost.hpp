@@ -11,11 +11,11 @@ namespace open3d {
 namespace cuda {
 /**
  * Client end
- * TODO: Think about how do we use server_ ... we don't want copy
+ * TODO: Think about how do we use device_ ... we don't want copy
  * constructors for such a large system...
  */
 template<size_t N>
-RGBDOdometryCuda<N>::RGBDOdometryCuda() : server_(nullptr) {}
+RGBDOdometryCuda<N>::RGBDOdometryCuda() : device_(nullptr) {}
 
 template<size_t N>
 RGBDOdometryCuda<N>::~RGBDOdometryCuda() {
@@ -39,7 +39,7 @@ template<size_t N>
 bool RGBDOdometryCuda<N>::Create(int width, int height) {
     assert(width > 0 && height > 0);
 
-    if (server_ != nullptr) {
+    if (device_ != nullptr) {
         if (source_[0].width_ != width || source_[0].height_ != height) {
             PrintError("[RGBDOdometryCuda] Incompatible image size, "
                        "width: %d vs %d, height: %d vs %d, "
@@ -50,7 +50,7 @@ bool RGBDOdometryCuda<N>::Create(int width, int height) {
         return true;
     }
 
-    server_ = std::make_shared<RGBDOdometryCudaDevice<N>>();
+    device_ = std::make_shared<RGBDOdometryCudaDevice<N>>();
 
     source_on_target_.Create(width, height);
 
@@ -62,7 +62,7 @@ bool RGBDOdometryCuda<N>::Create(int width, int height) {
     results_.Create(29); // 21 + 6 + 2
     correspondences_.Create(width * height);
 
-    UpdateServer();
+    UpdateDevice();
     return true;
 }
 
@@ -78,41 +78,41 @@ void RGBDOdometryCuda<N>::Release() {
     results_.Release();
     correspondences_.Release();
 
-    server_ = nullptr;
+    device_ = nullptr;
 }
 
 template<size_t N>
-void RGBDOdometryCuda<N>::UpdateServer() {
-    if (server_ != nullptr) {
-        source_on_target_.UpdateServer();
-        server_->source_on_target_ = *source_on_target_.server();
+void RGBDOdometryCuda<N>::UpdateDevice() {
+    if (device_ != nullptr) {
+        source_on_target_.UpdateDevice();
+        device_->source_on_target_ = *source_on_target_.device_;
 
-        source_.UpdateServer();
-        server_->source_ = *source_.server();
+        source_.UpdateDevice();
+        device_->source_ = *source_.device_;
 
-        target_.UpdateServer();
-        server_->target_ = *target_.server();
+        target_.UpdateDevice();
+        device_->target_ = *target_.device_;
 
-        target_dx_.UpdateServer();
-        server_->target_dx_ = *target_dx_.server();
+        target_dx_.UpdateDevice();
+        device_->target_dx_ = *target_dx_.device_;
 
-        target_dy_.UpdateServer();
-        server_->target_dy_ = *target_dy_.server();
+        target_dy_.UpdateDevice();
+        device_->target_dy_ = *target_dy_.device_;
 
-        server_->results_ = *results_.server();
-        server_->correspondences_ = *correspondences_.server();
+        device_->results_ = *results_.device_;
+        device_->correspondences_ = *correspondences_.device_;
 
         /** Update parameters **/
-        server_->sigma_ = sigma_;
-        server_->sqrt_coeff_D_ = sqrtf(sigma_);
-        server_->sqrt_coeff_I_ = sqrtf(1 - sigma_);
-        server_->depth_near_threshold_ = (float) option_.min_depth_;
-        server_->depth_far_threshold_ = (float) option_.max_depth_;
-        server_->depth_diff_threshold_ = (float) option_.max_depth_diff_;
+        device_->sigma_ = sigma_;
+        device_->sqrt_coeff_D_ = sqrtf(sigma_);
+        device_->sqrt_coeff_I_ = sqrtf(1 - sigma_);
+        device_->depth_near_threshold_ = (float) option_.min_depth_;
+        device_->depth_far_threshold_ = (float) option_.max_depth_;
+        device_->depth_diff_threshold_ = (float) option_.max_depth_diff_;
 
-        server_->intrinsics_[0] = PinholeCameraIntrinsicCuda(intrinsics_);
+        device_->intrinsics_[0] = PinholeCameraIntrinsicCuda(intrinsics_);
         for (size_t i = 1; i < N; ++i) {
-            server_->intrinsics_[i] = server_->intrinsics_[i - 1].Downsample();
+            device_->intrinsics_[i] = device_->intrinsics_[i - 1].Downsample();
         }
     }
 }
@@ -155,28 +155,28 @@ void RGBDOdometryCuda<N>::Initialize(
     target_raw_.Build(target);
     for (size_t i = 0; i < N; ++i) {
         /* Filter raw data */
-        source_raw_[i].depthf().Gaussian(
-            source_[i].depthf(), Gaussian3x3, true);
-        source_raw_[i].intensity().Gaussian(
-            source_[i].intensity(), Gaussian3x3, false);
+        source_raw_[i].depthf_.Gaussian(
+            source_[i].depthf_, Gaussian3x3, true);
+        source_raw_[i].intensity_.Gaussian(
+            source_[i].intensity_, Gaussian3x3, false);
 
-        target_raw_[i].depthf().Gaussian(
-            target_[i].depthf(), Gaussian3x3, true);
-        target_raw_[i].intensity().Gaussian(
-            target_[i].intensity(), Gaussian3x3, false);
+        target_raw_[i].depthf_.Gaussian(
+            target_[i].depthf_, Gaussian3x3, true);
+        target_raw_[i].intensity_.Gaussian(
+            target_[i].intensity_, Gaussian3x3, false);
 
         /** For visualization **/
-        source_[i].color().CopyFrom(source_raw_[i].color());
-        target_[i].color().CopyFrom(target_raw_[i].color());
+        source_[i].color_.CopyFrom(source_raw_[i].color_);
+        target_[i].color_.CopyFrom(target_raw_[i].color_);
 
         /* Compute gradients */
-        target_[i].depthf().Sobel(
-            target_dx_[i].depthf(), target_dy_[i].depthf(), true);
-        target_[i].intensity().Sobel(
-            target_dx_[i].intensity(), target_dy_[i].intensity(), false);
+        target_[i].depthf_.Sobel(
+            target_dx_[i].depthf_, target_dy_[i].depthf_, true);
+        target_[i].intensity_.Sobel(
+            target_dx_[i].intensity_, target_dy_[i].intensity_, false);
     }
 
-    UpdateServer();
+    UpdateDevice();
 }
 
 template<size_t N>
@@ -188,15 +188,15 @@ RGBDOdometryCuda<N>::DoSingleIteration(size_t level, int iter) {
 #ifdef VISUALIZE_ODOMETRY_INLIERS
     source_on_target_[level].CopyFrom(target_[level].intensity());
 #endif
-    server_->transform_source_to_target_.FromEigen(
+    device_->transform_source_to_target_.FromEigen(
         transform_source_to_target_);
 
     Timer timer;
     timer.Start();
     RGBDOdometryCudaKernelCaller<N>::DoSingleIterationKernelCaller(
-        *server_, level,
-        source_[level].depthf().width_,
-        source_[level].depthf().height_);
+        *device_, level,
+        source_[level].depthf_.width_,
+        source_[level].depthf_.height_);
     timer.Stop();
     PrintDebug("Direct: %f\n", timer.GetDuration());
 

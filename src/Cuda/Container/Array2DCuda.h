@@ -42,8 +42,8 @@ public:
 
 template<typename T>
 class Array2DCuda {
-private:
-    std::shared_ptr<Array2DCudaDevice<T>> server_ = nullptr;
+public:
+    std::shared_ptr<Array2DCudaDevice<T>> device_ = nullptr;
 
 public:
     int max_rows_;
@@ -59,7 +59,7 @@ public:
 
     void Create(int max_rows, int max_cols);
     void Release();
-    void UpdateServer();
+    void UpdateDevice();
 
     /** Memcpy requires the same type and row-wise storage **/
     void CopyTo(Array2DCuda<T> &other);
@@ -71,13 +71,6 @@ public:
 
     int rows() const;
     void set_iterator_rows(int row_position);
-
-    std::shared_ptr<Array2DCudaDevice<T>> &server() {
-        return server_;
-    }
-    const std::shared_ptr<Array2DCudaDevice<T>> &server() const {
-        return server_;
-    }
 };
 } // cuda
 } // open3d

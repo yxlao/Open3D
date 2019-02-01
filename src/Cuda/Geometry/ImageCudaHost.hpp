@@ -22,7 +22,7 @@ namespace cuda {
  */
 template<typename VecType>
 ImageCuda<VecType>::ImageCuda()
-    : width_(-1), height_(-1), pitch_(-1), server_(nullptr) {
+    : width_(-1), height_(-1), pitch_(-1), device_(nullptr) {
 #ifdef HOST_DEBUG_MONITOR_LIFECYCLE
     PrintInfo("Default ImageCuda constructor.\n");
 #endif
@@ -33,14 +33,14 @@ ImageCuda<VecType>::ImageCuda(const ImageCuda<VecType> &other) {
 #ifdef HOST_DEBUG_MONITOR_LIFECYCLE
     PrintInfo("ImageCuda copy constructor.\n");
 #endif
-    server_ = other.server();
+    device_ = other.device_;
 
     width_ = other.width_;
     height_ = other.height_;
     pitch_ = other.pitch_;
 
 #ifdef HOST_DEBUG_MONITOR_LIFECYCLE
-    PrintInfo("Ref count after copy construction: %d\n", server_.use_count());
+    PrintInfo("Ref count after copy construction: %d\n", device_.use_count());
 #endif
 }
 
@@ -57,13 +57,13 @@ ImageCuda<VecType> &ImageCuda<VecType>::operator=(const ImageCuda<VecType> &othe
     if (this != &other) {
         Release();
 
-        server_ = other.server();
+        device_ = other.device_;
         width_ = other.width_;
         height_ = other.height_;
         pitch_ = other.pitch_;
 
 #ifdef HOST_DEBUG_MONITOR_LIFECYCLE
-        PrintInfo("Ref count after copy construction: %d\n", server_.use_count());
+        PrintInfo("Ref count after copy construction: %d\n", device_.use_count());
 #endif
     }
 
@@ -82,7 +82,7 @@ template<typename VecType>
 bool ImageCuda<VecType>::Create(int width, int height) {
     assert(width > 0 && height > 0);
 
-    if (server_ != nullptr) {
+    if (device_ != nullptr) {
         if (width_ != width || height_ != height) {
             PrintError("[ImageCuda] Incompatible image size, "
                        "@Create aborted.\n");
@@ -94,43 +94,43 @@ bool ImageCuda<VecType>::Create(int width, int height) {
 #ifdef HOST_DEBUG_MONITOR_LIFECYCLE
     PrintInfo("Creating.\n");
 #endif
-    server_ = std::make_shared<ImageCudaDevice<VecType>>();
+    device_ = std::make_shared<ImageCudaDevice<VecType>>();
 
     width_ = width;
     height_ = height;
     size_t pitch_size_t = 0;
-    CheckCuda(cudaMallocPitch(&server_->data_, &pitch_size_t,
+    CheckCuda(cudaMallocPitch(&device_->data_, &pitch_size_t,
                               sizeof(VecType) * width_, (size_t) height_));
     pitch_ = (int) pitch_size_t;
 
-    UpdateServer();
+    UpdateDevice();
     return true;
 }
 
 template<typename VecType>
 void ImageCuda<VecType>::Release() {
 #ifdef HOST_DEBUG_MONITOR_LIFECYCLE
-    if (server_ != nullptr) {
-        PrintInfo("ref count before releasing: %d\n", server_.use_count());
+    if (device_ != nullptr) {
+        PrintInfo("ref count before releasing: %d\n", device_.use_count());
     }
 #endif
 
-    if (server_ != nullptr && server_.use_count() == 1) {
-        CheckCuda(cudaFree(server_->data_));
+    if (device_ != nullptr && device_.use_count() == 1) {
+        CheckCuda(cudaFree(device_->data_));
     }
 
-    server_ = nullptr;
+    device_ = nullptr;
     width_ = -1;
     height_ = -1;
     pitch_ = -1;
 }
 
 template<typename VecType>
-void ImageCuda<VecType>::UpdateServer() {
-    assert(server_ != nullptr);
-    server_->width_ = width_;
-    server_->height_ = height_;
-    server_->pitch_ = pitch_;
+void ImageCuda<VecType>::UpdateDevice() {
+    assert(device_ != nullptr);
+    device_->width_ = width_;
+    device_->height_ = height_;
+    device_->pitch_ = pitch_;
 }
 
 template<typename VecType>
@@ -140,8 +140,8 @@ void ImageCuda<VecType>::CopyFrom(const ImageCuda<VecType> &other) {
     bool success = Create(other.width_, other.height_);
     if (!success) return;
 
-    CheckCuda(cudaMemcpy2D(server_->data_, (size_t) pitch_,
-                           other.server()->data(), (size_t) other.pitch_,
+    CheckCuda(cudaMemcpy2D(device_->data_, (size_t) pitch_,
+                           other.device_->data(), (size_t) other.pitch_,
                            sizeof(VecType) * width_, (size_t) height_,
                            cudaMemcpyDeviceToDevice));
 }
@@ -170,7 +170,7 @@ void ImageCuda<VecType>::Upload(Image &image) {
     bool success = Create(image.width_, image.height_);
     if (!success) return;
 
-    CheckCuda(cudaMemcpy2D(server_->data_,
+    CheckCuda(cudaMemcpy2D(device_->data_,
                            (size_t) pitch_,
                            image.data_.data(),
                            (size_t) image.BytesPerLine(),
@@ -182,7 +182,7 @@ void ImageCuda<VecType>::Upload(Image &image) {
 template<typename VecType>
 std::shared_ptr<Image> ImageCuda<VecType>::DownloadImage() {
     std::shared_ptr<Image> image = std::make_shared<Image>();
-    if (server_ == nullptr) {
+    if (device_ == nullptr) {
         PrintWarning("[ImageCuda] not initialized, "
                      "@DownloadImage aborted.\n");
         return image;
@@ -205,7 +205,7 @@ std::shared_ptr<Image> ImageCuda<VecType>::DownloadImage() {
     }
 
     CheckCuda(cudaMemcpy2D(image->data_.data(), (size_t) image->BytesPerLine(),
-                           server_->data_, (size_t) pitch_,
+                           device_->data_, (size_t) pitch_,
                            sizeof(VecType) * width_, (size_t) height_,
                            cudaMemcpyDeviceToHost));
     return image;
@@ -225,7 +225,7 @@ void ImageCuda<VecType>::Downsample(ImageCuda<VecType> &image,
     bool success = image.Create(width_ >> 1, height_ >> 1);
     if (success) {
         ImageCudaKernelCaller<VecType>::DownsampleImageKernelCaller(
-            *server_, *image.server(), method);
+            *device_, *image.device_, method);
     }
 }
 
@@ -244,7 +244,7 @@ void ImageCuda<VecType>::Shift(ImageCuda<VecType> &image,
     bool success = image.Create(width_, height_);
     if (success) {
         ImageCudaKernelCaller<VecType>::ShiftImageKernelCaller(
-            *server_, *image.server(), dx, dy, with_holes);
+            *device_, *image.device_, dx, dy, with_holes);
     }
 }
 
@@ -264,7 +264,7 @@ void ImageCuda<VecType>::Gaussian(ImageCuda<VecType> &image,
     bool success = image.Create(width_, height_);
     if (success) {
         ImageCudaKernelCaller<VecType>::GaussianImageKernelCaller(
-            *server_, *image.server(), (int) kernel, with_holes);
+            *device_, *image.device_, (int) kernel, with_holes);
     }
 }
 
@@ -286,7 +286,7 @@ void ImageCuda<VecType>::Bilateral(ImageCuda<VecType> &image,
     bool success = image.Create(width_, height_);
     if (success) {
         ImageCudaKernelCaller<VecType>::BilateralImageKernelCaller(
-            *server_, *image.server(), (int) kernel, val_sigma, with_holes);
+            *device_, *image.device_, (int) kernel, val_sigma, with_holes);
     }
 }
 
@@ -311,7 +311,7 @@ void ImageCuda<VecType>::Sobel(ImageCuda<typename VecType::VecTypef> &dx,
     success &= dy.Create(width_, height_);
     if (success) {
         ImageCudaKernelCaller<VecType>::SobelImageKernelCaller(
-            *server_, *dx.server(), *dy.server(), with_holes);
+            *device_, *dx.device_, *dy.device_, with_holes);
     }
 }
 
@@ -330,7 +330,7 @@ void ImageCuda<VecType>::ConvertToFloat(
     bool success = image.Create(width_, height_);
     if (success) {
         ImageCudaKernelCaller<VecType>::ConvertToFloatImageKernelCaller(
-            *server_, *image.server(), scale, offset);
+            *device_, *image.device_, scale, offset);
     }
 }
 
@@ -348,7 +348,7 @@ void ImageCuda<VecType>::ConvertRGBToIntensity(ImageCuda<Vector1f> &image) {
     bool success = image.Create(width_, height_);
     if (success) {
         ImageCudaKernelCaller<VecType>::ConvertRGBToIntensityKernelCaller(
-            *server_, *image.server());
+            *device_, *image.device_);
     }
 }
 
@@ -381,7 +381,7 @@ void ImageCuda<VecType>::Upload(cv::Mat &m) {
     bool success = Create(m.cols, m.rows);
     if (!success) return;
 
-    CheckCuda(cudaMemcpy2D(server_->data_, (size_t) pitch_,
+    CheckCuda(cudaMemcpy2D(device_->data_, (size_t) pitch_,
                            m.data, m.step,
                            sizeof(VecType) * m.cols, (size_t) m.rows,
                            cudaMemcpyHostToDevice));
@@ -390,7 +390,7 @@ void ImageCuda<VecType>::Upload(cv::Mat &m) {
 template<typename VecType>
 cv::Mat ImageCuda<VecType>::DownloadMat() {
     cv::Mat m;
-    if (server_ == nullptr) {
+    if (device_ == nullptr) {
         PrintWarning("[ImageCuda] Not initialized, "
                      "@DownloadMat aborted.\n");
         return m;
@@ -416,7 +416,7 @@ cv::Mat ImageCuda<VecType>::DownloadMat() {
         return m;
     }
 
-    CheckCuda(cudaMemcpy2D(m.data, m.step, server_->data_, (size_t) pitch_,
+    CheckCuda(cudaMemcpy2D(m.data, m.step, device_->data_, (size_t) pitch_,
                            sizeof(VecType) * width_, (size_t) height_,
                            cudaMemcpyDeviceToHost));
     return m;

@@ -99,8 +99,8 @@ public:
 
 template<size_t N>
 class ScalableMeshVolumeCuda {
-private:
-    std::shared_ptr<ScalableMeshVolumeCudaDevice<N>> server_ = nullptr;
+public:
+    std::shared_ptr<ScalableMeshVolumeCudaDevice<N>> device_ = nullptr;
     TriangleMeshCuda mesh_;
 
 public:
@@ -127,7 +127,7 @@ public:
                 VertexType type, int max_vertices, int max_triangles);
     void Release();
     void Reset();
-    void UpdateServer();
+    void UpdateDevice();
 
 public:
     void VertexAllocation(ScalableTSDFVolumeCuda<N> &tsdf_volume);
@@ -137,14 +137,6 @@ public:
     void MarchingCubes(ScalableTSDFVolumeCuda<N> &tsdf_volume);
 
 public:
-    std::shared_ptr<ScalableMeshVolumeCudaDevice<N>> &server() {
-        return server_;
-    }
-    const std::shared_ptr<ScalableMeshVolumeCudaDevice<N>> &server()
-    const {
-        return server_;
-    }
-
     TriangleMeshCuda &mesh() {
         return mesh_;
     }

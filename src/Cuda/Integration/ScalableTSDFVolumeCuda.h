@@ -245,9 +245,9 @@ public:
     typedef HashTableCuda
     <Vector3i, UniformTSDFVolumeCudaDevice<N>, SpatialHasher>
         SpatialHashTableCuda;
+    std::shared_ptr<ScalableTSDFVolumeCudaDevice<N>> device_ = nullptr;
 
 private:
-    std::shared_ptr<ScalableTSDFVolumeCudaDevice<N>> server_ = nullptr;
     SpatialHashTableCuda hash_table_;
     ArrayCuda<HashEntry<Vector3i>> active_subvolume_entry_array_;
 
@@ -273,7 +273,7 @@ public:
     void Create(int bucket_count, int value_capacity);
     void Release();
     void Reset();
-    void UpdateServer();
+    void UpdateDevice();
 
     std::pair<std::vector<Vector3i>,                      /* Keys */
               std::vector<std::tuple<std::vector<float>,  /* TSDF volumes */
@@ -321,12 +321,6 @@ public:
     }
     const ArrayCuda<HashEntry<Vector3i>> &active_subvolume_entry_array() const {
         return active_subvolume_entry_array_;
-    }
-    std::shared_ptr<ScalableTSDFVolumeCudaDevice<N>> &server() {
-        return server_;
-    }
-    const std::shared_ptr<ScalableTSDFVolumeCudaDevice<N>> &server() const {
-        return server_;
     }
 };
 

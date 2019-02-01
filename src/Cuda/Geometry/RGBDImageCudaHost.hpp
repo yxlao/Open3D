@@ -11,7 +11,7 @@ RGBDImageCuda::RGBDImageCuda(float depth_near,
                              float depth_factor)
     : depth_near_(depth_near), depth_far_(depth_far),
       depth_factor_(depth_factor),
-      width_(-1), height_(-1), server_(nullptr) {}
+      width_(-1), height_(-1), device_(nullptr) {}
 
 RGBDImageCuda::RGBDImageCuda(int width, int height,
                              float depth_near,
@@ -23,32 +23,32 @@ RGBDImageCuda::RGBDImageCuda(int width, int height,
 }
 
 RGBDImageCuda::RGBDImageCuda(const RGBDImageCuda &other) {
-    server_ = other.server();
+    device_ = other.device_;
 
     depth_near_ = other.depth_near_;
     depth_far_ = other.depth_far_;
     depth_factor_ = other.depth_factor_;
 
-    depth_raw_ = other.depth_raw();
-    depthf_ = other.depthf();
-    color_ = other.color();
-    intensity_ = other.intensity();
+    depth_raw_ = other.depth_raw_;
+    depthf_ = other.depthf_;
+    color_ = other.color_;
+    intensity_ = other.intensity_;
 }
 
 RGBDImageCuda &RGBDImageCuda::operator=(const RGBDImageCuda &other) {
     if (this != &other) {
         Release();
 
-        server_ = other.server();
+        device_ = other.device_;
 
         depth_near_ = other.depth_near_;
         depth_far_ = other.depth_far_;
         depth_factor_ = other.depth_factor_;
 
-        depth_raw_ = other.depth_raw();
-        depthf_ = other.depthf();
-        color_ = other.color();
-        intensity_ = other.intensity();
+        depth_raw_ = other.depth_raw_;
+        depthf_ = other.depthf_;
+        color_ = other.color_;
+        intensity_ = other.intensity_;
     }
     return *this;
 }
@@ -60,7 +60,7 @@ RGBDImageCuda::~RGBDImageCuda() {
 bool RGBDImageCuda::Create(int width, int height) {
     assert(width > 0 && height > 0);
 
-    if (server_ != nullptr) {
+    if (device_ != nullptr) {
         if (width_ != width || height_ != height) {
             PrintError("[RGBDImageCuda] Incompatible image size,"
                        "@Create aborted.\n");
@@ -69,7 +69,7 @@ bool RGBDImageCuda::Create(int width, int height) {
         return true;
     }
 
-    server_ = std::make_shared<RGBDImageCudaDevice>();
+    device_ = std::make_shared<RGBDImageCudaDevice>();
 
     width_ = width;
     height_ = height;
@@ -79,12 +79,12 @@ bool RGBDImageCuda::Create(int width, int height) {
     depthf_.Create(width, height);
     intensity_.Create(width, height);
 
-    UpdateServer();
+    UpdateDevice();
     return true;
 }
 
 void RGBDImageCuda::Release() {
-    server_ = nullptr;
+    device_ = nullptr;
 
     depth_raw_.Release();
     color_.Release();
@@ -105,7 +105,7 @@ void RGBDImageCuda::Upload(Image &depth_raw, Image &color_raw) {
         depth_raw_.ConvertToFloat(depthf_, 1.0f / depth_factor_);
         color_.ConvertRGBToIntensity(intensity_);
 
-        UpdateServer();
+        UpdateDevice();
     }
 }
 
@@ -113,12 +113,12 @@ void RGBDImageCuda::CopyFrom(RGBDImageCuda &other) {
     if (&other == this) return;
     bool success = Create(other.width_, other.height_);
     if (success) {
-        depth_raw_.CopyFrom(other.depth_raw());
-        color_.CopyFrom(other.color());
-        depthf_.CopyFrom(other.depthf());
-        intensity_.CopyFrom(other.intensity());
+        depth_raw_.CopyFrom(other.depth_raw_);
+        color_.CopyFrom(other.color_);
+        depthf_.CopyFrom(other.depthf_);
+        intensity_.CopyFrom(other.intensity_);
 
-        UpdateServer();
+        UpdateDevice();
     }
 }
 
@@ -137,23 +137,23 @@ void RGBDImageCuda::Build(
         depth_raw_.ConvertToFloat(depthf_, 1.0f / depth_factor_);
         color_.ConvertRGBToIntensity(intensity_);
 
-        UpdateServer();
+        UpdateDevice();
     }
 }
 
-void RGBDImageCuda::UpdateServer() {
-    if (server_ != nullptr) {
-        server_->width_ = width_;
-        server_->height_ = height_;
+void RGBDImageCuda::UpdateDevice() {
+    if (device_ != nullptr) {
+        device_->width_ = width_;
+        device_->height_ = height_;
 
-        depthf_.UpdateServer();
-        server_->depth() = *depthf_.server();
+        depthf_.UpdateDevice();
+        device_->depth_ = *depthf_.device_;
 
-        color_.UpdateServer();
-        server_->color() = *color_.server();
+        color_.UpdateDevice();
+        device_->color_ = *color_.device_;
 
-        intensity_.UpdateServer();
-        server_->intensity() = *intensity_.server();
+        intensity_.UpdateDevice();
+        device_->intensity_ = *intensity_.device_;
     }
 }
 
@@ -171,7 +171,7 @@ void RGBDImageCuda::Upload(cv::Mat &depth, cv::Mat &color) {
         depth_raw_.ConvertToFloat(depthf_, 1.0f / depth_factor_);
         color_.ConvertRGBToIntensity(intensity_);
 
-        UpdateServer();
+        UpdateDevice();
     }
 }
 } // cuda

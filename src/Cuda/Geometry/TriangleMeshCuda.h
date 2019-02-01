@@ -17,7 +17,7 @@
 namespace open3d {
 namespace cuda {
 class TriangleMeshCudaDevice {
-private:
+public:
     ArrayCudaDevice<Vector3f> vertices_;
     ArrayCudaDevice<Vector3f> vertex_normals_;
     ArrayCudaDevice<Vector3f> vertex_colors_;
@@ -27,28 +27,11 @@ public:
     VertexType type_;
     int max_vertices_;
     int max_triangles_;
-
-public:
-    __DEVICE__ inline ArrayCudaDevice<Vector3f> &vertices() {
-        return vertices_;
-    }
-    __DEVICE__ inline ArrayCudaDevice<Vector3f> &vertex_normals() {
-        return vertex_normals_;
-    }
-    __DEVICE__ inline ArrayCudaDevice<Vector3f> &vertex_colors() {
-        return vertex_colors_;
-    }
-    __DEVICE__ inline ArrayCudaDevice<Vector3i> &triangles() {
-        return triangles_;
-    }
-
-public:
-    friend class TriangleMeshCuda;
 };
 
 class TriangleMeshCuda : public Geometry3D {
-private:
-    std::shared_ptr<TriangleMeshCudaDevice> server_ = nullptr;
+public:
+    std::shared_ptr<TriangleMeshCudaDevice> device_ = nullptr;
     ArrayCuda<Vector3f> vertices_;
     ArrayCuda<Vector3f> vertex_normals_;
     ArrayCuda<Vector3f> vertex_colors_;
@@ -67,7 +50,7 @@ public:
     ~TriangleMeshCuda() override;
 
     void Reset();
-    void UpdateServer();
+    void UpdateDevice();
 
     void Create(VertexType type, int max_vertices, int max_triangles);
     void Release();
@@ -86,39 +69,6 @@ public:
     Eigen::Vector3d GetMinBound() const override;
     Eigen::Vector3d GetMaxBound() const override;
     void Transform(const Eigen::Matrix4d &transformation) override;
-
-public:
-    ArrayCuda<Vector3f> &vertices() {
-        return vertices_;
-    }
-    const ArrayCuda<Vector3f> &vertices() const {
-        return vertices_;
-    }
-    ArrayCuda<Vector3f> &vertex_normals() {
-        return vertex_normals_;
-    }
-    const ArrayCuda<Vector3f> &vertex_normals() const {
-        return vertex_normals_;
-    }
-    ArrayCuda<Vector3f> &vertex_colors() {
-        return vertex_colors_;
-    }
-    const ArrayCuda<Vector3f> &vertex_colors() const {
-        return vertex_colors_;
-    }
-    ArrayCuda<Vector3i> &triangles() {
-        return triangles_;
-    }
-    const ArrayCuda<Vector3i> &triangles() const {
-        return triangles_;
-    }
-
-    std::shared_ptr<TriangleMeshCudaDevice> &server() {
-        return server_;
-    }
-    const std::shared_ptr<TriangleMeshCudaDevice> &server() const {
-        return server_;
-    }
 };
 
 class TriangleMeshCudaKernelCaller {

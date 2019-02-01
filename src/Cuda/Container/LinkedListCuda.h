@@ -79,10 +79,10 @@ public:
 
 template<typename T>
 class LinkedListCuda {
-private:
+public:
     typedef MemoryHeapCuda<LinkedListNodeCuda<T>> MemoryHeap;
 
-    std::shared_ptr<LinkedListCudaDevice<T>> server_ = nullptr;
+    std::shared_ptr<LinkedListCudaDevice<T>> device_ = nullptr;
     MemoryHeap memory_heap_;
 
 public:
@@ -103,7 +103,7 @@ public:
     void Delete(std::vector<int> &data);
     std::vector<T> Download();
 
-    void UpdateServer();
+    void UpdateDevice();
 
     int size();
     int max_capacity() const {
@@ -115,13 +115,6 @@ public:
     }
     const MemoryHeap &memory_heap() const {
         return memory_heap_;
-    }
-
-    std::shared_ptr<LinkedListCudaDevice<T>> &server() {
-        return server_;
-    }
-    const std::shared_ptr<LinkedListCudaDevice<T>> &server() const {
-        return server_;
     }
 };
 

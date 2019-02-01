@@ -41,7 +41,7 @@ ScalableMeshVolumeCuda<N>::ScalableMeshVolumeCuda(
     max_vertices_ = other.max_vertices_;
     max_triangles_ = other.max_triangles_;
 
-    server_ = other.server();
+    device_ = other.device_;
     mesh_ = other.mesh();
 }
 
@@ -55,7 +55,7 @@ ScalableMeshVolumeCuda<N> &ScalableMeshVolumeCuda<N>::operator=(
         max_vertices_ = other.max_vertices_;
         max_triangles_ = other.max_triangles_;
 
-        server_ = other.server();
+        device_ = other.device_;
         mesh_ = other.mesh();
     }
     return *this;
@@ -70,14 +70,14 @@ template<size_t N>
 void ScalableMeshVolumeCuda<N>::Create(
     int max_subvolumes,
     VertexType type, int max_vertices, int max_triangles) {
-    if (server_ != nullptr) {
+    if (device_ != nullptr) {
         PrintError("[ScalableMeshVolumeCuda]: Already created, abort!\n");
         return;
     }
 
     assert(max_subvolumes > 0 && max_vertices > 0 && max_triangles > 0);
 
-    server_ = std::make_shared<ScalableMeshVolumeCudaDevice<N>>();
+    device_ = std::make_shared<ScalableMeshVolumeCudaDevice<N>>();
     max_subvolumes_ = max_subvolumes;
 
     vertex_type_ = type;
@@ -85,24 +85,24 @@ void ScalableMeshVolumeCuda<N>::Create(
     max_triangles_ = max_triangles;
 
     const int NNN = N * N * N;
-    CheckCuda(cudaMalloc(&server_->table_indices_memory_pool_,
+    CheckCuda(cudaMalloc(&device_->table_indices_memory_pool_,
                          sizeof(uchar) * NNN * max_subvolumes_));
-    CheckCuda(cudaMalloc(&server_->vertex_indices_memory_pool_,
+    CheckCuda(cudaMalloc(&device_->vertex_indices_memory_pool_,
                          sizeof(Vector3i) * NNN * max_subvolumes_));
     mesh_.Create(type, max_vertices_, max_triangles_);
 
-    UpdateServer();
+    UpdateDevice();
     Reset();
 }
 
 template<size_t N>
 void ScalableMeshVolumeCuda<N>::Release() {
-    if (server_ != nullptr && server_.use_count() == 1) {
-        CheckCuda(cudaFree(server_->table_indices_memory_pool_));
-        CheckCuda(cudaFree(server_->vertex_indices_memory_pool_));
+    if (device_ != nullptr && device_.use_count() == 1) {
+        CheckCuda(cudaFree(device_->table_indices_memory_pool_));
+        CheckCuda(cudaFree(device_->vertex_indices_memory_pool_));
     }
     mesh_.Release();
-    server_ = nullptr;
+    device_ = nullptr;
     max_subvolumes_ = -1;
     max_vertices_ = -1;
     max_triangles_ = -1;
@@ -110,34 +110,34 @@ void ScalableMeshVolumeCuda<N>::Release() {
 
 template<size_t N>
 void ScalableMeshVolumeCuda<N>::Reset() {
-    if (server_ != nullptr) {
+    if (device_ != nullptr) {
         const size_t NNN = N * N * N;
-        CheckCuda(cudaMemset(server_->table_indices_memory_pool_, 0,
+        CheckCuda(cudaMemset(device_->table_indices_memory_pool_, 0,
                              sizeof(uchar) * NNN * max_subvolumes_));
-        CheckCuda(cudaMemset(server_->vertex_indices_memory_pool_, 0,
+        CheckCuda(cudaMemset(device_->vertex_indices_memory_pool_, 0,
                              sizeof(Vector3i) * NNN * max_subvolumes_));
         mesh_.Reset();
     }
 }
 
 template<size_t N>
-void ScalableMeshVolumeCuda<N>::UpdateServer() {
-    if (server_ != nullptr) {
-        server_->mesh_ = *mesh_.server();
+void ScalableMeshVolumeCuda<N>::UpdateDevice() {
+    if (device_ != nullptr) {
+        device_->mesh_ = *mesh_.device_;
     }
 }
 
 template<size_t N>
 void ScalableMeshVolumeCuda<N>::VertexAllocation(
     ScalableTSDFVolumeCuda<N> &tsdf_volume) {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     Timer timer;
     timer.Start();
 
     ScalableMeshVolumeCudaKernelCaller<N>::
     MarchingCubesVertexAllocationKernelCaller(
-        *server_, *tsdf_volume.server(), active_subvolumes_);
+        *device_, *tsdf_volume.device_, active_subvolumes_);
 
     timer.Stop();
     PrintDebug("Allocation takes %f milliseconds\n", timer.GetDuration());
@@ -146,14 +146,14 @@ void ScalableMeshVolumeCuda<N>::VertexAllocation(
 template<size_t N>
 void ScalableMeshVolumeCuda<N>::VertexExtraction(
     ScalableTSDFVolumeCuda<N> &tsdf_volume) {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     Timer timer;
     timer.Start();
 
     ScalableMeshVolumeCudaKernelCaller<N>::
     MarchingCubesVertexExtractionKernelCaller(
-        *server_, *tsdf_volume.server(), active_subvolumes_);
+        *device_, *tsdf_volume.device_, active_subvolumes_);
 
     timer.Stop();
     PrintDebug("Extraction takes %f milliseconds\n", timer.GetDuration());
@@ -162,14 +162,14 @@ void ScalableMeshVolumeCuda<N>::VertexExtraction(
 template<size_t N>
 void ScalableMeshVolumeCuda<N>::TriangleExtraction(
     ScalableTSDFVolumeCuda<N> &tsdf_volume) {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     Timer timer;
     timer.Start();
 
     ScalableMeshVolumeCudaKernelCaller<N>::
     MarchingCubesTriangleExtractionKernelCaller(
-        *server_, *tsdf_volume.server(), active_subvolumes_);
+        *device_, *tsdf_volume.device_, active_subvolumes_);
 
     timer.Stop();
     PrintDebug("Triangulation takes %f milliseconds\n", timer.GetDuration());
@@ -178,7 +178,7 @@ void ScalableMeshVolumeCuda<N>::TriangleExtraction(
 template<size_t N>
 void ScalableMeshVolumeCuda<N>::MarchingCubes(
     ScalableTSDFVolumeCuda<N> &tsdf_volume) {
-    assert(server_ != nullptr && vertex_type_ != VertexTypeUnknown);
+    assert(device_ != nullptr && vertex_type_ != VertexTypeUnknown);
 
     mesh_.Reset();
     active_subvolumes_ = tsdf_volume.active_subvolume_entry_array().size();
@@ -196,10 +196,10 @@ void ScalableMeshVolumeCuda<N>::MarchingCubes(
     TriangleExtraction(tsdf_volume);
 
     if (vertex_type_ & VertexWithNormal) {
-        mesh_.vertex_normals().set_iterator(mesh_.vertices().size());
+        mesh_.vertex_normals_.set_iterator(mesh_.vertices_.size());
     }
     if (vertex_type_ & VertexWithColor) {
-        mesh_.vertex_colors().set_iterator(mesh_.vertices().size());
+        mesh_.vertex_colors_.set_iterator(mesh_.vertices_.size());
     }
 }
 } // cuda

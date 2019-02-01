@@ -31,7 +31,7 @@ public:
 
 class FeatureExtractorCuda {
 public:
-    std::shared_ptr<FeatureCudaDevice> server_ = nullptr;
+    std::shared_ptr<FeatureCudaDevice> device_ = nullptr;
 
 public:
     FeatureExtractorCuda();
@@ -41,7 +41,7 @@ public:
 
     void Create();
     void Release();
-    void UpdateServer();
+    void UpdateDevice();
 
 public:
     void Compute(PointCloud &pcl, const KDTreeSearchParamHybrid &param);

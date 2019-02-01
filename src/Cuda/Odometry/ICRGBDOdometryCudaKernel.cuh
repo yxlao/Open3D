@@ -26,8 +26,8 @@ void DoSingleIterationKernel(
     local_sum1[tid] = 0;
     local_sum2[tid] = 0;
 
-    if (x >= odometry.target_[level].depth().width_
-        || y >= odometry.target_[level].depth().height_)
+    if (x >= odometry.target_[level].depth_.width_
+        || y >= odometry.target_[level].depth_.height_)
         return;
 
     /** Compute Jacobian and residual -> 9ms **/
@@ -179,8 +179,8 @@ void PrecomputeJacobiansKernel(
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
 
-    if (x >= odometry.source_[level].depth().width_
-        || y >= odometry.source_[level].depth().height_)
+    if (x >= odometry.source_[level].depth_.width_
+        || y >= odometry.source_[level].depth_.height_)
         return;
 
     odometry.ComputePixelwiseJacobian(x, y, level);

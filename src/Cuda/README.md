@@ -92,7 +92,7 @@ public:
     void Method();             
     
 private:
-    std::shared_ptr<ACudaServer> server_ = nullptr;    
+    std::shared_ptr<ACudaServer> device_ = nullptr;    
 };
 
 class AcudaKernelCaller {
@@ -116,7 +116,7 @@ can share one server.
 - The copy constructor or assignment operators will just pass the 
 `shared_ptr`, whose reference count will be monitored by STL.
 - When all the host classes connected to the server are 
-destroyed (i.e., when we detect `server_.use_count() == 1` meaning this object
+destroyed (i.e., when we detect `device_.use_count() == 1` meaning this object
  is 
 the final host that points to the server), the data on GPU will be freed.
 
@@ -126,7 +126,7 @@ other `Server` classes. Nested `Server` MUST hold structs instead of their
 pointers, because otherwise the values cannot be correctly passed to CUDA. 
 - For the classes with a simple `Server`, just handle cuda data correctly in 
 `Create` and `Release`.
-- For nested classes, write a function `UpdateServer` that correctly 
+- For nested classes, write a function `UpdateDevice` that correctly 
 synchronize nested structs (not their ptrs!). One simplified sample goes here:
 ```cpp
 class ACudaServer {
@@ -137,12 +137,12 @@ public:
 
 class ACuda {
 private:
-    std::shared_ptr<BCudaServer> server_;
+    std::shared_ptr<BCudaServer> device_;
     BCuda b_;
 
 public:
-    void ACuda::UpdateServer() {
-        server_->b_ = *b_.server();
+    void ACuda::UpdateDevice() {
+        device_->b_ = *b_.device_;
     }
 }
 ```
@@ -160,7 +160,7 @@ std::vector<BCuda> barray_hosts_;
 for (auto &barray_host : barray_hosts_) {
     barray_host.Create();    
 }
-/** On kernel, array_->server[i] = *barray_host.server() ??? **/
+/** On kernel, array_->server[i] = *barray_host.device_ ??? **/
 ```   
 - Another workaround is to pre-allocate the data in a plain cuda array 
 (name them server memory pool will be a little bit easy to understand) using 

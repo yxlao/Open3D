@@ -23,7 +23,7 @@ void FeatureCudaKernelCaller::ComputeSPFHFeature(FeatureExtractorCuda &feature) 
     const dim3 blocks(DIV_CEILING(feature.neighbors_.indices_.size(),
         THREAD_1D_UNIT));
     const dim3 threads(THREAD_1D_UNIT);
-    ComputeSPFHFeatureKernel<<<blocks, threads>>>(*feature.server_);
+    ComputeSPFHFeatureKernel<<<blocks, threads>>>(*feature.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
@@ -42,7 +42,7 @@ void FeatureCudaKernelCaller::ComputeFPFHFeature(FeatureExtractorCuda &feature) 
     const dim3 blocks(DIV_CEILING(feature.neighbors_.indices_.size(),
         THREAD_1D_UNIT));
     const dim3 threads(THREAD_1D_UNIT);
-    ComputeFPFHFeatureKernel<<<blocks, threads>>>(*feature.server_);
+    ComputeFPFHFeatureKernel<<<blocks, threads>>>(*feature.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }

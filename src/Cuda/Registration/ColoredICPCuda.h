@@ -40,7 +40,7 @@ public:
 class TransformEstimationCudaForColoredICP : public TransformEstimationCuda {
 public:
     std::shared_ptr<TransformEstimationCudaForColoredICPDevice>
-        server_ = nullptr;
+        device_ = nullptr;
 
 public:
     TransformationEstimationType GetTransformationEstimationType()
@@ -51,7 +51,7 @@ public:
 
     void Create() override;
     void Release() override;
-    void UpdateServer() override;
+    void UpdateDevice() override;
 
     /** TODO: copy constructors **/
 

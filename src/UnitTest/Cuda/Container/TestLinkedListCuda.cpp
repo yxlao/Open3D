@@ -49,8 +49,8 @@ TEST(LinkedListCuda, LinkedListInsertAndDownload) {
     }
     linked_list1.Insert(values);
     memory_heap.Resize(kMaxCapacity * 2);
-    linked_list1.UpdateServer();
-    linked_list2.UpdateServer();
+    linked_list1.UpdateDevice();
+    linked_list2.UpdateDevice();
 
     std::vector<int> downloaded_values = linked_list1.Download();
     EXPECT_EQ(downloaded_values.size(), num_samples);

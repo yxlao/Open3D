@@ -19,17 +19,17 @@ public:
 
 class CorrespondenceSetCuda {
 public:
-    std::shared_ptr<CorrespondenceSetCudaDevice> server_ = nullptr;
+    std::shared_ptr<CorrespondenceSetCudaDevice> device_ = nullptr;
 
 public:
-    CorrespondenceSetCuda() { server_ = nullptr; };
+    CorrespondenceSetCuda() { device_ = nullptr; };
     CorrespondenceSetCuda(const CorrespondenceSetCuda &other);
     CorrespondenceSetCuda& operator=(const CorrespondenceSetCuda &other);
     ~CorrespondenceSetCuda();
 
     void Create(int max_rows, int max_cols);
     void Release();
-    void UpdateServer();
+    void UpdateDevice();
 
     /* Dimensions: correspondences x queries */
     Array2DCuda<int> matrix_;

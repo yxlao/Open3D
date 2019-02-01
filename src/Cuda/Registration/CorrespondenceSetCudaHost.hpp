@@ -10,7 +10,7 @@ namespace cuda {
 
 CorrespondenceSetCuda::CorrespondenceSetCuda(
     const CorrespondenceSetCuda &other) {
-    server_ = other.server_;
+    device_ = other.device_;
 
     matrix_ = other.matrix_;
     indices_ = other.indices_;
@@ -20,7 +20,7 @@ CorrespondenceSetCuda::CorrespondenceSetCuda(
 CorrespondenceSetCuda& CorrespondenceSetCuda::operator=(
     const CorrespondenceSetCuda &other) {
     if (this != &other) {
-        server_ = other.server_;
+        device_ = other.device_;
 
         matrix_ = other.matrix_;
         indices_ = other.indices_;
@@ -35,25 +35,25 @@ CorrespondenceSetCuda::~CorrespondenceSetCuda() {
 }
 
 void CorrespondenceSetCuda::Create(int max_rows, int max_cols) {
-    if (server_ != nullptr) {
+    if (device_ != nullptr) {
         PrintError("[CorrespondenceSetCuda] Already created, abort.\n");
         return;
     }
 
-    server_ = std::make_shared<CorrespondenceSetCudaDevice>();
+    device_ = std::make_shared<CorrespondenceSetCudaDevice>();
     matrix_.Create(max_rows, max_cols);
     indices_.Create(max_cols);
     nn_count_.Create(max_cols);
 }
 
 void CorrespondenceSetCuda::Release() {
-    if (server_ != nullptr && server_.use_count() == 1) {
+    if (device_ != nullptr && device_.use_count() == 1) {
         matrix_.Release();
         indices_.Release();
         nn_count_.Release();
     }
 
-    server_ = nullptr;
+    device_ = nullptr;
 }
 
 void CorrespondenceSetCuda::SetCorrespondenceMatrix(
@@ -62,7 +62,7 @@ void CorrespondenceSetCuda::SetCorrespondenceMatrix(
     Eigen::Matrix<int, -1, -1, Eigen::RowMajor>
         corres_matrix_rowmajor = corres_matrix;
 
-    if (server_ == nullptr) {
+    if (device_ == nullptr) {
         Create(corres_matrix.rows(), corres_matrix.cols());
     } else {
         assert(corres_matrix.rows() == matrix_.max_rows_
@@ -72,12 +72,12 @@ void CorrespondenceSetCuda::SetCorrespondenceMatrix(
     matrix_.Upload(corres_matrix_rowmajor);
     indices_.Resize(matrix_.max_cols_);
     nn_count_.Resize(matrix_.max_cols_);
-    UpdateServer();
+    UpdateDevice();
 }
 
 void CorrespondenceSetCuda::SetCorrespondenceMatrix(
     Array2DCuda<int> &corres_matrix) {
-    if (server_ == nullptr) {
+    if (device_ == nullptr) {
         Create(corres_matrix.max_rows_, corres_matrix.max_cols_);
     } else {
         assert(corres_matrix.max_rows_ == matrix_.max_rows_);
@@ -87,7 +87,7 @@ void CorrespondenceSetCuda::SetCorrespondenceMatrix(
     corres_matrix.CopyTo(matrix_);
     indices_.Resize(matrix_.max_cols_);
     nn_count_.Resize(matrix_.max_cols_);
-    UpdateServer();
+    UpdateDevice();
 }
 
 void CorrespondenceSetCuda::Compress() {
@@ -98,12 +98,12 @@ void CorrespondenceSetCuda::Compress() {
 }
 
 
-void CorrespondenceSetCuda::UpdateServer() {
-    assert(server_ != nullptr);
+void CorrespondenceSetCuda::UpdateDevice() {
+    assert(device_ != nullptr);
 
-    server_->matrix_ = *matrix_.server();
-    server_->indices_ = *indices_.server();
-    server_->nn_count_ = *nn_count_.server();
+    device_->matrix_ = *matrix_.device_;
+    device_->indices_ = *indices_.device_;
+    device_->nn_count_ = *nn_count_.device_;
 }
 
 }

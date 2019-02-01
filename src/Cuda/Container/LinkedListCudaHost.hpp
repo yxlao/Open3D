@@ -33,7 +33,7 @@ LinkedListCuda<T>::~LinkedListCuda() {
 
 template<typename T>
 LinkedListCuda<T>::LinkedListCuda(const LinkedListCuda<T> &other) {
-    server_ = other.server();
+    device_ = other.device_;
     memory_heap_ = other.memory_heap();
     max_capacity_ = other.max_capacity();
 }
@@ -44,7 +44,7 @@ LinkedListCuda<T> &LinkedListCuda<T>::operator=(
     if (this != &other) {
         Release();
 
-        server_ = other.server();
+        device_ = other.device_;
         memory_heap_ = other.memory_heap();
         max_capacity_ = other.max_capacity();
     }
@@ -56,51 +56,51 @@ template<typename T>
 void LinkedListCuda<T>::Create(int max_capacity,
                                MemoryHeapCuda<LinkedListNodeCuda<T>> &memory_heap) {
     assert(max_capacity > 0 && max_capacity < memory_heap.max_capacity_);
-    if (server_ != nullptr) {
+    if (device_ != nullptr) {
         PrintError("[LinkedListCuda] Already created, abort!\n");
         return;
     }
 
-    server_ = std::make_shared<LinkedListCudaDevice<T>>();
+    device_ = std::make_shared<LinkedListCudaDevice<T>>();
     max_capacity_ = max_capacity;
     memory_heap_ = memory_heap;
 
-    CheckCuda(cudaMalloc(&server_->head_node_ptr_, sizeof(int)));
-    CheckCuda(cudaMemset(server_->head_node_ptr_, NULLPTR_CUDA, sizeof(int)));
+    CheckCuda(cudaMalloc(&device_->head_node_ptr_, sizeof(int)));
+    CheckCuda(cudaMemset(device_->head_node_ptr_, NULLPTR_CUDA, sizeof(int)));
 
-    CheckCuda(cudaMalloc(&server_->size_, sizeof(int)));
-    CheckCuda(cudaMemset(server_->size_, 0, sizeof(int)));
+    CheckCuda(cudaMalloc(&device_->size_, sizeof(int)));
+    CheckCuda(cudaMemset(device_->size_, 0, sizeof(int)));
 
-    UpdateServer();
+    UpdateDevice();
 }
 
 template<typename T>
-void LinkedListCuda<T>::UpdateServer() {
-    if (server_ != nullptr) {
-        server_->max_capacity_ = max_capacity_;
-        server_->memory_heap_ = *memory_heap_.server();
+void LinkedListCuda<T>::UpdateDevice() {
+    if (device_ != nullptr) {
+        device_->max_capacity_ = max_capacity_;
+        device_->memory_heap_ = *memory_heap_.device_;
     }
 }
 
 template<typename T>
 void LinkedListCuda<T>::Release() {
-    if (server_ != nullptr && server_.use_count() == 1) {
+    if (device_ != nullptr && device_.use_count() == 1) {
         LinkedListCudaKernelCaller<T>::
-        ClearLinkedListKernelCaller(*server_);
-        CheckCuda(cudaFree(server_->head_node_ptr_));
-        CheckCuda(cudaFree(server_->size_));
+        ClearLinkedListKernelCaller(*device_);
+        CheckCuda(cudaFree(device_->head_node_ptr_));
+        CheckCuda(cudaFree(device_->size_));
     }
 
-    server_ = nullptr;
+    device_ = nullptr;
     max_capacity_ = -1;
 }
 
 template<typename T>
 int LinkedListCuda<T>::size() {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     int ret;
-    CheckCuda(cudaMemcpy(&ret, server_->size_,
+    CheckCuda(cudaMemcpy(&ret, device_->size_,
                          sizeof(int),
                          cudaMemcpyDeviceToHost));
     return ret;
@@ -108,44 +108,44 @@ int LinkedListCuda<T>::size() {
 
 template<typename T>
 void LinkedListCuda<T>::Insert(std::vector<int> &data) {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     ArrayCuda<T> data_cuda(data.size());
     data_cuda.Upload(data);
     LinkedListCudaKernelCaller<T>::
-    InsertLinkedListKernelCaller(*server_, *data_cuda.server());
+    InsertLinkedListKernelCaller(*device_, *data_cuda.device_);
 }
 
 template<typename T>
 void LinkedListCuda<T>::Find(std::vector<int> &query) {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     ArrayCuda<T> query_cuda(query.size());
     query_cuda.Upload(query);
     LinkedListCudaKernelCaller<T>::
-    FindLinkedListKernelCaller(*server_, *query_cuda.server());
+    FindLinkedListKernelCaller(*device_, *query_cuda.device_);
 }
 
 template<typename T>
 void LinkedListCuda<T>::Delete(std::vector<int> &query) {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     ArrayCuda<T> query_cuda(query.size());
     query_cuda.Upload(query);
     LinkedListCudaKernelCaller<T>::
-    DeleteLinkedListKernelCaller(*server_, *query_cuda.server());
+    DeleteLinkedListKernelCaller(*device_, *query_cuda.device_);
 }
 
 template<typename T>
 std::vector<T> LinkedListCuda<T>::Download() {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     int linked_list_size = size();
     if (linked_list_size == 0) return std::vector<T>();
 
     ArrayCuda<T> data(linked_list_size);
     LinkedListCudaKernelCaller<T>::
-    DownloadLinkedListKernelCaller(*server_, *data.server());
+    DownloadLinkedListKernelCaller(*device_, *data.device_);
     return data.DownloadAll();
 }
 } // cuda

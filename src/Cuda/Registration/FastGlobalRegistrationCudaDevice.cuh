@@ -16,8 +16,8 @@ ComputePointwiseJacobianAndResidual(
     Vector6f &jacobian_x, Vector6f &jacobian_y, Vector6f &jacobian_z,
     Vector3f &residual, float &lij) {
 
-    Vector3f p = target_.points()[target_idx];
-    Vector3f q = source_.points()[source_idx];
+    Vector3f p = target_.points_[target_idx];
+    Vector3f q = source_.points_[source_idx];
     Vector3f rpq = p - q;
 
     lij = par_ / (rpq.dot(rpq) + par_);

@@ -19,15 +19,15 @@ void BuildFromRGBDImageKernel(
 
     if (x >= rgbd.width_ || y >= rgbd.height_) return;
 
-    float depth = rgbd.depth().at(x, y)(0);
+    float depth = rgbd.depth_.at(x, y)(0);
     if (depth == 0) return;
-    Vector3b color = rgbd.color().at(x, y);
+    Vector3b color = rgbd.color_.at(x, y);
 
     Vector3f point = intrinsic.InverseProjectPixel(Vector2i(x, y), depth);
 
-    int index = server.points().push_back(point);
+    int index = server.points_.push_back(point);
     if (server.type_ & VertexWithColor) {
-        server.colors()[index] = color.ToVectorf() / 255.0f;
+        server.colors_[index] = color.ToVectorf() / 255.0f;
     }
 }
 
@@ -59,7 +59,7 @@ void BuildFromDepthImageKernel(
     if (d == 0) return;
 
     Vector3f point = intrinsic.InverseProjectPixel(Vector2i(x, y), d);
-    server.points().push_back(point);
+    server.points_.push_back(point);
 }
 
 __host__
@@ -85,8 +85,8 @@ void GetMinBoundKernel(PointCloudCudaDevice server,
 
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
     int tid = threadIdx.x;
-    Vector3f vertex = idx < server.points().size() ?
-                      server.points()[idx] : Vector3f(1e10f);
+    Vector3f vertex = idx < server.points_.size() ?
+                      server.points_[idx] : Vector3f(1e10f);
 
     local_min_x[tid] = vertex(0);
     local_min_y[tid] = vertex(1);
@@ -128,8 +128,8 @@ void GetMaxBoundKernel(PointCloudCudaDevice server,
 
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
     int tid = threadIdx.x;
-    Vector3f vertex = idx < server.points().size() ?
-                      server.points()[idx] : Vector3f(-1e10f);
+    Vector3f vertex = idx < server.points_.size() ?
+                      server.points_[idx] : Vector3f(-1e10f);
 
     local_max_x[tid] = vertex(0);
     local_max_y[tid] = vertex(1);
@@ -166,13 +166,13 @@ void PointCloudCudaKernelCaller::GetMaxBoundKernelCaller(
 __global__
 void TransformKernel(PointCloudCudaDevice server, TransformCuda transform) {
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
-    if (idx >= server.points().size()) return;
+    if (idx >= server.points_.size()) return;
 
-    Vector3f &position = server.points()[idx];
+    Vector3f &position = server.points_[idx];
     position = transform * position;
 
     if (server.type_ & VertexWithNormal) {
-        Vector3f &normal = server.normals()[idx];
+        Vector3f &normal = server.normals_[idx];
         normal = transform.Rotate(normal);
     }
 }

@@ -74,7 +74,7 @@ void NNCudaKernelCaller::ComputeDistancesKernelCaller(NNCuda &nn) {
     const dim3 blocks(DIV_CEILING(nn.query_.max_cols_, THREAD_2D_UNIT),
                       DIV_CEILING(nn.reference_.max_cols_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
-    ComputeDistancesKernel<<<blocks, threads>>>(*nn.server_);
+    ComputeDistancesKernel<<<blocks, threads>>>(*nn.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
@@ -104,7 +104,7 @@ void NNCudaKernelCaller::FindNNKernelCaller(NNCuda &nn) {
     const dim3 blocks(DIV_CEILING(nn.query_.max_cols_, 256));
     const dim3 threads(256);
 
-    FindNNKernel<<<blocks, threads>>>(*nn.server_);
+    FindNNKernel<<<blocks, threads>>>(*nn.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }

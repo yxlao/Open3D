@@ -13,7 +13,7 @@ namespace open3d {
 namespace cuda {
 
 template<typename VecType, size_t N>
-ImagePyramidCuda<VecType, N>::ImagePyramidCuda() : server_(nullptr) {}
+ImagePyramidCuda<VecType, N>::ImagePyramidCuda() : device_(nullptr) {}
 
 template<typename VecType, size_t N>
 ImagePyramidCuda<VecType, N>::~ImagePyramidCuda() {
@@ -24,7 +24,7 @@ template<typename VecType, size_t N>
 ImagePyramidCuda<VecType, N>::ImagePyramidCuda(
     const ImagePyramidCuda<VecType, N> &other) {
 
-    server_ = other.server();
+    device_ = other.device_;
     for (size_t i = 0; i < N; ++i) {
         images_[i] = other[i];
     }
@@ -34,7 +34,7 @@ template<typename VecType, size_t N>
 ImagePyramidCuda<VecType, N> &ImagePyramidCuda<VecType, N>::operator=(
     const ImagePyramidCuda<VecType, N> &other) {
     if (this != &other) {
-        server_ = other.server();
+        device_ = other.device_;
         for (size_t i = 0; i < N; ++i) {
             images_[i] = other[i];
         }
@@ -45,7 +45,7 @@ ImagePyramidCuda<VecType, N> &ImagePyramidCuda<VecType, N>::operator=(
 template<typename VecType, size_t N>
 bool ImagePyramidCuda<VecType, N>::Create(int width, int height) {
     assert(width > 0 && height > 0);
-    if (server_ != nullptr) {
+    if (device_ != nullptr) {
         if (this->width(0) != width || this->height(0) != height) {
             PrintError("[ImagePyramidCuda] Incompatible image size,"
                        "@Create aborted.\n");
@@ -60,7 +60,7 @@ bool ImagePyramidCuda<VecType, N>::Create(int width, int height) {
         return false;
     }
 
-    server_ = std::make_shared<ImagePyramidCudaDevice<VecType, N>>();
+    device_ = std::make_shared<ImagePyramidCudaDevice<VecType, N>>();
     for (size_t i = 0; i < N; ++i) {
         int w = width >> i;
         int h = height >> i;
@@ -68,7 +68,7 @@ bool ImagePyramidCuda<VecType, N>::Create(int width, int height) {
         assert(success);
     }
 
-    UpdateServer();
+    UpdateDevice();
     return true;
 }
 
@@ -77,7 +77,7 @@ void ImagePyramidCuda<VecType, N>::Release() {
     for (size_t i = 0; i < N; ++i) {
         images_[i].Release();
     }
-    server_ = nullptr;
+    device_ = nullptr;
 }
 
 template<typename VecType, size_t N>
@@ -88,16 +88,16 @@ void ImagePyramidCuda<VecType, N>::Build(const ImageCuda<VecType> &image) {
         for (size_t i = 1; i < N; ++i) {
             images_[i - 1].Downsample(images_[i]);
         }
-        UpdateServer();
+        UpdateDevice();
     }
 }
 
 template<typename VecType, size_t N>
-void ImagePyramidCuda<VecType, N>::UpdateServer() {
-    if (server_ != nullptr) {
+void ImagePyramidCuda<VecType, N>::UpdateDevice() {
+    if (device_ != nullptr) {
         for (size_t i = 0; i < N; ++i) {
-            images_[i].UpdateServer();
-            (*server_)[i] = *images_[i].server();
+            images_[i].UpdateDevice();
+            (*device_)[i] = *images_[i].device_;
         }
     }
 }
@@ -106,7 +106,7 @@ template<typename VecType, size_t N>
 std::vector<std::shared_ptr<Image>> ImagePyramidCuda<VecType, N>::
 DownloadImages() {
     std::vector<std::shared_ptr<Image> > result;
-    if (server_ == nullptr) {
+    if (device_ == nullptr) {
         PrintWarning("[ImagePyramidCuda] Not initialized,"
                      "@DownloadImages aborted.\n");
         return result;
@@ -120,7 +120,7 @@ DownloadImages() {
 template<typename VecType, size_t N>
 std::vector<cv::Mat> ImagePyramidCuda<VecType, N>::DownloadMats() {
     std::vector<cv::Mat> result;
-    if (server_ == nullptr) {
+    if (device_ == nullptr) {
         PrintWarning("[ImagePyramidCuda] Not initialized,"
                      "@DownloadMats aborted.\n");
         return result;

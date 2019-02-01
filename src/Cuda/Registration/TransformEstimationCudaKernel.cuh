@@ -27,8 +27,8 @@ void ComputeSumsKernel(
     int source_idx = estimation.correspondences_.indices_[idx];
     int target_idx = estimation.correspondences_.matrix_(0, source_idx);
 
-    Vector3f &source = estimation.source_.points()[source_idx];
-    Vector3f &target = estimation.target_.points()[target_idx];
+    Vector3f &source = estimation.source_.points_[source_idx];
+    Vector3f &target = estimation.target_.points_[target_idx];
 
     {
         const int OFFSET1 = 9;
@@ -203,7 +203,7 @@ ComputeSumsKernelCaller(TransformEstimationPointToPointCuda &estimation){
                                   THREAD_1D_UNIT));
     const dim3 threads(THREAD_1D_UNIT);
 
-    ComputeSumsKernel << < blocks, threads >> > (*estimation.server_);
+    ComputeSumsKernel << < blocks, threads >> > (*estimation.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
@@ -216,7 +216,7 @@ ComputeResultsAndTransformationKernelCaller(
                                   THREAD_1D_UNIT));
     const dim3 threads(THREAD_1D_UNIT);
 
-    ComputeResultsAndTransformationKernel<< < blocks, threads >> > (*estimation.server_);
+    ComputeResultsAndTransformationKernel<< < blocks, threads >> > (*estimation.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
@@ -360,7 +360,7 @@ ComputeResultsAndTransformationKernelCaller(
                                   THREAD_1D_UNIT));
     const dim3 threads(THREAD_1D_UNIT);
 
-    ComputeResultsAndTransformationKernel<< < blocks, threads >> > (*estimation.server_);
+    ComputeResultsAndTransformationKernel<< < blocks, threads >> > (*estimation.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }

@@ -30,12 +30,12 @@ public:
 
 class NNCuda {
 public:
-    std::shared_ptr<NNCudaDevice> server_ = nullptr;
+    std::shared_ptr<NNCudaDevice> device_ = nullptr;
 
 public:
     NNCuda();
     ~NNCuda();
-    void UpdateServer();
+    void UpdateDevice();
 
     /** Should be feature_size x feature_count
      *  This will encourage cache hits in parallel kernels

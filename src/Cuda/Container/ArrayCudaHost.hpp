@@ -27,7 +27,7 @@ ArrayCuda<T>::ArrayCuda(int max_capacity) {
 
 template<typename T>
 ArrayCuda<T>::ArrayCuda(const ArrayCuda<T> &other) {
-    server_ = other.server();
+    device_ = other.device_;
     max_capacity_ = other.max_capacity_;
 }
 
@@ -36,7 +36,7 @@ ArrayCuda<T> &ArrayCuda<T>::operator=(const ArrayCuda<T> &other) {
     if (this != &other) {
         Release();
 
-        server_ = other.server();
+        device_ = other.device_;
         max_capacity_ = other.max_capacity_;
     }
     return *this;
@@ -49,7 +49,7 @@ ArrayCuda<T>::~ArrayCuda() {
 
 template<typename T>
 void ArrayCuda<T>::Resize(int max_capacity) {
-    if (server_ == nullptr) {
+    if (device_ == nullptr) {
         Create(max_capacity);
     } else {
         if (max_capacity_ == max_capacity) return;
@@ -60,14 +60,14 @@ void ArrayCuda<T>::Resize(int max_capacity) {
         CheckCuda(cudaMalloc(&(resized_data), sizeof(T) * max_capacity));
 
         int used_data_count = size();
-        CheckCuda(cudaMemcpy(resized_data, server_->data_,
+        CheckCuda(cudaMemcpy(resized_data, device_->data_,
                              sizeof(T) * used_data_count,
                              cudaMemcpyDeviceToDevice));
-        CheckCuda(cudaFree(server_->data_));
-        server_->data_ = resized_data;
+        CheckCuda(cudaFree(device_->data_));
+        device_->data_ = resized_data;
 
         max_capacity_ = max_capacity;
-        server_->max_capacity_ = max_capacity;
+        device_->max_capacity_ = max_capacity;
     }
 }
 
@@ -75,42 +75,42 @@ template<typename T>
 void ArrayCuda<T>::Create(int max_capacity) {
     assert(max_capacity > 0);
 
-    if (server_ != nullptr) {
+    if (device_ != nullptr) {
         PrintError("[ArrayCuda]: Already created, abort!\n");
         return;
     }
 
-    server_ = std::make_shared<ArrayCudaDevice<T >>();
+    device_ = std::make_shared<ArrayCudaDevice<T >>();
     max_capacity_ = max_capacity;
-    server_->max_capacity_ = max_capacity;
+    device_->max_capacity_ = max_capacity;
 
-    CheckCuda(cudaMalloc(&(server_->data_), sizeof(T) * max_capacity));
-    CheckCuda(cudaMemset(server_->data_, 0, sizeof(T) * max_capacity));
-    CheckCuda(cudaMalloc(&(server_->iterator_), sizeof(int)));
-    CheckCuda(cudaMemset(server_->iterator_, 0, sizeof(int)));
+    CheckCuda(cudaMalloc(&(device_->data_), sizeof(T) * max_capacity));
+    CheckCuda(cudaMemset(device_->data_, 0, sizeof(T) * max_capacity));
+    CheckCuda(cudaMalloc(&(device_->iterator_), sizeof(int)));
+    CheckCuda(cudaMemset(device_->iterator_, 0, sizeof(int)));
 }
 
 template<typename T>
 void ArrayCuda<T>::Release() {
-    if (server_ != nullptr && server_.use_count() == 1) {
-        CheckCuda(cudaFree(server_->data_));
-        CheckCuda(cudaFree(server_->iterator_));
+    if (device_ != nullptr && device_.use_count() == 1) {
+        CheckCuda(cudaFree(device_->data_));
+        CheckCuda(cudaFree(device_->iterator_));
     }
 
-    server_ = nullptr;
+    device_ = nullptr;
     max_capacity_ = -1;
 }
 
 template<typename T>
 void ArrayCuda<T>::CopyFromDeviceArray(const T *array, int size) {
-    if (server_ == nullptr) {
+    if (device_ == nullptr) {
         Create(size);
-    } else if (server_->max_capacity_ < size) {
+    } else if (device_->max_capacity_ < size) {
         PrintError("[ArrayCuda]: max capacity %d < %d, abort!\n",
                    max_capacity_, size);
         return;
     }
-    CheckCuda(cudaMemcpy(server_->data_, array,
+    CheckCuda(cudaMemcpy(device_->data_, array,
                          sizeof(T) * size,
                          cudaMemcpyDeviceToDevice));
 
@@ -118,11 +118,11 @@ void ArrayCuda<T>::CopyFromDeviceArray(const T *array, int size) {
 
 template<typename T>
 void ArrayCuda<T>::CopyTo(ArrayCuda<T> &other) const {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     if (this == &other) return;
 
-    if (other.server_ == nullptr) {
+    if (other.device_ == nullptr) {
         other.Create(max_capacity_);
     } else if (other.max_capacity_ < max_capacity_) {
         PrintError("[ArrayCuda]: other.max_capacity %d < %d, abort!\n",
@@ -130,41 +130,41 @@ void ArrayCuda<T>::CopyTo(ArrayCuda<T> &other) const {
         return;
     }
 
-    CheckCuda(cudaMemcpy(other.server()->data(), server_->data_,
+    CheckCuda(cudaMemcpy(other.device_->data(), device_->data_,
                          sizeof(T) * max_capacity_,
                          cudaMemcpyDeviceToDevice));
 }
 
 template<typename T>
 void ArrayCuda<T>::Upload(std::vector<T> &data) {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     int size = data.size();
     assert(size <= max_capacity_);
-    CheckCuda(cudaMemcpy(server_->data_, data.data(),
+    CheckCuda(cudaMemcpy(device_->data_, data.data(),
                          sizeof(T) * size,
                          cudaMemcpyHostToDevice));
-    CheckCuda(cudaMemcpy(server_->iterator_, &size,
+    CheckCuda(cudaMemcpy(device_->iterator_, &size,
                          sizeof(int),
                          cudaMemcpyHostToDevice));
 }
 
 template<typename T>
 void ArrayCuda<T>::Upload(const T *data, int size) {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     assert(size <= max_capacity_);
-    CheckCuda(cudaMemcpy(server_->data_, data,
+    CheckCuda(cudaMemcpy(device_->data_, data,
                          sizeof(T) * size,
                          cudaMemcpyHostToDevice));
-    CheckCuda(cudaMemcpy(server_->iterator_, &size,
+    CheckCuda(cudaMemcpy(device_->iterator_, &size,
                          sizeof(int),
                          cudaMemcpyHostToDevice));
 }
 
 template<class T>
 std::vector<T> ArrayCuda<T>::Download() {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     std::vector<T> ret;
     int iterator_count = size();
@@ -172,7 +172,7 @@ std::vector<T> ArrayCuda<T>::Download() {
 
     if (iterator_count == 0) return ret;
 
-    CheckCuda(cudaMemcpy(ret.data(), server_->data_,
+    CheckCuda(cudaMemcpy(ret.data(), device_->data_,
                          sizeof(T) * iterator_count,
                          cudaMemcpyDeviceToHost));
 
@@ -181,12 +181,12 @@ std::vector<T> ArrayCuda<T>::Download() {
 
 template<typename T>
 std::vector<T> ArrayCuda<T>::DownloadAll() {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     std::vector<T> ret;
     ret.resize(max_capacity_);
 
-    CheckCuda(cudaMemcpy(ret.data(), server_->data_,
+    CheckCuda(cudaMemcpy(ret.data(), device_->data_,
                          sizeof(T) * max_capacity_,
                          cudaMemcpyDeviceToHost));
 
@@ -195,31 +195,31 @@ std::vector<T> ArrayCuda<T>::DownloadAll() {
 
 template<typename T>
 void ArrayCuda<T>::Fill(const T &val) {
-    if (server_ == nullptr) return;
+    if (device_ == nullptr) return;
     ArrayCudaKernelCaller<T>::FillArrayKernelCaller(
-        *server_, val, max_capacity_);
+        *device_, val, max_capacity_);
 }
 
 template<typename T>
 void ArrayCuda<T>::Memset(int val) {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
-    CheckCuda(cudaMemset(server_->data_, val, sizeof(T) * max_capacity_));
+    CheckCuda(cudaMemset(device_->data_, val, sizeof(T) * max_capacity_));
 }
 
 template<class T>
 void ArrayCuda<T>::Clear() {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
-    CheckCuda(cudaMemset(server_->iterator_, 0, sizeof(int)));
+    CheckCuda(cudaMemset(device_->iterator_, 0, sizeof(int)));
 }
 
 template<class T>
 int ArrayCuda<T>::size() const {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     int ret;
-    CheckCuda(cudaMemcpy(&ret, server_->iterator_,
+    CheckCuda(cudaMemcpy(&ret, device_->iterator_,
                          sizeof(int),
                          cudaMemcpyDeviceToHost));
     return ret;
@@ -227,10 +227,10 @@ int ArrayCuda<T>::size() const {
 
 template<typename T>
 void ArrayCuda<T>::set_iterator(int iterator_position) {
-    assert(server_ != nullptr);
+    assert(device_ != nullptr);
 
     assert(0 <= iterator_position && iterator_position <= max_capacity_);
-    CheckCuda(cudaMemcpy(server_->iterator_, &iterator_position,
+    CheckCuda(cudaMemcpy(device_->iterator_, &iterator_position,
                          sizeof(int),
                          cudaMemcpyHostToDevice));
 }

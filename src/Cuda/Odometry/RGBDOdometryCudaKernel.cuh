@@ -24,8 +24,8 @@ void DoSingleIterationKernel(RGBDOdometryCudaDevice<N> odometry, size_t level) {
     local_sum1[tid] = 0;
     local_sum2[tid] = 0;
 
-    if (x >= odometry.source_[level].depth().width_
-        || y >= odometry.source_[level].depth().height_)
+    if (x >= odometry.source_[level].depth_.width_
+        || y >= odometry.source_[level].depth_.height_)
         return;
 
     int x_target, y_target;

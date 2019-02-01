@@ -27,16 +27,16 @@ PointCloudCuda::PointCloudCuda(
 
 PointCloudCuda::PointCloudCuda(const PointCloudCuda &other)
     : Geometry3D(Geometry::GeometryType::PointCloudCuda) {
-    server_ = other.server();
+    device_ = other.device_;
 
-    points_ = other.points();
+    points_ = other.points_;
 
-    normals_ = other.normals();
-    colors_ = other.colors();
+    normals_ = other.normals_;
+    colors_ = other.colors_;
 
-    radius_ = other.radius();
-    confidences_ = other.confidences();
-    indices_ = other.indices();
+    radius_ = other.radius_;
+    confidences_ = other.confidences_;
+    indices_ = other.indices_;
 
     type_ = other.type_;
     max_points_ = other.max_points_;
@@ -44,16 +44,16 @@ PointCloudCuda::PointCloudCuda(const PointCloudCuda &other)
 
 PointCloudCuda &PointCloudCuda::operator=(const PointCloudCuda &other) {
     if (this != &other) {
-        server_ = other.server();
+        device_ = other.device_;
 
-        points_ = other.points();
+        points_ = other.points_;
 
-        normals_ = other.normals();
-        colors_ = other.colors();
+        normals_ = other.normals_;
+        colors_ = other.colors_;
 
-        radius_ = other.radius();
-        confidences_ = other.confidences();
-        indices_ = other.indices();
+        radius_ = other.radius_;
+        confidences_ = other.confidences_;
+        indices_ = other.indices_;
 
         type_ = other.type_;
         max_points_ = other.max_points_;
@@ -89,7 +89,7 @@ void PointCloudCuda::Reset() {
 
 void PointCloudCuda::Create(VertexType type, int max_points) {
     assert(max_points > 0);
-    if (server_ != nullptr) {
+    if (device_ != nullptr) {
         PrintError("[PointCloudCuda] Already created, @Create aborted.\n");
         return;
     }
@@ -99,7 +99,7 @@ void PointCloudCuda::Create(VertexType type, int max_points) {
         return;
     }
 
-    server_ = std::make_shared<PointCloudCudaDevice>();
+    device_ = std::make_shared<PointCloudCudaDevice>();
 
     type_ = type;
     max_points_ = max_points;
@@ -118,7 +118,7 @@ void PointCloudCuda::Create(VertexType type, int max_points) {
         indices_.Create(max_points);
     }
 
-    UpdateServer();
+    UpdateDevice();
 }
 
 void PointCloudCuda::Release() {
@@ -129,31 +129,31 @@ void PointCloudCuda::Release() {
     radius_.Release();
     confidences_.Release();
 
-    server_ = nullptr;
+    device_ = nullptr;
     type_ = VertexTypeUnknown;
     max_points_ = -1;
 }
 
-void PointCloudCuda::UpdateServer() {
-    if (server_ != nullptr) {
+void PointCloudCuda::UpdateDevice() {
+    if (device_ != nullptr) {
 
-        server_->type_ = type_;
-        server_->max_points_ = max_points_;
+        device_->type_ = type_;
+        device_->max_points_ = max_points_;
 
         if (type_ != VertexTypeUnknown) {
-            server_->points_ = *points_.server();
+            device_->points_ = *points_.device_;
         }
 
         if (type_ & VertexWithNormal) {
-            server_->normals_ = *normals_.server();
+            device_->normals_ = *normals_.device_;
         }
         if (type_ & VertexWithColor) {
-            server_->colors_ = *colors_.server();
+            device_->colors_ = *colors_.device_;
         }
         if (type_ & VertexAsSurfel) {
-            server_->radius_ = *radius_.server();
-            server_->confidences_ = *confidences_.server();
-            server_->indices_ = *indices_.server();
+            device_->radius_ = *radius_.device_;
+            device_->confidences_ = *confidences_.device_;
+            device_->indices_ = *indices_.device_;
         }
     }
 }
@@ -162,7 +162,7 @@ void PointCloudCuda::Build(RGBDImageCuda &rgbd,
                            PinholeCameraIntrinsicCuda &intrinsic) {
     Reset();
     PointCloudCudaKernelCaller::BuildFromRGBDImageKernelCaller(
-        *server_, *rgbd.server(), intrinsic);
+        *device_, *rgbd.device_, intrinsic);
     if (type_ & VertexWithColor) {
         colors_.set_iterator(points_.size());
     }
@@ -172,11 +172,11 @@ void PointCloudCuda::Build(ImageCuda<Vector1f> &depth,
                            PinholeCameraIntrinsicCuda &intrinsic) {
     Reset();
     PointCloudCudaKernelCaller::BuildFromDepthImageKernelCaller(
-        *server_, *depth.server(), intrinsic);
+        *device_, *depth.device_, intrinsic);
 }
 
 void PointCloudCuda::Upload(PointCloud &pcl) {
-    if (server_ == nullptr) return;
+    if (device_ == nullptr) return;
 
     std::vector<Vector3f> points, normals, colors;
 
@@ -217,7 +217,7 @@ void PointCloudCuda::Upload(PointCloud &pcl) {
 
 std::shared_ptr<PointCloud> PointCloudCuda::Download() {
     std::shared_ptr<PointCloud> pcl = std::make_shared<PointCloud>();
-    if (server_ == nullptr) return pcl;
+    if (device_ == nullptr) return pcl;
 
     if (!HasPoints()) return pcl;
 
@@ -254,18 +254,18 @@ std::shared_ptr<PointCloud> PointCloudCuda::Download() {
 }
 
 bool PointCloudCuda::HasPoints() const {
-    if (type_ == VertexTypeUnknown || server_ == nullptr) return false;
+    if (type_ == VertexTypeUnknown || device_ == nullptr) return false;
     return points_.size() > 0;
 }
 
 bool PointCloudCuda::HasNormals() const {
-    if ((type_ & VertexWithNormal) == 0 || server_ == nullptr) return false;
+    if ((type_ & VertexWithNormal) == 0 || device_ == nullptr) return false;
     int vertices_size = points_.size();
     return vertices_size > 0 && vertices_size == normals_.size();
 }
 
 bool PointCloudCuda::HasColors() const {
-    if ((type_ & VertexWithColor) == 0 || server_ == nullptr) return false;
+    if ((type_ & VertexWithColor) == 0 || device_ == nullptr) return false;
     int vertices_size = points_.size();
     return vertices_size > 0 && vertices_size == colors_.size();
 }
@@ -279,7 +279,7 @@ bool PointCloudCuda::IsEmpty() const {
 }
 
 Eigen::Vector3d PointCloudCuda::GetMinBound() const {
-    if (server_ == nullptr) return Eigen::Vector3d(0, 0, 0);
+    if (device_ == nullptr) return Eigen::Vector3d(0, 0, 0);
 
     const int num_vertices = points_.size();
     if (num_vertices == 0) return Eigen::Vector3d(0, 0, 0);
@@ -289,14 +289,14 @@ Eigen::Vector3d PointCloudCuda::GetMinBound() const {
     min_bound_cuda.Upload(min_bound);
 
     PointCloudCudaKernelCaller::GetMinBoundKernelCaller(
-        *server_, *min_bound_cuda.server(), num_vertices);
+        *device_, *min_bound_cuda.device_, num_vertices);
 
     min_bound = min_bound_cuda.Download();
     return min_bound[0].ToEigen();
 }
 
 Eigen::Vector3d PointCloudCuda::GetMaxBound() const {
-    if (server_ == nullptr) return Eigen::Vector3d(10, 10, 10);
+    if (device_ == nullptr) return Eigen::Vector3d(10, 10, 10);
 
     const int num_vertices = points_.size();
     if (num_vertices == 0) return Eigen::Vector3d(0, 0, 0);
@@ -306,14 +306,14 @@ Eigen::Vector3d PointCloudCuda::GetMaxBound() const {
     max_bound_cuda.Upload(max_bound);
 
     PointCloudCudaKernelCaller::GetMaxBoundKernelCaller(
-        *server_, *max_bound_cuda.server(), num_vertices);
+        *device_, *max_bound_cuda.device_, num_vertices);
 
     max_bound = max_bound_cuda.Download();
     return max_bound[0].ToEigen();
 }
 
 void PointCloudCuda::Transform(const Eigen::Matrix4d &transformation) {
-    if (server_ == nullptr) return;
+    if (device_ == nullptr) return;
 
     const int num_vertices = points_.size();
     if (num_vertices == 0) return;
@@ -322,7 +322,7 @@ void PointCloudCuda::Transform(const Eigen::Matrix4d &transformation) {
     transformation_cuda.FromEigen(transformation);
 
     PointCloudCudaKernelCaller::TransformKernelCaller(
-        *server_, transformation_cuda, num_vertices);
+        *device_, transformation_cuda, num_vertices);
 }
 } // cuda
 } // open3d

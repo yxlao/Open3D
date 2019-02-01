@@ -50,7 +50,6 @@ int main(int argc, char *argv[]) {
 
     int index = 0;
     int save_index = 0;
-
     FPSTimer timer("Process RGBD stream",
                    (int) camera_trajectory->parameters_.size());
 

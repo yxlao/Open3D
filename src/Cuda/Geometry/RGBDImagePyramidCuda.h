@@ -34,8 +34,8 @@ public:
 
 template<size_t N>
 class RGBDImagePyramidCuda {
-private:
-    std::shared_ptr<RGBDImagePyramidCudaDevice<N>> server_ = nullptr;
+public:
+    std::shared_ptr<RGBDImagePyramidCudaDevice<N>> device_ = nullptr;
 
 private:
     RGBDImageCuda rgbd_[N];
@@ -48,7 +48,7 @@ public:
 
     bool Create(int width, int height);
     void Release();
-    void UpdateServer();
+    void UpdateDevice();
 
     void Build(RGBDImageCuda &rgbd);
 
@@ -59,13 +59,6 @@ public:
     const RGBDImageCuda &operator[](size_t level) const {
         assert(level < N);
         return rgbd_[level];
-    }
-
-    const std::shared_ptr<RGBDImagePyramidCudaDevice<N>> &server() const {
-        return server_;
-    }
-    std::shared_ptr<RGBDImagePyramidCudaDevice<N>> &server() {
-        return server_;
     }
 };
 } // cuda

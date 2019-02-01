@@ -8,20 +8,20 @@ namespace open3d {
 namespace cuda {
 
 NNCuda::NNCuda() {
-    server_ = std::make_shared<NNCudaDevice>();
+    device_ = std::make_shared<NNCudaDevice>();
 }
 
 NNCuda::~NNCuda() {
-    server_ = nullptr;
+    device_ = nullptr;
 }
 
-void NNCuda::UpdateServer() {
-    if (server_ != nullptr) {
-        server_->query_ = *query_.server();
-        server_->ref_ = *reference_.server();
-        server_->nn_idx_ = *nn_idx_.server();
-        server_->nn_dist_ = *nn_dist_.server();
-        server_->distance_matrix_ = *distance_matrix_.server();
+void NNCuda::UpdateDevice() {
+    if (device_ != nullptr) {
+        device_->query_ = *query_.device_;
+        device_->ref_ = *reference_.device_;
+        device_->nn_idx_ = *nn_idx_.device_;
+        device_->nn_dist_ = *nn_dist_.device_;
+        device_->distance_matrix_ = *distance_matrix_.device_;
     }
 }
 
@@ -40,7 +40,7 @@ void NNCuda::NNSearch(Eigen::MatrixXd &query, Eigen::MatrixXd &reference) {
     nn_dist_.Create(1, query_.max_cols_);
     distance_matrix_.Create(reference_.max_cols_, query_.max_cols_);
 
-    UpdateServer();
+    UpdateDevice();
 
     NNCudaKernelCaller::ComputeDistancesKernelCaller(*this);
     NNCudaKernelCaller::FindNNKernelCaller(*this);
@@ -55,7 +55,7 @@ void NNCuda::NNSearch(Array2DCuda<float> &query,
     nn_dist_.Create(1, query_.max_cols_);
     distance_matrix_.Create(reference_.max_cols_, query_.max_cols_);
 
-    UpdateServer();
+    UpdateDevice();
 
     NNCudaKernelCaller::ComputeDistancesKernelCaller(*this);
     NNCudaKernelCaller::FindNNKernelCaller(*this);
