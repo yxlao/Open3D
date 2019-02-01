@@ -32,30 +32,27 @@
 #include <Visualization/Visualization.h>
 
 #include <Cuda/Integration/UniformTSDFVolumeCuda.h>
-#include <opencv2/opencv.hpp>
 #include <Cuda/Integration/UniformMeshVolumeCuda.h>
+
+#include "Utils.h"
 
 int main(int argc, char *argv[]) {
     using namespace open3d;
 
-    std::string match_filename = "/home/wei/Work/data/lounge/data_association.txt";
-    std::string log_filename = "/home/wei/Work/data/lounge/lounge_trajectory.log";
+    SetVerbosityLevel(VerbosityLevel::VerboseDebug);
+    std::string base_path =
+        "/home/wei/Work/data/tum/rgbd_dataset_freiburg3_long_office_household/";
 
     auto camera_trajectory = CreatePinholeCameraTrajectoryFromFile(
-        log_filename);
-    std::string dir_name = filesystem::GetFileParentDirectory(
-        match_filename).c_str();
-    FILE *file = fopen(match_filename.c_str(), "r");
-    if (file == NULL) {
-        PrintError("Unable to open file %s\n", match_filename.c_str());
-        fclose(file);
-        return 0;
-    }
-    char buffer[DEFAULT_IO_BUFFER_SIZE];
+        base_path + "/trajectory.log");
+    auto rgbd_filenames = ReadDataAssociation(
+        base_path + "/data_association.txt");
+
     int index = 0;
     int save_index = 0;
 
-    FPSTimer timer("Process RGBD stream", (int)camera_trajectory->parameters_.size());
+    FPSTimer timer("Process RGBD stream",
+                   (int) camera_trajectory->parameters_.size());
 
     cuda::PinholeCameraIntrinsicCuda intrinsics(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault);
@@ -69,14 +66,13 @@ int main(int argc, char *argv[]) {
         cuda::VertexWithNormalAndColor, 4000000, 8000000);
 
     Image depth, color;
-    cuda::RGBDImageCuda rgbd(0.1f, 4.0f, 1000.0f);
+    cuda::RGBDImageCuda rgbd(0.1f, 4.0f, 5000.0f);
 
     VisualizerWithCustomAnimation visualizer;
     if (! visualizer.CreateVisualizerWindow("UniformFusion", 640, 480, 0, 0)) {
         PrintWarning("Failed creating OpenGL window.\n");
         return 0;
     }
-    visualizer.GetRenderOption().mesh_show_back_face_ = true;
     visualizer.BuildUtilities();
     visualizer.UpdateWindowTitle();
 
@@ -84,37 +80,38 @@ int main(int argc, char *argv[]) {
         std::make_shared<cuda::TriangleMeshCuda>();
     visualizer.AddGeometry(mesh);
 
-    while (fgets(buffer, DEFAULT_IO_BUFFER_SIZE, file)) {
-        std::vector<std::string> st;
-        SplitString(st, buffer, "\t\r\n ");
-        if (st.size() >= 2) {
-            PrintDebug("Processing frame %d ...\n", index);
-            ReadImage(dir_name + st[0], depth);
-            ReadImage(dir_name + st[1], color);
-            rgbd.Upload(depth, color);
+    for (int i = 0; i < rgbd_filenames.size() - 1; ++i) {
+        PrintDebug("Processing frame %d ...\n", index);
+        ReadImage(base_path + rgbd_filenames[i].first, depth);
+        ReadImage(base_path + rgbd_filenames[i].second, color);
+        rgbd.Upload(depth, color);
 
-            extrinsics.FromEigen(
-                camera_trajectory->parameters_[index].extrinsic_.inverse());
-            tsdf_volume.Integrate(rgbd, intrinsics, extrinsics);
+        /* Use ground truth trajectory */
+        Eigen::Matrix4d extrinsic =
+            camera_trajectory->parameters_[index].extrinsic_.inverse();
 
+        extrinsics.FromEigen(extrinsic);
+        tsdf_volume.Integrate(rgbd, intrinsics, extrinsics);
+
+        mesher.MarchingCubes(tsdf_volume);
+
+        *mesh = mesher.mesh();
+        visualizer.PollEvents();
+        visualizer.UpdateGeometry();
+        visualizer.GetViewControl().ConvertFromPinholeCameraParameters(
+            camera_trajectory->parameters_[index]);
+        index++;
+
+        if ((index > 0 && index % 2000 == 0)
+            || index == camera_trajectory->parameters_.size()) {
             mesher.MarchingCubes(tsdf_volume);
-
-            *mesh = mesher.mesh();
-            visualizer.PollEvents();
-            visualizer.UpdateGeometry();
-            visualizer.GetViewControl().ConvertFromPinholeCameraParameters(
-                camera_trajectory->parameters_[index]);
-
-            index++;
-
-            if (index == (int)camera_trajectory->parameters_.size()) {
-                mesher.MarchingCubes(tsdf_volume);
-                WriteTriangleMeshToPLY("uniform-system.ply", *mesher.mesh().Download());
-                save_index++;
-            }
-            timer.Signal();
+            WriteTriangleMeshToPLY(
+                "fragment-" + std::to_string(save_index) + ".ply",
+                *mesher.mesh().Download());
+            save_index++;
         }
+        timer.Signal();
     }
-    fclose(file);
+
     return 0;
 }

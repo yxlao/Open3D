@@ -29,6 +29,7 @@ int main(int argc, char **argv) {
     auto rgbd_filenames = ReadDataAssociation(
         base_path + "/data_association.txt");
 
+    /* Load and copy trajectories */
     PinholeCameraTrajectory trajectory_gt;
     ReadPinholeCameraTrajectoryFromLOG(
         base_path + "/lounge_trajectory.log", trajectory_gt);
@@ -37,32 +38,30 @@ int main(int argc, char **argv) {
     }
     WritePinholeCameraTrajectoryToLOG("trajectory_gt.log", trajectory_gt);
 
-    int index = 0;
+    /* Intrinsics */
     cuda::PinholeCameraIntrinsicCuda intrinsics(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault);
 
+    /* Volumes */
     float voxel_length = 0.01f;
     cuda::TransformCuda extrinsics = cuda::TransformCuda::Identity();
     cuda::ScalableTSDFVolumeCuda<8> tsdf_volume(
         10000, 200000, voxel_length, 3 * voxel_length, extrinsics);
 
+    /* RGBD image container */
     Image depth, color;
     cuda::RGBDImageCuda rgbd_prev(0.1f, 4.0f, 1000.0f);
     cuda::RGBDImageCuda rgbd_curr(0.1f, 4.0f, 1000.0f);
     cuda::ScalableMeshVolumeCuda<8> mesher(
         40000, cuda::VertexWithNormalAndColor, 6000000, 12000000);
 
+    /* Odometry class */
     cuda::RGBDOdometryCuda<3> odometry;
-//    odometry.SetIntrinsics(PinholeCameraIntrinsic(
-//        PinholeCameraIntrinsicParameters::PrimeSenseDefault));
     odometry.SetIntrinsics(PinholeCameraIntrinsic(
-        640, 480, 535.4, 539.2, 320.1, 247.6));
-//    odometry.SetIntrinsics(PinholeCameraIntrinsic(
-//        640, 480, 520.9, 521.0, 325.1, 249.7));
-//    odometry.SetIntrinsics(PinholeCameraIntrinsic(
-//        640, 480, 517.3, 516.5, 318.6, 255.3));
+        PinholeCameraIntrinsicParameters::PrimeSenseDefault));
     odometry.SetParameters(OdometryOption({20, 10, 5}, 0.07, 0.01), 0.5f);
 
+    /* Visualizer class */
     Visualizer visualizer;
     if (!visualizer.CreateVisualizerWindow("RGBD Odometry", 640, 480, 0, 0)) {
         PrintWarning("Failed creating OpenGL window.\n");
@@ -71,6 +70,7 @@ int main(int argc, char **argv) {
     visualizer.BuildUtilities();
     visualizer.UpdateWindowTitle();
 
+    /* Mesher class */
     std::shared_ptr<cuda::TriangleMeshCuda> mesh
         = std::make_shared<cuda::TriangleMeshCuda>();
     visualizer.AddGeometry(mesh);
@@ -78,26 +78,21 @@ int main(int argc, char **argv) {
     Eigen::Matrix4d target_to_world = trajectory_gt.parameters_[0].extrinsic_;
     PinholeCameraTrajectory trajectory;
 
-    double time = 0;
-    Timer timer;
+    int save_index = 0;
     for (int i = 0; i < rgbd_filenames.size(); ++i) {
         std::cout << i << std::endl;
         ReadImage(base_path + "/" + rgbd_filenames[i].first, depth);
         ReadImage(base_path + "/" + rgbd_filenames[i].second, color);
         rgbd_curr.Upload(depth, color);
 
-        if (index >= 1) {
-            odometry.transform_source_to_target_ =
-                Eigen::Matrix4d::Identity();
+        /* Odometry */
+        if (i >= 1) {
+            odometry.transform_source_to_target_ = Eigen::Matrix4d::Identity();
             odometry.Initialize(rgbd_curr, rgbd_prev);
-            timer.Start();
             odometry.ComputeMultiScale();
-            timer.Stop();
-            time += timer.GetDuration();
-            PrintInfo("%f\n", time / i);
 
-            target_to_world =
-                target_to_world * odometry.transform_source_to_target_;
+            target_to_world = target_to_world *
+                odometry.transform_source_to_target_;
         }
 
         PinholeCameraParameters params;
@@ -106,29 +101,28 @@ int main(int argc, char **argv) {
         params.extrinsic_ = target_to_world;
         trajectory.parameters_.emplace_back(params);
 
+        /* Integration */
         extrinsics.FromEigen(target_to_world);
         tsdf_volume.Integrate(rgbd_curr, intrinsics, extrinsics);
 
+        /* Meshing */
         mesher.MarchingCubes(tsdf_volume);
-
         *mesh = mesher.mesh();
         visualizer.PollEvents();
         visualizer.UpdateGeometry();
 
+        /* Log extrinsic files */
         params.extrinsic_ = extrinsics.ToEigen().inverse();
-        //std::cout << params.extrinsic_ << std::endl;
         visualizer.GetViewControl().ConvertFromPinholeCameraParameters(params);
-        index++;
 
-//        if (index > 0 && index % 200 == 0) {
-//            tsdf_volume.GetAllSubvolumes();
-//            mesher.MarchingCubes(tsdf_volume);
-//            WriteTriangleMeshToPLY(
-//                "fragment-" + std::to_string(save_index) + ".ply",
-//                *mesher.mesh().Download());
-//            save_index++;
-//        }
-
+        if (i > 0 && i % 2000 == 0) {
+            tsdf_volume.GetAllSubvolumes();
+            mesher.MarchingCubes(tsdf_volume);
+            WriteTriangleMeshToPLY(
+                "fragment-" + std::to_string(save_index) + ".ply",
+                *mesher.mesh().Download());
+            save_index++;
+        }
         rgbd_prev.CopyFrom(rgbd_curr);
     }
 

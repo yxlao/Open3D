@@ -38,6 +38,7 @@
 
 int main(int argc, char *argv[]) {
     using namespace open3d;
+
     SetVerbosityLevel(VerbosityLevel::VerboseDebug);
     std::string base_path =
         "/home/wei/Work/data/tum/rgbd_dataset_freiburg3_long_office_household/";
@@ -84,6 +85,7 @@ int main(int argc, char *argv[]) {
         ReadImage(base_path + rgbd_filenames[i].second, color);
         rgbd.Upload(depth, color);
 
+        /* Use ground truth trajectory */
         Eigen::Matrix4d extrinsic =
             camera_trajectory->parameters_[index].extrinsic_.inverse();
 
