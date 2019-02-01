@@ -9,21 +9,21 @@ namespace open3d {
 namespace cuda {
 template<typename T>
 __global__
-void FillArrayKernel(ArrayCudaDevice<T> server, T val) {
+void FillKernel(ArrayCudaDevice<T> device, T val) {
     const int i = blockDim.x * blockIdx.x + threadIdx.x;
-    if (i < server.max_capacity_) {
-        server.at(i) = val;
+    if (i < device.max_capacity_) {
+        device.at(i) = val;
     }
 }
 
 template<typename T>
 __host__
-void ArrayCudaKernelCaller<T>::FillArrayKernelCaller(
-    ArrayCudaDevice<T> &server, const T &val, int max_capacity) {
+void ArrayCudaKernelCaller<T>::Fill(
+    ArrayCuda<T> &array, const T &val) {
 
-    const int blocks = DIV_CEILING(max_capacity, THREAD_1D_UNIT);
+    const int blocks = DIV_CEILING(array.max_capacity_, THREAD_1D_UNIT);
     const int threads = THREAD_1D_UNIT;
-    FillArrayKernel << < blocks, threads >> > (server, val);
+    FillKernel << < blocks, threads >> > (*array.device_, val);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }

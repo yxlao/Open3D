@@ -12,7 +12,7 @@
 #include <unordered_map>
 #include <cstdlib>
 #include <random>
-#include "UnitTest.h"
+#include <gtest/gtest.h>
 
 using namespace open3d;
 using namespace open3d::cuda;

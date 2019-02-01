@@ -103,8 +103,8 @@ int TwoFrameRGBDOdometry(
         lines->colors_.clear();
         auto &intrinsic = odometry.device_->intrinsics_[level];
         auto correspondences = odometry.correspondences_.Download();
-        auto src_depth = odometry.source()[level].depthf().DownloadImage();
-        auto tgt_depth = odometry.target()[level].depthf().DownloadImage();
+        auto src_depth = odometry.source()[level].depthf_.DownloadImage();
+        auto tgt_depth = odometry.target()[level].depthf_.DownloadImage();
         for (int i = 0; i < correspondences.size(); ++i) {
             auto &c = correspondences[i];
 

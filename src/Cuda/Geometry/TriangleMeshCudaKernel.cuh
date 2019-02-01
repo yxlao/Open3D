@@ -26,6 +26,20 @@ void GetMinBoundKernel(TriangleMeshCudaDevice server,
     local_min_z[tid] = vertex(2);
     __syncthreads();
 
+    if (tid < 128) {
+        local_min_x[tid] = fminf(local_min_x[tid], local_min_x[tid + 128]);
+        local_min_y[tid] = fminf(local_min_y[tid], local_min_y[tid + 128]);
+        local_min_z[tid] = fminf(local_min_z[tid], local_min_z[tid + 128]);
+    }
+    __syncthreads();
+
+    if (tid < 64) {
+        local_min_x[tid] = fminf(local_min_x[tid], local_min_x[tid + 64]);
+        local_min_y[tid] = fminf(local_min_y[tid], local_min_y[tid + 64]);
+        local_min_z[tid] = fminf(local_min_z[tid], local_min_z[tid + 64]);
+    }
+    __syncthreads();
+
     if (tid < 32) {
         WarpReduceMin(local_min_x, tid);
         WarpReduceMin(local_min_y, tid);
@@ -67,6 +81,20 @@ void GetMaxBoundKernel(TriangleMeshCudaDevice server,
     local_max_x[tid] = vertex(0);
     local_max_y[tid] = vertex(1);
     local_max_z[tid] = vertex(2);
+    __syncthreads();
+
+    if (tid < 128) {
+        local_max_x[tid] = fmaxf(local_max_x[tid], local_max_x[tid + 128]);
+        local_max_y[tid] = fmaxf(local_max_y[tid], local_max_y[tid + 128]);
+        local_max_z[tid] = fmaxf(local_max_z[tid], local_max_z[tid + 128]);
+    }
+    __syncthreads();
+
+    if (tid < 64) {
+        local_max_x[tid] = fmaxf(local_max_x[tid], local_max_x[tid + 64]);
+        local_max_y[tid] = fmaxf(local_max_y[tid], local_max_y[tid + 64]);
+        local_max_z[tid] = fmaxf(local_max_z[tid], local_max_z[tid + 64]);
+    }
     __syncthreads();
 
     if (tid < 32) {

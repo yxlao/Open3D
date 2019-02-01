@@ -7,7 +7,7 @@
 #include <Cuda/Geometry/ImagePyramidCuda.h>
 #include <Cuda/Common/LinearAlgebraCuda.h>
 #include <opencv2/opencv.hpp>
-#include "UnitTest.h"
+#include <gtest/gtest.h>
 
 using namespace open3d;
 using namespace open3d::cuda;

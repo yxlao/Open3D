@@ -6,7 +6,7 @@
 #include <Eigen/Eigen>
 #include <Core/Core.h>
 
-#include "UnitTest.h"
+#include <gtest/gtest.h>
 
 using namespace open3d;
 using namespace open3d::cuda;

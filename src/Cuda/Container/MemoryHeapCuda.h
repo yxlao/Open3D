@@ -45,15 +45,9 @@ public:
     int max_capacity_;
 
 public:
-    __HOSTDEVICE__ inline T *data() {
-        return data_;
-    }
-    __HOSTDEVICE__ inline int *heap() {
-        return heap_;
-    }
-    __HOSTDEVICE__ inline int *heap_counter() {
-        return heap_counter_;
-    }
+    __HOSTDEVICE__ inline T *data() { return data_; }
+    __HOSTDEVICE__ inline int *heap() { return heap_; }
+    __HOSTDEVICE__ inline int *heap_counter() { return heap_counter_; }
 
     __DEVICE__ int Malloc();
     __DEVICE__ void Free(size_t addr);
@@ -93,22 +87,17 @@ public:
 template<typename T>
 class MemoryHeapCudaKernelCaller {
 public:
-    static __HOST__ void ResetMemoryHeapKernelCaller(
-        MemoryHeapCudaDevice<T> &server, int max_capacity);
-    static __HOST__ void ResizeMemoryHeapKernelCaller(
-        MemoryHeapCudaDevice<T> &server,
-        MemoryHeapCudaDevice<T> &dst,
-        int new_max_capacity);
+    static void Reset(MemoryHeapCuda<T> &memory_heap);
+    static void Resize(MemoryHeapCuda<T> &src, MemoryHeapCuda<T> &dst);
 };
 
 template<class T>
 __GLOBAL__
-void ResetMemoryHeapKernel(MemoryHeapCudaDevice<T> server);
-
+void ResetKernel(MemoryHeapCudaDevice<T> device);
 template<typename T>
 __GLOBAL__
-void ResizeMemoryHeapKernel(MemoryHeapCudaDevice<T> src,
-                            MemoryHeapCudaDevice<T> dst);
+void ResizeKernel(MemoryHeapCudaDevice<T> src,
+                  MemoryHeapCudaDevice<T> dst);
 
 } // cuda
 } // open3d

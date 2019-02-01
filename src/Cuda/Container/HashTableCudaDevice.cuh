@@ -36,8 +36,8 @@ int HashTableCudaDevice<Key, Value, Hasher>::GetInternalAddrByKey(
     }
 
     /* 2. Search in the unordered linked list */
-    const LinkedListEntryCudaServer &linked_list
-        = entry_list_array_[bucket_idx];
+    const LinkedListEntryCudaDevice &linked_list =
+        entry_list_array_[bucket_idx];
     Entry query_entry;
     query_entry.key = key;
     int entry_node_ptr = linked_list.Find(query_entry);
@@ -99,7 +99,7 @@ int HashTableCudaDevice<Key, Value, Hasher>::New(
     }
 
     /* 2. Search in the unordered linked list */
-    LinkedListEntryCudaServer &linked_list = entry_list_array_.at(bucket_idx);
+    LinkedListEntryCudaDevice &linked_list = entry_list_array_.at(bucket_idx);
     Entry query_entry;
     query_entry.key = key;
     int entry_node_ptr = linked_list.Find(query_entry);
@@ -154,7 +154,7 @@ int HashTableCudaDevice<Key, Value, Hasher>::Delete(const Key &key) {
     if (lock == LOCKED) {
         return ContainerReturnCode::HashEntryIsLocked;
     }
-    LinkedListEntryCudaServer &linked_list = entry_list_array_.at(bucket_idx);
+    LinkedListEntryCudaDevice &linked_list = entry_list_array_.at(bucket_idx);
     Entry query_entry;
     query_entry.key = key;
 

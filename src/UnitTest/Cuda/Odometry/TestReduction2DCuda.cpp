@@ -6,7 +6,7 @@
 #include <Cuda/Geometry/ImageCuda.h>
 #include <Core/Core.h>
 #include <opencv2/opencv.hpp>
-#include "UnitTest.h"
+#include <gtest/gtest.h>
 
 const std::string kBasePath = "../../examples/TestData/";
 
@@ -87,7 +87,7 @@ TEST(ReductionCuda, SumFloat) {
 
     for (int i = 0; i < im.rows; ++i) {
         for (int j = 0; j < im.cols; ++j) {
-            EXPECT_NEAR(imf.at<float>(i, j), im.at<short>(i, j), 1);
+            EXPECT_NEAR(imf.at<float>(i, j), im.at<unsigned short>(i, j), 1);
         }
     }
 

@@ -82,13 +82,12 @@ public:
 template<typename T>
 class ArrayCudaKernelCaller {
 public:
-    __HOST__ static void FillArrayKernelCaller(ArrayCudaDevice<T> &server,
-                                               const T &val, int max_capacity);
+    static void Fill(ArrayCuda<T> &array, const T &val);
 };
 
 template<typename T>
 __GLOBAL__
-void FillArrayKernel(ArrayCudaDevice<T> server, T val);
+void FillKernel(ArrayCudaDevice<T> device, T val);
 
 } // cuda
 } // open3d

@@ -62,11 +62,10 @@ void LinkedListCudaDevice<T>::Insert(T value) {
 template<typename T>
 __device__
 void LinkedListCudaDevice<T>::Create(
-    LinkedListCudaDevice<T>::MemoryHeapServer &memory_heap_server,
-    int *head_node_ptr,
-    int *size_ptr) {
-    max_capacity_ = memory_heap_server.max_capacity_;
-    memory_heap_ = memory_heap_server;
+    LinkedListCudaDevice<T>::MemoryHeapDevice &memory_heap_device,
+    int *head_node_ptr, int *size_ptr) {
+    max_capacity_ = memory_heap_device.max_capacity_;
+    memory_heap_ = memory_heap_device;
     head_node_ptr_ = head_node_ptr;
     size_ = size_ptr;
     (*head_node_ptr_) = NULLPTR_CUDA;

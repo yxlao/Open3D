@@ -2,7 +2,7 @@
 // Created by wei on 11/13/18.
 //
 
-#include "UnitTest.h"
+#include <gtest/gtest.h>
 #include <Core/Core.h>
 #include <IO/IO.h>
 #include <Cuda/Geometry/RGBDImageCuda.h>

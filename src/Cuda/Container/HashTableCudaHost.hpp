@@ -121,8 +121,7 @@ void HashTableCuda<Key, Value, Hasher>::Create(
                          sizeof(int) * bucket_count));
     UpdateDevice();
 
-    HashTableCudaKernelCaller<Key, Value, Hasher>::
-    CreateHashTableEntriesKernelCaller(*device_, bucket_count_);
+    HashTableCudaKernelCaller<Key, Value, Hasher>::Create(*this);
 }
 
 template<typename Key, typename Value, typename Hasher>
@@ -131,8 +130,7 @@ void HashTableCuda<Key, Value, Hasher>::Release() {
      * array. They are stored in the memory_heap and will be Releaseed anyway.
      */
     if (device_ != nullptr && device_.use_count() == 1) {
-        HashTableCudaKernelCaller<Key, Value, Hasher>::
-        ReleaseHashTableEntriesKernelCaller(*device_, bucket_count_);
+        HashTableCudaKernelCaller<Key, Value, Hasher>::Release(*this);
         entry_array_.Release();
         entry_list_array_.Release();
         lock_array_.Release();
@@ -180,8 +178,7 @@ template<typename Key, typename Value, typename Hasher>
 void HashTableCuda<Key, Value, Hasher>::ResetEntries() {
     assert(device_ != nullptr);
 
-    HashTableCudaKernelCaller<Key, Value, Hasher>::
-    ResetHashTableEntriesKernelCaller(*device_, bucket_count_);
+    HashTableCudaKernelCaller<Key, Value, Hasher>::Reset(*this);
 }
 
 template<typename Key, typename Value, typename Hasher>
@@ -198,8 +195,7 @@ void HashTableCuda<Key, Value, Hasher>::GetAssignedEntries() {
     /* Reset counter */
     assigned_entry_array_.Clear();
 
-    HashTableCudaKernelCaller<Key, Value, Hasher>::
-    GetHashTableAssignedEntriesKernelCaller(*device_, bucket_count_);
+    HashTableCudaKernelCaller<Key, Value, Hasher>::GetAssignedEntries(*this);
 }
 
 template<typename Key, typename Value, typename Hasher>
@@ -212,12 +208,8 @@ void HashTableCuda<Key, Value, Hasher>::New(
     ArrayCuda<Value> values_cuda(values.size());
     values_cuda.Upload(values);
 
-    HashTableCudaKernelCaller<Key, Value, Hasher>::
-    InsertHashTableEntriesKernelCaller(*device_,
-                                       *keys_cuda.device_,
-                                       *values_cuda.device_,
-                                       keys.size(),
-                                       bucket_count_);
+    HashTableCudaKernelCaller<Key, Value, Hasher>::Insert(
+        *this, keys_cuda, values_cuda, keys.size());
 }
 
 template<typename Key, typename Value, typename Hasher>
@@ -228,10 +220,8 @@ void HashTableCuda<Key, Value, Hasher>
     ArrayCuda<Key> keys_cuda(keys.size());
     keys_cuda.Upload(keys);
 
-    HashTableCudaKernelCaller<Key, Value, Hasher>::
-    DeleteHashTableEntriesKernelCaller(*device_,
-                                       *keys_cuda.device_, keys.size(),
-                                       bucket_count_);
+    HashTableCudaKernelCaller<Key, Value, Hasher>::Delete(*this, keys_cuda,
+        keys.size());
 }
 
 template<typename Key, typename Value, typename Hasher>
@@ -283,11 +273,8 @@ HashTableCuda<Key, Value, Hasher>::Profile() {
     ArrayCuda<int> array_entry_count_cuda(bucket_count_);
     ArrayCuda<int> list_entry_count_cuda(bucket_count_);
 
-    HashTableCudaKernelCaller<Key, Value, Hasher>::
-    ProfileHashTableKernelCaller(*device_,
-                                 *array_entry_count_cuda.device_,
-                                 *list_entry_count_cuda.device_,
-                                 bucket_count_);
+    HashTableCudaKernelCaller<Key, Value, Hasher>::Profile(
+        *this, array_entry_count_cuda, list_entry_count_cuda);
 
     std::vector<int> array_entry_count = array_entry_count_cuda.DownloadAll();
     std::vector<int> list_entry_count = list_entry_count_cuda.DownloadAll();

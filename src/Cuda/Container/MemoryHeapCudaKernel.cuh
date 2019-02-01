@@ -8,21 +8,20 @@ namespace open3d {
 namespace cuda {
 template<typename T>
 __global__
-void ResetMemoryHeapKernel(MemoryHeapCudaDevice<T> server) {
+void ResetMemoryHeapKernel(MemoryHeapCudaDevice<T> device) {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
-    if (i < server.max_capacity_) {
-        server.value_at(i) = T(); /* This is not necessary. */
-        server.internal_addr_at(i) = i;
+    if (i < device.max_capacity_) {
+        device.value_at(i) = T(); /* This is not necessary. */
+        device.internal_addr_at(i) = i;
     }
 }
 
 template<typename T>
-void MemoryHeapCudaKernelCaller<T>::ResetMemoryHeapKernelCaller(
-    MemoryHeapCudaDevice<T> &server, int max_capacity) {
-    const int blocks = DIV_CEILING(max_capacity, THREAD_1D_UNIT);
+void MemoryHeapCudaKernelCaller<T>::Reset(MemoryHeapCuda<T> &memory_heap) {
+    const int blocks = DIV_CEILING(memory_heap.max_capacity_, THREAD_1D_UNIT);
     const int threads = THREAD_1D_UNIT;
 
-    ResetMemoryHeapKernel << < blocks, threads >> > (server);
+    ResetMemoryHeapKernel << < blocks, threads >> > (*memory_heap.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
@@ -45,13 +44,13 @@ void ResizeMemoryHeapKernel(MemoryHeapCudaDevice<T> src, /* old size */
 }
 
 template<typename T>
-void MemoryHeapCudaKernelCaller<T>::ResizeMemoryHeapKernelCaller(
-    MemoryHeapCudaDevice<T> &server, MemoryHeapCudaDevice<T> &dst,
-    int new_max_capacity) {
-    const int blocks = DIV_CEILING(new_max_capacity, THREAD_1D_UNIT);
+void MemoryHeapCudaKernelCaller<T>::Resize(MemoryHeapCuda<T> &src,
+                                           MemoryHeapCuda<T> &dst) {
+    const int blocks = DIV_CEILING(dst.max_capacity_, THREAD_1D_UNIT);
     const int threads = THREAD_1D_UNIT;
 
-    ResizeMemoryHeapKernel << < blocks, threads >> > (server, dst);
+    ResizeMemoryHeapKernel << < blocks, threads >> >(
+        *src.device_, *dst.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }

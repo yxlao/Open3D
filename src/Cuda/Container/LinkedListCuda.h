@@ -13,7 +13,7 @@ namespace open3d {
 
 namespace cuda {
 /**
- * It is a basic unit, so we DON'T wrap it with server codes
+ * It is a basic unit, so we DON'T wrap it with device codes
  * otherwise pointer management will make you cry.
  */
 template<typename T>
@@ -30,11 +30,11 @@ struct LinkedListNodeCuda {
 template<typename T>
 class LinkedListCudaDevice {
 private:
-    typedef MemoryHeapCudaDevice<LinkedListNodeCuda<T>> MemoryHeapServer;
+    typedef MemoryHeapCudaDevice<LinkedListNodeCuda<T>> MemoryHeapDevice;
     int *head_node_ptr_;
     int *size_;
 
-    MemoryHeapServer memory_heap_;
+    MemoryHeapDevice memory_heap_;
 
 public:
     int max_capacity_;
@@ -43,13 +43,13 @@ public:
     /**
      * WARNING!!! USE ONLY ONE VERSION OF Create AND Release!!!
      * As a generic container, you can instantiate the class on CPU, and call
-     * server functions.
+     * device functions.
      * For our HashTable, we have to instantiate the class ON GPU, therefore
      * we need a GPU version.
      * Choose the correct version of Create and Release depending on where you
      * instantiate it.
      */
-    __DEVICE__ void Create(MemoryHeapServer &memory_heap,
+    __DEVICE__ void Create(MemoryHeapDevice &memory_heap_device,
                            int *head_node_ptr, int *size_ptr);
     __DEVICE__ void Release();
 
@@ -106,9 +106,6 @@ public:
     void UpdateDevice();
 
     int size();
-    int max_capacity() const {
-        return max_capacity_;
-    }
 
     MemoryHeap &memory_heap() {
         return memory_heap_;
@@ -121,36 +118,27 @@ public:
 template<typename T>
 class LinkedListCudaKernelCaller {
 public:
-    static __HOST__ void InsertLinkedListKernelCaller(
-        LinkedListCudaDevice<T> &server, ArrayCudaDevice<T> &data);
-    static __HOST__ void FindLinkedListKernelCaller(
-        LinkedListCudaDevice<T> &server, ArrayCudaDevice<T> &query);
-    static __HOST__ void DeleteLinkedListKernelCaller(
-        LinkedListCudaDevice<T> &server, ArrayCudaDevice<T> &query);
-    static __HOST__ void ClearLinkedListKernelCaller(
-        LinkedListCudaDevice<T> &server);
-    static __HOST__ void DownloadLinkedListKernelCaller(
-        LinkedListCudaDevice<T> &server, ArrayCudaDevice<T> &data);
+    static void Insert(LinkedListCuda<T> &device, ArrayCuda<T> &data);
+    static void Find(LinkedListCuda<T> &device, ArrayCuda<T> &query);
+    static void Delete(LinkedListCuda<T> &device, ArrayCuda<T> &query);
+    static void Clear(LinkedListCuda<T> &device);
+    static void Download(LinkedListCuda<T> &device, ArrayCuda<T> &data);
 };
 
 template<typename T>
 __GLOBAL__
-void InsertLinkedListKernel(
-    LinkedListCudaDevice<T> server, ArrayCudaDevice<T> data);
+void InsertKernel(LinkedListCudaDevice<T> device, ArrayCudaDevice<T> data);
 template<typename T>
 __GLOBAL__
-void FindLinkedListKernel(
-    LinkedListCudaDevice<T> server, ArrayCudaDevice<T> query);
+void FindKernel(LinkedListCudaDevice<T> device, ArrayCudaDevice<T> query);
 template<typename T>
 __GLOBAL__
-void DeleteLinkedListKernel(
-    LinkedListCudaDevice<T> server, ArrayCudaDevice<T> query);
+void DeleteKernel(LinkedListCudaDevice<T> device, ArrayCudaDevice<T> query);
 template<typename T>
 __GLOBAL__
-void ClearLinkedListKernel(LinkedListCudaDevice<T> server);
+void ClearKernel(LinkedListCudaDevice<T> device);
 template<typename T>
 __GLOBAL__
-void DownloadLinkedListKernel(
-    LinkedListCudaDevice<T> server, ArrayCudaDevice<T> data);
+void DownloadKernel(LinkedListCudaDevice<T> device, ArrayCudaDevice<T> data);
 } // cuda
 } // open3d

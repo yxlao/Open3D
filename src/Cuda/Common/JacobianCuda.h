@@ -42,7 +42,7 @@ public:
 };
 
 namespace {
-/** Triple term **/
+/** Triple terms **/
 __HOSTDEVICE__ void ComputeJtJAndJtr(
     const Vector6f &jacobian_x,
     const Vector6f &jacobian_y,
@@ -71,8 +71,10 @@ __HOSTDEVICE__ void ComputeJtJAndJtr(
 
 /** Joint terms **/
 __HOSTDEVICE__ void ComputeJtJAndJtr(
-    const Vector6f &jacobian_I, const Vector6f &jacobian_G,
-    const float &residual_I, const float &residual_G,
+    const Vector6f &jacobian_I,
+    const Vector6f &jacobian_G,
+    const float &residual_I,
+    const float &residual_G,
     HessianCuda<6> &JtJ, Vector6f &Jtr) {
 
     int cnt = 0;
@@ -93,7 +95,8 @@ __HOSTDEVICE__ void ComputeJtJAndJtr(
 
 /** Single term **/
 __HOSTDEVICE__ void ComputeJtJAndJtr(
-    const Vector6f &jacobian_I, const float &residual_I,
+    const Vector6f &jacobian,
+    const float &residual,
     HessianCuda<6> &JtJ, Vector6f &Jtr) {
 
     int cnt = 0;
@@ -105,9 +108,9 @@ __HOSTDEVICE__ void ComputeJtJAndJtr(
 #pragma unroll 1
 #endif
         for (int j = i; j < 6; ++j) {
-            JtJ(cnt++) = jacobian_I(i) * jacobian_I(j);
+            JtJ(cnt++) = jacobian(i) * jacobian(j);
         }
-        Jtr(i) = jacobian_I(i) * residual_I;
+        Jtr(i) = jacobian(i) * residual;
     }
 }
 } // unnamed namespace

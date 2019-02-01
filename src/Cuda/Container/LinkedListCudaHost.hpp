@@ -35,7 +35,7 @@ template<typename T>
 LinkedListCuda<T>::LinkedListCuda(const LinkedListCuda<T> &other) {
     device_ = other.device_;
     memory_heap_ = other.memory_heap();
-    max_capacity_ = other.max_capacity();
+    max_capacity_ = other.max_capacity_;
 }
 
 template<typename T>
@@ -46,7 +46,7 @@ LinkedListCuda<T> &LinkedListCuda<T>::operator=(
 
         device_ = other.device_;
         memory_heap_ = other.memory_heap();
-        max_capacity_ = other.max_capacity();
+        max_capacity_ = other.max_capacity_;
     }
 
     return *this;
@@ -85,8 +85,7 @@ void LinkedListCuda<T>::UpdateDevice() {
 template<typename T>
 void LinkedListCuda<T>::Release() {
     if (device_ != nullptr && device_.use_count() == 1) {
-        LinkedListCudaKernelCaller<T>::
-        ClearLinkedListKernelCaller(*device_);
+        LinkedListCudaKernelCaller<T>::Clear(*this);
         CheckCuda(cudaFree(device_->head_node_ptr_));
         CheckCuda(cudaFree(device_->size_));
     }
@@ -112,8 +111,7 @@ void LinkedListCuda<T>::Insert(std::vector<int> &data) {
 
     ArrayCuda<T> data_cuda(data.size());
     data_cuda.Upload(data);
-    LinkedListCudaKernelCaller<T>::
-    InsertLinkedListKernelCaller(*device_, *data_cuda.device_);
+    LinkedListCudaKernelCaller<T>::Insert(*this, data_cuda);
 }
 
 template<typename T>
@@ -122,8 +120,7 @@ void LinkedListCuda<T>::Find(std::vector<int> &query) {
 
     ArrayCuda<T> query_cuda(query.size());
     query_cuda.Upload(query);
-    LinkedListCudaKernelCaller<T>::
-    FindLinkedListKernelCaller(*device_, *query_cuda.device_);
+    LinkedListCudaKernelCaller<T>::Find(*this, query_cuda);
 }
 
 template<typename T>
@@ -132,8 +129,7 @@ void LinkedListCuda<T>::Delete(std::vector<int> &query) {
 
     ArrayCuda<T> query_cuda(query.size());
     query_cuda.Upload(query);
-    LinkedListCudaKernelCaller<T>::
-    DeleteLinkedListKernelCaller(*device_, *query_cuda.device_);
+    LinkedListCudaKernelCaller<T>::Delete(*this, query_cuda);
 }
 
 template<typename T>
@@ -144,8 +140,7 @@ std::vector<T> LinkedListCuda<T>::Download() {
     if (linked_list_size == 0) return std::vector<T>();
 
     ArrayCuda<T> data(linked_list_size);
-    LinkedListCudaKernelCaller<T>::
-    DownloadLinkedListKernelCaller(*device_, *data.device_);
+    LinkedListCudaKernelCaller<T>::Download(*this, data);
     return data.DownloadAll();
 }
 } // cuda
