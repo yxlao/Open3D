@@ -210,6 +210,13 @@ add_subdirectory(3rdparty)
 
 # > Additional code to incorporate cuda and opencv (TEMPORARY!)
 find_package(CUDA 8.0 REQUIRED)
+# NOTE: Eigen <= 3.3.5 has problem with CUDA >= 9.0
+# Source code have to be modified in Eigen/Core to ignore fp16:
+# Comment the following lines:
+# #include "src/Core/arch/CUDA/Half.h"
+# #include "src/Core/arch/CUDA/PacketMathHalf.h"
+# #include "src/Core/arch/CUDA/TypeCasting.h"
+
 find_package(OpenCV REQUIRED)
 list(APPEND 3RDPARTY_INCLUDE_DIRS ${CUDA_TOOLKIT_INCLUDE}
         ${OpenCV_INCLUDE_DIRS})
