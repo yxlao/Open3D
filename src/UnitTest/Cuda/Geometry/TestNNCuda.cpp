@@ -27,7 +27,7 @@ TEST(NN, NNSearch) {
     NNCuda nn;
     Timer timer;
     timer.Start();
-    nn.NNSearch(qr, reference);
+    nn.BruteForceNN(qr, reference);
     timer.Stop();
     PrintInfo("NNSearch takes: %f\n", timer.GetDuration());
 

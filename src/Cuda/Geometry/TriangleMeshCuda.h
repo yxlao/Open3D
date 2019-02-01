@@ -73,31 +73,24 @@ public:
 
 class TriangleMeshCudaKernelCaller {
 public:
-    static __HOST__ void GetMinBoundKernelCaller(
-        TriangleMeshCudaDevice &server,
-        ArrayCudaDevice<Vector3f> &min_bound,
-        int num_vertices);
+    static void GetMinBound(const TriangleMeshCuda &mesh,
+                            ArrayCuda<Vector3f> &min_bound);
 
-    static __HOST__ void GetMaxBoundKernelCaller(
-        TriangleMeshCudaDevice &server,
-        ArrayCudaDevice<Vector3f> &max_bound,
-        int num_vertices);
+    static void GetMaxBound(const TriangleMeshCuda &mesh,
+                            ArrayCuda<Vector3f> &max_bound);
 
-    static __HOST__ void TransformKernelCaller(
-        TriangleMeshCudaDevice &server,
-        TransformCuda &transform,
-        int num_vertices);
+    static void Transform(TriangleMeshCuda &mesh,
+                          TransformCuda &transform);
 };
 
 __GLOBAL__
-void GetMinBoundKernel(TriangleMeshCudaDevice server,
+void GetMinBoundKernel(TriangleMeshCudaDevice mesh,
                        ArrayCudaDevice<Vector3f> min_bound);
-
 __GLOBAL__
-void GetMaxBoundKernel(TriangleMeshCudaDevice server,
+void GetMaxBoundKernel(TriangleMeshCudaDevice mesh,
                        ArrayCudaDevice<Vector3f> max_bound);
-
 __GLOBAL__
 void TransformKernel(TriangleMeshCudaDevice, TransformCuda transform);
+
 } // cuda
 } // open3d

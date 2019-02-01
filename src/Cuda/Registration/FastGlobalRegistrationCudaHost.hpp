@@ -74,12 +74,12 @@ void FastGlobalRegistrationCuda::Initialize(PointCloud &source,
     target_features_ = target_feature_extractor_.fpfh_features_;
 
     /* 1) Initial Matching */
-    nn_source_to_target_.NNSearch(source_features_, target_features_);
+    nn_source_to_target_.BruteForceNN(source_features_, target_features_);
     corres_source_to_target_.SetCorrespondenceMatrix(
         nn_source_to_target_.nn_idx_);
     corres_source_to_target_.Compress();
 
-    nn_target_to_source_.NNSearch(target_features_, source_features_);
+    nn_target_to_source_.BruteForceNN(target_features_, source_features_);
     corres_target_to_source_.SetCorrespondenceMatrix(
         nn_target_to_source_.nn_idx_);
     corres_target_to_source_.Compress();

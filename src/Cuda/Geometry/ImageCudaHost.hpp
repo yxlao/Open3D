@@ -224,8 +224,7 @@ void ImageCuda<VecType>::Downsample(ImageCuda<VecType> &image,
                                     DownsampleMethod method) {
     bool success = image.Create(width_ >> 1, height_ >> 1);
     if (success) {
-        ImageCudaKernelCaller<VecType>::DownsampleImageKernelCaller(
-            *device_, *image.device_, method);
+        ImageCudaKernelCaller<VecType>::Downsample(*this, image, method);
     }
 }
 
@@ -243,8 +242,7 @@ void ImageCuda<VecType>::Shift(ImageCuda<VecType> &image,
                                float dx, float dy, bool with_holes) {
     bool success = image.Create(width_, height_);
     if (success) {
-        ImageCudaKernelCaller<VecType>::ShiftImageKernelCaller(
-            *device_, *image.device_, dx, dy, with_holes);
+        ImageCudaKernelCaller<VecType>::Shift(*this, image, dx, dy, with_holes);
     }
 }
 
@@ -263,8 +261,8 @@ void ImageCuda<VecType>::Gaussian(ImageCuda<VecType> &image,
                                   bool with_holes) {
     bool success = image.Create(width_, height_);
     if (success) {
-        ImageCudaKernelCaller<VecType>::GaussianImageKernelCaller(
-            *device_, *image.device_, (int) kernel, with_holes);
+        ImageCudaKernelCaller<VecType>::Gaussian(
+            *this, image, (int) kernel, with_holes);
     }
 }
 
@@ -285,8 +283,8 @@ void ImageCuda<VecType>::Bilateral(ImageCuda<VecType> &image,
                                    bool with_holes) {
     bool success = image.Create(width_, height_);
     if (success) {
-        ImageCudaKernelCaller<VecType>::BilateralImageKernelCaller(
-            *device_, *image.device_, (int) kernel, val_sigma, with_holes);
+        ImageCudaKernelCaller<VecType>::Bilateral(
+            *this, image, (int) kernel, val_sigma, with_holes);
     }
 }
 
@@ -310,8 +308,7 @@ void ImageCuda<VecType>::Sobel(ImageCuda<typename VecType::VecTypef> &dx,
     success &= dx.Create(width_, height_);
     success &= dy.Create(width_, height_);
     if (success) {
-        ImageCudaKernelCaller<VecType>::SobelImageKernelCaller(
-            *device_, *dx.device_, *dy.device_, with_holes);
+        ImageCudaKernelCaller<VecType>::Sobel(*this, dx, dy, with_holes);
     }
 }
 
@@ -329,8 +326,8 @@ void ImageCuda<VecType>::ConvertToFloat(
     ImageCuda<typename VecType::VecTypef> &image, float scale, float offset) {
     bool success = image.Create(width_, height_);
     if (success) {
-        ImageCudaKernelCaller<VecType>::ConvertToFloatImageKernelCaller(
-            *device_, *image.device_, scale, offset);
+        ImageCudaKernelCaller<VecType>::ConvertToFloat(
+            *this, image, scale, offset);
     }
 }
 
@@ -347,8 +344,7 @@ template<typename VecType>
 void ImageCuda<VecType>::ConvertRGBToIntensity(ImageCuda<Vector1f> &image) {
     bool success = image.Create(width_, height_);
     if (success) {
-        ImageCudaKernelCaller<VecType>::ConvertRGBToIntensityKernelCaller(
-            *device_, *image.device_);
+        ImageCudaKernelCaller<VecType>::ConvertRGBToIntensity(*this, image);
     }
 }
 

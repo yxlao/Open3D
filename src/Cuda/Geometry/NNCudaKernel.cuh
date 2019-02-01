@@ -70,7 +70,7 @@ void ComputeDistancesKernel(NNCudaDevice nn) {
     }
 }
 
-void NNCudaKernelCaller::ComputeDistancesKernelCaller(NNCuda &nn) {
+void NNCudaKernelCaller::ComputeDistances(NNCuda &nn) {
     const dim3 blocks(DIV_CEILING(nn.query_.max_cols_, THREAD_2D_UNIT),
                       DIV_CEILING(nn.reference_.max_cols_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
@@ -100,7 +100,7 @@ void FindNNKernel(NNCudaDevice nn) {
     nn.nn_dist_(0, query_idx) = nn_dist;
 }
 
-void NNCudaKernelCaller::FindNNKernelCaller(NNCuda &nn) {
+void NNCudaKernelCaller::FindNN(NNCuda &nn) {
     const dim3 blocks(DIV_CEILING(nn.query_.max_cols_, 256));
     const dim3 threads(256);
 

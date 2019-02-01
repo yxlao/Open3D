@@ -64,8 +64,8 @@ int main(int argc, char **argv) {
     }
 
     cuda::NNCuda nn;
-    nn.NNSearch(source_feature_extractor.fpfh_features_,
-                target_feature_extractor.fpfh_features_);
+    nn.BruteForceNN(source_feature_extractor.fpfh_features_,
+                    target_feature_extractor.fpfh_features_);
     auto correspondences_cuda = nn.nn_idx_.Download();
 
     valid_count = 0;

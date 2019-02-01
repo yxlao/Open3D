@@ -161,8 +161,7 @@ void PointCloudCuda::UpdateDevice() {
 void PointCloudCuda::Build(RGBDImageCuda &rgbd,
                            PinholeCameraIntrinsicCuda &intrinsic) {
     Reset();
-    PointCloudCudaKernelCaller::BuildFromRGBDImageKernelCaller(
-        *device_, *rgbd.device_, intrinsic);
+    PointCloudCudaKernelCaller::BuildFromRGBDImage(*this, rgbd, intrinsic);
     if (type_ & VertexWithColor) {
         colors_.set_iterator(points_.size());
     }
@@ -171,8 +170,7 @@ void PointCloudCuda::Build(RGBDImageCuda &rgbd,
 void PointCloudCuda::Build(ImageCuda<Vector1f> &depth,
                            PinholeCameraIntrinsicCuda &intrinsic) {
     Reset();
-    PointCloudCudaKernelCaller::BuildFromDepthImageKernelCaller(
-        *device_, *depth.device_, intrinsic);
+    PointCloudCudaKernelCaller::BuildFromDepthImage(*this, depth, intrinsic);
 }
 
 void PointCloudCuda::Upload(PointCloud &pcl) {
@@ -288,8 +286,7 @@ Eigen::Vector3d PointCloudCuda::GetMinBound() const {
     std::vector<Vector3f> min_bound = {Vector3f(1e10f, 1e10f, 1e10f)};
     min_bound_cuda.Upload(min_bound);
 
-    PointCloudCudaKernelCaller::GetMinBoundKernelCaller(
-        *device_, *min_bound_cuda.device_, num_vertices);
+    PointCloudCudaKernelCaller::GetMinBound(*this, min_bound_cuda);
 
     min_bound = min_bound_cuda.Download();
     return min_bound[0].ToEigen();
@@ -305,8 +302,7 @@ Eigen::Vector3d PointCloudCuda::GetMaxBound() const {
     std::vector<Vector3f> max_bound = {Vector3f(-1e10f, -1e10f, -1e10f)};
     max_bound_cuda.Upload(max_bound);
 
-    PointCloudCudaKernelCaller::GetMaxBoundKernelCaller(
-        *device_, *max_bound_cuda.device_, num_vertices);
+    PointCloudCudaKernelCaller::GetMaxBound(*this, max_bound_cuda);
 
     max_bound = max_bound_cuda.Download();
     return max_bound[0].ToEigen();
@@ -321,8 +317,8 @@ void PointCloudCuda::Transform(const Eigen::Matrix4d &transformation) {
     TransformCuda transformation_cuda;
     transformation_cuda.FromEigen(transformation);
 
-    PointCloudCudaKernelCaller::TransformKernelCaller(
-        *device_, transformation_cuda, num_vertices);
+    PointCloudCudaKernelCaller::Transform(
+        *this, transformation_cuda);
 }
 } // cuda
 } // open3d

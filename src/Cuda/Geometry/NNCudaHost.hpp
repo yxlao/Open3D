@@ -25,7 +25,7 @@ void NNCuda::UpdateDevice() {
     }
 }
 
-void NNCuda::NNSearch(Eigen::MatrixXd &query, Eigen::MatrixXd &reference) {
+void NNCuda::BruteForceNN(Eigen::MatrixXd &query, Eigen::MatrixXd &reference) {
 
     /** Change storage format for Array2DCuda **/
     Eigen::Matrix<float, -1, -1, Eigen::RowMajor> query_rowmajor;
@@ -42,12 +42,12 @@ void NNCuda::NNSearch(Eigen::MatrixXd &query, Eigen::MatrixXd &reference) {
 
     UpdateDevice();
 
-    NNCudaKernelCaller::ComputeDistancesKernelCaller(*this);
-    NNCudaKernelCaller::FindNNKernelCaller(*this);
+    NNCudaKernelCaller::ComputeDistances(*this);
+    NNCudaKernelCaller::FindNN(*this);
 }
 
-void NNCuda::NNSearch(Array2DCuda<float> &query,
-                      Array2DCuda<float> &reference) {
+void NNCuda::BruteForceNN(Array2DCuda<float> &query,
+                          Array2DCuda<float> &reference) {
     query_ = query;
     reference_ = reference;
 
@@ -57,8 +57,8 @@ void NNCuda::NNSearch(Array2DCuda<float> &query,
 
     UpdateDevice();
 
-    NNCudaKernelCaller::ComputeDistancesKernelCaller(*this);
-    NNCudaKernelCaller::FindNNKernelCaller(*this);
+    NNCudaKernelCaller::ComputeDistances(*this);
+    NNCudaKernelCaller::FindNN(*this);
 }
 } // cuda
 } // open3d

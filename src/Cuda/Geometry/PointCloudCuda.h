@@ -85,51 +85,44 @@ public:
 
 class PointCloudCudaKernelCaller {
 public:
-    static __HOST__ void GetMinBoundKernelCaller(
-        PointCloudCudaDevice &server,
-        ArrayCudaDevice<Vector3f> &min_bound,
-        int num_vertices);
+    static void GetMinBound(const PointCloudCuda &pcl,
+                            ArrayCuda<Vector3f> &min_bound);
 
-    static __HOST__ void GetMaxBoundKernelCaller(
-        PointCloudCudaDevice &server,
-        ArrayCudaDevice<Vector3f> &max_bound,
-        int num_vertices);
+    static void GetMaxBound(const PointCloudCuda &pcl,
+                            ArrayCuda<Vector3f> &max_bound);
 
-    static __HOST__ void TransformKernelCaller(
-        PointCloudCudaDevice &server,
-        TransformCuda &transform,
-        int num_vertices);
+    static void Transform(PointCloudCuda &pcl,
+                          TransformCuda &transform);
 
-    static __HOST__ void BuildFromRGBDImageKernelCaller(
-        PointCloudCudaDevice &server,
-        RGBDImageCudaDevice &rgbd,
-        PinholeCameraIntrinsicCuda &intrinsic);
+    static void BuildFromRGBDImage(PointCloudCuda &server,
+                                   RGBDImageCuda &rgbd,
+                                   PinholeCameraIntrinsicCuda &intrinsic);
 
-    static __HOST__ void BuildFromDepthImageKernelCaller(
-        PointCloudCudaDevice &server,
-        ImageCudaDevice<Vector1f> &depth,
-        PinholeCameraIntrinsicCuda &intrinsic);
+    static void BuildFromDepthImage(PointCloudCuda &server,
+                                    ImageCuda<Vector1f> &depth,
+                                    PinholeCameraIntrinsicCuda &intrinsic);
 };
 
 __GLOBAL__
-void BuildFromRGBDImageKernel(PointCloudCudaDevice server,
+void GetMinBoundKernel(PointCloudCudaDevice pcl,
+                       ArrayCudaDevice<Vector3f> min_bound);
+__GLOBAL__
+void GetMaxBoundKernel(PointCloudCudaDevice pcl,
+                       ArrayCudaDevice<Vector3f> max_bound);
+
+__GLOBAL__
+void TransformKernel(PointCloudCudaDevice pcl,
+                     TransformCuda transform);
+
+__GLOBAL__
+void BuildFromRGBDImageKernel(PointCloudCudaDevice pcl,
                               RGBDImageCudaDevice rgbd,
                               PinholeCameraIntrinsicCuda intrinsic);
 
 __GLOBAL__
-void BuildFromDepthImageKernel(PointCloudCudaDevice server,
+void BuildFromDepthImageKernel(PointCloudCudaDevice pcl,
                                ImageCudaDevice<Vector1f> depth,
                                PinholeCameraIntrinsicCuda intrinsic);
 
-__GLOBAL__
-void GetMinBoundKernel(PointCloudCudaDevice server,
-                       ArrayCudaDevice<Vector3f> min_bound);
-
-__GLOBAL__
-void GetMaxBoundKernel(PointCloudCudaDevice server,
-                       ArrayCudaDevice<Vector3f> max_bound);
-
-__GLOBAL__
-void TransformKernel(PointCloudCudaDevice, TransformCuda transform);
 } // cuda
 } // open3d

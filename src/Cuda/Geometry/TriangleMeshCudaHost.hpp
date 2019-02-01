@@ -285,8 +285,7 @@ Eigen::Vector3d TriangleMeshCuda::GetMinBound() const {
     std::vector<Vector3f> min_bound = {Vector3f(1e10f, 1e10f, 1e10f)};
     min_bound_cuda.Upload(min_bound);
 
-    TriangleMeshCudaKernelCaller::GetMinBoundKernelCaller(
-        *device_, *min_bound_cuda.device_, num_vertices);
+    TriangleMeshCudaKernelCaller::GetMinBound(*this, min_bound_cuda);
 
     min_bound = min_bound_cuda.Download();
     return min_bound[0].ToEigen();
@@ -302,8 +301,7 @@ Eigen::Vector3d TriangleMeshCuda::GetMaxBound() const {
     std::vector<Vector3f> max_bound = {Vector3f(-1e10f, -1e10f, -1e10f)};
     max_bound_cuda.Upload(max_bound);
 
-    TriangleMeshCudaKernelCaller::GetMaxBoundKernelCaller(
-        *device_, *max_bound_cuda.device_, num_vertices);
+    TriangleMeshCudaKernelCaller::GetMaxBound(*this, max_bound_cuda);
 
     max_bound = max_bound_cuda.Download();
     return max_bound[0].ToEigen();
@@ -318,8 +316,7 @@ void TriangleMeshCuda::Transform(const Eigen::Matrix4d &transformation) {
     TransformCuda transformation_cuda;
     transformation_cuda.FromEigen(transformation);
 
-    TriangleMeshCudaKernelCaller::TransformKernelCaller(
-        *device_, transformation_cuda, num_vertices);
+    TriangleMeshCudaKernelCaller::Transform(*this, transformation_cuda);
 }
 } // cuda
 } // open3d

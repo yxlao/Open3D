@@ -40,11 +40,11 @@ public:
     /** Should be feature_size x feature_count
      *  This will encourage cache hits in parallel kernels
      **/
-    void NNSearch(Eigen::MatrixXd &query,
-                  Eigen::MatrixXd &reference);
+    void BruteForceNN(Eigen::MatrixXd &query,
+                      Eigen::MatrixXd &reference);
 
-    void NNSearch(Array2DCuda<float> &query,
-                  Array2DCuda<float> &reference);
+    void BruteForceNN(Array2DCuda<float> &query,
+                      Array2DCuda<float> &reference);
 
 public:
     Array2DCuda<float> query_;
@@ -61,8 +61,8 @@ public:
 
 class NNCudaKernelCaller {
 public:
-    static void ComputeDistancesKernelCaller(NNCuda &nn);
-    static void FindNNKernelCaller(NNCuda &nn);
+    static void ComputeDistances(NNCuda &nn);
+    static void FindNN(NNCuda &nn);
 };
 
 __GLOBAL__
