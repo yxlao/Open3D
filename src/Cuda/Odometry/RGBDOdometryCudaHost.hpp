@@ -24,7 +24,7 @@ RGBDOdometryCuda<N>::~RGBDOdometryCuda() {
 
 template<size_t N>
 void RGBDOdometryCuda<N>::SetParameters(
-    const OdometryOption &option, const float sigma) {
+    const OdometryOption &option, float sigma) {
     assert(option_.iteration_number_per_pyramid_level_.size() == N);
     option_ = option;
     sigma_ = sigma;
@@ -193,10 +193,7 @@ RGBDOdometryCuda<N>::DoSingleIteration(size_t level, int iter) {
 
     Timer timer;
     timer.Start();
-    RGBDOdometryCudaKernelCaller<N>::DoSingleIterationKernelCaller(
-        *device_, level,
-        source_[level].depthf_.width_,
-        source_[level].depthf_.height_);
+    RGBDOdometryCudaKernelCaller<N>::DoSingleIteration(*this, level);
     timer.Stop();
     PrintDebug("Direct: %f\n", timer.GetDuration());
 

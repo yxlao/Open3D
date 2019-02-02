@@ -58,9 +58,9 @@ int TwoFrameRGBDOdometry(
         cuda::VertexWithColor, 300000),
         pcl_target = std::make_shared<cuda::PointCloudCuda>(
         cuda::VertexWithColor, 300000);
-    pcl_source->Build(odometry.source()[0],
+    pcl_source->Build(odometry.source_[0],
                       odometry.device_->intrinsics_[0]);
-    pcl_target->Build(odometry.target()[0],
+    pcl_target->Build(odometry.target_[0],
                       odometry.device_->intrinsics_[0]);
     visualizer.AddGeometry(pcl_source);
     visualizer.AddGeometry(pcl_target);
@@ -91,9 +91,9 @@ int TwoFrameRGBDOdometry(
         prev_transform = odometry.transform_source_to_target_;
 
         /* Update point cloud */
-        pcl_source->Build(odometry.source()[level],
+        pcl_source->Build(odometry.source_[level],
                           odometry.device_->intrinsics_[level]);
-        pcl_target->Build(odometry.target()[level],
+        pcl_target->Build(odometry.target_[level],
                           odometry.device_->intrinsics_[level]);
         pcl_source->Transform(odometry.transform_source_to_target_);
 
@@ -103,8 +103,8 @@ int TwoFrameRGBDOdometry(
         lines->colors_.clear();
         auto &intrinsic = odometry.device_->intrinsics_[level];
         auto correspondences = odometry.correspondences_.Download();
-        auto src_depth = odometry.source()[level].depthf_.DownloadImage();
-        auto tgt_depth = odometry.target()[level].depthf_.DownloadImage();
+        auto src_depth = odometry.source_[level].depthf_.DownloadImage();
+        auto tgt_depth = odometry.target_[level].depthf_.DownloadImage();
         for (int i = 0; i < correspondences.size(); ++i) {
             auto &c = correspondences[i];
 

@@ -195,10 +195,7 @@ void ICRGBDOdometryCuda<N>::Initialize(
 
 template<size_t N>
 void ICRGBDOdometryCuda<N>::PrecomputeJacobians(size_t level) {
-    ICRGBDOdometryCudaKernelCaller<N>::PrecomputeJacobiansKernelCaller(
-        *device_, level,
-        source_[level].depthf_.width_,
-        source_[level].depthf_.height_);
+    ICRGBDOdometryCudaKernelCaller<N>::PrecomputeJacobians(*this, level);
 }
 
 template<size_t N>
@@ -215,12 +212,8 @@ ICRGBDOdometryCuda<N>::DoSingleIteration(size_t level, int iter) {
 
     Timer timer;
     timer.Start();
-    ICRGBDOdometryCudaKernelCaller<N>::DoSinlgeIterationKernelCaller(
-        *device_, level,
-        target_[level].depthf_.width_,
-        target_[level].depthf_.height_);
+    ICRGBDOdometryCudaKernelCaller<N>::DoSinlgeIteration(*this, level);
     timer.Stop();
-    //PrintDebug("IC: %f\n", timer.GetDuration());
 
 #ifdef VISUALIZE_ODOMETRY_INLIERS
     cv::Mat im = source_on_target_[level].DownloadMat();

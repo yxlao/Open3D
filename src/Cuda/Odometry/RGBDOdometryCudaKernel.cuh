@@ -152,14 +152,15 @@ void DoSingleIterationKernel(RGBDOdometryCudaDevice<N> odometry, size_t level) {
 }
 
 template<size_t N>
-void RGBDOdometryCudaKernelCaller<N>::DoSingleIterationKernelCaller(
-    RGBDOdometryCudaDevice<N> &server, size_t level,
-    int width, int height) {
+void RGBDOdometryCudaKernelCaller<N>::DoSingleIteration(
+    RGBDOdometryCuda<N> &odometry, size_t level) {
 
-    const dim3 blocks(DIV_CEILING(width, THREAD_2D_UNIT),
-                      DIV_CEILING(height, THREAD_2D_UNIT));
+    const dim3 blocks(
+        DIV_CEILING(odometry.source_[level].depthf_.width_, THREAD_2D_UNIT),
+        DIV_CEILING(odometry.source_[level].depthf_.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
-    DoSingleIterationKernel << < blocks, threads >> > (server, level);
+    DoSingleIterationKernel << < blocks, threads >> > (
+        *odometry.device_, level);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }

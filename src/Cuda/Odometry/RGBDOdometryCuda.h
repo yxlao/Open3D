@@ -105,13 +105,14 @@ class RGBDOdometryCuda {
 public:
     std::shared_ptr<RGBDOdometryCudaDevice<N>> device_ = nullptr;
 
+public:
+    RGBDImagePyramidCuda<N> source_;
+    RGBDImagePyramidCuda<N> target_;
+
 private:
     ImagePyramidCuda<Vector1f, N> source_on_target_;
     RGBDImagePyramidCuda<N> source_raw_;
     RGBDImagePyramidCuda<N> target_raw_;
-
-    RGBDImagePyramidCuda<N> source_;
-    RGBDImagePyramidCuda<N> target_;
     RGBDImagePyramidCuda<N> target_dx_;
     RGBDImagePyramidCuda<N> target_dy_;
 
@@ -134,7 +135,7 @@ public:
     RGBDOdometryCuda();
     ~RGBDOdometryCuda();
 
-    void SetParameters(const OdometryOption &option, const float sigma = 0.5f);
+    void SetParameters(const OdometryOption &option, float sigma = 0.5f);
     void SetIntrinsics(PinholeCameraIntrinsic intrinsics);
 
     bool Create(int width, int height);
@@ -151,17 +152,12 @@ public:
 
     std::tuple<bool, Eigen::Matrix4d, std::vector<std::vector<float>>>
     ComputeMultiScale();
-
-    RGBDImagePyramidCuda<N> &source() { return source_; }
-    RGBDImagePyramidCuda<N> &target() { return target_; }
 };
 
 template<size_t N>
 class RGBDOdometryCudaKernelCaller {
 public:
-    static __HOST__ void DoSingleIterationKernelCaller(
-        RGBDOdometryCudaDevice<N> &server, size_t level,
-        int width, int height);
+    static void DoSingleIteration(RGBDOdometryCuda<N> &odometry, size_t level);
 };
 
 template<size_t N>

@@ -102,14 +102,14 @@ template<size_t N>
 class ICRGBDOdometryCuda {
 public:
     std::shared_ptr<ICRGBDOdometryCudaDevice<N>> device_ = nullptr;
+    RGBDImagePyramidCuda<N> source_;
+    RGBDImagePyramidCuda<N> target_;
 
 private:
     ImagePyramidCuda<Vector1f, N> source_on_target_;
     RGBDImagePyramidCuda<N> source_raw_;
     RGBDImagePyramidCuda<N> target_raw_;
 
-    RGBDImagePyramidCuda<N> source_;
-    RGBDImagePyramidCuda<N> target_;
     RGBDImagePyramidCuda<N> source_dx_;
     RGBDImagePyramidCuda<N> source_dy_;
     ImagePyramidCuda<Vector6f, N> source_depth_jacobian_;
@@ -153,20 +153,15 @@ public:
 
     std::tuple<bool, Eigen::Matrix4d, std::vector<std::vector<float>>>
     ComputeMultiScale();
-
-    RGBDImagePyramidCuda<N> &source() { return source_; }
-    RGBDImagePyramidCuda<N> &target() { return target_; }
 };
 
 template<size_t N>
 class ICRGBDOdometryCudaKernelCaller {
 public:
-    static __HOST__ void DoSinlgeIterationKernelCaller(
-        ICRGBDOdometryCudaDevice<N> &server, size_t level,
-        int width, int height);
-    static __HOST__ void PrecomputeJacobiansKernelCaller(
-        ICRGBDOdometryCudaDevice<N> &server, size_t level,
-        int width, int height);
+    static void DoSinlgeIteration(
+        ICRGBDOdometryCuda<N> &odometry, size_t level);
+    static void PrecomputeJacobians(
+        ICRGBDOdometryCuda<N> &odometry, size_t level);
 };
 
 template<size_t N>

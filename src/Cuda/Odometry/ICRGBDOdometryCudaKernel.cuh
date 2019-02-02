@@ -160,14 +160,15 @@ void DoSingleIterationKernel(
 }
 
 template<size_t N>
-void ICRGBDOdometryCudaKernelCaller<N>::DoSinlgeIterationKernelCaller(
-    ICRGBDOdometryCudaDevice<N> &server, size_t level,
-    int width, int height) {
+void ICRGBDOdometryCudaKernelCaller<N>::DoSinlgeIteration(
+    ICRGBDOdometryCuda<N> &odometry, size_t level) {
 
-    const dim3 blocks(DIV_CEILING(width, THREAD_2D_UNIT),
-                      DIV_CEILING(height, THREAD_2D_UNIT));
+    const dim3 blocks(
+        DIV_CEILING(odometry.source_[level].depthf_.width_, THREAD_2D_UNIT),
+        DIV_CEILING(odometry.source_[level].depthf_.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
-    DoSingleIterationKernel << < blocks, threads >> > (server, level);
+    DoSingleIterationKernel << < blocks, threads >> > (
+        *odometry.device_, level);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
@@ -187,14 +188,15 @@ void PrecomputeJacobiansKernel(
 }
 
 template<size_t N>
-void ICRGBDOdometryCudaKernelCaller<N>::PrecomputeJacobiansKernelCaller(
-    ICRGBDOdometryCudaDevice<N> &server, size_t level,
-    int width, int height) {
+void ICRGBDOdometryCudaKernelCaller<N>::PrecomputeJacobians(
+    ICRGBDOdometryCuda<N> &odometry, size_t level) {
 
-    const dim3 blocks(DIV_CEILING(width, THREAD_2D_UNIT),
-                      DIV_CEILING(height, THREAD_2D_UNIT));
+    const dim3 blocks(
+        DIV_CEILING(odometry.source_[level].depthf_.width_, THREAD_2D_UNIT),
+        DIV_CEILING(odometry.source_[level].depthf_.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
-    PrecomputeJacobiansKernel << < blocks, threads >> > (server, level);
+    PrecomputeJacobiansKernel << < blocks, threads >> > (
+        *odometry.device_, level);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
