@@ -65,7 +65,7 @@ void FastGlobalRegistrationCuda::Initialize(PointCloud &source,
     target_.Create(VertexWithNormal, (int)target.points_.size());
     target_.Upload(target);
 
-    /** Extract feature from original point clouds **/
+    /* 0) Extract feature from original point clouds */
     source_feature_extractor_.Compute(
         source, KDTreeSearchParamHybrid(0.25, 100));
     target_feature_extractor_.Compute(
@@ -85,19 +85,12 @@ void FastGlobalRegistrationCuda::Initialize(PointCloud &source,
     corres_target_to_source_.Compress();
     UpdateDevice();
 
-    PrintInfo("(%d x %d, %d) - (%d x %d, %d)\n",
-              corres_source_to_target_.matrix_.max_rows_,
-              corres_source_to_target_.matrix_.max_cols_,
-              corres_source_to_target_.indices_.size(),
-              corres_target_to_source_.matrix_.max_rows_,
-              corres_target_to_source_.matrix_.max_cols_,
-              corres_target_to_source_.indices_.size());
-
     /* 2) Reciprocity Test */
     corres_mutual_.Create(source.points_.size());
     device_->corres_mutual_ = *corres_mutual_.device_;
     FastGlobalRegistrationCudaKernelCaller::ReciprocityTest(*this);
 
+    /* 3) Tuple Test */
     corres_final_.Create(corres_mutual_.size());
     device_->corres_final_ = *corres_final_.device_;
     FastGlobalRegistrationCudaKernelCaller::TupleTest(*this);
@@ -135,7 +128,7 @@ Eigen::Matrix4d GetTransformationOriginalScale(
     transtemp(3, 3) = 1;
     return transtemp;
 }
-}
+} // unnamed namespace
 
 RegistrationResultCuda FastGlobalRegistrationCuda::DoSingleIteration(int iter) {
     RegistrationResultCuda result;
@@ -148,9 +141,6 @@ RegistrationResultCuda FastGlobalRegistrationCuda::DoSingleIteration(int iter) {
     Eigen::Vector6d Jtr;
     float rmse;
     ExtractResults(JtJ, Jtr, rmse);
-    std::cout << "gpu JtJ: " << JtJ << std::endl;
-    std::cout << "gpu Jtr: " << Jtr.transpose() << std::endl;
-    std::cout << "gpu rmse: " << rmse << std::endl;
 
     bool success;
     Eigen::VectorXd xi;
@@ -159,19 +149,15 @@ RegistrationResultCuda FastGlobalRegistrationCuda::DoSingleIteration(int iter) {
     transform_normalized_source_to_target_ =
         delta * transform_normalized_source_to_target_;
     source_.Transform(delta);
-    std::cout << "gpu delta: " << delta << std::endl;
-    std::cout << "gpu trans: " << transform_normalized_source_to_target_ <<
-    std::endl;
 
     result.transformation_ = GetTransformationOriginalScale(
-        transform_normalized_source_to_target_, mean_source_, mean_target_,
+        transform_normalized_source_to_target_,
+        mean_source_, mean_target_,
         device_->scale_global_);
     result.inlier_rmse_ = rmse;
-    PrintInfo("iter: %d, rmse: %f\n", iter, rmse);
 
     if (iter % 4 == 0 && device_->par_ > 0.0f) {
         device_->par_ /= 1.4f;
-        std::cout << "gpu par: " << device_->par_ << std::endl;
     }
 
     return result;

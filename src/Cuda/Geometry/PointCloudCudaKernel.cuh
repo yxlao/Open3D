@@ -90,26 +90,7 @@ void GetMinBoundKernel(PointCloudCudaDevice pcl,
     local_min_z[tid] = vertex(2);
     __syncthreads();
 
-    if (tid < 128) {
-        local_min_x[tid] = fminf(local_min_x[tid], local_min_x[tid + 128]);
-        local_min_y[tid] = fminf(local_min_y[tid], local_min_y[tid + 128]);
-        local_min_z[tid] = fminf(local_min_z[tid], local_min_z[tid + 128]);
-    }
-    __syncthreads();
-
-    if (tid < 64) {
-        local_min_x[tid] = fminf(local_min_x[tid], local_min_x[tid + 64]);
-        local_min_y[tid] = fminf(local_min_y[tid], local_min_y[tid + 64]);
-        local_min_z[tid] = fminf(local_min_z[tid], local_min_z[tid + 64]);
-    }
-    __syncthreads();
-
-    if (tid < 32) {
-        WarpReduceMin(local_min_x, tid);
-        WarpReduceMin(local_min_y, tid);
-        WarpReduceMin(local_min_z, tid);
-    }
-    __syncthreads();
+    TripleBlockReduceMin<float>(local_min_x, local_min_y, local_min_z, tid);
 
     if (tid == 0) {
         atomicMinf(&(min_bound[0](0)), local_min_x[0]);
@@ -146,26 +127,7 @@ void GetMaxBoundKernel(PointCloudCudaDevice pcl,
     local_max_z[tid] = vertex(2);
     __syncthreads();
 
-    if (tid < 128) {
-        local_max_x[tid] = fmaxf(local_max_x[tid], local_max_x[tid + 128]);
-        local_max_y[tid] = fmaxf(local_max_y[tid], local_max_y[tid + 128]);
-        local_max_z[tid] = fmaxf(local_max_z[tid], local_max_z[tid + 128]);
-        __syncthreads();
-    }
-
-    if (tid < 64) {
-        local_max_x[tid] = fmaxf(local_max_x[tid], local_max_x[tid + 64]);
-        local_max_y[tid] = fmaxf(local_max_y[tid], local_max_y[tid + 64]);
-        local_max_z[tid] = fmaxf(local_max_z[tid], local_max_z[tid + 64]);
-        __syncthreads();
-    }
-
-    if (tid < 32) {
-        WarpReduceMax(local_max_x, tid);
-        WarpReduceMax(local_max_y, tid);
-        WarpReduceMax(local_max_z, tid);
-    }
-    __syncthreads();
+    TripleBlockReduceMax<float>(local_max_x, local_max_y, local_max_z, tid);
 
     if (tid == 0) {
         atomicMaxf(&(max_bound[0](0)), local_max_x[0]);
@@ -210,25 +172,7 @@ void ComputeSumKernel(PointCloudCudaDevice device,
     local_sum2[tid] = vertex(2);
     __syncthreads();
 
-    if (tid < 128) {
-        local_sum0[tid] += local_sum0[tid + 128];
-        local_sum1[tid] += local_sum1[tid + 128];
-        local_sum2[tid] += local_sum2[tid + 128];
-    }
-    __syncthreads();
-
-    if (tid < 64) {
-        local_sum0[tid] += local_sum0[tid + 64];
-        local_sum1[tid] += local_sum1[tid + 64];
-        local_sum2[tid] += local_sum2[tid + 64];
-    }
-    __syncthreads();
-
-    if (tid < 32) {
-        WarpReduceSum<float>(local_sum0, tid);
-        WarpReduceSum<float>(local_sum1, tid);
-        WarpReduceSum<float>(local_sum2, tid);
-    }
+    TripleBlockReduceSum<float>(local_sum0, local_sum1, local_sum2, tid);
 
     if (tid == 0) {
         atomicAdd(&sum[0](0), local_sum0[0]);
@@ -266,19 +210,7 @@ void SubMeanAndGetMaxScaleKernel(PointCloudCudaDevice device,
     local_max[tid] = vertex.norm();
     __syncthreads();
 
-    if (tid < 128) {
-        local_max[tid] = fmaxf(local_max[tid], local_max[tid + 128]);
-    }
-    __syncthreads();
-
-    if (tid < 64) {
-        local_max[tid] = fmaxf(local_max[tid], local_max[tid + 64]);
-    }
-    __syncthreads();
-
-    if (tid < 32) {
-        WarpReduceMax<float>(local_max, tid);
-    }
+    BlockReduceMax<float>(local_max, tid);
 
     if (tid == 0) {
         atomicMaxf(&scale[0], local_max[0]);

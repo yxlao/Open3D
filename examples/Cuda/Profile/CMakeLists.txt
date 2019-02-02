@@ -1,0 +1,2 @@
+add_executable(RGBDOdometryCudaProfiler RGBDOdometryCudaProfiler.cpp)
+target_link_libraries(RGBDOdometryCudaProfiler ${CMAKE_PROJECT_NAME})

@@ -47,7 +47,7 @@ public:
     ArrayCuda<int> indices_;
 
 public:
-    VertexType type_;
+    VertexType type_ = VertexTypeUnknown;
     int max_points_;
 
 public:

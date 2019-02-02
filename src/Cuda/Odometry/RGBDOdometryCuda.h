@@ -5,17 +5,16 @@
 #pragma once
 
 #include "OdometryClasses.h"
-#include "JacobianCuda.h"
+
+#include <Cuda/Common/JacobianCuda.h>
+#include <Cuda/Common/UtilsCuda.h>
+#include <Cuda/Common/LinearAlgebraCuda.h>
+#include <Cuda/Common/TransformCuda.h>
 
 #include <Core/Odometry/OdometryOption.h>
 
-#include <Cuda/Common/UtilsCuda.h>
-
 #include <Cuda/Camera/PinholeCameraIntrinsicCuda.h>
 #include <Cuda/Container/ArrayCuda.h>
-
-#include <Cuda/Common/LinearAlgebraCuda.h>
-#include <Cuda/Common/TransformCuda.h>
 #include <Cuda/Geometry/ImagePyramidCuda.h>
 #include <Cuda/Geometry/RGBDImagePyramidCuda.h>
 

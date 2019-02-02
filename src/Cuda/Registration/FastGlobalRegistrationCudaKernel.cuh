@@ -139,32 +139,13 @@ void ComputeResultsAndTransformationKernel(
     float rmse = residual.dot(residual) + fgr.par_ * (1 - lij) * (1 - lij);
 
     /** Reduce Sum JtJ **/
-#pragma unroll 1
     for (size_t i = 0; i < 21; i += 3) {
         local_sum0[tid] = JtJ(i + 0);
         local_sum1[tid] = JtJ(i + 1);
         local_sum2[tid] = JtJ(i + 2);
         __syncthreads();
 
-        if (tid < 128) {
-            local_sum0[tid] += local_sum0[tid + 128];
-            local_sum1[tid] += local_sum1[tid + 128];
-            local_sum2[tid] += local_sum2[tid + 128];
-        }
-        __syncthreads();
-
-        if (tid < 64) {
-            local_sum0[tid] += local_sum0[tid + 64];
-            local_sum1[tid] += local_sum1[tid + 64];
-            local_sum2[tid] += local_sum2[tid + 64];
-        }
-        __syncthreads();
-
-        if (tid < 32) {
-            WarpReduceSum<float>(local_sum0, tid);
-            WarpReduceSum<float>(local_sum1, tid);
-            WarpReduceSum<float>(local_sum2, tid);
-        }
+        TripleBlockReduceSum<float>(local_sum0, local_sum1, local_sum2, tid);
 
         if (tid == 0) {
             atomicAdd(&fgr.results_.at(i + 0), local_sum0[0]);
@@ -176,32 +157,13 @@ void ComputeResultsAndTransformationKernel(
 
     /** Reduce Sum Jtr **/
     const int OFFSET1 = 21;
-#pragma unroll 1
     for (size_t i = 0; i < 6; i += 3) {
         local_sum0[tid] = Jtr(i + 0);
         local_sum1[tid] = Jtr(i + 1);
         local_sum2[tid] = Jtr(i + 2);
         __syncthreads();
 
-        if (tid < 128) {
-            local_sum0[tid] += local_sum0[tid + 128];
-            local_sum1[tid] += local_sum1[tid + 128];
-            local_sum2[tid] += local_sum2[tid + 128];
-        }
-        __syncthreads();
-
-        if (tid < 64) {
-            local_sum0[tid] += local_sum0[tid + 64];
-            local_sum1[tid] += local_sum1[tid + 64];
-            local_sum2[tid] += local_sum2[tid + 64];
-        }
-        __syncthreads();
-
-        if (tid < 32) {
-            WarpReduceSum<float>(local_sum0, tid);
-            WarpReduceSum<float>(local_sum1, tid);
-            WarpReduceSum<float>(local_sum2, tid);
-        }
+        TripleBlockReduceSum<float>(local_sum0, local_sum1, local_sum2, tid);
 
         if (tid == 0) {
             atomicAdd(&fgr.results_.at(i + 0 + OFFSET1), local_sum0[0]);
@@ -217,19 +179,7 @@ void ComputeResultsAndTransformationKernel(
         local_sum0[tid] = rmse;
         __syncthreads();
 
-        if (tid < 128) {
-            local_sum0[tid] += local_sum0[tid + 128];
-        }
-        __syncthreads();
-
-        if (tid < 64) {
-            local_sum0[tid] += local_sum0[tid + 64];
-        }
-        __syncthreads();
-
-        if (tid < 32) {
-            WarpReduceSum<float>(local_sum0, tid);
-        }
+        BlockReduceSum<float>(local_sum0, tid);
 
         if (tid == 0) {
             atomicAdd(&fgr.results_.at(0 + OFFSET2), local_sum0[0]);

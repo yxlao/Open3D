@@ -30,32 +30,14 @@ void ComputeSumsKernel(
     Vector3f &source = estimation.source_.points_[source_idx];
     Vector3f &target = estimation.target_.points_[target_idx];
 
+    const int OFFSET1 = 9;
     {
-        const int OFFSET1 = 9;
         local_sum0[tid] = source(0);
         local_sum1[tid] = source(1);
         local_sum2[tid] = source(2);
         __syncthreads();
 
-        if (tid < 128) {
-            local_sum0[tid] += local_sum0[tid + 128];
-            local_sum1[tid] += local_sum1[tid + 128];
-            local_sum2[tid] += local_sum2[tid + 128];
-        }
-        __syncthreads();
-
-        if (tid < 64) {
-            local_sum0[tid] += local_sum0[tid + 64];
-            local_sum1[tid] += local_sum1[tid + 64];
-            local_sum2[tid] += local_sum2[tid + 64];
-        }
-        __syncthreads();
-
-        if (tid < 32) {
-            WarpReduceSum<float>(local_sum0, tid);
-            WarpReduceSum<float>(local_sum1, tid);
-            WarpReduceSum<float>(local_sum2, tid);
-        }
+        TripleBlockReduceSum<float>(local_sum0, local_sum1, local_sum2, tid);
 
         if (tid == 0) {
             atomicAdd(&estimation.results_.at(0 + OFFSET1), local_sum0[0]);
@@ -65,32 +47,14 @@ void ComputeSumsKernel(
         __syncthreads();
     }
 
+    const int OFFSET2 = 12;
     {
-        const int OFFSET2 = 12;
         local_sum0[tid] = target(0);
         local_sum1[tid] = target(1);
         local_sum2[tid] = target(2);
         __syncthreads();
 
-        if (tid < 128) {
-            local_sum0[tid] += local_sum0[tid + 128];
-            local_sum1[tid] += local_sum1[tid + 128];
-            local_sum2[tid] += local_sum2[tid + 128];
-        }
-        __syncthreads();
-
-        if (tid < 64) {
-            local_sum0[tid] += local_sum0[tid + 64];
-            local_sum1[tid] += local_sum1[tid + 64];
-            local_sum2[tid] += local_sum2[tid + 64];
-        }
-        __syncthreads();
-
-        if (tid < 32) {
-            WarpReduceSum<float>(local_sum0, tid);
-            WarpReduceSum<float>(local_sum1, tid);
-            WarpReduceSum<float>(local_sum2, tid);
-        }
+        TripleBlockReduceSum<float>(local_sum0, local_sum1, local_sum2, tid);
 
         if (tid == 0) {
             atomicAdd(&estimation.results_.at(0 + OFFSET2), local_sum0[0]);
@@ -137,67 +101,29 @@ void ComputeResultsAndTransformationKernel(
     estimation.ComputePointwiseStatistics(
         source_idx, target_idx, Sigma, sigma_source2, rmse);
 
-    {
-        for (size_t i = 0; i < 3; i ++) {
-            local_sum0[tid] = Sigma(i, 0);
-            local_sum1[tid] = Sigma(i, 1);
-            local_sum2[tid] = Sigma(i, 2);
-            __syncthreads();
+    for (size_t i = 0; i < 3; i ++) {
+        local_sum0[tid] = Sigma(i, 0);
+        local_sum1[tid] = Sigma(i, 1);
+        local_sum2[tid] = Sigma(i, 2);
+        __syncthreads();
 
-            if (tid < 128) {
-                local_sum0[tid] += local_sum0[tid + 128];
-                local_sum1[tid] += local_sum1[tid + 128];
-                local_sum2[tid] += local_sum2[tid + 128];
-            }
-            __syncthreads();
+        TripleBlockReduceSum<float>(local_sum0, local_sum1, local_sum2, tid);
 
-            if (tid < 64) {
-                local_sum0[tid] += local_sum0[tid + 64];
-                local_sum1[tid] += local_sum1[tid + 64];
-                local_sum2[tid] += local_sum2[tid + 64];
-            }
-            __syncthreads();
-
-            if (tid < 32) {
-                WarpReduceSum<float>(local_sum0, tid);
-                WarpReduceSum<float>(local_sum1, tid);
-                WarpReduceSum<float>(local_sum2, tid);
-            }
-
-            if (tid == 0) {
-                atomicAdd(&estimation.results_.at(3 * i + 0),
-                          local_sum0[0]);
-                atomicAdd(&estimation.results_.at(3 * i + 1),
-                          local_sum1[0]);
-                atomicAdd(&estimation.results_.at(3 * i + 2),
-                          local_sum2[0]);
-            }
-            __syncthreads();
+        if (tid == 0) {
+            atomicAdd(&estimation.results_.at(3 * i + 0), local_sum0[0]);
+            atomicAdd(&estimation.results_.at(3 * i + 1), local_sum1[0]);
+            atomicAdd(&estimation.results_.at(3 * i + 2), local_sum2[0]);
         }
+        __syncthreads();
     }
 
+    const int OFFSET3 = 15;
     {
-        const int OFFSET3 = 15;
         local_sum0[tid] = sigma_source2;
         local_sum1[tid] = rmse;
         __syncthreads();
 
-        if (tid < 128) {
-            local_sum0[tid] += local_sum0[tid + 128];
-            local_sum1[tid] += local_sum1[tid + 128];
-        }
-        __syncthreads();
-
-        if (tid < 64) {
-            local_sum0[tid] += local_sum0[tid + 64];
-            local_sum1[tid] += local_sum1[tid + 64];
-        }
-        __syncthreads();
-
-        if (tid < 32) {
-            WarpReduceSum<float>(local_sum0, tid);
-            WarpReduceSum<float>(local_sum1, tid);
-        }
+        DoubleBlockReduceSum<float>(local_sum0, local_sum1, tid);
 
         if (tid == 0) {
             atomicAdd(&estimation.results_.at(0 + OFFSET3), local_sum0[0]);
@@ -261,25 +187,7 @@ void ComputeResultsAndTransformationKernel(
         local_sum2[tid] = JtJ(i + 2);
         __syncthreads();
 
-        if (tid < 128) {
-            local_sum0[tid] += local_sum0[tid + 128];
-            local_sum1[tid] += local_sum1[tid + 128];
-            local_sum2[tid] += local_sum2[tid + 128];
-        }
-        __syncthreads();
-
-        if (tid < 64) {
-            local_sum0[tid] += local_sum0[tid + 64];
-            local_sum1[tid] += local_sum1[tid + 64];
-            local_sum2[tid] += local_sum2[tid + 64];
-        }
-        __syncthreads();
-
-        if (tid < 32) {
-            WarpReduceSum<float>(local_sum0, tid);
-            WarpReduceSum<float>(local_sum1, tid);
-            WarpReduceSum<float>(local_sum2, tid);
-        }
+        TripleBlockReduceSum<float>(local_sum0, local_sum1, local_sum2, tid);
 
         if (tid == 0) {
             atomicAdd(&estimation.results_.at(i + 0), local_sum0[0]);
@@ -298,25 +206,7 @@ void ComputeResultsAndTransformationKernel(
         local_sum2[tid] = Jtr(i + 2);
         __syncthreads();
 
-        if (tid < 128) {
-            local_sum0[tid] += local_sum0[tid + 128];
-            local_sum1[tid] += local_sum1[tid + 128];
-            local_sum2[tid] += local_sum2[tid + 128];
-        }
-        __syncthreads();
-
-        if (tid < 64) {
-            local_sum0[tid] += local_sum0[tid + 64];
-            local_sum1[tid] += local_sum1[tid + 64];
-            local_sum2[tid] += local_sum2[tid + 64];
-        }
-        __syncthreads();
-
-        if (tid < 32) {
-            WarpReduceSum<float>(local_sum0, tid);
-            WarpReduceSum<float>(local_sum1, tid);
-            WarpReduceSum<float>(local_sum2, tid);
-        }
+        TripleBlockReduceSum<float>(local_sum0, local_sum1, local_sum2, tid);
 
         if (tid == 0) {
             atomicAdd(&estimation.results_.at(i + 0 + OFFSET1), local_sum0[0]);
@@ -332,19 +222,7 @@ void ComputeResultsAndTransformationKernel(
         local_sum0[tid] = residual * residual;
         __syncthreads();
 
-        if (tid < 128) {
-            local_sum0[tid] += local_sum0[tid + 128];
-        }
-        __syncthreads();
-
-        if (tid < 64) {
-            local_sum0[tid] += local_sum0[tid + 64];
-        }
-        __syncthreads();
-
-        if (tid < 32) {
-            WarpReduceSum<float>(local_sum0, tid);
-        }
+        BlockReduceSum<float>(local_sum0, tid);
 
         if (tid == 0) {
             atomicAdd(&estimation.results_.at(0 + OFFSET2), local_sum0[0]);

@@ -8,8 +8,7 @@
 namespace open3d {
 namespace cuda {
 __device__
-void TransformEstimationPointToPointCudaDevice
-::ComputePointwiseStatistics(
+void TransformEstimationPointToPointCudaDevice::ComputePointwiseStatistics(
     int source_idx, int target_idx,
     Matrix3f &Sigma, float &source_sigma2, float &residual) {
     const Vector3f &vs = source_.points_[source_idx];
@@ -23,7 +22,6 @@ void TransformEstimationPointToPointCudaDevice
                       vt(2) - target_mean_(2));
     const Vector3f dst(vs(0) - vt(0), vs(1) - vt(1), vs(2) - vt(2));
 
-#pragma unroll 1
     for (int i = 0; i < 3; ++i) {
 #pragma unroll 1
         for (int j = 0; j < 3; ++j) {
