@@ -56,8 +56,8 @@ public:
 
 class FeatureCudaKernelCaller {
 public:
-    static void ComputeSPFHFeature(FeatureExtractorCuda &feature);
-    static void ComputeFPFHFeature(FeatureExtractorCuda &feature);
+    static void ComputeSPFHFeature(FeatureExtractorCuda &extractor);
+    static void ComputeFPFHFeature(FeatureExtractorCuda &extractor);
 };
 
 __GLOBAL__

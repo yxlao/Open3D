@@ -32,7 +32,7 @@ void CompressCorrespondencesKernel(CorrespondenceSetCudaDevice corres) {
     }
 }
 
-void CorrespondenceSetCudaKernelCaller::CompressCorrespondenceKernelCaller(
+void CorrespondenceSetCudaKernelCaller::CompressCorrespondence(
     CorrespondenceSetCuda &corres) {
 
     corres.indices_.set_iterator(0);

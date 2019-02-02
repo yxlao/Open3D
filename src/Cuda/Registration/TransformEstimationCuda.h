@@ -129,9 +129,9 @@ private:
 
 class TransformEstimationPointToPointCudaKernelCaller {
 public:
-    static void ComputeSumsKernelCaller(
+    static void ComputeSums(
         TransformEstimationPointToPointCuda &estimation);
-    static void ComputeResultsAndTransformationKernelCaller(
+    static void ComputeResultsAndTransformation(
         TransformEstimationPointToPointCuda &estimation);
 };
 
@@ -184,7 +184,7 @@ private:
 
 class TransformEstimationPointToPlaneCudaKernelCaller {
 public:
-    static void ComputeResultsAndTransformationKernelCaller(
+    static void ComputeResultsAndTransformation(
         TransformEstimationPointToPlaneCuda &estimation);
 };
 

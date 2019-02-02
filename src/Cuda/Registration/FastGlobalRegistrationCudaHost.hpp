@@ -110,28 +110,13 @@ void FastGlobalRegistrationCuda::Initialize(PointCloud &source,
 }
 
 double FastGlobalRegistrationCuda::NormalizePointClouds() {
-    mean_source_ =
-        FastGlobalRegistrationCudaKernelCaller::ComputePointCloudSum(
-            source_);
-    mean_source_ /= source_.points_.size();
-    double scale_source =
-        FastGlobalRegistrationCudaKernelCaller::NormalizePointCloud(
-            source_, mean_source_);
+    double scale_source, scale_target;
 
-    mean_target_ =
-        FastGlobalRegistrationCudaKernelCaller::ComputePointCloudSum(
-            target_);
-    mean_target_ /= target_.points_.size();
-    double scale_target =
-        FastGlobalRegistrationCudaKernelCaller::NormalizePointCloud(
-            target_, mean_target_);
-
+    std::tie(mean_source_, scale_source) = source_.Normalize();
+    std::tie(mean_target_, scale_target) = target_.Normalize();
     double scale_global = std::max(scale_source, scale_target);
-    FastGlobalRegistrationCudaKernelCaller::RescalePointCloud(
-        source_, scale_global);
-    FastGlobalRegistrationCudaKernelCaller::RescalePointCloud(
-        target_, scale_global);
-
+    source_.Rescale(scale_global);
+    target_.Rescale(scale_global);
     return scale_global;
 }
 

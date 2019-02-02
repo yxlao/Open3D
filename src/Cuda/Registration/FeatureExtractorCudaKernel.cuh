@@ -19,11 +19,12 @@ void ComputeSPFHFeatureKernel(FeatureCudaDevice server) {
     server.ComputeSPFHFeature(i, max_nn);
 }
 
-void FeatureCudaKernelCaller::ComputeSPFHFeature(FeatureExtractorCuda &feature) {
-    const dim3 blocks(DIV_CEILING(feature.neighbors_.indices_.size(),
-        THREAD_1D_UNIT));
+void FeatureCudaKernelCaller::ComputeSPFHFeature(
+    FeatureExtractorCuda &extractor) {
+    const dim3 blocks(DIV_CEILING(
+        extractor.neighbors_.indices_.size(), THREAD_1D_UNIT));
     const dim3 threads(THREAD_1D_UNIT);
-    ComputeSPFHFeatureKernel<<<blocks, threads>>>(*feature.device_);
+    ComputeSPFHFeatureKernel<<<blocks, threads>>>(*extractor.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
@@ -38,11 +39,12 @@ void ComputeFPFHFeatureKernel(FeatureCudaDevice server) {
     server.ComputeFPFHFeature(i, max_nn);
 }
 
-void FeatureCudaKernelCaller::ComputeFPFHFeature(FeatureExtractorCuda &feature) {
-    const dim3 blocks(DIV_CEILING(feature.neighbors_.indices_.size(),
-        THREAD_1D_UNIT));
+void FeatureCudaKernelCaller::ComputeFPFHFeature(
+    FeatureExtractorCuda &extractor) {
+    const dim3 blocks(DIV_CEILING(
+        extractor.neighbors_.indices_.size(), THREAD_1D_UNIT));
     const dim3 threads(THREAD_1D_UNIT);
-    ComputeFPFHFeatureKernel<<<blocks, threads>>>(*feature.device_);
+    ComputeFPFHFeatureKernel<<<blocks, threads>>>(*extractor.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }

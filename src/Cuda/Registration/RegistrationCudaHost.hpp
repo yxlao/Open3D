@@ -10,7 +10,7 @@ namespace cuda {
 
 RegistrationCuda::RegistrationCuda(const TransformationEstimationType &type) {
     if (type == TransformationEstimationType::ColoredICP) {
-        estimator_ = std::make_shared<TransformEstimationCudaForColoredICP>();
+        estimator_ = std::make_shared<TransformEstimationForColoredICPCuda>();
     } else if (type == TransformationEstimationType::PointToPlane) {
         estimator_ = std::make_shared<TransformEstimationPointToPlaneCuda>();
     } else if (type == TransformationEstimationType::PointToPoint) {

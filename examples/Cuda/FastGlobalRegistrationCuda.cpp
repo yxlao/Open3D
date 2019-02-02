@@ -23,9 +23,9 @@ int main(int argc, char **argv) {
 
     std::string filepath = "/home/wei/Work/data/stanford/lounge/fragments";
     auto source_origin = CreatePointCloudFromFile(
-        filepath + "/fragment_005.ply");
+        filepath + "/fragment_000.ply");
     auto target_origin = CreatePointCloudFromFile(
-        filepath + "/fragment_008.ply");
+        filepath + "/fragment_003.ply");
 
     auto source = VoxelDownSample(*source_origin, 0.05);
     auto target = VoxelDownSample(*target_origin, 0.05);

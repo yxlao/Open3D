@@ -13,7 +13,7 @@ namespace open3d {
 namespace cuda {
 
 /* We don't want inheritance for cuda classes */
-class TransformEstimationCudaForColoredICPDevice {
+class TransformEstimationForColoredICPCudaDevice {
 public:
     PointCloudCudaDevice source_;
     PointCloudCudaDevice target_;
@@ -35,19 +35,22 @@ public:
         int source_idx, int target_idx,
         Vector6f& jacobian_I, Vector6f &jacobian_G,
         float &residual_I, float &residual_G);
+
+    __DEVICE__ void ComputePointwiseGradient(
+        int idx, CorrespondenceSetCudaDevice &corres_for_color_gradient);
 };
 
-class TransformEstimationCudaForColoredICP : public TransformEstimationCuda {
+class TransformEstimationForColoredICPCuda : public TransformEstimationCuda {
 public:
-    std::shared_ptr<TransformEstimationCudaForColoredICPDevice>
+    std::shared_ptr<TransformEstimationForColoredICPCudaDevice>
         device_ = nullptr;
 
 public:
     TransformationEstimationType GetTransformationEstimationType()
     const override { return type_; };
 
-    TransformEstimationCudaForColoredICP(float lambda_geometric = 0.968f);
-    ~TransformEstimationCudaForColoredICP() override;
+    TransformEstimationForColoredICPCuda(float lambda_geometric = 0.968f);
+    ~TransformEstimationForColoredICPCuda() override;
 
     void Create() override;
     void Release() override;
@@ -82,22 +85,22 @@ private:
 
 class TransformEstimationCudaForColoredICPKernelCaller {
 public:
-    static void ComputeColorGradeintKernelCaller(
-        TransformEstimationCudaForColoredICP &estimation,
+    static void ComputeColorGradeint(
+        TransformEstimationForColoredICPCuda &estimation,
         CorrespondenceSetCuda &corres_for_color_gradient);
 
-    static void ComputeResultsAndTransformationKernelCaller(
-        TransformEstimationCudaForColoredICP &estimation);
+    static void ComputeResultsAndTransformation(
+        TransformEstimationForColoredICPCuda &estimation);
 };
 
 __GLOBAL__
 void ComputeColorGradientKernel(
-    TransformEstimationCudaForColoredICPDevice estimation,
+    TransformEstimationForColoredICPCudaDevice estimation,
     CorrespondenceSetCudaDevice corres_for_color_gradient);
 
 __GLOBAL__
 void ComputeResultsAndTransformationKernel(
-    TransformEstimationCudaForColoredICPDevice estimation);
+    TransformEstimationForColoredICPCudaDevice estimation);
 
 } // cuda
 } // open3d

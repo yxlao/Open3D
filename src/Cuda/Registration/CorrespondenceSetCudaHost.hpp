@@ -93,8 +93,7 @@ void CorrespondenceSetCuda::SetCorrespondenceMatrix(
 void CorrespondenceSetCuda::Compress() {
     assert(matrix_.max_cols_ > 0);
 
-    CorrespondenceSetCudaKernelCaller::
-    CompressCorrespondenceKernelCaller(*this);
+    CorrespondenceSetCudaKernelCaller::CompressCorrespondence(*this);
 }
 
 

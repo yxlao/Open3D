@@ -320,5 +320,42 @@ void PointCloudCuda::Transform(const Eigen::Matrix4d &transformation) {
     PointCloudCudaKernelCaller::Transform(
         *this, transformation_cuda);
 }
+
+std::tuple<Eigen::Vector3d, double> PointCloudCuda::Normalize() {
+    Eigen::Vector3d mean = ComputeMean();
+    double scale = SubMeanAndGetMaxScale(mean);
+    return std::make_tuple(mean, scale);
+}
+
+
+void PointCloudCuda::Rescale(double scale) {
+    PointCloudCudaKernelCaller::Rescale(*this, (float) scale);
+}
+
+Eigen::Vector3d PointCloudCuda::ComputeMean() {
+    ArrayCuda<Vector3f> sum;
+    sum.Resize(1);
+    sum.Memset(0);
+
+    PointCloudCudaKernelCaller::ComputeSum(*this, sum);
+    auto downloaded_sum = sum.DownloadAll();
+
+    return downloaded_sum[0].ToEigen() / points_.size();
+}
+
+double PointCloudCuda::SubMeanAndGetMaxScale(Eigen::Vector3d &mean) {
+    Vector3f mean_cuda;
+    mean_cuda.FromEigen(mean);
+
+    ArrayCuda<float> scale;
+    scale.Resize(1);
+    scale.Memset(0);
+
+    PointCloudCudaKernelCaller::Normalize(*this, mean_cuda, scale);
+    auto downloaded_scale = scale.DownloadAll();
+
+    return double(downloaded_scale[0]);
+}
+
 } // cuda
 } // open3d

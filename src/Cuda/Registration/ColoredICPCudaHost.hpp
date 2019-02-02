@@ -8,7 +8,7 @@
 namespace open3d {
 namespace cuda {
 
-TransformEstimationCudaForColoredICP::TransformEstimationCudaForColoredICP(
+TransformEstimationForColoredICPCuda::TransformEstimationForColoredICPCuda(
     float lambda_geometric) :
     lambda_geometric_(lambda_geometric) {
     if (lambda_geometric_ < 0 || lambda_geometric_ > 1.0)
@@ -17,17 +17,17 @@ TransformEstimationCudaForColoredICP::TransformEstimationCudaForColoredICP(
     Create();
 }
 
-TransformEstimationCudaForColoredICP::~TransformEstimationCudaForColoredICP() {
+TransformEstimationForColoredICPCuda::~TransformEstimationForColoredICPCuda() {
     Release();
 }
 
-void TransformEstimationCudaForColoredICP::Create() {
-    device_ = std::make_shared<TransformEstimationCudaForColoredICPDevice>();
+void TransformEstimationForColoredICPCuda::Create() {
+    device_ = std::make_shared<TransformEstimationForColoredICPCudaDevice>();
     /* 21 JtJ + 6 Jtr + 1 RMSE */
     results_.Create(28);
 }
 
-void TransformEstimationCudaForColoredICP::Release() {
+void TransformEstimationForColoredICPCuda::Release() {
     if (device_ != nullptr && device_.use_count() == 1) {
         target_color_gradient_.Release();
 
@@ -39,7 +39,7 @@ void TransformEstimationCudaForColoredICP::Release() {
     device_ = nullptr;
 }
 
-void TransformEstimationCudaForColoredICP::UpdateDevice() {
+void TransformEstimationForColoredICPCuda::UpdateDevice() {
     if (device_ != nullptr) {
         device_->source_ = *source_.device_;
         device_->target_ = *target_.device_;
@@ -55,7 +55,7 @@ void TransformEstimationCudaForColoredICP::UpdateDevice() {
     }
 }
 
-void TransformEstimationCudaForColoredICP::Initialize(
+void TransformEstimationForColoredICPCuda::Initialize(
     PointCloud &source, PointCloud &target, float max_correspondence_distance) {
 
     /** Resize it first -- in super.Initialize, UpdateDevice will be called,
@@ -69,7 +69,7 @@ void TransformEstimationCudaForColoredICP::Initialize(
         KDTreeSearchParamHybrid(max_correspondence_distance_ * 2, 30));
 }
 
-void TransformEstimationCudaForColoredICP::ComputeColorGradients(
+void TransformEstimationForColoredICPCuda::ComputeColorGradients(
     PointCloud &target,
     KDTreeFlann &kdtree, const KDTreeSearchParamHybrid &search_param) {
 
@@ -108,17 +108,17 @@ void TransformEstimationCudaForColoredICP::ComputeColorGradients(
     corres_for_color_gradient.Compress();
 
     /** Run GPU color_gradient intialization **/
-    TransformEstimationCudaForColoredICPKernelCaller::
-    ComputeColorGradeintKernelCaller(*this, corres_for_color_gradient);
+    TransformEstimationCudaForColoredICPKernelCaller::ComputeColorGradeint(
+        *this, corres_for_color_gradient);
 }
 
-RegistrationResultCuda TransformEstimationCudaForColoredICP::
+RegistrationResultCuda TransformEstimationForColoredICPCuda::
 ComputeResultsAndTransformation() {
     RegistrationResultCuda result;
 
     results_.Memset(0);
     TransformEstimationCudaForColoredICPKernelCaller::
-    ComputeResultsAndTransformationKernelCaller(*this);
+    ComputeResultsAndTransformation(*this);
 
     Eigen::Matrix6d JtJ;
     Eigen::Vector6d Jtr;

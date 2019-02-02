@@ -89,26 +89,11 @@ public:
 
 class FastGlobalRegistrationCudaKernelCaller {
 public:
-    static Eigen::Vector3d ComputePointCloudSum(PointCloudCuda &pcl);
-    static double NormalizePointCloud(
-        PointCloudCuda &pcl, Eigen::Vector3d &mean);
-    static void RescalePointCloud(
-        PointCloudCuda &pcl, double scale);
     static void ReciprocityTest(FastGlobalRegistrationCuda &fgr);
     static void TupleTest(FastGlobalRegistrationCuda &fgr);
     static void ComputeResultsAndTransformation(
         FastGlobalRegistrationCuda &fgr);
 };
-
-__GLOBAL__
-void ComputeMeanKernel(PointCloudCudaDevice server,
-                       ArrayCudaDevice<Vector3f> mean);
-__GLOBAL__
-void NormalizePointCloudKernel(PointCloudCudaDevice server,
-                               Vector3f mean,
-                               ArrayCudaDevice<float> scale);
-__GLOBAL__
-void RescalePointCloudKernel(PointCloudCudaDevice server, float scale);
 
 __GLOBAL__
 void ReciprocityTestKernel(FastGlobalRegistrationCudaDevice server);

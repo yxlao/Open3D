@@ -101,6 +101,18 @@ void ComputeSumsKernel(
     }
 }
 
+void TransformEstimationPointToPointCudaKernelCaller::ComputeSums(
+    TransformEstimationPointToPointCuda &estimation){
+
+    const dim3 blocks(DIV_CEILING(estimation.correspondences_.indices_.size(),
+                                  THREAD_1D_UNIT));
+    const dim3 threads(THREAD_1D_UNIT);
+
+    ComputeSumsKernel << < blocks, threads >> > (*estimation.device_);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+}
+
 __global__
 void ComputeResultsAndTransformationKernel(
     TransformEstimationPointToPointCudaDevice estimation) {
@@ -196,20 +208,9 @@ void ComputeResultsAndTransformationKernel(
 }
 
 
-void TransformEstimationPointToPointCudaKernelCaller::
-ComputeSumsKernelCaller(TransformEstimationPointToPointCuda &estimation){
-
-    const dim3 blocks(DIV_CEILING(estimation.correspondences_.indices_.size(),
-                                  THREAD_1D_UNIT));
-    const dim3 threads(THREAD_1D_UNIT);
-
-    ComputeSumsKernel << < blocks, threads >> > (*estimation.device_);
-    CheckCuda(cudaDeviceSynchronize());
-    CheckCuda(cudaGetLastError());
-}
 
 void TransformEstimationPointToPointCudaKernelCaller::
-ComputeResultsAndTransformationKernelCaller(
+ComputeResultsAndTransformation(
     TransformEstimationPointToPointCuda &estimation) {
 
     const dim3 blocks(DIV_CEILING(estimation.correspondences_.indices_.size(),
@@ -353,7 +354,7 @@ void ComputeResultsAndTransformationKernel(
 }
 
 void TransformEstimationPointToPlaneCudaKernelCaller::
-ComputeResultsAndTransformationKernelCaller(
+ComputeResultsAndTransformation(
     TransformEstimationPointToPlaneCuda &estimation) {
 
     const dim3 blocks(DIV_CEILING(estimation.correspondences_.indices_.size(),

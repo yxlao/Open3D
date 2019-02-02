@@ -117,8 +117,7 @@ ComputeResultsAndTransformation() {
     int inliers = correspondences_.indices_.size();
 
     /** Pass 1: sum reduction means **/
-    TransformEstimationPointToPointCudaKernelCaller::
-    ComputeSumsKernelCaller(*this);
+    TransformEstimationPointToPointCudaKernelCaller::ComputeSums(*this);
 
     Eigen::Vector3d source_mean, target_mean;
     UnpackSums(source_mean, target_mean);
@@ -129,7 +128,7 @@ ComputeResultsAndTransformation() {
 
     /** Pass 2: sum reduction Sigma **/
     TransformEstimationPointToPointCudaKernelCaller::
-    ComputeResultsAndTransformationKernelCaller(*this);
+    ComputeResultsAndTransformation(*this);
 
     Eigen::Matrix3d Sigma;
     float source_sigma2, rmse;
@@ -232,7 +231,7 @@ ComputeResultsAndTransformation() {
 
     results_.Memset(0);
     TransformEstimationPointToPlaneCudaKernelCaller::
-    ComputeResultsAndTransformationKernelCaller(*this);
+    ComputeResultsAndTransformation(*this);
 
     Eigen::Matrix6d JtJ;
     Eigen::Vector6d Jtr;

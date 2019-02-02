@@ -45,7 +45,7 @@ public:
 
 class CorrespondenceSetCudaKernelCaller {
 public:
-    static void CompressCorrespondenceKernelCaller(
+    static void CompressCorrespondence(
         CorrespondenceSetCuda& corres);
 };
 

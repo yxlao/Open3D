@@ -186,6 +186,134 @@ void PointCloudCudaKernelCaller::GetMaxBound(
     CheckCuda(cudaGetLastError());
 }
 
+
+__global__
+void ComputeSumKernel(PointCloudCudaDevice device,
+                      ArrayCudaDevice<Vector3f> sum) {
+    __shared__ float local_sum0[THREAD_1D_UNIT];
+    __shared__ float local_sum1[THREAD_1D_UNIT];
+    __shared__ float local_sum2[THREAD_1D_UNIT];
+
+    const int idx = threadIdx.x + blockIdx.x * blockDim.x;
+    if (idx >= device.points_.size()) return;
+
+    const int tid = threadIdx.x;
+
+    /** Proper initialization **/
+    local_sum0[tid] = 0;
+    local_sum1[tid] = 0;
+    local_sum2[tid] = 0;
+
+    Vector3f &vertex = device.points_[idx];
+    local_sum0[tid] = vertex(0);
+    local_sum1[tid] = vertex(1);
+    local_sum2[tid] = vertex(2);
+    __syncthreads();
+
+    if (tid < 128) {
+        local_sum0[tid] += local_sum0[tid + 128];
+        local_sum1[tid] += local_sum1[tid + 128];
+        local_sum2[tid] += local_sum2[tid + 128];
+    }
+    __syncthreads();
+
+    if (tid < 64) {
+        local_sum0[tid] += local_sum0[tid + 64];
+        local_sum1[tid] += local_sum1[tid + 64];
+        local_sum2[tid] += local_sum2[tid + 64];
+    }
+    __syncthreads();
+
+    if (tid < 32) {
+        WarpReduceSum<float>(local_sum0, tid);
+        WarpReduceSum<float>(local_sum1, tid);
+        WarpReduceSum<float>(local_sum2, tid);
+    }
+
+    if (tid == 0) {
+        atomicAdd(&sum[0](0), local_sum0[0]);
+        atomicAdd(&sum[0](1), local_sum1[0]);
+        atomicAdd(&sum[0](2), local_sum2[0]);
+    }
+    __syncthreads();
+}
+
+void PointCloudCudaKernelCaller::ComputeSum(
+    PointCloudCuda &pcl, ArrayCuda<Vector3f> &sum) {
+
+    const dim3 blocks(DIV_CEILING(pcl.points_.size(), THREAD_1D_UNIT));
+    const dim3 threads(THREAD_1D_UNIT);
+    ComputeSumKernel<<<blocks, threads>>>(*pcl.device_, *sum.device_);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+}
+
+__global__
+void SubMeanAndGetMaxScaleKernel(PointCloudCudaDevice device,
+                                Vector3f mean,
+                                ArrayCudaDevice<float> scale) {
+    __shared__ float local_max[THREAD_1D_UNIT];
+
+    const int tid = threadIdx.x;
+    local_max[tid] = 0;
+
+    const int idx = threadIdx.x + blockIdx.x * blockDim.x;
+    if (idx >= device.points_.size()) return;
+
+    Vector3f &vertex = device.points_[idx];
+    vertex -= mean;
+
+    local_max[tid] = vertex.norm();
+    __syncthreads();
+
+    if (tid < 128) {
+        local_max[tid] = fmaxf(local_max[tid], local_max[tid + 128]);
+    }
+    __syncthreads();
+
+    if (tid < 64) {
+        local_max[tid] = fmaxf(local_max[tid], local_max[tid + 64]);
+    }
+    __syncthreads();
+
+    if (tid < 32) {
+        WarpReduceMax<float>(local_max, tid);
+    }
+
+    if (tid == 0) {
+        atomicMaxf(&scale[0], local_max[0]);
+    }
+}
+
+void PointCloudCudaKernelCaller::Normalize(
+    PointCloudCuda &pcl, const Vector3f &mean,
+    ArrayCuda<float> &max_scale) {
+
+    const dim3 blocks(DIV_CEILING(pcl.points_.size(), THREAD_1D_UNIT));
+    const dim3 threads(THREAD_1D_UNIT);
+    SubMeanAndGetMaxScaleKernel <<<blocks, threads>>>(
+        *pcl.device_, mean, *max_scale.device_);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+}
+
+__global__
+void RescaleKernel(PointCloudCudaDevice device, float scale) {
+    const int idx = threadIdx.x + blockIdx.x * blockDim.x;
+    if (idx >= device.points_.size()) return;
+
+    Vector3f &vertex = device.points_[idx];
+    vertex /= scale;
+}
+
+void PointCloudCudaKernelCaller::Rescale(PointCloudCuda &pcl, float scale){
+    const dim3 blocks(DIV_CEILING(pcl.points_.size(), THREAD_1D_UNIT));
+    const dim3 threads(THREAD_1D_UNIT);
+    RescaleKernel<<<blocks, threads>>>(*pcl.device_, scale);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+}
+
 __global__
 void TransformKernel(PointCloudCudaDevice pcl, TransformCuda transform) {
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
