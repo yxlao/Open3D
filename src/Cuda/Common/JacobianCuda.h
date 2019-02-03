@@ -43,6 +43,28 @@ public:
 
 namespace {
 /** Triple terms **/
+__HOSTDEVICE__ void ComputeJtJ(
+    const Vector6f &jacobian_x,
+    const Vector6f &jacobian_y,
+    const Vector6f &jacobian_z,
+    HessianCuda<6> &JtJ) {
+
+    int cnt = 0;
+#ifdef __CUDACC__
+#pragma unroll 1
+#endif
+    for (int i = 0; i < 6; ++i) {
+#ifdef __CUDACC__
+#pragma unroll 1
+#endif
+        for (int j = i; j < 6; ++j) {
+            JtJ(cnt++) = jacobian_x(i) * jacobian_x(j)
+                + jacobian_y(i) * jacobian_y(j)
+                + jacobian_z(i) * jacobian_z(j);
+        }
+    }
+}
+
 __HOSTDEVICE__ void ComputeJtJAndJtr(
     const Vector6f &jacobian_x,
     const Vector6f &jacobian_y,

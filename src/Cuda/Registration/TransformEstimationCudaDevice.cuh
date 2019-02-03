@@ -8,7 +8,8 @@
 namespace open3d {
 namespace cuda {
 __device__
-void TransformEstimationPointToPointCudaDevice::ComputePointwiseStatistics(
+void TransformEstimationPointToPointCudaDevice
+::ComputePointwiseStatistics(
     int source_idx, int target_idx,
     Matrix3f &Sigma, float &source_sigma2, float &residual) {
     const Vector3f &vs = source_.points_[source_idx];

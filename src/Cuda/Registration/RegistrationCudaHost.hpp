@@ -37,10 +37,17 @@ RegistrationResultCuda RegistrationCuda::DoSingleIteration(int iter) {
     transform_source_to_target_ = result.transformation_ *
         transform_source_to_target_;
 
-    PrintInfo("Iteration %d: inlier rmse = %f, fitness = %f\n",
+    PrintDebug("Iteration %d: inlier rmse = %f, fitness = %f\n",
         iter, result.inlier_rmse_, result.fitness_);
 
     return result;
+}
+
+Eigen::Matrix6d RegistrationCuda::ComputeInformationMatrix() {
+    /** Point clouds should have been transformed during registration **/
+    estimator_->GetCorrespondences();
+
+    return estimator_->ComputeInformationMatrix();
 }
 
 RegistrationResultCuda RegistrationCuda::ComputeICP() {

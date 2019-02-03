@@ -53,6 +53,7 @@ public:
 
     /* ICP computations */
     RegistrationResultCuda DoSingleIteration(int iter);
+    Eigen::Matrix6d ComputeInformationMatrix();
 
     /* Wrapper of multiple iterations */
     RegistrationResultCuda ComputeICP();

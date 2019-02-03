@@ -80,12 +80,26 @@ void TransformEstimationCuda::ExtractResults(
     rmse = downloaded_result[cnt];
 }
 
+Eigen::Matrix6d TransformEstimationCuda::ComputeInformationMatrix() {
+    RegistrationResultCuda result;
+
+    results_.Memset(0);
+    TransformEstimationCudaKernelCaller::ComputeInformationMatrix(*this);
+
+    Eigen::Matrix6d JtJ;
+    Eigen::Vector6d Jtr; // dummy
+    float rmse; // dummy
+    ExtractResults(JtJ, Jtr, rmse);
+
+    return Eigen::Matrix6d::Identity() + JtJ;
+}
+
 /** TransformEstimationPointToPointCuda **/
 void TransformEstimationPointToPointCuda::Create() {
     device_ = std::make_shared<TransformEstimationPointToPointCudaDevice>();
 
-    /** 9 + 3 + 3 + 1 + 1 **/
-    results_.Create(17);
+    /** max(9 + 3 + 3 + 1 + 1, 21) **/
+    results_.Create(21);
 }
 
 void TransformEstimationPointToPointCuda::Release() {
@@ -251,6 +265,5 @@ ComputeResultsAndTransformation() {
 
     return result;
 }
-
 } // cuda
 } // open3d

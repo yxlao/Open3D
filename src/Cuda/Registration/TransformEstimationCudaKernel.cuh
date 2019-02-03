@@ -7,6 +7,87 @@
 
 namespace open3d {
 namespace cuda {
+__device__
+void ComputePointwiseJacobian(
+    const Vector3f& point,
+    Vector6f &jacobian_x, Vector6f &jacobian_y, Vector6f &jacobian_z) {
+    jacobian_x(0) = jacobian_x(4) = jacobian_x(5) = 0;
+    jacobian_x(1) = point(2);
+    jacobian_x(2) = -point(1);
+    jacobian_x(3) = 1;
+
+    jacobian_y(1) = jacobian_y(3) = jacobian_y(5) = 0;
+    jacobian_y(0) = -point(2);
+    jacobian_y(2) = point(0);
+    jacobian_y(4) = 1.0f;
+
+    jacobian_z(2) = jacobian_z(3) = jacobian_z(4) = 0;
+    jacobian_z(0) = point(1);
+    jacobian_z(1) = -point(0);
+    jacobian_z(5) = 1.0f;
+}
+
+__global__
+void ComputeInformationMatrixKernel(
+    PointCloudCudaDevice target,
+    CorrespondenceSetCudaDevice corres,
+    ArrayCudaDevice<float> results) {
+    __shared__ float local_sum0[THREAD_1D_UNIT];
+    __shared__ float local_sum1[THREAD_1D_UNIT];
+    __shared__ float local_sum2[THREAD_1D_UNIT];
+
+    const int tid = threadIdx.x;
+
+    /** Proper initialization **/
+    local_sum0[tid] = 0;
+    local_sum1[tid] = 0;
+    local_sum2[tid] = 0;
+
+    const int idx = threadIdx.x + blockIdx.x * blockDim.x;
+    if (idx >= corres.indices_.size()) return;
+
+    int source_idx = corres.indices_[idx];
+    int target_idx = corres.matrix_(0, source_idx);
+
+    Vector6f jacobian_x, jacobian_y, jacobian_z;
+    HessianCuda<6> JtJ;
+
+    Vector3f &point = target.points_[target_idx];
+    ComputePointwiseJacobian(point, jacobian_x, jacobian_y, jacobian_z);
+    ComputeJtJ(jacobian_x, jacobian_y, jacobian_z, JtJ);
+
+    /** Reduce Sum JtJ **/
+    for (size_t i = 0; i < 21; i += 3) {
+        local_sum0[tid] = JtJ(i + 0);
+        local_sum1[tid] = JtJ(i + 1);
+        local_sum2[tid] = JtJ(i + 2);
+        __syncthreads();
+
+        TripleBlockReduceSum<float>(local_sum0, local_sum1, local_sum2, tid);
+
+        if (tid == 0) {
+            atomicAdd(&results.at(i + 0), local_sum0[0]);
+            atomicAdd(&results.at(i + 1), local_sum1[0]);
+            atomicAdd(&results.at(i + 2), local_sum2[0]);
+        }
+        __syncthreads();
+    }
+}
+
+void TransformEstimationCudaKernelCaller::ComputeInformationMatrix(
+    TransformEstimationCuda &estimation) {
+    const dim3 blocks(DIV_CEILING(estimation.correspondences_.indices_.size(),
+                                  THREAD_1D_UNIT));
+    const dim3 threads(THREAD_1D_UNIT);
+
+    ComputeInformationMatrixKernel<< < blocks, threads >> > (
+            *estimation.target_.device_,
+                *estimation.correspondences_.device_,
+                *estimation.results_.device_);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+}
+
 __global__
 void ComputeSumsKernel(
     TransformEstimationPointToPointCudaDevice estimation) {
@@ -239,7 +320,8 @@ ComputeResultsAndTransformation(
                                   THREAD_1D_UNIT));
     const dim3 threads(THREAD_1D_UNIT);
 
-    ComputeResultsAndTransformationKernel<< < blocks, threads >> > (*estimation.device_);
+    ComputeResultsAndTransformationKernel<< < blocks, threads >> > (
+        *estimation.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }

@@ -51,6 +51,9 @@ public:
     virtual void ExtractResults(
         Eigen::Matrix6d &JtJ, Eigen::Vector6d &Jtr, float &rmse);
 
+    /* After computing the final transformation */
+    Eigen::Matrix6d ComputeInformationMatrix();
+
 public:
     /** For GPU **/
     PointCloudCuda source_;
@@ -69,6 +72,17 @@ public:
     /** Build linear system **/
     ArrayCuda<float> results_;
 };
+
+class TransformEstimationCudaKernelCaller {
+public:
+    static void ComputeInformationMatrix(TransformEstimationCuda &estimation);
+};
+
+__GLOBAL__
+void ComputeInformationMatrixKernel(
+    PointCloudCudaDevice target,
+    CorrespondenceSetCudaDevice corres,
+    ArrayCudaDevice<float> results);
 
 /* Only the CPU interface uses inheritance
  * vtable will face problems on the device side.

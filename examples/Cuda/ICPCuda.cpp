@@ -17,7 +17,7 @@
 
 int main(int argc, char **argv) {
     using namespace open3d;
-    SetVerbosityLevel(VerbosityLevel::VerboseDebug);
+    SetVerbosityLevel(VerbosityLevel::VerboseInfo);
 
     std::string base_path = "/home/wei/Work/data/stanford/lounge/";
     auto rgbd_filenames = ReadDataAssociation(
@@ -54,6 +54,13 @@ int main(int argc, char **argv) {
         }
         VisualizeRegistration(*source, *target,
                               registration.transform_source_to_target_);
+        auto info_gpu = registration.ComputeInformationMatrix();
+
+        auto result = open3d::RegistrationICP(
+            *source, *target, 0.07, Eigen::Matrix4d::Identity(),
+            TransformationEstimationPointToPlane());
+        auto info_cpu = open3d::GetInformationMatrixFromPointClouds(
+            *source, *target, 0.07, result.transformation_);
     }
 
     { /** PointToPlane **/
@@ -66,5 +73,12 @@ int main(int argc, char **argv) {
         }
         VisualizeRegistration(*source, *target,
                               registration.transform_source_to_target_);
+        auto info_gpu = registration.ComputeInformationMatrix();
+
+        auto result = open3d::RegistrationICP(
+            *source, *target, 0.07, Eigen::Matrix4d::Identity(),
+            TransformationEstimationPointToPoint());
+        auto info_cpu = open3d::GetInformationMatrixFromPointClouds(
+            *source, *target, 0.07, result.transformation_);
     }
 }
