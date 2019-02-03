@@ -119,8 +119,8 @@ void RGBDOdometryCuda<N>::UpdateDevice() {
 
 template<size_t N>
 void RGBDOdometryCuda<N>::ExtractResults(std::vector<float> &results,
-                                         EigenMatrix6d &JtJ,
-                                         EigenVector6d &Jtr,
+                                         Eigen::Matrix6d &JtJ,
+                                         Eigen::Vector6d &Jtr,
                                          float &loss, float &inliers) {
     int cnt = 0;
     for (int i = 0; i < 6; ++i) {
@@ -195,7 +195,6 @@ RGBDOdometryCuda<N>::DoSingleIteration(size_t level, int iter) {
     timer.Start();
     RGBDOdometryCudaKernelCaller<N>::DoSingleIteration(*this, level);
     timer.Stop();
-    PrintDebug("Direct: %f\n", timer.GetDuration());
 
 #ifdef VISUALIZE_ODOMETRY_INLIERS
     cv::Mat im = source_on_target_[level].DownloadMat();
@@ -205,8 +204,8 @@ RGBDOdometryCuda<N>::DoSingleIteration(size_t level, int iter) {
 
     std::vector<float> results = results_.DownloadAll();
 
-    EigenMatrix6d JtJ;
-    EigenVector6d Jtr;
+    Eigen::Matrix6d JtJ;
+    Eigen::Vector6d Jtr;
     float loss, inliers;
     ExtractResults(results, JtJ, Jtr, loss, inliers);
 
@@ -253,6 +252,21 @@ RGBDOdometryCuda<N>::ComputeMultiScale() {
     }
 
     return std::make_tuple(true, transform_source_to_target_, losses);
+}
+
+template<size_t N>
+Eigen::Matrix6d RGBDOdometryCuda<N>::ComputeInformationMatrix() {
+    results_.Memset(0);
+
+    RGBDOdometryCudaKernelCaller<N>::ComputeInformationMatrix(*this);
+    std::vector<float> results = results_.DownloadAll();
+
+    Eigen::Matrix6d JtJ;
+    Eigen::Vector6d Jtr; // dummy
+    float loss, inliers; // dummy
+    ExtractResults(results, JtJ, Jtr, loss, inliers);
+
+    return JtJ;
 }
 } // cuda
 } // open3d

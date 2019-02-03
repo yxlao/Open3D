@@ -39,7 +39,7 @@ int TwoFrameRGBDOdometry(
     cuda::RGBDOdometryCuda<3> odometry;
     odometry.SetIntrinsics(PinholeCameraIntrinsic(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault));
-    odometry.SetParameters(OdometryOption({0, 0, 60}, 0.07), 0.5f);
+    odometry.SetParameters(OdometryOption({20, 10, 5}, 0.03), 0.5f);
     odometry.Initialize(source, target);
 
     Timer timer;
@@ -49,8 +49,33 @@ int TwoFrameRGBDOdometry(
         odometry.transform_source_to_target_ = Eigen::Matrix4d::Identity();
         odometry.ComputeMultiScale();
     }
+    auto information = odometry.ComputeInformationMatrix();
+    std::cout << information << std::endl;
     timer.Stop();
     PrintInfo("time: %f\n", timer.GetDuration() / cases);
+
+    RGBDImage source_cpu, target_cpu;
+    double depth_scale = 1000.0, depth_trunc = 3.0;
+    bool convert_rgb_to_intensity = true;
+
+    std::shared_ptr<RGBDImage> rgbd_source =
+        CreateRGBDImageFromColorAndDepth(
+            source_color, source_depth,
+            depth_scale, depth_trunc,
+            convert_rgb_to_intensity);
+    std::shared_ptr<RGBDImage> rgbd_target =
+        CreateRGBDImageFromColorAndDepth(
+            target_color, target_depth,
+            depth_scale, depth_trunc,
+            convert_rgb_to_intensity);
+
+    bool is_success;
+    Eigen::Matrix4d transformation;
+    std::tie(is_success, transformation, information) =
+        ComputeRGBDOdometry(*rgbd_source, *rgbd_target,
+        PinholeCameraIntrinsic(
+            PinholeCameraIntrinsicParameters::PrimeSenseDefault));
+    std::cout << information << std::endl;
 
     return 0;
 }
@@ -62,8 +87,8 @@ int main(int argc, char **argv) {
 
     int i = 0;
     TwoFrameRGBDOdometry(
-        base_path + "/" + rgbd_filenames[i + 5].first,
-        base_path + "/" + rgbd_filenames[i + 5].second,
+        base_path + "/" + rgbd_filenames[i + 1].first,
+        base_path + "/" + rgbd_filenames[i + 1].second,
         base_path + "/" + rgbd_filenames[i].first,
         base_path + "/" + rgbd_filenames[i].second);
 

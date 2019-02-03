@@ -20,7 +20,7 @@ __device__
 bool RGBDOdometryCudaDevice<N>::ComputePixelwiseCorrespondenceAndResidual(
     int x_source, int y_source, size_t level,
     int &x_target, int &y_target,
-    Vector3f &X_target,
+    Vector3f &X_source_on_target,
     float &residual_I, float &residual_D) {
 
     /** Check 1: depth valid in source? **/
@@ -29,11 +29,11 @@ bool RGBDOdometryCudaDevice<N>::ComputePixelwiseCorrespondenceAndResidual(
     if (!mask) return false;
 
     /** Check 2: reprojected point in image? **/
-    X_target = transform_source_to_target_
+    X_source_on_target = transform_source_to_target_
         * intrinsics_[level].InverseProjectPixel(
             Vector2i(x_source, y_source), d_source);
 
-    Vector2f p_warpedf = intrinsics_[level].ProjectPoint(X_target);
+    Vector2f p_warpedf = intrinsics_[level].ProjectPoint(X_source_on_target);
     mask = intrinsics_[level].IsPixelValid(p_warpedf);
     if (!mask) return false;
 
@@ -41,7 +41,8 @@ bool RGBDOdometryCudaDevice<N>::ComputePixelwiseCorrespondenceAndResidual(
 
     /** Check 3: depth valid in target? Occlusion? -> 1ms **/
     float d_target = target_[level].depth_.at(p_warped(0), p_warped(1))(0);
-    mask = IsValidDepth(d_target) && IsValidDepthDiff(d_target - X_target(2));
+    mask = IsValidDepth(d_target)
+        && IsValidDepthDiff(d_target - X_source_on_target(2));
     if (!mask) return false;
 
     x_target = p_warped(0);
@@ -49,7 +50,7 @@ bool RGBDOdometryCudaDevice<N>::ComputePixelwiseCorrespondenceAndResidual(
     residual_I = sqrt_coeff_I_ * (
         target_[level].intensity_.at(x_target, y_target)(0) -
             source_[level].intensity_.at(x_source, y_source)(0));
-    residual_D = sqrt_coeff_D_ * (d_target - X_target(2));
+    residual_D = sqrt_coeff_D_ * (d_target - X_source_on_target(2));
 
     return true;
 }
@@ -117,6 +118,56 @@ bool RGBDOdometryCudaDevice<N>::ComputePixelwiseJacobian(
     jacobian_D(3) = sqrt_coeff_D_ * d0;
     jacobian_D(4) = sqrt_coeff_D_ * d1;
     jacobian_D(5) = sqrt_coeff_D_ * (d2 - 1.0f);
+    return true;
+}
+
+
+template<size_t N>
+__device__
+bool RGBDOdometryCudaDevice<N>::
+    ComputePixelwiseCorrespondenceAndInformationJacobian(
+    int x_source, int y_source,
+    Vector6f &jacobian_x, Vector6f &jacobian_y, Vector6f &jacobian_z) {
+
+    /** Check 1: depth valid in source? **/
+    float d_source = source_[0].depth_.at(x_source, y_source)(0);
+    bool mask = IsValidDepth(d_source);
+    if (!mask) return false;
+
+    /** Check 2: reprojected point in image? **/
+    Vector3f X_source_on_target = transform_source_to_target_
+        * intrinsics_[0].InverseProjectPixel(
+            Vector2i(x_source, y_source), d_source);
+
+    Vector2f p_warpedf = intrinsics_[0].ProjectPoint(X_source_on_target);
+    mask = intrinsics_[0].IsPixelValid(p_warpedf);
+    if (!mask) return false;
+
+    Vector2i p_warped(int(p_warpedf(0) + 0.5f), int(p_warpedf(1) + 0.5f));
+
+    /** Check 3: depth valid in target? Occlusion? -> 1ms **/
+    float d_target = target_[0].depth_.at(p_warped(0), p_warped(1))(0);
+    mask = IsValidDepth(d_target) && IsValidDepthDiff(
+        d_target - X_source_on_target(2));
+    if (!mask) return false;
+
+    Vector3f X_target = intrinsics_[0].InverseProjectPixel(p_warped, d_target);
+
+    jacobian_x(0) = jacobian_x(4) = jacobian_x(5) = 0;
+    jacobian_x(1) = X_target(2);
+    jacobian_x(2) = -X_target(1);
+    jacobian_x(3) = 1;
+
+    jacobian_y(1) = jacobian_y(3) = jacobian_y(5) = 0;
+    jacobian_y(0) = -X_target(2);
+    jacobian_y(2) = X_target(0);
+    jacobian_y(4) = 1.0f;
+
+    jacobian_z(2) = jacobian_z(3) = jacobian_z(4) = 0;
+    jacobian_z(0) = X_target(1);
+    jacobian_z(1) = -X_target(0);
+    jacobian_z(5) = 1.0f;
+
     return true;
 }
 } // cuda

@@ -87,13 +87,17 @@ public:
     __DEVICE__ bool ComputePixelwiseCorrespondenceAndResidual(
         int x_source, int y_source, size_t level,
         int &x_target, int &y_target,
-        Vector3f &X_target,
+        Vector3f &X_source_on_target,
         float &residual_I, float &residual_D);
 
     __DEVICE__ bool ComputePixelwiseJacobian(
         int x_target, int y_target, size_t level,
         const Vector3f &X_target,
         Vector6f &jacobian_I, Vector6f &jacobian_D);
+
+    __DEVICE__ bool ComputePixelwiseCorrespondenceAndInformationJacobian(
+        int x_source, int y_source, /* Always size 0 */
+        Vector6f &jacobian_x, Vector6f &jacobian_y, Vector6f &jacobian_z);
 
 public:
     friend class RGBDOdometryCuda<N>;
@@ -121,9 +125,6 @@ public:
     ArrayCuda<Vector4i> correspondences_;
 
 public:
-    typedef Eigen::Matrix<double, 6, 6> EigenMatrix6d;
-    typedef Eigen::Matrix<double, 6, 1> EigenVector6d;
-
     float sigma_;
     OdometryOption option_;
     PinholeCameraIntrinsic intrinsics_;
@@ -145,23 +146,30 @@ public:
 
     std::tuple<bool, Eigen::Matrix4d, float> DoSingleIteration(
         size_t level, int iter);
-    void ExtractResults(
-        std::vector<float> &results,
-        EigenMatrix6d &JtJ, EigenVector6d &Jtr, float &loss, float &inliers);
+    void ExtractResults(std::vector<float> &results,
+                        Eigen::Matrix6d &JtJ, Eigen::Vector6d &Jtr,
+                        float &loss, float &inliers);
 
     std::tuple<bool, Eigen::Matrix4d, std::vector<std::vector<float>>>
     ComputeMultiScale();
+
+    Eigen::Matrix6d ComputeInformationMatrix();
 };
 
 template<size_t N>
 class RGBDOdometryCudaKernelCaller {
 public:
     static void DoSingleIteration(RGBDOdometryCuda<N> &odometry, size_t level);
+    static void ComputeInformationMatrix(RGBDOdometryCuda<N> &odometry);
 };
 
 template<size_t N>
 __GLOBAL__
 void DoSingleIterationKernel(RGBDOdometryCudaDevice<N> odometry, size_t level);
+
+template<size_t N>
+__GLOBAL__
+void ComputeInformationMatrixKernel(RGBDOdometryCudaDevice<N> odometry);
 
 } // cuda
 } // open3d

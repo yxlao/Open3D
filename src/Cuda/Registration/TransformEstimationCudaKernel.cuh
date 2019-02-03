@@ -8,8 +8,8 @@
 namespace open3d {
 namespace cuda {
 __device__
-void ComputePointwiseJacobian(
-    const Vector3f& point,
+void ComputePixelwiseInformationJacobian(
+    const Vector3f &point,
     Vector6f &jacobian_x, Vector6f &jacobian_y, Vector6f &jacobian_z) {
     jacobian_x(0) = jacobian_x(4) = jacobian_x(5) = 0;
     jacobian_x(1) = point(2);
@@ -53,7 +53,10 @@ void ComputeInformationMatrixKernel(
     HessianCuda<6> JtJ;
 
     Vector3f &point = target.points_[target_idx];
-    ComputePointwiseJacobian(point, jacobian_x, jacobian_y, jacobian_z);
+    ComputePixelwiseInformationJacobian(point,
+                                        jacobian_x,
+                                        jacobian_y,
+                                        jacobian_z);
     ComputeJtJ(jacobian_x, jacobian_y, jacobian_z, JtJ);
 
     /** Reduce Sum JtJ **/
