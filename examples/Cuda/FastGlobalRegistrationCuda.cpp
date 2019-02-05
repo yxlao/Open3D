@@ -2,13 +2,11 @@
 // Created by wei on 1/23/19.
 //
 
-//
-// Created by wei on 1/21/19.
-//
-
 #include <Core/Core.h>
 #include <IO/IO.h>
 #include <Visualization/Visualization.h>
+#include <Core/Geometry/PointCloud.h>
+#include <Core/Registration/Registration.h>
 #include <Core/Registration/FastGlobalRegistration.h>
 #include <Core/Registration/ColoredICP.h>
 #include <iostream>
@@ -43,8 +41,24 @@ int main(int argc, char **argv) {
         result = fgr.DoSingleIteration(iter);
     }
 
+    std::cout << "cpu: " << GetInformationMatrixFromPointClouds(
+        *source, *target, 0.07, result.transformation_)
+              << std::endl;
+
+    /** IT IS A WORKAROUND AND NEEDS BETTER IMPLEMENTATION **/
+    cuda::RegistrationCuda registration(
+        TransformationEstimationType::PointToPoint);
+    auto source_copy = *source;
+    source_copy.Transform(result.transformation_);
+    registration.Initialize(source_copy, *target, 0.07);
+    registration.transform_source_to_target_ = result.transformation_;
+    std::cout << "cuda: " << registration.ComputeInformationMatrix()
+              << std::endl;
+
     /* After */
     VisualizeRegistration(*source, *target, result.transformation_);
+
+
 
     return 0;
 }

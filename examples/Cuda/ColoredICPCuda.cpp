@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
     }
 
     /* After */
-    VisualizeRegistration(*source, *target,
+    VisualizeRegistration(*source_origin, *target_origin,
         registration.transform_source_to_target_);
     return 0;
 }

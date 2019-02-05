@@ -132,6 +132,10 @@ Eigen::Matrix4d GetTransformationOriginalScale(
 
 RegistrationResultCuda FastGlobalRegistrationCuda::DoSingleIteration(int iter) {
     RegistrationResultCuda result;
+    result.transformation_ = Eigen::Matrix4d::Identity();
+    result.inlier_rmse_ = 0;
+
+    if (corres_final_.size() < 10) return result;
 
     results_.Memset(0);
     FastGlobalRegistrationCudaKernelCaller::
@@ -155,6 +159,7 @@ RegistrationResultCuda FastGlobalRegistrationCuda::DoSingleIteration(int iter) {
         mean_source_, mean_target_,
         device_->scale_global_);
     result.inlier_rmse_ = rmse;
+    PrintDebug("Iteration %d: inlier rmse = %f\n", iter, rmse);
 
     if (iter % 4 == 0 && device_->par_ > 0.0f) {
         device_->par_ /= 1.4f;
