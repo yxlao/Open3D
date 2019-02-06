@@ -51,9 +51,7 @@ int main(int argc, char **argv) {
     cuda::RegistrationCuda registration(
         TransformationEstimationType::ColoredICP);
     registration.Initialize(*source, *target, 0.07f);
-    for (int i = 0; i < 20; ++i) {
-        auto result = registration.DoSingleIteration(i);
-    }
+    auto result = registration.ComputeICP();
 
     /* After */
     VisualizeRegistration(*source_origin, *target_origin,

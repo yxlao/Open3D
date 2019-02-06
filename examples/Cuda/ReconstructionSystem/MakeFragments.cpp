@@ -31,14 +31,16 @@ void MakePoseGraphForFragment(
     cuda::RGBDOdometryCuda<3> odometry;
     odometry.SetIntrinsics(PinholeCameraIntrinsic(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault));
-    odometry.SetParameters(OdometryOption({20, 10, 5}, 0.07, 0.01), 0.5f);
+    odometry.SetParameters(OdometryOption(
+        {20, 10, 5}, kMaxDepthDiff, kDepthMin, kDepthMax),
+                           0.5f);
 
-    cuda::RGBDImageCuda rgbd_source(0.05f, 4.0f, 1000.0f);
-    cuda::RGBDImageCuda rgbd_target(0.05f, 4.0f, 1000.0f);
+    cuda::RGBDImageCuda rgbd_source(kDepthMin, kDepthMax, kDepthFactor);
+    cuda::RGBDImageCuda rgbd_target(kDepthMin, kDepthMax, kDepthFactor);
 
     const int begin = fragment_id * kFramesPerFragment;
     const int end = std::min((fragment_id + 1) * kFramesPerFragment,
-                             (int)filenames.size());
+                             (int) filenames.size());
 
     // world_to_source
     Eigen::Matrix4d trans_odometry = Eigen::Matrix4d::Identity();
@@ -77,7 +79,8 @@ void MakePoseGraphForFragment(
             s - begin, t - begin, trans, information, false));
     }
 
-    WritePoseGraph(GetFragmentPoseGraphName(fragment_id, base_path), pose_graph);
+    WritePoseGraph(GetFragmentPoseGraphName(fragment_id, base_path),
+                   pose_graph);
 }
 
 void OptimizePoseGraphForFragment(
@@ -87,18 +90,18 @@ void OptimizePoseGraphForFragment(
     ReadPoseGraph(GetFragmentPoseGraphName(fragment_id, base_path), pose_graph);
 
     GlobalOptimizationConvergenceCriteria criteria;
-    GlobalOptimizationOption option(0.07, 0.25, 0.1, 0);
+    GlobalOptimizationOption option(
+        kMaxDepthDiff, 0.25, kPreferenceLoopClosureOdometry, 0);
     GlobalOptimizationLevenbergMarquardt optimization_method;
     GlobalOptimization(pose_graph, optimization_method,
                        criteria, option);
 
-    auto pose_graph_prunned = CreatePoseGraphWithoutInvalidEdges(pose_graph,
-        option);
+    auto pose_graph_prunned = CreatePoseGraphWithoutInvalidEdges(
+        pose_graph, option);
 
-    WritePoseGraph(GetFragmentPoseGraphName(fragment_id,
-                                            base_path,
-                                            "optimized_"),
-        *pose_graph_prunned);
+    WritePoseGraph(GetFragmentPoseGraphName(
+        fragment_id, base_path, "optimized_"),
+                   *pose_graph_prunned);
 }
 
 void IntegrateForFragment(
@@ -107,20 +110,21 @@ void IntegrateForFragment(
     const std::vector<std::pair<std::string, std::string>> &filenames) {
 
     PoseGraph pose_graph;
-    ReadPoseGraph(GetFragmentPoseGraphName(fragment_id, base_path, "optimized_"),
+    ReadPoseGraph(GetFragmentPoseGraphName(
+        fragment_id, base_path, "optimized_"),
                   pose_graph);
 
     cuda::PinholeCameraIntrinsicCuda intrinsics(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault);
 
-    float voxel_length = 3.0f / 512.0f;
+    float voxel_length = kCubicSize / 512.0f;
 
     cuda::TransformCuda trans = cuda::TransformCuda::Identity();
     cuda::ScalableTSDFVolumeCuda<8> tsdf_volume(
-        20000, 400000, voxel_length, 0.04f, trans);
+        20000, 400000, voxel_length, kTSDFTruncation, trans);
     cuda::ScalableMeshVolumeCuda<8> mesher(
         120000, cuda::VertexWithNormalAndColor, 10000000, 20000000);
-    cuda::RGBDImageCuda rgbd(0.05f, 4.0f, 1000.0f);
+    cuda::RGBDImageCuda rgbd(kDepthMin, kDepthMax, kDepthFactor);
 
     const int begin = fragment_id * kFramesPerFragment;
     const int end = std::min((fragment_id + 1) * kFramesPerFragment,
@@ -155,7 +159,8 @@ void IntegrateForFragment(
 int main(int argc, char **argv) {
     SetVerbosityLevel(VerbosityLevel::VerboseDebug);
 
-    std::string kBasePath = "/home/wei/Work/data/stanford/copyroom";
+    Timer timer;
+    timer.Start();
 
     auto rgbd_filenames = ReadDataAssociation(
         kBasePath + "/data_association.txt");
@@ -166,8 +171,7 @@ int main(int argc, char **argv) {
     const int num_fragments =
         DIV_CEILING(rgbd_filenames.size(), kFramesPerFragment);
 
-    Timer timer;
-    timer.Start();
+
     for (int i = 0; i < num_fragments; ++i) {
         PrintInfo("Processing fragment %d / %d\n", i, num_fragments - 1);
         MakePoseGraphForFragment(i, kBasePath, rgbd_filenames);
@@ -175,5 +179,5 @@ int main(int argc, char **argv) {
         IntegrateForFragment(i, kBasePath, rgbd_filenames);
     }
     timer.Stop();
-    PrintInfo("MakeFragment takes %.3f s\n", timer.GetDuration());
+    PrintInfo("MakeFragment takes %.3f s\n", timer.GetDuration() / 1000.0f);
 }

@@ -156,15 +156,15 @@ void ComputeSumKernel(PointCloudCudaDevice device,
     __shared__ float local_sum1[THREAD_1D_UNIT];
     __shared__ float local_sum2[THREAD_1D_UNIT];
 
-    const int idx = threadIdx.x + blockIdx.x * blockDim.x;
-    if (idx >= device.points_.size()) return;
-
     const int tid = threadIdx.x;
 
     /** Proper initialization **/
     local_sum0[tid] = 0;
     local_sum1[tid] = 0;
     local_sum2[tid] = 0;
+
+    const int idx = threadIdx.x + blockIdx.x * blockDim.x;
+    if (idx >= device.points_.size()) return;
 
     Vector3f &vertex = device.points_[idx];
     local_sum0[tid] = vertex(0);

@@ -167,5 +167,13 @@ RegistrationResultCuda FastGlobalRegistrationCuda::DoSingleIteration(int iter) {
 
     return result;
 };
+
+RegistrationResultCuda FastGlobalRegistrationCuda::ComputeRegistration() {
+    RegistrationResultCuda result;
+    for (int i = 0; i < 64; ++i) {
+        result = DoSingleIteration(i);
+    }
+    return result;
+}
 }
 }

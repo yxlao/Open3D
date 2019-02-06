@@ -44,15 +44,15 @@ void ComputeResultsAndTransformationKernel(
     __shared__ float local_sum1[THREAD_1D_UNIT];
     __shared__ float local_sum2[THREAD_1D_UNIT];
 
-    const int idx = threadIdx.x + blockIdx.x * blockDim.x;
-    if (idx >= estimation.correspondences_.indices_.size()) return;
-
+    /** Proper initialization **/
     const int tid = threadIdx.x;
 
-    /** Proper initialization **/
     local_sum0[tid] = 0;
     local_sum1[tid] = 0;
     local_sum2[tid] = 0;
+
+    const int idx = threadIdx.x + blockIdx.x * blockDim.x;
+    if (idx >= estimation.correspondences_.indices_.size()) return;
 
     int source_idx = estimation.correspondences_.indices_[idx];
     int target_idx = estimation.correspondences_.matrix_(0, source_idx);

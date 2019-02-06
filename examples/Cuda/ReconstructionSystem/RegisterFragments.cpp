@@ -18,14 +18,6 @@
 
 using namespace open3d;
 
-struct Match {
-    bool success;
-    int s;
-    int t;
-    Eigen::Matrix4d trans_source_to_target;
-    Eigen::Matrix6d information;
-};
-
 std::vector<Match> MatchFragments(
     const std::string &base_path,
     const std::vector<std::string> &ply_filenames) {
@@ -35,7 +27,7 @@ std::vector<Match> MatchFragments(
     PointCloud source_origin, target_origin;
     for (int s = 0; s < ply_filenames.size() - 1; ++s) {
         ReadPointCloudFromPLY(ply_filenames[s], source_origin);
-        auto source = VoxelDownSample(source_origin, 0.05);
+        auto source = VoxelDownSample(source_origin, kVoxelSize);
 
         PoseGraph pose_graph_s;
         ReadPoseGraph(GetFragmentPoseGraphName(s, base_path), pose_graph_s);
@@ -44,7 +36,7 @@ std::vector<Match> MatchFragments(
 
         for (int t = s + 1; t < ply_filenames.size(); ++t) {
             ReadPointCloudFromPLY(ply_filenames[t], target_origin);
-            auto target = VoxelDownSample(target_origin, 0.05);
+            auto target = VoxelDownSample(target_origin, kVoxelSize);
 
             Match match;
             match.s = s;
@@ -53,11 +45,9 @@ std::vector<Match> MatchFragments(
             if (t == s + 1) {
                 cuda::RegistrationCuda registration(
                     TransformationEstimationType::ColoredICP);
-                registration.Initialize(*source, *target, 0.07f,
+                registration.Initialize(*source, *target, kVoxelSize * 1.4f,
                                         init_source_to_target);
-                for (int i = 0; i < 20; ++i) {
-                    registration.DoSingleIteration(i);
-                }
+                registration.ComputeICP();
                 match.trans_source_to_target =
                     registration.transform_source_to_target_;
                 match.information = registration.ComputeInformationMatrix();
@@ -67,10 +57,8 @@ std::vector<Match> MatchFragments(
             } else {
                 cuda::FastGlobalRegistrationCuda fgr;
                 fgr.Initialize(*source, *target);
-                cuda::RegistrationResultCuda result;
-                for (int iter = 0; iter < 64; ++iter) {
-                    result = fgr.DoSingleIteration(iter);
-                }
+
+                auto result = fgr.ComputeRegistration();
                 match.trans_source_to_target = result.transformation_;
 
                 /**!!! THIS SHOULD BE REFACTORED !!!**/
@@ -78,7 +66,7 @@ std::vector<Match> MatchFragments(
                     TransformationEstimationType::PointToPoint);
                 auto source_copy = *source;
                 source_copy.Transform(result.transformation_);
-                registration.Initialize(source_copy, *target, 0.07);
+                registration.Initialize(source_copy, *target, kVoxelSize * 1.4f);
                 registration.transform_source_to_target_ =
                     result.transformation_;
                 match.information = registration.ComputeInformationMatrix();
@@ -139,7 +127,8 @@ void OptimizePoseGraphForScene(
     ReadPoseGraph(GetScenePoseGraphName(base_path), pose_graph);
 
     GlobalOptimizationConvergenceCriteria criteria;
-    GlobalOptimizationOption option(0.07, 0.25, 5.0, 0);
+    GlobalOptimizationOption option(
+        kMaxDepthDiff, 0.25, kPreferenceLoopClosureRegistration, 0);
     GlobalOptimizationLevenbergMarquardt optimization_method;
     GlobalOptimization(pose_graph, optimization_method,
                        criteria, option);
@@ -155,9 +144,8 @@ void OptimizePoseGraphForScene(
 int main(int argc, char **argv) {
     SetVerbosityLevel(VerbosityLevel::VerboseDebug);
 
-    std::string kBasePath = "/home/wei/Work/data/stanford/copyroom";
-    const int kNumFragments = 55;
-
+    Timer timer;
+    timer.Start();
     std::string cmd = "mkdir -p " + kBasePath + "/scene_cuda";
     system(cmd.c_str());
 
@@ -165,4 +153,7 @@ int main(int argc, char **argv) {
     auto matches = MatchFragments(kBasePath, ply_filenames);
     MakePoseGraphForScene(kBasePath, matches);
     OptimizePoseGraphForScene(kBasePath);
+    timer.Stop();
+    PrintInfo("RegisterFragments takes %.3f s\n",
+        timer.GetDuration() / 1000.0f);
 }

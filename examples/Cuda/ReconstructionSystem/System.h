@@ -9,10 +9,35 @@
 #include <iomanip>
 #include <sstream>
 
+//const std::string kBasePath = "/home/wei/Work/data/stanford/lounge";
+//const std::string kBasePath = "/home/wei/Work/data/stanford/copyroom";
+const std::string kBasePath
+    ="/media/wei/Data/data/indoor_lidar_rgbd/apartment";
+const int kNumFragments = 320;
+
 const int kFramesPerFragment = 100;
+
 const float kCubicSize = 3.0f;
 const float kTSDFTruncation = 0.04f;
+
 const float kVoxelSize = 0.05f;
+const float kMaxDepthDiff = 0.07f;
+const float kDepthMin = 0.05f;
+const float kDepthMax = 4.0f;
+const float kDepthFactor = 1000.0f;
+
+const float kPreferenceLoopClosureOdometry = 0.25f;
+const float kPreferenceLoopClosureRegistration = 5.0f;
+
+
+struct Match {
+    bool success;
+    int s;
+    int t;
+    Eigen::Matrix4d trans_source_to_target;
+    Eigen::Matrix6d information;
+};
+
 
 std::string GetFragmentPoseGraphName(
     int fragment_id,

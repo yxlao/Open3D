@@ -111,7 +111,6 @@ void ComputeResultsAndTransformationKernel(
     __shared__ float local_sum1[THREAD_1D_UNIT];
     __shared__ float local_sum2[THREAD_1D_UNIT];
 
-    const int idx = threadIdx.x + blockIdx.x * blockDim.x;
     const int tid = threadIdx.x;
 
     /** Proper initialization **/
@@ -119,6 +118,7 @@ void ComputeResultsAndTransformationKernel(
     local_sum1[tid] = 0;
     local_sum2[tid] = 0;
 
+    const int idx = threadIdx.x + blockIdx.x * blockDim.x;
     if (idx >= fgr.corres_final_.size()) return;
 
     Vector2i &pair = fgr.corres_final_[idx];

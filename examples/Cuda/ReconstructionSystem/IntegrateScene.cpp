@@ -28,6 +28,7 @@ void IntegrateFragment(
     PoseGraph global_pose_graph;
     ReadPoseGraph(
         GetScenePoseGraphName(base_path, "_refined_optimized"),
+//        GetScenePoseGraphName(base_path, "_optimized"),
         global_pose_graph);
 
     PoseGraph local_pose_graph;
@@ -37,7 +38,7 @@ void IntegrateFragment(
 
     cuda::PinholeCameraIntrinsicCuda intrinsics(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault);
-    cuda::RGBDImageCuda rgbd(0.05f, 4.0f, 1000.0f);
+    cuda::RGBDImageCuda rgbd(kDepthMin, kDepthMax, kDepthFactor);
 
     const int begin = fragment_id * kFramesPerFragment;
     const int end = std::min((fragment_id + 1) * kFramesPerFragment,
@@ -62,11 +63,10 @@ void IntegrateFragment(
 }
 
 int main(int argc, char **argv) {
-    const int kNumFragments = 55;
-
     SetVerbosityLevel(VerbosityLevel::VerboseDebug);
 
-    std::string kBasePath = "/home/wei/Work/data/stanford/copyroom";
+    Timer timer;
+    timer.Start();
     auto rgbd_filenames = ReadDataAssociation(
         kBasePath + "/data_association.txt");
 
@@ -79,11 +79,16 @@ int main(int argc, char **argv) {
     }
 
     cuda::ScalableMeshVolumeCuda<8> mesher(
-        150000, cuda::VertexWithNormalAndColor, 10000000, 20000000);
+        400000, cuda::VertexWithNormalAndColor, 20000000, 40000000);
     tsdf_volume.GetAllSubvolumes();
     mesher.MarchingCubes(tsdf_volume);
     auto mesh = mesher.mesh().Download();
 
     WriteTriangleMeshToPLY(GetScenePlyName(kBasePath), *mesh);
+    timer.Stop();
+    PrintInfo("IntegrateScene takes %.3f s\n", timer.GetDuration() / 1000.0f);
+
+    DrawGeometries({mesh});
+
     return 0;
 }

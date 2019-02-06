@@ -59,6 +59,7 @@ public:
     double NormalizePointClouds();
     void AdvancedMatching();
     RegistrationResultCuda DoSingleIteration(int iter);
+    RegistrationResultCuda ComputeRegistration();
 
 public:
     PointCloudCuda source_;

@@ -18,14 +18,6 @@
 
 using namespace open3d;
 
-struct Match {
-    bool success;
-    int s;
-    int t;
-    Eigen::Matrix4d trans_source_to_target;
-    Eigen::Matrix6d information;
-};
-
 std::vector<Match> MatchFragments(
     const std::string &base_path,
     const std::vector<std::string> &ply_filenames) {
@@ -44,16 +36,14 @@ std::vector<Match> MatchFragments(
 
         ReadPointCloudFromPLY(ply_filenames[match.s], source_origin);
         ReadPointCloudFromPLY(ply_filenames[match.t], target_origin);
-        auto source = VoxelDownSample(source_origin, 0.05);
-        auto target = VoxelDownSample(target_origin, 0.05);
+        auto source = VoxelDownSample(source_origin, kVoxelSize);
+        auto target = VoxelDownSample(target_origin, kVoxelSize);
 
         cuda::RegistrationCuda registration(
             TransformationEstimationType::ColoredICP);
-        registration.Initialize(*source, *target, 0.07f,
+        registration.Initialize(*source, *target, kVoxelSize * 1.4f,
                                 edge.transformation_);
-        for (int i = 0; i < 20; ++i) {
-            registration.DoSingleIteration(i);
-        }
+        registration.ComputeICP();
         match.trans_source_to_target =
             registration.transform_source_to_target_;
         match.information = registration.ComputeInformationMatrix();
@@ -103,7 +93,8 @@ void OptimizePoseGraphForScene(
     ReadPoseGraph(GetScenePoseGraphName(base_path, "_refined"), pose_graph);
 
     GlobalOptimizationConvergenceCriteria criteria;
-    GlobalOptimizationOption option(0.07, 0.25, 5.0, 0);
+    GlobalOptimizationOption option(
+        kMaxDepthDiff, 0.25, kPreferenceLoopClosureRegistration, 0);
     GlobalOptimizationLevenbergMarquardt optimization_method;
     GlobalOptimization(pose_graph, optimization_method,
                        criteria, option);
@@ -119,9 +110,8 @@ void OptimizePoseGraphForScene(
 int main(int argc, char **argv) {
     SetVerbosityLevel(VerbosityLevel::VerboseDebug);
 
-    std::string kBasePath = "/home/wei/Work/data/stanford/copyroom";
-    const int kNumFragments = 55;
-
+    Timer timer;
+    timer.Start();
     std::string cmd = "mkdir -p " + kBasePath + "/scene_cuda";
     system(cmd.c_str());
 
@@ -129,4 +119,7 @@ int main(int argc, char **argv) {
     auto matches = MatchFragments(kBasePath, ply_filenames);
     MakePoseGraphForRefinedScene(kBasePath, matches);
     OptimizePoseGraphForScene(kBasePath);
+    timer.Stop();
+    PrintInfo("RefineRegistration takes %.3f s\n",
+              timer.GetDuration() / 1000.0f);
 }

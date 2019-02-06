@@ -31,14 +31,26 @@ void RegistrationCuda::Initialize(
 }
 
 RegistrationResultCuda RegistrationCuda::DoSingleIteration(int iter) {
+    RegistrationResultCuda result;
+    result.transformation_ = Eigen::Matrix4d::Identity();
+    result.fitness_ = result.inlier_rmse_ = 0;
+
     estimator_->GetCorrespondences();
-    auto result = estimator_->ComputeResultsAndTransformation();
+
+    if (estimator_->correspondences_.indices_.size() < 10) {
+        PrintError("Insufficient correspondences: %d\n",
+                   estimator_->correspondences_.indices_.size());
+        return result;
+    }
+
+    result = estimator_->ComputeResultsAndTransformation();
+
+    PrintDebug("Iteration %d: inlier rmse = %f, fitness = %f\n",
+               iter, result.inlier_rmse_, result.fitness_);
+
     estimator_->TransformSourcePointCloud(result.transformation_);
     transform_source_to_target_ = result.transformation_ *
         transform_source_to_target_;
-
-    PrintDebug("Iteration %d: inlier rmse = %f, fitness = %f\n",
-        iter, result.inlier_rmse_, result.fitness_);
 
     return result;
 }
@@ -46,12 +58,31 @@ RegistrationResultCuda RegistrationCuda::DoSingleIteration(int iter) {
 Eigen::Matrix6d RegistrationCuda::ComputeInformationMatrix() {
     /** Point clouds should have been transformed during registration **/
     estimator_->GetCorrespondences();
+    if (estimator_->correspondences_.indices_.size() < 10) {
+        return Eigen::Matrix6d::Identity();
+    }
 
     return estimator_->ComputeInformationMatrix();
 }
 
 RegistrationResultCuda RegistrationCuda::ComputeICP() {
+    auto result = DoSingleIteration(0);
+    float prev_fitness = result.fitness_;
+    float prev_rmse = result.inlier_rmse_;
 
+    for (int i = 1; i < 30; ++i) {
+        result = DoSingleIteration(i);
+
+        if (std::abs(prev_fitness - result.fitness_) < 1e-6
+            && std::abs(prev_rmse - result.inlier_rmse_) < 1e-6) {
+            return result;
+        }
+
+        prev_fitness = result.fitness_;
+        prev_rmse = result.inlier_rmse_;
+    }
+
+    return result;
 }
 }
 }
