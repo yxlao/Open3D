@@ -12,6 +12,9 @@ using namespace open3d;
 int main(int argc, char **argv) {
     auto ply_filenames = GetFragmentPlyNames(kBasePath, kNumFragments);
 
+    auto mesh = CreateMeshFromFile(kBasePath + "/scene_cuda/integrated.ply");
+    DrawGeometries({mesh});
+
     for (auto &ply_filename : ply_filenames) {
         auto pcl = CreatePointCloudFromFile(ply_filename);
         DrawGeometries({pcl});

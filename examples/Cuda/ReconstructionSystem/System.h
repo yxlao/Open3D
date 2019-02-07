@@ -13,7 +13,7 @@
 //const std::string kBasePath = "/home/wei/Work/data/stanford/copyroom";
 const std::string kBasePath
     ="/media/wei/Data/data/indoor_lidar_rgbd/apartment";
-const int kNumFragments = 320;
+const int kNumFragments = 30;
 
 const int kFramesPerFragment = 100;
 

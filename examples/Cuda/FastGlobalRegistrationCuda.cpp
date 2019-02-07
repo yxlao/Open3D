@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
 
     SetVerbosityLevel(VerbosityLevel::VerboseDebug);
 
-    std::string filepath = "/home/wei/Work/data/stanford/lounge/fragments";
+    std::string filepath = "/home/wei/Work/data/stanford/lounge/fragments_cuda";
     auto source_origin = CreatePointCloudFromFile(
         filepath + "/fragment_000.ply");
     auto target_origin = CreatePointCloudFromFile(

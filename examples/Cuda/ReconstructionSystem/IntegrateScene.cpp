@@ -78,9 +78,10 @@ int main(int argc, char **argv) {
         IntegrateFragment(i, kBasePath, rgbd_filenames, tsdf_volume);
     }
 
-    cuda::ScalableMeshVolumeCuda<8> mesher(
-        400000, cuda::VertexWithNormalAndColor, 20000000, 40000000);
     tsdf_volume.GetAllSubvolumes();
+    cuda::ScalableMeshVolumeCuda<8> mesher(
+        tsdf_volume.active_subvolume_entry_array().size(),
+        cuda::VertexWithNormalAndColor, 20000000, 40000000);
     mesher.MarchingCubes(tsdf_volume);
     auto mesh = mesher.mesh().Download();
 

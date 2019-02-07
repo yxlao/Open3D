@@ -11,7 +11,7 @@ using namespace open3d;
 
 int main(int argc, char **argv) {
     PoseGraph pose_graph;
-    ReadPoseGraph(GetScenePoseGraphName(kBasePath, "_refined_optimized"),
+    ReadPoseGraph(GetScenePoseGraphName(kBasePath, ""),
                   pose_graph);
 
     std::shared_ptr<LineSet> pose_graph_vis = std::make_shared<LineSet>();

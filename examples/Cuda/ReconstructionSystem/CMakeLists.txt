@@ -17,5 +17,5 @@ target_link_libraries(IntegrateScene ${CMAKE_PROJECT_NAME})
 add_executable(ViewFragments ViewFragments.cpp)
 target_link_libraries(ViewFragments ${CMAKE_PROJECT_NAME})
 
-add_executable(ViewPoses ViewPoses.cpp)
+add_executable(ViewPoses ViewPoseGraph.cpp)
 target_link_libraries(ViewPoses ${CMAKE_PROJECT_NAME})
