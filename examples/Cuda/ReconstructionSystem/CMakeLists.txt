@@ -19,3 +19,6 @@ target_link_libraries(ViewFragments ${CMAKE_PROJECT_NAME})
 
 add_executable(ViewPoses ViewPoseGraph.cpp)
 target_link_libraries(ViewPoses ${CMAKE_PROJECT_NAME})
+
+add_executable(RunSystem RunSystem.cpp)
+target_link_libraries(RunSystem ${CMAKE_PROJECT_NAME})
