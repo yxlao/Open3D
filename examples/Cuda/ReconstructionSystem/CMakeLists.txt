@@ -1,17 +1,17 @@
 
-add_executable(MakeFragments MakeFragments.cpp)
+add_executable(MakeFragments MakeFragments.h)
 target_link_libraries(MakeFragments ${CMAKE_PROJECT_NAME})
 
-add_executable(RegisterFragments RegisterFragments.cpp)
+add_executable(RegisterFragments RegisterFragments.h)
 target_link_libraries(RegisterFragments ${CMAKE_PROJECT_NAME})
 
 add_executable(RegisterFragmentsWithReloc RegisterFragmentsWithReloc.cpp)
 target_link_libraries(RegisterFragmentsWithReloc ${CMAKE_PROJECT_NAME})
 
-add_executable(RefineRegistration RefineRegistration.cpp)
+add_executable(RefineRegistration RefineRegistration.h)
 target_link_libraries(RefineRegistration ${CMAKE_PROJECT_NAME})
 
-add_executable(IntegrateScene IntegrateScene.cpp)
+add_executable(IntegrateScene IntegrateScene.h)
 target_link_libraries(IntegrateScene ${CMAKE_PROJECT_NAME})
 
 add_executable(ViewFragments ViewFragments.cpp)

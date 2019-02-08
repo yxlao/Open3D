@@ -5,15 +5,27 @@
 #pragma once
 
 #include <json/json.h>
+#include <Core/Core.h>
 #include <IO/IO.h>
 #include <iomanip>
 #include <sstream>
+#include <fstream>
 
 namespace open3d {
+struct Match {
+    bool success;
+    int s;
+    int t;
+    Eigen::Matrix4d trans_source_to_target;
+    Eigen::Matrix6d information;
+};
+
 class DatasetConfig : public IJsonConvertible {
 public:
     std::string path_dataset_;
     std::string path_intrinsic_;
+
+    bool is_tum_;
 
     int n_frames_per_fragment_;
     int n_keyframes_per_n_frame_;
@@ -27,6 +39,7 @@ public:
     double preference_loop_closure_odometry_;
     double preference_loop_closure_registration_;
     double tsdf_cubic_size_;
+    double tsdf_truncation_;
 
 
     PinholeCameraIntrinsic intrinsic_;
@@ -34,88 +47,83 @@ public:
     std::vector<std::string> depth_files_;
     std::vector<std::string> fragment_files_;
 
-    explicit DatasetConfig(
-        const std::string &path_dataset = "",
-        const std::string &path_intrinsic = "",
-        int n_frames_per_fragment = 100,
-        int n_keyframes_per_n_frame = 5,
-
-        double min_depth = 0.3,
-        double max_depth = 3.0,
-        double depth_factor = 1000.0,
-        double voxel_size = 0.05,
-
-        double max_depth_diff = 0.07,
-        double preference_loop_closure_odometry = 0.1,
-        double preference_loop_closure_registration = 5.0,
-        double tsdf_cubic_size = 3.0) :
-
-        path_dataset_(path_dataset),
-        path_intrinsic_(path_intrinsic),
-        n_frames_per_fragment_(n_frames_per_fragment),
-        n_keyframes_per_n_frame_(n_keyframes_per_n_frame),
-        min_depth_(min_depth),
-        max_depth_(max_depth),
-        depth_factor_(depth_factor),
-        voxel_size_(voxel_size),
-        max_depth_diff_(max_depth_diff),
-        preference_loop_closure_odometry_(preference_loop_closure_odometry),
-        preference_loop_closure_registration_(
-            preference_loop_closure_registration),
-        tsdf_cubic_size_(tsdf_cubic_size) {
-
-        if (path_intrinsic_.empty()) {
-            intrinsic_ = PinholeCameraIntrinsic(
-                PinholeCameraIntrinsicParameters::PrimeSenseDefault);
-        } else {
-            bool is_success = ReadIJsonConvertible(path_intrinsic_, intrinsic_);
-            if (!is_success) {
-                PrintError("Unable to read camera intrinsics: %s!\n",
-                           path_intrinsic_.c_str());
-            }
+    bool GetColorAndDepthFilesForTUM() {
+        std::string association_file_name = path_dataset_ +
+            "/data_association.txt";
+        if (! filesystem::FileExists(association_file_name)) {
+            PrintError("Data association file not found for %s\n",
+                path_dataset_.c_str());
+            return false;
         }
+
+        std::ifstream in(association_file_name);
+        std::string depth_file, color_file;
+        while (in >> depth_file >> color_file) {
+            color_files_.emplace_back(path_dataset_ + "/" + color_file);
+            depth_files_.emplace_back(path_dataset_ + "/" + depth_file);
+        }
+
+        return true;
     }
 
-    std::vector<std::string>& GetColorFiles() {
-        std::string color_directory = path_dataset_ + "/color";
-        if (! filesystem::DirectoryExists(color_directory)) {
-            color_directory = path_dataset_ + "/image";
-            if (! filesystem::DirectoryExists(color_directory)) {
-                PrintError("No color image folder found in directory %s\n",
-                    color_directory.c_str());
+    bool GetColorFiles() {
+        const std::vector<std::string> color_folders = {
+            "/color", "/rgb", "/image"
+        };
+
+        for (auto &color_folder : color_folders) {
+            std::string color_directory = path_dataset_ + color_folder;
+            if (filesystem::DirectoryExists(color_directory)) {
+                filesystem::ListFilesInDirectory(color_directory, color_files_);
+                std::sort(color_files_.begin(), color_files_.end());
+                return true;
             }
         }
-        filesystem::ListFilesInDirectory(color_directory, color_files_);
 
-        /* alphabetical order */
-        std::sort(color_files_.begin(), color_files_.end());
-        return color_files_;
+        PrintError("No color image folder found in directory %s\n",
+            path_dataset_.c_str());
+        return false;
     }
 
-    std::vector<std::string>& GetDepthFiles() {
+    bool GetDepthFiles() {
         std::string depth_directory = path_dataset_ + "/depth";
         if (! filesystem::DirectoryExists(depth_directory)) {
             PrintError("No depth image folder found in directory %s\n",
                        depth_directory.c_str());
+            return false;
         }
         filesystem::ListFilesInDirectory(depth_directory, depth_files_);
 
         /* alphabetical order */
         std::sort(depth_files_.begin(), depth_files_.end());
-        return depth_files_;
+        return true;
     }
 
-    std::vector<std::string>& GetFragmentFiles() {
+    bool GetFragmentFiles() {
         std::string fragment_directory = path_dataset_ + "/fragments_cuda";
+        if (! filesystem::DirectoryExists(fragment_directory)) {
+            PrintError("No fragment folder found in directory %s\n",
+                       fragment_directory.c_str());
+            return false;
+        }
+
         filesystem::ListFilesInDirectoryWithExtension(
             fragment_directory, "ply", fragment_files_);
 
         /* alphabetical order */
         std::sort(fragment_files_.begin(), fragment_files_.end());
-        return fragment_files_;
+        return true;
     }
 
-    std::shared_ptr<PoseGraph> GetPoseGraphForFragment(
+    std::string GetPlyFileForFragment(int fragment_id) {
+        std::stringstream ss;
+        ss << path_dataset_ << "/fragments_cuda/fragment_";
+        ss << std::setw(3) << std::setfill('0') << fragment_id;
+        ss << ".ply";
+        return ss.str();
+    }
+
+    std::string GetPoseGraphFileForFragment(
         int fragment_id, bool optimized) {
 
         std::stringstream ss;
@@ -126,10 +134,10 @@ public:
         ss << std::setw(3) << std::setfill('0') << fragment_id;
         ss << ".json";
 
-        return CreatePoseGraphFromFile(ss.str());
+        return ss.str();
     }
 
-    std::shared_ptr<PoseGraph> GetPoseGraphForScene(bool optimized) {
+    std::string GetPoseGraphFileForScene(bool optimized) {
         std::stringstream ss;
         ss << path_dataset_ << "/scene_cuda/global_registration";
         if (optimized) {
@@ -137,10 +145,10 @@ public:
         }
         ss << ".json";
 
-        return CreatePoseGraphFromFile(ss.str());
+        return ss.str();
     }
 
-    std::shared_ptr<PoseGraph> GetPoseGraphForRefinedScene(bool optimized) {
+    std::string GetPoseGraphFileForRefinedScene(bool optimized) {
         std::stringstream ss;
         ss << path_dataset_ << "/scene_cuda/global_registration_refined";
         if (optimized) {
@@ -148,14 +156,14 @@ public:
         }
         ss << ".json";
 
-        return CreatePoseGraphFromFile(ss.str());
+        return ss.str();
     }
 
-    std::shared_ptr<TriangleMesh> GetReconstructedScene() {
+    std::string GetReconstructedSceneFile() {
         std::stringstream ss;
         ss << path_dataset_ << "/scene_cuda/integrated.ply";
 
-        return CreateMeshFromFile(ss.str());
+        return ss.str();
     }
 
     bool ConvertToJsonValue(Json::Value &value) const override {}
@@ -168,6 +176,7 @@ public:
 
         path_dataset_ = value.get("path_dataset", "").asString();
         path_intrinsic_ = value.get("path_intrinsic", "").asString();
+        is_tum_ = value.get("is_tum", false).asBool();
 
         n_frames_per_fragment_ = value.get(
             "n_frames_per_fragment", 100).asInt();
@@ -185,6 +194,28 @@ public:
         preference_loop_closure_registration_ = value.get(
             "preference_loop_closure_registration", 5.0).asDouble();
         tsdf_cubic_size_ = value.get("tsdf_cubic_size", 3.0).asDouble();
+        tsdf_truncation_ = value.get("tsdf_truncation", 0.04).asDouble();
+
+        if (path_intrinsic_.empty()) {
+            intrinsic_ = PinholeCameraIntrinsic(
+                PinholeCameraIntrinsicParameters::PrimeSenseDefault);
+        } else {
+            bool is_success = ReadIJsonConvertible(path_intrinsic_, intrinsic_);
+            if (!is_success) {
+                PrintError("Unable to read camera intrinsics: %s!\n",
+                           path_intrinsic_.c_str());
+            }
+        }
+
+        if (! is_tum_) {
+            GetColorFiles();
+            GetDepthFiles();
+        } else {
+            GetColorAndDepthFilesForTUM();
+        }
+
+        assert(color_files_.size() > 0);
+        assert(color_files_.size() == depth_files_.size());
 
         return true;
     }

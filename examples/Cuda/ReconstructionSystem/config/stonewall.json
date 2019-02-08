@@ -1,6 +1,6 @@
 {
     "name": "Stanford - stonewall",
-    "path_dataset": "/home/wei/Work/data/stanford/copyroom",
+    "path_dataset": "/media/wei/Data/data/stanford/stonewall",
     "path_intrinsic": "",
     "max_depth": 3.0,
     "voxel_size": 0.05,

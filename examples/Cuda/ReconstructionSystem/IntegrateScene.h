@@ -7,6 +7,7 @@
 
 #include <Core/Core.h>
 #include <IO/IO.h>
+#include <Visualization/Visualization.h>
 
 #include <Core/Registration/Registration.h>
 #include <Core/Registration/PoseGraph.h>
@@ -14,42 +15,38 @@
 #include <Cuda/Integration/ScalableTSDFVolumeCuda.h>
 #include <Cuda/Integration/ScalableMeshVolumeCuda.h>
 
-#include "System.h"
-#include "../Utils.h"
+#include "DatasetConfig.h"
 
 using namespace open3d;
 
+namespace IntegrateScene {
 void IntegrateFragment(
-    int fragment_id,
-    const std::string &base_path,
-    const std::vector<std::pair<std::string, std::string>> &filenames,
-    cuda::ScalableTSDFVolumeCuda<8> &volume) {
+    int fragment_id, cuda::ScalableTSDFVolumeCuda<8> &volume,
+    DatasetConfig &config) {
 
     PoseGraph global_pose_graph;
-    ReadPoseGraph(
-        GetScenePoseGraphName(base_path, "_refined_optimized"),
-//        GetScenePoseGraphName(base_path, "_optimized"),
+    ReadPoseGraph(config.GetPoseGraphFileForRefinedScene(true),
         global_pose_graph);
 
     PoseGraph local_pose_graph;
-    ReadPoseGraph(
-        GetFragmentPoseGraphName(fragment_id, base_path,"optimized_"),
+    ReadPoseGraph(config.GetPoseGraphFileForFragment(fragment_id, true),
         local_pose_graph);
 
-    cuda::PinholeCameraIntrinsicCuda intrinsics(
-        PinholeCameraIntrinsicParameters::PrimeSenseDefault);
-    cuda::RGBDImageCuda rgbd(kDepthMin, kDepthMax, kDepthFactor);
+    cuda::PinholeCameraIntrinsicCuda intrinsics(config.intrinsic_);
+    cuda::RGBDImageCuda rgbd((float)config.min_depth_,
+                             (float)config.max_depth_,
+                             (float)config.depth_factor_);
 
-    const int begin = fragment_id * kFramesPerFragment;
-    const int end = std::min((fragment_id + 1) * kFramesPerFragment,
-                             (int) filenames.size());
+    const int begin = fragment_id * config.n_frames_per_fragment_;
+    const int end = std::min((fragment_id + 1) * config.n_frames_per_fragment_,
+                             (int) config.color_files_.size());
 
     for (int i = begin; i < end; ++i) {
         PrintDebug("Integrating frame %d ...\n", i);
 
         Image depth, color;
-        ReadImage(base_path + "/" + filenames[i].first, depth);
-        ReadImage(base_path + "/" + filenames[i].second, color);
+        ReadImage(config.depth_files_[i], depth);
+        ReadImage(config.color_files_[i], color);
         rgbd.Upload(depth, color);
 
         /* Use ground truth trajectory */
@@ -62,20 +59,25 @@ void IntegrateFragment(
     }
 }
 
-int main(int argc, char **argv) {
+int Run(DatasetConfig &config) {
     SetVerbosityLevel(VerbosityLevel::VerboseDebug);
 
     Timer timer;
     timer.Start();
-    auto rgbd_filenames = ReadDataAssociation(
-        kBasePath + "/data_association.txt");
 
     cuda::TransformCuda trans = cuda::TransformCuda::Identity();
     cuda::ScalableTSDFVolumeCuda<8> tsdf_volume(
-        40000, 600000, kCubicSize / 512, kTSDFTruncation, trans);
+        40000, 600000,
+        (float)config.tsdf_cubic_size_ / 512,
+        (float)config.tsdf_truncation_, trans);
 
-    for (int i = 0; i < kNumFragments; ++i) {
-        IntegrateFragment(i, kBasePath, rgbd_filenames, tsdf_volume);
+    bool is_success = config.GetFragmentFiles();
+    if (! is_success) {
+        PrintError("Unable to get fragment files\n");
+        return -1;
+    }
+    for (int i = 0; i < config.fragment_files_.size(); ++i) {
+        IntegrateFragment(i, tsdf_volume, config);
     }
 
     tsdf_volume.GetAllSubvolumes();
@@ -85,11 +87,10 @@ int main(int argc, char **argv) {
     mesher.MarchingCubes(tsdf_volume);
     auto mesh = mesher.mesh().Download();
 
-    WriteTriangleMeshToPLY(GetScenePlyName(kBasePath), *mesh);
+    WriteTriangleMeshToPLY(config.GetReconstructedSceneFile(), *mesh);
     timer.Stop();
     PrintInfo("IntegrateScene takes %.3f s\n", timer.GetDuration() / 1000.0f);
 
-    DrawGeometries({mesh});
-
     return 0;
+}
 }

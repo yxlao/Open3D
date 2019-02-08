@@ -5,13 +5,24 @@
 #include <Core/Core.h>
 #include <IO/IO.h>
 #include <Visualization/Visualization.h>
-#include "System.h"
+#include "DatasetConfig.h"
 
 using namespace open3d;
 
 int main(int argc, char **argv) {
+    SetVerbosityLevel(VerbosityLevel::VerboseDebug);
+
+    DatasetConfig config;
+
+    std::string config_path = argc > 1 ? argv[1] :
+                              "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda"
+                              "/ReconstructionSystem/config/stonewall.json";
+
+    bool is_success = ReadIJsonConvertible(config_path, config);
+    if (! is_success) return 1;
+
     PoseGraph pose_graph;
-    ReadPoseGraph(GetScenePoseGraphName(kBasePath, ""),
+    ReadPoseGraph(config.GetPoseGraphFileForRefinedScene(true),
                   pose_graph);
 
     std::shared_ptr<LineSet> pose_graph_vis = std::make_shared<LineSet>();
