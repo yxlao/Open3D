@@ -1,24 +1,17 @@
-
-add_executable(MakeFragments MakeFragments.h)
-target_link_libraries(MakeFragments ${CMAKE_PROJECT_NAME})
-
-add_executable(RegisterFragments RegisterFragments.h)
-target_link_libraries(RegisterFragments ${CMAKE_PROJECT_NAME})
-
-add_executable(RegisterFragmentsWithReloc RegisterFragmentsWithReloc.cpp)
-target_link_libraries(RegisterFragmentsWithReloc ${CMAKE_PROJECT_NAME})
-
-add_executable(RefineRegistration RefineRegistration.h)
-target_link_libraries(RefineRegistration ${CMAKE_PROJECT_NAME})
-
-add_executable(IntegrateScene IntegrateScene.h)
-target_link_libraries(IntegrateScene ${CMAKE_PROJECT_NAME})
-
 add_executable(ViewFragments ViewFragments.cpp)
 target_link_libraries(ViewFragments ${CMAKE_PROJECT_NAME})
 
-add_executable(ViewPoses ViewPoseGraph.cpp)
-target_link_libraries(ViewPoses ${CMAKE_PROJECT_NAME})
+add_executable(ViewPoseGraph ViewPoseGraph.cpp)
+target_link_libraries(ViewPoseGraph ${CMAKE_PROJECT_NAME})
 
 add_executable(RunSystem RunSystem.cpp)
 target_link_libraries(RunSystem ${CMAKE_PROJECT_NAME})
+
+add_executable(CVEstimation ORBPoseEstimation.h)
+target_link_libraries(CVEstimation ${CMAKE_PROJECT_NAME})
+
+add_executable(DebugICPOdometry DebugICPOdometry.cpp)
+target_link_libraries(DebugICPOdometry ${CMAKE_PROJECT_NAME})
+
+add_executable(RegisterFragmentsWithReloc RegisterFragmentsWithOdometry.cpp)
+target_link_libraries(RegisterFragmentsWithReloc ${CMAKE_PROJECT_NAME})

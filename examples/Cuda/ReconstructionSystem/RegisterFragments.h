@@ -22,10 +22,8 @@ namespace RegisterFragments {
 std::vector<Match> MatchFragments(DatasetConfig &config) {
     std::vector<Match> matches;
 
-    PointCloud source_origin, target_origin;
     for (int s = 0; s < config.fragment_files_.size() - 1; ++s) {
-        ReadPointCloudFromPLY(config.fragment_files_[s], source_origin);
-        auto source = VoxelDownSample(source_origin, config.voxel_size_);
+        auto source = CreatePointCloudFromFile(config.fragment_files_[s]);
 
         PoseGraph pose_graph_s;
         ReadPoseGraph(config.GetPoseGraphFileForFragment(s, true),
@@ -35,8 +33,7 @@ std::vector<Match> MatchFragments(DatasetConfig &config) {
         Eigen::Matrix4d init_source_to_target = rbegin->pose_.inverse();
 
         for (int t = s + 1; t < config.fragment_files_.size(); ++t) {
-            ReadPointCloudFromPLY(config.fragment_files_[t], target_origin);
-            auto target = VoxelDownSample(target_origin, config.voxel_size_);
+            auto target = CreatePointCloudFromFile(config.fragment_files_[t]);
 
             Match match;
             match.s = s;
@@ -46,7 +43,7 @@ std::vector<Match> MatchFragments(DatasetConfig &config) {
                 cuda::RegistrationCuda registration(
                     TransformationEstimationType::ColoredICP);
                 registration.Initialize(*source, *target,
-                                        config.voxel_size_ * 1.4f,
+                                        (float) config.voxel_size_ * 1.4f,
                                         init_source_to_target);
                 registration.ComputeICP();
                 match.trans_source_to_target =
@@ -55,7 +52,8 @@ std::vector<Match> MatchFragments(DatasetConfig &config) {
                 match.success = true;
                 PrintDebug("Pair (%d %d) odometry computed.\n",
                            match.s, match.t);
-            } else {
+            }
+            else {
                 cuda::FastGlobalRegistrationCuda fgr;
                 fgr.Initialize(*source, *target);
 
@@ -85,7 +83,6 @@ std::vector<Match> MatchFragments(DatasetConfig &config) {
                                match.s, match.t);
                 }
             }
-
             matches.push_back(match);
         }
     }

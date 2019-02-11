@@ -16,13 +16,13 @@ int main(int argc, char **argv) {
 
     std::string config_path = argc > 1 ? argv[1] :
                               "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda"
-                              "/ReconstructionSystem/config/stonewall.json";
+                              "/ReconstructionSystem/config/chair.json";
 
     bool is_success = ReadIJsonConvertible(config_path, config);
     if (! is_success) return 1;
 
     PoseGraph pose_graph;
-    ReadPoseGraph(config.GetPoseGraphFileForRefinedScene(true),
+    ReadPoseGraph(config.GetPoseGraphFileForScene(true),
                   pose_graph);
 
     std::shared_ptr<LineSet> pose_graph_vis = std::make_shared<LineSet>();
@@ -74,11 +74,13 @@ int main(int argc, char **argv) {
         int s = edge.source_node_id_;
         int t = edge.target_node_id_;
 
-        pose_graph_vis->lines_.emplace_back(
-            Eigen::Vector2i(s * kPointsPerFrustum, t * kPointsPerFrustum));
         if (edge.uncertain_) {
+            pose_graph_vis->lines_.emplace_back(
+                Eigen::Vector2i(s * kPointsPerFrustum, t * kPointsPerFrustum));
             pose_graph_vis->colors_.emplace_back(Eigen::Vector3d(0, 1, 0));
         } else {
+            pose_graph_vis->lines_.emplace_back(
+                Eigen::Vector2i(s * kPointsPerFrustum, t * kPointsPerFrustum));
             pose_graph_vis->colors_.emplace_back(Eigen::Vector3d(0, 0, 1));
         }
     }

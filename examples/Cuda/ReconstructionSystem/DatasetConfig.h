@@ -26,6 +26,7 @@ public:
     std::string path_intrinsic_;
 
     bool is_tum_;
+    bool with_opencv_;
 
     int n_frames_per_fragment_;
     int n_keyframes_per_n_frame_;
@@ -177,6 +178,7 @@ public:
         path_dataset_ = value.get("path_dataset", "").asString();
         path_intrinsic_ = value.get("path_intrinsic", "").asString();
         is_tum_ = value.get("is_tum", false).asBool();
+        with_opencv_ = value.get("with_opencv", true).asBool();
 
         n_frames_per_fragment_ = value.get(
             "n_frames_per_fragment", 100).asInt();

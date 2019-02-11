@@ -5,6 +5,7 @@
 #include "DatasetConfig.h"
 
 #include "MakeFragments.h"
+//#include "ORBPoseEstimation.cpp"
 #include "RegisterFragments.h"
 #include "RefineRegistration.h"
 #include "IntegrateScene.h"
@@ -35,7 +36,7 @@ int main(int argc, char **argv) {
 
     std::string config_path = argc > 1 ? argv[1] :
                               "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda"
-                              "/ReconstructionSystem/config/fr2_desktop.json";
+                              "/ReconstructionSystem/config/fr1_desktop.json";
 
     bool is_success = ReadIJsonConvertible(config_path, config);
     if (!is_success) return 1;
@@ -44,6 +45,7 @@ int main(int argc, char **argv) {
     timer_total.Start();
 
     Timer timer;
+
     timer.Start();
     MakeFragment::Run(config);
     timer.Stop();

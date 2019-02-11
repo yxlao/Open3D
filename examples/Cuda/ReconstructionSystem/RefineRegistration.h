@@ -25,7 +25,6 @@ std::vector<Match> MatchFragments(DatasetConfig &config) {
     ReadPoseGraph(config.GetPoseGraphFileForScene(true), pose_graph);
 
     std::vector<Match> matches;
-    PointCloud source_origin, target_origin;
 
     for (auto &edge : pose_graph.edges_) {
         Match match;
@@ -33,10 +32,8 @@ std::vector<Match> MatchFragments(DatasetConfig &config) {
         match.t = edge.target_node_id_;
         PrintDebug("Processing (%d %d)\n", match.s, match.t);
 
-        ReadPointCloudFromPLY(config.fragment_files_[match.s], source_origin);
-        ReadPointCloudFromPLY(config.fragment_files_[match.t], target_origin);
-        auto source = VoxelDownSample(source_origin, config.voxel_size_);
-        auto target = VoxelDownSample(target_origin, config.voxel_size_);
+        auto source = CreatePointCloudFromFile(config.fragment_files_[match.s]);
+        auto target = CreatePointCloudFromFile(config.fragment_files_[match.t]);
 
         cuda::RegistrationCuda registration(
             TransformationEstimationType::ColoredICP);

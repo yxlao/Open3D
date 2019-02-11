@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
 
     std::string config_path = argc > 1 ? argv[1] :
         "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda"
-        "/ReconstructionSystem/config/fr2_desktop.json";
+        "/ReconstructionSystem/config/chair.json";
 
     bool is_success = ReadIJsonConvertible(config_path, config);
     if (! is_success) return 1;
@@ -25,9 +25,10 @@ int main(int argc, char **argv) {
     DrawGeometries({mesh});
 
     config.GetFragmentFiles();
-    for (auto &ply_filename : config.fragment_files_) {
+    for (int i = 0; i < config.fragment_files_.size(); ++i) {
+        auto ply_filename = config.fragment_files_[i];
         auto pcl = CreatePointCloudFromFile(ply_filename);
-        DrawGeometries({pcl});
+        DrawGeometries({pcl}, ply_filename);
     }
     return 0;
 }

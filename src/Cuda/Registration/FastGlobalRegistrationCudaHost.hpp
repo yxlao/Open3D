@@ -91,7 +91,7 @@ void FastGlobalRegistrationCuda::Initialize(PointCloud &source,
     FastGlobalRegistrationCudaKernelCaller::ReciprocityTest(*this);
 
     /* 3) Tuple Test */
-    corres_final_.Create(corres_mutual_.size());
+    corres_final_.Create(corres_mutual_.size() * 300);
     device_->corres_final_ = *corres_final_.device_;
     FastGlobalRegistrationCudaKernelCaller::TupleTest(*this);
 

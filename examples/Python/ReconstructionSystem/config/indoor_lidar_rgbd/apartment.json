@@ -1,6 +1,6 @@
 {
     "name": "Indoor Lidar-RGBD Dataset: http://redwood-data.org/indoor_lidar_rgbd/download.html",
-    "path_dataset": "dataset/indoor_lidar_rgbd/apartment/",
+    "path_dataset": "/media/wei/Data/data/indoor_lidar_rgbd/apartment/",
     "path_intrinsic": "",
     "max_depth": 3.0,
     "voxel_size": 0.05,
@@ -9,6 +9,6 @@
     "preference_loop_closure_registration": 5.0,
     "tsdf_cubic_size": 3.0,
     "icp_method": "color",
-    "global_registration": "ransac",
-    "python_multi_threading": true
+    "global_registration": "fgr",
+    "python_multi_threading": false
 }
