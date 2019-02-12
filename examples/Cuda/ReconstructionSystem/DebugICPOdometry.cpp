@@ -22,8 +22,8 @@ using namespace open3d;
 std::vector<Match> MatchFragments(DatasetConfig &config) {
     std::vector<Match> matches;
 
-    for (int s = 0; s < config.fragment_files_.size() - 1; ++s) {
-        auto source = CreatePointCloudFromFile(config.fragment_files_[s]);
+    for (int s = 55; s < config.thumbnail_fragment_files_.size() - 1; ++s) {
+        auto source = CreatePointCloudFromFile(config.thumbnail_fragment_files_[s]);
 
         PoseGraph pose_graph_s;
         ReadPoseGraph(config.GetPoseGraphFileForFragment(s, true),
@@ -33,7 +33,7 @@ std::vector<Match> MatchFragments(DatasetConfig &config) {
         Eigen::Matrix4d init_source_to_target = rbegin->pose_.inverse();
 
         int t = s + 1;
-        auto target = CreatePointCloudFromFile(config.fragment_files_[t]);
+        auto target = CreatePointCloudFromFile(config.thumbnail_fragment_files_[t]);
 
         Match match;
         match.s = s;
@@ -52,8 +52,8 @@ std::vector<Match> MatchFragments(DatasetConfig &config) {
         PrintDebug("Pair (%d %d) odometry computed.\n", match.s, match.t);
         matches.push_back(match);
 
-        DrawGeometries({source}, "source");
-        DrawGeometries({target}, "target");
+//        DrawGeometries({source}, "source");
+//        DrawGeometries({target}, "target");
         DrawGeometries({source, target});
         source->Transform(match.trans_source_to_target);
         DrawGeometries({source, target});
@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
     timer.Start();
     filesystem::MakeDirectory(config.path_dataset_ + "/scene_cuda");
 
-    is_success = config.GetFragmentFiles();
+    is_success = config.GetThumbnailFragmentFiles();
     if (! is_success) {
         PrintError("Unable to get fragment files\n");
         return -1;

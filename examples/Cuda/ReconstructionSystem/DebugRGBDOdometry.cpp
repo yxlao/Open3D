@@ -51,7 +51,7 @@ PoseGraph MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
 
     /** Add odometry and keyframe info **/
     std::vector<ORBPoseEstimation::KeyframeInfo> keyframe_infos;
-    cv::Ptr<cv::ORB> orb = cv::ORB::create(100);
+    cv::Ptr<cv::ORB> orb = cv::ORB::create(300);
 
     for (int s = begin; s < end - 1; ++s) {
         Image depth, color;
@@ -107,6 +107,7 @@ PoseGraph MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
             keyframe_info.descriptor = desc;
             keyframe_info.keypoints = kp;
             keyframe_info.depth = rgbd_source.depthf_.DownloadMat();
+            keyframe_info.color = im;
             keyframe_infos.emplace_back(keyframe_info);
         }
     }
@@ -118,30 +119,42 @@ PoseGraph MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
                 int s = keyframe_infos[i].idx;
                 int t = keyframe_infos[j].idx;
                 PrintInfo("matching (%d %d)\n", s, t);
+//                if (s != 5770 || t != 5785) continue;
 
                 bool is_success;
                 Eigen::Matrix4d trans_source_to_target;
 
                 std::tie(is_success, trans_source_to_target) =
-                    ORBPoseEstimation::PoseEstimation(keyframe_infos[i],
+                    ORBPoseEstimation::PoseEstimationPnP(keyframe_infos[i],
                                                       keyframe_infos[j],
                                                       config.intrinsic_);
-
                 if (is_success) {
-                    odometry.transform_source_to_target_ =
-                        trans_source_to_target;
-
                     Image depth, color;
 
                     ReadImage(config.depth_files_[s], depth);
                     ReadImage(config.color_files_[s], color);
+//                    auto ss = CreateRGBDImageFromColorAndDepth(color, depth);
+
                     rgbd_source.Upload(depth, color);
 
                     ReadImage(config.depth_files_[t], depth);
                     ReadImage(config.color_files_[t], color);
+//                    auto tt = CreateRGBDImageFromColorAndDepth(color, depth);
+//
+//                    auto s_p = CreatePointCloudFromRGBDImage(*ss, config
+//                    .intrinsic_);
+//                    auto t_p = CreatePointCloudFromRGBDImage(*tt, config
+//                    .intrinsic_);
+//                    Eigen::Matrix4d tra;
+////                    s_p->Transform(trans_source_to_target);
+//                    s_p->Transform(tra);
+//                    DrawGeometries({s_p, t_p});
+
                     rgbd_target.Upload(depth, color);
 
                     odometry.Initialize(rgbd_source, rgbd_target);
+                    odometry.transform_source_to_target_ =
+                        trans_source_to_target;
                     auto result = odometry.ComputeMultiScale();
 
                     if (std::get<0>(result)) {
@@ -150,6 +163,8 @@ PoseGraph MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
                         Eigen::Matrix6d
                             information = odometry.ComputeInformationMatrix();
 
+                        PrintInfo("Add edge (%d %d)\n", s, t);
+                        std::cout << trans << "\n" << information << "\n";
                         pose_graph.edges_.emplace_back(PoseGraphEdge(
                             s - begin, t - begin, trans, information, true));
                     }
@@ -165,6 +180,9 @@ PoseGraph MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
 PoseGraph OptimizePoseGraphForFragment(int fragment_id, PoseGraph &pose_graph,
                                   DatasetConfig &config) {
 
+    std::cout << config.preference_loop_closure_odometry_ << std::endl;
+    SetVerbosityLevel(VerbosityLevel::VerboseDebug);
+
     GlobalOptimizationConvergenceCriteria criteria;
     GlobalOptimizationOption option(
         config.max_depth_diff_,
@@ -174,11 +192,9 @@ PoseGraph OptimizePoseGraphForFragment(int fragment_id, PoseGraph &pose_graph,
     GlobalOptimizationLevenbergMarquardt optimization_method;
     GlobalOptimization(pose_graph, optimization_method,
                        criteria, option);
+    SetVerbosityLevel(VerbosityLevel::VerboseInfo);
 
-    auto pose_graph_prunned = CreatePoseGraphWithoutInvalidEdges(
-        pose_graph, option);
-
-    return *pose_graph_prunned;
+    return pose_graph;
 }
 
 void IntegrateForFragment(int fragment_id, PoseGraph &pose_graph,
@@ -233,6 +249,7 @@ void IntegrateForFragment(int fragment_id, PoseGraph &pose_graph,
 
     std::shared_ptr<PointCloud> ptr = std::make_shared<PointCloud>(pcl);
     DrawGeometries({ptr});
+    WritePointCloudToPLY("/home/wei/fragment_057_cuda_nocv.ply", pcl);
 }
 
 
@@ -244,13 +261,12 @@ int main(int argc, char **argv) {
 
     std::string config_path = argc > 1 ? argv[1] :
                               "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda"
-                              "/ReconstructionSystem/config/lounge.json";
+                              "/ReconstructionSystem/config/apartment.json";
 
     bool is_success = ReadIJsonConvertible(config_path, config);
     if (!is_success) return 1;
 
-    SetVerbosityLevel(VerbosityLevel::VerboseDebug);
-
+//    SetVerbosityLevel(VerbosityLevel::VerboseDebug);
     filesystem::MakeDirectory(config.path_dataset_ + "/fragments_cuda");
 
     config.with_opencv_ = true;
@@ -258,7 +274,7 @@ int main(int argc, char **argv) {
         DIV_CEILING(config.color_files_.size(),
                     config.n_frames_per_fragment_);
 
-    for (int i = 29; i < num_fragments; ++i) {
+    for (int i = 57; i < 58; ++i) {
         PrintInfo("Processing fragment %d / %d\n", i, num_fragments - 1);
         auto pose_graph = MakePoseGraphForFragment(i, config);
         auto pose_graph_prunned = OptimizePoseGraphForFragment(i, pose_graph,
