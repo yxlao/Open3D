@@ -4,28 +4,27 @@
 
 #include <vector>
 #include <string>
-#include <sstream>
-#include <cmath>
-#include <iomanip>
-
 #include <Core/Core.h>
-#include <Core/Registration/PoseGraph.h>
-#include <Core/Registration/GlobalOptimization.h>
-
 #include <IO/IO.h>
+#include <Visualization/Visualization.h>
 
 #include <Cuda/Odometry/RGBDOdometryCuda.h>
 #include <Cuda/Integration/ScalableTSDFVolumeCuda.h>
 #include <Cuda/Integration/ScalableMeshVolumeCuda.h>
 
-#include <opencv2/opencv.hpp>
-#include "DatasetConfig.h"
+#include <Cuda/Registration/RegistrationCuda.h>
+#include <Cuda/Registration/ColoredICPCuda.h>
+#include <Cuda/Registration/FastGlobalRegistrationCuda.h>
+
+#include <Core/Registration/PoseGraph.h>
+#include <Core/Registration/GlobalOptimization.h>
+
 #include "ORBPoseEstimation.h"
+#include "DatasetConfig.h"
 
 using namespace open3d;
 
-namespace MakeFragment {
-void MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
+PoseGraph MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
 
     cuda::RGBDOdometryCuda<3> odometry;
     odometry.SetIntrinsics(config.intrinsic_);
@@ -82,6 +81,18 @@ void MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
         pose_graph.nodes_.emplace_back(PoseGraphNode(trans_odometry_inv));
         pose_graph.edges_.emplace_back(PoseGraphEdge(
             s - begin, t - begin, trans, information, false));
+
+//        std::shared_ptr<cuda::PointCloudCuda>
+//            pcl_source = std::make_shared<cuda::PointCloudCuda>(
+//            cuda::VertexWithColor, 300000),
+//            pcl_target = std::make_shared<cuda::PointCloudCuda>(
+//            cuda::VertexWithColor, 300000);
+//        pcl_source->Build(odometry.source_[0],
+//                          odometry.device_->intrinsics_[0]);
+//        pcl_target->Build(odometry.target_[0],
+//                          odometry.device_->intrinsics_[0]);
+//        pcl_source->Transform(odometry.transform_source_to_target_);
+//        DrawGeometries({pcl_source, pcl_target});
 
         /** Insert a keyframe **/
         if (config.with_opencv_ && s % config.n_keyframes_per_n_frame_ == 0) {
@@ -147,16 +158,12 @@ void MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
         }
     }
 
-    WritePoseGraph(config.GetPoseGraphFileForFragment(fragment_id, false),
-                   pose_graph);
+    return pose_graph;
 }
 
-void OptimizePoseGraphForFragment(int fragment_id,
-                                  DatasetConfig &config) {
 
-    PoseGraph pose_graph;
-    ReadPoseGraph(config.GetPoseGraphFileForFragment(fragment_id, false),
-                  pose_graph);
+PoseGraph OptimizePoseGraphForFragment(int fragment_id, PoseGraph &pose_graph,
+                                  DatasetConfig &config) {
 
     GlobalOptimizationConvergenceCriteria criteria;
     GlobalOptimizationOption option(
@@ -171,15 +178,11 @@ void OptimizePoseGraphForFragment(int fragment_id,
     auto pose_graph_prunned = CreatePoseGraphWithoutInvalidEdges(
         pose_graph, option);
 
-    WritePoseGraph(config.GetPoseGraphFileForFragment(fragment_id, true),
-                   *pose_graph_prunned);
+    return *pose_graph_prunned;
 }
 
-void IntegrateForFragment(int fragment_id, DatasetConfig &config) {
-
-    PoseGraph pose_graph;
-    ReadPoseGraph(config.GetPoseGraphFileForFragment(fragment_id, true),
-                  pose_graph);
+void IntegrateForFragment(int fragment_id, PoseGraph &pose_graph,
+                          DatasetConfig &config) {
 
     float voxel_length = config.tsdf_cubic_size_ / 512.0;
 
@@ -228,33 +231,40 @@ void IntegrateForFragment(int fragment_id, DatasetConfig &config) {
     pcl.normals_ = mesh->vertex_normals_;
     pcl.colors_ = mesh->vertex_colors_;
 
-    /** Write original fragments **/
-    WritePointCloudToPLY(config.GetPlyFileForFragment(fragment_id), pcl);
-
-    /** Write downsampled thumbnail fragments **/
-    auto pcl_downsampled = VoxelDownSample(pcl, config.voxel_size_);
-    WritePointCloudToPLY(config.GetThumbnailPlyFileForFragment(fragment_id),
-                         *pcl_downsampled);
+    std::shared_ptr<PointCloud> ptr = std::make_shared<PointCloud>(pcl);
+    DrawGeometries({ptr});
 }
 
-static int Run(DatasetConfig &config) {
+
+int main(int argc, char **argv) {
     Timer timer;
     timer.Start();
 
-    filesystem::MakeDirectoryHierarchy(
-        config.path_dataset_ + "/fragments_cuda/thumbnails");
+    DatasetConfig config;
 
+    std::string config_path = argc > 1 ? argv[1] :
+                              "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda"
+                              "/ReconstructionSystem/config/lounge.json";
+
+    bool is_success = ReadIJsonConvertible(config_path, config);
+    if (!is_success) return 1;
+
+    SetVerbosityLevel(VerbosityLevel::VerboseDebug);
+
+    filesystem::MakeDirectory(config.path_dataset_ + "/fragments_cuda");
+
+    config.with_opencv_ = true;
     const int num_fragments =
         DIV_CEILING(config.color_files_.size(),
                     config.n_frames_per_fragment_);
 
-    for (int i = 0; i < num_fragments; ++i) {
+    for (int i = 29; i < num_fragments; ++i) {
         PrintInfo("Processing fragment %d / %d\n", i, num_fragments - 1);
-        MakePoseGraphForFragment(i, config);
-        OptimizePoseGraphForFragment(i, config);
-        IntegrateForFragment(i, config);
+        auto pose_graph = MakePoseGraphForFragment(i, config);
+        auto pose_graph_prunned = OptimizePoseGraphForFragment(i, pose_graph,
+            config);
+        IntegrateForFragment(i, pose_graph, config);
     }
     timer.Stop();
     PrintInfo("MakeFragment takes %.3f s\n", timer.GetDuration() / 1000.0f);
 }
-};

@@ -13,5 +13,11 @@ target_link_libraries(CVEstimation ${CMAKE_PROJECT_NAME})
 add_executable(DebugICPOdometry DebugICPOdometry.cpp)
 target_link_libraries(DebugICPOdometry ${CMAKE_PROJECT_NAME})
 
+add_executable(DebugRGBDOdometry DebugRGBDOdometry.cpp)
+target_link_libraries(DebugRGBDOdometry ${CMAKE_PROJECT_NAME})
+
 add_executable(RegisterFragmentsWithReloc RegisterFragmentsWithOdometry.cpp)
 target_link_libraries(RegisterFragmentsWithReloc ${CMAKE_PROJECT_NAME})
+
+add_executable(TestCVFunctions TestCVFunctions.cpp)
+target_link_libraries(TestCVFunctions ${CMAKE_PROJECT_NAME})

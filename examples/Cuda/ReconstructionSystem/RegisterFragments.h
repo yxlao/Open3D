@@ -22,8 +22,9 @@ namespace RegisterFragments {
 std::vector<Match> MatchFragments(DatasetConfig &config) {
     std::vector<Match> matches;
 
-    for (int s = 0; s < config.fragment_files_.size() - 1; ++s) {
-        auto source = CreatePointCloudFromFile(config.fragment_files_[s]);
+    for (int s = 0; s < config.thumbnail_fragment_files_.size() - 1; ++s) {
+        auto source = CreatePointCloudFromFile(
+            config.thumbnail_fragment_files_[s]);
 
         PoseGraph pose_graph_s;
         ReadPoseGraph(config.GetPoseGraphFileForFragment(s, true),
@@ -32,13 +33,15 @@ std::vector<Match> MatchFragments(DatasetConfig &config) {
         auto rbegin = pose_graph_s.nodes_.rbegin();
         Eigen::Matrix4d init_source_to_target = rbegin->pose_.inverse();
 
-        for (int t = s + 1; t < config.fragment_files_.size(); ++t) {
-            auto target = CreatePointCloudFromFile(config.fragment_files_[t]);
+        for (int t = s + 1; t < config.thumbnail_fragment_files_.size(); ++t) {
+            auto target = CreatePointCloudFromFile(
+                config.thumbnail_fragment_files_[t]);
 
             Match match;
             match.s = s;
             match.t = t;
 
+            /** Colored ICP **/
             if (t == s + 1) {
                 cuda::RegistrationCuda registration(
                     TransformationEstimationType::ColoredICP);
@@ -53,6 +56,8 @@ std::vector<Match> MatchFragments(DatasetConfig &config) {
                 PrintDebug("Pair (%d %d) odometry computed.\n",
                            match.s, match.t);
             }
+
+            /** Fast global registration **/
             else {
                 cuda::FastGlobalRegistrationCuda fgr;
                 fgr.Initialize(*source, *target);
@@ -148,9 +153,9 @@ int Run(DatasetConfig &config) {
     timer.Start();
     filesystem::MakeDirectory(config.path_dataset_ + "/scene_cuda");
 
-    bool is_success = config.GetFragmentFiles();
+    bool is_success = config.GetThumbnailFragmentFiles();
     if (! is_success) {
-        PrintError("Unable to get fragment files\n");
+        PrintError("Unable to get thumbnail fragment files\n");
         return -1;
     }
 

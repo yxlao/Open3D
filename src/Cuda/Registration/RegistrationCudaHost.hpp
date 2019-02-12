@@ -65,12 +65,14 @@ Eigen::Matrix6d RegistrationCuda::ComputeInformationMatrix() {
     return estimator_->ComputeInformationMatrix();
 }
 
-RegistrationResultCuda RegistrationCuda::ComputeICP() {
+RegistrationResultCuda RegistrationCuda::ComputeICP(int iter) {
+    assert(iter > 0);
+
     auto result = DoSingleIteration(0);
     float prev_fitness = result.fitness_;
     float prev_rmse = result.inlier_rmse_;
 
-    for (int i = 1; i < 30; ++i) {
+    for (int i = 1; i < iter; ++i) {
         result = DoSingleIteration(i);
 
         if (std::abs(prev_fitness - result.fitness_) < 1e-6

@@ -108,10 +108,10 @@ def associate(first_dict, second_dict, offset, max_difference):
     return matches
 
 
-def generate_data_association(dataset_path,
+def generate_data_association(dataset_path, filename,
                               first_dict, second_dict, matches,
                               first_only):
-    with open(dataset_path + '/data_association.txt', 'w') as fout:
+    with open(dataset_path + '/' + filename, 'w') as fout:
         if first_only:
             for a, b in matches:
                 fout.write('{} {}\n'.format(a, " ".join(first_dict[a])))
@@ -153,6 +153,10 @@ if __name__ == '__main__':
         matched_depth_and_rgb = associate(depth_dict, rgb_dict,
                                           float(args.offset),
                                           float(args.max_difference))
+        generate_data_association(dataset_absolute_path,
+                                  'depth_rgb_association.txt',
+                                  depth_dict, rgb_dict, matched_depth_and_rgb,
+                                  args.first_only)
 
         matched_depth_and_gt = associate(depth_dict, gt_dict,
                                          float(args.offset),
@@ -168,7 +172,7 @@ if __name__ == '__main__':
                 matches.append((a, b))
                 gts.append(associated_detph_and_gt[0][1])
 
-        generate_data_association(dataset_absolute_path,
+        generate_data_association(dataset_absolute_path, 'data_association.txt',
                                   depth_dict, rgb_dict, matches,
                                   args.first_only)
 
@@ -187,5 +191,6 @@ if __name__ == '__main__':
 
         save_traj_log(dataset_absolute_path + '/trajectory.log', trajectory)
 
-        print('{} {} {} -> {}'.format(
-            len(depth_dict), len(rgb_dict), len(gt_dict), len(gts)))
+        print('({} {}->{}) {} -> {}'.format(
+            len(depth_dict), len(rgb_dict), len(matched_depth_and_rgb),
+            len(gt_dict), len(gts)))

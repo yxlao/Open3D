@@ -56,7 +56,7 @@ public:
     Eigen::Matrix6d ComputeInformationMatrix();
 
     /* Wrapper of multiple iterations */
-    RegistrationResultCuda ComputeICP();
+    RegistrationResultCuda ComputeICP(int iter = 60);
 };
 }
 }

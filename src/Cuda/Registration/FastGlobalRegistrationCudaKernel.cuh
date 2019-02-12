@@ -91,7 +91,7 @@ void FastGlobalRegistrationCudaKernelCaller::TupleTest(
 
     curandGenerator_t gen;
     curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT);
-    curandSetPseudoRandomGeneratorSeed(gen, (unsigned int) std::time(0));
+    curandSetPseudoRandomGeneratorSeed(gen, (unsigned int) std::time(NULL));
     curandGenerateUniform(gen, random_numbers.device_->data(), n);
     curandDestroyGenerator(gen);
 

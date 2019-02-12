@@ -42,18 +42,18 @@ public:
     double tsdf_cubic_size_;
     double tsdf_truncation_;
 
-
     PinholeCameraIntrinsic intrinsic_;
     std::vector<std::string> color_files_;
     std::vector<std::string> depth_files_;
     std::vector<std::string> fragment_files_;
+    std::vector<std::string> thumbnail_fragment_files_;
 
     bool GetColorAndDepthFilesForTUM() {
         std::string association_file_name = path_dataset_ +
-            "/data_association.txt";
-        if (! filesystem::FileExists(association_file_name)) {
+            "/depth_rgb_association.txt";
+        if (!filesystem::FileExists(association_file_name)) {
             PrintError("Data association file not found for %s\n",
-                path_dataset_.c_str());
+                       path_dataset_.c_str());
             return false;
         }
 
@@ -82,13 +82,13 @@ public:
         }
 
         PrintError("No color image folder found in directory %s\n",
-            path_dataset_.c_str());
+                   path_dataset_.c_str());
         return false;
     }
 
     bool GetDepthFiles() {
         std::string depth_directory = path_dataset_ + "/depth";
-        if (! filesystem::DirectoryExists(depth_directory)) {
+        if (!filesystem::DirectoryExists(depth_directory)) {
             PrintError("No depth image folder found in directory %s\n",
                        depth_directory.c_str());
             return false;
@@ -102,7 +102,7 @@ public:
 
     bool GetFragmentFiles() {
         std::string fragment_directory = path_dataset_ + "/fragments_cuda";
-        if (! filesystem::DirectoryExists(fragment_directory)) {
+        if (!filesystem::DirectoryExists(fragment_directory)) {
             PrintError("No fragment folder found in directory %s\n",
                        fragment_directory.c_str());
             return false;
@@ -116,9 +116,35 @@ public:
         return true;
     }
 
+    bool GetThumbnailFragmentFiles() {
+        std::string fragment_directory =
+            path_dataset_ + "/fragments_cuda/thumbnails";
+        if (!filesystem::DirectoryExists(fragment_directory)) {
+            PrintError("No fragment thumbnail folder found in directory %s\n",
+                       fragment_directory.c_str());
+            return false;
+        }
+
+        filesystem::ListFilesInDirectoryWithExtension(
+            fragment_directory, "ply", thumbnail_fragment_files_);
+
+        /* alphabetical order */
+        std::sort(thumbnail_fragment_files_.begin(),
+                  thumbnail_fragment_files_.end());
+        return true;
+    }
+
     std::string GetPlyFileForFragment(int fragment_id) {
         std::stringstream ss;
         ss << path_dataset_ << "/fragments_cuda/fragment_";
+        ss << std::setw(3) << std::setfill('0') << fragment_id;
+        ss << ".ply";
+        return ss.str();
+    }
+
+    std::string GetThumbnailPlyFileForFragment(int fragment_id) {
+        std::stringstream ss;
+        ss << path_dataset_ << "/fragments_cuda/thumbnails/fragment_";
         ss << std::setw(3) << std::setfill('0') << fragment_id;
         ss << ".ply";
         return ss.str();
@@ -209,7 +235,7 @@ public:
             }
         }
 
-        if (! is_tum_) {
+        if (!is_tum_) {
             GetColorFiles();
             GetDepthFiles();
         } else {

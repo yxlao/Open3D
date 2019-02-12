@@ -19,6 +19,41 @@
 using namespace open3d;
 
 namespace RefineRegistration {
+
+std::tuple<Eigen::Matrix4d, Eigen::Matrix6d>
+    MultiScaleICP(const PointCloud &source, const PointCloud& target,
+                    const Eigen::Matrix4d &init_trans,
+                    const float voxel_size,
+                    const std::vector<int> &iters = {50, 30, 14},
+                    const std::vector<float> &voxel_factors = {1.0, 2.0, 4.0}) {
+
+    assert(iters.size() == voxel_factors.size());
+
+    Eigen::Matrix4d transformation = init_trans;
+    Eigen::Matrix6d information = Eigen::Matrix6d::Identity();
+
+    for (int i = 0; i < iters.size(); ++i) {
+        float voxel_size_level = voxel_size / voxel_factors[i];
+        auto source_down = VoxelDownSample(source, voxel_size_level);
+        auto target_down = VoxelDownSample(target, voxel_size_level);
+
+        cuda::RegistrationCuda registration(
+            TransformationEstimationType::ColoredICP);
+        registration.Initialize(*source_down, *target_down,
+                                voxel_size_level * 1.4f,
+                                transformation);
+        registration.ComputeICP(iters[i]);
+
+        transformation = registration.transform_source_to_target_;
+
+        if (i == iters.size() - 1) {
+            information = registration.ComputeInformationMatrix();
+        }
+    }
+
+    return std::make_tuple(transformation, information);
+}
+
 std::vector<Match> MatchFragments(DatasetConfig &config) {
 
     PoseGraph pose_graph;
@@ -30,24 +65,18 @@ std::vector<Match> MatchFragments(DatasetConfig &config) {
         Match match;
         match.s = edge.source_node_id_;
         match.t = edge.target_node_id_;
+        match.success = true;
+
         PrintDebug("Processing (%d %d)\n", match.s, match.t);
 
         auto source = CreatePointCloudFromFile(config.fragment_files_[match.s]);
         auto target = CreatePointCloudFromFile(config.fragment_files_[match.t]);
 
-        cuda::RegistrationCuda registration(
-            TransformationEstimationType::ColoredICP);
-        registration.Initialize(*source, *target,
-                                (float) config.voxel_size_ * 1.4f,
-                                edge.transformation_);
-        registration.ComputeICP();
-        match.trans_source_to_target =
-            registration.transform_source_to_target_;
-        match.information = registration.ComputeInformationMatrix();
-        match.success = true;
+        std::tie(match.trans_source_to_target, match.information) =
+            MultiScaleICP(*source, *target,
+                edge.transformation_, config.voxel_size_);
 
-        PrintDebug("Pair (%d %d) odometry computed.\n",
-                   match.s, match.t);
+        PrintDebug("Pair (%d %d) odometry computed.\n", match.s, match.t);
 
         matches.push_back(match);
     }
