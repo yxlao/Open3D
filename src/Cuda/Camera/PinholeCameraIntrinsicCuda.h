@@ -100,6 +100,10 @@ public:
             && p(1) >= 0 && p(1) < height_ - 1;
     }
 
+    __HOSTDEVICE__ inline bool IsPixelValid(const Vector2i &p) {
+        return p(0) >= 0 && p(0) < width_ && p(1) >= 0 && p(1) < height_;
+    }
+
     __HOSTDEVICE__ bool IsPointInFrustum(const Vector3f &X, size_t level = 0) {
         /* TODO: Derive a RGBDImage Class (using short),
          * holding depth constraints */

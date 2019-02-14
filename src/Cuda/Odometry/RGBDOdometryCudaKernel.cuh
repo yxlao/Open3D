@@ -3,6 +3,7 @@
 //
 
 #include "RGBDOdometryCudaDevice.cuh"
+#include <math_constants.h>
 
 namespace open3d {
 namespace cuda {
@@ -28,7 +29,7 @@ void DoSingleIterationKernel(RGBDOdometryCudaDevice<N> odometry, size_t level) {
         || y >= odometry.source_[level].depth_.height_)
         return;
 
-    int x_target, y_target;
+    int x_target = -1, y_target = -1;
     float residual_I, residual_D;
     Vector3f X_source_on_target;
     bool mask = odometry.ComputePixelwiseCorrespondenceAndResidual(
@@ -44,6 +45,14 @@ void DoSingleIterationKernel(RGBDOdometryCudaDevice<N> odometry, size_t level) {
         odometry.correspondences_.push_back(Vector4i(x, y, x_target, y_target));
         ComputeJtJAndJtr(jacobian_I, jacobian_D, residual_I, residual_D,
             JtJ, Jtr);
+//        printf("- (%d %d) -> "
+//               "(%f %f %f %f %f %f) - %f "
+//               "(%f %f %f %f %f %f) - %f\n",
+//            x_target, y_target,
+//            jacobian_D(0), jacobian_D(1), jacobian_D(2),
+//            jacobian_D(3), jacobian_D(4), jacobian_D(5), residual_D,
+//            jacobian_I(0), jacobian_I(1), jacobian_I(2),
+//            jacobian_I(3), jacobian_I(4), jacobian_I(5), residual_I);
     }
 
     /** Reduce Sum JtJ -> 2ms **/
@@ -104,8 +113,8 @@ void RGBDOdometryCudaKernelCaller<N>::DoSingleIteration(
     RGBDOdometryCuda<N> &odometry, size_t level) {
 
     const dim3 blocks(
-        DIV_CEILING(odometry.source_[level].depthf_.width_, THREAD_2D_UNIT),
-        DIV_CEILING(odometry.source_[level].depthf_.height_, THREAD_2D_UNIT));
+        DIV_CEILING(odometry.source_[level].depth_.width_, THREAD_2D_UNIT),
+        DIV_CEILING(odometry.source_[level].depth_.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
     DoSingleIterationKernel << < blocks, threads >> > (
         *odometry.device_, level);
@@ -167,10 +176,135 @@ void RGBDOdometryCudaKernelCaller<N>::ComputeInformationMatrix(
     RGBDOdometryCuda<N> &odometry) {
 
     const dim3 blocks(
-        DIV_CEILING(odometry.source_[0].depthf_.width_, THREAD_2D_UNIT),
-        DIV_CEILING(odometry.source_[0].depthf_.height_, THREAD_2D_UNIT));
+        DIV_CEILING(odometry.source_[0].depth_.width_, THREAD_2D_UNIT),
+        DIV_CEILING(odometry.source_[0].depth_.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
     ComputeInformationMatrixKernel << < blocks, threads >> >(*odometry.device_);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+}
+
+template<size_t N>
+__global__
+void PreprocessDepthKernel(RGBDOdometryCudaDevice<N> odometry) {
+    const int x = threadIdx.x + blockIdx.x * blockDim.x;
+    const int y = threadIdx.y + blockIdx.y * blockDim.y;
+    if (x >= odometry.source_input_.depth_.width_
+        || y >= odometry.source_input_.depth_.height_)
+        return;
+
+    float &depth_src = odometry.source_input_.depth_.at(x, y)(0);
+    if (! odometry.IsValidDepth(depth_src)) {
+        depth_src = CUDART_NAN_F;
+    }
+
+    float &depth_tgt = odometry.target_input_.depth_.at(x, y)(0);
+    if (! odometry.IsValidDepth(depth_tgt)) {
+        depth_tgt = CUDART_NAN_F;
+    }
+}
+
+template<size_t N>
+void RGBDOdometryCudaKernelCaller<N>::PreprocessDepth(
+    RGBDOdometryCuda<N> &odometry){
+
+    const dim3 blocks(
+        DIV_CEILING(odometry.source_preprocessed_.depth_.width_, THREAD_2D_UNIT),
+        DIV_CEILING(odometry.target_preprocessed_.depth_.height_, THREAD_2D_UNIT));
+    const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+    PreprocessDepthKernel << < blocks, threads >> >(*odometry.device_);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+}
+
+template<size_t N>
+__global__
+void ComputeInitCorrespondenceMeanKernel(
+    RGBDOdometryCudaDevice<N> odometry, ArrayCudaDevice<float> means) {
+    __shared__ float local_sum0[THREAD_2D_UNIT * THREAD_2D_UNIT];
+    __shared__ float local_sum1[THREAD_2D_UNIT * THREAD_2D_UNIT];
+    __shared__ float local_sum2[THREAD_2D_UNIT * THREAD_2D_UNIT];
+
+    const int x = threadIdx.x + blockIdx.x * blockDim.x;
+    const int y = threadIdx.y + blockIdx.y * blockDim.y;
+    const int tid = threadIdx.x + threadIdx.y * blockDim.x;
+
+    /** Proper initialization **/
+    local_sum0[tid] = 0;
+    local_sum1[tid] = 0;
+    local_sum2[tid] = 0;
+
+    if (x >= odometry.source_[0].depth_.width_
+        || y >= odometry.source_[0].depth_.height_)
+        return;
+
+    int x_target = -1, y_target = -1;
+    float residual_I, residual_D;
+    Vector3f X_source_on_target;
+    bool mask = odometry.ComputePixelwiseCorrespondenceAndResidual(
+        x, y, 0, x_target, y_target,
+        X_source_on_target, residual_I, residual_D);
+
+    if (mask) {
+        odometry.correspondences_.push_back(Vector4i(x, y, x_target, y_target));
+    }
+
+    local_sum0[tid] = mask ?
+        odometry.source_[0].intensity_(x, y)(0) : 0;
+    local_sum1[tid] = mask ?
+        odometry.target_[0].intensity_(x_target, y_target)(0) : 0;
+    local_sum2[tid] = mask ? 1 : 0;
+    __syncthreads();
+
+    TripleBlockReduceSum<float>(local_sum0, local_sum1, local_sum2, tid);
+
+    if (tid == 0) {
+        atomicAdd(&means[0], local_sum0[0]);
+        atomicAdd(&means[1], local_sum1[0]);
+        atomicAdd(&means[2], local_sum2[0]);
+    }
+    __syncthreads();
+}
+
+template<size_t N>
+__global__
+void NormalizeIntensityKernel(RGBDOdometryCudaDevice<N> odometry,
+    ArrayCudaDevice<float> means) {
+    const int x = threadIdx.x + blockIdx.x * blockDim.x;
+    const int y = threadIdx.y + blockIdx.y * blockDim.y;
+
+    if (x >= odometry.source_input_.depth_.width_
+        || y >= odometry.source_input_.depth_.height_)
+        return;
+
+    float &intensity_source = odometry.source_[0].intensity_.at(x, y)(0);
+    intensity_source *= 0.5f * (means[2] / means[0]);
+
+    float &intensity_target = odometry.target_[0].intensity_.at(x, y)(0);
+    intensity_target *= 0.5f * (means[2] / means[1]);
+}
+
+template<size_t N>
+void RGBDOdometryCudaKernelCaller<N>::NormalizeIntensity(
+    RGBDOdometryCuda<N> &odometry) {
+    ArrayCuda<float> means;
+    means.Create(3);
+    means.Memset(0);
+
+    const dim3 blocks(
+        DIV_CEILING(odometry.source_[0].intensity_.width_, THREAD_2D_UNIT),
+        DIV_CEILING(odometry.source_[0].intensity_.height_, THREAD_2D_UNIT));
+    const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+
+    ComputeInitCorrespondenceMeanKernel<< < blocks, threads >> >(
+        *odometry.device_, *means.device_);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+
+    auto means_intensity = means.DownloadAll();
+
+    NormalizeIntensityKernel<<<blocks, threads>>>(
+        *odometry.device_, *means.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }

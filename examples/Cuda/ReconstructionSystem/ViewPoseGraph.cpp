@@ -9,22 +9,7 @@
 
 using namespace open3d;
 
-int main(int argc, char **argv) {
-    SetVerbosityLevel(VerbosityLevel::VerboseDebug);
-
-    DatasetConfig config;
-
-    std::string config_path = argc > 1 ? argv[1] :
-                              "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda"
-                              "/ReconstructionSystem/config/chair.json";
-
-    bool is_success = ReadIJsonConvertible(config_path, config);
-    if (! is_success) return 1;
-
-    PoseGraph pose_graph;
-    ReadPoseGraph(config.GetPoseGraphFileForScene(true),
-                  pose_graph);
-
+std::shared_ptr<LineSet> VisualizePoseGraph(PoseGraph &pose_graph) {
     std::shared_ptr<LineSet> pose_graph_vis = std::make_shared<LineSet>();
 
     int cnt = 0;
@@ -34,7 +19,7 @@ int main(int argc, char **argv) {
     for (auto &node : pose_graph.nodes_) {
         auto pose = node.pose_;
 
-        double norm = 0.1;
+        double norm = 0.001;
         pose_graph_vis->points_.emplace_back(
             (pose * Eigen::Vector4d(0, 0, 0, 1)).hnormalized());
         pose_graph_vis->points_.emplace_back(
@@ -85,7 +70,41 @@ int main(int argc, char **argv) {
         }
     }
 
-    DrawGeometries({pose_graph_vis});
+    return pose_graph_vis;
+}
+
+int main(int argc, char **argv) {
+    SetVerbosityLevel(VerbosityLevel::VerboseDebug);
+
+    DatasetConfig config;
+
+//    std::string config_path = argc > 1 ? argv[1] :
+//                              "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda"
+//                              "/ReconstructionSystem/config/chair.json";
+//
+//    bool is_success = ReadIJsonConvertible(config_path, config);
+//    if (! is_success) return 1;
+
+    PoseGraph pose_graph_cpu, pose_graph_cuda;
+
+    std::string path_cuda =
+        "/media/wei/Data/data/indoor_lidar_rgbd/apartment/fragments_cuda/"
+        "fragment_057.json";
+    std::string path_cpu_optimized =
+        "/media/wei/Data/data/indoor_lidar_rgbd/apartment/fragments/"
+        "fragment_optimized_057.json";
+    std::string path_cpu =
+        "/media/wei/Data/data/indoor_lidar_rgbd/apartment/fragments/"
+        "fragment_057.json";
+
+    ReadPoseGraph(path_cuda, pose_graph_cuda);
+    ReadPoseGraph(path_cpu, pose_graph_cpu);
+
+    auto pose_graph_vis_cuda = VisualizePoseGraph(pose_graph_cuda);
+    auto pose_graph_vis_cpu = VisualizePoseGraph(pose_graph_cpu);
+
+
+    DrawGeometries({pose_graph_vis_cuda, pose_graph_vis_cpu});
 
     return 0;
 }

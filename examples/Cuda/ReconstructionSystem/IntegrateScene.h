@@ -33,8 +33,7 @@ void IntegrateFragment(
         local_pose_graph);
 
     cuda::PinholeCameraIntrinsicCuda intrinsics(config.intrinsic_);
-    cuda::RGBDImageCuda rgbd((float)config.min_depth_,
-                             (float)config.max_depth_,
+    cuda::RGBDImageCuda rgbd((float)config.max_depth_,
                              (float)config.depth_factor_);
 
     const int begin = fragment_id * config.n_frames_per_fragment_;

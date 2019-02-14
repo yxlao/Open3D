@@ -19,8 +19,8 @@ void BuildFromRGBDImageKernel(PointCloudCudaDevice pcl,
     if (x >= rgbd.width_ || y >= rgbd.height_) return;
 
     float depth = rgbd.depth_.at(x, y)(0);
-    if (depth == 0) return;
-    Vector3b color = rgbd.color_.at(x, y);
+    if (depth == 0 || isnan(depth)) return;
+    Vector3b color = rgbd.color_raw_.at(x, y);
 
     Vector3f point = intrinsic.InverseProjectPixel(Vector2i(x, y), depth);
 
@@ -53,7 +53,7 @@ void BuildFromDepthImageKernel(PointCloudCudaDevice pcl,
     if (x >= depth.width_ || y >= depth.height_) return;
 
     float d = depth.at(x, y)(0);
-    if (d == 0) return;
+    if (d == 0 || isnan(d)) return;
 
     Vector3f point = intrinsic.InverseProjectPixel(Vector2i(x, y), d);
     pcl.points_.push_back(point);

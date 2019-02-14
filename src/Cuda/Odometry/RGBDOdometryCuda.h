@@ -6,6 +6,8 @@
 
 #include "OdometryClasses.h"
 
+#include <math.h>
+
 #include <Cuda/Common/JacobianCuda.h>
 #include <Cuda/Common/UtilsCuda.h>
 #include <Cuda/Common/LinearAlgebraCuda.h>
@@ -51,6 +53,8 @@ class RGBDOdometryCudaDevice {
 public:
     ImagePyramidCudaDevice<Vector1f, N> source_on_target_;
 
+    RGBDImageCudaDevice source_input_;
+    RGBDImageCudaDevice target_input_;
     RGBDImagePyramidCudaDevice<N> source_;
     RGBDImagePyramidCudaDevice<N> target_;
     RGBDImagePyramidCudaDevice<N> target_dx_;
@@ -71,16 +75,23 @@ public:
     float sqrt_coeff_D_;
 
 public:
-    float depth_near_threshold_;
-    float depth_far_threshold_;
-    float depth_diff_threshold_;
+    float min_depth_;
+    float max_depth_;
+    float max_depth_diff_;
 
 public:
     __HOSTDEVICE__ inline bool IsValidDepth(float depth) {
-        return depth_near_threshold_ <= depth && depth <= depth_far_threshold_;
+        return
+#ifdef __CUDACC__
+            !isnan(depth)
+#else
+            !std::isnan(depth)
+#endif
+        && depth > 0 && min_depth_ <= depth && depth <= max_depth_;
     }
+
     __HOSTDEVICE__ inline bool IsValidDepthDiff(float depth_diff) {
-        return fabsf(depth_diff) <= depth_diff_threshold_;
+        return fabsf(depth_diff) <= max_depth_diff_;
     }
 
 public:
@@ -109,19 +120,21 @@ public:
     std::shared_ptr<RGBDOdometryCudaDevice<N>> device_ = nullptr;
 
 public:
+    /** Preprocess the input: 0 -> nan, normalization, etc **/
+    RGBDImageCuda source_preprocessed_;
+    RGBDImageCuda target_preprocessed_;
+
+    /** Core in RGBD Odometry **/
     RGBDImagePyramidCuda<N> source_;
     RGBDImagePyramidCuda<N> target_;
 
-private:
-    ImagePyramidCuda<Vector1f, N> source_on_target_;
-    RGBDImagePyramidCuda<N> source_raw_;
-    RGBDImagePyramidCuda<N> target_raw_;
     RGBDImagePyramidCuda<N> target_dx_;
     RGBDImagePyramidCuda<N> target_dy_;
 
     ArrayCuda<float> results_;
 
-public:
+    /** Debug use **/
+    ImagePyramidCuda<Vector1f, N> source_on_target_;
     ArrayCuda<Vector4i> correspondences_;
 
 public:
@@ -141,6 +154,7 @@ public:
     bool Create(int width, int height);
     void Release();
     void UpdateDevice();
+    void UpdateSigma(float sigma);
 
     void Initialize(RGBDImageCuda &source, RGBDImageCuda &target);
 
@@ -161,6 +175,8 @@ class RGBDOdometryCudaKernelCaller {
 public:
     static void DoSingleIteration(RGBDOdometryCuda<N> &odometry, size_t level);
     static void ComputeInformationMatrix(RGBDOdometryCuda<N> &odometry);
+    static void PreprocessDepth(RGBDOdometryCuda<N> &odometry);
+    static void NormalizeIntensity(RGBDOdometryCuda<N> &odometry);
 };
 
 template<size_t N>
@@ -170,6 +186,20 @@ void DoSingleIterationKernel(RGBDOdometryCudaDevice<N> odometry, size_t level);
 template<size_t N>
 __GLOBAL__
 void ComputeInformationMatrixKernel(RGBDOdometryCudaDevice<N> odometry);
+
+template<size_t N>
+__GLOBAL__
+void PreprocessDepthKernel(RGBDOdometryCudaDevice<N> odometry);
+
+template<size_t N>
+__GLOBAL__
+void NormalizeIntensityKernel(RGBDOdometryCudaDevice<N> odometry,
+    ArrayCudaDevice<float> means);
+
+template<size_t N>
+__GLOBAL__
+void ComputeInitCorrespondenceMeanKernel(RGBDOdometryCudaDevice<N> odometry,
+    ArrayCudaDevice<float> means);
 
 } // cuda
 } // open3d

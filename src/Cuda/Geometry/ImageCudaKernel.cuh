@@ -1,4 +1,5 @@
 #include "ImageCudaDevice.cuh"
+#include <math_constants.h>
 
 namespace open3d {
 
@@ -19,18 +20,18 @@ void DownsampleKernel(ImageCudaDevice<VecType> src,
 
     /** Re-write the function by hard-coding if we want to accelerate **/
     switch (method) {
-        case BoxFilter: dst.at(u, v) = src.BoxFilter2x2(u << 1, v << 1);
+        case BoxFilter:
+            dst.at(u, v) = src.BoxFilter2x2(u << 1, v << 1);
             return;
         case BoxFilterWithHoles:
             dst.at(u, v) = src.BoxFilter2x2WithHoles(u << 1, v << 1);
             return;
         case GaussianFilter:
-            dst.at(u, v) = src.GaussianFilter(u << 1, v << 1, Gaussian5x5);
+            dst.at(u, v) = src.GaussianFilter(u << 1, v << 1, Gaussian3x3);
             return;
         case GaussianFilterWithHoles:
-            dst.at(u, v) = src.GaussianFilterWithHoles(u << 1,
-                                                       v << 1,
-                                                       Gaussian5x5);
+            dst.at(u, v) = src.GaussianFilterWithHoles(u << 1, v << 1,
+                                                       Gaussian3x3);
             return;
         default: printf("Unsupported method.\n");
     }
@@ -177,12 +178,6 @@ void SobelKernel(ImageCudaDevice<VecType> src,
     int u = blockIdx.x * blockDim.x + threadIdx.x;
     int v = blockIdx.y * blockDim.y + threadIdx.y;
     if (u >= src.width_ || v >= src.height_) return;
-
-    if (u == 0 || u == src.width_ - 1 || v == 0 || v == src.height_ - 1) {
-        dx.at(u, v) = VecType::VecTypef(0);
-        dy.at(u, v) = VecType::VecTypef(0);
-        return;
-    }
 
     typename ImageCudaDevice<VecType>::Grad grad;
     if (with_holes) {

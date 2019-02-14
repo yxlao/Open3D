@@ -195,7 +195,8 @@ ImageCudaDevice<VecType>::GaussianFilter(int x, int y, int kernel_idx) {
     for (int xx = x_min; xx <= x_max; ++xx) {
         for (int yy = y_min; yy <= y_max; ++yy) {
             auto val = at(xx, yy).ToVectorf();
-            float weight = kernel[abs(xx - x)] * kernel[abs(yy - y)];
+            float weight = kernel[xx - x + kernel_size_2]
+                * kernel[yy - y + kernel_size_2];
             sum_val += val * weight;
             sum_weight += weight;
         }
@@ -249,7 +250,8 @@ ImageCudaDevice<VecType>::GaussianFilterWithHoles(
 
             /** TODO: Check it carefully **/
             float weight = (val == zero) //|| (val - val0).norm() > threshold
-                           ? 0 : kernel[abs(xx - x)] * kernel[abs(yy - y)];
+                           ? 0 : kernel[xx - x + kernel_size_2]
+                               * kernel[yy - y + kernel_size_2];
             sum_val += valf * weight;
             sum_weight += weight;
         }
@@ -293,7 +295,8 @@ ImageCudaDevice<VecType>::BilateralFilter(
     for (int xx = x_min; xx <= x_max; ++xx) {
         for (int yy = y_min; yy <= y_max; ++yy) {
             auto val = at(xx, yy).ToVectorf();
-            float weight = kernel[abs(xx - x)] * kernel[abs(yy - y)];
+            float weight = kernel[xx - x + kernel_size_2]
+                * kernel[yy - y + kernel_size_2];
             float value_diff = (val - center_val).norm() / val_sigma;
             weight *= expf(-value_diff);
 
@@ -344,7 +347,8 @@ ImageCudaDevice<VecType>::BilateralFilterWithHoles(
         for (int yy = y_min; yy <= y_max; ++yy) {
             auto val = at(xx, yy);
             auto valf = val.ToVectorf();
-            float weight = kernel[abs(xx - x)] * kernel[abs(yy - y)];
+            float weight = kernel[xx - x + kernel_size_2]
+                * kernel[yy - y + kernel_size_2];
             float value_diff = (valf - center_valf).norm() / val_sigma;
             weight *= expf(-value_diff * value_diff);
 
@@ -366,14 +370,16 @@ ImageCudaDevice<VecType>::Sobel(int x, int y) {
     assert(y >= 1 && y < height_ - 1);
 #endif
 
-    auto Iumvm = at(x - 1, y - 1).ToVectorf();
-    auto Iumv0 = at(x - 1, y).ToVectorf();
-    auto Iumvp = at(x - 1, y + 1).ToVectorf();
-    auto Iu0vm = at(x, y - 1).ToVectorf();
-    auto Iu0vp = at(x, y + 1).ToVectorf();
-    auto Iupvm = at(x + 1, y - 1).ToVectorf();
-    auto Iupv0 = at(x + 1, y).ToVectorf();
-    auto Iupvp = at(x + 1, y + 1).ToVectorf();
+    int xm1 = max(x - 1, 0), ym1 = max(y - 1, 0);
+    int xp1 = min(x + 1, width_ - 1), yp1 = min(y + 1, height_ - 1);
+    auto Iumvm = at(xm1, ym1).ToVectorf();
+    auto Iumv0 = at(xm1, y).ToVectorf();
+    auto Iumvp = at(xm1, yp1).ToVectorf();
+    auto Iu0vm = at(x, ym1).ToVectorf();
+    auto Iu0vp = at(x, yp1).ToVectorf();
+    auto Iupvm = at(xp1, ym1).ToVectorf();
+    auto Iupv0 = at(xp1, y).ToVectorf();
+    auto Iupvp = at(xp1, yp1).ToVectorf();
 
     return {
         (Iupvm - Iumvm) + (Iupv0 - Iumv0) * 2 + (Iupvp - Iumvp),

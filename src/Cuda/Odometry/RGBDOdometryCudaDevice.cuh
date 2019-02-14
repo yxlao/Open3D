@@ -25,6 +25,7 @@ bool RGBDOdometryCudaDevice<N>::ComputePixelwiseCorrespondenceAndResidual(
 
     /** Check 1: depth valid in source? **/
     float d_source = source_[level].depth_.at(x_source, y_source)(0);
+
     bool mask = IsValidDepth(d_source);
     if (!mask) return false;
 
@@ -34,10 +35,10 @@ bool RGBDOdometryCudaDevice<N>::ComputePixelwiseCorrespondenceAndResidual(
             Vector2i(x_source, y_source), d_source);
 
     Vector2f p_warpedf = intrinsics_[level].ProjectPoint(X_source_on_target);
-    mask = intrinsics_[level].IsPixelValid(p_warpedf);
-    if (!mask) return false;
-
     Vector2i p_warped(int(p_warpedf(0) + 0.5f), int(p_warpedf(1) + 0.5f));
+
+    mask = intrinsics_[level].IsPixelValid(p_warped);
+    if (!mask) return false;
 
     /** Check 3: depth valid in target? Occlusion? -> 1ms **/
     float d_target = target_[level].depth_.at(p_warped(0), p_warped(1))(0);
@@ -87,6 +88,9 @@ bool RGBDOdometryCudaDevice<N>::ComputePixelwiseJacobian(
         x_target, y_target)(0);
     float dy_D = kSobelFactor * target_dy_[level].depth_.at(
         x_target, y_target)(0);
+
+    if (isnan(dx_D)) dx_D = 0;
+    if (isnan(dy_D)) dy_D = 0;
 
     float fx = intrinsics_[level].fx_;
     float fy = intrinsics_[level].fy_;

@@ -32,13 +32,11 @@ void MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
     odometry.SetParameters(OdometryOption({20, 10, 5},
                                           config.max_depth_diff_,
                                           config.min_depth_,
-                                          config.max_depth_), 0.5f);
+                                          config.max_depth_), 0.5);
 
-    cuda::RGBDImageCuda rgbd_source((float) config.min_depth_,
-                                    (float) config.max_depth_,
+    cuda::RGBDImageCuda rgbd_source((float) config.max_depth_,
                                     (float) config.depth_factor_);
-    cuda::RGBDImageCuda rgbd_target((float) config.min_depth_,
-                                    (float) config.max_depth_,
+    cuda::RGBDImageCuda rgbd_target((float) config.max_depth_,
                                     (float) config.depth_factor_);
 
     const int begin = fragment_id * config.n_frames_per_fragment_;
@@ -95,7 +93,7 @@ void MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
             keyframe_info.idx = s;
             keyframe_info.descriptor = desc;
             keyframe_info.keypoints = kp;
-            keyframe_info.depth = rgbd_source.depthf_.DownloadMat();
+            keyframe_info.depth = rgbd_source.depth_.DownloadMat();
             keyframe_infos.emplace_back(keyframe_info);
         }
     }
@@ -192,8 +190,7 @@ void IntegrateForFragment(int fragment_id, DatasetConfig &config) {
         (float) config.tsdf_truncation_,
         trans);
 
-    cuda::RGBDImageCuda rgbd((float) config.min_depth_,
-                             (float) config.max_depth_,
+    cuda::RGBDImageCuda rgbd((float) config.max_depth_,
                              (float) config.depth_factor_);
 
     const int begin = fragment_id * config.n_frames_per_fragment_;

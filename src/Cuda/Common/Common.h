@@ -47,6 +47,5 @@ typedef unsigned int uint;
 #define THREAD_1D_UNIT   256
 #define DIV_CEILING(a, b) ((a + b - 1) / b)
 
-# define M_PIf 3.14159265358f /* pi */
-
+#define M_PIf 3.14159265358f /* pi */
 }

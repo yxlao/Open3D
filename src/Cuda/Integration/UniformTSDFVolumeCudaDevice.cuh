@@ -227,8 +227,7 @@ void UniformTSDFVolumeCudaDevice<N>::Integrate(
     if (tsdf <= -sdf_trunc_) return;
     tsdf = fminf(tsdf, sdf_trunc_);
 
-    Vector3b
-    color = rgbd.color_.at(int(p(0)), int(p(1)));
+    Vector3b color = rgbd.color_raw_.at(int(p(0)), int(p(1)));
 
     float &tsdf_sum = this->tsdf(X);
     uchar & weight_sum = this->weight(X);

@@ -54,6 +54,9 @@ bool RGBDOdometryCuda<N>::Create(int width, int height) {
 
     source_on_target_.Create(width, height);
 
+    source_preprocessed_.Create(width, height);
+    target_preprocessed_.Create(width, height);
+
     source_.Create(width, height);
     target_.Create(width, height);
     target_dx_.Create(width, height);
@@ -62,12 +65,17 @@ bool RGBDOdometryCuda<N>::Create(int width, int height) {
     results_.Create(29); // 21 + 6 + 2
     correspondences_.Create(width * height);
 
+    transform_source_to_target_ = Eigen::Matrix4d::Identity();
+
     UpdateDevice();
     return true;
 }
 
 template<size_t N>
 void RGBDOdometryCuda<N>::Release() {
+    source_preprocessed_.Release();
+    target_preprocessed_.Release();
+
     source_.Release();
     target_.Release();
     target_dx_.Release();
@@ -82,10 +90,23 @@ void RGBDOdometryCuda<N>::Release() {
 }
 
 template<size_t N>
+void RGBDOdometryCuda<N>::UpdateSigma(float sigma){
+    device_->sigma_ = sigma;
+    device_->sqrt_coeff_D_ = sqrtf(sigma);
+    device_->sqrt_coeff_I_ = sqrtf(1 - sigma);
+}
+
+template<size_t N>
 void RGBDOdometryCuda<N>::UpdateDevice() {
     if (device_ != nullptr) {
         source_on_target_.UpdateDevice();
         device_->source_on_target_ = *source_on_target_.device_;
+
+        source_preprocessed_.UpdateDevice();
+        device_->source_input_ = *source_preprocessed_.device_;
+
+        target_preprocessed_.UpdateDevice();
+        device_->target_input_ = *target_preprocessed_.device_;
 
         source_.UpdateDevice();
         device_->source_ = *source_.device_;
@@ -103,17 +124,18 @@ void RGBDOdometryCuda<N>::UpdateDevice() {
         device_->correspondences_ = *correspondences_.device_;
 
         /** Update parameters **/
-        device_->sigma_ = sigma_;
-        device_->sqrt_coeff_D_ = sqrtf(sigma_);
-        device_->sqrt_coeff_I_ = sqrtf(1 - sigma_);
-        device_->depth_near_threshold_ = (float) option_.min_depth_;
-        device_->depth_far_threshold_ = (float) option_.max_depth_;
-        device_->depth_diff_threshold_ = (float) option_.max_depth_diff_;
+        device_->min_depth_ = (float) option_.min_depth_;
+        device_->max_depth_ = (float) option_.max_depth_;
+        device_->max_depth_diff_ = (float) option_.max_depth_diff_;
+
+        UpdateSigma(sigma_);
 
         device_->intrinsics_[0] = PinholeCameraIntrinsicCuda(intrinsics_);
         for (size_t i = 1; i < N; ++i) {
             device_->intrinsics_[i] = device_->intrinsics_[i - 1].Downsample();
         }
+        device_->transform_source_to_target_.FromEigen(
+            transform_source_to_target_);
     }
 }
 
@@ -151,27 +173,42 @@ void RGBDOdometryCuda<N>::Initialize(
         return;
     }
 
-    source_raw_.Build(source);
-    target_raw_.Build(target);
-    for (size_t i = 0; i < N; ++i) {
-        /* Filter raw data */
-        source_raw_[i].depthf_.Gaussian(
-            source_[i].depthf_, Gaussian3x3, true);
-        source_raw_[i].intensity_.Gaussian(
-            source_[i].intensity_, Gaussian3x3, false);
+    /** Preprocess: truncate depth to nan values, then perform Gaussian **/
+    source_preprocessed_.CopyFrom(source);
+    target_preprocessed_.CopyFrom(target);
+    RGBDOdometryCudaKernelCaller<N>::PreprocessDepth(*this);
+    source_preprocessed_.depth_.Gaussian(source_[0].depth_,
+        Gaussian3x3, false);
+    target_preprocessed_.depth_.Gaussian(target_[0].depth_,
+        Gaussian3x3, false);
 
-        target_raw_[i].depthf_.Gaussian(
-            target_[i].depthf_, Gaussian3x3, true);
-        target_raw_[i].intensity_.Gaussian(
-            target_[i].intensity_, Gaussian3x3, false);
+    /** Preprocess: Gaussian intensities **/
+    source_preprocessed_.intensity_.Gaussian(source_[0].intensity_,
+        Gaussian3x3, false);
+    target_preprocessed_.intensity_.Gaussian(target_[0].intensity_,
+        Gaussian3x3, false);
 
-        /** For visualization **/
-        source_[i].color_.CopyFrom(source_raw_[i].color_);
-        target_[i].color_.CopyFrom(target_raw_[i].color_);
+    /** For debug **/
+    source_preprocessed_.color_raw_.Gaussian(source_[0].color_raw_,
+        Gaussian3x3, false);
+    target_preprocessed_.color_raw_.Gaussian(target_[0].color_raw_,
+        Gaussian3x3, false);
+    auto im_source = source_[0].intensity_.DownloadImage();
+    auto im_target = target_[0].intensity_.DownloadImage();
 
+    /** Preprocess: normalize intensity
+      * between pair (source_[0], target_[0]) **/
+    device_->transform_source_to_target_.FromEigen(transform_source_to_target_);
+    correspondences_.set_iterator(0);
+    RGBDOdometryCudaKernelCaller<N>::NormalizeIntensity(*this);
+
+    source_.Build(source_[0]);
+    target_.Build(target_[0]);
+
+    for (int i = 0; i < N; ++i) {
         /* Compute gradients */
-        target_[i].depthf_.Sobel(
-            target_dx_[i].depthf_, target_dy_[i].depthf_, true);
+        target_[i].depth_.Sobel(
+            target_dx_[i].depth_, target_dy_[i].depth_, false);
         target_[i].intensity_.Sobel(
             target_dx_[i].intensity_, target_dy_[i].intensity_, false);
     }
@@ -208,7 +245,6 @@ RGBDOdometryCuda<N>::DoSingleIteration(size_t level, int iter) {
     Eigen::Vector6d Jtr;
     float loss, inliers;
     ExtractResults(results, JtJ, Jtr, loss, inliers);
-
     PrintDebug("> Level %d, iter %d: loss = %f, avg loss = %f, inliers = %.0f\n",
                level, iter, loss, loss / inliers, inliers);
 

@@ -23,6 +23,39 @@ public:
     cv::Mat color;
 };
 
+cv::Mat outputMatches(
+    std::vector<cv::Point3f> &pts3d_source,
+    std::vector<cv::Point2f> &pts2d_source,
+    std::vector<cv::Point2f> &pts2d_target,
+    cv::Matx33d &K, cv::Mat &R, cv::Mat &t,
+    cv::Mat &left, cv::Mat &right) {
+    cv::Mat out(left.rows, left.cols + right.cols, CV_8UC1);
+
+    cv::Mat tmp = out(cv::Rect(0, 0, left.cols, left.rows));
+    left.copyTo(tmp);
+    tmp = out(cv::Rect(left.cols, 0, right.cols, right.rows));
+    right.copyTo(tmp);
+
+    cv::cvtColor(out, out, CV_GRAY2BGR);
+    for (int i = 0; i < pts2d_source.size(); ++i) {
+        cv::Mat KK;
+        cv::Mat(K).convertTo(KK, CV_32F);
+        R.convertTo(R, CV_32F);
+        t.convertTo(R, CV_32F);
+        std::cout << R.size << " " << cv::Mat(pts3d_source[i]).size << " " <<
+        t.size << std::endl;
+        cv::Mat proj = (R * cv::Mat(pts3d_source[i]) + t);
+        cv::circle(out, cv::Point2f(proj.at<float>(1) / proj.at<float>(2),
+            proj.at<float>(0) / proj.at<float>(2)), 3, cv::Scalar(-1));
+//        cv::circle(out, pts2d_source[i], 3, cv::Scalar(-1));
+//        cv::circle(out, cv::Point2f(pts2d_target[i].x + left.cols,
+//                                    pts2d_target[i].y), 3, cv::Scalar(-1));
+    }
+
+
+    return out;
+}
+
 std::tuple<bool, Eigen::Matrix4d> PoseEstimationPnP(
     KeyframeInfo &source_info, KeyframeInfo &target_info,
     PinholeCameraIntrinsic &intrinsic) {
@@ -43,20 +76,28 @@ std::tuple<bool, Eigen::Matrix4d> PoseEstimationPnP(
     }
 
     std::vector<cv::Point3f> pts3d_source;
+    std::vector<cv::Point2f> pts2d_source;
     std::vector<cv::Point2f> pts2d_target;
+    std::map<int, int> indices;
     Eigen::Matrix3d inv_intrinsic = intrinsic.intrinsic_matrix_.inverse();
-    for (auto &match : matches) {
+
+    int cnt = 0;
+    for (int i = 0; i < matches.size(); ++i) {
+        auto &match = matches[i];
         cv::Point2f uv_source = source_info.keypoints[match.queryIdx].pt;
         cv::Point2f uv_target = target_info.keypoints[match.trainIdx].pt;
         int u = (int) uv_source.x;
         int v = (int) uv_source.y;
 
         float d = source_info.depth.at<float>(v, u);
-        if (d > 0) {
+        if (! std::isnan(d) && d > 0) {
             Eigen::Vector3d pt(u, v, 1);
             Eigen::Vector3d pt3d = d * (inv_intrinsic * pt);
             pts3d_source.emplace_back(cv::Point3f(pt3d(0), pt3d(1), pt3d(2)));
+            pts2d_source.emplace_back(uv_source);
             pts2d_target.emplace_back(uv_target);
+
+            indices[pts3d_source.size() - 1] = i;
         }
     }
 
@@ -74,7 +115,7 @@ std::tuple<bool, Eigen::Matrix4d> PoseEstimationPnP(
     std::vector<int> inliers;
     cv::solvePnPRansac(pts3d_source, pts2d_target,
                        K, cv::noArray(), rvec, tvec,
-                       false, 1000, 1.0, 0.999, inliers);
+                       false, 100, 3.0, 0.99, inliers);
 
     /** pnp not successful **/
     if (inliers.size() < 4) {
@@ -91,12 +132,17 @@ std::tuple<bool, Eigen::Matrix4d> PoseEstimationPnP(
         transform(i, 3) = tvec.at<double>(i);
     }
 
+    cv::Mat out = outputMatches(pts3d_source, pts2d_source, pts2d_target,
+        K, R, tvec, source_info.color, target_info.color);
+    cv::imshow("out", out);
+    cv::waitKey(-1);
+
     PrintDebug("Matches %d: PnP: %d, Inliers: %d\n",
                matches.size(), pts3d_source.size(), inliers.size());
     return std::make_tuple(true, transform);
 }
 
-std::tuple<bool, Eigen::Matrix4d> PointToPointICPRansac(
+std::tuple<bool, Eigen::Matrix4d, std::vector<char>> PointToPointICPRansac(
     std::vector<Eigen::Vector3d> &pts3d_source,
     std::vector<Eigen::Vector3d> &pts3d_target,
     std::vector<int> &indices) {
@@ -108,6 +154,9 @@ std::tuple<bool, Eigen::Matrix4d> PointToPointICPRansac(
 
     bool success = false;
     Eigen::Matrix4d best_trans = Eigen::Matrix4d::Identity();
+    std::vector<char> best_inliers;
+    best_inliers.resize(indices.size());
+
     int max_inlier = 5;
 
     for (int i = 0; i < kMaxIter; ++i) {
@@ -127,24 +176,28 @@ std::tuple<bool, Eigen::Matrix4d> PointToPointICPRansac(
 
         /** Evaluate **/
         int inlier = 0;
+        std::vector<char> inliers;
+        inliers.resize(best_inliers.size());
         for (int j = 0; j < kNumPoints; ++j) {
             Eigen::Vector3d pt3d_source_on_target =
                 (trans * pts3d_source[j].homogeneous()).hnormalized();
             if ((pt3d_source_on_target - pts3d_target[j]).norm()
                 < kMaxDistance) {
                 ++inlier;
+                inliers[j] = 1;
             }
+            else inliers[j] = 0;
         }
 
         if (inlier > max_inlier) {
             success = true;
             best_trans = trans;
             max_inlier = inlier;
+            best_inliers = inliers;
         }
     }
 
-//    std::cout << best_trans << "\n";
-    return std::make_tuple(success, best_trans);
+    return std::make_tuple(success, best_trans, best_inliers);
 }
 
 std::tuple<bool, Eigen::Matrix4d> PoseEstimation(
@@ -188,22 +241,13 @@ std::tuple<bool, Eigen::Matrix4d> PoseEstimation(
     cv::findEssentialMat(pts2d_source, pts2d_target, K,
                          cv::RANSAC, 0.999, 1.0, mask);
 
-//    cv::Mat out;
-//    cv::drawMatches(source_info.color, source_info.keypoints,
-//                    target_info.color, target_info.keypoints,
-//                    matches, out,
-//                    cv::Scalar::all(-1), cv::Scalar::all(-1), mask);
-//    cv::imshow("out", out);
-//    cv::waitKey(-1);
-
-
     std::vector<Eigen::Vector3d> pts3d_source;
     std::vector<Eigen::Vector3d> pts3d_target;
     std::vector<int> indices; // for shuffle
     Eigen::Matrix3d inv_K = intrinsic.intrinsic_matrix_.inverse();
 
     int cnt = 0;
-    for (int i = 0; i < matches.size(); ++i) {
+    for (int i = 0; i < matches.size();) {
         if (mask.at<char>(i)) {
             Eigen::Vector2d pt2d_source = Eigen::Vector2d(
                 pts2d_source[i].x, pts2d_source[i].y);
@@ -222,21 +266,8 @@ std::tuple<bool, Eigen::Matrix4d> PoseEstimation(
                 pts3d_source.emplace_back(Eigen::Vector3d::Zero());
             }
 
-            if (depth_target > 0) {
-                pts3d_target.emplace_back(depth_target * (inv_K *
-                    Eigen::Vector3d(pt2d_target(0), pt2d_target(1), 1)));
-            } else {
-                pts3d_target.emplace_back(Eigen::Vector3d::Zero());
-            }
-
-//            std::cout << cnt << ": ";
-//            std::cout << pt2d_source.transpose() << " -> ";
-//            std::cout << pts3d_source[cnt].transpose() << " vs ";
-//
-//            std::cout << pt2d_target.transpose() << " -> ";
-//            std::cout << pts3d_target[cnt].transpose() << "\n";
-
-            indices.push_back(cnt++);
+        } else {
+            matches.erase(matches.begin() + i);
         }
     }
 
@@ -245,6 +276,17 @@ std::tuple<bool, Eigen::Matrix4d> PoseEstimation(
         return std::make_tuple(false, Eigen::Matrix4d::Identity());
     }
 
-    return PointToPointICPRansac(pts3d_source, pts3d_target, indices);
+    bool success;
+    Eigen::Matrix4d transform;
+    std::vector<char> inliers;
+    std::tie(success, transform, inliers) =
+        PointToPointICPRansac(pts3d_source, pts3d_target, indices);
+    cv::Mat out;
+    cv::drawMatches(source_info.color, source_info.keypoints,
+                    target_info.color, target_info.keypoints,
+                    matches, out,
+                    cv::Scalar::all(-1), cv::Scalar::all(-1), inliers);
+    cv::imshow("out", out);
+    cv::waitKey(-1);
 }
 }

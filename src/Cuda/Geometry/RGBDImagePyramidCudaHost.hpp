@@ -78,11 +78,17 @@ void RGBDImagePyramidCuda<N>::Build(RGBDImageCuda &rgbd) {
     bool success = Create(rgbd.width_, rgbd.height_);
     if (success) {
         rgbd_[0].CopyFrom(rgbd);
+
         for (size_t i = 1; i < N; ++i) {
-            rgbd_[i - 1].depthf_.Downsample(rgbd_[i].depthf_,
-                                             BoxFilterWithHoles);
-            rgbd_[i - 1].color_.Downsample(rgbd_[i].color_);
-            rgbd_[i - 1].intensity_.Downsample(rgbd_[i].intensity_);
+            /* Only for debug */
+            rgbd_[i - 1].color_raw_.Downsample(rgbd_[i].color_raw_, GaussianFilter);
+
+            /** Box filter **/
+            rgbd_[i - 1].depth_.Downsample(rgbd_[i].depth_, BoxFilter);
+
+            /** Box filter after Gaussian **/
+            auto result = rgbd_[i - 1].intensity_.Gaussian(Gaussian3x3, false);
+            result.Downsample(rgbd_[i].intensity_, BoxFilter);
         }
         UpdateDevice();
     }

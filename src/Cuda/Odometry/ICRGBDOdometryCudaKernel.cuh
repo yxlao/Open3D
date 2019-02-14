@@ -164,8 +164,8 @@ void ICRGBDOdometryCudaKernelCaller<N>::DoSinlgeIteration(
     ICRGBDOdometryCuda<N> &odometry, size_t level) {
 
     const dim3 blocks(
-        DIV_CEILING(odometry.source_[level].depthf_.width_, THREAD_2D_UNIT),
-        DIV_CEILING(odometry.source_[level].depthf_.height_, THREAD_2D_UNIT));
+        DIV_CEILING(odometry.source_[level].depth_.width_, THREAD_2D_UNIT),
+        DIV_CEILING(odometry.source_[level].depth_.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
     DoSingleIterationKernel << < blocks, threads >> > (
         *odometry.device_, level);
@@ -192,8 +192,8 @@ void ICRGBDOdometryCudaKernelCaller<N>::PrecomputeJacobians(
     ICRGBDOdometryCuda<N> &odometry, size_t level) {
 
     const dim3 blocks(
-        DIV_CEILING(odometry.source_[level].depthf_.width_, THREAD_2D_UNIT),
-        DIV_CEILING(odometry.source_[level].depthf_.height_, THREAD_2D_UNIT));
+        DIV_CEILING(odometry.source_[level].depth_.width_, THREAD_2D_UNIT),
+        DIV_CEILING(odometry.source_[level].depth_.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
     PrecomputeJacobiansKernel << < blocks, threads >> > (
         *odometry.device_, level);

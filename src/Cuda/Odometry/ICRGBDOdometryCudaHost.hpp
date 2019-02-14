@@ -167,23 +167,23 @@ void ICRGBDOdometryCuda<N>::Initialize(
     target_raw_.Build(target);
     for (size_t i = 0; i < N; ++i) {
         /* Filter raw data */
-        source_raw_[i].depthf_.Gaussian(
-            source_[i].depthf_, Gaussian3x3, true);
+        source_raw_[i].depth_.Gaussian(
+            source_[i].depth_, Gaussian3x3, true);
         source_raw_[i].intensity_.Gaussian(
             source_[i].intensity_, Gaussian3x3, false);
 
-        source_[i].color_.CopyFrom(source_raw_[i].color_);
+        source_[i].color_raw_.CopyFrom(source_raw_[i].color_raw_);
 
-        target_raw_[i].depthf_.Gaussian(
-            target_[i].depthf_, Gaussian3x3, true);
+        target_raw_[i].depth_.Gaussian(
+            target_[i].depth_, Gaussian3x3, true);
         target_raw_[i].intensity_.Gaussian(
             target_[i].intensity_, Gaussian3x3, false);
 
-        target_[i].color_.CopyFrom(target_raw_[i].color_);
+        target_[i].color_raw_.CopyFrom(target_raw_[i].color_raw_);
 
         /* Compute gradients */
-        source_[i].depthf_.Sobel(
-            source_dx_[i].depthf_, source_dy_[i].depthf_, true);
+        source_[i].depth_.Sobel(
+            source_dx_[i].depth_, source_dy_[i].depth_, true);
         source_[i].intensity_.Sobel(
             source_dx_[i].intensity_, source_dy_[i].intensity_, false);
 

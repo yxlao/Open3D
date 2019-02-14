@@ -31,13 +31,11 @@ PoseGraph MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
     odometry.SetParameters(OdometryOption({20, 10, 5},
                                           config.max_depth_diff_,
                                           config.min_depth_,
-                                          config.max_depth_), 0.5f);
+                                          config.max_depth_), 0.968f);
 
-    cuda::RGBDImageCuda rgbd_source((float) config.min_depth_,
-                                    (float) config.max_depth_,
+    cuda::RGBDImageCuda rgbd_source((float) config.max_depth_,
                                     (float) config.depth_factor_);
-    cuda::RGBDImageCuda rgbd_target((float) config.min_depth_,
-                                    (float) config.max_depth_,
+    cuda::RGBDImageCuda rgbd_target((float) config.max_depth_,
                                     (float) config.depth_factor_);
 
     const int begin = fragment_id * config.n_frames_per_fragment_;
@@ -51,13 +49,16 @@ PoseGraph MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
 
     /** Add odometry and keyframe info **/
     std::vector<ORBPoseEstimation::KeyframeInfo> keyframe_infos;
-    cv::Ptr<cv::ORB> orb = cv::ORB::create(300);
+    cv::Ptr<cv::ORB> orb = cv::ORB::create(100);
 
     for (int s = begin; s < end - 1; ++s) {
+        PrintInfo("s: %d\n", s);
         Image depth, color;
 
         ReadImage(config.depth_files_[s], depth);
         ReadImage(config.color_files_[s], color);
+
+        PrintInfo("s: %d\n", s);
         rgbd_source.Upload(depth, color);
 
         int t = s + 1;
@@ -106,20 +107,20 @@ PoseGraph MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
             keyframe_info.idx = s;
             keyframe_info.descriptor = desc;
             keyframe_info.keypoints = kp;
-            keyframe_info.depth = rgbd_source.depthf_.DownloadMat();
+            keyframe_info.depth = rgbd_source.depth_.DownloadMat();
             keyframe_info.color = im;
             keyframe_infos.emplace_back(keyframe_info);
         }
     }
 
     /** Add Loop closures **/
+    PrintInfo("Loop closure\n");
     if (config.with_opencv_) {
         for (int i = 0; i < keyframe_infos.size() - 1; ++i) {
             for (int j = i + 1; j < keyframe_infos.size(); ++j) {
                 int s = keyframe_infos[i].idx;
                 int t = keyframe_infos[j].idx;
                 PrintInfo("matching (%d %d)\n", s, t);
-//                if (s != 5770 || t != 5785) continue;
 
                 bool is_success;
                 Eigen::Matrix4d trans_source_to_target;
@@ -133,22 +134,13 @@ PoseGraph MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
 
                     ReadImage(config.depth_files_[s], depth);
                     ReadImage(config.color_files_[s], color);
-//                    auto ss = CreateRGBDImageFromColorAndDepth(color, depth);
+                    auto ss = CreateRGBDImageFromColorAndDepth(color, depth);
 
                     rgbd_source.Upload(depth, color);
 
                     ReadImage(config.depth_files_[t], depth);
                     ReadImage(config.color_files_[t], color);
-//                    auto tt = CreateRGBDImageFromColorAndDepth(color, depth);
-//
-//                    auto s_p = CreatePointCloudFromRGBDImage(*ss, config
-//                    .intrinsic_);
-//                    auto t_p = CreatePointCloudFromRGBDImage(*tt, config
-//                    .intrinsic_);
-//                    Eigen::Matrix4d tra;
-////                    s_p->Transform(trans_source_to_target);
-//                    s_p->Transform(tra);
-//                    DrawGeometries({s_p, t_p});
+                    auto tt = CreateRGBDImageFromColorAndDepth(color, depth);
 
                     rgbd_target.Upload(depth, color);
 
@@ -162,6 +154,13 @@ PoseGraph MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
                             trans = odometry.transform_source_to_target_;
                         Eigen::Matrix6d
                             information = odometry.ComputeInformationMatrix();
+
+                        auto s_p = CreatePointCloudFromRGBDImage(*ss, config
+                            .intrinsic_);
+                        auto t_p = CreatePointCloudFromRGBDImage(*tt, config
+                            .intrinsic_);
+                        s_p->Transform(trans);
+                        DrawGeometries({s_p, t_p});
 
                         PrintInfo("Add edge (%d %d)\n", s, t);
                         std::cout << trans << "\n" << information << "\n";
@@ -211,8 +210,7 @@ void IntegrateForFragment(int fragment_id, PoseGraph &pose_graph,
         (float) config.tsdf_truncation_,
         trans);
 
-    cuda::RGBDImageCuda rgbd((float) config.min_depth_,
-                             (float) config.max_depth_,
+    cuda::RGBDImageCuda rgbd((float) config.max_depth_,
                              (float) config.depth_factor_);
 
     const int begin = fragment_id * config.n_frames_per_fragment_;
@@ -266,10 +264,10 @@ int main(int argc, char **argv) {
     bool is_success = ReadIJsonConvertible(config_path, config);
     if (!is_success) return 1;
 
-//    SetVerbosityLevel(VerbosityLevel::VerboseDebug);
+    SetVerbosityLevel(VerbosityLevel::VerboseDebug);
     filesystem::MakeDirectory(config.path_dataset_ + "/fragments_cuda");
 
-    config.with_opencv_ = true;
+    config.with_opencv_ = false;
     const int num_fragments =
         DIV_CEILING(config.color_files_.size(),
                     config.n_frames_per_fragment_);
@@ -277,9 +275,15 @@ int main(int argc, char **argv) {
     for (int i = 57; i < 58; ++i) {
         PrintInfo("Processing fragment %d / %d\n", i, num_fragments - 1);
         auto pose_graph = MakePoseGraphForFragment(i, config);
+        WritePoseGraph(
+        "/media/wei/Data/data/indoor_lidar_rgbd/apartment/fragments_cuda/"
+        "fragment_057.json", pose_graph);
         auto pose_graph_prunned = OptimizePoseGraphForFragment(i, pose_graph,
             config);
-        IntegrateForFragment(i, pose_graph, config);
+        WritePoseGraph(
+            "/media/wei/Data/data/indoor_lidar_rgbd/apartment/fragments_cuda/"
+            "fragment_optimizedd_057.json", pose_graph_prunned);
+        IntegrateForFragment(i, pose_graph_prunned, config);
     }
     timer.Stop();
     PrintInfo("MakeFragment takes %.3f s\n", timer.GetDuration() / 1000.0f);

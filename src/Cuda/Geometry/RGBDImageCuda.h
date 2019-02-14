@@ -16,8 +16,10 @@ namespace open3d {
 namespace cuda {
 class RGBDImageCudaDevice {
 public:
+    ImageCudaDevice<Vector1s> depth_raw_;
+    ImageCudaDevice<Vector3b> color_raw_;
+
     ImageCudaDevice<Vector1f> depth_;
-    ImageCudaDevice<Vector3b> color_;
     ImageCudaDevice<Vector1f> intensity_;
 
 public:
@@ -31,25 +33,22 @@ public:
 
     /* Raw input */
     ImageCuda<Vector1s> depth_raw_;
-    ImageCuda<Vector3b> color_;
+    ImageCuda<Vector3b> color_raw_;
 
-    ImageCuda<Vector1f> depthf_;
+    ImageCuda<Vector1f> depth_;
     ImageCuda<Vector1f> intensity_;
 
 public:
-    float depth_near_;
-    float depth_far_;
+    float depth_trunc_;
     float depth_factor_;
 
     int width_;
     int height_;
 
 public:
-    RGBDImageCuda(float depth_near = 0.1f, float depth_far = 3.5f,
-                  float depth_factor = 1000.0f);
+    RGBDImageCuda(float depth_trunc = 3.0f, float depth_factor = 1000.0f);
     RGBDImageCuda(int width, int height,
-                  float depth_near = 0.1f, float depth_far = 3.5f,
-                  float depth_factor = 1000.0f);
+                  float depth_trunc = 3.0f, float depth_factor = 1000.0f);
 
     RGBDImageCuda(const RGBDImageCuda &other);
     RGBDImageCuda &operator=(const RGBDImageCuda &other);
@@ -67,6 +66,15 @@ public:
     /** Legacy **/
     void Upload(cv::Mat &depth, cv::Mat &color);
 };
+
+class RGBDImageCudaKernelCaller {
+public:
+    static void ConvertDepthToFloat(RGBDImageCuda &rgbd);
+};
+
+__GLOBAL__
+void ConvertDepthToFloatKernel(RGBDImageCudaDevice device,
+    float factor, float depth_trunc);
 
 } // cuda
 } // open3d
