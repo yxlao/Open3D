@@ -90,7 +90,7 @@ void RGBDOdometryCuda<N>::Release() {
 }
 
 template<size_t N>
-void RGBDOdometryCuda<N>::UpdateSigma(float sigma){
+void RGBDOdometryCuda<N>::UpdateSigma(float sigma) {
     device_->sigma_ = sigma;
     device_->sqrt_coeff_D_ = sqrtf(sigma);
     device_->sqrt_coeff_I_ = sqrtf(1 - sigma);
@@ -266,6 +266,10 @@ RGBDOdometryCuda<N>::ComputeMultiScale() {
     std::vector<std::vector<float>> losses;
     for (int level = (int) (N - 1); level >= 0; --level) {
         std::vector<float> losses_on_level;
+
+        if (level == 0) {
+            UpdateSigma(0.968f);
+        }
 
         for (int iter = 0;
              iter < option_.iteration_number_per_pyramid_level_[N - 1 - level];

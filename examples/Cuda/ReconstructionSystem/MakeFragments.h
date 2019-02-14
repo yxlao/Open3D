@@ -32,7 +32,7 @@ void MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
     odometry.SetParameters(OdometryOption({20, 10, 5},
                                           config.max_depth_diff_,
                                           config.min_depth_,
-                                          config.max_depth_), 0.5);
+                                          config.max_depth_), 0.5f);
 
     cuda::RGBDImageCuda rgbd_source((float) config.max_depth_,
                                     (float) config.depth_factor_);
@@ -52,14 +52,33 @@ void MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
     std::vector<ORBPoseEstimation::KeyframeInfo> keyframe_infos;
     cv::Ptr<cv::ORB> orb = cv::ORB::create(100);
 
-    for (int s = begin; s < end - 1; ++s) {
+    for (int s = begin; s < end; ++s) {
         Image depth, color;
 
         ReadImage(config.depth_files_[s], depth);
         ReadImage(config.color_files_[s], color);
         rgbd_source.Upload(depth, color);
 
+        /** Insert a keyframe **/
+        if (config.with_opencv_ && s % config.n_keyframes_per_n_frame_ == 0) {
+            cv::Mat im;
+            rgbd_source.intensity_.DownloadMat().convertTo(im, CV_8U, 255.0);
+            std::vector<cv::KeyPoint> kp;
+            cv::Mat desc;
+            orb->detectAndCompute(im, cv::noArray(), kp, desc);
+
+            ORBPoseEstimation::KeyframeInfo keyframe_info;
+            keyframe_info.idx = s;
+            keyframe_info.descriptor = desc;
+            keyframe_info.keypoints = kp;
+            keyframe_info.color = im;
+            keyframe_info.depth = rgbd_source.depth_.DownloadMat();
+            keyframe_infos.emplace_back(keyframe_info);
+        }
+
         int t = s + 1;
+        if (t >= end) break;
+
         ReadImage(config.depth_files_[t], depth);
         ReadImage(config.color_files_[t], color);
         rgbd_target.Upload(depth, color);
@@ -80,22 +99,6 @@ void MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
         pose_graph.nodes_.emplace_back(PoseGraphNode(trans_odometry_inv));
         pose_graph.edges_.emplace_back(PoseGraphEdge(
             s - begin, t - begin, trans, information, false));
-
-        /** Insert a keyframe **/
-        if (config.with_opencv_ && s % config.n_keyframes_per_n_frame_ == 0) {
-            cv::Mat im;
-            rgbd_source.intensity_.DownloadMat().convertTo(im, CV_8U, 255.0);
-            std::vector<cv::KeyPoint> kp;
-            cv::Mat desc;
-            orb->detectAndCompute(im, cv::noArray(), kp, desc);
-
-            ORBPoseEstimation::KeyframeInfo keyframe_info;
-            keyframe_info.idx = s;
-            keyframe_info.descriptor = desc;
-            keyframe_info.keypoints = kp;
-            keyframe_info.depth = rgbd_source.depth_.DownloadMat();
-            keyframe_infos.emplace_back(keyframe_info);
-        }
     }
 
     /** Add Loop closures **/
@@ -144,7 +147,6 @@ void MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
             }
         }
     }
-
     WritePoseGraph(config.GetPoseGraphFileForFragment(fragment_id, false),
                    pose_graph);
 }

@@ -89,13 +89,13 @@ int main(int argc, char **argv) {
 
     std::string path_cuda =
         "/media/wei/Data/data/indoor_lidar_rgbd/apartment/fragments_cuda/"
-        "fragment_057.json";
-    std::string path_cpu_optimized =
-        "/media/wei/Data/data/indoor_lidar_rgbd/apartment/fragments/"
         "fragment_optimized_057.json";
     std::string path_cpu =
         "/media/wei/Data/data/indoor_lidar_rgbd/apartment/fragments/"
-        "fragment_057.json";
+        "fragment_optimized_057.json";
+//    std::string path_cpu =
+//        "/media/wei/Data/data/indoor_lidar_rgbd/apartment/fragments/"
+//        "fragment_057.json";
 
     ReadPoseGraph(path_cuda, pose_graph_cuda);
     ReadPoseGraph(path_cpu, pose_graph_cpu);
