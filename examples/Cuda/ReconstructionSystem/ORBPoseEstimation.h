@@ -246,13 +246,13 @@ std::tuple<bool, Eigen::Matrix4d, std::vector<char>> PointToPointICPRansac(
         int inlier = 0;
         std::vector<char> inliers;
         inliers.resize(best_inliers.size());
+
         for (int j = 0; j < kNumPoints; ++j) {
             Eigen::Vector3d pt3d_source_on_target =
                 (trans * pts3d_source[j].homogeneous()).hnormalized();
             if ((pt3d_source_on_target - pts3d_target[j]).norm()
                 < kMaxDistance) {
                 ++inlier;
-                inliers[j] = 1;
             } else inliers[j] = 0;
         }
 
@@ -269,7 +269,7 @@ std::tuple<bool, Eigen::Matrix4d, std::vector<char>> PointToPointICPRansac(
 
 std::tuple<bool, Eigen::Matrix4d> PoseEstimation(
     KeyframeInfo &source_info, KeyframeInfo &target_info,
-    PinholeCameraIntrinsic &intrinsic) {
+    PinholeCameraIntrinsic &intrinsic, bool debug = false) {
 
     const int kNumSamples = 5;
 
@@ -331,8 +331,9 @@ std::tuple<bool, Eigen::Matrix4d> PoseEstimation(
                 pts2d_source.emplace_back(pt2d_source);
 
                 pts3d_target.emplace_back(depth_target * (inv_K *
-                    Eigen::Vector3d(pt2d_target(0), pt2d_target(1), 1)));
+                Eigen::Vector3d(pt2d_target(0), pt2d_target(1), 1)));
                 pts2d_target.emplace_back(pt2d_target);
+
                 indices.push_back(cnt);
                 ++cnt;
             }
@@ -350,11 +351,13 @@ std::tuple<bool, Eigen::Matrix4d> PoseEstimation(
     std::tie(success, transform, inliers) =
         PointToPointICPRansac(pts3d_source, pts3d_target, indices);
 
-//    cv::Mat out = drawMatches(source_info.color, target_info.color,
-//        pts3d_source, pts2d_source, pts3d_target, pts2d_target,
-//        intrinsic.intrinsic_matrix_, transform, inliers);
-//    cv::imshow("out", out);
-//    cv::waitKey(-1);
+    if (debug) {
+        cv::Mat out = drawMatches(source_info.color, target_info.color,
+            pts3d_source, pts2d_source, pts3d_target, pts2d_target,
+            intrinsic.intrinsic_matrix_, transform, inliers);
+        cv::imshow("out", out);
+        cv::waitKey(-1);
+    }
 
     return std::make_tuple(success, transform);
 }

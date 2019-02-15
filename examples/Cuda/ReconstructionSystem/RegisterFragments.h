@@ -53,8 +53,7 @@ std::vector<Match> MatchFragments(DatasetConfig &config) {
                     registration.transform_source_to_target_;
                 match.information = registration.ComputeInformationMatrix();
                 match.success = true;
-                PrintDebug("Pair (%d %d) odometry computed.\n",
-                           match.s, match.t);
+                PrintInfo("Point cloud odometry (%d %d)\n", match.s, match.t);
             }
 
             /** Fast global registration **/
@@ -81,11 +80,10 @@ std::vector<Match> MatchFragments(DatasetConfig &config) {
                         std::min(source->points_.size(),
                                  target->points_.size()) >= 0.3;
                 if (match.success) {
-                    PrintDebug("Pair (%d %d) registration computed.\n",
+                    PrintInfo("Global registration (%d %d) computed\n",
                                match.s, match.t);
                 } else {
-                    PrintDebug("Skip (%d %d) registration.\n",
-                               match.s, match.t);
+                    PrintInfo("Skip (%d %d).\n", match.s, match.t);
                 }
             }
             matches.push_back(match);
@@ -147,8 +145,6 @@ void OptimizePoseGraphForScene(DatasetConfig &config) {
 }
 
 int Run(DatasetConfig &config) {
-    SetVerbosityLevel(VerbosityLevel::VerboseDebug);
-
     Timer timer;
     timer.Start();
     filesystem::MakeDirectory(config.path_dataset_ + "/scene_cuda");

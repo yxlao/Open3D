@@ -67,8 +67,6 @@ std::vector<Match> MatchFragments(DatasetConfig &config) {
         match.t = edge.target_node_id_;
         match.success = true;
 
-        PrintDebug("Processing (%d %d)\n", match.s, match.t);
-
         auto source = CreatePointCloudFromFile(config.fragment_files_[match.s]);
         auto target = CreatePointCloudFromFile(config.fragment_files_[match.t]);
 
@@ -76,7 +74,7 @@ std::vector<Match> MatchFragments(DatasetConfig &config) {
             MultiScaleICP(*source, *target,
                 edge.transformation_, config.voxel_size_);
 
-        PrintDebug("Pair (%d %d) odometry computed.\n", match.s, match.t);
+        PrintInfo("Point cloud odometry (%d %d)\n", match.s, match.t);
 
         matches.push_back(match);
     }

@@ -83,6 +83,7 @@ void MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
         ReadImage(config.color_files_[t], color);
         rgbd_target.Upload(depth, color);
 
+        PrintInfo("RGBD Odometry between (%d %d)\n", s, t);
         odometry.transform_source_to_target_ = Eigen::Matrix4d::Identity();
         odometry.Initialize(rgbd_source, rgbd_target);
         odometry.ComputeMultiScale();
@@ -107,7 +108,7 @@ void MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
             for (int j = i + 1; j < keyframe_infos.size(); ++j) {
                 int s = keyframe_infos[i].idx;
                 int t = keyframe_infos[j].idx;
-                PrintInfo("matching (%d %d)\n", s, t);
+                PrintInfo("RGBD Loop closure between (%d %d)\n", s, t);
 
                 bool is_success;
                 Eigen::Matrix4d trans_source_to_target;

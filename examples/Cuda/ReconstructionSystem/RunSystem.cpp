@@ -30,7 +30,7 @@ std::string SecondsToHMS(double seconds) {
 }
 
 int main(int argc, char **argv) {
-    SetVerbosityLevel(VerbosityLevel::VerboseDebug);
+//    SetVerbosityLevel(VerbosityLevel::VerboseDebug);
 
     DatasetConfig config;
 
@@ -81,8 +81,8 @@ int main(int argc, char **argv) {
     PrintInfo(" - Total              : %s\n", total_time.c_str());
     PrintInfo("================================\n");
 
-    auto mesh = CreateMeshFromFile(config.GetReconstructedSceneFile());
-    DrawGeometries({mesh});
+//    auto mesh = CreateMeshFromFile(config.GetReconstructedSceneFile());
+//    DrawGeometries({mesh});
 
     return 0;
 }
