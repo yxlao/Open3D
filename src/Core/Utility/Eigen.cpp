@@ -50,6 +50,7 @@ std::tuple<bool, Eigen::VectorXd> SolveLinearSystemPSD(
     if (check_det) {
         double det = A.determinant();
         if (fabs(det) < 1e-6 || std::isnan(det) || std::isinf(det)) {
+            PrintInfo("det == %f\n", det);
             PrintInfo("check_det failed, empty vector will be returned\n");
             return std::make_tuple(false, Eigen::VectorXd::Zero(b.rows()));
         }

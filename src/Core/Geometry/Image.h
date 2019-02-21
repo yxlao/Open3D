@@ -148,6 +148,9 @@ std::shared_ptr<Image> DownsampleImage(const Image &input);
 std::shared_ptr<Image> DilateImage(const Image &input,
                                    int half_kernel_size = 1);
 
+/// Function to erode 8bit mask map
+std::shared_ptr<Image> ErodeImage(const Image &input, int half_kernel_size = 1);
+
 /// Function to linearly transform pixel intensities
 /// image_new = scale * image + offset
 void LinearTransformImage(Image &input,

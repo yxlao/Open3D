@@ -26,6 +26,8 @@
 
 #pragma once
 
+#include <Eigen/SparseCore>
+
 #include <memory>
 #include <vector>
 #include <Core/ColorMap/EigenHelperForNonRigidOptimization.h>
@@ -71,6 +73,22 @@ public:
             Eigen::Vector14d& J_r,
             double& r,
             Eigen::Vector14i& pattern,
+            const TriangleMesh& mesh,
+            const std::vector<double>& proxy_intensity,
+            const std::shared_ptr<Image>& images_gray,
+            const std::shared_ptr<Image>& images_dx,
+            const std::shared_ptr<Image>& images_dy,
+            const ImageWarpingField& warping_fields,
+            const ImageWarpingField& warping_fields_init,
+            const Eigen::Matrix4d& intrinsic,
+            const Eigen::Matrix4d& extrinsic,
+            const std::vector<int>& visiblity_image_to_vertex,
+            const int image_boundary_margin);
+
+    void ComputeJacobianAndResidualNonRigidSparse(
+            int row,
+            Eigen::SparseMatrix<double, Eigen::RowMajor>& J_sparse,
+            double& r,
             const TriangleMesh& mesh,
             const std::vector<double>& proxy_intensity,
             const std::shared_ptr<Image>& images_gray,

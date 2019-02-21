@@ -78,7 +78,7 @@ public:
 /// Q.-Y. Zhou and V. Koltun,
 /// Color Map Optimization for 3D Reconstruction with Consumer Depth Cameras,
 /// SIGGRAPH 2014
-void ColorMapOptimization(
+std::vector<std::shared_ptr<Image>> ColorMapOptimization(
         TriangleMesh& mesh,
         const std::vector<std::shared_ptr<RGBDImage>>& imgs_rgbd,
         PinholeCameraTrajectory& camera,

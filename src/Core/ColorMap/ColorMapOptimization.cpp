@@ -25,6 +25,9 @@
 // ----------------------------------------------------------------------------
 
 #include "ColorMapOptimization.h"
+#include <unordered_map>
+#include <ctime>
+#include <omp.h>
 
 #include <Core/Camera/PinholeCameraTrajectory.h>
 #include <Core/ColorMap/ColorMapOptimizationJacobian.h>
@@ -59,8 +62,17 @@ void OptimizeImageCoorNonrigid(
     SetProxyIntensityForVertex(mesh, images_gray, warping_fields, camera,
                                visiblity_vertex_to_image, proxy_intensity,
                                option.image_boundary_margin_);
+    if (mesh.vertex_colors_.size() == mesh.vertices_.size()) {
+        for (size_t i = 0; i < proxy_intensity.size(); ++i) {
+            proxy_intensity[i] = 0.2990f * mesh.vertex_colors_[i][0] +
+                                 0.5870f * mesh.vertex_colors_[i][1] +
+                                 0.1140f * mesh.vertex_colors_[i][2];
+        }
+        PrintDebug("[OptimizeImageCoorNonrigid] Injected mesh's color\n");
+    }
     for (int itr = 0; itr < option.maximum_iteration_; itr++) {
         PrintDebug("[Iteration %04d] ", itr + 1);
+        double iter_start_time = omp_get_wtime();
         double residual = 0.0;
         double residual_reg = 0.0;
 #ifdef _OPENMP
@@ -81,47 +93,106 @@ void OptimizeImageCoorNonrigid(
             intr.block<3, 3>(0, 0) = intrinsic;
             intr(3, 3) = 1.0;
 
-            auto f_lambda = [&](int i, Eigen::Vector14d& J_r, double& r,
-                                Eigen::Vector14i& pattern) {
-                jac.ComputeJacobianAndResidualNonRigid(
-                        i, J_r, r, pattern, mesh, proxy_intensity,
-                        images_gray[c], images_dx[c], images_dy[c],
-                        warping_fields[c], warping_fields_init[c], intr,
-                        extrinsic, visiblity_image_to_vertex[c],
-                        option.image_boundary_margin_);
-            };
+            auto f_lambda =
+                    [&](int i,
+                        Eigen::SparseMatrix<double, Eigen::RowMajor>& J_sparse,
+                        double& r) {
+                        jac.ComputeJacobianAndResidualNonRigidSparse(
+                                i, J_sparse, r, mesh, proxy_intensity,
+                                images_gray[c], images_dx[c], images_dy[c],
+                                warping_fields[c], warping_fields_init[c], intr,
+                                extrinsic, visiblity_image_to_vertex[c],
+                                option.image_boundary_margin_);
+                    };
             Eigen::MatrixXd JTJ;
-            Eigen::VectorXd JTr;
+            Eigen::VectorXd JTr_dense;
+            Eigen::SparseMatrix<double, Eigen::RowMajor> J_sparse;
             double r2;
-            std::tie(JTJ, JTr, r2) =
-                    ComputeJTJandJTr<Eigen::Vector14d, Eigen::Vector14i,
-                                     Eigen::MatrixXd, Eigen::VectorXd>(
-                            f_lambda, visiblity_image_to_vertex[c].size(),
-                            nonrigidval, false);
+            std::tie(J_sparse, JTr_dense, r2) = ComputeJTJandJTr(
+                    f_lambda, visiblity_image_to_vertex[c].size(), nonrigidval,
+                    false);
+
+            // Prune zero columns
+            // Method 1: keep track of non-zero columns at J matrix creation
+            // Method 2: some efficient eigen method
+            Eigen::SparseMatrix<double, Eigen::ColMajor> J_sparse_col_major(
+                    J_sparse);
+
+            // J_sparse_col_major.outerSize() == J_sparse_col_major.cols()
+            std::unordered_map<size_t, size_t> map_col_to_selected_col;
+            std::unordered_map<size_t, size_t> map_selected_col_to_col;
+            size_t num_cols = J_sparse_col_major.cols();
+            size_t selected_col = 0;
+            for (size_t col = 0; col < J_sparse_col_major.outerSize(); ++col) {
+                bool col_has_value = false;
+                for (Eigen::SparseMatrix<double>::InnerIterator it(
+                             J_sparse_col_major, col);
+                     it; ++it) {
+                    col_has_value = true;
+                    break;
+                }
+                if (col_has_value) {
+                    map_col_to_selected_col[col] = selected_col;
+                    map_selected_col_to_col[selected_col] = col;
+                    selected_col++;
+                }
+            }
+            size_t num_selected_cols = selected_col;
+
+            // col_selection_matrix is used to map columns to selected columns
+            Eigen::SparseMatrix<double> col_selection_matrix(num_cols,
+                                                             num_selected_cols);
+            col_selection_matrix.reserve(
+                    Eigen::VectorXi::Constant(num_selected_cols, 1));
+            size_t col_idx = 0;
+            for (size_t selected_col = 0; selected_col < num_selected_cols;
+                 ++selected_col) {
+                size_t col = map_selected_col_to_col[selected_col];
+                col_selection_matrix.insert(col, selected_col) = 1;
+            }
+
+            // We remove J's empty column before computing JTJ
+            Eigen::SparseMatrix<double> J_selected =
+                    J_sparse_col_major * col_selection_matrix;
+            JTJ = Eigen::MatrixXd(J_selected.transpose() * J_selected);
+            Eigen::VectorXd JTr = JTr_dense.transpose() * col_selection_matrix;
 
             double weight = option.non_rigid_anchor_point_weight_ *
                             visiblity_image_to_vertex[c].size() / n_vertex;
-            for (int j = 0; j < nonrigidval; j++) {
-                double r = weight * (warping_fields[c].flow_(j) -
-                                     warping_fields_init[c].flow_(j));
-                JTJ(6 + j, 6 + j) += weight * weight;
-                JTr(6 + j) += weight * r;
-                rr_reg += r * r;
+            for (size_t j = 0; j < nonrigidval; j++) {
+                size_t col = 6 + j;
+                if (map_col_to_selected_col.find(col) !=
+                    map_col_to_selected_col.end()) {
+                    double r = weight * (warping_fields[c].flow_(j) -
+                                         warping_fields_init[c].flow_(j));
+                    size_t selected_col = map_col_to_selected_col[col];
+                    JTJ(selected_col, selected_col) += weight * weight;
+                    JTr(selected_col) += weight * r;
+                    rr_reg += r * r;
+                }
             }
 
             bool success;
             Eigen::VectorXd result;
+
+            // Ignore warnings and just get a result
             std::tie(success, result) = SolveLinearSystemPSD(
-                    JTJ, -JTr, /*prefer_sparse=*/false,
+                    JTJ, -JTr, /*prefer_sparse=*/true,
                     /*check_symmetric=*/false,
                     /*check_det=*/false, /*check_psd=*/false);
+
             Eigen::Vector6d result_pose;
             result_pose << result.block(0, 0, 6, 1);
             auto delta = TransformVector6dToMatrix4d(result_pose);
             pose = delta * pose;
 
-            for (int j = 0; j < nonrigidval; j++) {
-                warping_fields[c].flow_(j) += result(6 + j);
+            for (size_t j = 0; j < nonrigidval; j++) {
+                size_t col = 6 + j;
+                if (map_col_to_selected_col.find(col) !=
+                    map_col_to_selected_col.end()) {
+                    size_t selected_col = map_col_to_selected_col[col];
+                    warping_fields[c].flow_(j) += result(selected_col);
+                }
             }
             camera.parameters_[c].extrinsic_ = pose;
 
@@ -133,13 +204,14 @@ void OptimizeImageCoorNonrigid(
                 residual_reg += rr_reg;
             }
         }
-        PrintDebug("Residual error : %.6f, reg : %.6f\n", residual,
-                   residual_reg);
+        double iter_time = omp_get_wtime() - iter_start_time;
+        PrintDebug("Residual error : %.6f, reg : %.6f, time: %.2f\n", residual,
+                   residual_reg, iter_time);
         SetProxyIntensityForVertex(mesh, images_gray, warping_fields, camera,
                                    visiblity_vertex_to_image, proxy_intensity,
                                    option.image_boundary_margin_);
-    }
-}
+    }  // for (int itr = 0; itr < option.maximum_iteration_; itr++)
+}  // namespace
 
 void OptimizeImageCoorRigid(
         const TriangleMesh& mesh,
@@ -156,6 +228,14 @@ void OptimizeImageCoorRigid(
     SetProxyIntensityForVertex(mesh, images_gray, camera,
                                visiblity_vertex_to_image, proxy_intensity,
                                option.image_boundary_margin_);
+    if (mesh.vertex_colors_.size() == mesh.vertices_.size()) {
+        for (size_t i = 0; i < proxy_intensity.size(); ++i) {
+            proxy_intensity[i] = 0.2990f * mesh.vertex_colors_[i][0] +
+                                 0.5870f * mesh.vertex_colors_[i][1] +
+                                 0.1140f * mesh.vertex_colors_[i][2];
+        }
+        PrintDebug("[OptimizeImageCoorNonrigid] Injected mesh's color\n");
+    }
     for (int itr = 0; itr < option.maximum_iteration_; itr++) {
         PrintDebug("[Iteration %04d] ", itr + 1);
         double residual = 0.0;
@@ -241,6 +321,60 @@ CreateGradientImages(
                                      images_color, images_depth));
 }
 
+std::tuple<std::vector<std::shared_ptr<Image>>,
+           std::vector<std::shared_ptr<Image>>,
+           std::vector<std::shared_ptr<Image>>,
+           std::vector<std::shared_ptr<Image>>,
+           std::vector<std::shared_ptr<Image>>>
+CreateGradientImagesAlignGrad(
+        const std::vector<std::shared_ptr<RGBDImage>>& images_rgbd) {
+    std::vector<std::shared_ptr<Image>> images_gray;
+    std::vector<std::shared_ptr<Image>> images_dx;
+    std::vector<std::shared_ptr<Image>> images_dy;
+    std::vector<std::shared_ptr<Image>> images_color;
+    std::vector<std::shared_ptr<Image>> images_depth;
+    for (auto i = 0; i < images_rgbd.size(); i++) {
+        auto im_gray = CreateFloatImageFromImage(images_rgbd[i]->color_);
+        auto im_gray_filtered =
+                FilterImage(*im_gray, Image::FilterType::Gaussian3);
+        auto im_gray_dx =
+                FilterImage(*im_gray_filtered, Image::FilterType::Sobel3Dx);
+        auto im_gray_dy =
+                FilterImage(*im_gray_filtered, Image::FilterType::Sobel3Dy);
+
+        // im_mag = sqrt(im_gray_dx ** 2 + im_gray_dy ** 2)
+        auto im_mag = std::make_shared<Image>();
+        im_mag->PrepareImage(im_gray->width_, im_gray->height_,
+                             im_gray->num_of_channels_,
+                             im_gray->bytes_per_channel_);
+        for (size_t v = 0; v < im_gray->height_; v++) {
+            for (size_t u = 0; u < im_gray->width_; u++) {
+                float dx = *PointerAt<float>(*im_gray_dx, u, v);
+                float dy = *PointerAt<float>(*im_gray_dy, u, v);
+                float mag = sqrt(dx * dx + dy * dy);
+                *PointerAt<unsigned char>(*im_mag, u, v) = mag;
+            }
+        }
+        auto im_mag_filtered =
+                FilterImage(*im_gray, Image::FilterType::Gaussian3);
+        auto im_mag_dx =
+                FilterImage(*im_mag_filtered, Image::FilterType::Sobel3Dx);
+        auto im_mag_dy =
+                FilterImage(*im_mag_filtered, Image::FilterType::Sobel3Dy);
+
+        auto im_color = std::make_shared<Image>(images_rgbd[i]->color_);
+        auto im_depth = std::make_shared<Image>(images_rgbd[i]->depth_);
+
+        images_gray.push_back(im_mag_filtered);
+        images_dx.push_back(im_mag_dx);
+        images_dy.push_back(im_mag_dy);
+        images_color.push_back(im_color);
+        images_depth.push_back(im_depth);
+    }
+    return std::move(std::make_tuple(images_gray, images_dx, images_dy,
+                                     images_color, images_depth));
+}
+
 std::vector<std::shared_ptr<Image>> CreateDepthBoundaryMasks(
         const std::vector<std::shared_ptr<Image>>& images_depth,
         const ColorMapOptimizationOption& option) {
@@ -269,9 +403,9 @@ std::vector<ImageWarpingField> CreateWarpingFields(
     return std::move(fields);
 }
 
-}  // unnamed namespace
+}  // namespace
 
-void ColorMapOptimization(
+std::vector<std::shared_ptr<Image>> ColorMapOptimization(
         TriangleMesh& mesh,
         const std::vector<std::shared_ptr<RGBDImage>>& images_rgbd,
         PinholeCameraTrajectory& camera,
@@ -317,6 +451,7 @@ void ColorMapOptimization(
                                 visiblity_vertex_to_image,
                                 option.image_boundary_margin_);
     }
+    return images_mask;
 }
 
 }  // namespace open3d

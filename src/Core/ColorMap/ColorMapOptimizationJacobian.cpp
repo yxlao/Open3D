@@ -175,4 +175,35 @@ void ColorMapOptimizationJacobian::ComputeJacobianAndResidualNonRigid(
     r = (gray - proxy_intensity[vid]);
 }
 
+void ColorMapOptimizationJacobian::ComputeJacobianAndResidualNonRigidSparse(
+        int row,
+        Eigen::SparseMatrix<double, Eigen::RowMajor>& J_sparse,
+        double& r,
+        const TriangleMesh& mesh,
+        const std::vector<double>& proxy_intensity,
+        const std::shared_ptr<Image>& images_gray,
+        const std::shared_ptr<Image>& images_dx,
+        const std::shared_ptr<Image>& images_dy,
+        const ImageWarpingField& warping_fields,
+        const ImageWarpingField& warping_fields_init,
+        const Eigen::Matrix4d& intrinsic,
+        const Eigen::Matrix4d& extrinsic,
+        const std::vector<int>& visiblity_image_to_vertex,
+        const int image_boundary_margin) {
+    Eigen::Vector14d J_r;
+    Eigen::Vector14i pattern;
+    this->ComputeJacobianAndResidualNonRigid(
+            row, J_r, r, pattern, mesh, proxy_intensity, images_gray, images_dx,
+            images_dy, warping_fields, warping_fields_init, intrinsic,
+            extrinsic, visiblity_image_to_vertex, image_boundary_margin);
+
+    // J_r_sparse is of size 6 + 2 * anchor_w * anchor_h
+    // J_sparse is of size (num_visable_vertex, 6 + 2 * anchor_w * anchor_h)
+    //
+    // TODO: use sparse vector instead of sparse matrix
+    for (size_t i = 0; i < J_r.size(); ++i) {
+        J_sparse.insert(row, pattern(i)) = J_r(i);
+    }
+}
+
 }  // namespace open3d

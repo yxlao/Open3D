@@ -322,6 +322,51 @@ std::shared_ptr<Image> DilateImage(const Image &input,
     return output;
 }
 
+// First set output <- input, then for for each pixel coordinate (i, j) if there
+// are value 0 within half_kernel_size from (i, j) in the input image, set
+// output(i, j) = 0
+std::shared_ptr<Image> ErodeImage(const Image &input,
+                                  int half_kernel_size /* = 1 */) {
+    auto output = std::make_shared<Image>();
+    if (input.num_of_channels_ != 1 || input.bytes_per_channel_ != 1) {
+        PrintWarning("[ErodeImage] Unsupported image format.\n");
+        return output;
+    }
+    output->PrepareImage(input.width_, input.height_, 1, 1);
+
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+    for (int y = 0; y < input.height_; y++) {
+        for (int x = 0; x < input.width_; x++) {
+            *PointerAt<unsigned char>(*output, x, y, 0) =
+                    *PointerAt<unsigned char>(input, x, y);
+        }
+    }
+
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+    for (int y = 0; y < input.height_; y++) {
+        for (int x = 0; x < input.width_; x++) {
+            for (int yy = -half_kernel_size; yy <= half_kernel_size; yy++) {
+                for (int xx = -half_kernel_size; xx <= half_kernel_size; xx++) {
+                    unsigned char *pi;
+                    if (input.TestImageBoundary(x + xx, y + yy)) {
+                        pi = PointerAt<unsigned char>(input, x + xx, y + yy);
+                        if (*pi == 0) {
+                            *PointerAt<unsigned char>(*output, x, y, 0) = 0;
+                            xx = half_kernel_size;
+                            yy = half_kernel_size;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return output;
+}
+
 std::shared_ptr<Image> CreateDepthBoundaryMask(
         const Image &depth_image_input,
         double depth_threshold_for_discontinuity_check,
@@ -358,6 +403,9 @@ std::shared_ptr<Image> CreateDepthBoundaryMask(
         return mask_dilated;
     } else {
         return mask;
+        // TODO: specify erode size
+        auto mask_eroded = ErodeImage(*mask, 1);
+        return mask_eroded;
     }
 }
 
