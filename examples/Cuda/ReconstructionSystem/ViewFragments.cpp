@@ -22,6 +22,7 @@ int main(int argc, char **argv) {
     if (! is_success) return 1;
 
     auto mesh = CreateMeshFromFile(config.GetReconstructedSceneFile());
+    mesh->ComputeTriangleNormals();
     DrawGeometries({mesh});
 
     config.GetFragmentFiles();

@@ -91,8 +91,9 @@ int main(int argc, char **argv) {
     ReadPoseGraph(path_cuda, pose_graph_cuda);
 
     auto pose_graph_vis_cuda = VisualizePoseGraph(pose_graph_cuda);
+    auto mesh = CreateMeshFromFile(config.GetReconstructedSceneFile());
 
-    DrawGeometries({pose_graph_vis_cuda});
+    DrawGeometries({pose_graph_vis_cuda, mesh});
 
     return 0;
 }
