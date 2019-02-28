@@ -14,7 +14,7 @@
 #include <Core/Registration/PoseGraph.h>
 #include <Core/Registration/GlobalOptimization.h>
 
-#include "DatasetConfig.h"
+#include "examples/Cuda/DatasetConfig.h"
 
 using namespace open3d;
 

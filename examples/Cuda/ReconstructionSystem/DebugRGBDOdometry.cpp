@@ -20,7 +20,7 @@
 #include <Core/Registration/GlobalOptimization.h>
 
 #include "ORBPoseEstimation.h"
-#include "DatasetConfig.h"
+#include "examples/Cuda/DatasetConfig.h"
 
 using namespace open3d;
 
@@ -243,7 +243,7 @@ int main(int argc, char **argv) {
 
     std::string config_path = argc > 1 ? argv[1] :
                               "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda"
-                              "/ReconstructionSystem/config/bf_office3.json";
+                              "/ReconstructionSystem/config/office3.json";
 
     bool is_success = ReadIJsonConvertible(config_path, config);
     if (!is_success) return 1;

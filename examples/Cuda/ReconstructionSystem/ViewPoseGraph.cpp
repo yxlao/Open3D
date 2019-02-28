@@ -5,7 +5,7 @@
 #include <Core/Core.h>
 #include <IO/IO.h>
 #include <Visualization/Visualization.h>
-#include "DatasetConfig.h"
+#include "examples/Cuda/DatasetConfig.h"
 
 using namespace open3d;
 

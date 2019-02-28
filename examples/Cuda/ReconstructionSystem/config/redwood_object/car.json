@@ -1,0 +1,11 @@
+{
+  "name": "Stanford - lounge",
+  "path_dataset": "/media/wei/Data/data/redwood_objects/car",
+  "path_intrinsic": "",
+  "max_depth": 3.0,
+  "voxel_size": 0.05,
+  "max_depth_diff": 0.07,
+  "preference_loop_closure_odometry": 0.1,
+  "preference_loop_closure_registration": 5.0,
+  "tsdf_cubic_size": 3.0
+}

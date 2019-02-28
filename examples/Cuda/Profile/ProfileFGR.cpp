@@ -15,15 +15,13 @@
 #include <Core/Registration/GlobalOptimization.h>
 #include <Core/Registration/FastGlobalRegistration.h>
 
-#include "../ReconstructionSystem/DatasetConfig.h"
+#include "examples/Cuda/DatasetConfig.h"
 #include "Analyzer.h"
 
 using namespace open3d;
 
 void ProfileFGR(DatasetConfig &config, bool use_cuda) {
     std::vector<double> fgr_times;
-    std::vector<double> feature_extraction_times;
-    std::vector<double> feature_matching_times;
 
     int num_fragments = config.thumbnail_fragment_files_.size();
     for (int s = 0; s < num_fragments; ++s) {
@@ -39,13 +37,11 @@ void ProfileFGR(DatasetConfig &config, bool use_cuda) {
             match.t = t;
 
             Timer fgr_timer;
-            double feature_extraction_time;
-            double feature_matching_time;
+
             if (use_cuda) {
                 fgr_timer.Start();
                 cuda::FastGlobalRegistrationCuda fgr;
-                std::tie(feature_extraction_time, feature_matching_time)
-                    = fgr.Initialize(*source, *target);
+                fgr.Initialize(*source, *target);
 
                 auto result = fgr.ComputeRegistration();
                 match.trans_source_to_target = result.transformation_;
@@ -62,43 +58,26 @@ void ProfileFGR(DatasetConfig &config, bool use_cuda) {
                 match.information = registration.ComputeInformationMatrix();
                 fgr_timer.Stop();
             } else {
-                Timer feature_timer;
                 fgr_timer.Start();
-                feature_timer.Start();
                 auto source_fpfh = ComputeFPFHFeature(
                     *source, open3d::KDTreeSearchParamHybrid(0.25, 100));
                 auto target_fpfh = ComputeFPFHFeature(
                     *target, open3d::KDTreeSearchParamHybrid(0.25, 100));
-                feature_timer.Stop();
-                feature_extraction_time = feature_timer.GetDuration() / 2;
-
                 auto result = FastGlobalRegistration(*source, *target,
                                        *source_fpfh, *target_fpfh);
-                feature_matching_time = result.inlier_rmse_;
                 fgr_timer.Stop();
             }
 
             double time = fgr_timer.GetDuration();
             fgr_times.push_back(time);
-            feature_extraction_times.push_back(feature_extraction_time);
-            feature_matching_times.push_back(feature_matching_time);
 
-            PrintInfo("Fragment %d - %d takes %f + %f / %f ms\n", s, t,
-                      feature_extraction_time,
-                      feature_matching_time,
-                      time);
+            PrintInfo("Fragment %d - %d takes %f ms\n", s, t, time);
         }
     }
 
     double mean, std;
     std::tie(mean, std) = ComputeStatistics(fgr_times);
     PrintInfo("total time: avg = %f, std = %f\n", mean, std);
-
-    std::tie(mean, std) = ComputeStatistics(feature_extraction_times);
-    PrintInfo("feature extraction time: avg = %f, std = %f\n", mean, std);
-
-    std::tie(mean, std) = ComputeStatistics(feature_matching_times);
-    PrintInfo("feature matching time: avg = %f, std = %f\n", mean, std);
 }
 
 

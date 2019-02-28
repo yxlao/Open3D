@@ -16,7 +16,7 @@
 #include <Core/Registration/GlobalOptimization.h>
 #include <Core/Registration/ColoredICP.h>
 
-#include "../ReconstructionSystem/DatasetConfig.h"
+#include "examples/Cuda/DatasetConfig.h"
 #include "Analyzer.h"
 
 using namespace open3d;

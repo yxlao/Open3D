@@ -8,7 +8,7 @@
 #include <opencv2/opencv.hpp>
 #include <Cuda/Geometry/RGBDImageCuda.h>
 #include <Cuda/Geometry/PointCloudCuda.h>
-#include "DatasetConfig.h"
+#include "examples/Cuda/DatasetConfig.h"
 
 using namespace open3d;
 

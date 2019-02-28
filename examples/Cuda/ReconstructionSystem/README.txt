@@ -5,6 +5,6 @@ A cpp-based system will first be implemented here in order to reproduce the
 result of the original version.
 Only after the interfaces are stable shall we start to work on python binds.
 
-The version is simplified, without 5-pt matching inside a fragment -- we assume
-the odometry is accurate enough. With such a configuration, pose graph is
-not necessary inside a fragment. This may reduce a little bit accuracy.
+This version only supports Colored ICP and FGR. Point-to-point and
+point-to-plane ICP, as well as RANSAC-based global registration will be
+supported later.

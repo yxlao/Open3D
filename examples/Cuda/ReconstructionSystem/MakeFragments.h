@@ -19,7 +19,7 @@
 #include <Cuda/Integration/ScalableMeshVolumeCuda.h>
 
 #include <opencv2/opencv.hpp>
-#include "DatasetConfig.h"
+#include "examples/Cuda/DatasetConfig.h"
 #include "ORBPoseEstimation.h"
 
 using namespace open3d;

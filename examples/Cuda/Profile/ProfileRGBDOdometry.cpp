@@ -15,7 +15,7 @@
 
 using namespace open3d;
 
-#include "../ReconstructionSystem/DatasetConfig.h"
+#include "examples/Cuda/DatasetConfig.h"
 #include "Analyzer.h"
 
 double ProfileOdometry(

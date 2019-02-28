@@ -15,7 +15,7 @@
 #include <Cuda/Integration/ScalableTSDFVolumeCuda.h>
 #include <Cuda/Integration/ScalableMeshVolumeCuda.h>
 
-#include "DatasetConfig.h"
+#include "examples/Cuda/DatasetConfig.h"
 
 using namespace open3d;
 
