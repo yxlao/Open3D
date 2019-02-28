@@ -20,6 +20,10 @@ struct Match {
     Eigen::Matrix6d information;
 };
 
+static const std::string kDefaultDatasetConfigDir =
+    "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda"
+    "/ReconstructionSystem/config";
+
 class DatasetConfig : public IJsonConvertible {
 public:
     std::string path_dataset_;

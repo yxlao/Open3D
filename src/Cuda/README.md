@@ -1,33 +1,45 @@
 # Open3D: The CUDA Branch
 
-This cuda branch is in **VERY EARLY STAGE** under development, and I cannot 
-guarantee the
- stability or compatibility at all -- I do apologize for it. 
- 
-Since I work on my own, I expect to complete the basic functions in one or two
- months ~~(**Christmas 2018** might be a good time to place a milestone)~~. 
-I'm slower than expected now... 
- Before 
- that, I can only ensure it to be compilable on my machine.
- 
-Many parts of the code are migrated from my previous projects. They offer 
-similar functions to Open3D CPU version, but the interfaces may vary. I will 
-work on that part later. 
+This cuda branch is at **EARLY STAGE** under development. A fully functional 
+reconstruction system (`examples/Cuda/ReconstructionSystem`) is able to 
+reproduce reconstruction results from the CPU  version, while the running 
+speed is significantly boosted (> 10 times).   
 
+The next step will be refactoring code and designing compatible interfaces for 
+future integration into the Open3D release. Utility functions such as 
+`VoxelDownSample` will also be supported.  
+
+At current I am working on my own, although the branch is quite large. 
+If you run into the project and attempt to use it, please file a issue when 
+problems emerge. I cannot guarantee to solve it very quickly, but I will give
+ it a try. 
+
+~~Since I work on my own, I expect to complete the basic functions in one or two
+ months (**Christmas 2018** might be a good time to place a milestone). 
+I'm slower than expected now... 
+ Before that, I can only ensure it to be compilable on my machine.~~
+ 
 ## Dependencies
-- At current it requires OpenCV for basic image reading, writing, and 
-displaying. I will remove that part and turn to Open3D's internal APIs.
-- **Update 11.11.2018**, migration is partly done. Raytracing still requires 
-it for displaying in several demo files, but can be removed.
+- ~~At current it requires OpenCV for basic image reading, writing, and 
+displaying. I will remove that part and turn to Open3D's internal APIs.~~
+- ~~**Update 11.11.2018**, migration is partly done. Raytracing still requires 
+it for displaying in several demo files, but can be removed.~~
+- Additional dependencies include CUDA (of course) and OpenCV (for ORB feature 
+extraction). We may also introduce CUDA feature extraction and matching later.
+- A lower CMake version may fail to find CUDA properly. I'm using 3.13.2. 
+- Please be aware the compatibility issues between Eigen and CUDA 
+(e.g. Eigen <= 3.3.5 has problem with CUDA >= 9.0). 
+
+The system currently works on Ubuntu 16.04, CUDA 9.0. 
 
 
 ## Designs for CUDA classes
 
 ### Architecture
 Classes involving heterogeneous computations can involve both CPU computations 
-(data preparation, kernel calls) and GPU computations (data manipulation on board).
-Mixing them up will make the framework nasty, increase compilation time, and 
-can cause linking problems.
+(data preparation, kernel calls) and GPU computations (data manipulation on 
+device). Mixing them up will make the framework nasty, increase compilation 
+time, and can cause linking problems.
  
 I tried to design an architecture to split classes into smaller ones doing 
 specific jobs. There may be better solutions. If better ones are suggested, I
@@ -35,7 +47,7 @@ specific jobs. There may be better solutions. If better ones are suggested, I
 
 Typically, there will be 3 classes and 4 files holding a complete class. 
 The classes include
-- `Server` class, which holds GPU data and device functions. 
+- `Device` class, which holds GPU data and device functions. 
 - `KernelCaller` class, which is a wrapper of kernel calls from CPU.
 - `Host` class, which is the CPU interface that will prepare and transfer 
 data, and launch kernels functions.
@@ -45,18 +57,18 @@ These classes will be distributed in
 functions will also be declared separately in the header.
 - `.hpp` file, implementing the host functions for `Host` class. It will be 
 compiled by g++.
-- `.cuh` file, implementing the device functions for `Server` class. It will 
+- `.cuh` file, implementing the device functions for `Device` class. It will 
 be compiled by nvcc.
 - `.cuh` file, implementing the kernel functions for the global functions and
  its callers. It will be compiled by nvcc.
 
-As a bridge, the `Server` classes will be directly passed to ```__global__``` 
+As a bridge, the `Device` classes will be directly passed to ```__global__``` 
 functions **BY VALUE** (because CPU and GPU code does not share address space, 
 passing by reference is incorrect). In view of this, we **CANNOT** use 
 intelligent pointers as well as the constructors and destructors. We have to 
 use raw pointers and manage memory in CPU code. 
 
-The existance of `Server` is easy to understand -- it is a wrapper for the 
+The existance of `Device` is easy to understand -- it is a wrapper for the 
 device side. The reason that I setup a KernelCaller class is twofold:
 - Although kernel calls ```<<<blocks, threads >>>``` are launched from 
 CPU, they can only be compiled by nvcc. It is more reasonable to separate 
@@ -70,7 +82,7 @@ instantiations. It can keep things organized.
  
 A typical header will look like this:
 ```cpp
-class ACudaServer {
+class ACudaDevice {
 public:
     /* __device__ code to manipulate gpu data */
 private:
@@ -91,25 +103,24 @@ public:
     /* __host__ code calling ACudaKernelCallers functions */
     void Method();             
     
-private:
-    std::shared_ptr<ACudaServer> device_ = nullptr;    
+    std::shared_ptr<ACudaDevice> device_ = nullptr;    
 };
 
 class AcudaKernelCaller {
 public: 
-    static __host__ void MethodKernelCaller(AcudaServer& server);
+    static __host__ void MethodKernelCaller(Acuda& server);
 }
 /* Pass `Server` class BY VALUE */
-__global__ void MethodKernel(ACudaServer server);
+__global__ void MethodKernel(ACudaDevice server);
 ```  
 
 Note if the class is templated, we have to instantiate them in a `.cu` file 
-for `Server` and `KernelCaller` that includes the `.cuh` files, and a `.cpp` 
+for `Device` and `KernelCaller` that includes the `.cuh` files, and a `.cpp` 
 file that includes the `.hpp` file.
 
-### CUDA Server Reference Counting
+### Reference Counting
 - To avoid frequent CUDA memory manipulation, we add reference count for 
-servers. 
+`Device` classes. 
 - Basically, every host class (say `ArrayCuda`) is connected to one 
 server (say `ArrayCudaDevice`) using a `shared_ptr`. Multiple host objects 
 can share one server. 
@@ -120,24 +131,24 @@ destroyed (i.e., when we detect `device_.use_count() == 1` meaning this object
  is 
 the final host that points to the server), the data on GPU will be freed.
 
-### Nested CUDA Servers
-One CPU class should hold only one `Server` class, which can be nested with 
-other `Server` classes. Nested `Server` MUST hold structs instead of their 
+### Nested CUDA Devices
+One CPU class should hold only one `Device` class, which can be nested with 
+other `Device` classes. Nested `Device` MUST hold structs instead of their 
 pointers, because otherwise the values cannot be correctly passed to CUDA. 
-- For the classes with a simple `Server`, just handle cuda data correctly in 
+- For the classes with a simple `Device`, just handle cuda data correctly in 
 `Create` and `Release`.
 - For nested classes, write a function `UpdateDevice` that correctly 
 synchronize nested structs (not their ptrs!). One simplified sample goes here:
 ```cpp
-class ACudaServer {
+class ACudaDevice {
 public:
-    BCudaServer b_;
+    BCudaDevice b_;
     Type* data_owned_by_a_;
 }
 
 class ACuda {
 private:
-    std::shared_ptr<BCudaServer> device_;
+    std::shared_ptr<BCudaDevice> device_;
     BCuda b_;
 
 public:
@@ -147,20 +158,20 @@ public:
 }
 ```
 
-**DON'T** use inheritance for `Server`. It is not supported by CUDA -- there 
+**DO NOT** use inheritance for `Device`. It is not supported by CUDA -- there 
 will be problems transforming *vtable* to kernels.
 
-One thing to note is that how do we initialize the servers, if they are in 
+One thing to note is that how do we initialize the `Device`s, if they are in 
 containers (e.g.  HashTable, Array)? 
 - One bad way to do this is to give every copy of them a host 
 correspondent. That will make the code silly and impossible to maintain:
 ```cpp
-ArrayCuda<BServer> array_;
+ArrayCuda<BDevice> array_;
 std::vector<BCuda> barray_hosts_;
 for (auto &barray_host : barray_hosts_) {
     barray_host.Create();    
 }
-/** On kernel, array_->server[i] = *barray_host.device_ ??? **/
+/** On kernel, array_->device[i] = *barray_host.device_ ??? **/
 ```   
 - Another workaround is to pre-allocate the data in a plain cuda array 
 (name them server memory pool will be a little bit easy to understand) using 

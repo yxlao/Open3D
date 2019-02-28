@@ -11,6 +11,7 @@
 #include <Cuda/Geometry/PointCloudCuda.h>
 #include <Visualization/Visualization.h>
 
+#include "DatasetConfig.h"
 #include "Utils.h"
 
 using namespace open3d;
@@ -40,7 +41,7 @@ int TwoFrameRGBDOdometry(
     cuda::RGBDOdometryCuda<3> odometry;
     odometry.SetIntrinsics(PinholeCameraIntrinsic(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault));
-    odometry.SetParameters(OdometryOption({20, 10, 5}, 0.07), 0.5f);
+    odometry.SetParameters(OdometryOption({20, 10, 5}, 0.07), 0.1);
     odometry.Initialize(source, target);
     odometry.transform_source_to_target_ = Eigen::Matrix4d::Identity();
 
@@ -63,9 +64,6 @@ int TwoFrameRGBDOdometry(
                       odometry.device_->intrinsics_[0]);
     pcl_target->Build(odometry.target_[0],
                       odometry.device_->intrinsics_[0]);
-    DrawGeometries({pcl_source});
-    DrawGeometries({pcl_target});
-
     visualizer.AddGeometry(pcl_source);
     visualizer.AddGeometry(pcl_target);
 
@@ -73,7 +71,7 @@ int TwoFrameRGBDOdometry(
     std::shared_ptr<LineSet> lines = std::make_shared<LineSet>();
     visualizer.AddGeometry(lines);
 
-    const int kIterations[3] = {0, 0, 60};
+    const int kIterations[3] = {60, 60, 60};
     bool finished = false;
     int level = 2;
     int iter = kIterations[level];
@@ -154,27 +152,15 @@ int TwoFrameRGBDOdometry(
 }
 
 int main(int argc, char **argv) {
-    std::string base_path = "/home/wei/Work/data/stanford/lounge";
-    auto rgbd_filenames = ReadDataAssociation(
-        base_path + "/data_association.txt");
+    DatasetConfig config;
 
-    std::string paths[] = {
-        "/media/wei/Data/data/bundlefusion/apt2/depth/frame-002000.depth.png",
-        "/media/wei/Data/data/bundlefusion/apt2/image/frame-002000.color.jpg",
-        "/media/wei/Data/data/bundlefusion/apt2/depth/frame-002001.depth.png",
-        "/media/wei/Data/data/bundlefusion/apt2/image/frame-002001.color.jpg"
-    };
+    std::string config_path = argc > 1 ? argv[1]
+        : kDefaultDatasetConfigDir + "/stanford/lounge.json";
+    bool is_success = ReadIJsonConvertible(config_path, config);
+    if (!is_success) return 1;
 
-    TwoFrameRGBDOdometry(paths[0], paths[1], paths[2], paths[3]);
-
-    for (int i = 0; i < rgbd_filenames.size(); i += 100) {
-        std::cout << i << std::endl;
-        TwoFrameRGBDOdometry(
-            base_path + "/" + rgbd_filenames[i].first,
-            base_path + "/" + rgbd_filenames[i].second,
-            base_path + "/" + rgbd_filenames[i + 1].first,
-            base_path + "/" + rgbd_filenames[i + 1].second);
-    }
+    TwoFrameRGBDOdometry(config.depth_files_[350], config.color_files_[350],
+                         config.depth_files_[352], config.color_files_[352]);
 
     return 0;
 }
