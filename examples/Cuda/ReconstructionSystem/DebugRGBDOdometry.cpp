@@ -31,7 +31,7 @@ PoseGraph MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
     odometry.SetParameters(OdometryOption({20, 10, 5},
                                           config.max_depth_diff_,
                                           config.min_depth_,
-                                          config.max_depth_), 0.5f);
+                                          config.max_depth_), 0.968f);
 
     cuda::RGBDImageCuda rgbd_source((float) config.max_depth_,
                                     (float) config.depth_factor_);
@@ -79,6 +79,8 @@ PoseGraph MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
         int t = s + 1;
         if (t >= end) break;
 
+        std::cout << config.depth_files_[s] << " " << config.color_files_[s]<< "\n";
+        std::cout << config.depth_files_[t] << " " << config.color_files_[t]<< "\n";
         ReadImage(config.depth_files_[t], depth);
         ReadImage(config.color_files_[t], color);
         rgbd_target.Upload(depth, color);
@@ -241,7 +243,7 @@ int main(int argc, char **argv) {
 
     std::string config_path = argc > 1 ? argv[1] :
                               "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda"
-                              "/ReconstructionSystem/config/lounge.json";
+                              "/ReconstructionSystem/config/bf_office3.json";
 
     bool is_success = ReadIJsonConvertible(config_path, config);
     if (!is_success) return 1;
@@ -254,17 +256,17 @@ int main(int argc, char **argv) {
         DIV_CEILING(config.color_files_.size(),
                     config.n_frames_per_fragment_);
 
-    for (int i = 28; i < 29; ++i) {
+    for (int i = 11; i < 21; ++i) {
         PrintInfo("Processing fragment %d / %d\n", i, num_fragments - 1);
         auto pose_graph = MakePoseGraphForFragment(i, config);
-        WritePoseGraph(
-        "/media/wei/Data/data/indoor_lidar_rgbd/apartment/fragments_cuda/"
-        "fragment_057.json", pose_graph);
+//        WritePoseGraph(
+//        "/media/wei/Data/data/indoor_lidar_rgbd/apartment/fragments_cuda/"
+//        "fragment_057.json", pose_graph);
         auto pose_graph_prunned = OptimizePoseGraphForFragment(i, pose_graph,
             config);
-        WritePoseGraph(
-            "/media/wei/Data/data/indoor_lidar_rgbd/apartment/fragments_cuda/"
-            "fragment_optimized_057.json", pose_graph_prunned);
+//        WritePoseGraph(
+//            "/media/wei/Data/data/indoor_lidar_rgbd/apartment/fragments_cuda/"
+//            "fragment_optimized_057.json", pose_graph_prunned);
         IntegrateForFragment(i, pose_graph_prunned, config);
     }
     timer.Stop();

@@ -148,7 +148,7 @@ if __name__ == '__main__':
 
         depth_dict = read_file_list(dataset_absolute_path + '/depth.txt')
         rgb_dict = read_file_list(dataset_absolute_path + '/rgb.txt')
-        gt_dict = read_file_list(dataset_absolute_path + '/groundtruth.txt')
+        # gt_dict = read_file_list(dataset_absolute_path + '/groundtruth.txt')
 
         matched_depth_and_rgb = associate(depth_dict, rgb_dict,
                                           float(args.offset),
@@ -157,40 +157,40 @@ if __name__ == '__main__':
                                   'depth_rgb_association.txt',
                                   depth_dict, rgb_dict, matched_depth_and_rgb,
                                   args.first_only)
-
-        matched_depth_and_gt = associate(depth_dict, gt_dict,
-                                         float(args.offset),
-                                         float(args.max_difference))
-
-        # (depth, rgb), (gt)
-        matches = []
-        gts = []
-        for a, b in matched_depth_and_rgb:
-            associated_detph_and_gt = \
-                list(filter(lambda x: x[0] == a, matched_depth_and_gt))
-            if len(associated_detph_and_gt) > 0:
-                matches.append((a, b))
-                gts.append(associated_detph_and_gt[0][1])
-
-        generate_data_association(dataset_absolute_path, 'data_association.txt',
-                                  depth_dict, rgb_dict, matches,
-                                  args.first_only)
-
-        trajectory = np.zeros((len(gts), 4, 4))
-        for i, gt in enumerate(gts):
-            pose = list(map(lambda x: float(x), gt_dict[gt]))
-            t = np.array(pose[0:3])
-            q = np.quaternion(pose[6], pose[3], pose[4], pose[5])
-            R = quaternion.as_rotation_matrix(q)
-
-            T = np.zeros((4, 4))
-            T[0:3, 0:3] = R
-            T[0:3, 3] = t
-            T[3, 3] = 1
-            trajectory[i, :, :] = T
-
-        save_traj_log(dataset_absolute_path + '/trajectory.log', trajectory)
-
-        print('({} {}->{}) {} -> {}'.format(
-            len(depth_dict), len(rgb_dict), len(matched_depth_and_rgb),
-            len(gt_dict), len(gts)))
+        #
+        # matched_depth_and_gt = associate(depth_dict, gt_dict,
+        #                                  float(args.offset),
+        #                                  float(args.max_difference))
+        #
+        # # (depth, rgb), (gt)
+        # matches = []
+        # gts = []
+        # for a, b in matched_depth_and_rgb:
+        #     associated_detph_and_gt = \
+        #         list(filter(lambda x: x[0] == a, matched_depth_and_gt))
+        #     if len(associated_detph_and_gt) > 0:
+        #         matches.append((a, b))
+        #         gts.append(associated_detph_and_gt[0][1])
+        #
+        # generate_data_association(dataset_absolute_path, 'data_association.txt',
+        #                           depth_dict, rgb_dict, matches,
+        #                           args.first_only)
+        #
+        # trajectory = np.zeros((len(gts), 4, 4))
+        # for i, gt in enumerate(gts):
+        #     pose = list(map(lambda x: float(x), gt_dict[gt]))
+        #     t = np.array(pose[0:3])
+        #     q = np.quaternion(pose[6], pose[3], pose[4], pose[5])
+        #     R = quaternion.as_rotation_matrix(q)
+        #
+        #     T = np.zeros((4, 4))
+        #     T[0:3, 0:3] = R
+        #     T[0:3, 3] = t
+        #     T[3, 3] = 1
+        #     trajectory[i, :, :] = T
+        #
+        # save_traj_log(dataset_absolute_path + '/trajectory.log', trajectory)
+        #
+        # print('({} {}->{}) {} -> {}'.format(
+        #     len(depth_dict), len(rgb_dict), len(matched_depth_and_rgb),
+        #     len(gt_dict), len(gts)))

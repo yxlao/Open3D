@@ -80,7 +80,8 @@ int main(int argc, char **argv) {
 
     std::string config_path = argc > 1 ? argv[1] :
                               "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda"
-                              "/ReconstructionSystem/config/burghers.json";
+                              "/ReconstructionSystem/config/bf_office3"
+                              ".json";
 
     bool is_success = ReadIJsonConvertible(config_path, config);
     if (! is_success) return 1;

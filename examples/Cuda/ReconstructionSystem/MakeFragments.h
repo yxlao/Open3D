@@ -32,7 +32,7 @@ void MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
     odometry.SetParameters(OdometryOption({20, 10, 5},
                                           config.max_depth_diff_,
                                           config.min_depth_,
-                                          config.max_depth_), 0.5f);
+                                          config.max_depth_), 0.968f);
 
     cuda::RGBDImageCuda rgbd_source((float) config.max_depth_,
                                     (float) config.depth_factor_);

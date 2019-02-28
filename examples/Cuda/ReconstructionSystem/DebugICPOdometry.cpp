@@ -22,7 +22,7 @@ using namespace open3d;
 std::vector<Match> MatchFragments(DatasetConfig &config) {
     std::vector<Match> matches;
 
-    for (int s = 55; s < config.thumbnail_fragment_files_.size() - 1; ++s) {
+    for (int s = 20; s < config.thumbnail_fragment_files_.size() - 1; ++s) {
         auto source = CreatePointCloudFromFile(config.thumbnail_fragment_files_[s]);
 
         PoseGraph pose_graph_s;
@@ -42,7 +42,7 @@ std::vector<Match> MatchFragments(DatasetConfig &config) {
         cuda::RegistrationCuda registration(
             TransformationEstimationType::ColoredICP);
         registration.Initialize(*source, *target,
-                                (float) config.voxel_size_ * 1.4f,
+                                (float) config.voxel_size_,
                                 init_source_to_target);
         registration.ComputeICP();
         match.trans_source_to_target =
@@ -67,7 +67,8 @@ int main(int argc, char **argv) {
 
     std::string config_path = argc > 1 ? argv[1] :
                               "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda"
-                              "/ReconstructionSystem/config/apartment.json";
+                              "/ReconstructionSystem/config/livingroom1-simulated"
+                              ".json";
 
     bool is_success = ReadIJsonConvertible(config_path, config);
     if (!is_success) return 1;

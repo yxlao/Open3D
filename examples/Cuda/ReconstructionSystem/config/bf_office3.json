@@ -1,0 +1,13 @@
+{
+  "name": "Stanford - lounge",
+  "path_dataset": "/media/wei/Data/data/bundlefusion/office3",
+  "path_intrinsic": "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda/ReconstructionSystem/config/intrinsics/camera_bf.json",
+  "n_frames_per_fragment": 100,
+  "max_depth": 2.0,
+  "voxel_size": 0.05,
+  "max_depth_diff": 0.04,
+  "preference_loop_closure_odometry": 0.1,
+  "preference_loop_closure_registration": 20,
+  "tsdf_cubic_size": 3.0,
+  "with_opencv": true
+}

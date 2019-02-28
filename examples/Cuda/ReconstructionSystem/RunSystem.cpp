@@ -36,7 +36,8 @@ int main(int argc, char **argv) {
 
     std::string config_path = argc > 1 ? argv[1] :
                               "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda"
-                              "/ReconstructionSystem/config/copyroom.json";
+                              "/ReconstructionSystem/config/bf_office3"
+                              ".json";
 
     bool is_success = ReadIJsonConvertible(config_path, config);
     if (!is_success) return 1;
@@ -86,3 +87,9 @@ int main(int argc, char **argv) {
 
     return 0;
 }
+//
+//- Make fragment      : 00:18:09.577
+//- Register fragments : 00:38:47.560
+//- Refine registration: 00:19:40.272
+//- Intergate scene    : 00:07:30.579
+//- Total              : 01:24:08.008

@@ -31,7 +31,8 @@ int TwoFrameRGBDOdometry(
     ReadImage(target_color_path, target_color);
     ReadImage(target_depth_path, target_depth);
 
-    cuda::RGBDImageCuda source, target;
+    cuda::RGBDImageCuda
+        source(640, 480, 2.5, 1000), target(640, 480, 2.5, 1000);
     source.Upload(source_depth, source_color);
     target.Upload(target_depth, target_color);
 
@@ -62,6 +63,9 @@ int TwoFrameRGBDOdometry(
                       odometry.device_->intrinsics_[0]);
     pcl_target->Build(odometry.target_[0],
                       odometry.device_->intrinsics_[0]);
+    DrawGeometries({pcl_source});
+    DrawGeometries({pcl_target});
+
     visualizer.AddGeometry(pcl_source);
     visualizer.AddGeometry(pcl_target);
 
@@ -69,7 +73,7 @@ int TwoFrameRGBDOdometry(
     std::shared_ptr<LineSet> lines = std::make_shared<LineSet>();
     visualizer.AddGeometry(lines);
 
-    const int kIterations[3] = {60, 60, 60};
+    const int kIterations[3] = {0, 0, 60};
     bool finished = false;
     int level = 2;
     int iter = kIterations[level];
@@ -103,8 +107,8 @@ int TwoFrameRGBDOdometry(
         lines->colors_.clear();
         auto &intrinsic = odometry.device_->intrinsics_[level];
         auto correspondences = odometry.correspondences_.Download();
-        auto src_depth = odometry.source_[level].depthf_.DownloadImage();
-        auto tgt_depth = odometry.target_[level].depthf_.DownloadImage();
+        auto src_depth = odometry.source_[level].depth_.DownloadImage();
+        auto tgt_depth = odometry.target_[level].depth_.DownloadImage();
         for (int i = 0; i < correspondences.size(); ++i) {
             auto &c = correspondences[i];
 
@@ -154,13 +158,22 @@ int main(int argc, char **argv) {
     auto rgbd_filenames = ReadDataAssociation(
         base_path + "/data_association.txt");
 
+    std::string paths[] = {
+        "/media/wei/Data/data/bundlefusion/apt2/depth/frame-002000.depth.png",
+        "/media/wei/Data/data/bundlefusion/apt2/image/frame-002000.color.jpg",
+        "/media/wei/Data/data/bundlefusion/apt2/depth/frame-002001.depth.png",
+        "/media/wei/Data/data/bundlefusion/apt2/image/frame-002001.color.jpg"
+    };
+
+    TwoFrameRGBDOdometry(paths[0], paths[1], paths[2], paths[3]);
+
     for (int i = 0; i < rgbd_filenames.size(); i += 100) {
         std::cout << i << std::endl;
         TwoFrameRGBDOdometry(
-            base_path + "/" + rgbd_filenames[i + 5].first,
-            base_path + "/" + rgbd_filenames[i + 5].second,
             base_path + "/" + rgbd_filenames[i].first,
-            base_path + "/" + rgbd_filenames[i].second);
+            base_path + "/" + rgbd_filenames[i].second,
+            base_path + "/" + rgbd_filenames[i + 1].first,
+            base_path + "/" + rgbd_filenames[i + 1].second);
     }
 
     return 0;
