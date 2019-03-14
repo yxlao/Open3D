@@ -97,8 +97,7 @@ int main(int argc, char **argv) {
     DatasetConfig config;
 
     std::string config_path = argc > 1 ? argv[1] :
-                              "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda"
-                              "/ReconstructionSystem/config/lounge.json";
+        kDefaultDatasetConfigDir + "/stanford/lounge.json";
 
     bool is_success = ReadIJsonConvertible(config_path, config);
     if (!is_success) return 1;

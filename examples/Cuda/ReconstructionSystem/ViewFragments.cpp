@@ -15,21 +15,20 @@ int main(int argc, char **argv) {
     DatasetConfig config;
 
     std::string config_path = argc > 1 ? argv[1] :
-        "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda"
-        "/ReconstructionSystem/config/office3.json";
+        kDefaultDatasetConfigDir + "/cmu/nsh.json";
 
     bool is_success = ReadIJsonConvertible(config_path, config);
     if (! is_success) return 1;
 
-    auto mesh = CreateMeshFromFile(config.GetReconstructedSceneFile());
-    mesh->ComputeTriangleNormals();
-    DrawGeometries({mesh});
+//    auto mesh = CreateMeshFromFile(config.GetReconstructedSceneFile());
+//    mesh->ComputeTriangleNormals();
+//    DrawGeometries({mesh});
 
     config.GetFragmentFiles();
-    for (int i = 0; i < config.fragment_files_.size(); ++i) {
-        auto ply_filename = config.fragment_files_[i];
+    for (auto &ply_filename : config.fragment_files_) {
         auto pcl = CreatePointCloudFromFile(ply_filename);
-        DrawGeometries({pcl}, ply_filename);
+        PrintInfo("%s\n", ply_filename.c_str());
+        DrawGeometries({pcl});
     }
     return 0;
 }

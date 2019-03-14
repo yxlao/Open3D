@@ -16,7 +16,7 @@
 
 #include <opencv2/opencv.hpp>
 #include <thread>
-#include "Utils.h"
+#include "examples/Cuda/Utils.h"
 
 using namespace open3d;
 

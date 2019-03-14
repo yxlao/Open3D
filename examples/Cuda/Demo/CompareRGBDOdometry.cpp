@@ -11,7 +11,7 @@
 #include <Cuda/Geometry/PointCloudCuda.h>
 #include <Visualization/Visualization.h>
 
-#include "Utils.h"
+#include "examples/Cuda/Utils.h"
 
 #include <Eigen/Dense>
 #include <Core/Geometry/Image.h>

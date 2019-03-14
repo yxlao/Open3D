@@ -7,7 +7,7 @@
 #include <Visualization/Visualization.h>
 #include <Cuda/Registration/FeatureExtractorCuda.h>
 #include <Cuda/Geometry/NNCuda.h>
-#include "Utils.h"
+#include "examples/Cuda/Utils.h"
 
 int main(int argc, char **argv) {
     using namespace open3d;

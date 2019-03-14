@@ -29,14 +29,10 @@ std::string SecondsToHMS(double seconds) {
 }
 
 int main(int argc, char **argv) {
-//    SetVerbosityLevel(VerbosityLevel::VerboseDebug);
-
     DatasetConfig config;
 
     std::string config_path = argc > 1 ? argv[1] :
-        "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda"
-        "/ReconstructionSystem/config/bundlefusion/office3"
-        ".json";
+        kDefaultDatasetConfigDir + "/cmu/nsh.json";
 
     bool is_success = ReadIJsonConvertible(config_path, config);
     if (!is_success) return 1;
@@ -47,7 +43,7 @@ int main(int argc, char **argv) {
     Timer timer;
 
     timer.Start();
-    MakeFragment::Run(config);
+//    MakeFragment::Run(config);
     timer.Stop();
     std::string make_fragment_time = SecondsToHMS(
         timer.GetDuration() / 1000.0);

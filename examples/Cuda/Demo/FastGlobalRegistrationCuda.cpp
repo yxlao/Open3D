@@ -12,7 +12,7 @@
 #include <iostream>
 #include <Cuda/Geometry/NNCuda.h>
 #include <Cuda/Registration/FastGlobalRegistrationCuda.h>
-#include "Utils.h"
+#include "examples/Cuda/Utils.h"
 
 int main(int argc, char **argv) {
     using namespace open3d;
@@ -57,8 +57,6 @@ int main(int argc, char **argv) {
 
     /* After */
     VisualizeRegistration(*source, *target, result.transformation_);
-
-
 
     return 0;
 }

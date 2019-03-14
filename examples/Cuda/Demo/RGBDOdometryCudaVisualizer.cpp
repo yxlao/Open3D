@@ -11,8 +11,8 @@
 #include <Cuda/Geometry/PointCloudCuda.h>
 #include <Visualization/Visualization.h>
 
-#include "DatasetConfig.h"
-#include "Utils.h"
+#include "examples/Cuda/DatasetConfig.h"
+#include "examples/Cuda/Utils.h"
 
 using namespace open3d;
 
@@ -33,7 +33,7 @@ int TwoFrameRGBDOdometry(
     ReadImage(target_depth_path, target_depth);
 
     cuda::RGBDImageCuda
-        source(640, 480, 2.5, 1000), target(640, 480, 2.5, 1000);
+        source(640, 480, 2.5, 5000), target(640, 480, 2.5, 5000);
     source.Upload(source_depth, source_color);
     target.Upload(target_depth, target_color);
 
@@ -41,13 +41,13 @@ int TwoFrameRGBDOdometry(
     cuda::RGBDOdometryCuda<3> odometry;
     odometry.SetIntrinsics(PinholeCameraIntrinsic(
         PinholeCameraIntrinsicParameters::PrimeSenseDefault));
-    odometry.SetParameters(OdometryOption({20, 10, 5}, 0.07), 0.1);
+    odometry.SetParameters(OdometryOption({20, 10, 5}, 0.07), 0.5);
     odometry.Initialize(source, target);
     odometry.transform_source_to_target_ = Eigen::Matrix4d::Identity();
 
     /** Prepare visualizer **/
     VisualizerWithKeyCallback visualizer;
-    if (!visualizer.CreateVisualizerWindow("RGBDOdometry", 1280, 960, 0, 0)) {
+    if (!visualizer.CreateVisualizerWindow("RGBDOdometry", 640, 480, 0, 0)) {
         PrintWarning("Failed creating OpenGL window.\n");
         return -1;
     }
@@ -71,7 +71,7 @@ int TwoFrameRGBDOdometry(
     std::shared_ptr<LineSet> lines = std::make_shared<LineSet>();
     visualizer.AddGeometry(lines);
 
-    const int kIterations[3] = {60, 60, 60};
+    const int kIterations[3] = {40, 20, 10};
     bool finished = false;
     int level = 2;
     int iter = kIterations[level];
@@ -155,12 +155,20 @@ int main(int argc, char **argv) {
     DatasetConfig config;
 
     std::string config_path = argc > 1 ? argv[1]
-        : kDefaultDatasetConfigDir + "/stanford/lounge.json";
+                                       : kDefaultDatasetConfigDir
+                                  + "/tum/fr3_household.json";
     bool is_success = ReadIJsonConvertible(config_path, config);
     if (!is_success) return 1;
 
-    TwoFrameRGBDOdometry(config.depth_files_[350], config.color_files_[350],
-                         config.depth_files_[352], config.color_files_[352]);
+    // 1800 -> 1805
+    // 1900 -> 1905
+    for (int i = 1900; i < config.depth_files_.size(); i += 100) {
+        PrintInfo("%d -> %d\n", i, i + 5);
+        TwoFrameRGBDOdometry(config.depth_files_[i],
+                             config.color_files_[i],
+                             config.depth_files_[i + 5],
+                             config.color_files_[i + 5]);
+    }
 
     return 0;
 }

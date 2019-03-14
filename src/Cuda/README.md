@@ -25,7 +25,8 @@ displaying. I will remove that part and turn to Open3D's internal APIs.~~
 - ~~**Update 11.11.2018**, migration is partly done. Raytracing still requires 
 it for displaying in several demo files, but can be removed.~~
 - Additional dependencies include CUDA (of course) and OpenCV (for ORB feature 
-extraction). We may also introduce CUDA feature extraction and matching later.
+extraction). We may also introduce CUDA feature extraction and matching later
+ to get rid of OpenCV.
 - A lower CMake version may fail to find CUDA properly. I'm using 3.13.2. 
 - Please be aware the compatibility issues between Eigen and CUDA 
 (e.g. Eigen <= 3.3.5 has problem with CUDA >= 9.0). 
@@ -210,18 +211,17 @@ ImageCuda).~~ Done
 - Add macros for debugging code snippets (e.g. boundary check).
 
 ## Notes
-- Use newer cmake. 3.5.1 has problems with cuda headers. 3.12.3 works for me.
 - ~~Eigen has something wrong in their code. I believe not every functions 
 are correctly prefixed with EIGEN_DEVICE_FUNC. Even if I don't call Eigen 
 function in CUDA, as long as I compile with nvcc, the annoying warnings will 
 come out. Work around: uncomment `EIGEN_DEVICE_FUNC` in Eigen's headers.~~ 
 Fixed by separating cuda and cpp implementations.
 - ~~DO NOT add boundary checks in frequently accessed functions, such as get(),
- push_back(), etc. Check them outside.~~ Add boundary check macros.
+ push_back(), etc. Check them outside.~~ Added boundary check macros.
 - Never abuse `inline` for non-trivial functions. NVCC will cry!
 
 ## Notations
-- World coordinate (in unit of meter): Xw = (xw, yw, zw)$
+- World coordinate (in unit of meter): Xw = (xw, yw, zw)
 - Volume coordinate (in unit of meter, transformed from world): Xv = (xv, yv,
  zv)
 - Global voxel coordinate (in unit of voxel): X = (x, y, z)

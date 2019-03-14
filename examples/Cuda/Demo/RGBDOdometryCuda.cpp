@@ -12,7 +12,7 @@
 #include <Cuda/Integration/ScalableMeshVolumeCuda.h>
 #include <Visualization/Visualization.h>
 
-#include "Utils.h"
+#include "examples/Cuda/Utils.h"
 
 using namespace open3d;
 

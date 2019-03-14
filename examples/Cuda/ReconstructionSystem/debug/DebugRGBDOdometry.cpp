@@ -19,7 +19,7 @@
 #include <Core/Registration/PoseGraph.h>
 #include <Core/Registration/GlobalOptimization.h>
 
-#include "ORBPoseEstimation.h"
+#include "examples/Cuda/ReconstructionSystem/ORBPoseEstimation.h"
 #include "examples/Cuda/DatasetConfig.h"
 
 using namespace open3d;
@@ -163,7 +163,6 @@ PoseGraph MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
 PoseGraph OptimizePoseGraphForFragment(int fragment_id, PoseGraph &pose_graph,
                                   DatasetConfig &config) {
 
-    std::cout << config.preference_loop_closure_odometry_ << std::endl;
     SetVerbosityLevel(VerbosityLevel::VerboseDebug);
 
     GlobalOptimizationConvergenceCriteria criteria;
@@ -231,7 +230,6 @@ void IntegrateForFragment(int fragment_id, PoseGraph &pose_graph,
 
     std::shared_ptr<PointCloud> ptr = std::make_shared<PointCloud>(pcl);
     DrawGeometries({ptr});
-    WritePointCloudToPLY("/home/wei/fragment_057_cuda_nocv.ply", pcl);
 }
 
 
@@ -242,8 +240,7 @@ int main(int argc, char **argv) {
     DatasetConfig config;
 
     std::string config_path = argc > 1 ? argv[1] :
-                              "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda"
-                              "/ReconstructionSystem/config/office3.json";
+        kDefaultDatasetConfigDir + "/stanford/lounge.json";
 
     bool is_success = ReadIJsonConvertible(config_path, config);
     if (!is_success) return 1;
@@ -259,14 +256,8 @@ int main(int argc, char **argv) {
     for (int i = 11; i < 21; ++i) {
         PrintInfo("Processing fragment %d / %d\n", i, num_fragments - 1);
         auto pose_graph = MakePoseGraphForFragment(i, config);
-//        WritePoseGraph(
-//        "/media/wei/Data/data/indoor_lidar_rgbd/apartment/fragments_cuda/"
-//        "fragment_057.json", pose_graph);
         auto pose_graph_prunned = OptimizePoseGraphForFragment(i, pose_graph,
             config);
-//        WritePoseGraph(
-//            "/media/wei/Data/data/indoor_lidar_rgbd/apartment/fragments_cuda/"
-//            "fragment_optimized_057.json", pose_graph_prunned);
         IntegrateForFragment(i, pose_graph_prunned, config);
     }
     timer.Stop();

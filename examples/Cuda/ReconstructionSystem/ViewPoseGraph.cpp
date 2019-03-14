@@ -79,16 +79,13 @@ int main(int argc, char **argv) {
     DatasetConfig config;
 
     std::string config_path = argc > 1 ? argv[1] :
-                              "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda"
-                              "/ReconstructionSystem/config/bf_office3"
-                              ".json";
+        kDefaultDatasetConfigDir + "/cmu/nsh.json";
 
     bool is_success = ReadIJsonConvertible(config_path, config);
     if (! is_success) return 1;
 
-    PoseGraph pose_graph_cpu, pose_graph_cuda;
-
-    std::string path_cuda = config.GetPoseGraphFileForScene(true);
+    PoseGraph pose_graph_cuda;
+    std::string path_cuda = config.GetPoseGraphFileForRefinedScene(true);
     ReadPoseGraph(path_cuda, pose_graph_cuda);
 
     auto pose_graph_vis_cuda = VisualizePoseGraph(pose_graph_cuda);

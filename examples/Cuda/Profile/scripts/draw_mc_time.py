@@ -39,7 +39,7 @@ if __name__ == '__main__':
     e_gpu_mc = np.array([1.64, 3.25, 1.98, 1.94, 1.15])
     draw_error_bar(axs, x, labels,
                    y_gpu_mc, e_gpu_mc,
-                   r'\textbf{MarchingCubes for Voxels in Frustum}',
+                   r'\textbf{Marching Cubes for Voxels in Frustum}',
                    r'\textbf{Average time per frame} (ms)')
 
     fig.tight_layout()

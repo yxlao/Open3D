@@ -103,8 +103,7 @@ int main(int argc, char **argv) {
     DatasetConfig config;
 
     std::string config_path = argc > 1 ? argv[1] :
-                              "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda"
-                              "/ReconstructionSystem/config/copyroom.json";
+        kDefaultDatasetConfigDir + "/stanford/copyroom.json";
 
     bool is_success = ReadIJsonConvertible(config_path, config);
     if (!is_success) return 1;
@@ -123,19 +122,7 @@ int main(int argc, char **argv) {
         PrintInfo("Frame %d / %d takes %f ms\n", i, num_odometries, time);
     }
     std::tie(mean, std) = ComputeStatistics(times);
-        PrintInfo("gpu time: avg = %f, std = %f\n", mean, std);
-
-//    for (int i = 0; i < num_odometries; ++i) {
-//        double time = ProfileOdometry(
-//            config.depth_files_[i], config.color_files_[i],
-//            config.depth_files_[i + 1], config.color_files_[i + 1],
-//            config,
-//            false);
-//        times[i] = time;
-//        PrintInfo("Frame %d / %d takes %f ms\n", i, num_odometries, time);
-//    }
-//    std::tie(mean, std) = ComputeStatistics(times);
-//    PrintInfo("cpu time: avg = %f, std = %f\n", mean, std);
+    PrintInfo("gpu time: avg = %f, std = %f\n", mean, std);
 
     return 0;
 }

@@ -267,8 +267,8 @@ RGBDOdometryCuda<N>::ComputeMultiScale() {
     for (int level = (int) (N - 1); level >= 0; --level) {
         std::vector<float> losses_on_level;
 
-        float factor = std::pow(1.39f, (N - 1 - level));
-        UpdateSigma(std::min(sigma_ * factor, 0.968f));
+//        float factor = std::pow(1.39f, (N - 1 - level));
+//        UpdateSigma(std::min(sigma_ * factor, 0.968f));
 
         for (int iter = 0;
              iter < option_.iteration_number_per_pyramid_level_[N - 1 - level];

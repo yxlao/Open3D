@@ -24,7 +24,6 @@ int main(int argc, char **argv) {
     std::vector<std::shared_ptr<TriangleMesh>> meshes;
     meshes.resize(2);
     meshes[0] = CreateMeshFromFile(path + "office3_ours.ply");
-//    meshes[1] = CreateMeshFromFile(path + "copyroom_ours.ply");
     meshes[1] = CreateMeshFromFile(path + "office3_bf.ply");
 
     std::shared_ptr<TriangleMesh> mesh_ptr = std::make_shared<TriangleMesh>();
