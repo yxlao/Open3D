@@ -4,13 +4,12 @@
 
 #pragma once
 
-#include <Cuda/Common/UtilsCuda.h>
+#include <src/Cuda/Common/UtilsCuda.h>
 #include <GL/glew.h>
 #include <cuda_gl_interop.h>
 #include <cassert>
 
 namespace open3d {
-
 namespace {
 /**
  * Replacement of BindData - direct transfer data to graphics part on GPU
@@ -66,6 +65,5 @@ bool UnregisterResource(cudaGraphicsResource_t &cuda_graphics_resource,
 
     return true;
 }
-
 }
 }

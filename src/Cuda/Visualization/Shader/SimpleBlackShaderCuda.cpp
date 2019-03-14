@@ -27,13 +27,13 @@
 #include "SimpleBlackShaderCuda.h"
 #include "CudaGLInterp.h"
 
-#include <Core/Geometry/PointCloud.h>
-#include <Cuda/Geometry/TriangleMeshCuda.h>
-#include <Visualization/Shader/Shader.h>
-#include <Visualization/Utility/ColorMap.h>
+#include <Open3D/Geometry/PointCloud.h>
+#include <src/Cuda/Geometry/TriangleMeshCuda.h>
+#include <Open3D/Visualization/Shader/Shader.h>
+#include <Open3D/Visualization/Utility/ColorMap.h>
 
 namespace open3d {
-
+namespace visualization {
 namespace glsl {
 
 bool SimpleBlackShaderCuda::Compile() {
@@ -52,7 +52,7 @@ void SimpleBlackShaderCuda::Release() {
     ReleaseProgram();
 }
 
-bool SimpleBlackShaderCuda::BindGeometry(const Geometry &geometry,
+bool SimpleBlackShaderCuda::BindGeometry(const geometry::Geometry &geometry,
                                          const RenderOption &option,
                                          const ViewControl &view) {
     // If there is already geometry, we first unbind it.
@@ -86,7 +86,7 @@ bool SimpleBlackShaderCuda::BindGeometry(const Geometry &geometry,
     return true;
 }
 
-bool SimpleBlackShaderCuda::RenderGeometry(const Geometry &geometry,
+bool SimpleBlackShaderCuda::RenderGeometry(const geometry::Geometry &geometry,
                                            const RenderOption &option,
                                            const ViewControl &view) {
     if (PrepareRendering(geometry, option, view) == false) {
@@ -102,7 +102,10 @@ bool SimpleBlackShaderCuda::RenderGeometry(const Geometry &geometry,
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_);
 
-    glDrawElements(draw_arrays_mode_, draw_arrays_size_, GL_UNSIGNED_INT, nullptr);
+    glDrawElements(draw_arrays_mode_,
+                   draw_arrays_size_,
+                   GL_UNSIGNED_INT,
+                   nullptr);
     glDisableVertexAttribArray(vertex_position_);
     return true;
 }
@@ -118,11 +121,11 @@ void SimpleBlackShaderCuda::UnbindGeometry() {
 }
 
 bool SimpleBlackShaderForTriangleMeshCuda::PrepareRendering(
-    const Geometry &geometry,
+    const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view) {
     if (geometry.GetGeometryType() !=
-        Geometry::GeometryType::TriangleMeshCuda) {
+        geometry::Geometry::GeometryType::TriangleMeshCuda) {
         PrintShaderWarning("Rendering type is not TriangleMeshCuda.");
         return false;
     }
@@ -136,11 +139,11 @@ bool SimpleBlackShaderForTriangleMeshCuda::PrepareRendering(
 }
 
 bool SimpleBlackShaderForTriangleMeshCuda::PrepareBinding(
-    const Geometry &geometry,
+    const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view) {
     if (geometry.GetGeometryType() !=
-        Geometry::GeometryType::TriangleMeshCuda) {
+        geometry::Geometry::GeometryType::TriangleMeshCuda) {
         PrintShaderWarning("Rendering type is not TriangleMeshCuda.");
         return false;
     }
@@ -159,5 +162,5 @@ bool SimpleBlackShaderForTriangleMeshCuda::PrepareBinding(
 }
 
 }
-
+}
 }    // namespace open3d

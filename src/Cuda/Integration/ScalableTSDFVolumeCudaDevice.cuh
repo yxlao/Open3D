@@ -6,13 +6,12 @@
 
 #include "ScalableTSDFVolumeCuda.h"
 
-#include <Cuda/Container/HashTableCudaDevice.cuh>
-#include <Cuda/Container/HashTableCudaKernel.cuh>
+#include <src/Cuda/Container/HashTableCudaDevice.cuh>
+#include <src/Cuda/Container/HashTableCudaKernel.cuh>
 
-#include <Cuda/Container/MemoryHeapCudaDevice.cuh>
-#include <Cuda/Container/MemoryHeapCudaKernel.cuh>
+#include <src/Cuda/Container/MemoryHeapCudaDevice.cuh>
+#include <src/Cuda/Container/MemoryHeapCudaKernel.cuh>
 
-#include <Core/Core.h>
 
 namespace open3d {
 namespace cuda {

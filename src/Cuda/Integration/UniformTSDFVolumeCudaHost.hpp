@@ -4,9 +4,8 @@
 
 #include "UniformTSDFVolumeCuda.h"
 
-#include <Cuda/Common/UtilsCuda.h>
+#include <src/Cuda/Common/UtilsCuda.h>
 
-#include <Core/Core.h>
 
 namespace open3d {
 namespace cuda {
@@ -59,7 +58,8 @@ UniformTSDFVolumeCuda<N>::~UniformTSDFVolumeCuda() {
 template<size_t N>
 void UniformTSDFVolumeCuda<N>::Create() {
     if (device_ != nullptr) {
-        PrintError("[UniformTSDFVolumeCuda] Already created, abort!\n");
+        utility::PrintError("[UniformTSDFVolumeCuda] Already created, "
+                            "abort!\n");
         return;
     }
 
@@ -139,7 +139,7 @@ UniformTSDFVolumeCuda<N>::DownloadVolume() {
     std::vector<Vector3b> color;
 
     if (device_ == nullptr) {
-        PrintError("Server not available!\n");
+        utility::PrintError("Server not available!\n");
         return std::make_tuple(tsdf, weight, color);
     }
 

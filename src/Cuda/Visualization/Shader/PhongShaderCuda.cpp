@@ -26,13 +26,13 @@
 
 #include "PhongShaderCuda.h"
 #include "CudaGLInterp.h"
-#include <Core/Geometry/PointCloud.h>
+#include <Open3D/Geometry/PointCloud.h>
 #include <Cuda/Geometry/TriangleMeshCuda.h>
-#include <Visualization/Shader/Shader.h>
-#include <Visualization/Utility/ColorMap.h>
+#include <Open3D/Visualization/Shader/Shader.h>
+#include <Open3D/Visualization/Utility/ColorMap.h>
 
 namespace open3d {
-
+namespace visualization {
 namespace glsl {
 
 bool PhongShaderCuda::Compile() {
@@ -64,7 +64,7 @@ void PhongShaderCuda::Release() {
     ReleaseProgram();
 }
 
-bool PhongShaderCuda::BindGeometry(const Geometry &geometry,
+bool PhongShaderCuda::BindGeometry(const geometry::Geometry &geometry,
                                    const RenderOption &option,
                                    const ViewControl &view) {
     // If there is already geometry, we first unbind it.
@@ -109,7 +109,7 @@ bool PhongShaderCuda::BindGeometry(const Geometry &geometry,
     return true;
 }
 
-bool PhongShaderCuda::RenderGeometry(const Geometry &geometry,
+bool PhongShaderCuda::RenderGeometry(const geometry::Geometry &geometry,
                                      const RenderOption &option,
                                      const ViewControl &view) {
     if (PrepareRendering(geometry, option, view) == false) {
@@ -202,11 +202,11 @@ void PhongShaderCuda::SetLighting(const ViewControl &view,
     }
 }
 
-bool PhongShaderForTriangleMeshCuda::PrepareRendering(const Geometry &geometry,
+bool PhongShaderForTriangleMeshCuda::PrepareRendering(const geometry::Geometry&geometry,
                                                       const RenderOption &option,
                                                       const ViewControl &view) {
     if (geometry.GetGeometryType() !=
-        Geometry::GeometryType::TriangleMeshCuda) {
+        geometry::Geometry::GeometryType::TriangleMeshCuda) {
         PrintShaderWarning("Rendering type is not TriangleMeshCuda.");
         return false;
     }
@@ -228,11 +228,11 @@ bool PhongShaderForTriangleMeshCuda::PrepareRendering(const Geometry &geometry,
     return true;
 }
 
-bool PhongShaderForTriangleMeshCuda::PrepareBinding(const Geometry &geometry,
+bool PhongShaderForTriangleMeshCuda::PrepareBinding(const geometry::Geometry&geometry,
                                                     const RenderOption &option,
                                                     const ViewControl &view) {
     if (geometry.GetGeometryType() !=
-        Geometry::GeometryType::TriangleMeshCuda) {
+        geometry::Geometry::GeometryType::TriangleMeshCuda) {
         PrintShaderWarning("Rendering type is not TriangleMeshCuda.");
         return false;
     }
@@ -255,5 +255,5 @@ bool PhongShaderForTriangleMeshCuda::PrepareBinding(const Geometry &geometry,
 }
 
 }    // namespace glsl
-
+}    // visualization
 }    // namespace open3d

@@ -6,9 +6,9 @@
 
 #include "RGBDOdometryCuda.h"
 
-#include <Cuda/Common/UtilsCuda.h>
-#include <Cuda/Geometry/ImageCudaDevice.cuh>
-#include <Cuda/Container/ArrayCudaDevice.cuh>
+#include <src/Cuda/Common/UtilsCuda.h>
+#include <src/Cuda/Geometry/ImageCudaDevice.cuh>
+#include <src/Cuda/Container/ArrayCudaDevice.cuh>
 
 namespace open3d {
 namespace cuda {

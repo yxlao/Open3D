@@ -3,7 +3,7 @@
 //
 
 #include "TransformEstimationCuda.h"
-#include <Cuda/Common/JacobianCuda.h>
+#include <src/Cuda/Common/JacobianCuda.h>
 
 namespace open3d {
 namespace cuda {

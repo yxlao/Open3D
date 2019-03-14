@@ -2,15 +2,15 @@
 // Created by wei on 2/5/19.
 //
 
-#include <Core/Core.h>
-#include <IO/IO.h>
-#include <Visualization/Visualization.h>
+#include <Open3D/Open3D.h>
 #include "examples/Cuda/DatasetConfig.h"
 
 using namespace open3d;
 
-std::shared_ptr<LineSet> VisualizePoseGraph(PoseGraph &pose_graph) {
-    std::shared_ptr<LineSet> pose_graph_vis = std::make_shared<LineSet>();
+std::shared_ptr<geometry::LineSet> VisualizePoseGraph(
+    registration::PoseGraph &pose_graph) {
+    std::shared_ptr<geometry::LineSet> pose_graph_vis =
+        std::make_shared<geometry::LineSet>();
 
     int cnt = 0;
 
@@ -74,24 +74,24 @@ std::shared_ptr<LineSet> VisualizePoseGraph(PoseGraph &pose_graph) {
 }
 
 int main(int argc, char **argv) {
-    SetVerbosityLevel(VerbosityLevel::VerboseDebug);
+    SetVerbosityLevel(utility::VerbosityLevel::VerboseDebug);
 
     DatasetConfig config;
 
     std::string config_path = argc > 1 ? argv[1] :
         kDefaultDatasetConfigDir + "/cmu/nsh.json";
 
-    bool is_success = ReadIJsonConvertible(config_path, config);
+    bool is_success = io::ReadIJsonConvertible(config_path, config);
     if (! is_success) return 1;
 
-    PoseGraph pose_graph_cuda;
+    registration::PoseGraph pose_graph_cuda;
     std::string path_cuda = config.GetPoseGraphFileForRefinedScene(true);
-    ReadPoseGraph(path_cuda, pose_graph_cuda);
+    io::ReadPoseGraph(path_cuda, pose_graph_cuda);
 
     auto pose_graph_vis_cuda = VisualizePoseGraph(pose_graph_cuda);
-    auto mesh = CreateMeshFromFile(config.GetReconstructedSceneFile());
+    auto mesh = io::CreateMeshFromFile(config.GetReconstructedSceneFile());
 
-    DrawGeometries({pose_graph_vis_cuda, mesh});
+    visualization::DrawGeometries({pose_graph_vis_cuda, mesh});
 
     return 0;
 }

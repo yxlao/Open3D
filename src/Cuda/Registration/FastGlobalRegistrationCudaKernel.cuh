@@ -6,7 +6,7 @@
 
 #include "FastGlobalRegistrationCuda.h"
 #include "FastGlobalRegistrationCudaDevice.cuh"
-#include <Cuda/Container/ArrayCudaDevice.cuh>
+#include <src/Cuda/Container/ArrayCudaDevice.cuh>
 #include <cuda.h>
 #include <curand.h>
 

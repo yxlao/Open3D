@@ -5,9 +5,7 @@
 #pragma once
 
 #include "MemoryHeapCuda.h"
-#include <Cuda/Common/UtilsCuda.h>
-
-#include <Core/Core.h>
+#include <src/Cuda/Common/UtilsCuda.h>
 
 #include <cassert>
 

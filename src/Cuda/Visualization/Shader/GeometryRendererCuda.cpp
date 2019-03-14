@@ -5,12 +5,12 @@
 #include "GeometryRendererCuda.h"
 
 namespace open3d {
-
+namespace visualization {
 namespace glsl {
 bool TriangleMeshCudaRenderer::Render(const RenderOption &option,
                                       const ViewControl &view) {
     if (is_visible_ == false || geometry_ptr_->IsEmpty()) return true;
-    const auto &mesh = (const cuda::TriangleMeshCuda &)(*geometry_ptr_);
+    const auto &mesh = (const cuda::TriangleMeshCuda &) (*geometry_ptr_);
     bool success = true;
     if (mesh.HasVertexNormals()) {
         if (option.mesh_color_option_ ==
@@ -29,9 +29,9 @@ bool TriangleMeshCudaRenderer::Render(const RenderOption &option,
 }
 
 bool TriangleMeshCudaRenderer::AddGeometry(
-    std::shared_ptr<const Geometry> geometry_ptr) {
+    std::shared_ptr<const geometry::Geometry> geometry_ptr) {
     if (geometry_ptr->GetGeometryType() !=
-        Geometry::GeometryType::TriangleMeshCuda) {
+        geometry::Geometry::GeometryType::TriangleMeshCuda) {
         return false;
     }
     geometry_ptr_ = geometry_ptr;
@@ -46,11 +46,10 @@ bool TriangleMeshCudaRenderer::UpdateGeometry() {
     return true;
 }
 
-
 bool PointCloudCudaRenderer::Render(const RenderOption &option,
                                     const ViewControl &view) {
     if (is_visible_ == false || geometry_ptr_->IsEmpty()) return true;
-    const auto &pcl = (const cuda::PointCloudCuda &)(*geometry_ptr_);
+    const auto &pcl = (const cuda::PointCloudCuda &) (*geometry_ptr_);
     bool success = true;
     if (pcl.HasNormals()) {
         if (option.mesh_color_option_ ==
@@ -69,9 +68,9 @@ bool PointCloudCudaRenderer::Render(const RenderOption &option,
 }
 
 bool PointCloudCudaRenderer::AddGeometry(
-    std::shared_ptr<const Geometry> geometry_ptr) {
+    std::shared_ptr<const geometry::Geometry> geometry_ptr) {
     if (geometry_ptr->GetGeometryType() !=
-        Geometry::GeometryType::PointCloudCuda) {
+        geometry::Geometry::GeometryType::PointCloudCuda) {
         return false;
     }
     geometry_ptr_ = geometry_ptr;
@@ -84,6 +83,7 @@ bool PointCloudCudaRenderer::UpdateGeometry() {
     simple_mesh_shader_.InvalidateGeometry();
     simpleblack_wireframe_shader_.InvalidateGeometry();
     return true;
+}
 }
 }
 }

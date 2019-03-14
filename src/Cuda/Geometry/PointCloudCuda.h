@@ -13,7 +13,7 @@
 #include <Cuda/Camera/PinholeCameraIntrinsicCuda.h>
 #include <Cuda/Container/ArrayCuda.h>
 
-#include <Core/Geometry/PointCloud.h>
+#include <Open3D/Geometry/PointCloud.h>
 
 #include <memory>
 
@@ -34,7 +34,7 @@ public:
     int max_points_;
 };
 
-class PointCloudCuda : public Geometry3D {
+class PointCloudCuda : public geometry::Geometry3D {
 public:
     std::shared_ptr<PointCloudCudaDevice> device_ = nullptr;
     ArrayCuda<Vector3f> points_;
@@ -67,13 +67,13 @@ public:
     bool HasNormals() const;
     bool HasColors() const;
 
-    void Upload(PointCloud &pcl);
+    void Upload(geometry::PointCloud &pcl);
 
     void Build(RGBDImageCuda &rgbd,
                PinholeCameraIntrinsicCuda &intrinsic);
     void Build(ImageCuda<Vector1f> &depth,
                PinholeCameraIntrinsicCuda &intrinsic);
-    std::shared_ptr<PointCloud> Download();
+    std::shared_ptr<geometry::PointCloud> Download();
 
 public:
     void Clear() override;

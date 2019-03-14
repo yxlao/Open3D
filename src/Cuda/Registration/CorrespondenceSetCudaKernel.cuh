@@ -5,10 +5,9 @@
 #pragma once
 
 #include "CorrespondenceSetCuda.h"
-#include <Cuda/Common/UtilsCuda.h>
-#include <Cuda/Container/ArrayCudaDevice.cuh>
-#include <Cuda/Container/Array2DCudaDevice.cuh>
-#include <Core/Core.h>
+#include <src/Cuda/Common/UtilsCuda.h>
+#include <src/Cuda/Container/ArrayCudaDevice.cuh>
+#include <src/Cuda/Container/Array2DCudaDevice.cuh>
 
 namespace open3d {
 namespace cuda {

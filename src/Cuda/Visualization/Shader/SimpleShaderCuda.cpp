@@ -31,11 +31,11 @@
 #include <Cuda/Geometry/TriangleMeshCuda.h>
 #include <Cuda/Geometry/PointCloudCuda.h>
 
-#include <Visualization/Shader/Shader.h>
-#include <Visualization/Utility/ColorMap.h>
+#include <Open3D/Visualization/Shader/Shader.h>
+#include <Open3D/Visualization/Utility/ColorMap.h>
 
 namespace open3d {
-
+namespace visualization {
 namespace glsl {
 
 bool SimpleShaderCuda::Compile() {
@@ -55,7 +55,7 @@ void SimpleShaderCuda::Release() {
     ReleaseProgram();
 }
 
-bool SimpleShaderCuda::BindGeometry(const Geometry &geometry,
+bool SimpleShaderCuda::BindGeometry(const geometry::Geometry &geometry,
                                     const RenderOption &option,
                                     const ViewControl &view) {
     // If there is already geometry, we first unbind it.
@@ -87,7 +87,7 @@ bool SimpleShaderCuda::BindGeometry(const Geometry &geometry,
                      colors, vertex_size);
 
     if (geometry.GetGeometryType() ==
-        Geometry::GeometryType::TriangleMeshCuda) {
+        geometry::Geometry::GeometryType::TriangleMeshCuda) {
         RegisterResource(triangle_cuda_resource_,
                          GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_,
                          triangles, triangle_size);
@@ -99,7 +99,7 @@ bool SimpleShaderCuda::BindGeometry(const Geometry &geometry,
     return true;
 }
 
-bool SimpleShaderCuda::RenderGeometry(const Geometry &geometry,
+bool SimpleShaderCuda::RenderGeometry(const geometry::Geometry &geometry,
                                       const RenderOption &option,
                                       const ViewControl &view) {
     if (PrepareRendering(geometry, option, view) == false) {
@@ -118,10 +118,10 @@ bool SimpleShaderCuda::RenderGeometry(const Geometry &geometry,
     glVertexAttribPointer(vertex_color_, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
     if (geometry.GetGeometryType() ==
-        Geometry::GeometryType::PointCloudCuda) {
+        geometry::Geometry::GeometryType::PointCloudCuda) {
         glDrawArrays(draw_arrays_mode_, 0, draw_arrays_size_);
     } else if (geometry.GetGeometryType() ==
-        Geometry::GeometryType::TriangleMeshCuda) {
+        geometry::Geometry::GeometryType::TriangleMeshCuda) {
         glBindBuffer(GL_ARRAY_BUFFER, triangle_buffer_);
         glDrawElements(draw_arrays_mode_, draw_arrays_size_,
                        GL_UNSIGNED_INT,
@@ -143,20 +143,21 @@ void SimpleShaderCuda::UnbindGeometry() {
         UnregisterResource(vertex_color_cuda_resource_,
                            vertex_color_buffer_);
 
-         if (triangle_cuda_resource_) {
-             UnregisterResource(triangle_cuda_resource_,
-                                triangle_buffer_);
-         }
+        if (triangle_cuda_resource_) {
+            UnregisterResource(triangle_cuda_resource_,
+                               triangle_buffer_);
+        }
         bound_ = false;
     }
 }
 
 /****** SimpleShaderForPointCloudCuda ******/
-bool SimpleShaderForPointCloudCuda::PrepareRendering(const Geometry &geometry,
-                                                     const RenderOption &option,
-                                                     const ViewControl &view) {
+bool SimpleShaderForPointCloudCuda::PrepareRendering(
+    const geometry::Geometry &geometry,
+    const RenderOption &option,
+    const ViewControl &view) {
     if (geometry.GetGeometryType() !=
-        Geometry::GeometryType::PointCloudCuda) {
+        geometry::Geometry::GeometryType::PointCloudCuda) {
         PrintShaderWarning("Rendering type is not PointCloudCuda.");
         return false;
     }
@@ -167,16 +168,17 @@ bool SimpleShaderForPointCloudCuda::PrepareRendering(const Geometry &geometry,
     return true;
 }
 
-bool SimpleShaderForPointCloudCuda::PrepareBinding(const Geometry &geometry,
-                                                   const RenderOption &option,
-                                                   const ViewControl &view,
-                                                   cuda::Vector3f *&vertices,
-                                                   cuda::Vector3f *&colors,
-                                                   cuda::Vector3i *&triangles,
-                                                   int &vertex_size,
-                                                   int &triangle_size) {
+bool SimpleShaderForPointCloudCuda::PrepareBinding(
+    const geometry::Geometry &geometry,
+    const RenderOption &option,
+    const ViewControl &view,
+    cuda::Vector3f *&vertices,
+    cuda::Vector3f *&colors,
+    cuda::Vector3i *&triangles,
+    int &vertex_size,
+    int &triangle_size) {
     if (geometry.GetGeometryType() !=
-        Geometry::GeometryType::PointCloudCuda) {
+        geometry::Geometry::GeometryType::PointCloudCuda) {
         PrintShaderWarning("Rendering type is not PointCloudCuda.");
         return false;
     }
@@ -200,11 +202,12 @@ bool SimpleShaderForPointCloudCuda::PrepareBinding(const Geometry &geometry,
 }
 
 /****** SimpleShaderForTriangleMeshCuda ******/
-bool SimpleShaderForTriangleMeshCuda::PrepareRendering(const Geometry &geometry,
-                                                       const RenderOption &option,
-                                                       const ViewControl &view) {
+bool SimpleShaderForTriangleMeshCuda::PrepareRendering(
+    const geometry::Geometry &geometry,
+    const RenderOption &option,
+    const ViewControl &view) {
     if (geometry.GetGeometryType() !=
-        Geometry::GeometryType::TriangleMeshCuda) {
+        geometry::Geometry::GeometryType::TriangleMeshCuda) {
         PrintShaderWarning("Rendering type is not TriangleMeshCuda.");
         return false;
     }
@@ -225,16 +228,17 @@ bool SimpleShaderForTriangleMeshCuda::PrepareRendering(const Geometry &geometry,
     return true;
 }
 
-bool SimpleShaderForTriangleMeshCuda::PrepareBinding(const Geometry &geometry,
-                                                     const RenderOption &option,
-                                                     const ViewControl &view,
-                                                     cuda::Vector3f *&vertices,
-                                                     cuda::Vector3f *&colors,
-                                                     cuda::Vector3i *&triangles,
-                                                     int &vertex_size,
-                                                     int &triangle_size) {
+bool SimpleShaderForTriangleMeshCuda::PrepareBinding(
+    const geometry::Geometry &geometry,
+    const RenderOption &option,
+    const ViewControl &view,
+    cuda::Vector3f *&vertices,
+    cuda::Vector3f *&colors,
+    cuda::Vector3i *&triangles,
+    int &vertex_size,
+    int &triangle_size) {
     if (geometry.GetGeometryType() !=
-        Geometry::GeometryType::TriangleMeshCuda) {
+        geometry::Geometry::GeometryType::TriangleMeshCuda) {
         PrintShaderWarning("Rendering type is not TriangleMeshCuda.");
         return false;
     }
@@ -258,5 +262,5 @@ bool SimpleShaderForTriangleMeshCuda::PrepareBinding(const Geometry &geometry,
 }
 
 }    // namespace open3d::glsl
-
+}
 }    // namespace open3d

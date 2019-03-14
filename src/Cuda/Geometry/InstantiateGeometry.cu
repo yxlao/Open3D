@@ -6,7 +6,7 @@
 #include "RGBDImageCudaKernel.cuh"
 
 #include "LinearAlgebraCuda.h"
-#include <Cuda/Common/Common.h>
+#include <src/Cuda/Common/Common.h>
 
 namespace open3d {
 

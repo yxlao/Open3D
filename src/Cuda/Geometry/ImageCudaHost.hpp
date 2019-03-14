@@ -5,14 +5,12 @@
 #pragma once
 
 #include "ImageCuda.h"
-#include <Cuda/Common/LinearAlgebraCuda.h>
-#include <Cuda/Common/UtilsCuda.h>
+#include <src/Cuda/Common/LinearAlgebraCuda.h>
+#include <src/Cuda/Common/UtilsCuda.h>
 
 #include <cuda_runtime.h>
 #include <driver_types.h>
 #include <vector_types.h>
-
-#include <Core/Core.h>
 
 namespace open3d {
 
@@ -84,7 +82,7 @@ bool ImageCuda<VecType>::Create(int width, int height) {
 
     if (device_ != nullptr) {
         if (width_ != width || height_ != height) {
-            PrintError("[ImageCuda] Incompatible image size, "
+            utility::PrintError("[ImageCuda] Incompatible image size, "
                        "@Create aborted.\n");
             return false;
         }
@@ -147,7 +145,7 @@ void ImageCuda<VecType>::CopyFrom(const ImageCuda<VecType> &other) {
 }
 
 template<typename VecType>
-void ImageCuda<VecType>::Upload(Image &image) {
+void ImageCuda<VecType>::Upload(geometry::Image &image) {
     assert(image.width_ > 0 && image.height_ > 0);
 
     /* Type checking */
@@ -162,7 +160,7 @@ void ImageCuda<VecType>::Upload(Image &image) {
     } else if (typeid(VecType) == typeid(Vector1f)) {
         assert(image.bytes_per_channel_ == 4 && image.num_of_channels_ == 1);
     } else {
-        PrintWarning("[ImageCuda] Unsupported format %d,"
+        utility::PrintWarning("[ImageCuda] Unsupported format %d,"
                      "@Upload aborted.\n");
         return;
     }
@@ -180,10 +178,11 @@ void ImageCuda<VecType>::Upload(Image &image) {
 }
 
 template<typename VecType>
-std::shared_ptr<Image> ImageCuda<VecType>::DownloadImage() {
-    std::shared_ptr<Image> image = std::make_shared<Image>();
+std::shared_ptr<geometry::Image> ImageCuda<VecType>::DownloadImage() {
+    std::shared_ptr<geometry::Image> image =
+        std::make_shared<geometry::Image>();
     if (device_ == nullptr) {
-        PrintWarning("[ImageCuda] not initialized, "
+        utility::PrintWarning("[ImageCuda] not initialized, "
                      "@DownloadImage aborted.\n");
         return image;
     }
@@ -199,7 +198,7 @@ std::shared_ptr<Image> ImageCuda<VecType>::DownloadImage() {
     } else if (typeid(VecType) == typeid(Vector1f)) {
         image->PrepareImage(width_, height_, 1, 4);
     } else {
-        PrintWarning("[ImageCuda] Unsupported format %d,"
+        utility::PrintWarning("[ImageCuda] Unsupported format %d,"
                      "@DownloadImage aborted.\n");
         return image;
     }
@@ -369,7 +368,7 @@ void ImageCuda<VecType>::Upload(cv::Mat &m) {
     } else if (typeid(VecType) == typeid(Vector1f)) {
         assert(m.type() == CV_32FC1);
     } else {
-        PrintWarning("[ImageCuda] Unsupported format %d,"
+        utility::PrintWarning("[ImageCuda] Unsupported format %d,"
                      "@Upload aborted.\n");
         return;
     }
@@ -387,7 +386,7 @@ template<typename VecType>
 cv::Mat ImageCuda<VecType>::DownloadMat() {
     cv::Mat m;
     if (device_ == nullptr) {
-        PrintWarning("[ImageCuda] Not initialized, "
+        utility::PrintWarning("[ImageCuda] Not initialized, "
                      "@DownloadMat aborted.\n");
         return m;
     }
@@ -407,7 +406,7 @@ cv::Mat ImageCuda<VecType>::DownloadMat() {
     } else if (typeid(VecType) == typeid(Vector1f)) {
         m = cv::Mat(height_, width_, CV_32FC1);
     } else {
-        PrintWarning("[ImageCuda] Unsupported format %d,"
+        utility::PrintWarning("[ImageCuda] Unsupported format %d,"
                      "@DownloadMat aborted.\n");
         return m;
     }

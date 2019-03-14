@@ -26,11 +26,12 @@
 
 #include "NormalShaderCuda.h"
 
-#include <Core/Geometry/PointCloud.h>
-#include <Core/Geometry/TriangleMesh.h>
-#include <Visualization/Shader/Shader.h>
+#include <Open3D/Geometry/PointCloud.h>
+#include <Open3D/Geometry/TriangleMesh.h>
+#include <Open3D/Visualization/Shader/Shader.h>
 
 namespace open3d {
+namespace visualization {
 
 namespace glsl {
 
@@ -52,7 +53,7 @@ void NormalShaderCuda::Release() {
     ReleaseProgram();
 }
 
-bool NormalShaderCuda::BindGeometry(const Geometry &geometry,
+bool NormalShaderCuda::BindGeometry(const geometry::Geometry &geometry,
                                     const RenderOption &option,
                                     const ViewControl &view) {
     // If there is already geometry, we first unbind it.
@@ -70,7 +71,7 @@ bool NormalShaderCuda::BindGeometry(const Geometry &geometry,
     }
 
     const cuda::TriangleMeshCuda &mesh =
-        (const cuda::TriangleMeshCuda &)geometry;
+        (const cuda::TriangleMeshCuda &) geometry;
 
     // Create buffers and bind the geometry
     RegisterResource(vertex_position_cuda_resource_,
@@ -92,7 +93,7 @@ bool NormalShaderCuda::BindGeometry(const Geometry &geometry,
     return true;
 }
 
-bool NormalShaderCuda::RenderGeometry(const Geometry &geometry,
+bool NormalShaderCuda::RenderGeometry(const geometry::Geometry &geometry,
                                       const RenderOption &option,
                                       const ViewControl &view) {
     if (!PrepareRendering(geometry, option, view)) {
@@ -136,11 +137,11 @@ void NormalShaderCuda::UnbindGeometry() {
     }
 }
 
-bool NormalShaderForTriangleMeshCuda::PrepareRendering(const Geometry &geometry,
+bool NormalShaderForTriangleMeshCuda::PrepareRendering(const geometry::Geometry&geometry,
                                                        const RenderOption &option,
                                                        const ViewControl &view) {
     if (geometry.GetGeometryType() !=
-        Geometry::GeometryType::TriangleMeshCuda) {
+        geometry::Geometry::GeometryType::TriangleMeshCuda) {
         PrintShaderWarning("Rendering type is not TriangleMeshCuda.");
         return false;
     }
@@ -161,11 +162,11 @@ bool NormalShaderForTriangleMeshCuda::PrepareRendering(const Geometry &geometry,
     return true;
 }
 
-bool NormalShaderForTriangleMeshCuda::PrepareBinding(const Geometry &geometry,
+bool NormalShaderForTriangleMeshCuda::PrepareBinding(const geometry::Geometry&geometry,
                                                      const RenderOption &option,
                                                      const ViewControl &view) {
     if (geometry.GetGeometryType() !=
-        Geometry::GeometryType::TriangleMeshCuda) {
+        geometry::Geometry::GeometryType::TriangleMeshCuda) {
         PrintShaderWarning("Rendering type is not TriangleMeshCuda.");
         return false;
     }
@@ -183,5 +184,5 @@ bool NormalShaderForTriangleMeshCuda::PrepareBinding(const Geometry &geometry,
 }
 
 }    // namespace glsl
-
+}    // visuliazation
 }    // namespace open3d

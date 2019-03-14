@@ -28,11 +28,11 @@
 
 #include <vector>
 #include <Eigen/Core>
-#include <Visualization/Shader/ShaderWrapper.h>
+#include <Open3D/Visualization/Shader/ShaderWrapper.h>
 #include "CudaGLInterp.h"
 
 namespace open3d {
-
+namespace visualization {
 namespace glsl {
 
 class PhongShaderCuda : public ShaderWrapper {
@@ -48,19 +48,19 @@ protected:
 protected:
     bool Compile() final;
     void Release() final;
-    bool BindGeometry(const Geometry &geometry,
+    bool BindGeometry(const geometry::Geometry &geometry,
                       const RenderOption &option,
                       const ViewControl &view) final;
-    bool RenderGeometry(const Geometry &geometry,
+    bool RenderGeometry(const geometry::Geometry &geometry,
                         const RenderOption &option,
                         const ViewControl &view) final;
     void UnbindGeometry() final;
 
 protected:
-    virtual bool PrepareRendering(const Geometry &geometry,
+    virtual bool PrepareRendering(const geometry::Geometry &geometry,
                                   const RenderOption &option,
                                   const ViewControl &view) = 0;
-    virtual bool PrepareBinding(const Geometry &geometry,
+    virtual bool PrepareBinding(const geometry::Geometry &geometry,
                                 const RenderOption &option,
                                 const ViewControl &view) = 0;
 
@@ -105,17 +105,17 @@ protected:
 class PhongShaderForTriangleMeshCuda : public PhongShaderCuda {
 public:
     PhongShaderForTriangleMeshCuda()
-    : PhongShaderCuda("PhongShaderForTriangleMesh") {}
+        : PhongShaderCuda("PhongShaderForTriangleMesh") {}
 
 protected:
-    bool PrepareRendering(const Geometry &geometry,
+    bool PrepareRendering(const geometry::Geometry &geometry,
                           const RenderOption &option,
                           const ViewControl &view) final;
-    bool PrepareBinding(const Geometry &geometry,
+    bool PrepareBinding(const geometry::Geometry &geometry,
                         const RenderOption &option,
                         const ViewControl &view) final;
 };
 
 }    // namespace open3d::glsl
-
+}    // namespace visualization
 }    // namespace open3d

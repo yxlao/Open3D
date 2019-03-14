@@ -5,8 +5,7 @@
 #pragma once
 
 #include <json/json.h>
-#include <Core/Core.h>
-#include <IO/IO.h>
+#include <Open3D/Open3D.h>
 #include <iomanip>
 #include <sstream>
 #include <fstream>
@@ -24,7 +23,7 @@ static const std::string kDefaultDatasetConfigDir =
     "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda"
     "/ReconstructionSystem/config";
 
-class DatasetConfig : public IJsonConvertible {
+class DatasetConfig : public utility::IJsonConvertible {
 public:
     std::string path_dataset_;
     std::string path_intrinsic_;
@@ -46,7 +45,7 @@ public:
     double tsdf_cubic_size_;
     double tsdf_truncation_;
 
-    PinholeCameraIntrinsic intrinsic_;
+    camera::PinholeCameraIntrinsic intrinsic_;
     std::vector<std::string> color_files_;
     std::vector<std::string> depth_files_;
     std::vector<std::string> fragment_files_;
@@ -55,8 +54,8 @@ public:
     bool GetColorAndDepthFilesForTUM() {
         std::string association_file_name = path_dataset_ +
             "/depth_rgb_association.txt";
-        if (!filesystem::FileExists(association_file_name)) {
-            PrintError("Data association file not found for %s\n",
+        if (!utility::filesystem::FileExists(association_file_name)) {
+            utility::PrintError("Data association file not found for %s\n",
                        path_dataset_.c_str());
             return false;
         }
@@ -78,26 +77,28 @@ public:
 
         for (auto &color_folder : color_folders) {
             std::string color_directory = path_dataset_ + color_folder;
-            if (filesystem::DirectoryExists(color_directory)) {
-                filesystem::ListFilesInDirectory(color_directory, color_files_);
+            if (utility::filesystem::DirectoryExists(color_directory)) {
+                utility::filesystem::ListFilesInDirectory(color_directory,
+                    color_files_);
                 std::sort(color_files_.begin(), color_files_.end());
                 return true;
             }
         }
 
-        PrintError("No color image folder found in directory %s\n",
+        utility::PrintError("No color image folder found in directory %s\n",
                    path_dataset_.c_str());
         return false;
     }
 
     bool GetDepthFiles() {
         std::string depth_directory = path_dataset_ + "/depth";
-        if (!filesystem::DirectoryExists(depth_directory)) {
-            PrintError("No depth image folder found in directory %s\n",
+        if (!utility::filesystem::DirectoryExists(depth_directory)) {
+            utility::PrintError("No depth image folder found in directory %s\n",
                        depth_directory.c_str());
             return false;
         }
-        filesystem::ListFilesInDirectory(depth_directory, depth_files_);
+        utility::filesystem::ListFilesInDirectory(depth_directory,
+            depth_files_);
 
         /* alphabetical order */
         std::sort(depth_files_.begin(), depth_files_.end());
@@ -106,13 +107,13 @@ public:
 
     bool GetFragmentFiles() {
         std::string fragment_directory = path_dataset_ + "/fragments_cuda";
-        if (!filesystem::DirectoryExists(fragment_directory)) {
-            PrintError("No fragment folder found in directory %s\n",
+        if (!utility::filesystem::DirectoryExists(fragment_directory)) {
+            utility::PrintError("No fragment folder found in directory %s\n",
                        fragment_directory.c_str());
             return false;
         }
 
-        filesystem::ListFilesInDirectoryWithExtension(
+        utility::filesystem::ListFilesInDirectoryWithExtension(
             fragment_directory, "ply", fragment_files_);
 
         /* alphabetical order */
@@ -123,13 +124,14 @@ public:
     bool GetThumbnailFragmentFiles() {
         std::string fragment_directory =
             path_dataset_ + "/fragments_cuda/thumbnails";
-        if (!filesystem::DirectoryExists(fragment_directory)) {
-            PrintError("No fragment thumbnail folder found in directory %s\n",
+        if (!utility::filesystem::DirectoryExists(fragment_directory)) {
+            utility::PrintError("No fragment thumbnail folder found in "
+                               "directory %s\n",
                        fragment_directory.c_str());
             return false;
         }
 
-        filesystem::ListFilesInDirectoryWithExtension(
+        utility::filesystem::ListFilesInDirectoryWithExtension(
             fragment_directory, "ply", thumbnail_fragment_files_);
 
         /* alphabetical order */
@@ -201,7 +203,8 @@ public:
 
     bool ConvertFromJsonValue(const Json::Value &value) override {
         if (!value.isObject()) {
-            PrintWarning("DatasetConfig read JSON failed: unsupported json "
+            utility::PrintWarning("DatasetConfig read JSON failed: unsupported "
+                              "json "
                          "format.\n");
             return false;
         }
@@ -230,12 +233,13 @@ public:
         tsdf_truncation_ = value.get("tsdf_truncation", 0.04).asDouble();
 
         if (path_intrinsic_.empty()) {
-            intrinsic_ = PinholeCameraIntrinsic(
-                PinholeCameraIntrinsicParameters::PrimeSenseDefault);
+            intrinsic_ = camera::PinholeCameraIntrinsic(
+                camera::PinholeCameraIntrinsicParameters::PrimeSenseDefault);
         } else {
-            bool is_success = ReadIJsonConvertible(path_intrinsic_, intrinsic_);
+            bool is_success = io::ReadIJsonConvertible(path_intrinsic_,
+                intrinsic_);
             if (!is_success) {
-                PrintError("Unable to read camera intrinsics: %s!\n",
+                utility::PrintError("Unable to read camera intrinsics: %s!\n",
                            path_intrinsic_.c_str());
             }
         }

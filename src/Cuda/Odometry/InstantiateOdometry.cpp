@@ -5,8 +5,8 @@
 #include "RGBDOdometryCudaHost.hpp"
 #include "ICRGBDOdometryCudaHost.hpp"
 
-#include <Cuda/Geometry/ImageCudaHost.hpp>
-#include <Cuda/Geometry/ImagePyramidCudaHost.hpp>
+#include <src/Cuda/Geometry/ImageCudaHost.hpp>
+#include <src/Cuda/Geometry/ImagePyramidCudaHost.hpp>
 
 namespace open3d {
 namespace cuda {

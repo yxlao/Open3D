@@ -2,22 +2,20 @@
 // Created by wei on 2/5/19.
 //
 
-#include <IO/IO.h>
-#include <Core/Core.h>
-#include <Visualization/Visualization.h>
+#include <Open3D/Open3D.h>
 #include "examples/Cuda/DatasetConfig.h"
 
 using namespace open3d;
 
 int main(int argc, char **argv) {
-    SetVerbosityLevel(VerbosityLevel::VerboseDebug);
+    SetVerbosityLevel(utility::VerbosityLevel::VerboseDebug);
 
     DatasetConfig config;
 
     std::string config_path = argc > 1 ? argv[1] :
         kDefaultDatasetConfigDir + "/cmu/nsh.json";
 
-    bool is_success = ReadIJsonConvertible(config_path, config);
+    bool is_success = io::ReadIJsonConvertible(config_path, config);
     if (! is_success) return 1;
 
 //    auto mesh = CreateMeshFromFile(config.GetReconstructedSceneFile());
@@ -26,9 +24,9 @@ int main(int argc, char **argv) {
 
     config.GetFragmentFiles();
     for (auto &ply_filename : config.fragment_files_) {
-        auto pcl = CreatePointCloudFromFile(ply_filename);
-        PrintInfo("%s\n", ply_filename.c_str());
-        DrawGeometries({pcl});
+        auto pcl = io::CreatePointCloudFromFile(ply_filename);
+        utility::PrintInfo("%s\n", ply_filename.c_str());
+        visualization::DrawGeometries({pcl});
     }
     return 0;
 }

@@ -9,7 +9,6 @@
 
 #include "UniformTSDFVolumeCudaDevice.cuh"
 
-#include <Core/Core.h>
 
 namespace open3d {
 namespace cuda {

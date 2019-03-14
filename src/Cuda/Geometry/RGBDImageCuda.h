@@ -5,7 +5,7 @@
 #pragma once
 
 #include "ImageCuda.h"
-#include <Cuda/Common/LinearAlgebraCuda.h>
+#include <src/Cuda/Common/LinearAlgebraCuda.h>
 #include <memory>
 #include <opencv2/opencv.hpp>
 
@@ -61,7 +61,7 @@ public:
     void CopyFrom(RGBDImageCuda &other);
     void Build(ImageCuda<Vector1s> &depth_raw,
                ImageCuda<Vector3b> &color_raw);
-    void Upload(Image &depth_raw, Image &color_raw);
+    void Upload(geometry::Image &depth_raw, geometry::Image &color_raw);
 
     /** Legacy **/
     void Upload(cv::Mat &depth, cv::Mat &color);

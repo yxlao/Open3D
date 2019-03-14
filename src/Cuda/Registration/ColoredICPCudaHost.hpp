@@ -3,7 +3,6 @@
 //
 
 #include "ColoredICPCuda.h"
-#include <Core/Core.h>
 
 namespace open3d {
 namespace cuda {
@@ -56,7 +55,9 @@ void TransformEstimationForColoredICPCuda::UpdateDevice() {
 }
 
 void TransformEstimationForColoredICPCuda::Initialize(
-    PointCloud &source, PointCloud &target, float max_correspondence_distance) {
+    geometry::PointCloud &source,
+    geometry::PointCloud &target, float
+    max_correspondence_distance) {
 
     /** Resize it first -- in super.Initialize, UpdateDevice will be called,
      * where target_color_gradient will be updated **/
@@ -66,12 +67,14 @@ void TransformEstimationForColoredICPCuda::Initialize(
         source, target, max_correspondence_distance);
 
     ComputeColorGradients(target_cpu_, kdtree_,
-        KDTreeSearchParamHybrid(max_correspondence_distance_ * 2, 30));
+        geometry::KDTreeSearchParamHybrid(max_correspondence_distance_ * 2,
+            30));
 }
 
 void TransformEstimationForColoredICPCuda::ComputeColorGradients(
-    PointCloud &target,
-    KDTreeFlann &kdtree, const KDTreeSearchParamHybrid &search_param) {
+    geometry::PointCloud &target,
+    geometry::KDTreeFlann &kdtree,
+    const geometry::KDTreeSearchParamHybrid &search_param) {
 
     /** Initialize correspondence matrix for neighbors **/
     Eigen::MatrixXi corres_matrix = Eigen::MatrixXi::Constant(
@@ -128,7 +131,7 @@ ComputeResultsAndTransformation() {
     bool is_success;
     Eigen::Matrix4d extrinsic;
     std::tie(is_success, extrinsic) =
-        SolveJacobianSystemAndObtainExtrinsicMatrix(JtJ, Jtr);
+        utility::SolveJacobianSystemAndObtainExtrinsicMatrix(JtJ, Jtr);
 
     int inliers = correspondences_.indices_.size();
     result.fitness_ = float(inliers) / source_.points_.size();

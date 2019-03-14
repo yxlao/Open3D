@@ -10,15 +10,13 @@
 #include "LinkedListCudaHost.hpp"
 #include "MemoryHeapCudaHost.hpp"
 
-#include <Cuda/Common/UtilsCuda.h>
+#include <src/Cuda/Common/UtilsCuda.h>
 
 #include <cassert>
 #include <tuple>
 #include <vector>
 
 #include <cuda_runtime.h>
-
-#include <Core/Core.h>
 
 namespace open3d {
 
@@ -90,7 +88,7 @@ void HashTableCuda<Key, Value, Hasher>::Create(
     assert(bucket_count > 0 && value_capacity > 0);
 
     if (device_ != nullptr) {
-        PrintError("[HashTableCuda] Already created, abort!\n");
+        utility::PrintError("[HashTableCuda] Already created, abort!\n");
         return;
     }
 

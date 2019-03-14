@@ -4,12 +4,12 @@
 
 #pragma once
 
-#include "Container/ArrayCuda.h"
-#include "Container/HashTableCuda.h"
-#include "Container/LinkedListCuda.h"
-#include "Container/MemoryHeapCuda.h"
+#include "src/Cuda/Container/ArrayCuda.h"
+#include "src/Cuda/Container/HashTableCuda.h"
+#include "src/Cuda/Container/LinkedListCuda.h"
+#include "src/Cuda/Container/MemoryHeapCuda.h"
 
-#include "Integration/UniformTSDFVolumeCuda.h"
-#include "Integration/UniformMeshVolumeCuda.h"
-#include "Integration/ScalableTSDFVolumeCuda.h"
-#include "Integration/ScalableMeshVolumeCuda.h"
+#include "src/Cuda/Integration/UniformTSDFVolumeCuda.h"
+#include "src/Cuda/Integration/UniformMeshVolumeCuda.h"
+#include "src/Cuda/Integration/ScalableTSDFVolumeCuda.h"
+#include "src/Cuda/Integration/ScalableMeshVolumeCuda.h"

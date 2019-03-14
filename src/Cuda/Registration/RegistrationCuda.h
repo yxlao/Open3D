@@ -4,14 +4,14 @@
 
 #pragma once
 
-#include <Core/Registration/Registration.h>
-#include <Core/Geometry/PointCloud.h>
-#include <Core/Geometry/KDTreeFlann.h>
+#include <Open3D/Registration/Registration.h>
+#include <Open3D/Geometry/PointCloud.h>
+#include <Open3D/Geometry/KDTreeFlann.h>
 
-#include <Cuda/Container/ArrayCuda.h>
-#include <Cuda/Geometry/PointCloudCuda.h>
-#include <Cuda/Registration/ColoredICPCuda.h>
-#include <Cuda/Registration/TransformEstimationCuda.h>
+#include <src/Cuda/Container/ArrayCuda.h>
+#include <src/Cuda/Geometry/PointCloudCuda.h>
+#include <src/Cuda/Registration/ColoredICPCuda.h>
+#include <src/Cuda/Registration/TransformEstimationCuda.h>
 
 namespace open3d {
 
@@ -41,13 +41,15 @@ public:
     std::shared_ptr<TransformEstimationCuda> estimator_;
 
 public:
-    explicit RegistrationCuda(const TransformationEstimationType &type);
+    explicit RegistrationCuda(const
+                              registration::TransformationEstimationType &type);
     ~RegistrationCuda() {};
 
 public:
     /* Preparation */
     void Initialize(
-        PointCloud &source, PointCloud &target,
+        geometry::PointCloud &source,
+        geometry::PointCloud &target,
         float max_correspondence_distance,
         const Eigen::Matrix4d &init = Eigen::Matrix4d::Identity());
 

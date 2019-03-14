@@ -12,9 +12,9 @@
 
 #include "Reduction2DCudaKernel.cuh"
 
-#include <Cuda/Geometry/ImageCudaDevice.cuh>
-#include <Cuda/Geometry/ImageCudaKernel.cuh>
-#include <Cuda/Geometry/ImagePyramidCuda.h>
+#include <src/Cuda/Geometry/ImageCudaDevice.cuh>
+#include <src/Cuda/Geometry/ImageCudaKernel.cuh>
+#include <src/Cuda/Geometry/ImagePyramidCuda.h>
 
 namespace open3d {
 namespace cuda {

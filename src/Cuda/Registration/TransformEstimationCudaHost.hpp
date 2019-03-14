@@ -9,8 +9,8 @@
 namespace open3d {
 namespace cuda {
 
-void TransformEstimationCuda::Initialize(PointCloud &source,
-                                         PointCloud &target,
+void TransformEstimationCuda::Initialize(geometry::PointCloud &source,
+                                         geometry::PointCloud &target,
                                          float max_correspondence_distance) {
     /** GPU part **/
     source_.Create(VertexWithNormalAndColor, source.points_.size());
@@ -255,7 +255,7 @@ ComputeResultsAndTransformation() {
     bool is_success;
     Eigen::Matrix4d extrinsic;
     std::tie(is_success, extrinsic) =
-        SolveJacobianSystemAndObtainExtrinsicMatrix(JtJ, Jtr);
+        utility::SolveJacobianSystemAndObtainExtrinsicMatrix(JtJ, Jtr);
 
     int inliers = correspondences_.indices_.size();
     result.fitness_ = float(inliers) / source_.points_.size();

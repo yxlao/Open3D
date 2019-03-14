@@ -3,7 +3,7 @@
 //
 
 #include "Array2DCuda.h"
-#include <Cuda/Common/UtilsCuda.h>
+#include <src/Cuda/Common/UtilsCuda.h>
 
 namespace open3d {
 
@@ -48,7 +48,7 @@ template<typename T>
 void Array2DCuda<T>::Create(int max_rows, int max_cols) {
     assert(max_rows > 0 && max_cols > 0);
     if (device_ != nullptr) {
-        PrintError("[Array2DCuda]: Already created, abort!\n");
+        utility::PrintError("[Array2DCuda]: Already created, abort!\n");
         return;
     }
 
@@ -95,7 +95,8 @@ void Array2DCuda<T>::CopyTo(Array2DCuda<T> &other) {
     if (other.device_ == nullptr) {
         other.Create(max_rows_, max_cols_);
     } else if (other.max_rows_ < max_rows_ || other.max_cols_ < max_cols_) {
-        PrintError("[Array2DCuda]: Dimension mismatch: (%d %d) vs (%d %d)\n",
+        utility::PrintError("[Array2DCuda]: Dimension mismatch: (%d %d) vs (%d "
+                          "%d)\n",
                    other.max_rows_, other.max_cols_, max_rows_, max_cols_);
         return;
     }

@@ -2,9 +2,8 @@
 // Created by wei on 2/8/19.
 //
 
-#include <Core/Core.h>
-#include <IO/IO.h>
-#include <Visualization/Visualization.h>
+#include <Open3D/Open3D.h>
+
 #include <opencv2/opencv.hpp>
 #include <Cuda/Geometry/RGBDImageCuda.h>
 #include <Cuda/Geometry/PointCloudCuda.h>
@@ -65,7 +64,7 @@ cv::Mat drawMatches(
 
 std::tuple<bool, Eigen::Matrix4d> PoseEstimationPnP(
     KeyframeInfo &source_info, KeyframeInfo &target_info,
-    PinholeCameraIntrinsic &intrinsic) {
+    camera::PinholeCameraIntrinsic &intrinsic) {
 
     /** No descriptor **/
     if (source_info.descriptor.empty() || target_info.descriptor.empty()) {
@@ -153,7 +152,7 @@ std::tuple<bool, Eigen::Matrix4d> PoseEstimationPnP(
     cv::imshow("out", out);
     cv::waitKey(-1);
 
-    PrintDebug("Matches %d: PnP: %d, Inliers: %d\n",
+    utility::PrintDebug("Matches %d: PnP: %d, Inliers: %d\n",
                matches.size(), pts3d_source.size(), inliers.size());
     return std::make_tuple(true, transform);
 }
@@ -269,7 +268,7 @@ std::tuple<bool, Eigen::Matrix4d, std::vector<char>> PointToPointICPRansac(
 
 std::tuple<bool, Eigen::Matrix4d> PoseEstimation(
     KeyframeInfo &source_info, KeyframeInfo &target_info,
-    PinholeCameraIntrinsic &intrinsic, bool debug = false) {
+    camera::PinholeCameraIntrinsic &intrinsic, bool debug = false) {
 
     const int kNumSamples = 5;
 

@@ -5,9 +5,8 @@
 #pragma once
 
 #include "MemoryHeapCuda.h"
-#include <Cuda/Common/UtilsCuda.h>
+#include <src/Cuda/Common/UtilsCuda.h>
 
-#include <Core/Core.h>
 #include <cassert>
 
 namespace open3d {
@@ -60,7 +59,7 @@ void MemoryHeapCuda<T>::Create(int max_capacity) {
     assert(max_capacity > 0);
 
     if (device_ != nullptr) {
-        PrintError("[MemoryHeapCuda] Already created, abort!\n");
+        utility::PrintError("[MemoryHeapCuda] Already created, abort!\n");
         return;
     }
 

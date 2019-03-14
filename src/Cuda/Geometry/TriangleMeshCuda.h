@@ -10,7 +10,7 @@
 
 #include <Cuda/Container/ArrayCuda.h>
 
-#include <Core/Geometry/TriangleMesh.h>
+#include <Open3D/Geometry/TriangleMesh.h>
 
 #include <memory>
 
@@ -29,7 +29,7 @@ public:
     int max_triangles_;
 };
 
-class TriangleMeshCuda : public Geometry3D {
+class TriangleMeshCuda : public geometry::Geometry3D {
 public:
     std::shared_ptr<TriangleMeshCudaDevice> device_ = nullptr;
     ArrayCuda<Vector3f> vertices_;
@@ -60,8 +60,8 @@ public:
     bool HasVertexNormals() const;
     bool HasVertexColors() const;
 
-    void Upload(TriangleMesh &mesh);
-    std::shared_ptr<TriangleMesh> Download();
+    void Upload(geometry::TriangleMesh &mesh);
+    std::shared_ptr<geometry::TriangleMesh> Download();
 
 public:
     void Clear() override;

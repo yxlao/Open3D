@@ -9,7 +9,6 @@
 
 #include "ScalableTSDFVolumeCuda.h"
 
-#include <Core/Core.h>
 #include <cuda_runtime.h>
 
 namespace open3d {
@@ -71,7 +70,8 @@ void ScalableMeshVolumeCuda<N>::Create(
     int max_subvolumes,
     VertexType type, int max_vertices, int max_triangles) {
     if (device_ != nullptr) {
-        PrintError("[ScalableMeshVolumeCuda]: Already created, abort!\n");
+        utility::PrintError("[ScalableMeshVolumeCuda]: Already created, "
+                          "abort!\n");
         return;
     }
 
@@ -132,13 +132,14 @@ void ScalableMeshVolumeCuda<N>::VertexAllocation(
     ScalableTSDFVolumeCuda<N> &tsdf_volume) {
     assert(device_ != nullptr);
 
-    Timer timer;
+    utility::Timer timer;
     timer.Start();
 
     ScalableMeshVolumeCudaKernelCaller<N>::VertexAllocation(*this, tsdf_volume);
 
     timer.Stop();
-    PrintDebug("Allocation takes %f milliseconds\n", timer.GetDuration());
+    utility::PrintDebug("Allocation takes %f milliseconds\n", timer.GetDuration
+    ());
 }
 
 template<size_t N>
@@ -146,13 +147,14 @@ void ScalableMeshVolumeCuda<N>::VertexExtraction(
     ScalableTSDFVolumeCuda<N> &tsdf_volume) {
     assert(device_ != nullptr);
 
-    Timer timer;
+    utility::Timer timer;
     timer.Start();
 
     ScalableMeshVolumeCudaKernelCaller<N>::VertexExtraction(*this, tsdf_volume);
 
     timer.Stop();
-    PrintDebug("Extraction takes %f milliseconds\n", timer.GetDuration());
+    utility::PrintDebug("Extraction takes %f milliseconds\n", timer.GetDuration
+    ());
 }
 
 template<size_t N>
@@ -160,14 +162,15 @@ void ScalableMeshVolumeCuda<N>::TriangleExtraction(
     ScalableTSDFVolumeCuda<N> &tsdf_volume) {
     assert(device_ != nullptr);
 
-    Timer timer;
+    utility::Timer timer;
     timer.Start();
 
     ScalableMeshVolumeCudaKernelCaller<N>::TriangleExtraction(
         *this, tsdf_volume);
 
     timer.Stop();
-    PrintDebug("Triangulation takes %f milliseconds\n", timer.GetDuration());
+    utility::PrintDebug("Triangulation takes %f milliseconds\n", timer
+    .GetDuration());
 }
 
 template<size_t N>
@@ -177,10 +180,10 @@ void ScalableMeshVolumeCuda<N>::MarchingCubes(
 
     mesh_.Reset();
     active_subvolumes_ = tsdf_volume.active_subvolume_entry_array().size();
-    PrintDebug("Active subvolumes: %d\n", active_subvolumes_);
+    utility::PrintDebug("Active subvolumes: %d\n", active_subvolumes_);
 
     if (active_subvolumes_ <= 0) {
-        PrintError("Invalid active subvolume numbers: %d !\n",
+        utility::PrintError("Invalid active subvolume numbers: %d !\n",
                    active_subvolumes_);
         return;
     }

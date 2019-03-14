@@ -9,10 +9,10 @@
 #include "SimpleShaderCuda.h"
 #include "SimpleBlackShaderCuda.h"
 
-#include <Visualization/Shader/GeometryRenderer.h>
+#include <Open3D/Visualization/Shader/GeometryRenderer.h>
 
 namespace open3d {
-
+namespace visualization {
 namespace glsl {
 
 class TriangleMeshCudaRenderer : public GeometryRenderer {
@@ -21,7 +21,8 @@ public:
 
 public:
     bool Render(const RenderOption &option, const ViewControl &view) override;
-    bool AddGeometry(std::shared_ptr<const Geometry> geometry_ptr) override;
+    bool AddGeometry(std::shared_ptr<const geometry::Geometry> geometry_ptr)
+    override;
     bool UpdateGeometry() override;
 
 protected:
@@ -37,7 +38,8 @@ public:
 
 public:
     bool Render(const RenderOption &option, const ViewControl &view) override;
-    bool AddGeometry(std::shared_ptr<const Geometry> geometry_ptr) override;
+    bool AddGeometry(std::shared_ptr<const geometry::Geometry> geometry_ptr)
+    override;
     bool UpdateGeometry() override;
 
 protected:
@@ -46,8 +48,7 @@ protected:
     SimpleShaderForPointCloudCuda simple_mesh_shader_;
     SimpleBlackShaderForTriangleMeshCuda simpleblack_wireframe_shader_;
 };
-}
 
 }
-
-
+}
+}

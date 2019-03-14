@@ -6,8 +6,7 @@
 
 #include "TriangleMeshCuda.h"
 
-#include <Cuda/Container/ArrayCuda.h>
-#include <Core/Core.h>
+#include <src/Cuda/Container/ArrayCuda.h>
 
 namespace open3d {
 namespace cuda {
@@ -65,7 +64,7 @@ TriangleMeshCuda::~TriangleMeshCuda() {
 void TriangleMeshCuda::Reset() {
     /** No need to clear data **/
     if (type_ == VertexTypeUnknown) {
-        PrintError("Unknown vertex type!\n");
+        utility::PrintError("Unknown vertex type!\n");
     }
 
     vertices_.set_iterator(0);
@@ -83,12 +82,12 @@ void TriangleMeshCuda::Create(
     VertexType type, int max_vertices, int max_triangles) {
     assert(max_vertices > 0 && max_triangles > 0);
     if (device_ != nullptr) {
-        PrintError("[TriangleMeshCuda] Already created, abort!\n");
+        utility::PrintError("[TriangleMeshCuda] Already created, abort!\n");
         return;
     }
 
     if (type == VertexTypeUnknown) {
-        PrintError("[TriangleMeshCuda] Unknown vertex type, abort!\n");
+        utility::PrintError("[TriangleMeshCuda] Unknown vertex type, abort!\n");
         return;
     }
 
@@ -143,14 +142,14 @@ void TriangleMeshCuda::UpdateDevice() {
     }
 }
 
-void TriangleMeshCuda::Upload(TriangleMesh &mesh) {
+void TriangleMeshCuda::Upload(geometry::TriangleMesh &mesh) {
     if (device_ == nullptr) return;
 
     std::vector<Vector3f> vertices, vertex_normals;
     std::vector<Vector3f> vertex_colors;
 
     if (!mesh.HasVertices() || !mesh.HasTriangles()) {
-        PrintError("Empty mesh!\n");
+        utility::PrintError("Empty mesh!\n");
         return;
     }
 
@@ -194,8 +193,9 @@ void TriangleMeshCuda::Upload(TriangleMesh &mesh) {
     }
 }
 
-std::shared_ptr<TriangleMesh> TriangleMeshCuda::Download() {
-    std::shared_ptr<TriangleMesh> mesh = std::make_shared<TriangleMesh>();
+std::shared_ptr<geometry::TriangleMesh> TriangleMeshCuda::Download() {
+    std::shared_ptr<geometry::TriangleMesh> mesh =
+        std::make_shared<geometry::TriangleMesh>();
     if (device_ == nullptr) return mesh;
 
     if (!HasVertices() || !HasTriangles()) return mesh;

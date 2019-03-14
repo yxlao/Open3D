@@ -2,10 +2,10 @@
 // Created by wei on 1/23/19.
 //
 
-#include <Core/Geometry/PointCloud.h>
-#include <Core/Geometry/KDTreeFlann.h>
-#include <Cuda/Geometry/PointCloudCuda.h>
-#include <Cuda/Registration/CorrespondenceSetCuda.h>
+#include <Open3D/Geometry/PointCloud.h>
+#include <Open3D/Geometry/KDTreeFlann.h>
+#include <src/Cuda/Geometry/PointCloudCuda.h>
+#include <src/Cuda/Registration/CorrespondenceSetCuda.h>
 
 #pragma once
 
@@ -37,14 +37,15 @@ public:
     FeatureExtractorCuda();
     ~FeatureExtractorCuda();
     FeatureExtractorCuda(const FeatureExtractorCuda &other);
-    FeatureExtractorCuda& operator=(const FeatureExtractorCuda &other);
+    FeatureExtractorCuda &operator=(const FeatureExtractorCuda &other);
 
     void Create();
     void Release();
     void UpdateDevice();
 
 public:
-    void Compute(PointCloud &pcl, const KDTreeSearchParamHybrid &param);
+    void Compute(geometry::PointCloud &pcl,
+                 const geometry::KDTreeSearchParamHybrid &param);
 
 public:
     PointCloudCuda pcl_;

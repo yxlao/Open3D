@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <Cuda/Common/UtilsCuda.h>
-#include <Cuda/Container/Array2DCuda.h>
+#include <src/Cuda/Common/UtilsCuda.h>
+#include <src/Cuda/Container/Array2DCuda.h>
 #include <Eigen/Eigen>
 
 namespace open3d {

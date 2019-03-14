@@ -5,14 +5,14 @@
 #pragma once
 
 #include "IntegrationClasses.h"
-#include <Cuda/Common/UtilsCuda.h>
+#include <src/Cuda/Common/UtilsCuda.h>
 
-#include <Cuda/Container/HashTableCuda.h>
+#include <src/Cuda/Container/HashTableCuda.h>
 
-#include <Cuda/Camera/PinholeCameraIntrinsicCuda.h>
-#include <Cuda/Common/TransformCuda.h>
-#include <Cuda/Common/LinearAlgebraCuda.h>
-#include <Cuda/Geometry/RGBDImageCuda.h>
+#include <src/Cuda/Camera/PinholeCameraIntrinsicCuda.h>
+#include <src/Cuda/Common/TransformCuda.h>
+#include <src/Cuda/Common/LinearAlgebraCuda.h>
+#include <src/Cuda/Geometry/RGBDImageCuda.h>
 
 #include <memory>
 

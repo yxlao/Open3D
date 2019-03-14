@@ -2,7 +2,7 @@
 // Created by wei on 1/21/19.
 //
 
-#include <Cuda/Geometry/NNCuda.h>
+#include <src/Cuda/Geometry/NNCuda.h>
 #include "FastGlobalRegistrationCuda.h"
 
 namespace open3d {
@@ -29,7 +29,7 @@ void FastGlobalRegistrationCuda::Release() {
 
 void FastGlobalRegistrationCuda::UpdateDevice() {
     if (device_ == nullptr) {
-        PrintError("Server not initialized!\n");
+        utility::PrintError("Server not initialized!\n");
         return;
     }
 
@@ -57,8 +57,8 @@ void FastGlobalRegistrationCuda::ExtractResults(
     rmse = downloaded_result[cnt];
 }
 
-void FastGlobalRegistrationCuda::Initialize(PointCloud &source,
-                                            PointCloud &target) {
+void FastGlobalRegistrationCuda::Initialize(
+    geometry::PointCloud &source, geometry::PointCloud &target) {
 
     source_.Create(VertexWithNormal, (int)source.points_.size());
     source_.Upload(source);
@@ -67,9 +67,9 @@ void FastGlobalRegistrationCuda::Initialize(PointCloud &source,
 
     /* 0) Extract feature from original point clouds */
     source_feature_extractor_.Compute(
-        source, KDTreeSearchParamHybrid(0.25, 100));
+        source, geometry::KDTreeSearchParamHybrid(0.25, 100));
     target_feature_extractor_.Compute(
-        target, KDTreeSearchParamHybrid(0.25, 100));
+        target, geometry::KDTreeSearchParamHybrid(0.25, 100));
     source_features_ = source_feature_extractor_.fpfh_features_;
     target_features_ = target_feature_extractor_.fpfh_features_;
 
@@ -148,8 +148,8 @@ RegistrationResultCuda FastGlobalRegistrationCuda::DoSingleIteration(int iter) {
 
     bool success;
     Eigen::VectorXd xi;
-    std::tie(success, xi) = SolveLinearSystem(-JtJ, Jtr);
-    Eigen::Matrix4d delta = TransformVector6dToMatrix4d(xi);
+    std::tie(success, xi) = utility::SolveLinearSystemPSD(-JtJ, Jtr);
+    Eigen::Matrix4d delta = utility::TransformVector6dToMatrix4d(xi);
     transform_normalized_source_to_target_ =
         delta * transform_normalized_source_to_target_;
     source_.Transform(delta);
@@ -159,7 +159,7 @@ RegistrationResultCuda FastGlobalRegistrationCuda::DoSingleIteration(int iter) {
         mean_source_, mean_target_,
         device_->scale_global_);
     result.inlier_rmse_ = rmse;
-    PrintDebug("Iteration %d: inlier rmse = %f\n", iter, rmse);
+    utility::PrintDebug("Iteration %d: inlier rmse = %f\n", iter, rmse);
 
     if (iter % 4 == 0 && device_->par_ > 0.0f) {
         device_->par_ /= 1.4f;

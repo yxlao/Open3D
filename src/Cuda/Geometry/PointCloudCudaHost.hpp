@@ -6,8 +6,7 @@
 
 #include "PointCloudCuda.h"
 
-#include <Cuda/Container/ArrayCuda.h>
-#include <Core/Core.h>
+#include <src/Cuda/Container/ArrayCuda.h>
 
 namespace open3d {
 
@@ -69,7 +68,7 @@ PointCloudCuda::~PointCloudCuda() {
 void PointCloudCuda::Reset() {
     /** No need to clear data **/
     if (type_ == VertexTypeUnknown) {
-        PrintError("Unknown vertex type!\n");
+        utility::PrintError("Unknown vertex type!\n");
     }
 
     points_.set_iterator(0);
@@ -90,12 +89,12 @@ void PointCloudCuda::Reset() {
 void PointCloudCuda::Create(VertexType type, int max_points) {
     assert(max_points > 0);
     if (device_ != nullptr) {
-        PrintError("[PointCloudCuda] Already created, @Create aborted.\n");
+        utility::PrintError("[PointCloudCuda] Already created, @Create aborted.\n");
         return;
     }
 
     if (type == VertexTypeUnknown) {
-        PrintError("[PointCloudCuda] Unknown vertex type, @Create aborted!\n");
+        utility::PrintError("[PointCloudCuda] Unknown vertex type, @Create aborted!\n");
         return;
     }
 
@@ -173,13 +172,14 @@ void PointCloudCuda::Build(ImageCuda<Vector1f> &depth,
     PointCloudCudaKernelCaller::BuildFromDepthImage(*this, depth, intrinsic);
 }
 
-void PointCloudCuda::Upload(PointCloud &pcl) {
+void PointCloudCuda::Upload(geometry::PointCloud &pcl) {
     if (device_ == nullptr) return;
 
     std::vector<Vector3f> points, normals, colors;
 
     if (!pcl.HasPoints()) {
-        PrintError("[PointCloudCuda] Empty point cloud, @Upload aborted.\n");
+        utility::PrintError("[PointCloudCuda] Empty point cloud, @Upload "
+                            "aborted.\n");
         return;
     }
 
@@ -213,8 +213,9 @@ void PointCloudCuda::Upload(PointCloud &pcl) {
     }
 }
 
-std::shared_ptr<PointCloud> PointCloudCuda::Download() {
-    std::shared_ptr<PointCloud> pcl = std::make_shared<PointCloud>();
+std::shared_ptr<geometry::PointCloud> PointCloudCuda::Download() {
+    std::shared_ptr<geometry::PointCloud> pcl =
+        std::make_shared<geometry::PointCloud>();
     if (device_ == nullptr) return pcl;
 
     if (!HasPoints()) return pcl;

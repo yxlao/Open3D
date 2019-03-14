@@ -9,7 +9,7 @@ if (NOT CMAKE_VERSION VERSION_LESS "3.1")
 endif()
 
 # central location for specifying the Open3D version
-file(STRINGS "src/version.txt" OPEN3D_VERSION_READ)
+file(STRINGS "src/Open3D/version.txt" OPEN3D_VERSION_READ)
 foreach(ver ${OPEN3D_VERSION_READ})
   if (ver MATCHES "OPEN3D_VERSION_(MAJOR|MINOR|PATCH|TWEAK) +([^ ]+)$")
     set(OPEN3D_VERSION_${CMAKE_MATCH_1} "${CMAKE_MATCH_2}" CACHE INTERNAL "")
@@ -27,6 +27,17 @@ string(CONCAT PROJECT_VERSION_THREE_NUMBER "${OPEN3D_VERSION_MAJOR}"
                                            ".${OPEN3D_VERSION_MINOR}"
                                            ".${OPEN3D_VERSION_PATCH}")
 
+# pypi package name controls specifies the repository name on pypi
+# possbie names include:
+# - open3d: default name when building from source and for conda
+# - open3d-python: for PyPI
+# - py3d
+# - open3d-original
+# - open3d-official
+# - open-3d
+if(NOT DEFINED PYPI_PACKAGE_NAME)
+    set(PYPI_PACKAGE_NAME "open3d")
+endif()
 
 # set additional info
 set(PROJECT_EMAIL   "info@open3d.org")
@@ -36,8 +47,8 @@ set(PROJECT_CODE    "https://github.com/IntelVCL/Open3D")
 set(PROJECT_ISSUES  "https://github.com/IntelVCL/Open3D/issues")
 
 # configure a header file to pass the version settings to the source code
-configure_file("${PROJECT_SOURCE_DIR}/src/Open3DConfig.h.in"
-               "${PROJECT_SOURCE_DIR}/src/Open3DConfig.h")
+configure_file("${PROJECT_SOURCE_DIR}/src/Open3D/Open3DConfig.h.in"
+               "${PROJECT_SOURCE_DIR}/src/Open3D/Open3DConfig.h")
 
 if(WIN32 AND NOT CYGWIN)
     set(DEF_INSTALL_CMAKE_DIR CMake)
@@ -76,13 +87,6 @@ if (NOT CMAKE_BUILD_TYPE)
         "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
         FORCE)
 endif ()
-
-# set include directories
-include_directories(
-    ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_SOURCE_DIR}/3rdparty
-    ${PROJECT_SOURCE_DIR}/3rdparty/librealsense/include
-    )
 
 # if dynamic link is added, use if (WIN32) macro
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
@@ -194,39 +198,20 @@ macro(ADD_SOURCE_GROUP MODULE_NAME)
     source_group("Source Files\\${MODULE_NAME}" FILES ${MODULE_SOURCE_FILES})
 endmacro(ADD_SOURCE_GROUP)
 
-# Modified to add cuda files
-macro(ADD_CUDA_SOURCE_GROUP MODULE_NAME)
-    file(GLOB MODULE_CUDA_HEADER_FILES "${MODULE_NAME}/*.cuh")
-    source_group("Header Files\\${MODULE_NAME}" FILES
-            ${MODULE_CUDA_HEADER_FILES})
-    file(GLOB MODULE_CUDA_SOURCE_FILES "${MODULE_NAME}/*.cu")
-    source_group("Source Files\\${MODULE_NAME}" FILES
-            ${MODULE_CUDA_SOURCE_FILES})
-endmacro(ADD_CUDA_SOURCE_GROUP)
-
-
 # Handling dependencies
 add_subdirectory(3rdparty)
-
-# > Additional code to incorporate cuda and opencv (TEMPORARY!)
-find_package(CUDA 8.0 REQUIRED)
-# NOTE: Eigen <= 3.3.5 has problem with CUDA >= 9.0
-# Source code have to be modified in Eigen/Core to ignore fp16:
-# Comment the following lines:
-# #include "src/Core/arch/CUDA/Half.h"
-# #include "src/Core/arch/CUDA/PacketMathHalf.h"
-# #include "src/Core/arch/CUDA/TypeCasting.h"
-
-find_package(OpenCV REQUIRED)
-list(APPEND 3RDPARTY_INCLUDE_DIRS ${CUDA_TOOLKIT_INCLUDE}
-        ${OpenCV_INCLUDE_DIRS})
-list(APPEND 3RDPARTY_LIBRARIES
-        ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES} ${CUDA_curand_LIBRARY}
-        ${OpenCV_LIBS})
-
 include_directories(${PROJECT_SOURCE_DIR})
 include_directories(${3RDPARTY_INCLUDE_DIRS})
+
 link_directories(${3RDPARTY_LIBRARY_DIRS})
+
+# set include directories
+include_directories(
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}/3rdparty
+    ${3RDPARTY_INCLUDE_DIRS}
+    ${PROJECT_SOURCE_DIR}/3rdparty/librealsense/include
+)
 
 # Open3D library
 add_subdirectory(src)
@@ -234,12 +219,16 @@ add_subdirectory(src)
 # Examples
 add_subdirectory(examples)
 
-# `make check-style` returns non-zero exit code if styling is not compliant
+# `make check-style` errors if styling is not compliant
 add_custom_target(check-style
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/util/scripts/check-style.sh
+    COMMAND ${CMAKE_COMMAND}
+    -DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/util/scripts/check-style.cmake
 )
 
 # `make apply-style` runs clang-format to format all source code
 add_custom_target(apply-style
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/util/scripts/apply-style.sh
+    COMMAND ${CMAKE_COMMAND}
+    -DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/util/scripts/apply-style.cmake
 )

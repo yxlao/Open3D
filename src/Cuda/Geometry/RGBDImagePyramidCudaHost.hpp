@@ -41,7 +41,8 @@ bool RGBDImagePyramidCuda<N>::Create(int width, int height) {
 
     if (device_ != nullptr) {
         if (rgbd_[0].width_ != width || rgbd_[0].height_ != height) {
-            PrintError("[RGBDImagePyramidCuda] Incompatible image size,"
+            utility::PrintError("[RGBDImagePyramidCuda] Incompatible image "
+                                "size,"
                        "@Create aborted.\n");
             return false;
         }
@@ -49,7 +50,8 @@ bool RGBDImagePyramidCuda<N>::Create(int width, int height) {
     }
 
     if ((width >> N) == 0 || (height >> N) == 0) {
-        PrintError("[RGBDImagePyramidCuda] Width %d || height %d too small,"
+        utility::PrintError("[RGBDImagePyramidCuda] Width %d || height %d too "
+                        "small,"
                    "@Create aborted.\n", width, height);
         return false;
     }

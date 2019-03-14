@@ -5,7 +5,6 @@
 #pragma once
 
 #include "RGBDOdometryCuda.h"
-#include <Core/Core.h>
 
 namespace open3d {
 namespace cuda {
@@ -24,14 +23,15 @@ RGBDOdometryCuda<N>::~RGBDOdometryCuda() {
 
 template<size_t N>
 void RGBDOdometryCuda<N>::SetParameters(
-    const OdometryOption &option, float sigma) {
+    const odometry::OdometryOption &option, float sigma) {
     assert(option_.iteration_number_per_pyramid_level_.size() == N);
     option_ = option;
     sigma_ = sigma;
 }
 
 template<size_t N>
-void RGBDOdometryCuda<N>::SetIntrinsics(PinholeCameraIntrinsic intrinsics) {
+void RGBDOdometryCuda<N>::SetIntrinsics(camera::PinholeCameraIntrinsic
+intrinsics) {
     intrinsics_ = intrinsics;
 }
 
@@ -41,7 +41,7 @@ bool RGBDOdometryCuda<N>::Create(int width, int height) {
 
     if (device_ != nullptr) {
         if (source_[0].width_ != width || source_[0].height_ != height) {
-            PrintError("[RGBDOdometryCuda] Incompatible image size, "
+            utility::PrintError("[RGBDOdometryCuda] Incompatible image size, "
                        "width: %d vs %d, height: %d vs %d, "
                        "@Create aborted.\n",
                        source_[0].width_, width, source_[0].height_, height);
@@ -168,7 +168,7 @@ void RGBDOdometryCuda<N>::Initialize(
 
     bool success = Create(source.width_, source.height_);
     if (!success) {
-        PrintError("[RGBDOdometryCuda] create failed, "
+        utility::PrintError("[RGBDOdometryCuda] create failed, "
                    "@PrepareData aborted.\n");
         return;
     }
@@ -228,7 +228,7 @@ RGBDOdometryCuda<N>::DoSingleIteration(size_t level, int iter) {
     device_->transform_source_to_target_.FromEigen(
         transform_source_to_target_);
 
-    Timer timer;
+    utility::Timer timer;
     timer.Start();
     RGBDOdometryCudaKernelCaller<N>::DoSingleIteration(*this, level);
     timer.Stop();
@@ -245,13 +245,15 @@ RGBDOdometryCuda<N>::DoSingleIteration(size_t level, int iter) {
     Eigen::Vector6d Jtr;
     float loss, inliers;
     ExtractResults(results, JtJ, Jtr, loss, inliers);
-    PrintDebug("> Level %d, iter %d: loss = %f, avg loss = %f, inliers = %.0f\n",
+    utility::PrintDebug("> Level %d, iter %d: loss = %f, avg loss = %f, "
+                        "inliers = %"
+                ".0f\n",
                level, iter, loss, loss / inliers, inliers);
 
     bool is_success;
     Eigen::Matrix4d extrinsic;
     std::tie(is_success, extrinsic) =
-        SolveJacobianSystemAndObtainExtrinsicMatrix(JtJ, Jtr);
+        utility::SolveJacobianSystemAndObtainExtrinsicMatrix(JtJ, Jtr);
 
     return std::make_tuple(is_success, extrinsic, loss / inliers);
 }
@@ -280,7 +282,7 @@ RGBDOdometryCuda<N>::ComputeMultiScale() {
             losses_on_level.emplace_back(loss);
 
             if (!is_success) {
-                PrintWarning("[ComputeOdometry] no solution!\n");
+                utility::PrintWarning("[ComputeOdometry] no solution!\n");
                 return std::make_tuple(
                     false, Eigen::Matrix4d::Identity(),
                     losses);

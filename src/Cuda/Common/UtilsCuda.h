@@ -5,8 +5,12 @@
 #pragma once
 
 #include <cstdlib>
-#include <driver_types.h>
-#include <cuda_runtime_api.h>
+
+#include <Open3D/Utility/Console.h>
+#include <Open3D/Utility/Timer.h>
+
+#include "driver_types.h"
+#include "cuda_runtime_api.h"
 
 #include "Common.h"
 #include "HelperCuda.h"

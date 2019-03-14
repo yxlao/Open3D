@@ -5,13 +5,13 @@
 #pragma once
 
 #include "GeometryClasses.h"
-#include <Cuda/Common/Common.h>
-#include <Cuda/Common/LinearAlgebraCuda.h>
-#include <Core/Geometry/Image.h>
+#include <src/Cuda/Common/Common.h>
+#include <src/Cuda/Common/LinearAlgebraCuda.h>
+#include <Open3D/Geometry/Image.h>
 
 #include <cstdlib>
 #include <memory>
-#include <vector_types.h>
+// #include <vector_types.h>
 #include <opencv2/opencv.hpp>
 
 //#define HOST_DEBUG_MONITOR_LIFECYCLE
@@ -116,8 +116,8 @@ public:
     void UpdateDevice();
 
     void CopyFrom(const ImageCuda<VecType> &other);
-    void Upload(Image &image);
-    std::shared_ptr<Image> DownloadImage();
+    void Upload(geometry::Image &image);
+    std::shared_ptr<geometry::Image> DownloadImage();
 
     /********** Image Processing **********/
     /** 'switch' code in kernel can be slow, manually expand it if needed. **/

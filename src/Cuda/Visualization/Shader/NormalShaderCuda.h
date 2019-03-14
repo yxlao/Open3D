@@ -28,12 +28,13 @@
 
 #include <vector>
 #include <Eigen/Core>
-#include <Visualization/Shader/ShaderWrapper.h>
 
 #include <Cuda/Common/UtilsCuda.h>
+#include <Open3D/Visualization/Shader/ShaderWrapper.h>
 #include "CudaGLInterp.h"
 
 namespace open3d {
+namespace visualization {
 
 namespace glsl {
 
@@ -49,17 +50,19 @@ protected:
 protected:
     bool Compile() final;
     void Release() final;
-    bool BindGeometry(const Geometry &geometry, const RenderOption &option,
+    bool BindGeometry(const geometry::Geometry &geometry,
+                      const RenderOption &option,
                       const ViewControl &view) final;
-    bool RenderGeometry(const Geometry &geometry, const RenderOption &option,
+    bool RenderGeometry(const geometry::Geometry &geometry,
+                        const RenderOption &option,
                         const ViewControl &view) final;
     void UnbindGeometry() final;
 
 protected:
-    virtual bool PrepareRendering(const Geometry &geometry,
+    virtual bool PrepareRendering(const geometry::Geometry &geometry,
                                   const RenderOption &option,
                                   const ViewControl &view) = 0;
-    virtual bool PrepareBinding(const Geometry &geometry,
+    virtual bool PrepareBinding(const geometry::Geometry &geometry,
                                 const RenderOption &option,
                                 const ViewControl &view) = 0;
 
@@ -83,17 +86,17 @@ protected:
 class NormalShaderForTriangleMeshCuda : public NormalShaderCuda {
 public:
     NormalShaderForTriangleMeshCuda()
-    : NormalShaderCuda("NormalShaderForTriangleMeshCuda") {}
+        : NormalShaderCuda("NormalShaderForTriangleMeshCuda") {}
 
 protected:
-    bool PrepareRendering(const Geometry &geometry,
+    bool PrepareRendering(const geometry::Geometry &geometry,
                           const RenderOption &option,
                           const ViewControl &view) final;
-    bool PrepareBinding(const Geometry &geometry,
+    bool PrepareBinding(const geometry::Geometry &geometry,
                         const RenderOption &option,
                         const ViewControl &view) final;
 };
 
-}    // namespace open3d::glsl
-
+}    // namespace glsl
+}    // names[ace visualization
 }    // namespace open3d

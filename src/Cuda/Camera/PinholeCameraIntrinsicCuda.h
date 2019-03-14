@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <Core/Camera/PinholeCameraIntrinsic.h>
+#include <Open3D/Camera/PinholeCameraIntrinsic.h>
 #include <Cuda/Common/LinearAlgebraCuda.h>
 
 namespace open3d {
@@ -42,7 +42,7 @@ public:
     }
 
     __HOST__ explicit PinholeCameraIntrinsicCuda(
-        PinholeCameraIntrinsic &intrinsic) {
+        camera::PinholeCameraIntrinsic &intrinsic) {
         width_ = intrinsic.width_;
         height_ = intrinsic.height_;
 
@@ -58,14 +58,15 @@ public:
     }
 
     __HOSTDEVICE__ PinholeCameraIntrinsicCuda(
-        PinholeCameraIntrinsicParameters param) {
+        camera::PinholeCameraIntrinsicParameters param) {
 
-        if (param == PinholeCameraIntrinsicParameters::PrimeSenseDefault)
+        if (param == camera::PinholeCameraIntrinsicParameters
+        ::PrimeSenseDefault)
             SetIntrinsics(640, 480, 525.0f, 525.0f, 319.5f, 239.5f);
-        else if (param == PinholeCameraIntrinsicParameters::
+        else if (param == camera::PinholeCameraIntrinsicParameters::
         Kinect2DepthCameraDefault)
             SetIntrinsics(512, 424, 254.878f, 205.395f, 365.456f, 365.456f);
-        else if (param == PinholeCameraIntrinsicParameters::
+        else if (param == camera::PinholeCameraIntrinsicParameters::
         Kinect2ColorCameraDefault)
             SetIntrinsics(1920,
                           1080,

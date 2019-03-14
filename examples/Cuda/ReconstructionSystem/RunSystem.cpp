@@ -32,15 +32,15 @@ int main(int argc, char **argv) {
     DatasetConfig config;
 
     std::string config_path = argc > 1 ? argv[1] :
-        kDefaultDatasetConfigDir + "/cmu/nsh.json";
+        kDefaultDatasetConfigDir + "/cmu/office_2204.json";
 
-    bool is_success = ReadIJsonConvertible(config_path, config);
+    bool is_success = io::ReadIJsonConvertible(config_path, config);
     if (!is_success) return 1;
 
-    Timer timer_total;
+    utility::Timer timer_total;
     timer_total.Start();
 
-    Timer timer;
+    utility::Timer timer;
 
     timer.Start();
 //    MakeFragment::Run(config);
@@ -69,16 +69,20 @@ int main(int argc, char **argv) {
     timer_total.Stop();
     std::string total_time = SecondsToHMS(timer_total.GetDuration() / 1000.0);
 
-    PrintInfo("================================\n");
-    PrintInfo(" - Make fragment      : %s\n", make_fragment_time.c_str());
-    PrintInfo(" - Register fragments : %s\n", register_fragments_time.c_str());
-    PrintInfo(" - Refine registration: %s\n", refine_registration_time.c_str());
-    PrintInfo(" - Intergate scene    : %s\n", integrate_scene_time.c_str());
-    PrintInfo(" - Total              : %s\n", total_time.c_str());
-    PrintInfo("================================\n");
+    utility::PrintInfo("================================\n");
+    utility::PrintInfo(" - Make fragment      : %s\n", make_fragment_time.c_str
+    ());
+    utility::PrintInfo(" - Register fragments : %s\n", register_fragments_time
+    .c_str());
+    utility::PrintInfo(" - Refine registration: %s\n", refine_registration_time
+    .c_str());
+    utility::PrintInfo(" - Intergate scene    : %s\n", integrate_scene_time
+    .c_str());
+    utility::PrintInfo(" - Total              : %s\n", total_time.c_str());
+    utility::PrintInfo("================================\n");
 
-    auto mesh = CreateMeshFromFile(config.GetReconstructedSceneFile());
-    DrawGeometries({mesh});
+    auto mesh = io::CreateMeshFromFile(config.GetReconstructedSceneFile());
+    visualization::DrawGeometries({mesh});
 
     return 0;
 }

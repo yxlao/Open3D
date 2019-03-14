@@ -3,23 +3,25 @@
 //
 
 #include "RegistrationCuda.h"
-#include <Core/Core.h>
 
 namespace open3d {
 namespace cuda {
 
-RegistrationCuda::RegistrationCuda(const TransformationEstimationType &type) {
-    if (type == TransformationEstimationType::ColoredICP) {
+RegistrationCuda::RegistrationCuda(
+    const registration::TransformationEstimationType &type) {
+    if (type == registration::TransformationEstimationType::ColoredICP) {
         estimator_ = std::make_shared<TransformEstimationForColoredICPCuda>();
-    } else if (type == TransformationEstimationType::PointToPlane) {
+    } else if (type == registration::TransformationEstimationType
+    ::PointToPlane) {
         estimator_ = std::make_shared<TransformEstimationPointToPlaneCuda>();
-    } else if (type == TransformationEstimationType::PointToPoint) {
+    } else if (type == registration::TransformationEstimationType
+    ::PointToPoint) {
         estimator_ = std::make_shared<TransformEstimationPointToPointCuda>();
     }
 }
 
 void RegistrationCuda::Initialize(
-    PointCloud &source, PointCloud &target,
+    geometry::PointCloud &source, geometry::PointCloud &target,
     float max_correspondence_distance,
     const Eigen::Matrix<double, 4, 4> &init) {
     estimator_->Initialize(source, target, max_correspondence_distance);
@@ -38,14 +40,14 @@ RegistrationResultCuda RegistrationCuda::DoSingleIteration(int iter) {
     estimator_->GetCorrespondences();
 
     if (estimator_->correspondences_.indices_.size() < 10) {
-        PrintError("Insufficient correspondences: %d\n",
+        utility::PrintError("Insufficient correspondences: %d\n",
                    estimator_->correspondences_.indices_.size());
         return result;
     }
 
     result = estimator_->ComputeResultsAndTransformation();
 
-    PrintDebug("Iteration %d: inlier rmse = %f, fitness = %f\n",
+    utility::PrintDebug("Iteration %d: inlier rmse = %f, fitness = %f\n",
                iter, result.inlier_rmse_, result.fitness_);
 
     estimator_->TransformSourcePointCloud(result.transformation_);

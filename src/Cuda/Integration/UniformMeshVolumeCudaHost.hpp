@@ -7,7 +7,6 @@
 #include "MarchingCubesConstCuda.h"
 
 #include <cuda_runtime.h>
-#include <Core/Core.h>
 
 namespace open3d {
 namespace cuda {
@@ -61,7 +60,8 @@ template<size_t N>
 void UniformMeshVolumeCuda<N>::Create(
     VertexType type, int max_vertices, int max_triangles) {
     if (device_ != nullptr) {
-        PrintError("[UniformMeshVolumeCuda] Already created, abort!\n");
+        utility::PrintError("[UniformMeshVolumeCuda] Already created, "
+                            "abort!\n");
         return;
     }
 
@@ -127,13 +127,14 @@ void UniformMeshVolumeCuda<N>::VertexAllocation(
     UniformTSDFVolumeCuda<N> &tsdf_volume) {
     assert(device_ != nullptr);
 
-    Timer timer;
+    utility::Timer timer;
     timer.Start();
 
     UniformMeshVolumeCudaKernelCaller<N>::VertexAllocation(*this, tsdf_volume);
 
     timer.Stop();
-    PrintInfo("Allocation takes %f milliseconds\n", timer.GetDuration());
+    utility::PrintInfo("Allocation takes %f milliseconds\n", timer.GetDuration
+    ());
 }
 
 template<size_t N>
@@ -141,25 +142,27 @@ void UniformMeshVolumeCuda<N>::VertexExtraction(
     UniformTSDFVolumeCuda<N> &tsdf_volume) {
     assert(device_ != nullptr);
 
-    Timer timer;
+    utility::Timer timer;
     timer.Start();
 
     UniformMeshVolumeCudaKernelCaller<N>::VertexExtraction(*this, tsdf_volume);
     timer.Stop();
-    PrintInfo("Extraction takes %f milliseconds\n", timer.GetDuration());
+    utility::PrintInfo("Extraction takes %f milliseconds\n", timer.GetDuration
+    ());
 }
 
 template<size_t N>
 void UniformMeshVolumeCuda<N>::TriangleExtraction() {
     assert(device_ != nullptr);
 
-    Timer timer;
+    utility::Timer timer;
     timer.Start();
 
     UniformMeshVolumeCudaKernelCaller<N>::TriangleExtraction(*this);
 
     timer.Stop();
-    PrintInfo("Triangulation takes %f milliseconds\n", timer.GetDuration());
+    utility::PrintInfo("Triangulation takes %f milliseconds\n", timer
+    .GetDuration());
 }
 
 template<size_t N>

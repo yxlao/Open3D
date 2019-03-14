@@ -5,7 +5,7 @@
 #pragma once
 
 #include "TriangleMeshCuda.h"
-#include <Cuda/Container/ArrayCudaDevice.cuh>
+#include <src/Cuda/Container/ArrayCudaDevice.cuh>
 
 namespace open3d {
 namespace cuda {

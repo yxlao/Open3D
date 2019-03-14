@@ -4,12 +4,12 @@
 
 #pragma once
 
-#include <Cuda/Common/UtilsCuda.h>
-#include <Core/Geometry/PointCloud.h>
-#include <Cuda/Geometry/PointCloudCuda.h>
-#include <Cuda/Registration/FeatureExtractorCuda.h>
-#include <Cuda/Registration/RegistrationCuda.h>
-#include <Cuda/Geometry/NNCuda.h>
+#include <src/Cuda/Common/UtilsCuda.h>
+#include <Open3D/Geometry/PointCloud.h>
+#include <src/Cuda/Geometry/PointCloudCuda.h>
+#include <src/Cuda/Registration/FeatureExtractorCuda.h>
+#include <src/Cuda/Registration/RegistrationCuda.h>
+#include <src/Cuda/Geometry/NNCuda.h>
 
 namespace open3d {
 namespace cuda {
@@ -55,7 +55,7 @@ public:
         Eigen::Matrix6d &JtJ, Eigen::Vector6d &Jtr, float &rmse);
 
 public:
-    void Initialize(PointCloud& source, PointCloud &target);
+    void Initialize(geometry::PointCloud& source, geometry::PointCloud &target);
     double NormalizePointClouds();
     void AdvancedMatching();
     RegistrationResultCuda DoSingleIteration(int iter);

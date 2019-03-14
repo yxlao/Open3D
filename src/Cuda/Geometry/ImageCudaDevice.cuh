@@ -8,9 +8,8 @@
 #include "LinearAlgebraCuda.h"
 #include <iostream>
 #include <driver_types.h>
-#include <Cuda/Common/UtilsCuda.h>
+#include <src/Cuda/Common/UtilsCuda.h>
 #include <vector_types.h>
-#include <Core/Core.h>
 
 namespace open3d {
 

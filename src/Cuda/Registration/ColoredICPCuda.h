@@ -7,7 +7,7 @@
 #include <Cuda/Common/JacobianCuda.h>
 #include <Cuda/Geometry/PointCloudCuda.h>
 #include <Cuda/Registration/TransformEstimationCuda.h>
-#include <Core/Geometry/KDTreeFlann.h>
+#include <Open3D/Geometry/KDTreeFlann.h>
 
 namespace open3d {
 namespace cuda {
@@ -46,7 +46,7 @@ public:
         device_ = nullptr;
 
 public:
-    TransformationEstimationType GetTransformationEstimationType()
+    registration::TransformationEstimationType GetTransformationEstimationType()
     const override { return type_; };
 
     TransformEstimationForColoredICPCuda(float lambda_geometric = 0.968f);
@@ -59,8 +59,10 @@ public:
     /** TODO: copy constructors **/
 
 public:
-    void Initialize(PointCloud &source, PointCloud &target,
-                    float max_correspondence_distance) override;
+    void Initialize(
+        geometry::PointCloud &source,
+        geometry::PointCloud &target,
+        float max_correspondence_distance) override;
     RegistrationResultCuda ComputeResultsAndTransformation() override;
 
 public:
@@ -70,17 +72,18 @@ public:
      * 3. Use the compressed correspondence matrix to build linear systems
      * and compute color gradients.
      * **/
-    void ComputeColorGradients(PointCloud &target,
-                               KDTreeFlann &kdtree,
-                               const KDTreeSearchParamHybrid &search_param);
+    void ComputeColorGradients(
+        geometry::PointCloud &target,
+        geometry::KDTreeFlann &kdtree,
+        const geometry::KDTreeSearchParamHybrid &search_param);
 
 public:
     float lambda_geometric_;
     ArrayCuda<Vector3f> target_color_gradient_;
 
 private:
-    const TransformationEstimationType type_ =
-        TransformationEstimationType::ColoredICP;
+    const registration::TransformationEstimationType type_ =
+        registration::TransformationEstimationType::ColoredICP;
 };
 
 class TransformEstimationCudaForColoredICPKernelCaller {

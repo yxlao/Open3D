@@ -68,7 +68,7 @@ public:
     void UpdateDevice();
 
     void Build(const ImageCuda<VecType> &image);
-    std::vector<std::shared_ptr<Image>> DownloadImages();
+    std::vector<std::shared_ptr<geometry::Image>> DownloadImages();
 
     /** Legacy **/
     std::vector<cv::Mat> DownloadMats();

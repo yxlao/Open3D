@@ -58,7 +58,7 @@ bool RGBDImageCuda::Create(int width, int height) {
 
     if (device_ != nullptr) {
         if (width_ != width || height_ != height) {
-            PrintError("[RGBDImageCuda] Incompatible image size,"
+            utility::PrintError("[RGBDImageCuda] Incompatible image size,"
                        "@Create aborted.\n");
             return false;
         }
@@ -90,7 +90,8 @@ void RGBDImageCuda::Release() {
     intensity_.Release();
 }
 
-void RGBDImageCuda::Upload(Image &depth_raw, Image &color_raw) {
+void RGBDImageCuda::Upload(geometry::Image &depth_raw, geometry::Image
+&color_raw) {
     assert(depth_raw.width_ == color_raw.width_
                && depth_raw.height_ == color_raw.height_);
     width_ = depth_raw.width_;

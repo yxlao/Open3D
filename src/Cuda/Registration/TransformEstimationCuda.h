@@ -8,8 +8,8 @@
 #include <Cuda/Container/ArrayCuda.h>
 #include <Cuda/Geometry/PointCloudCuda.h>
 #include <Cuda/Registration/CorrespondenceSetCuda.h>
-#include <Core/Registration/TransformationEstimation.h>
-#include <Core/Geometry/KDTreeFlann.h>
+#include <Open3D/Registration/TransformationEstimation.h>
+#include <Open3D/Geometry/KDTreeFlann.h>
 
 namespace open3d {
 namespace cuda {
@@ -34,7 +34,7 @@ public:
     virtual ~TransformEstimationCuda() {}
 
 public:
-    virtual TransformationEstimationType
+    virtual registration::TransformationEstimationType
     GetTransformationEstimationType() const = 0;
 
     virtual void Create() = 0;
@@ -42,8 +42,10 @@ public:
     virtual void UpdateDevice() = 0;
     virtual RegistrationResultCuda ComputeResultsAndTransformation() = 0;
 
-    virtual void Initialize(PointCloud &source, PointCloud &target,
-                            float max_correspondence_distance);
+    virtual void Initialize(
+        geometry::PointCloud &source,
+        geometry::PointCloud &target,
+        float max_correspondence_distance);
     virtual void GetCorrespondences();
     virtual void TransformSourcePointCloud(
         const Eigen::Matrix4d &source_to_target);
@@ -64,9 +66,9 @@ public:
     float max_correspondence_distance_;
 
     /** For CPU NN search **/
-    PointCloud source_cpu_;
-    PointCloud target_cpu_;
-    KDTreeFlann kdtree_;
+    geometry::PointCloud source_cpu_;
+    geometry::PointCloud target_cpu_;
+    geometry::KDTreeFlann kdtree_;
     Eigen::MatrixXi corres_matrix_;
 
     /** Build linear system **/
@@ -118,7 +120,7 @@ public:
     ~TransformEstimationPointToPointCuda() override { Release(); }
 
 public:
-    TransformationEstimationType GetTransformationEstimationType()
+    registration::TransformationEstimationType GetTransformationEstimationType()
     const override { return type_; };
 
     void Create() override;
@@ -137,8 +139,8 @@ public:
     bool with_scaling_ = false;
 
 private:
-    const TransformationEstimationType type_ =
-        TransformationEstimationType::PointToPoint;
+    const registration::TransformationEstimationType type_ =
+        registration::TransformationEstimationType::PointToPoint;
 };
 
 class TransformEstimationPointToPointCudaKernelCaller {
@@ -182,7 +184,7 @@ public:
     ~TransformEstimationPointToPlaneCuda() override { Release(); }
 
 public:
-    TransformationEstimationType GetTransformationEstimationType()
+    registration::TransformationEstimationType GetTransformationEstimationType()
     const override { return type_; };
 
     void Create() override;
@@ -192,8 +194,8 @@ public:
     RegistrationResultCuda ComputeResultsAndTransformation() override;
 
 private:
-    const TransformationEstimationType type_ =
-        TransformationEstimationType::PointToPlane;
+    const registration::TransformationEstimationType type_ =
+        registration::TransformationEstimationType::PointToPlane;
 };
 
 class TransformEstimationPointToPlaneCudaKernelCaller {

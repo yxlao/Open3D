@@ -61,7 +61,7 @@ void FeatureExtractorCuda::UpdateDevice() {
 }
 
 void FeatureExtractorCuda::Compute(
-    PointCloud &pcl, const KDTreeSearchParamHybrid &param) {
+    geometry::PointCloud &pcl, const geometry::KDTreeSearchParamHybrid &param) {
     pcl_.Create(VertexWithNormal, pcl.points_.size());
     pcl_.Upload(pcl);
 
@@ -70,7 +70,7 @@ void FeatureExtractorCuda::Compute(
     fpfh_features_.Create(33, pcl.points_.size());
     fpfh_features_.Memset(0);
 
-    KDTreeFlann kdtree;
+    geometry::KDTreeFlann kdtree;
     kdtree.SetGeometry(pcl);
 
     /** Initialize correspondence matrix for neighbors **/

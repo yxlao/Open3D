@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <Cuda/Common/Common.h>
+#include <src/Cuda/Common/Common.h>
 #include <Eigen/Eigen>
 
 #include <cassert>

@@ -7,7 +7,7 @@
 #include "OdometryClasses.h"
 #include "JacobianCuda.h"
 
-#include <Core/Odometry/OdometryOption.h>
+#include <Open3D/Odometry/OdometryOption.h>
 
 #include <Cuda/Common/UtilsCuda.h>
 
@@ -125,8 +125,8 @@ public:
     typedef Eigen::Matrix<double, 6, 1> EigenVector6d;
 
     float sigma_;
-    OdometryOption option_;
-    PinholeCameraIntrinsic intrinsics_;
+    odometry::OdometryOption option_;
+    camera::PinholeCameraIntrinsic intrinsics_;
     Eigen::Matrix4d transform_source_to_target_;
 
     /** At current I don't want to add assignments for such a large class **/
@@ -134,8 +134,8 @@ public:
     ICRGBDOdometryCuda();
     ~ICRGBDOdometryCuda();
 
-    void SetParameters(const OdometryOption &option, const float sigma = 0.5f);
-    void SetIntrinsics(PinholeCameraIntrinsic intrinsics);
+    void SetParameters(const odometry::OdometryOption &option, const float sigma= 0.5f);
+    void SetIntrinsics(camera::PinholeCameraIntrinsic intrinsics);
 
     bool Create(int width, int height);
     void Release();

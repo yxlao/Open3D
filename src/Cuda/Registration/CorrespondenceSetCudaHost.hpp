@@ -3,7 +3,6 @@
 //
 
 #include "CorrespondenceSetCuda.h"
-#include <Core/Core.h>
 
 namespace open3d {
 namespace cuda {
@@ -36,7 +35,8 @@ CorrespondenceSetCuda::~CorrespondenceSetCuda() {
 
 void CorrespondenceSetCuda::Create(int max_rows, int max_cols) {
     if (device_ != nullptr) {
-        PrintError("[CorrespondenceSetCuda] Already created, abort.\n");
+        utility::PrintError("[CorrespondenceSetCuda] Already created, abort"
+                            ".\n");
         return;
     }
 

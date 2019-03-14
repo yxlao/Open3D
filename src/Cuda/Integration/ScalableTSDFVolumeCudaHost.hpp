@@ -3,7 +3,7 @@
 //
 
 #include "ScalableTSDFVolumeCuda.h"
-#include <Cuda/Container/HashTableCudaHost.hpp>
+#include <src/Cuda/Container/HashTableCudaHost.hpp>
 #include <cuda_runtime.h>
 
 namespace open3d {
@@ -77,7 +77,8 @@ void ScalableTSDFVolumeCuda<N>::Create(
     assert(bucket_count > 0 && value_capacity > 0);
 
     if (device_ != nullptr) {
-        PrintError("[ScalableTSDFVolumeCuda] Already created, abort!\n");
+        utility::PrintError("[ScalableTSDFVolumeCuda] Already created, "
+                           "abort!\n");
         return;
     }
 

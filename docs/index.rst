@@ -3,18 +3,48 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. image:: _static/open3d_logo_horizontal.png
+    :alt: Open3D logo
+    :width: 320px
+    :align: center
+
+-----------
 
 Open3D: A Modern Library for 3D Data Processing
-===================================================================
+===============================================
 
 .. only: not latex
 
-   Contents:
+    Contents:
 
 .. toctree::
 
-  introduction
-  getting_started
-  compilation
-  tutorial/index
-  contribute
+    introduction
+    getting_started
+    compilation
+    contribute
+
+.. toctree::
+    :maxdepth: 1
+    :caption: Tutorial
+
+    tutorial/Basic/index
+    tutorial/Advanced/index
+    tutorial/ReconstructionSystem/index
+    tutorial/C++/cplusplus_interface
+    tutorial/docker/index
+    tutorial/reference
+
+.. toctree::
+    :maxdepth: 1
+    :caption: Python API
+
+    python_api/camera
+    python_api/color_map
+    python_api/geometry
+    python_api/io
+    python_api/integration
+    python_api/odometry
+    python_api/registration
+    python_api/utility
+    python_api/visualization

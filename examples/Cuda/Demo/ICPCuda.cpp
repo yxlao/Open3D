@@ -6,25 +6,21 @@
 #include <memory>
 #include <Eigen/Dense>
 
-#include <Core/Core.h>
-#include <IO/IO.h>
-#include <Visualization/Visualization.h>
-
-#include <Core/Utility/Timer.h>
+#include <Open3D/Open3D.h>
 #include <Cuda/Registration/RegistrationCuda.h>
 
 #include "examples/Cuda/Utils.h"
 
 int main(int argc, char **argv) {
     using namespace open3d;
-    SetVerbosityLevel(VerbosityLevel::VerboseInfo);
+    SetVerbosityLevel(utility::VerbosityLevel::VerboseInfo);
 
     std::string base_path = "/home/wei/Work/data/stanford/lounge/";
     auto rgbd_filenames = ReadDataAssociation(
         base_path + "data_association.txt");
 
-    PinholeCameraIntrinsic intrinsic = PinholeCameraIntrinsic(
-        PinholeCameraIntrinsicParameters::PrimeSenseDefault);
+    camera::PinholeCameraIntrinsic intrinsic = camera::PinholeCameraIntrinsic(
+        camera::PinholeCameraIntrinsicParameters::PrimeSenseDefault);
 
     auto rgbd_source = ReadRGBDImage(base_path + "/" + rgbd_filenames[3].second,
                                      base_path + "/" + rgbd_filenames[3].first,
@@ -46,7 +42,7 @@ int main(int argc, char **argv) {
 
     { /** PointToPlane **/
         open3d::cuda::RegistrationCuda registration(
-            open3d::TransformationEstimationType::PointToPlane);
+            open3d::registration::TransformationEstimationType::PointToPlane);
 
         registration.Initialize(*source, *target, 0.07f);
         for (int i = 0; i < 30; ++i) {
@@ -56,16 +52,16 @@ int main(int argc, char **argv) {
                               registration.transform_source_to_target_);
         auto info_gpu = registration.ComputeInformationMatrix();
 
-        auto result = open3d::RegistrationICP(
+        auto result = registration::RegistrationICP(
             *source, *target, 0.07, Eigen::Matrix4d::Identity(),
-            TransformationEstimationPointToPlane());
-        auto info_cpu = open3d::GetInformationMatrixFromPointClouds(
+            registration::TransformationEstimationPointToPlane());
+        auto info_cpu = registration::GetInformationMatrixFromPointClouds(
             *source, *target, 0.07, result.transformation_);
     }
 
     { /** PointToPlane **/
         open3d::cuda::RegistrationCuda registration(
-            open3d::TransformationEstimationType::PointToPoint);
+            registration::TransformationEstimationType::PointToPoint);
 
         registration.Initialize(*source, *target, 0.07f);
         for (int i = 0; i < 30; ++i) {
@@ -75,10 +71,10 @@ int main(int argc, char **argv) {
                               registration.transform_source_to_target_);
         auto info_gpu = registration.ComputeInformationMatrix();
 
-        auto result = open3d::RegistrationICP(
+        auto result = registration::RegistrationICP(
             *source, *target, 0.07, Eigen::Matrix4d::Identity(),
-            TransformationEstimationPointToPoint());
-        auto info_cpu = open3d::GetInformationMatrixFromPointClouds(
+            registration::TransformationEstimationPointToPoint());
+        auto info_cpu = registration::GetInformationMatrixFromPointClouds(
             *source, *target, 0.07, result.transformation_);
     }
 }

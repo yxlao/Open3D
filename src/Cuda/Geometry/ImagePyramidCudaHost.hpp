@@ -6,8 +6,7 @@
 #pragma once
 
 #include "ImagePyramidCuda.h"
-#include <Cuda/Common/UtilsCuda.h>
-#include <Core/Core.h>
+#include <src/Cuda/Common/UtilsCuda.h>
 
 namespace open3d {
 namespace cuda {
@@ -47,7 +46,7 @@ bool ImagePyramidCuda<VecType, N>::Create(int width, int height) {
     assert(width > 0 && height > 0);
     if (device_ != nullptr) {
         if (this->width(0) != width || this->height(0) != height) {
-            PrintError("[ImagePyramidCuda] Incompatible image size,"
+            utility::PrintError("[ImagePyramidCuda] Incompatible image size,"
                        "@Create aborted.\n");
             return false;
         }
@@ -55,7 +54,8 @@ bool ImagePyramidCuda<VecType, N>::Create(int width, int height) {
     }
 
     if ((width >> N) == 0 || (height >> N) == 0) {
-        PrintError("[ImagePyramidCuda] Width %d || height %d too small,"
+        utility::PrintError("[ImagePyramidCuda] Width %d || height %d too "
+                            "small,"
                    "@Create aborted.\n", width, height);
         return false;
     }
@@ -103,11 +103,11 @@ void ImagePyramidCuda<VecType, N>::UpdateDevice() {
 }
 
 template<typename VecType, size_t N>
-std::vector<std::shared_ptr<Image>> ImagePyramidCuda<VecType, N>::
+std::vector<std::shared_ptr<geometry::Image>> ImagePyramidCuda<VecType, N>::
 DownloadImages() {
-    std::vector<std::shared_ptr<Image> > result;
+    std::vector<std::shared_ptr<geometry::Image> > result;
     if (device_ == nullptr) {
-        PrintWarning("[ImagePyramidCuda] Not initialized,"
+        utility::PrintWarning("[ImagePyramidCuda] Not initialized,"
                      "@DownloadImages aborted.\n");
         return result;
     }
@@ -121,7 +121,7 @@ template<typename VecType, size_t N>
 std::vector<cv::Mat> ImagePyramidCuda<VecType, N>::DownloadMats() {
     std::vector<cv::Mat> result;
     if (device_ == nullptr) {
-        PrintWarning("[ImagePyramidCuda] Not initialized,"
+        utility::PrintWarning("[ImagePyramidCuda] Not initialized,"
                      "@DownloadMats aborted.\n");
         return result;
     }

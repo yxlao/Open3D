@@ -8,17 +8,17 @@
 
 #include <math.h>
 
-#include <Cuda/Common/JacobianCuda.h>
-#include <Cuda/Common/UtilsCuda.h>
-#include <Cuda/Common/LinearAlgebraCuda.h>
-#include <Cuda/Common/TransformCuda.h>
+#include <src/Cuda/Common/JacobianCuda.h>
+#include <src/Cuda/Common/UtilsCuda.h>
+#include <src/Cuda/Common/LinearAlgebraCuda.h>
+#include <src/Cuda/Common/TransformCuda.h>
 
-#include <Core/Odometry/OdometryOption.h>
+#include <Open3D/Odometry/OdometryOption.h>
 
-#include <Cuda/Camera/PinholeCameraIntrinsicCuda.h>
-#include <Cuda/Container/ArrayCuda.h>
-#include <Cuda/Geometry/ImagePyramidCuda.h>
-#include <Cuda/Geometry/RGBDImagePyramidCuda.h>
+#include <src/Cuda/Camera/PinholeCameraIntrinsicCuda.h>
+#include <src/Cuda/Container/ArrayCuda.h>
+#include <src/Cuda/Geometry/ImagePyramidCuda.h>
+#include <src/Cuda/Geometry/RGBDImagePyramidCuda.h>
 
 #include <Eigen/Eigen>
 
@@ -139,8 +139,8 @@ public:
 
 public:
     float sigma_;
-    OdometryOption option_;
-    PinholeCameraIntrinsic intrinsics_;
+    odometry::OdometryOption option_;
+    camera::PinholeCameraIntrinsic intrinsics_;
     Eigen::Matrix4d transform_source_to_target_;
 
     /** At current I don't want to add assignments for such a large class **/
@@ -148,8 +148,8 @@ public:
     RGBDOdometryCuda();
     ~RGBDOdometryCuda();
 
-    void SetParameters(const OdometryOption &option, float sigma = 0.5f);
-    void SetIntrinsics(PinholeCameraIntrinsic intrinsics);
+    void SetParameters(const odometry::OdometryOption &option, float sigma = 0.5f);
+    void SetIntrinsics(camera::PinholeCameraIntrinsic intrinsics);
 
     bool Create(int width, int height);
     void Release();

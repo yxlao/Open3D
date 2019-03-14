@@ -28,12 +28,15 @@
 
 #include <vector>
 #include <Eigen/Core>
-#include <Visualization/Shader/ShaderWrapper.h>
+#include <Open3D/Visualization/Shader/ShaderWrapper.h>
 
-#include <Cuda/Common/UtilsCuda.h>
+#include <src/Cuda/Common/UtilsCuda.h>
+#ifdef __CUDACC__
 #include <cuda_gl_interop.h>
+#endif
 
 namespace open3d {
+namespace visualization {
 
 namespace glsl {
 
@@ -49,24 +52,24 @@ protected:
     bool Compile() final;
     void Release() final;
 
-    bool BindGeometry(const Geometry &geometry,
+    bool BindGeometry(const geometry::Geometry &geometry,
                       const RenderOption &option,
                       const ViewControl &view) final;
-    bool RenderGeometry(const Geometry &geometry,
+    bool RenderGeometry(const geometry::Geometry &geometry,
                         const RenderOption &option,
                         const ViewControl &view) final;
     void UnbindGeometry() final;
 
 protected:
-    virtual bool PrepareRendering(const Geometry &geometry,
+    virtual bool PrepareRendering(const geometry::Geometry &geometry,
                                   const RenderOption &option,
                                   const ViewControl &view) = 0;
-    virtual bool PrepareBinding(const Geometry &geometry,
+    virtual bool PrepareBinding(const geometry::Geometry &geometry,
                                 const RenderOption &option,
                                 const ViewControl &view,
-                                cuda::Vector3f* &vertices,
-                                cuda::Vector3f* &colors,
-                                cuda::Vector3i* &triangles,
+                                cuda::Vector3f *&vertices,
+                                cuda::Vector3f *&colors,
+                                cuda::Vector3i *&triangles,
                                 int &vertex_size,
                                 int &triangle_size) = 0;
 
@@ -92,15 +95,15 @@ public:
         SimpleShaderCuda("SimpleShaderForPointCloudCuda") {}
 
 protected:
-    bool PrepareRendering(const Geometry &geometry,
+    bool PrepareRendering(const geometry::Geometry &geometry,
                           const RenderOption &option,
                           const ViewControl &view) final;
-    bool PrepareBinding(const Geometry &geometry,
+    bool PrepareBinding(const geometry::Geometry &geometry,
                         const RenderOption &option,
                         const ViewControl &view,
-                        cuda::Vector3f* &vertices,
-                        cuda::Vector3f* &colors,
-                        cuda::Vector3i* &triangles, /* Place holder */
+                        cuda::Vector3f *&vertices,
+                        cuda::Vector3f *&colors,
+                        cuda::Vector3i *&triangles, /* Place holder */
                         int &vertex_size,
                         int &triangle_size /* Place holder */) final;
 };
@@ -111,19 +114,19 @@ public:
         SimpleShaderCuda("SimpleShaderForTriangleMeshCuda") {}
 
 protected:
-    bool PrepareRendering(const Geometry &geometry,
+    bool PrepareRendering(const geometry::Geometry &geometry,
                           const RenderOption &option,
                           const ViewControl &view) final;
-    bool PrepareBinding(const Geometry &geometry,
+    bool PrepareBinding(const geometry::Geometry &geometry,
                         const RenderOption &option,
                         const ViewControl &view,
-                        cuda::Vector3f* &vertices,
-                        cuda::Vector3f* &colors,
-                        cuda::Vector3i* &triangles,
+                        cuda::Vector3f *&vertices,
+                        cuda::Vector3f *&colors,
+                        cuda::Vector3i *&triangles,
                         int &vertex_size,
                         int &triangle_size) final;
 };
 
 }    // namespace open3d::glsl
-
+}    // visualization
 }    // namespace open3d

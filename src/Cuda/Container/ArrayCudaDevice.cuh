@@ -5,7 +5,7 @@
 #pragma once
 
 #include "ArrayCuda.h"
-#include <Cuda/Common/UtilsCuda.h>
+#include <src/Cuda/Common/UtilsCuda.h>
 
 #include <cassert>
 

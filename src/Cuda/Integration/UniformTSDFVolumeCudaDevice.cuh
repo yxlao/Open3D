@@ -5,12 +5,8 @@
 #pragma once
 
 #include "UniformTSDFVolumeCuda.h"
-
-#include <Cuda/Common/UtilsCuda.h>
-
-#include <Cuda/Geometry/ImageCudaDevice.cuh>
-
-#include <Core/Core.h>
+#include <src/Cuda/Common/UtilsCuda.h>
+#include <src/Cuda/Geometry/ImageCudaDevice.cuh>
 
 namespace open3d {
 namespace cuda {

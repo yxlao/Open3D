@@ -5,15 +5,12 @@
 #pragma once
 
 #include "LinkedListCuda.h"
-#include <Cuda/Common/UtilsCuda.h>
+#include <src/Cuda/Common/UtilsCuda.h>
 
 #include "MemoryHeapCuda.h"
 
 #include <cassert>
 #include <cstdio>
-
-#include <Core/Core.h>
-
 
 namespace open3d {
 
@@ -57,7 +54,7 @@ void LinkedListCuda<T>::Create(int max_capacity,
                                MemoryHeapCuda<LinkedListNodeCuda<T>> &memory_heap) {
     assert(max_capacity > 0 && max_capacity < memory_heap.max_capacity_);
     if (device_ != nullptr) {
-        PrintError("[LinkedListCuda] Already created, abort!\n");
+        utility::PrintError("[LinkedListCuda] Already created, abort!\n");
         return;
     }
 
