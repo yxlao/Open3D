@@ -52,9 +52,12 @@ public:
     }
 
     __DEVICE__ inline ValueType &at(int x, int y);
+    __DEVICE__ inline Scalar &at(int x, int y, int channel);
+
     __DEVICE__ inline ValueType &operator()(int x, int y);
+    __DEVICE__ inline Scalar &operator()(int x, int y, int channel);
+
     __DEVICE__ inline ValueType interp_at(float x, float y);
-    __DEVICE__ inline ValueType interp_with_holes_at(float x, float y);
 
     __DEVICE__
     ValueType BoxFilter2x2(int x, int y);
