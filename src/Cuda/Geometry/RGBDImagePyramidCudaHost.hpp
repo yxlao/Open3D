@@ -89,7 +89,7 @@ void RGBDImagePyramidCuda<N>::Build(RGBDImageCuda &rgbd) {
             rgbd_[i - 1].depth_.Downsample(rgbd_[i].depth_, BoxFilter);
 
             /** Box filter after Gaussian **/
-            auto result = rgbd_[i - 1].intensity_.Gaussian(Gaussian3x3, false);
+            auto result = rgbd_[i - 1].intensity_.Gaussian(Gaussian3x3);
             result.Downsample(rgbd_[i].intensity_, BoxFilter);
         }
         UpdateDevice();

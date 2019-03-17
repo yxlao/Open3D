@@ -166,7 +166,7 @@ void PointCloudCuda::Build(RGBDImageCuda &rgbd,
     }
 }
 
-void PointCloudCuda::Build(ImageCuda<Vector1f> &depth,
+void PointCloudCuda::Build(ImageCuda<float, 1> &depth,
                            PinholeCameraIntrinsicCuda &intrinsic) {
     Reset();
     PointCloudCudaKernelCaller::BuildFromDepthImage(*this, depth, intrinsic);

@@ -31,25 +31,25 @@ inline T WarpReduceSumShuffle(T &sum);
 /** The rest are for testing **/
 #define TEST_ARRAY_SIZE (6 + 21 + 2)
 
-template<typename VecType, typename T>
+template<typename Scalar, size_t Channel>
 __GLOBAL__
-void ReduceSum2DKernel(ImageCudaDevice<VecType> src, T *sum);
+void ReduceSum2DKernel(ImageCudaDevice<Scalar, Channel> src, Scalar *sum);
 
-template<typename VecType, typename T>
+template<typename Scalar, size_t Channel>
 __GLOBAL__
-void ReduceSum2DShuffleKernel(ImageCudaDevice<VecType> src, T *sum);
+void ReduceSum2DShuffleKernel(ImageCudaDevice<Scalar, Channel> src, Scalar*sum);
 
-template<typename VecType, typename T>
+template<typename Scalar, size_t Channel>
 __GLOBAL__
-void AtomicSumKernel(ImageCudaDevice<VecType> src, T *sum);
+void AtomicSumKernel(ImageCudaDevice<Scalar, Channel> src, Scalar *sum);
 
-template<typename VecType, typename T>
-T ReduceSum2D(ImageCuda<VecType> &src);
+template<typename Scalar, size_t Channel>
+Scalar ReduceSum2D(ImageCuda<Scalar, Channel> &src);
 
-template<typename VecType, typename T>
-T ReduceSum2DShuffle(ImageCuda<VecType> &src);
+template<typename Scalar, size_t Channel>
+Scalar ReduceSum2DShuffle(ImageCuda<Scalar, Channel> &src);
 
-template<typename VecType, typename T>
-T AtomicSum(ImageCuda<VecType> &src);
+template<typename Scalar, size_t Channel>
+Scalar AtomicSum(ImageCuda<Scalar, Channel> &src);
 } // cuda
 } // open3d

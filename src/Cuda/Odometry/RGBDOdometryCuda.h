@@ -51,7 +51,7 @@ namespace cuda {
 template<size_t N>
 class RGBDOdometryCudaDevice {
 public:
-    ImagePyramidCudaDevice<Vector1f, N> source_on_target_;
+    ImagePyramidCudaDevice<float, 1, N> source_on_target_;
 
     RGBDImageCudaDevice source_input_;
     RGBDImageCudaDevice target_input_;
@@ -134,7 +134,7 @@ public:
     ArrayCuda<float> results_;
 
     /** Debug use **/
-    ImagePyramidCuda<Vector1f, N> source_on_target_;
+    ImagePyramidCuda<float, 1, N> source_on_target_;
     ArrayCuda<Vector4i> correspondences_;
 
 public:

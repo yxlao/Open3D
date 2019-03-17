@@ -6,10 +6,6 @@
 #include "RGBDOdometryCudaDevice.cuh"
 #include "RGBDOdometryCudaKernel.cuh"
 
-#include "ICRGBDOdometryCuda.h"
-#include "ICRGBDOdometryCudaDevice.cuh"
-#include "ICRGBDOdometryCudaKernel.cuh"
-
 #include "Reduction2DCudaKernel.cuh"
 
 #include <src/Cuda/Geometry/ImageCudaDevice.cuh>
@@ -24,34 +20,29 @@ template
 class RGBDOdometryCudaKernelCaller<3>;
 
 template
-class ICRGBDOdometryCudaDevice<3>;
+class ImageCudaDevice<float, 6>;
 template
-class ICRGBDOdometryCudaKernelCaller<3>;
+class ImageCudaKernelCaller<float, 6>;
+template
+class ImagePyramidCudaDevice<float, 6, 3>;
 
 template
-class ImageCudaDevice<Vector6f>;
-template
-class ImageCudaKernelCaller<Vector6f>;
-template
-class ImagePyramidCudaDevice<Vector6f, 3>;
+float ReduceSum2D<float, 1>(ImageCuda<float, 1> &src);
 
 template
-float ReduceSum2D<Vector1f, float>(ImageCuda<Vector1f> &src);
+float ReduceSum2DShuffle<float, 1>(ImageCuda<float, 1> &src);
 
 template
-float ReduceSum2DShuffle<Vector1f, float>(ImageCuda<Vector1f> &src);
+float AtomicSum<float, 1>(ImageCuda<float, 1> &src);
 
 template
-float AtomicSum<Vector1f, float>(ImageCuda<Vector1f> &src);
+int ReduceSum2D<int, 1>(ImageCuda<int, 1> &src);
 
 template
-int ReduceSum2D<Vector1b, int>(ImageCuda<Vector1b> &src);
+int ReduceSum2DShuffle<int, 1>(ImageCuda<int, 1> &src);
 
 template
-int ReduceSum2DShuffle<Vector1b, int>(ImageCuda<Vector1b> &src);
-
-template
-int AtomicSum<Vector1b, int>(ImageCuda<Vector1b> &src);
+int AtomicSum<int, 1>(ImageCuda<int, 1> &src);
 
 } // cuda
 } // open3d

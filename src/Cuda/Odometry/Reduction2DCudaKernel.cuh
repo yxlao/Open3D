@@ -9,10 +9,10 @@
 namespace open3d {
 
 namespace cuda {
-template<typename VecType, typename T>
+template<typename Scalar, size_t Channel>
 __global__
-void ReduceSum2DKernel(ImageCudaDevice<VecType> src, T *sum) {
-    __shared__ T local_sum[THREAD_2D_UNIT * THREAD_2D_UNIT];
+void ReduceSum2DKernel(ImageCudaDevice<Scalar, Channel> src, Scalar *sum) {
+    __shared__ Scalar local_sum[THREAD_2D_UNIT * THREAD_2D_UNIT];
 
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -29,10 +29,10 @@ void ReduceSum2DKernel(ImageCudaDevice<VecType> src, T *sum) {
     for (int i = 0; i < TEST_ARRAY_SIZE; ++i) {
         __syncthreads();
 
-        local_sum[tid] = T(src.at(x, y)(0));
+        local_sum[tid] = Scalar(src.at(x, y)(0));
         __syncthreads();
 
-        BlockReduceSum<T>(local_sum, tid);
+        BlockReduceSum<Scalar>(local_sum, tid);
         if (tid == 0) atomicAdd(sum, local_sum[0]);
     }
 }
@@ -65,87 +65,87 @@ inline T blockReduceSumShuffle(T sum) {
     return sum;
 }
 
-template<typename VecType, typename T>
+template<typename Scalar, size_t Channel>
 __global__
-void ReduceSum2DShuffleKernel(ImageCudaDevice<VecType> src, T *sum_total) {
+void ReduceSum2DShuffleKernel(ImageCudaDevice<Scalar, Channel> src, Scalar*sum_total) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
 
     for (int i = 0; i < TEST_ARRAY_SIZE; ++i) {
-        T sum =
-            (x >= src.width_ || y >= src.height_) ? 0 : T(src.at(x, y)(0));
+        Scalar sum =
+            (x >= src.width_ || y >= src.height_) ? 0 : Scalar(src.at(x, y)(0));
         __syncthreads();
         sum = blockReduceSumShuffle(sum);
         if (threadIdx.x == 0) atomicAdd(sum_total, sum);
     }
 }
 
-/** Why is it so fast ??? **/
-template<typename VecType, typename T>
+/** Why is it so fast for int ??? **/
+template<typename Scalar, size_t Channel>
 __global__
-void AtomicSumKernel(ImageCudaDevice<VecType> src, T *sum_total) {
+void AtomicSumKernel(ImageCudaDevice<Scalar, Channel> src, Scalar *sum_total) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
 
     if (x >= src.width_ || y >= src.height_) return;
     for (int i = 0; i < TEST_ARRAY_SIZE; ++i) {
-        T sum = T(src.at(x, y)(0));
+        Scalar sum = Scalar(src.at(x, y)(0));
         atomicAdd(sum_total, sum);
     }
 }
 
 /** For testing **/
-template<typename VecType, typename T>
-T ReduceSum2D(ImageCuda<VecType> &src) {
+template<typename Scalar, size_t Channel>
+Scalar ReduceSum2D(ImageCuda<Scalar, Channel> &src) {
     const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
                       DIV_CEILING(src.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
 
-    T *sum;
-    CheckCuda(cudaMalloc(&sum, sizeof(T)));
-    CheckCuda(cudaMemset(sum, 0, sizeof(T)));
+    Scalar *sum;
+    CheckCuda(cudaMalloc(&sum, sizeof(Scalar)));
+    CheckCuda(cudaMemset(sum, 0, sizeof(Scalar)));
     ReduceSum2DKernel << < blocks, threads >> > (*src.device_, sum);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 
-    T ret;
-    CheckCuda(cudaMemcpy(&ret, sum, sizeof(T), cudaMemcpyDeviceToHost));
+    Scalar ret;
+    CheckCuda(cudaMemcpy(&ret, sum, sizeof(Scalar), cudaMemcpyDeviceToHost));
     return ret;
 }
 
-template<typename VecType, typename T>
-T ReduceSum2DShuffle(ImageCuda<VecType> &src) {
+template<typename Scalar, size_t Channel>
+Scalar ReduceSum2DShuffle(ImageCuda<Scalar, Channel> &src) {
     const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
                       DIV_CEILING(src.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
 
-    T *sum;
-    CheckCuda(cudaMalloc(&sum, sizeof(T)));
-    CheckCuda(cudaMemset(sum, 0, sizeof(T)));
+    Scalar *sum;
+    CheckCuda(cudaMalloc(&sum, sizeof(Scalar)));
+    CheckCuda(cudaMemset(sum, 0, sizeof(Scalar)));
     ReduceSum2DShuffleKernel << < blocks, threads >> > (*src.device_, sum);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 
-    T ret;
-    CheckCuda(cudaMemcpy(&ret, sum, sizeof(T), cudaMemcpyDeviceToHost));
+    Scalar ret;
+    CheckCuda(cudaMemcpy(&ret, sum, sizeof(Scalar), cudaMemcpyDeviceToHost));
     return ret;
 }
 
-template<typename VecType, typename T>
-T AtomicSum(ImageCuda<VecType> &src) {
+template<typename Scalar, size_t Channel>
+Scalar AtomicSum(ImageCuda<Scalar, Channel> &src) {
     const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
                       DIV_CEILING(src.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
 
-    T *sum;
-    CheckCuda(cudaMalloc(&sum, sizeof(T)));
-    CheckCuda(cudaMemset(sum, 0, sizeof(T)));
+    Scalar *sum;
+    CheckCuda(cudaMalloc(&sum, sizeof(Scalar)));
+    CheckCuda(cudaMemset(sum, 0, sizeof(Scalar)));
     AtomicSumKernel << < blocks, threads >> > (*src.device_, sum);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 
-    T ret;
-    CheckCuda(cudaMemcpy(&ret, sum, sizeof(T), cudaMemcpyDeviceToHost));
+    Scalar ret;
+    CheckCuda(cudaMemcpy(&ret, sum, sizeof(Scalar), cudaMemcpyDeviceToHost));
     return ret;
 }
 } // cuda

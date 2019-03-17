@@ -44,7 +44,7 @@ void UniformTSDFVolumeCudaKernelCaller<N>::Integrate(
 template<size_t N>
 __global__
 void RayCastingKernel(UniformTSDFVolumeCudaDevice<N> server,
-                      ImageCudaDevice<Vector3f> image,
+                      ImageCudaDevice<float, 3> image,
                       PinholeCameraIntrinsicCuda camera,
                       TransformCuda transform_camera_to_world) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
@@ -65,7 +65,7 @@ void RayCastingKernel(UniformTSDFVolumeCudaDevice<N> server,
 template<size_t N>
 void UniformTSDFVolumeCudaKernelCaller<N>::RayCasting(
     UniformTSDFVolumeCuda<N> &volume,
-    ImageCuda<Vector3f> &image,
+    ImageCuda<float, 3> &image,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
 

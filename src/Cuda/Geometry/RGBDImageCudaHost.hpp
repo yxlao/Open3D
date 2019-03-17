@@ -120,7 +120,8 @@ void RGBDImageCuda::CopyFrom(RGBDImageCuda &other) {
 }
 
 void RGBDImageCuda::Build(
-    ImageCuda<Vector1s> &depth_raw, ImageCuda<Vector3b> &color_raw) {
+    ImageCuda<ushort, 1> &depth_raw,
+    ImageCuda<uchar, 3> &color_raw) {
 
     assert(depth_raw.width_ == color_raw.width_
                && depth_raw.height_ == color_raw.height_);

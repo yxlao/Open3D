@@ -5,7 +5,7 @@
 #include <Cuda/Container/ArrayCuda.h>
 #include <Cuda/Container/LinkedListCuda.h>
 #include <Cuda/Container/HashTableCuda.h>
-#include <Core/Core.h>
+#include <Open3D/Open3D.h>
 
 #include <vector>
 #include <unordered_map>
@@ -17,7 +17,7 @@ using namespace open3d;
 using namespace open3d::cuda;
 
 TEST(ArrayCuda, ArrayFill) {
-    Timer timer;
+    utility::Timer timer;
     std::random_device rd;
     std::default_random_engine rd_engine(rd());
 
@@ -34,12 +34,12 @@ TEST(ArrayCuda, ArrayFill) {
         EXPECT_EQ(val, kFilledValue);
     }
     timer.Stop();
-    PrintInfo("> ArrayCuda.Fill() passed in %.2f seconds.\n",
+    utility::PrintInfo("> ArrayCuda.Fill() passed in %.2f seconds.\n",
               timer.GetDuration() * 0.001f);
 }
 
 TEST(ArrayCuda, ArrayUploadAndDownload) {
-    Timer timer;
+    utility::Timer timer;
     std::random_device rd;
     std::default_random_engine rd_engine(rd());
 
@@ -64,13 +64,13 @@ TEST(ArrayCuda, ArrayUploadAndDownload) {
         EXPECT_EQ(random_vec[i], downloaded[i]);
     }
     timer.Stop();
-    PrintInfo("ArrayCuda.Upload() and ArrayCuda.Download() "
+    utility::PrintInfo("ArrayCuda.Upload() and ArrayCuda.Download() "
               "passed in %.2f seconds.\n",
               timer.GetDuration() * 0.001f);
 }
 
 TEST(ArrayCuda, ArrayResize) {
-    Timer timer;
+    utility::Timer timer;
     std::random_device rd;
     std::default_random_engine rd_engine(rd());
 
@@ -97,7 +97,7 @@ TEST(ArrayCuda, ArrayResize) {
         EXPECT_EQ(random_vec[i], downloaded[i]);
     }
     timer.Stop();
-    PrintInfo("ArrayCuda.Upload(), Resize(), and ArrayCuda.Download() "
+    utility::PrintInfo("ArrayCuda.Upload(), Resize(), and ArrayCuda.Download() "
               "passed in %.2f seconds.\n",
               timer.GetDuration() * 0.001f);
 }

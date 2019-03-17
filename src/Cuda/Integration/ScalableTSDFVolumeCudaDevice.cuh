@@ -609,7 +609,7 @@ template<size_t N>
 __device__
 void ScalableTSDFVolumeCudaDevice<N>::TouchSubvolume(
     const Vector2i &p,
-    ImageCudaDevice<Vector1f> &depth,
+    ImageCudaDevice<float, 1> &depth,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
 

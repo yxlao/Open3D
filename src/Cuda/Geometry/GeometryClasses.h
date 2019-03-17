@@ -12,14 +12,14 @@
 namespace open3d {
 
 namespace cuda {
-template<typename T>
+template<typename Scalar, size_t Channel>
 class ImageCudaDevice;
-template<typename T>
+template<typename Scalar, size_t Channel>
 class ImageCuda;
 
-template<typename T, size_t N>
+template<typename Scalar, size_t Channel, size_t N>
 class ImagePyramidCudaDevice;
-template<typename T, size_t N>
+template<typename Scalar, size_t Channel, size_t N>
 class ImagePyramidCuda;
 
 class RGBDImageCudaDevice;

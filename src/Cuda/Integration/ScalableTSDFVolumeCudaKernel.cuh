@@ -46,7 +46,7 @@ void ScalableTSDFVolumeCudaKernelCaller<N>::Create(
 template<size_t N>
 __global__
 void TouchSubvolumesKernel(ScalableTSDFVolumeCudaDevice<N> server,
-                           ImageCudaDevice<Vector1f> depth,
+                           ImageCudaDevice<float, 1> depth,
                            PinholeCameraIntrinsicCuda camera,
                            TransformCuda transform_camera_to_world) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
@@ -62,7 +62,7 @@ template<size_t N>
 __host__
 void ScalableTSDFVolumeCudaKernelCaller<N>::TouchSubvolumes(
     ScalableTSDFVolumeCuda<N> &volume,
-    ImageCuda<Vector1f> &depth,
+    ImageCuda<float, 1> &depth,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
 
@@ -218,7 +218,7 @@ void ScalableTSDFVolumeCudaKernelCaller<N>::GetAllSubvolumes(
 template<size_t N>
 __global__
 void RayCastingKernel(ScalableTSDFVolumeCudaDevice<N> server,
-                      ImageCudaDevice<Vector3f> normal,
+                      ImageCudaDevice<float, 3> normal,
                       PinholeCameraIntrinsicCuda camera,
                       TransformCuda transform_camera_to_world) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
@@ -236,7 +236,7 @@ template<size_t N>
 __host__
 void ScalableTSDFVolumeCudaKernelCaller<N>::RayCasting(
     ScalableTSDFVolumeCuda<N> &volume,
-    ImageCuda<Vector3f> &image,
+    ImageCuda<float, 3> &image,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
     const dim3 blocks(DIV_CEILING(image.width_, THREAD_2D_UNIT),

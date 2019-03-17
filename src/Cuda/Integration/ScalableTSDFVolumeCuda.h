@@ -219,7 +219,7 @@ public:
 
 public:
     __DEVICE__ void TouchSubvolume(const Vector2i &p,
-                                   ImageCudaDevice<Vector1f> &depth,
+                                   ImageCudaDevice<float, 1> &depth,
                                    PinholeCameraIntrinsicCuda &camera,
                                    TransformCuda &transform_camera_to_world);
     __DEVICE__ void Integrate(const Vector3i &Xlocal,
@@ -290,7 +290,7 @@ public:
      *  - If we capture all the allocated volume indices in parallel, then
      *    there will be duplicates. (thread1 allocate and return, thread2
      *    capture it and return again). **/
-    void TouchSubvolumes(ImageCuda<Vector1f> &depth,
+    void TouchSubvolumes(ImageCuda<float, 1> &depth,
                          PinholeCameraIntrinsicCuda &camera,
                          TransformCuda &transform_camera_to_world);
     void GetSubvolumesInFrustum(PinholeCameraIntrinsicCuda &camera,
@@ -305,7 +305,7 @@ public:
     void Integrate(RGBDImageCuda &rgbd,
                    PinholeCameraIntrinsicCuda &camera,
                    TransformCuda &transform_camera_to_world);
-    void RayCasting(ImageCuda<Vector3f> &image,
+    void RayCasting(ImageCuda<float, 3> &image,
                     PinholeCameraIntrinsicCuda &camera,
                     TransformCuda &transform_camera_to_world);
 
@@ -330,7 +330,7 @@ public:
     static void Create(ScalableTSDFVolumeCuda<N> &volume);
 
     static void TouchSubvolumes(ScalableTSDFVolumeCuda<N> &volume,
-                                ImageCuda<Vector1f> &depth,
+                                ImageCuda<float, 1> &depth,
                                 PinholeCameraIntrinsicCuda &camera,
                                 TransformCuda &transform_camera_to_world);
 
@@ -346,7 +346,7 @@ public:
     static void GetAllSubvolumes(ScalableTSDFVolumeCuda<N> &volume);
 
     static void RayCasting(ScalableTSDFVolumeCuda<N> &volume,
-                           ImageCuda<Vector3f> &normal,
+                           ImageCuda<float, 3> &normal,
                            PinholeCameraIntrinsicCuda &camera,
                            TransformCuda &transform_camera_to_world);
 };
@@ -358,7 +358,7 @@ void CreateKernel(ScalableTSDFVolumeCudaDevice<N> device);
 template<size_t N>
 __GLOBAL__
 void TouchSubvolumesKernel(ScalableTSDFVolumeCudaDevice<N> device,
-                           ImageCudaDevice<Vector1f> depth,
+                           ImageCudaDevice<float, 1> depth,
                            PinholeCameraIntrinsicCuda camera,
                            TransformCuda transform_camera_to_world);
 
@@ -382,7 +382,7 @@ void GetAllSubvolumesKernel(ScalableTSDFVolumeCudaDevice<N> device);
 template<size_t N>
 __GLOBAL__
 void RayCastingKernel(ScalableTSDFVolumeCudaDevice<N> device,
-                      ImageCudaDevice<Vector3f> normal,
+                      ImageCudaDevice<float, 3> normal,
                       PinholeCameraIntrinsicCuda camera,
                       TransformCuda transform_camera_to_world);
 

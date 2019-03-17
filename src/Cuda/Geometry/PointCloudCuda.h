@@ -71,7 +71,7 @@ public:
 
     void Build(RGBDImageCuda &rgbd,
                PinholeCameraIntrinsicCuda &intrinsic);
-    void Build(ImageCuda<Vector1f> &depth,
+    void Build(ImageCuda<float, 1> &depth,
                PinholeCameraIntrinsicCuda &intrinsic);
     std::shared_ptr<geometry::PointCloud> Download();
 
@@ -108,7 +108,7 @@ public:
                                    PinholeCameraIntrinsicCuda &intrinsic);
 
     static void BuildFromDepthImage(PointCloudCuda &server,
-                                    ImageCuda<Vector1f> &depth,
+                                    ImageCuda<float, 1> &depth,
                                     PinholeCameraIntrinsicCuda &intrinsic);
 };
 
@@ -140,7 +140,7 @@ void BuildFromRGBDImageKernel(PointCloudCudaDevice pcl,
 
 __GLOBAL__
 void BuildFromDepthImageKernel(PointCloudCudaDevice pcl,
-                               ImageCudaDevice<Vector1f> depth,
+                               ImageCudaDevice<float, 1> depth,
                                PinholeCameraIntrinsicCuda intrinsic);
 
 } // cuda

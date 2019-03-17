@@ -172,7 +172,7 @@ void UniformTSDFVolumeCuda<N>::Integrate(RGBDImageCuda &rgbd,
 }
 
 template<size_t N>
-void UniformTSDFVolumeCuda<N>::RayCasting(ImageCuda<Vector3f> &image,
+void UniformTSDFVolumeCuda<N>::RayCasting(ImageCuda<float, 3> &image,
                                           PinholeCameraIntrinsicCuda &camera,
                                           TransformCuda &transform_camera_to_world) {
     assert(device_ != nullptr);

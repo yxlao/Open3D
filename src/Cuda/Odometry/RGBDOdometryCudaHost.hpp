@@ -177,22 +177,20 @@ void RGBDOdometryCuda<N>::Initialize(
     source_preprocessed_.CopyFrom(source);
     target_preprocessed_.CopyFrom(target);
     RGBDOdometryCudaKernelCaller<N>::PreprocessDepth(*this);
-    source_preprocessed_.depth_.Gaussian(source_[0].depth_,
-        Gaussian3x3, false);
-    target_preprocessed_.depth_.Gaussian(target_[0].depth_,
-        Gaussian3x3, false);
+    source_preprocessed_.depth_.Gaussian(source_[0].depth_, Gaussian3x3);
+    target_preprocessed_.depth_.Gaussian(target_[0].depth_, Gaussian3x3);
 
     /** Preprocess: Gaussian intensities **/
     source_preprocessed_.intensity_.Gaussian(source_[0].intensity_,
-        Gaussian3x3, false);
+        Gaussian3x3);
     target_preprocessed_.intensity_.Gaussian(target_[0].intensity_,
-        Gaussian3x3, false);
+        Gaussian3x3);
 
     /** For debug **/
     source_preprocessed_.color_raw_.Gaussian(source_[0].color_raw_,
-        Gaussian3x3, false);
+        Gaussian3x3);
     target_preprocessed_.color_raw_.Gaussian(target_[0].color_raw_,
-        Gaussian3x3, false);
+        Gaussian3x3);
     auto im_source = source_[0].intensity_.DownloadImage();
     auto im_target = target_[0].intensity_.DownloadImage();
 
@@ -208,9 +206,9 @@ void RGBDOdometryCuda<N>::Initialize(
     for (int i = 0; i < N; ++i) {
         /* Compute gradients */
         target_[i].depth_.Sobel(
-            target_dx_[i].depth_, target_dy_[i].depth_, false);
+            target_dx_[i].depth_, target_dy_[i].depth_);
         target_[i].intensity_.Sobel(
-            target_dx_[i].intensity_, target_dy_[i].intensity_, false);
+            target_dx_[i].intensity_, target_dy_[i].intensity_);
     }
 
     UpdateDevice();

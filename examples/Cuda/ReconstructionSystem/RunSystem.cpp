@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
     DatasetConfig config;
 
     std::string config_path = argc > 1 ? argv[1] :
-        kDefaultDatasetConfigDir + "/cmu/office_2204.json";
+        kDefaultDatasetConfigDir + "/stanford/lounge.json";
 
     bool is_success = io::ReadIJsonConvertible(config_path, config);
     if (!is_success) return 1;
@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
     utility::Timer timer;
 
     timer.Start();
-//    MakeFragment::Run(config);
+    MakeFragment::Run(config);
     timer.Stop();
     std::string make_fragment_time = SecondsToHMS(
         timer.GetDuration() / 1000.0);

@@ -145,7 +145,7 @@ public:
     void Integrate(RGBDImageCuda &rgbd,
                    PinholeCameraIntrinsicCuda &camera,
                    TransformCuda &transform_camera_to_world);
-    void RayCasting(ImageCuda<Vector3f> &image,
+    void RayCasting(ImageCuda<float, 3> &image,
                     PinholeCameraIntrinsicCuda &camera,
                     TransformCuda &transform_camera_to_world);
 };
@@ -161,7 +161,7 @@ public:
 
     static void RayCasting(
         UniformTSDFVolumeCuda<N> &volume,
-        ImageCuda<Vector3f> &image,
+        ImageCuda<float, 3> &image,
         PinholeCameraIntrinsicCuda &camera,
         TransformCuda &transform_camera_to_world);
 };
@@ -176,7 +176,7 @@ void IntegrateKernel(UniformTSDFVolumeCudaDevice<N> server,
 template<size_t N>
 __GLOBAL__
 void RayCastingKernel(UniformTSDFVolumeCudaDevice<N> server,
-                      ImageCudaDevice<Vector3f> image,
+                      ImageCudaDevice<float, 3> image,
                       PinholeCameraIntrinsicCuda camera,
                       TransformCuda transform_camera_to_world);
 } // cuda

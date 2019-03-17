@@ -12,34 +12,34 @@ namespace open3d {
 
 namespace cuda {
 template
-class ImageCudaDevice<Vector1s>;
+class ImageCudaDevice<ushort, 1>;
 template
-class ImageCudaDevice<Vector4b>;
+class ImageCudaDevice<uchar, 4>;
 template
-class ImageCudaDevice<Vector3b>;
+class ImageCudaDevice<uchar, 3>;
 template
-class ImageCudaDevice<Vector1b>;
+class ImageCudaDevice<uchar, 1>;
 template
-class ImageCudaDevice<Vector4f>;
+class ImageCudaDevice<float, 4>;
 template
-class ImageCudaDevice<Vector3f>;
+class ImageCudaDevice<float, 3>;
 template
-class ImageCudaDevice<Vector1f>;
+class ImageCudaDevice<float, 1>;
 
 template
-class ImageCudaKernelCaller<Vector1s>;
+class ImageCudaKernelCaller<ushort, 1>;
 template
-class ImageCudaKernelCaller<Vector4b>;
+class ImageCudaKernelCaller<uchar, 4>;
 template
-class ImageCudaKernelCaller<Vector3b>;
+class ImageCudaKernelCaller<uchar, 3>;
 template
-class ImageCudaKernelCaller<Vector1b>;
+class ImageCudaKernelCaller<uchar, 1>;
 template
-class ImageCudaKernelCaller<Vector4f>;
+class ImageCudaKernelCaller<float, 4>;
 template
-class ImageCudaKernelCaller<Vector3f>;
+class ImageCudaKernelCaller<float, 3>;
 template
-class ImageCudaKernelCaller<Vector1f>;
+class ImageCudaKernelCaller<float, 1>;
 
 /** Vector **/
 template Vector4f operator*<float, 4>(float s, const Vector4f &vec);

@@ -202,7 +202,7 @@ ScalableTSDFVolumeCuda<N>::DownloadVolumes() {
 
 template<size_t N>
 void ScalableTSDFVolumeCuda<N>::TouchSubvolumes(
-    ImageCuda<Vector1f> &depth,
+    ImageCuda<float, 1> &depth,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
     assert(device_ != nullptr);
@@ -264,7 +264,7 @@ void ScalableTSDFVolumeCuda<N>::Integrate(
 
 template<size_t N>
 void ScalableTSDFVolumeCuda<N>::RayCasting(
-    ImageCuda<Vector3f> &image,
+    ImageCuda<float, 3> &image,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
     assert(device_ != nullptr);

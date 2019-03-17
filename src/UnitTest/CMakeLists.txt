@@ -6,13 +6,6 @@ include_directories(${GTEST_INCLUDE_DIRS})
 
 include_directories(".")
 
-<<<<<<< HEAD
-=======
-file(GLOB_RECURSE UNIT_TESTS "*.cpp")
-add_executable(unitTests ${UNIT_TESTS})
-add_definitions(-DTEST_DATA_DIR="${PROJECT_SOURCE_DIR}/examples/TestData")
->>>>>>> master
-
 add_subdirectory(Cuda)
 
 # > This is too general and lacks scalability

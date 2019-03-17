@@ -7,10 +7,10 @@ namespace cuda {
 /**
  * Downsampling
  */
-template<typename VecType>
+template<typename Scalar, size_t Channel>
 __global__
-void DownsampleKernel(ImageCudaDevice<VecType> src,
-                      ImageCudaDevice<VecType> dst,
+void DownsampleKernel(ImageCudaDevice<Scalar, Channel> src,
+                      ImageCudaDevice<Scalar, Channel> dst,
                       DownsampleMethod method) {
     int u = blockIdx.x * blockDim.x + threadIdx.x;
     int v = blockIdx.y * blockDim.y + threadIdx.y;
@@ -20,27 +20,19 @@ void DownsampleKernel(ImageCudaDevice<VecType> src,
 
     /** Re-write the function by hard-coding if we want to accelerate **/
     switch (method) {
-        case BoxFilter:
-            dst.at(u, v) = src.BoxFilter2x2(u << 1, v << 1);
-            return;
-        case BoxFilterWithHoles:
-            dst.at(u, v) = src.BoxFilter2x2WithHoles(u << 1, v << 1);
+        case BoxFilter:dst.at(u, v) = src.BoxFilter2x2(u << 1, v << 1);
             return;
         case GaussianFilter:
             dst.at(u, v) = src.GaussianFilter(u << 1, v << 1, Gaussian3x3);
             return;
-        case GaussianFilterWithHoles:
-            dst.at(u, v) = src.GaussianFilterWithHoles(u << 1, v << 1,
-                                                       Gaussian3x3);
-            return;
-        default: printf("Unsupported method.\n");
+        default:printf("Unsupported method.\n");
     }
 }
 
-template<typename VecType>
+template<typename Scalar, size_t Channel>
 __host__
-void ImageCudaKernelCaller<VecType>::Downsample(
-    ImageCuda<VecType> &src, ImageCuda<VecType> &dst,
+void ImageCudaKernelCaller<Scalar, Channel>::Downsample(
+    ImageCuda<Scalar, Channel> &src, ImageCuda<Scalar, Channel> &dst,
     DownsampleMethod method) {
 
     const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
@@ -55,15 +47,15 @@ void ImageCudaKernelCaller<VecType>::Downsample(
 /**
  * Shift
  */
-template<typename VecType>
+template<typename Scalar, size_t Channel>
 __global__
-void ShiftKernel(ImageCudaDevice<VecType> src,
-                      ImageCudaDevice<VecType> dst,
-    float dx, float dy, bool with_holes) {
+void ShiftKernel(ImageCudaDevice<Scalar, Channel> src,
+                 ImageCudaDevice<Scalar, Channel> dst,
+                 float dx, float dy) {
     int u = blockIdx.x * blockDim.x + threadIdx.x;
     int v = blockIdx.y * blockDim.y + threadIdx.y;
 
-    dst.at(u, v) = VecType(0);
+    dst.at(u, v) = VectorCuda<Scalar, Channel>(0);
     if (u >= dst.width_ || v >= dst.height_)
         return;
 
@@ -71,24 +63,20 @@ void ShiftKernel(ImageCudaDevice<VecType> src,
         || v + dy < 0 || v + dy >= src.height_ - 1)
         return;
 
-    if (with_holes) {
-        dst.at(u, v) = src.interp_with_holes_at(u + dx, v + dy);
-    } else {
-        dst.at(u, v) = src.interp_at(u + dx, v + dy);
-    }
+    dst.at(u, v) = src.interp_at(u + dx, v + dy);
 }
 
-template<typename VecType>
+template<typename Scalar, size_t Channel>
 __host__
-void ImageCudaKernelCaller<VecType>::Shift(
-    ImageCuda<VecType> &src, ImageCuda<VecType> &dst,
-    float dx, float dy, bool with_holes) {
+void ImageCudaKernelCaller<Scalar, Channel>::Shift(
+    ImageCuda<Scalar, Channel> &src, ImageCuda<Scalar, Channel> &dst,
+    float dx, float dy) {
 
     const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
                       DIV_CEILING(src.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
     ShiftKernel << < blocks, threads >> > (
-        *src.device_, *dst.device_, dx, dy, with_holes);
+        *src.device_, *dst.device_, dx, dy);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
@@ -96,11 +84,11 @@ void ImageCudaKernelCaller<VecType>::Shift(
 /**
  * Gaussian
  */
-template<typename VecType>
+template<typename Scalar, size_t Channel>
 __global__
-void GaussianKernel(ImageCudaDevice<VecType> src,
-                         ImageCudaDevice<VecType> dst,
-                         int kernel_idx, bool with_holes) {
+void GaussianKernel(ImageCudaDevice<Scalar, Channel> src,
+                    ImageCudaDevice<Scalar, Channel> dst,
+                    int kernel_idx) {
 
     int u = blockIdx.x * blockDim.x + threadIdx.x;
     int v = blockIdx.y * blockDim.y + threadIdx.y;
@@ -108,23 +96,20 @@ void GaussianKernel(ImageCudaDevice<VecType> src,
     if (u >= dst.width_ || v >= dst.height_)
         return;
 
-    if (with_holes) {
-        dst.at(u, v) = src.GaussianFilterWithHoles(u, v, kernel_idx);
-    } else {
-        dst.at(u, v) = src.GaussianFilter(u, v, kernel_idx);
-    }
+    dst.at(u, v) = src.GaussianFilter(u, v, kernel_idx);
 }
-template<typename VecType>
+
+template<typename Scalar, size_t Channel>
 __host__
-void ImageCudaKernelCaller<VecType>::Gaussian(
-    ImageCuda<VecType> &src, ImageCuda<VecType> &dst,
-    int kernel_idx, bool with_holes) {
+void ImageCudaKernelCaller<Scalar, Channel>::Gaussian(
+    ImageCuda<Scalar, Channel> &src, ImageCuda<Scalar, Channel> &dst,
+    int kernel_idx) {
 
     const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
                       DIV_CEILING(src.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
     GaussianKernel << < blocks, threads >> > (
-        *src.device_, *dst.device_, kernel_idx, with_holes);
+        *src.device_, *dst.device_, kernel_idx);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
@@ -132,35 +117,31 @@ void ImageCudaKernelCaller<VecType>::Gaussian(
 /**
  * Bilateral
  */
-template<typename VecType>
+template<typename Scalar, size_t Channel>
 __global__
-void BilateralKernel(ImageCudaDevice<VecType> src,
-                     ImageCudaDevice<VecType> dst,
+void BilateralKernel(ImageCudaDevice<Scalar, Channel> src,
+                     ImageCudaDevice<Scalar, Channel> dst,
                      int kernel_idx,
-                     float val_sigma,
-                     bool with_holes) {
+                     float val_sigma) {
     int u = blockIdx.x * blockDim.x + threadIdx.x;
     int v = blockIdx.y * blockDim.y + threadIdx.y;
 
     if (u >= dst.width_ || v >= dst.height_)
         return;
-    if (with_holes) {
-        dst.at(u, v) =
-            src.BilateralFilterWithHoles(u, v, kernel_idx, val_sigma);
-    } else {
-        dst.at(u, v) = src.BilateralFilter(u, v, kernel_idx, val_sigma);
-    }
+
+    dst.at(u, v) = src.BilateralFilter(u, v, kernel_idx, val_sigma);
 }
-template<typename VecType>
+
+template<typename Scalar, size_t Channel>
 __host__
-void ImageCudaKernelCaller<VecType>::Bilateral(
-    ImageCuda<VecType> &src, ImageCuda<VecType> &dst,
-    int kernel_idx, float val_sigma, bool with_holes) {
+void ImageCudaKernelCaller<Scalar, Channel>::Bilateral(
+    ImageCuda<Scalar, Channel> &src, ImageCuda<Scalar, Channel> &dst,
+    int kernel_idx, float val_sigma) {
     const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
                       DIV_CEILING(src.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
     BilateralKernel << < blocks, threads >> > (
-        *src.device_, *dst.device_, kernel_idx, val_sigma, with_holes);
+        *src.device_, *dst.device_, kernel_idx, val_sigma);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
@@ -168,38 +149,34 @@ void ImageCudaKernelCaller<VecType>::Bilateral(
 /**
  * Gradient, using Sobel operator
  */
-template<typename VecType>
+template<typename Scalar, size_t Channel>
 __global__
-void SobelKernel(ImageCudaDevice<VecType> src,
-                 ImageCudaDevice<typename VecType::VecTypef> dx,
-                 ImageCudaDevice<typename VecType::VecTypef> dy,
-                 bool with_holes) {
+void SobelKernel(ImageCudaDevice<Scalar, Channel> src,
+                 ImageCudaDevice<float, Channel> dx,
+                 ImageCudaDevice<float, Channel> dy) {
 
     int u = blockIdx.x * blockDim.x + threadIdx.x;
     int v = blockIdx.y * blockDim.y + threadIdx.y;
     if (u >= src.width_ || v >= src.height_) return;
 
-    typename ImageCudaDevice<VecType>::Grad grad;
-    if (with_holes) {
-        grad = src.SobelWithHoles(u, v);
-    } else {
-        grad = src.Sobel(u, v);
-    }
+    typename ImageCudaDevice<Scalar, Channel>::Grad grad;
+
+    grad = src.Sobel(u, v);
+
     dx(u, v) = grad.dx;
     dy(u, v) = grad.dy;
 }
-template<typename VecType>
+
+template<typename Scalar, size_t Channel>
 __host__
-void ImageCudaKernelCaller<VecType>::Sobel(
-    ImageCuda<VecType> &src,
-    ImageCuda<typename VecType::VecTypef> &dx,
-    ImageCuda<typename VecType::VecTypef> &dy,
-    bool with_holes) {
+void ImageCudaKernelCaller<Scalar, Channel>::Sobel(
+    ImageCuda<Scalar, Channel> &src,
+    ImageCuda<float, Channel> &dx, ImageCuda<float, Channel> &dy) {
     const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
                       DIV_CEILING(src.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
     SobelKernel << < blocks, threads >> > (
-        *src.device_, *dx.device_, *dy.device_, with_holes);
+        *src.device_, *dx.device_, *dy.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
@@ -207,24 +184,24 @@ void ImageCudaKernelCaller<VecType>::Sobel(
 /**
  * Conversion
  */
-template<typename VecType>
+template<typename Scalar, size_t Channel>
 __global__
-void ConvertToFloatKernel(ImageCudaDevice<VecType> src,
-                          ImageCudaDevice<typename VecType::VecTypef> dst,
+void ConvertToFloatKernel(ImageCudaDevice<Scalar, Channel> src,
+                          ImageCudaDevice<float, Channel> dst,
                           float scale, float offset) {
     int u = blockIdx.x * blockDim.x + threadIdx.x;
     int v = blockIdx.y * blockDim.y + threadIdx.y;
     if (u >= dst.width_ || v >= dst.height_) return;
 
     dst.at(u, v) =
-        src.at(u, v).ToVectorf() * scale + VecType::VecTypef(offset);
+        src.at(u, v).ToVectorf() * scale + VectorCuda<float, Channel>(offset);
 }
 
-template<typename VecType>
+template<typename Scalar, size_t Channel>
 __host__
-void ImageCudaKernelCaller<VecType>::ConvertToFloat(
-    ImageCuda<VecType> &src,
-    ImageCuda<typename VecType::VecTypef> &dst,
+void ImageCudaKernelCaller<Scalar, Channel>::ConvertToFloat(
+    ImageCuda<Scalar, Channel> &src,
+    ImageCuda<float, Channel> &dst,
     float scale, float offset) {
     const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
                       DIV_CEILING(src.height_, THREAD_2D_UNIT));
@@ -235,24 +212,24 @@ void ImageCudaKernelCaller<VecType>::ConvertToFloat(
     CheckCuda(cudaGetLastError());
 }
 
-template<typename VecType>
+template<typename Scalar, size_t Channel>
 __global__
-void ConvertRGBToIntensityKernel(ImageCudaDevice<VecType> src,
-                                 ImageCudaDevice<Vector1f> dst) {
+void ConvertRGBToIntensityKernel(ImageCudaDevice<Scalar, Channel> src,
+                                 ImageCudaDevice<float, 1> dst) {
 
     int u = blockIdx.x * blockDim.x + threadIdx.x;
     int v = blockIdx.y * blockDim.y + threadIdx.y;
     if (u >= dst.width_ || v >= dst.height_) return;
 
-    VecType &rgb = src.at(u, v);
+    VectorCuda<Scalar, Channel> &rgb = src.at(u, v);
     dst.at(u, v) = Vector1f(
         (0.2990f * rgb(0) + 0.5870f * rgb(1) + 0.1140f * rgb(2)) / 255.0f);
 }
 
-template<typename VecType>
+template<typename Scalar, size_t Channel>
 __host__
-void ImageCudaKernelCaller<VecType>::ConvertRGBToIntensity(
-    ImageCuda<VecType> &src, ImageCuda<Vector1f> &dst) {
+void ImageCudaKernelCaller<Scalar, Channel>::ConvertRGBToIntensity(
+    ImageCuda<Scalar, Channel> &src, ImageCuda<float, 1> &dst) {
     const dim3 blocks(DIV_CEILING(src.width_, THREAD_2D_UNIT),
                       DIV_CEILING(src.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);

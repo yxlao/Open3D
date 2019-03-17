@@ -15,11 +15,5 @@ class RGBDOdometryCudaDevice;
 template<size_t N>
 class RGBDOdometryCuda;
 
-template<size_t N>
-class ICRGBDOdometryCudaDevice;
-
-template<size_t N>
-class ICRGBDOdometryCuda;
-
 } // cuda
 } // open3d

@@ -17,52 +17,37 @@ namespace open3d {
 
 namespace cuda {
 template
-class ImageCuda<Vector1s>;
+class ImageCuda<ushort, 1>;
 template
-class ImageCuda<Vector4b>;
+class ImageCuda<uchar, 4>;
 template
-class ImageCuda<Vector3b>;
+class ImageCuda<uchar, 3>;
 template
-class ImageCuda<Vector1b>;
+class ImageCuda<uchar, 1>;
 template
-class ImageCuda<Vector4f>;
+class ImageCuda<float, 4>;
 template
-class ImageCuda<Vector3f>;
+class ImageCuda<float, 3>;
 template
-class ImageCuda<Vector1f>;
+class ImageCuda<float, 1>;
 
 template
-class ImagePyramidCuda<Vector1s, 3>;
+class ImagePyramidCuda<ushort, 1, 3>;
 template
-class ImagePyramidCuda<Vector1s, 4>;
+class ImagePyramidCuda<uchar, 4, 3>;
 template
-class ImagePyramidCuda<Vector4b, 3>;
+class ImagePyramidCuda<uchar, 3, 3>;
 template
-class ImagePyramidCuda<Vector4b, 4>;
+class ImagePyramidCuda<uchar, 1, 3>;
+
 template
-class ImagePyramidCuda<Vector3b, 3>;
+class ImagePyramidCuda<float, 4, 3>;
 template
-class ImagePyramidCuda<Vector3b, 4>;
+class ImagePyramidCuda<float, 3, 3>;
 template
-class ImagePyramidCuda<Vector1b, 3>;
-template
-class ImagePyramidCuda<Vector1b, 4>;
-template
-class ImagePyramidCuda<Vector4f, 3>;
-template
-class ImagePyramidCuda<Vector4f, 4>;
-template
-class ImagePyramidCuda<Vector3f, 3>;
-template
-class ImagePyramidCuda<Vector3f, 4>;
-template
-class ImagePyramidCuda<Vector1f, 3>;
-template
-class ImagePyramidCuda<Vector1f, 4>;
+class ImagePyramidCuda<float, 1, 3>;
 
 template
 class RGBDImagePyramidCuda<3>;
-template
-class RGBDImagePyramidCuda<4>;
 } // cuda
 } // open3d

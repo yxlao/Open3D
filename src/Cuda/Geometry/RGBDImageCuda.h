@@ -16,11 +16,11 @@ namespace open3d {
 namespace cuda {
 class RGBDImageCudaDevice {
 public:
-    ImageCudaDevice<Vector1s> depth_raw_;
-    ImageCudaDevice<Vector3b> color_raw_;
+    ImageCudaDevice<ushort, 1> depth_raw_;
+    ImageCudaDevice<uchar, 3> color_raw_;
 
-    ImageCudaDevice<Vector1f> depth_;
-    ImageCudaDevice<Vector1f> intensity_;
+    ImageCudaDevice<float, 1> depth_;
+    ImageCudaDevice<float, 1> intensity_;
 
 public:
     int width_;
@@ -32,11 +32,11 @@ public:
     std::shared_ptr<RGBDImageCudaDevice> device_ = nullptr;
 
     /* Raw input */
-    ImageCuda<Vector1s> depth_raw_;
-    ImageCuda<Vector3b> color_raw_;
+    ImageCuda<ushort, 1> depth_raw_;
+    ImageCuda<uchar, 3> color_raw_;
 
-    ImageCuda<Vector1f> depth_;
-    ImageCuda<Vector1f> intensity_;
+    ImageCuda<float, 1> depth_;
+    ImageCuda<float, 1> intensity_;
 
 public:
     float depth_trunc_;
@@ -59,8 +59,7 @@ public:
     void UpdateDevice();
 
     void CopyFrom(RGBDImageCuda &other);
-    void Build(ImageCuda<Vector1s> &depth_raw,
-               ImageCuda<Vector3b> &color_raw);
+    void Build(ImageCuda<ushort, 1> &depth_raw, ImageCuda<uchar, 3> &color_raw);
     void Upload(geometry::Image &depth_raw, geometry::Image &color_raw);
 
     /** Legacy **/

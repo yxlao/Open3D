@@ -45,7 +45,7 @@ void PointCloudCudaKernelCaller::BuildFromRGBDImage(
 
 __global__
 void BuildFromDepthImageKernel(PointCloudCudaDevice pcl,
-                               ImageCudaDevice<Vector1f> depth,
+                               ImageCudaDevice<float, 1> depth,
                                PinholeCameraIntrinsicCuda intrinsic) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -61,7 +61,7 @@ void BuildFromDepthImageKernel(PointCloudCudaDevice pcl,
 
 __host__
 void PointCloudCudaKernelCaller::BuildFromDepthImage(
-    PointCloudCuda &pcl, ImageCuda<Vector1f> &depth,
+    PointCloudCuda &pcl, ImageCuda<float, 1> &depth,
     PinholeCameraIntrinsicCuda &intrinsic) {
     const dim3 blocks(DIV_CEILING(depth.width_, THREAD_2D_UNIT),
                       DIV_CEILING(depth.height_, THREAD_2D_UNIT));

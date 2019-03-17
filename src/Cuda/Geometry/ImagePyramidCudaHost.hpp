@@ -11,17 +11,17 @@
 namespace open3d {
 namespace cuda {
 
-template<typename VecType, size_t N>
-ImagePyramidCuda<VecType, N>::ImagePyramidCuda() : device_(nullptr) {}
+template<typename Scalar, size_t Channel, size_t N>
+ImagePyramidCuda<Scalar, Channel, N>::ImagePyramidCuda() : device_(nullptr) {}
 
-template<typename VecType, size_t N>
-ImagePyramidCuda<VecType, N>::~ImagePyramidCuda() {
+template<typename Scalar, size_t Channel, size_t N>
+ImagePyramidCuda<Scalar, Channel, N>::~ImagePyramidCuda() {
     Release();
 }
 
-template<typename VecType, size_t N>
-ImagePyramidCuda<VecType, N>::ImagePyramidCuda(
-    const ImagePyramidCuda<VecType, N> &other) {
+template<typename Scalar, size_t Channel, size_t N>
+ImagePyramidCuda<Scalar, Channel, N>::ImagePyramidCuda(
+    const ImagePyramidCuda<Scalar, Channel, N> &other) {
 
     device_ = other.device_;
     for (size_t i = 0; i < N; ++i) {
@@ -29,9 +29,9 @@ ImagePyramidCuda<VecType, N>::ImagePyramidCuda(
     }
 }
 
-template<typename VecType, size_t N>
-ImagePyramidCuda<VecType, N> &ImagePyramidCuda<VecType, N>::operator=(
-    const ImagePyramidCuda<VecType, N> &other) {
+template<typename Scalar, size_t Channel, size_t N>
+ImagePyramidCuda<Scalar, Channel, N> &ImagePyramidCuda<Scalar, Channel, N>::operator=(
+    const ImagePyramidCuda<Scalar, Channel, N> &other) {
     if (this != &other) {
         device_ = other.device_;
         for (size_t i = 0; i < N; ++i) {
@@ -41,8 +41,8 @@ ImagePyramidCuda<VecType, N> &ImagePyramidCuda<VecType, N>::operator=(
     return *this;
 }
 
-template<typename VecType, size_t N>
-bool ImagePyramidCuda<VecType, N>::Create(int width, int height) {
+template<typename Scalar, size_t Channel, size_t N>
+bool ImagePyramidCuda<Scalar, Channel, N>::Create(int width, int height) {
     assert(width > 0 && height > 0);
     if (device_ != nullptr) {
         if (this->width(0) != width || this->height(0) != height) {
@@ -60,7 +60,7 @@ bool ImagePyramidCuda<VecType, N>::Create(int width, int height) {
         return false;
     }
 
-    device_ = std::make_shared<ImagePyramidCudaDevice<VecType, N>>();
+    device_ = std::make_shared<ImagePyramidCudaDevice<Scalar, Channel, N>>();
     for (size_t i = 0; i < N; ++i) {
         int w = width >> i;
         int h = height >> i;
@@ -72,16 +72,16 @@ bool ImagePyramidCuda<VecType, N>::Create(int width, int height) {
     return true;
 }
 
-template<typename VecType, size_t N>
-void ImagePyramidCuda<VecType, N>::Release() {
+template<typename Scalar, size_t Channel, size_t N>
+void ImagePyramidCuda<Scalar, Channel, N>::Release() {
     for (size_t i = 0; i < N; ++i) {
         images_[i].Release();
     }
     device_ = nullptr;
 }
 
-template<typename VecType, size_t N>
-void ImagePyramidCuda<VecType, N>::Build(const ImageCuda<VecType> &image) {
+template<typename Scalar, size_t Channel, size_t N>
+void ImagePyramidCuda<Scalar, Channel, N>::Build(const ImageCuda<Scalar, Channel> &image) {
     bool success = Create(image.width_, image.height_);
     if (success) {
         images_[0].CopyFrom(image);
@@ -92,8 +92,8 @@ void ImagePyramidCuda<VecType, N>::Build(const ImageCuda<VecType> &image) {
     }
 }
 
-template<typename VecType, size_t N>
-void ImagePyramidCuda<VecType, N>::UpdateDevice() {
+template<typename Scalar, size_t Channel, size_t N>
+void ImagePyramidCuda<Scalar, Channel, N>::UpdateDevice() {
     if (device_ != nullptr) {
         for (size_t i = 0; i < N; ++i) {
             images_[i].UpdateDevice();
@@ -102,8 +102,8 @@ void ImagePyramidCuda<VecType, N>::UpdateDevice() {
     }
 }
 
-template<typename VecType, size_t N>
-std::vector<std::shared_ptr<geometry::Image>> ImagePyramidCuda<VecType, N>::
+template<typename Scalar, size_t Channel, size_t N>
+std::vector<std::shared_ptr<geometry::Image>> ImagePyramidCuda<Scalar, Channel, N>::
 DownloadImages() {
     std::vector<std::shared_ptr<geometry::Image> > result;
     if (device_ == nullptr) {
@@ -117,8 +117,8 @@ DownloadImages() {
     return result;
 }
 
-template<typename VecType, size_t N>
-std::vector<cv::Mat> ImagePyramidCuda<VecType, N>::DownloadMats() {
+template<typename Scalar, size_t Channel, size_t N>
+std::vector<cv::Mat> ImagePyramidCuda<Scalar, Channel, N>::DownloadMats() {
     std::vector<cv::Mat> result;
     if (device_ == nullptr) {
         utility::PrintWarning("[ImagePyramidCuda] Not initialized,"
