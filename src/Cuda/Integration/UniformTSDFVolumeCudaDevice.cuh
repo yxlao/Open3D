@@ -100,9 +100,9 @@ template<size_t N>
 __device__
 float UniformTSDFVolumeCudaDevice<N>::TSDFAt(const Vector3f &X) {
     Vector3i
-    Xi = X.ToVectori();
+    Xi = X.template cast<int>();
     Vector3f
-    r = X - Xi.ToVectorf();
+    r = X - Xi.template cast<float>();
 
     return (1 - r(0)) * (
         (1 - r(1)) * (
@@ -126,9 +126,9 @@ __device__
     uchar
 UniformTSDFVolumeCudaDevice<N>::WeightAt(const Vector3f &X) {
     Vector3i
-    Xi = X.ToVectori();
+    Xi = X.template cast<int>();
     Vector3f
-    r = X - Xi.ToVectorf();
+    r = X - Xi.template cast<float>();
 
     return uchar((1 - r(0)) * (
         (1 - r(1)) * (
@@ -152,28 +152,28 @@ __device__
     Vector3b
 UniformTSDFVolumeCudaDevice<N>::ColorAt(const Vector3f &X) {
     Vector3i
-    Xi = X.ToVectori();
+    Xi = X.template cast<int>();
     Vector3f
-    r = X - Xi.ToVectorf();
+    r = X - Xi.template cast<float>();
 
     Vector3f
     colorf = (1 - r(0)) * (
         (1 - r(1)) * (
-            (1 - r(2)) * color_[IndexOf(Xi + Vector3i(0, 0, 0))].ToVectorf() +
-                r(2) * color_[IndexOf(Xi + Vector3i(0, 0, 1))].ToVectorf()
+            (1 - r(2)) * color_[IndexOf(Xi + Vector3i(0, 0, 0))].template cast<float>() +
+                r(2) * color_[IndexOf(Xi + Vector3i(0, 0, 1))].template cast<float>()
         ) + r(1) * (
-            (1 - r(2)) * color_[IndexOf(Xi + Vector3i(0, 1, 0))].ToVectorf() +
-                r(2) * color_[IndexOf(Xi + Vector3i(0, 1, 1))].ToVectorf()
+            (1 - r(2)) * color_[IndexOf(Xi + Vector3i(0, 1, 0))].template cast<float>() +
+                r(2) * color_[IndexOf(Xi + Vector3i(0, 1, 1))].template cast<float>()
         )) + r(0) * (
         (1 - r(1)) * (
-            (1 - r(2)) * color_[IndexOf(Xi + Vector3i(1, 0, 0))].ToVectorf() +
-                r(2) * color_[IndexOf(Xi + Vector3i(1, 0, 1))].ToVectorf()
+            (1 - r(2)) * color_[IndexOf(Xi + Vector3i(1, 0, 0))].template cast<float>() +
+                r(2) * color_[IndexOf(Xi + Vector3i(1, 0, 1))].template cast<float>()
         ) + r(1) * (
-            (1 - r(2)) * color_[IndexOf(Xi + Vector3i(1, 1, 0))].ToVectorf() +
-                r(2) * color_[IndexOf(Xi + Vector3i(1, 1, 1))].ToVectorf()
+            (1 - r(2)) * color_[IndexOf(Xi + Vector3i(1, 1, 0))].template cast<float>() +
+                r(2) * color_[IndexOf(Xi + Vector3i(1, 1, 1))].template cast<float>()
         ));
 
-    return colorf.ToVectorb();
+    return colorf.template saturate_cast<uchar>();
 }
 
 template<size_t N>
@@ -210,7 +210,7 @@ void UniformTSDFVolumeCudaDevice<N>::Integrate(
 
     /** Projective data association **/
     Vector3f
-    Xw = voxelf_to_world(X.ToVectorf());
+    Xw = voxelf_to_world(X.template cast<float>());
     Vector3f
     Xc = transform_camera_to_world.Inverse() * Xw;
     Vector2f p = camera.ProjectPoint(Xc);
@@ -274,7 +274,7 @@ UniformTSDFVolumeCudaDevice<N>::RayCasting(
 
         if (!InVolumef(X_t)) return ret;
 
-        float tsdf_curr = this->tsdf(X_t.ToVectori());
+        float tsdf_curr = this->tsdf(X_t.template cast<int>());
 
         float step_size = tsdf_curr == 0 ?
                           sdf_trunc_ : fmaxf(tsdf_curr, voxel_length_);

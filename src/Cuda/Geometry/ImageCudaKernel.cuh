@@ -193,8 +193,8 @@ void ConvertToFloatKernel(ImageCudaDevice<Scalar, Channel> src,
     int v = blockIdx.y * blockDim.y + threadIdx.y;
     if (u >= dst.width_ || v >= dst.height_) return;
 
-    dst.at(u, v) =
-        src.at(u, v).ToVectorf() * scale + VectorCuda<float, Channel>(offset);
+    dst.at(u, v) = src.at(u, v).template cast<float>() * scale
+        + VectorCuda<float, Channel>(offset);
 }
 
 template<typename Scalar, size_t Channel>

@@ -165,7 +165,7 @@ template<size_t N>
 __device__
 float ScalableTSDFVolumeCudaDevice<N>::TSDFAt(const Vector3f &X) {
     Vector3i
-    Xi = X.ToVectori();
+    Xi = X.template cast<int>();
     Vector3f
     r = Vector3f(X(0) - Xi(0), X(1) - Xi(1), X(2) - Xi(2));
 
@@ -191,7 +191,7 @@ __device__
     uchar
 ScalableTSDFVolumeCudaDevice<N>::WeightAt(const Vector3f &X) {
     Vector3i
-    Xi = X.ToVectori();
+    Xi = X.template cast<int>();
     Vector3f
     r = Vector3f(X(0) - Xi(0), X(1) - Xi(1), X(2) - Xi(2));
 
@@ -217,28 +217,28 @@ __device__
     Vector3b
 ScalableTSDFVolumeCudaDevice<N>::ColorAt(const Vector3f &X) {
     Vector3i
-    Xi = X.ToVectori();
+    Xi = X.template cast<int>();
     Vector3f
     r = Vector3f(X(0) - Xi(0), X(1) - Xi(1), X(2) - Xi(2));
 
     Vector3f
     colorf = (1 - r(0)) * (
         (1 - r(1)) * (
-            (1 - r(2)) * color(Xi + Vector3i(0, 0, 0)).ToVectorf() +
-                r(2) * color(Xi + Vector3i(0, 0, 1)).ToVectorf()
+            (1 - r(2)) * color(Xi + Vector3i(0, 0, 0)).template cast<float>() +
+                r(2) * color(Xi + Vector3i(0, 0, 1)).template cast<float>()
         ) + r(1) * (
-            (1 - r(2)) * color(Xi + Vector3i(0, 1, 0)).ToVectorf() +
-                r(2) * color(Xi + Vector3i(0, 1, 1)).ToVectorf()
+            (1 - r(2)) * color(Xi + Vector3i(0, 1, 0)).template cast<float>() +
+                r(2) * color(Xi + Vector3i(0, 1, 1)).template cast<float>()
         )) + r(0) * (
         (1 - r(1)) * (
-            (1 - r(2)) * color(Xi + Vector3i(1, 0, 0)).ToVectorf() +
-                r(2) * color(Xi + Vector3i(1, 0, 1)).ToVectorf()
+            (1 - r(2)) * color(Xi + Vector3i(1, 0, 0)).template cast<float>() +
+                r(2) * color(Xi + Vector3i(1, 0, 1)).template cast<float>()
         ) + r(1) * (
-            (1 - r(2)) * color(Xi + Vector3i(1, 1, 0)).ToVectorf() +
-                r(2) * color(Xi + Vector3i(1, 1, 1)).ToVectorf()
+            (1 - r(2)) * color(Xi + Vector3i(1, 1, 0)).template cast<float>() +
+                r(2) * color(Xi + Vector3i(1, 1, 1)).template cast<float>()
         ));
 
-    return colorf.ToVectorb();
+    return colorf.template saturate_cast<uchar>();
 }
 
 template<size_t N>
@@ -373,7 +373,7 @@ float ScalableTSDFVolumeCudaDevice<N>::TSDFOnBoundaryAt(
     assert(-1 <= Xlocal(2) && Xlocal(2) < N + 1);
 #endif
 
-    const Vector3i Xlocali = Xlocal.ToVectori();
+    const Vector3i Xlocali = Xlocal.template cast<int>();
     Vector3f
     r = Vector3f(Xlocal(0) - Xlocali(0),
                  Xlocal(1) - Xlocali(1),
@@ -427,7 +427,7 @@ ScalableTSDFVolumeCudaDevice<N>::WeightOnBoundaryAt(
     assert(-1 <= Xlocal(2) && Xlocal(2) < N + 1);
 #endif
 
-    const Vector3i Xlocali = Xlocal.ToVectori();
+    const Vector3i Xlocali = Xlocal.template cast<int>();
     Vector3f
     r = Vector3f(Xlocal(0) - Xlocali(0),
                  Xlocal(1) - Xlocali(1),
@@ -481,7 +481,7 @@ ScalableTSDFVolumeCudaDevice<N>::ColorOnBoundaryAt(
     assert(-1 <= Xlocal(2) && Xlocal(2) < N + 1);
 #endif
 
-    const Vector3i Xlocali = Xlocal.ToVectori();
+    const Vector3i Xlocali = Xlocal.template cast<int>();
     Vector3f
     r = Vector3f(Xlocal(0) - Xlocali(0),
                  Xlocal(1) - Xlocali(1),
@@ -506,7 +506,7 @@ ScalableTSDFVolumeCudaDevice<N>::ColorOnBoundaryAt(
         Vector3f
         color_k = (subvolume == nullptr) ? Vector3f(0) :
                   subvolume->color(BoundaryVoxelInNeighbor(Xlocali_k,
-                                                           dXsv_k)).ToVectorf();
+                                                           dXsv_k)).template cast<float>();
         float weight_interp_k = (subvolume == nullptr) ? 0.0f :
                                 (rneg(0) * (1 - offset_k(0))
                                     + r(0) * offset_k(0)) *
@@ -520,7 +520,7 @@ ScalableTSDFVolumeCudaDevice<N>::ColorOnBoundaryAt(
     }
 
     return sum_weight_interp > 0 ?
-           (sum_color / sum_weight_interp).ToVectorb() : Vector3b(0);
+           (sum_color / sum_weight_interp).template cast<uchar>() : Vector3b(0);
 }
 
 template<size_t N>
@@ -652,13 +652,13 @@ void ScalableTSDFVolumeCudaDevice<N>::TouchSubvolume(
     int step = DXsv_abs(0) >= DXsv_abs(1) ? DXsv_abs(0) : DXsv_abs(1);
     step = DXsv_abs(2) >= step ? DXsv_abs(2) : step;
     Vector3f
-    DXsv_normalized = DXsv.ToVectorf() * (1.0f / step);
+    DXsv_normalized = DXsv.template cast<float>() * (1.0f / step);
 
     Vector3f
-    Xsv_curr = Xsv_near.ToVectorf();
+    Xsv_curr = Xsv_near.template cast<float>();
     HashEntry<Vector3i> entry;
     for (int k = 0; k <= step; ++k) {
-        hash_table_.New(Xsv_curr.ToVectori());
+        hash_table_.New(Xsv_curr.template cast<int>());
         Xsv_curr += DXsv_normalized;
     }
 }
@@ -674,7 +674,7 @@ void ScalableTSDFVolumeCudaDevice<N>::Integrate(
 
     /** Projective data association - additional local to global transform **/
     Vector3f
-    X = voxelf_local_to_global(Xlocal.ToVectorf(), entry.key);
+    X = voxelf_local_to_global(Xlocal.template cast<float>(), entry.key);
     Vector3f
     Xw = voxelf_to_world(X);
     Vector3f
@@ -746,7 +746,7 @@ ScalableTSDFVolumeCudaDevice<N>::RayCasting(
         Vector3f
         Xv_t = camera_origin_v + t_curr * ray_v;
         Vector3i
-        X_t = volume_to_voxelf(Xv_t).ToVectori();
+        X_t = volume_to_voxelf(Xv_t).template cast<int>();
         Vector3i
         Xsv_t = voxel_locate_subvolume(X_t);
         Vector3i

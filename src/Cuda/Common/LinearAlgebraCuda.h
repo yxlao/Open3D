@@ -4,7 +4,8 @@
 
 #pragma once
 
-#include <src/Cuda/Common/Common.h>
+#include <Cuda/Common/Common.h>
+#include <Cuda/Common/TypeConversion.h>
 #include <Eigen/Eigen>
 
 #include <cassert>
@@ -33,71 +34,22 @@ public:
     typedef VectorCuda<uchar, N> VecTypeb;
 
     /*********************** Conversions ***********************/
-    __HOSTDEVICE__ inline static VecTypef Vectorf() {
-        return VecTypef();
-    }
-    __HOSTDEVICE__ inline static VecTypei Vectori() {
-        return VecTypei();
-    }
-    __HOSTDEVICE__ inline static VecTypes Vectors() {
-        return VecTypes();
-    }
-    __HOSTDEVICE__ inline static VecTypeb Vectorb() {
-        return VecTypeb();
-    }
-
-    __HOSTDEVICE__ inline VecTypef ToVectorf() const {
-        VecTypef ret;
-#ifdef __CUDACC__
+    template<typename D>
+    __HOSTDEVICE__ inline VectorCuda<D, N> cast() const {
+        VectorCuda<D, N> ret;
 #pragma unroll 1
-#endif
         for (int i = 0; i < N; ++i) {
-            ret.v[i] = float(v[i]);
+            ret(i) = D(v[i]);
         }
         return ret;
     }
 
-    __HOSTDEVICE__ inline VecTypei ToVectori() const {
-        VecTypei ret;
-#ifdef __CUDACC__
+    template<typename D>
+    __HOSTDEVICE__ inline VectorCuda<D, N> saturate_cast() const {
+        VectorCuda<D, N> ret;
 #pragma unroll 1
-#endif
         for (int i = 0; i < N; ++i) {
-            ret.v[i] = int(v[i]);
-        }
-        return ret;
-    }
-
-    __HOSTDEVICE__ inline VecTypes ToVectors() const {
-        VecTypes ret;
-#ifdef __CUDACC__
-#pragma unroll 1
-#endif
-        for (int i = 0; i < N; ++i) {
-            ret.v[i] = ushort(fminf(v[i], 65535));
-        }
-        return ret;
-    }
-
-    __HOSTDEVICE__ inline VecTypeb ToVectorb() const {
-        VecTypeb ret;
-#ifdef __CUDACC__
-#pragma unroll 1
-#endif
-        for (int i = 0; i < N; ++i) {
-            ret.v[i] = uchar(fminf(v[i], 255));
-        }
-        return ret;
-    }
-
-    __HOSTDEVICE__ inline static VectorCuda<T, N> FromVectorf(
-        const VecTypef &other) {
-        VectorCuda<T, N> ret;
-#ifdef __CUDACC__
-#pragma unroll 1
-#endif
-        for (int i = 0; i < N; ++i) {
-            ret(i) = T(other.v[i]);
+            ret(i) = open3d::number_traits::saturate_cast<D>(v[i]);
         }
         return ret;
     }
@@ -119,7 +71,6 @@ public:
         }
         return is_zero;
     }
-
 
     /*********************** Constructors ***********************/
     __HOSTDEVICE__ inline VectorCuda() {};

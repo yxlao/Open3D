@@ -26,7 +26,7 @@ void BuildFromRGBDImageKernel(PointCloudCudaDevice pcl,
 
     int index = pcl.points_.push_back(point);
     if (pcl.type_ & VertexWithColor) {
-        pcl.colors_[index] = color.ToVectorf() / 255.0f;
+        pcl.colors_[index] = color.cast<float>() / 255.0f;
     }
 }
 

@@ -149,7 +149,7 @@ ImageCudaDevice<Scalar, Channel>::GaussianFilter(int x, int y, int kernel_idx) {
 
     for (int xx = x_min; xx <= x_max; ++xx) {
         for (int yy = y_min; yy <= y_max; ++yy) {
-            auto val = at(xx, yy).ToVectorf();
+            auto val = at(xx, yy).template cast<float>();
             float weight = kernel[xx - x + kernel_size_2]
                 * kernel[yy - y + kernel_size_2];
             sum_val += val * weight;
@@ -159,7 +159,7 @@ ImageCudaDevice<Scalar, Channel>::GaussianFilter(int x, int y, int kernel_idx) {
 
     sum_val /= sum_weight;
 
-    return VectorCuda<Scalar, Channel>::FromVectorf(sum_val);
+    return sum_val.template cast<Scalar>();
 }
 
 template<typename Scalar, size_t Channel>
@@ -188,13 +188,13 @@ ImageCudaDevice<Scalar, Channel>::BilateralFilter(
     int x_max = min(width_ - 1, x + kernel_size_2);
     int y_max = min(height_ - 1, y + kernel_size_2);
 
-    auto center_val = at(x, y).ToVectorf();
+    auto center_val = at(x, y).template cast<float>();
     auto sum_val = VectorCuda<float, Channel>::Zeros();
     float sum_weight = 0;
 
     for (int xx = x_min; xx <= x_max; ++xx) {
         for (int yy = y_min; yy <= y_max; ++yy) {
-            auto val = at(xx, yy).ToVectorf();
+            auto val = at(xx, yy).template cast<float>();
             float weight = kernel[xx - x + kernel_size_2]
                 * kernel[yy - y + kernel_size_2];
             float value_diff = (val - center_val).norm() / val_sigma;
@@ -206,7 +206,7 @@ ImageCudaDevice<Scalar, Channel>::BilateralFilter(
     }
 
     sum_val /= sum_weight;
-    return VectorCuda<Scalar, Channel>::FromVectorf(sum_val);
+    return sum_val.template cast<Scalar>();
 }
 
 template<typename Scalar, size_t Channel>

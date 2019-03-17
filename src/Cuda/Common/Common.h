@@ -33,6 +33,9 @@ typedef unsigned short ushort;
 typedef unsigned int uint;
 #endif
 
+#define O3D_MIN(a, b) (a < b ? a : b)
+#define O3D_MAX(a, b) (b < a ? a : b)
+
 /* @TODO: make this part modern, using enum, const, etc. */
 #define NULLPTR_CUDA (-1)
 
