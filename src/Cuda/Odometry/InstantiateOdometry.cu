@@ -10,7 +10,6 @@
 
 #include <src/Cuda/Geometry/ImageCudaDevice.cuh>
 #include <src/Cuda/Geometry/ImageCudaKernel.cuh>
-#include <src/Cuda/Geometry/ImagePyramidCuda.h>
 
 namespace open3d {
 namespace cuda {
@@ -23,8 +22,6 @@ template
 class ImageCudaDevice<float, 6>;
 template
 class ImageCudaKernelCaller<float, 6>;
-template
-class ImagePyramidCudaDevice<float, 6, 3>;
 
 template
 float ReduceSum2D<float, 1>(ImageCuda<float, 1> &src);

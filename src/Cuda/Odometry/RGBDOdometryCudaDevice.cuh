@@ -24,7 +24,7 @@ bool RGBDOdometryCudaDevice<N>::ComputePixelwiseCorrespondenceAndResidual(
     float &residual_I, float &residual_D) {
 
     /** Check 1: depth valid in source? **/
-    float d_source = source_[level].depth_.at(x_source, y_source)(0);
+    float d_source = source_depth_[level].at(x_source, y_source)(0);
 
     bool mask = IsValidDepth(d_source);
     if (!mask) return false;
@@ -41,7 +41,7 @@ bool RGBDOdometryCudaDevice<N>::ComputePixelwiseCorrespondenceAndResidual(
     if (!mask) return false;
 
     /** Check 3: depth valid in target? Occlusion? -> 1ms **/
-    float d_target = target_[level].depth_.at(p_warped(0), p_warped(1))(0);
+    float d_target = target_depth_[level].at(p_warped(0), p_warped(1))(0);
     mask = IsValidDepth(d_target)
         && IsValidDepthDiff(d_target - X_source_on_target(2));
     if (!mask) return false;
@@ -49,8 +49,8 @@ bool RGBDOdometryCudaDevice<N>::ComputePixelwiseCorrespondenceAndResidual(
     x_target = p_warped(0);
     y_target = p_warped(1);
     residual_I = sqrt_coeff_I_ * (
-        target_[level].intensity_.at(x_target, y_target)(0) -
-            source_[level].intensity_.at(x_source, y_source)(0));
+        target_intensity_[level].at(x_target, y_target)(0) -
+            source_intensity_[level].at(x_source, y_source)(0));
     residual_D = sqrt_coeff_D_ * (d_target - X_source_on_target(2));
 
     return true;
@@ -79,14 +79,14 @@ bool RGBDOdometryCudaDevice<N>::ComputePixelwiseJacobian(
      *     - (d X.z / d X) (d X / d \xi)
      */
     const float kSobelFactor = 0.125f;
-    float dx_I = kSobelFactor * target_dx_[level].intensity_.at(
+    float dx_I = kSobelFactor * target_intensity_dx_[level].at(
         x_target, y_target)(0);
-    float dy_I = kSobelFactor * target_dy_[level].intensity_.at(
+    float dy_I = kSobelFactor * target_intensity_dy_[level].at(
         x_target, y_target)(0);
 
-    float dx_D = kSobelFactor * target_dx_[level].depth_.at(
+    float dx_D = kSobelFactor * target_depth_dx_[level].at(
         x_target, y_target)(0);
-    float dy_D = kSobelFactor * target_dy_[level].depth_.at(
+    float dy_D = kSobelFactor * target_depth_dy_[level].at(
         x_target, y_target)(0);
 
     if (isnan(dx_D)) dx_D = 0;
@@ -134,7 +134,7 @@ bool RGBDOdometryCudaDevice<N>::
     Vector6f &jacobian_x, Vector6f &jacobian_y, Vector6f &jacobian_z) {
 
     /** Check 1: depth valid in source? **/
-    float d_source = source_[0].depth_.at(x_source, y_source)(0);
+    float d_source = source_depth_[0].at(x_source, y_source)(0);
     bool mask = IsValidDepth(d_source);
     if (!mask) return false;
 
@@ -150,7 +150,7 @@ bool RGBDOdometryCudaDevice<N>::
     Vector2i p_warped(int(p_warpedf(0) + 0.5f), int(p_warpedf(1) + 0.5f));
 
     /** Check 3: depth valid in target? Occlusion? -> 1ms **/
-    float d_target = target_[0].depth_.at(p_warped(0), p_warped(1))(0);
+    float d_target = target_depth_[0].at(p_warped(0), p_warped(1))(0);
     mask = IsValidDepth(d_target) && IsValidDepthDiff(
         d_target - X_source_on_target(2));
     if (!mask) return false;

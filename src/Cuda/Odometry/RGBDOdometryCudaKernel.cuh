@@ -25,8 +25,8 @@ void DoSingleIterationKernel(RGBDOdometryCudaDevice<N> odometry, size_t level) {
     local_sum1[tid] = 0;
     local_sum2[tid] = 0;
 
-    if (x >= odometry.source_[level].depth_.width_
-        || y >= odometry.source_[level].depth_.height_)
+    if (x >= odometry.source_depth_[level].width_
+        || y >= odometry.source_depth_[level].height_)
         return;
 
     int x_target = -1, y_target = -1;
@@ -113,8 +113,8 @@ void RGBDOdometryCudaKernelCaller<N>::DoSingleIteration(
     RGBDOdometryCuda<N> &odometry, size_t level) {
 
     const dim3 blocks(
-        DIV_CEILING(odometry.source_[level].depth_.width_, THREAD_2D_UNIT),
-        DIV_CEILING(odometry.source_[level].depth_.height_, THREAD_2D_UNIT));
+        DIV_CEILING(odometry.source_depth_[level].width_, THREAD_2D_UNIT),
+        DIV_CEILING(odometry.source_depth_[level].height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
     DoSingleIterationKernel << < blocks, threads >> > (
         *odometry.device_, level);
@@ -140,8 +140,8 @@ void ComputeInformationMatrixKernel(RGBDOdometryCudaDevice<N> odometry) {
     local_sum1[tid] = 0;
     local_sum2[tid] = 0;
 
-    if (x >= odometry.source_[0].depth_.width_
-        || y >= odometry.source_[0].depth_.height_)
+    if (x >= odometry.source_depth_[0].width_
+        || y >= odometry.source_depth_[0].height_)
         return;
 
     Vector6f jacobian_x, jacobian_y, jacobian_z;
@@ -176,8 +176,8 @@ void RGBDOdometryCudaKernelCaller<N>::ComputeInformationMatrix(
     RGBDOdometryCuda<N> &odometry) {
 
     const dim3 blocks(
-        DIV_CEILING(odometry.source_[0].depth_.width_, THREAD_2D_UNIT),
-        DIV_CEILING(odometry.source_[0].depth_.height_, THREAD_2D_UNIT));
+        DIV_CEILING(odometry.source_depth_[0].width_, THREAD_2D_UNIT),
+        DIV_CEILING(odometry.source_depth_[0].height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
     ComputeInformationMatrixKernel << < blocks, threads >> >(*odometry.device_);
     CheckCuda(cudaDeviceSynchronize());
@@ -209,8 +209,8 @@ void RGBDOdometryCudaKernelCaller<N>::PreprocessDepth(
     RGBDOdometryCuda<N> &odometry){
 
     const dim3 blocks(
-        DIV_CEILING(odometry.source_preprocessed_.depth_.width_, THREAD_2D_UNIT),
-        DIV_CEILING(odometry.target_preprocessed_.depth_.height_, THREAD_2D_UNIT));
+        DIV_CEILING(odometry.source_input_.depth_.width_, THREAD_2D_UNIT),
+        DIV_CEILING(odometry.target_input_.depth_.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
     PreprocessDepthKernel << < blocks, threads >> >(*odometry.device_);
     CheckCuda(cudaDeviceSynchronize());
@@ -234,8 +234,8 @@ void ComputeInitCorrespondenceMeanKernel(
     local_sum1[tid] = 0;
     local_sum2[tid] = 0;
 
-    if (x >= odometry.source_[0].depth_.width_
-        || y >= odometry.source_[0].depth_.height_)
+    if (x >= odometry.source_depth_[0].width_
+        || y >= odometry.source_depth_[0].height_)
         return;
 
     int x_target = -1, y_target = -1;
@@ -250,9 +250,9 @@ void ComputeInitCorrespondenceMeanKernel(
     }
 
     local_sum0[tid] = mask ?
-        odometry.source_[0].intensity_(x, y)(0) : 0;
+        odometry.source_intensity_[0](x, y)(0) : 0;
     local_sum1[tid] = mask ?
-        odometry.target_[0].intensity_(x_target, y_target)(0) : 0;
+        odometry.target_intensity_[0](x_target, y_target)(0) : 0;
     local_sum2[tid] = mask ? 1 : 0;
     __syncthreads();
 
@@ -277,10 +277,10 @@ void NormalizeIntensityKernel(RGBDOdometryCudaDevice<N> odometry,
         || y >= odometry.source_input_.depth_.height_)
         return;
 
-    float &intensity_source = odometry.source_[0].intensity_.at(x, y)(0);
+    float &intensity_source = odometry.source_intensity_[0].at(x, y)(0);
     intensity_source *= 0.5f * (means[2] / means[0]);
 
-    float &intensity_target = odometry.target_[0].intensity_.at(x, y)(0);
+    float &intensity_target = odometry.target_intensity_[0].at(x, y)(0);
     intensity_target *= 0.5f * (means[2] / means[1]);
 }
 
@@ -292,8 +292,8 @@ void RGBDOdometryCudaKernelCaller<N>::NormalizeIntensity(
     means.Memset(0);
 
     const dim3 blocks(
-        DIV_CEILING(odometry.source_[0].intensity_.width_, THREAD_2D_UNIT),
-        DIV_CEILING(odometry.source_[0].intensity_.height_, THREAD_2D_UNIT));
+        DIV_CEILING(odometry.source_intensity_[0].width_, THREAD_2D_UNIT),
+        DIV_CEILING(odometry.source_intensity_[0].height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
 
     ComputeInitCorrespondenceMeanKernel<< < blocks, threads >> >(

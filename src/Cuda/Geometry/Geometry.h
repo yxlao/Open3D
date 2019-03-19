@@ -7,8 +7,5 @@
 #include "ImageCuda.h"
 #include "RGBDImageCuda.h"
 
-#include "ImagePyramidCuda.h"
-#include "RGBDImagePyramidCuda.h"
-
 #include "PointCloudCuda.h"
 #include "TriangleMeshCuda.h"

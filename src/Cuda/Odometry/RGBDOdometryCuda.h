@@ -17,9 +17,9 @@
 
 #include <src/Cuda/Camera/PinholeCameraIntrinsicCuda.h>
 #include <src/Cuda/Container/ArrayCuda.h>
-#include <src/Cuda/Geometry/ImagePyramidCuda.h>
-#include <src/Cuda/Geometry/RGBDImagePyramidCuda.h>
 
+#include <Cuda/Geometry/RGBDImageCuda.h>
+#include <Cuda/Geometry/ImageCuda.h>
 #include <Eigen/Eigen>
 
 namespace open3d {
@@ -51,14 +51,22 @@ namespace cuda {
 template<size_t N>
 class RGBDOdometryCudaDevice {
 public:
-    ImagePyramidCudaDevice<float, 1, N> source_on_target_;
+    typedef ImageCudaDevice<float, 1> ImageCudaDevicef;
 
     RGBDImageCudaDevice source_input_;
     RGBDImageCudaDevice target_input_;
-    RGBDImagePyramidCudaDevice<N> source_;
-    RGBDImagePyramidCudaDevice<N> target_;
-    RGBDImagePyramidCudaDevice<N> target_dx_;
-    RGBDImagePyramidCudaDevice<N> target_dy_;
+
+    ImageCudaDevicef source_depth_[N];
+    ImageCudaDevicef source_intensity_[N];
+
+    ImageCudaDevicef target_depth_[N];
+    ImageCudaDevicef target_intensity_[N];
+
+    ImageCudaDevicef target_depth_dx_[N];
+    ImageCudaDevicef target_depth_dy_[N];
+
+    ImageCudaDevicef target_intensity_dx_[N];
+    ImageCudaDevicef target_intensity_dy_[N];
 
     ArrayCudaDevice<float> results_;
     ArrayCudaDevice<Vector4i> correspondences_;
@@ -118,23 +126,28 @@ template<size_t N>
 class RGBDOdometryCuda {
 public:
     std::shared_ptr<RGBDOdometryCudaDevice<N>> device_ = nullptr;
+    typedef ImageCuda<float, 1> ImageCudaf;
 
 public:
     /** Preprocess the input: 0 -> nan, normalization, etc **/
-    RGBDImageCuda source_preprocessed_;
-    RGBDImageCuda target_preprocessed_;
+    RGBDImageCuda source_input_;
+    RGBDImageCuda target_input_;
 
     /** Core in RGBD Odometry **/
-    RGBDImagePyramidCuda<N> source_;
-    RGBDImagePyramidCuda<N> target_;
+    ImageCudaf source_depth_[N];
+    ImageCudaf source_intensity_[N];
 
-    RGBDImagePyramidCuda<N> target_dx_;
-    RGBDImagePyramidCuda<N> target_dy_;
+    ImageCudaf target_depth_[N];
+    ImageCudaf target_intensity_[N];
+
+    ImageCudaf target_depth_dx_[N];
+    ImageCudaf target_depth_dy_[N];
+    ImageCudaf target_intensity_dx_[N];
+    ImageCudaf target_intensity_dy_[N];
 
     ArrayCuda<float> results_;
 
     /** Debug use **/
-    ImagePyramidCuda<float, 1, N> source_on_target_;
     ArrayCuda<Vector4i> correspondences_;
 
 public:
