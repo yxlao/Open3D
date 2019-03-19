@@ -31,6 +31,7 @@
 #include <Open3D/Visualization/Visualizer/Visualizer.h>
 #include <Open3D/Visualization/Visualizer/VisualizerWithKeyCallback.h>
 #include <Open3D/Visualization/Visualizer/VisualizerWithEditing.h>
+#include "Open3D/Visualization/Visualizer/ViewTrajectory.h"
 
 using namespace open3d;
 
@@ -141,6 +142,12 @@ void pybind_visualizer(py::module &m) {
             .def("get_picked_points",
                  &visualization::VisualizerWithEditing::GetPickedPoints,
                  "Function to get picked points");
+
+    py::class_<visualization::ViewTrajectory> view_traj(m, "ViewTrajectory",
+                                                        "ViewTrajectory");
+    py::detail::bind_default_constructor<visualization::ViewTrajectory>(
+            view_traj);
+    py::detail::bind_copy_functions<visualization::ViewTrajectory>(view_traj);
 }
 
 void pybind_visualizer_method(py::module &m) {}
