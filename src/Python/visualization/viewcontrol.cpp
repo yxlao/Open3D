@@ -54,6 +54,9 @@ void pybind_viewcontrol(py::module &m) {
                  &visualization::ViewControl::
                          ConvertFromPinholeCameraParameters,
                  "parameter"_a)
+            .def("convert_from_view_parameters",
+                 &visualization::ViewControl::ConvertFromViewParameters,
+                 "view_parameters"_a)
             .def("scale", &visualization::ViewControl::Scale,
                  "Function to process scaling", "scale"_a)
             .def("rotate", &visualization::ViewControl::Rotate,
