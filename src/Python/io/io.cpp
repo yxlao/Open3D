@@ -40,6 +40,7 @@
 #include "Open3D/IO/ClassIO/PoseGraphIO.h"
 #include "Open3D/IO/ClassIO/TriangleMeshIO.h"
 #include "Open3D/IO/ClassIO/VoxelGridIO.h"
+#include "Open3D/Visualization/Visualizer/ViewTrajectory.h"
 
 using namespace open3d;
 
@@ -251,6 +252,16 @@ void pybind_io(py::module &m) {
              "Function to write PinholeCameraTrajectory to file", "filename"_a,
              "trajectory"_a);
     docstring::FunctionDocInject(m_io, "write_pinhole_camera_trajectory",
+                                 map_io_argument_docstrings);
+
+    m_io.def("read_view_trajectory",
+             [](const std::string &filename) {
+                 visualization::ViewTrajectory view_trajectory;
+                 io::ReadIJsonConvertible(filename, view_trajectory);
+                 return view_trajectory;
+             },
+             "Function to read view trajectory from file", "filename"_a);
+    docstring::FunctionDocInject(m_io, "read_view_trajectory",
                                  map_io_argument_docstrings);
 
     // open3d::registration
