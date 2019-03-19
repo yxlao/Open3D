@@ -148,6 +148,12 @@ void pybind_visualizer(py::module &m) {
     py::detail::bind_default_constructor<visualization::ViewTrajectory>(
             view_traj);
     py::detail::bind_copy_functions<visualization::ViewTrajectory>(view_traj);
+
+    py::class_<visualization::ViewParameters> view_params(m, "ViewParameters",
+                                                          "ViewParameters");
+    py::detail::bind_default_constructor<visualization::ViewParameters>(
+            view_params);
+    py::detail::bind_copy_functions<visualization::ViewParameters>(view_params);
 }
 
 void pybind_visualizer_method(py::module &m) {}
