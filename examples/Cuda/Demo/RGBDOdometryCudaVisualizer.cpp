@@ -57,10 +57,8 @@ int TwoFrameRGBDOdometry(
         cuda::VertexWithColor, 300000),
         pcl_target = std::make_shared<cuda::PointCloudCuda>(
         cuda::VertexWithColor, 300000);
-    pcl_source->Build(odometry.source_depth_[0],
-                      odometry.device_->intrinsics_[0]);
-    pcl_target->Build(odometry.target_depth_[0],
-                      odometry.device_->intrinsics_[0]);
+    pcl_source->Build(source, odometry.device_->intrinsics_[0]);
+    pcl_target->Build(target, odometry.device_->intrinsics_[0]);
     visualizer.AddGeometry(pcl_source);
     visualizer.AddGeometry(pcl_target);
 

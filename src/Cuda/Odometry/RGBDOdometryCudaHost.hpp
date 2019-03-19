@@ -193,19 +193,27 @@ void RGBDOdometryCuda<N>::Initialize(
         return;
     }
 
-    /** Preprocess: truncate depth to nan values, then perform Gaussian **/
     source_input_.CopyFrom(source);
     target_input_.CopyFrom(target);
-    RGBDOdometryCudaKernelCaller<N>::PreprocessDepth(*this);
-    source_input_.depth_.Gaussian(source_depth_[0], Gaussian3x3);
-    target_input_.depth_.Gaussian(target_depth_[0], Gaussian3x3);
 
-    /** Preprocess: Gaussian intensities **/
-    source_input_.intensity_.Gaussian(source_intensity_[0], Gaussian3x3);
-    target_input_.intensity_.Gaussian(target_intensity_[0], Gaussian3x3);
+    /** Preprocess: truncate depth to nan values, then perform Gaussian **/
+    ImageCudaf source_depth_preprocessed, source_intensity_preprocessed;
+    ImageCudaf target_depth_preprocessed, target_intensity_preprocessed;
+    source_depth_preprocessed.Create(source.width_, source.height_);
+    source_intensity_preprocessed.Create(source.width_, source.height_);
+    target_depth_preprocessed.Create(source.width_, source.height_);
+    target_intensity_preprocessed.Create(source.width_, source.height_);
+    RGBDOdometryCudaKernelCaller<N>::PreprocessInput(*this,
+        source_depth_preprocessed, source_intensity_preprocessed,
+        target_depth_preprocessed, target_intensity_preprocessed);
 
-    /** Preprocess: normalize intensity
-      * between pair (source_[0], target_[0]) **/
+    /** Preprocess: Smooth **/
+    source_depth_preprocessed.Gaussian(source_depth_[0], Gaussian3x3);
+    source_intensity_preprocessed.Gaussian(source_intensity_[0], Gaussian3x3);
+    target_depth_preprocessed.Gaussian(target_depth_[0], Gaussian3x3);
+    target_intensity_preprocessed.Gaussian(target_intensity_[0], Gaussian3x3);
+
+    /** Preprocess: normalize intensity between pair (source_[0], target_[0]) **/
     device_->transform_source_to_target_.FromEigen(transform_source_to_target_);
     correspondences_.set_iterator(0);
     RGBDOdometryCudaKernelCaller<N>::NormalizeIntensity(*this);
@@ -282,9 +290,6 @@ RGBDOdometryCuda<N>::ComputeMultiScale() {
     std::vector<std::vector<float>> losses;
     for (int level = (int) (N - 1); level >= 0; --level) {
         std::vector<float> losses_on_level;
-
-//        float factor = std::pow(1.39f, (N - 1 - level));
-//        UpdateSigma(std::min(sigma_ * factor, 0.968f));
 
         for (int iter = 0;
              iter < option_.iteration_number_per_pyramid_level_[N - 1 - level];

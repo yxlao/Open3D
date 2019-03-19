@@ -44,7 +44,7 @@ void DoSingleIterationKernel(RGBDOdometryCudaDevice<N> odometry, size_t level) {
     if (mask) {
         odometry.correspondences_.push_back(Vector4i(x, y, x_target, y_target));
         ComputeJtJAndJtr(jacobian_I, jacobian_D, residual_I, residual_D,
-            JtJ, Jtr);
+                         JtJ, Jtr);
 //        printf("- (%d %d) -> "
 //               "(%f %f %f %f %f %f) - %f "
 //               "(%f %f %f %f %f %f) - %f\n",
@@ -94,7 +94,7 @@ void DoSingleIterationKernel(RGBDOdometryCudaDevice<N> odometry, size_t level) {
     const int OFFSET2 = 27;
     {
         local_sum0[tid] = mask ?
-            residual_I * residual_I + residual_D * residual_D : 0;
+                          residual_I * residual_I + residual_D * residual_D : 0;
         local_sum1[tid] = mask ? 1 : 0;
         __syncthreads();
 
@@ -179,40 +179,59 @@ void RGBDOdometryCudaKernelCaller<N>::ComputeInformationMatrix(
         DIV_CEILING(odometry.source_depth_[0].width_, THREAD_2D_UNIT),
         DIV_CEILING(odometry.source_depth_[0].height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
-    ComputeInformationMatrixKernel << < blocks, threads >> >(*odometry.device_);
+    ComputeInformationMatrixKernel << < blocks, threads >>
+        > (*odometry.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
 
 template<size_t N>
 __global__
-void PreprocessDepthKernel(RGBDOdometryCudaDevice<N> odometry) {
+void PreprocessInputKernel(RGBDOdometryCudaDevice<N> odometry,
+                           ImageCudaDevicef source_depth_preprocessed,
+                           ImageCudaDevicef source_intensity_preprocessed,
+                           ImageCudaDevicef target_depth_preprocessed,
+                           ImageCudaDevicef target_intensity_preprocessed) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
-    if (x >= odometry.source_input_.depth_.width_
-        || y >= odometry.source_input_.depth_.height_)
+    if (x >= odometry.source_input_.depth_raw_.width_
+        || y >= odometry.source_input_.depth_raw_.height_)
         return;
 
     float &depth_src = odometry.source_input_.depth_.at(x, y)(0);
-    if (! odometry.IsValidDepth(depth_src)) {
-        depth_src = CUDART_NAN_F;
-    }
+    source_depth_preprocessed.at(x, y, 0) = odometry.IsValidDepth(depth_src) ?
+        depth_src : CUDART_NAN_F;
+
+    auto rgb_src = odometry.source_input_.color_raw_.at(x, y);
+    source_intensity_preprocessed.at(x, y, 0) =
+        (0.2990f * rgb_src(0) + 0.5870f * rgb_src(1) + 0.1140f * rgb_src(2)) / 255.0f;
 
     float &depth_tgt = odometry.target_input_.depth_.at(x, y)(0);
-    if (! odometry.IsValidDepth(depth_tgt)) {
-        depth_tgt = CUDART_NAN_F;
-    }
+    target_depth_preprocessed.at(x, y, 0) = odometry.IsValidDepth(depth_tgt) ?
+        depth_tgt : CUDART_NAN_F;
+
+    auto rgb_tgt = odometry.target_input_.color_raw_.at(x, y);
+    target_intensity_preprocessed.at(x, y, 0) =
+        (0.2990f * rgb_tgt(0) + 0.5870f * rgb_tgt(1) + 0.1140f * rgb_tgt(2)) / 255.0f;
 }
 
 template<size_t N>
-void RGBDOdometryCudaKernelCaller<N>::PreprocessDepth(
-    RGBDOdometryCuda<N> &odometry){
+void RGBDOdometryCudaKernelCaller<N>::PreprocessInput(
+    RGBDOdometryCuda<N> &odometry,
+    ImageCudaf &source_depth_preprocessed,
+    ImageCudaf &source_intensity_preprocessed,
+    ImageCudaf &target_depth_preprocessed,
+    ImageCudaf &target_intensity_preprocessed) {
 
     const dim3 blocks(
-        DIV_CEILING(odometry.source_input_.depth_.width_, THREAD_2D_UNIT),
-        DIV_CEILING(odometry.target_input_.depth_.height_, THREAD_2D_UNIT));
+        DIV_CEILING(odometry.source_input_.depth_raw_.width_, THREAD_2D_UNIT),
+        DIV_CEILING(odometry.target_input_.depth_raw_.height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
-    PreprocessDepthKernel << < blocks, threads >> >(*odometry.device_);
+    PreprocessInputKernel << < blocks, threads >> > (*odometry.device_,
+        *source_depth_preprocessed.device_,
+        *source_intensity_preprocessed.device_,
+        *target_depth_preprocessed.device_,
+        *target_intensity_preprocessed.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
@@ -250,9 +269,9 @@ void ComputeInitCorrespondenceMeanKernel(
     }
 
     local_sum0[tid] = mask ?
-        odometry.source_intensity_[0](x, y)(0) : 0;
+                      odometry.source_intensity_[0](x, y)(0) : 0;
     local_sum1[tid] = mask ?
-        odometry.target_intensity_[0](x_target, y_target)(0) : 0;
+                      odometry.target_intensity_[0](x_target, y_target)(0) : 0;
     local_sum2[tid] = mask ? 1 : 0;
     __syncthreads();
 
@@ -269,12 +288,12 @@ void ComputeInitCorrespondenceMeanKernel(
 template<size_t N>
 __global__
 void NormalizeIntensityKernel(RGBDOdometryCudaDevice<N> odometry,
-    ArrayCudaDevice<float> means) {
+                              ArrayCudaDevice<float> means) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
 
-    if (x >= odometry.source_input_.depth_.width_
-        || y >= odometry.source_input_.depth_.height_)
+    if (x >= odometry.source_intensity_[0].width_
+        || y >= odometry.source_intensity_[0].height_)
         return;
 
     float &intensity_source = odometry.source_intensity_[0].at(x, y)(0);
@@ -296,14 +315,14 @@ void RGBDOdometryCudaKernelCaller<N>::NormalizeIntensity(
         DIV_CEILING(odometry.source_intensity_[0].height_, THREAD_2D_UNIT));
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
 
-    ComputeInitCorrespondenceMeanKernel<< < blocks, threads >> >(
+    ComputeInitCorrespondenceMeanKernel << < blocks, threads >> > (
         *odometry.device_, *means.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 
     auto means_intensity = means.DownloadAll();
 
-    NormalizeIntensityKernel<<<blocks, threads>>>(
+    NormalizeIntensityKernel << < blocks, threads >> > (
         *odometry.device_, *means.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());

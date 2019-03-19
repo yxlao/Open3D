@@ -28,7 +28,6 @@ RGBDImageCuda::RGBDImageCuda(const RGBDImageCuda &other) {
     color_raw_ = other.color_raw_;
 
     depth_ = other.depth_;
-    intensity_ = other.intensity_;
 }
 
 RGBDImageCuda &RGBDImageCuda::operator=(const RGBDImageCuda &other) {
@@ -44,7 +43,6 @@ RGBDImageCuda &RGBDImageCuda::operator=(const RGBDImageCuda &other) {
         color_raw_ = other.color_raw_;
 
         depth_ = other.depth_;
-        intensity_ = other.intensity_;
     }
     return *this;
 }
@@ -74,7 +72,6 @@ bool RGBDImageCuda::Create(int width, int height) {
     color_raw_.Create(width, height);
 
     depth_.Create(width, height);
-    intensity_.Create(width, height);
 
     UpdateDevice();
     return true;
@@ -87,7 +84,6 @@ void RGBDImageCuda::Release() {
     color_raw_.Release();
 
     depth_.Release();
-    intensity_.Release();
 }
 
 void RGBDImageCuda::Upload(geometry::Image &depth_raw, geometry::Image
@@ -100,9 +96,8 @@ void RGBDImageCuda::Upload(geometry::Image &depth_raw, geometry::Image
     bool success = Create(width_, height_);
     if (success) {
         color_raw_.Upload(color_raw);
-        color_raw_.ConvertRGBToIntensity(intensity_);
-
         depth_raw_.Upload(depth_raw);
+
         RGBDImageCudaKernelCaller::ConvertDepthToFloat(*this);
     }
 }
@@ -115,7 +110,6 @@ void RGBDImageCuda::CopyFrom(RGBDImageCuda &other) {
         color_raw_.CopyFrom(other.color_raw_);
 
         depth_.CopyFrom(other.depth_);
-        intensity_.CopyFrom(other.intensity_);
     }
 }
 
@@ -131,8 +125,6 @@ void RGBDImageCuda::Build(
     bool success = Create(width_, height_);
     if (success) {
         color_raw_.CopyFrom(color_raw);
-        color_raw_.ConvertRGBToIntensity(intensity_);
-
         depth_raw_.CopyFrom(depth_raw);
         RGBDImageCudaKernelCaller::ConvertDepthToFloat(*this);
     }
@@ -147,13 +139,10 @@ void RGBDImageCuda::UpdateDevice() {
         color_raw_.UpdateDevice();
 
         depth_.UpdateDevice();
-        intensity_.UpdateDevice();
 
         device_->depth_raw_ = *depth_raw_.device_;
         device_->color_raw_ = *color_raw_.device_;
-
         device_->depth_ = *depth_.device_;
-        device_->intensity_ = *intensity_.device_;
     }
 }
 
@@ -166,8 +155,6 @@ void RGBDImageCuda::Upload(cv::Mat &depth, cv::Mat &color) {
     bool success = Create(width_, height_);
     if (success) {
         color_raw_.Upload(color);
-        color_raw_.ConvertRGBToIntensity(intensity_);
-
         depth_raw_.Upload(depth);
         RGBDImageCudaKernelCaller::ConvertDepthToFloat(*this);
     }

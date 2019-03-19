@@ -60,8 +60,8 @@ void MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
 
         /** Insert a keyframe **/
         if (config.with_opencv_ && s % config.n_keyframes_per_n_frame_ == 0) {
-            cv::Mat im;
-            rgbd_source.intensity_.DownloadMat().convertTo(im, CV_8U, 255.0);
+            cv::Mat im = cv::imread(config.color_files_[s]);
+            cv::cvtColor(im, im, cv::COLOR_BGR2GRAY);
             std::vector<cv::KeyPoint> kp;
             cv::Mat desc;
             orb->detectAndCompute(im, cv::noArray(), kp, desc);

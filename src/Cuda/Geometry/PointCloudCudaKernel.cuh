@@ -20,12 +20,12 @@ void BuildFromRGBDImageKernel(PointCloudCudaDevice pcl,
 
     float depth = rgbd.depth_.at(x, y)(0);
     if (depth == 0 || isnan(depth)) return;
-    Vector3b color = rgbd.color_raw_.at(x, y);
 
     Vector3f point = intrinsic.InverseProjectPixel(Vector2i(x, y), depth);
 
     int index = pcl.points_.push_back(point);
     if (pcl.type_ & VertexWithColor) {
+        Vector3b color = rgbd.color_raw_.at(x, y);
         pcl.colors_[index] = color.cast<float>() / 255.0f;
     }
 }

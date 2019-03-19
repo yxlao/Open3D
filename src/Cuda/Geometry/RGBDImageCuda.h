@@ -20,7 +20,6 @@ public:
     ImageCudaDevice<uchar, 3> color_raw_;
 
     ImageCudaDevice<float, 1> depth_;
-    ImageCudaDevice<float, 1> intensity_;
 
 public:
     int width_;
@@ -36,7 +35,6 @@ public:
     ImageCuda<uchar, 3> color_raw_;
 
     ImageCuda<float, 1> depth_;
-    ImageCuda<float, 1> intensity_;
 
 public:
     float depth_trunc_;

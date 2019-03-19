@@ -48,11 +48,13 @@ namespace cuda {
  *         @source frame should be a current frame.
  *         We warp the @source frame to the @target frame.
  */
+
+typedef ImageCudaDevice<float, 1> ImageCudaDevicef;
+typedef ImageCuda<float, 1> ImageCudaf;
+
 template<size_t N>
 class RGBDOdometryCudaDevice {
 public:
-    typedef ImageCudaDevice<float, 1> ImageCudaDevicef;
-
     RGBDImageCudaDevice source_input_;
     RGBDImageCudaDevice target_input_;
 
@@ -126,10 +128,8 @@ template<size_t N>
 class RGBDOdometryCuda {
 public:
     std::shared_ptr<RGBDOdometryCudaDevice<N>> device_ = nullptr;
-    typedef ImageCuda<float, 1> ImageCudaf;
 
 public:
-    /** Preprocess the input: 0 -> nan, normalization, etc **/
     RGBDImageCuda source_input_;
     RGBDImageCuda target_input_;
 
@@ -161,7 +161,8 @@ public:
     RGBDOdometryCuda();
     ~RGBDOdometryCuda();
 
-    void SetParameters(const odometry::OdometryOption &option, float sigma = 0.5f);
+    void SetParameters(const odometry::OdometryOption &option,
+                       float sigma = 0.5f);
     void SetIntrinsics(camera::PinholeCameraIntrinsic intrinsics);
 
     bool Create(int width, int height);
@@ -188,7 +189,13 @@ class RGBDOdometryCudaKernelCaller {
 public:
     static void DoSingleIteration(RGBDOdometryCuda<N> &odometry, size_t level);
     static void ComputeInformationMatrix(RGBDOdometryCuda<N> &odometry);
-    static void PreprocessDepth(RGBDOdometryCuda<N> &odometry);
+
+    static void PreprocessInput(RGBDOdometryCuda<N> &odometry,
+                                ImageCudaf &source_depth_preprocessed,
+                                ImageCudaf &source_intensity_preprocessed,
+                                ImageCudaf &target_depth_preprocessed,
+                                ImageCudaf &target_intensity_preprocessed);
+
     static void NormalizeIntensity(RGBDOdometryCuda<N> &odometry);
 };
 
@@ -202,17 +209,21 @@ void ComputeInformationMatrixKernel(RGBDOdometryCudaDevice<N> odometry);
 
 template<size_t N>
 __GLOBAL__
-void PreprocessDepthKernel(RGBDOdometryCudaDevice<N> odometry);
+void PreprocessInputKernel(RGBDOdometryCudaDevice<N> odometry,
+                           ImageCudaDevicef source_depth_preprocessed,
+                           ImageCudaDevicef source_intensity_preprocessed,
+                           ImageCudaDevicef target_depth_preprocessed,
+                           ImageCudaDevicef target_intensity_preprocessed);
 
 template<size_t N>
 __GLOBAL__
 void NormalizeIntensityKernel(RGBDOdometryCudaDevice<N> odometry,
-    ArrayCudaDevice<float> means);
+                              ArrayCudaDevice<float> means);
 
 template<size_t N>
 __GLOBAL__
 void ComputeInitCorrespondenceMeanKernel(RGBDOdometryCudaDevice<N> odometry,
-    ArrayCudaDevice<float> means);
+                                         ArrayCudaDevice<float> means);
 
 } // cuda
 } // open3d
