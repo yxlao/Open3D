@@ -1,5 +1,5 @@
 //
-// Created by wei on 3/1/19.
+// Created by wei on 3/19/19.
 //
 
 #include <string>
@@ -8,6 +8,7 @@
 
 #include <Cuda/Odometry/RGBDOdometryCuda.h>
 #include <Cuda/Geometry/PointCloudCuda.h>
+#include <Cuda/Registration/RegistrationCudaRefactor.h>
 #include <Cuda/Registration/RegistrationCuda.h>
 
 #include "examples/Cuda/DatasetConfig.h"
@@ -25,8 +26,8 @@ int TwoFragmentRegistration(
     auto target = io::CreatePointCloudFromFile(target_ply_path);
 
     /** Load data **/
-    cuda::RegistrationCuda registration(
-        registration::TransformationEstimationType::ColoredICP);
+    cuda::RegistrationCudaR registration(
+        registration::TransformationEstimationType::PointToPoint);
     registration.Initialize(*source, *target, 0.07f);
 
     /** Prepare visualizer **/
@@ -47,7 +48,7 @@ int TwoFragmentRegistration(
 
         /* Odometry (1 iteration) */
         registration.DoSingleIteration(iter++);
-        *source = registration.estimator_->source_cpu_;
+        *source = registration.source_cpu_;
 
         /* Re-bind geometry */
         vis->UpdateGeometry();

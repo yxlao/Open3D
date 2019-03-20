@@ -11,3 +11,6 @@
 #include "FeatureExtractorCudaKernel.cuh"
 #include "FastGlobalRegistrationCudaDevice.cuh"
 #include "FastGlobalRegistrationCudaKernel.cuh"
+
+#include "RegistrationCudaRefactorDevice.cuh"
+#include "RegistrationCudaRefactorKernel.cuh"

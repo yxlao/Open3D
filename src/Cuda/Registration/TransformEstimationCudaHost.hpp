@@ -140,6 +140,8 @@ ComputeResultsAndTransformation() {
     device_->source_mean_.FromEigen(source_mean);
     device_->target_mean_.FromEigen(target_mean);
 
+    std::cout << source_mean << "\n" << target_mean << "\n" << inliers << "\n";
+
     /** Pass 2: sum reduction Sigma **/
     TransformEstimationPointToPointCudaKernelCaller::
     ComputeResultsAndTransformation(*this);
@@ -149,6 +151,8 @@ ComputeResultsAndTransformation() {
     UnpackSigmasAndRmse(Sigma, source_sigma2, rmse);
     Sigma /= inliers;
     source_sigma2 /= inliers;
+
+    std::cout << Sigma << "\n" << source_sigma2 << "\n";
 
     /** Solve linear system **/
     Eigen::JacobiSVD<Eigen::Matrix3d> svd(Sigma,

@@ -1,7 +1,7 @@
 {
   "name": "CMU - Test",
   "path_dataset": "/media/wei/Data/data/cmu/apt0/",
-  "path_intrinsic": "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda/ReconstructionSystem/config/intrinsics/camera_realsense.json",
+  "path_intrinsic": "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda/ReconstructionSystem/config/intrinsics/camera_realsense_d435.json",
   "n_frames_per_fragment": 100,
   "n_keyframes_per_n_frame": 5,
   "max_depth": 3.0,

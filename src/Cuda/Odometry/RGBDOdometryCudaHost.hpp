@@ -244,9 +244,6 @@ RGBDOdometryCuda<N>::DoSingleIteration(size_t level, int iter) {
     results_.Memset(0);
     correspondences_.set_iterator(0);
 
-#ifdef VISUALIZE_ODOMETRY_INLIERS
-    source_on_target_[level].CopyFrom(target_[level].intensity());
-#endif
     device_->transform_source_to_target_.FromEigen(
         transform_source_to_target_);
 
@@ -254,12 +251,6 @@ RGBDOdometryCuda<N>::DoSingleIteration(size_t level, int iter) {
     timer.Start();
     RGBDOdometryCudaKernelCaller<N>::DoSingleIteration(*this, level);
     timer.Stop();
-
-#ifdef VISUALIZE_ODOMETRY_INLIERS
-    cv::Mat im = source_on_target_[level].DownloadMat();
-        cv::imshow("source_on_target", im);
-        cv::waitKey(-1);
-#endif
 
     std::vector<float> results = results_.DownloadAll();
 

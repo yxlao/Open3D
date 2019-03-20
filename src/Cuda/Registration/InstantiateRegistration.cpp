@@ -8,3 +8,5 @@
 #include "TransformEstimationCudaHost.hpp"
 #include "FeatureExtractorCudaHost.hpp"
 #include "FastGlobalRegistrationCudaHost.hpp"
+
+#include "RegistrationCudaRefactorHost.hpp"
