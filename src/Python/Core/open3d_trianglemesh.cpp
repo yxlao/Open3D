@@ -120,4 +120,24 @@ void pybind_trianglemesh_methods(py::module &m) {
     m.def("create_mesh_coordinate_frame", &CreateMeshCoordinateFrame,
           "Factory function to create a coordinate frame mesh", "size"_a = 1.0,
           "origin"_a = Eigen::Vector3d(0.0, 0.0, 0.0));
+    py::enum_<TriangleMesh::FilterOperandType>(m, "FilterOperandType")
+            .value("Color", TriangleMesh::FilterOperandType::Color)
+            .value("Normal", TriangleMesh::FilterOperandType::Normal)
+            .value("Vertex", TriangleMesh::FilterOperandType::Vertex)
+            .export_values();
+    py::enum_<TriangleMesh::FilterType>(m, "FilterType")
+            .value("Sharpen", TriangleMesh::FilterType::Sharpen)
+            .value("Smooth", TriangleMesh::FilterType::Smooth)
+            .value("TaubinSmooth", TriangleMesh::FilterType::TaubinSmooth)
+            .export_values();
+    m.def("filter_triangle_mesh",
+          [](const TriangleMesh &input_mesh,
+             TriangleMesh::FilterOperandType filter_operand_type,
+             TriangleMesh::FilterType filter_type, double filter_strength) {
+              return *FilterTriangleMesh(input_mesh, filter_operand_type,
+                                         filter_type, filter_strength);
+          },
+          "Function to filter TriangleMesh with pre-defined filtering type",
+          "input_mesh"_a, "filter_operand_type"_a, "filter_type"_a,
+          "filter_strength"_a = 1.0);
 }

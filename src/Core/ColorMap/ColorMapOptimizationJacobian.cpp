@@ -192,6 +192,8 @@ void ColorMapOptimizationJacobian::ComputeJacobianAndResidualNonRigidSparse(
         const int image_boundary_margin) {
     Eigen::Vector14d J_r;
     Eigen::Vector14i pattern;
+    Eigen::Vector14i zero_pattern;
+    zero_pattern.setZero();
     this->ComputeJacobianAndResidualNonRigid(
             row, J_r, r, pattern, mesh, proxy_intensity, images_gray, images_dx,
             images_dy, warping_fields, warping_fields_init, intrinsic,
@@ -201,8 +203,10 @@ void ColorMapOptimizationJacobian::ComputeJacobianAndResidualNonRigidSparse(
     // J_sparse is of size (num_visable_vertex, 6 + 2 * anchor_w * anchor_h)
     //
     // TODO: use sparse vector instead of sparse matrix
-    for (size_t i = 0; i < J_r.size(); ++i) {
-        J_sparse.insert(row, pattern(i)) = J_r(i);
+    if (!pattern.isApprox(zero_pattern)) {
+        for (size_t i = 0; i < J_r.size(); ++i) {
+            J_sparse.insert(row, pattern(i)) = J_r(i);
+        }
     }
 }
 

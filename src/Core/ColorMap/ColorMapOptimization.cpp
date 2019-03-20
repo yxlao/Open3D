@@ -27,7 +27,9 @@
 #include "ColorMapOptimization.h"
 #include <unordered_map>
 #include <ctime>
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 
 #include <Core/Camera/PinholeCameraTrajectory.h>
 #include <Core/ColorMap/ColorMapOptimizationJacobian.h>
@@ -36,10 +38,12 @@
 #include <Core/Geometry/Image.h>
 #include <Core/Geometry/RGBDImage.h>
 #include <Core/Geometry/TriangleMesh.h>
+#include <Core/Geometry/KDTreeFlann.h>
 #include <Core/Utility/Console.h>
 #include <Core/Utility/Eigen.h>
 #include <IO/ClassIO/ImageWarpingFieldIO.h>
 #include <IO/ClassIO/PinholeCameraTrajectoryIO.h>
+#include <IO/ClassIO/TriangleMeshIO.h>
 
 namespace open3d {
 
@@ -62,17 +66,11 @@ void OptimizeImageCoorNonrigid(
     SetProxyIntensityForVertex(mesh, images_gray, warping_fields, camera,
                                visiblity_vertex_to_image, proxy_intensity,
                                option.image_boundary_margin_);
-    if (mesh.vertex_colors_.size() == mesh.vertices_.size()) {
-        for (size_t i = 0; i < proxy_intensity.size(); ++i) {
-            proxy_intensity[i] = 0.2990f * mesh.vertex_colors_[i][0] +
-                                 0.5870f * mesh.vertex_colors_[i][1] +
-                                 0.1140f * mesh.vertex_colors_[i][2];
-        }
-        PrintDebug("[OptimizeImageCoorNonrigid] Injected mesh's color\n");
-    }
     for (int itr = 0; itr < option.maximum_iteration_; itr++) {
         PrintDebug("[Iteration %04d] ", itr + 1);
+#ifdef _OPENMP
         double iter_start_time = omp_get_wtime();
+#endif
         double residual = 0.0;
         double residual_reg = 0.0;
 #ifdef _OPENMP
@@ -204,9 +202,14 @@ void OptimizeImageCoorNonrigid(
                 residual_reg += rr_reg;
             }
         }
+#ifdef _OPENMP
         double iter_time = omp_get_wtime() - iter_start_time;
         PrintDebug("Residual error : %.6f, reg : %.6f, time: %.2f\n", residual,
                    residual_reg, iter_time);
+#else
+        PrintDebug("Residual error : %.6f, reg : %.6f, time: %.2f\n", residual,
+                   residual_reg);
+#endif
         SetProxyIntensityForVertex(mesh, images_gray, warping_fields, camera,
                                    visiblity_vertex_to_image, proxy_intensity,
                                    option.image_boundary_margin_);
@@ -228,14 +231,6 @@ void OptimizeImageCoorRigid(
     SetProxyIntensityForVertex(mesh, images_gray, camera,
                                visiblity_vertex_to_image, proxy_intensity,
                                option.image_boundary_margin_);
-    if (mesh.vertex_colors_.size() == mesh.vertices_.size()) {
-        for (size_t i = 0; i < proxy_intensity.size(); ++i) {
-            proxy_intensity[i] = 0.2990f * mesh.vertex_colors_[i][0] +
-                                 0.5870f * mesh.vertex_colors_[i][1] +
-                                 0.1140f * mesh.vertex_colors_[i][2];
-        }
-        PrintDebug("[OptimizeImageCoorNonrigid] Injected mesh's color\n");
-    }
     for (int itr = 0; itr < option.maximum_iteration_; itr++) {
         PrintDebug("[Iteration %04d] ", itr + 1);
         double residual = 0.0;
@@ -403,6 +398,52 @@ std::vector<ImageWarpingField> CreateWarpingFields(
     return std::move(fields);
 }
 
+void fill_invisible_vertex_colors(
+        TriangleMesh& mesh,
+        const std::vector<std::vector<int>>& visiblity_vertex_to_image,
+        size_t k = 3) {
+    PrintInfo("Enter filling invisible vertex\n");
+    size_t num_vertices = mesh.vertices_.size();
+
+    // Get all invisible indices
+    std::vector<int> invisible_indices;
+    for (size_t vertex_index = 0; vertex_index < num_vertices; ++vertex_index) {
+        if (visiblity_vertex_to_image[vertex_index].size() == 0) {
+            invisible_indices.push_back(vertex_index);
+        }
+    }
+
+    // Build mesh with just the visible vertices
+    // Technically we don't need a unordered_set, just for convenience
+    std::unordered_set<int> invisible_indices_set(invisible_indices.begin(),
+                                                  invisible_indices.end());
+    std::vector<size_t> visible_indices;
+    for (size_t vertex_index = 0; vertex_index < num_vertices; ++vertex_index) {
+        if (invisible_indices_set.find(vertex_index) ==
+            invisible_indices_set.end()) {
+            visible_indices.push_back(vertex_index);
+        }
+    }
+    std::shared_ptr<TriangleMesh> visible_mesh =
+            SelectDownSample(mesh, visible_indices);
+
+    // For each invisible vertex, find k visible vertex and get its average
+    KDTreeFlann kd_tree(*visible_mesh);
+    for (const int& invisible_index : invisible_indices) {
+        std::vector<int> indices;  // indices in visible_mesh
+        std::vector<double> dists;
+        kd_tree.SearchKNN(mesh.vertices_[invisible_index], k, indices, dists);
+        Eigen::Vector3d new_color(0, 0, 0);
+        for (const int& index : indices) {
+            new_color += visible_mesh->vertex_colors_[index];
+        }
+        new_color /= indices.size();
+        mesh.vertex_colors_[invisible_index] = new_color;
+    }
+    PrintInfo("Filling invisible vertex: %zu out of %zu filled\n",
+              invisible_indices.size(), num_vertices);
+}
+
 }  // namespace
 
 std::vector<std::shared_ptr<Image>> ColorMapOptimization(
@@ -411,6 +452,7 @@ std::vector<std::shared_ptr<Image>> ColorMapOptimization(
         PinholeCameraTrajectory& camera,
         const ColorMapOptimizationOption& option
         /* = ColorMapOptimizationOption()*/) {
+    mesh.ComputeVertexNormals();
     PrintDebug("[ColorMapOptimization]\n");
     std::vector<std::shared_ptr<Image>> images_gray, images_dx, images_dy,
             images_color, images_depth;
@@ -420,6 +462,67 @@ std::vector<std::shared_ptr<Image>> ColorMapOptimization(
     PrintDebug("[ColorMapOptimization] :: MakingMasks\n");
     auto images_mask = CreateDepthBoundaryMasks(images_depth, option);
 
+    // Save a mesh colored by visibility count for debugging
+    // {
+    //     // Do not constrain max_visible_cameras_ to get actual camera count
+    //     std::vector<std::vector<int>> visiblity_vertex_to_image;
+    //     std::vector<std::vector<int>> visiblity_image_to_vertex;
+    //     std::tie(visiblity_vertex_to_image, visiblity_image_to_vertex) =
+    //             CreateVertexAndImageVisibility(
+    //                     mesh, images_depth, images_mask, camera,
+    //                     option.maximum_allowable_depth_,
+    //                     option.depth_threshold_for_visiblity_check_, 1000,
+    //                     0);
+    //
+    //     // Visualize how many camera can see one point
+    //     TriangleMesh visibility_mesh(mesh);
+    //     visibility_mesh.PaintUniformColor(Eigen::Vector3d(0.9, 0.9, 0.9));
+    //
+    //     std::vector<size_t> visibility_count(6);
+    //     for (size_t vertex_index = 0;
+    //          vertex_index < visibility_mesh.vertices_.size(); ++vertex_index)
+    //          {
+    //         size_t num_visible_camera =
+    //                 visiblity_vertex_to_image[vertex_index].size();
+    //         if (num_visible_camera == 0) {
+    //             // Black
+    //             visibility_mesh.vertex_colors_[vertex_index] =
+    //                     Eigen::Vector3d(0.0, 0.0, 0.0);
+    //         } else if (num_visible_camera == 1) {
+    //             // Red
+    //             visibility_mesh.vertex_colors_[vertex_index] =
+    //                     Eigen::Vector3d(0.9, 0.0, 0.0);
+    //         } else if (num_visible_camera == 2) {
+    //             // Yellow
+    //             visibility_mesh.vertex_colors_[vertex_index] =
+    //                     Eigen::Vector3d(0.9, 0.9, 0.0);
+    //         } else if (num_visible_camera == 3) {
+    //             // Cyan
+    //             visibility_mesh.vertex_colors_[vertex_index] =
+    //                     Eigen::Vector3d(0.0, 0.9, 0.9);
+    //         } else if (num_visible_camera == 4) {
+    //             // Blue
+    //             visibility_mesh.vertex_colors_[vertex_index] =
+    //                     Eigen::Vector3d(0.0, 0.0, 0.9);
+    //         }
+    //
+    //         if (num_visible_camera < 5) {
+    //             visibility_count[num_visible_camera]++;
+    //         } else {  // >= 5
+    //             visibility_count[5]++;
+    //         }
+    //     }
+    //
+    //     for (size_t count = 0; count < 5; count++) {
+    //         PrintInfo("Visable by %zu cameras: count %zu\n", count,
+    //                   visibility_count[count]);
+    //     }
+    //     PrintInfo("Visable by >= %zu cameras: count %zu\n", 5,
+    //               visibility_count[5]);
+    //     WriteTriangleMesh("camera_colored_k0_r1_y2_b3_c4.ply",
+    //     visibility_mesh);
+    // }
+
     PrintDebug("[ColorMapOptimization] :: VisibilityCheck\n");
     std::vector<std::vector<int>> visiblity_vertex_to_image;
     std::vector<std::vector<int>> visiblity_image_to_vertex;
@@ -427,7 +530,8 @@ std::vector<std::shared_ptr<Image>> ColorMapOptimization(
             CreateVertexAndImageVisibility(
                     mesh, images_depth, images_mask, camera,
                     option.maximum_allowable_depth_,
-                    option.depth_threshold_for_visiblity_check_);
+                    option.depth_threshold_for_visiblity_check_,
+                    option.max_visible_cameras_, option.min_visible_cameras_);
 
     std::vector<double> proxy_intensity;
     if (option.non_rigid_camera_coordinate_) {
@@ -451,6 +555,10 @@ std::vector<std::shared_ptr<Image>> ColorMapOptimization(
                                 visiblity_vertex_to_image,
                                 option.image_boundary_margin_);
     }
+
+    // Fill invisible points
+    fill_invisible_vertex_colors(mesh, visiblity_vertex_to_image, 3);
+
     return images_mask;
 }
 

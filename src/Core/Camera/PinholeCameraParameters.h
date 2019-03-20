@@ -41,6 +41,7 @@ public:
 public:
     bool ConvertToJsonValue(Json::Value &value) const override;
     bool ConvertFromJsonValue(const Json::Value &value) override;
+    Eigen::Vector3d GetCameraCenter() const;
 
 public:
     PinholeCameraIntrinsic intrinsic_;

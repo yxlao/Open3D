@@ -51,7 +51,9 @@ CreateVertexAndImageVisibility(
         const std::vector<std::shared_ptr<Image>>& images_mask,
         const PinholeCameraTrajectory& camera,
         double maximum_allowable_depth,
-        double depth_threshold_for_visiblity_check);
+        double depth_threshold_for_visiblity_check,
+        int max_visible_cameras = 0,
+        int min_visible_cameras = 0);
 
 template <typename T>
 std::tuple<bool, T> QueryImageIntensity(const Image& img,

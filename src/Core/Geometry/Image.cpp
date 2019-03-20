@@ -401,12 +401,15 @@ std::shared_ptr<Image> CreateDepthBoundaryMask(
         auto mask_dilated = DilateImage(
                 *mask, half_dilation_kernel_size_for_discontinuity_map);
         return mask_dilated;
-    } else {
+    } else if (half_dilation_kernel_size_for_discontinuity_map == 0) {
         return mask;
-        // TODO: specify erode size
-        auto mask_eroded = ErodeImage(*mask, 1);
+    } else {
+        auto mask_eroded = ErodeImage(
+                *mask, abs(half_dilation_kernel_size_for_discontinuity_map));
+        PrintInfo("Eroding BoundaryMask by %d\n",
+                  abs(half_dilation_kernel_size_for_discontinuity_map));
         return mask_eroded;
     }
-}
+}  // namespace open3d
 
 }  // namespace open3d

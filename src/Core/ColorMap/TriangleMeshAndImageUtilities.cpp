@@ -32,6 +32,9 @@
 #include <Core/Geometry/RGBDImage.h>
 #include <Core/Geometry/TriangleMesh.h>
 #include <iostream>
+#include <numeric>
+#include <algorithm>
+#include <cmath>
 
 namespace open3d {
 
@@ -51,6 +54,33 @@ inline std::tuple<float, float, float> Project3DPointAndGetUVDepth(
     return std::make_tuple(u, v, z);
 }
 
+template <typename T>
+std::vector<size_t> sort_indexes(const std::vector<T>& v, bool ascend = true) {
+    // https://stackoverflow.com/a/12399290/1255535
+    // Initialize original index locations
+    std::vector<size_t> idx(v.size());
+    std::iota(idx.begin(), idx.end(), 0);
+
+    // Sort indexes based on comparing values in v
+    if (ascend) {
+        std::sort(idx.begin(), idx.end(),
+                  [&v](size_t i1, size_t i2) { return v[i1] < v[i2]; });
+    } else {
+        std::sort(idx.begin(), idx.end(),
+                  [&v](size_t i1, size_t i2) { return v[i1] > v[i2]; });
+    }
+    return idx;
+}
+
+template <typename T>
+std::vector<size_t> argmax_k(const std::vector<T>& v, size_t k) {
+    k = std::min(k, v.size());
+    std::vector<size_t> max_indices = sort_indexes(v, false);
+    std::vector<size_t> k_max_indices(max_indices.begin(),
+                                      max_indices.begin() + k);
+    return k_max_indices;
+}
+
 std::tuple<std::vector<std::vector<int>>, std::vector<std::vector<int>>>
 CreateVertexAndImageVisibility(
         const TriangleMesh& mesh,
@@ -58,7 +88,9 @@ CreateVertexAndImageVisibility(
         const std::vector<std::shared_ptr<Image>>& images_mask,
         const PinholeCameraTrajectory& camera,
         double maximum_allowable_depth,
-        double depth_threshold_for_visiblity_check) {
+        double depth_threshold_for_visiblity_check,
+        int max_visible_cameras,
+        int min_visible_cameras) {
     auto n_camera = camera.parameters_.size();
     auto n_vertex = mesh.vertices_.size();
     std::vector<std::vector<int>> visiblity_vertex_to_image;
@@ -117,10 +149,60 @@ CreateVertexAndImageVisibility(
                 "%d, rj_images_mask %d, rj_depth_threshold %d \n",
                 c, n_vertex, reject_image_boundary, reject_allowable_depth,
                 reject_images_mask, reject_depth_threshold);
-        PrintDebug("[cam %d] %.5f percents are visible\n", c,
-                   double(viscnt) / n_vertex * 100);
+        PrintDebug("[cam %d] %.5f percents, %d vertices are visible\n", c,
+                   double(viscnt) / n_vertex * 100, viscnt);
         fflush(stdout);
     }
+
+    // Select according to min_visible_cameras and max_visible_cameras
+    std::vector<std::vector<int>> selected_visiblity_vertex_to_image;
+    std::vector<std::vector<int>> selected_visiblity_image_to_vertex;
+    selected_visiblity_vertex_to_image.resize(n_vertex);
+    selected_visiblity_image_to_vertex.resize(n_camera);
+
+    // Cache camera centers
+    std::vector<Eigen::Vector3d> camera_centers;
+    for (const PinholeCameraParameters& camera_param : camera.parameters_) {
+        camera_centers.push_back(camera_param.GetCameraCenter());
+    }
+
+    for (int v = 0; v < visiblity_vertex_to_image.size(); ++v) {
+        // Skip if number of visible cameras < min_camera_number
+        if (min_visible_cameras != 0 &&
+            visiblity_vertex_to_image[v].size() < min_visible_cameras) {
+            continue;
+        }
+        std::vector<double> cosines;
+        Eigen::Vector3d vertex = mesh.vertices_[v];
+        Eigen::Vector3d vertex_normal = mesh.vertex_normals_[v];
+        for (int c : visiblity_vertex_to_image[v]) {
+            Eigen::Vector3d vec_v_to_c = camera_centers[c] - vertex;
+            double cosine = vertex_normal.dot(vec_v_to_c) /
+                            vertex_normal.norm() / vec_v_to_c.norm();
+            cosines.push_back(cosine);
+        }
+        std::vector<size_t> best_c_indices;
+
+        // Select <= max_visible_cameras cameras
+        if (max_visible_cameras != 0) {
+            best_c_indices = argmax_k(cosines, max_visible_cameras);
+        } else {
+            best_c_indices = argmax_k(cosines, cosines.size());  // select all
+        }
+        for (size_t best_c_index : best_c_indices) {
+            int best_c = visiblity_vertex_to_image[v][best_c_index];
+            selected_visiblity_vertex_to_image[v].push_back(best_c);
+            selected_visiblity_image_to_vertex[best_c].push_back(v);
+        }
+    }
+
+    visiblity_vertex_to_image = selected_visiblity_vertex_to_image;
+    visiblity_image_to_vertex = selected_visiblity_image_to_vertex;
+    for (int c = 0; c < n_camera; c++) {
+        PrintDebug("[cam %d] After selection %d\n", c,
+                   visiblity_image_to_vertex[c].size());
+    }
+
     return std::move(std::make_tuple(visiblity_vertex_to_image,
                                      visiblity_image_to_vertex));
 }

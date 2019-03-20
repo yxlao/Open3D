@@ -343,4 +343,90 @@ void TriangleMesh::RemoveNonManifoldTriangles() {
                (int)(old_triangle_num - k));
 }
 
+std::shared_ptr<TriangleMesh> FilterTriangleMesh(
+        const TriangleMesh &input_mesh,
+        TriangleMesh::FilterOperandType filter_operand_type,
+        TriangleMesh::FilterType filter_type,
+        double filter_strength) {
+    // Get neighbor filtering function
+    std::function<Eigen::Vector3d(
+            Eigen::Vector3d center_value,
+            const std::vector<Eigen::Vector3d> &neighbor_values,
+            double filter_strength)>
+            neighbor_func;
+    if (filter_type == TriangleMesh::FilterType::Sharpen) {
+        neighbor_func = [](Eigen::Vector3d center_value,
+                           const std::vector<Eigen::Vector3d> &neighbor_values,
+                           double filter_strength) {
+            Eigen::Vector3d neighbor_sum(0, 0, 0);
+            for (const Eigen::Vector3d &neighboar_value : neighbor_values) {
+                neighbor_sum += neighboar_value;
+            }
+            Eigen::Vector3d sharpen_diff =
+                    center_value * neighbor_values.size() - neighbor_sum;
+            // Why can't I directly return filter_center_value?
+            Eigen::Vector3d filter_center_value =
+                    center_value + sharpen_diff * filter_strength;
+            return filter_center_value;
+        };
+    } else if (filter_type == TriangleMesh::FilterType::Smooth) {
+        neighbor_func = [](Eigen::Vector3d center_value,
+                           const std::vector<Eigen::Vector3d> &neighbor_values,
+                           double filter_strength) {
+            Eigen::Vector3d all_sum(0, 0, 0);
+            for (const Eigen::Vector3d &neighboar_value : neighbor_values) {
+                all_sum += neighboar_value;
+            }
+            all_sum += center_value;
+            Eigen::Vector3d filter_center_value =
+                    all_sum / (neighbor_values.size() + 1.);
+            return filter_center_value;
+        };
+    } else {
+        throw std::runtime_error("Unknown filter type");
+    }
+
+    // Get operand values based on operand type
+    std::vector<Eigen::Vector3d> values;
+    if (filter_operand_type == TriangleMesh::FilterOperandType::Color) {
+        values = input_mesh.vertex_colors_;
+    } else if (filter_operand_type == TriangleMesh::FilterOperandType::Normal) {
+        values = input_mesh.vertex_normals_;
+    } else if (filter_operand_type == TriangleMesh::FilterOperandType::Vertex) {
+        values = input_mesh.vertices_;
+    } else {
+        throw std::runtime_error("Unknown filter operand type");
+    }
+
+    // Apply Filter
+    std::vector<Eigen::Vector3d> filtered_values;
+    filtered_values.resize(values.size());
+    auto filtered_mesh = std::make_shared<TriangleMesh>(input_mesh);
+    filtered_mesh->ComputeAdjacencyList();
+    for (size_t vertex_idx = 0;
+         vertex_idx < filtered_mesh->adjacency_list_.size(); vertex_idx++) {
+        Eigen::Vector3d center_value = values[vertex_idx];
+        std::vector<Eigen::Vector3d> neighbor_values;
+        for (size_t neighbor_vertex_index :
+             filtered_mesh->adjacency_list_[vertex_idx]) {
+            neighbor_values.push_back(values[neighbor_vertex_index]);
+        }
+        filtered_values[vertex_idx] =
+                neighbor_func(center_value, neighbor_values, filter_strength);
+    }
+
+    // Write filtered value to new mesh
+    if (filter_operand_type == TriangleMesh::FilterOperandType::Color) {
+        filtered_mesh->vertex_colors_ = filtered_values;
+    } else if (filter_operand_type == TriangleMesh::FilterOperandType::Normal) {
+        filtered_mesh->vertex_normals_ = filtered_values;
+    } else if (filter_operand_type == TriangleMesh::FilterOperandType::Vertex) {
+        filtered_mesh->vertices_ = filtered_values;
+    } else {
+        throw std::runtime_error("Unknown filter operand type");
+    }
+
+    return filtered_mesh;
+}
+
 }  // namespace open3d

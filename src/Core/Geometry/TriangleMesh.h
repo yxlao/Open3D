@@ -37,6 +37,12 @@ namespace open3d {
 
 class TriangleMesh : public Geometry3D {
 public:
+    /// The datastructure type to apply filter on
+    enum class FilterOperandType { Color, Normal, Vertex };
+
+    /// The filter type to apply to mesh datastructures
+    enum class FilterType { Sharpen, Smooth, TaubinSmooth };
+
     TriangleMesh() : Geometry3D(Geometry::GeometryType::TriangleMesh){};
     ~TriangleMesh() override{};
 
@@ -199,5 +205,12 @@ std::shared_ptr<TriangleMesh> CreateMeshArrow(double cylinder_radius = 1.0,
 std::shared_ptr<TriangleMesh> CreateMeshCoordinateFrame(
         double size = 1.0,
         const Eigen::Vector3d &origin = Eigen::Vector3d(0.0, 0.0, 0.0));
+
+/// Function to filter TriangleMesh with pre-defined filtering type
+std::shared_ptr<TriangleMesh> FilterTriangleMesh(
+        const TriangleMesh &input_mesh,
+        TriangleMesh::FilterOperandType filter_operand_type,
+        TriangleMesh::FilterType filter_type,
+        double filter_strength = 1.0);
 
 }  // namespace open3d

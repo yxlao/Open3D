@@ -73,4 +73,11 @@ bool PinholeCameraParameters::ConvertFromJsonValue(const Json::Value &value) {
     return true;
 }
 
+Eigen::Vector3d PinholeCameraParameters::GetCameraCenter() const {
+    Eigen::Matrix3d R = extrinsic_.block(0, 0, 3, 3);
+    Eigen::Vector3d t = extrinsic_.block(0, 3, 3, 1);
+    Eigen::Vector3d camera_center = -R.transpose() * t;
+    return camera_center;
+}
+
 }  // namespace open3d
