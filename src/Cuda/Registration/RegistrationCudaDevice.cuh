@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include "RegistrationCudaRefactor.h"
+#include "RegistrationCuda.h"
 
 namespace open3d {
 namespace cuda {
 
 __device__
-void RegistrationCudaDeviceR::ComputePointwiseColoredJacobianAndResidual(
+void RegistrationCudaDevice::ComputePointwiseColoredJacobianAndResidual(
     int source_idx,
     int target_idx,
     Vector6f &jacobian_I,
@@ -50,7 +50,7 @@ void RegistrationCudaDeviceR::ComputePointwiseColoredJacobianAndResidual(
 }
 
 __device__
-void RegistrationCudaDeviceR::ComputePointwisePointToPlaneJacobianAndResidual(
+void RegistrationCudaDevice::ComputePointwisePointToPlaneJacobianAndResidual(
     int source_idx, int target_idx,
     Vector6f &jacobian, float &residual) {
 
@@ -69,7 +69,7 @@ void RegistrationCudaDeviceR::ComputePointwisePointToPlaneJacobianAndResidual(
 }
 
 __device__
-void RegistrationCudaDeviceR::ComputePointwisePointToPointSigmaAndResidual(
+void RegistrationCudaDevice::ComputePointwisePointToPointSigmaAndResidual(
     int source_idx, int target_idx,
     const Vector3f &mean_source, const Vector3f &mean_target,
     Matrix3f &Sigma, float &source_sigma2, float &residual) {
@@ -97,7 +97,7 @@ void RegistrationCudaDeviceR::ComputePointwisePointToPointSigmaAndResidual(
 
 
 __device__
-void RegistrationCudaDeviceR::ComputePixelwiseInformationJacobian(
+void RegistrationCudaDevice::ComputePixelwiseInformationJacobian(
     const Vector3f &point,
     Vector6f &jacobian_x, Vector6f &jacobian_y, Vector6f &jacobian_z) {
     jacobian_x(0) = jacobian_x(4) = jacobian_x(5) = 0;
@@ -118,7 +118,7 @@ void RegistrationCudaDeviceR::ComputePixelwiseInformationJacobian(
 
 
 __device__
-void RegistrationCudaDeviceR::ComputePointwiseColorGradient(
+void RegistrationCudaDevice::ComputePointwiseColorGradient(
     int idx, CorrespondenceSetCudaDevice &corres_for_color_gradient) {
     int i = corres_for_color_gradient.indices_[idx];
 

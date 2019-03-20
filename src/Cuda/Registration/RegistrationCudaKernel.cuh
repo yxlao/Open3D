@@ -5,17 +5,18 @@
 #pragma once
 
 #include <Cuda/Common/UtilsCuda.h>
+#include <Cuda/Common/JacobianCuda.h>
 #include <Cuda/Container/ArrayCudaDevice.cuh>
 #include <Cuda/Container/Array2DCudaDevice.cuh>
 
-#include <RegistrationCudaRefactor.h>
+#include <RegistrationCuda.h>
 
 namespace open3d {
 namespace cuda {
 
 __global__
 void ComputeColorGradientKernel(
-    RegistrationCudaDeviceR estimation,
+    RegistrationCudaDevice estimation,
     CorrespondenceSetCudaDevice corres_for_gradient) {
 
     const int idx = threadIdx.x + blockIdx.x * blockDim.x;
@@ -24,8 +25,8 @@ void ComputeColorGradientKernel(
     estimation.ComputePointwiseColorGradient(idx, corres_for_gradient);
 }
 
-void RegistrationCudaKernelCallerR::ComputeColorGradeint(
-    RegistrationCudaR &estimation,
+void RegistrationCudaKernelCaller::ComputeColorGradeint(
+    RegistrationCuda &estimation,
     CorrespondenceSetCuda &corres_for_color_gradient) {
 
     const dim3 blocks(
@@ -40,7 +41,7 @@ void RegistrationCudaKernelCallerR::ComputeColorGradeint(
 
 __global__
 void BuildLinearSystemForColoredICPKernel(
-    RegistrationCudaDeviceR estimation) {
+    RegistrationCudaDevice estimation) {
     __shared__ float local_sum0[THREAD_1D_UNIT];
     __shared__ float local_sum1[THREAD_1D_UNIT];
     __shared__ float local_sum2[THREAD_1D_UNIT];
@@ -116,8 +117,8 @@ void BuildLinearSystemForColoredICPKernel(
     }
 }
 
-void RegistrationCudaKernelCallerR::BuildLinearSystemForColoredICP(
-    RegistrationCudaR &registration) {
+void RegistrationCudaKernelCaller::BuildLinearSystemForColoredICP(
+    RegistrationCuda &registration) {
 
     const dim3 blocks(DIV_CEILING(registration.correspondences_.indices_.size(),
                                   THREAD_1D_UNIT));
@@ -132,7 +133,7 @@ void RegistrationCudaKernelCallerR::BuildLinearSystemForColoredICP(
 
 __global__
 void BuildLinearSystemForPointToPlaneICPKernel(
-    RegistrationCudaDeviceR estimation) {
+    RegistrationCudaDevice estimation) {
     __shared__ float local_sum0[THREAD_1D_UNIT];
     __shared__ float local_sum1[THREAD_1D_UNIT];
     __shared__ float local_sum2[THREAD_1D_UNIT];
@@ -210,8 +211,8 @@ void BuildLinearSystemForPointToPlaneICPKernel(
     }
 }
 
-void RegistrationCudaKernelCallerR::BuildLinearSystemForPointToPlaneICP(
-    RegistrationCudaR &registration) {
+void RegistrationCudaKernelCaller::BuildLinearSystemForPointToPlaneICP(
+    RegistrationCuda &registration) {
     const dim3 blocks(DIV_CEILING(registration.correspondences_.indices_.size(),
                                   THREAD_1D_UNIT));
     const dim3 threads(THREAD_1D_UNIT);
@@ -225,7 +226,7 @@ void RegistrationCudaKernelCallerR::BuildLinearSystemForPointToPlaneICP(
 
 __global__
 void ComputeSumForPointToPointICPKernel(
-    RegistrationCudaDeviceR estimation) {
+    RegistrationCudaDevice estimation) {
     __shared__ float local_sum0[THREAD_1D_UNIT];
     __shared__ float local_sum1[THREAD_1D_UNIT];
     __shared__ float local_sum2[THREAD_1D_UNIT];
@@ -281,8 +282,8 @@ void ComputeSumForPointToPointICPKernel(
     }
 }
 
-void RegistrationCudaKernelCallerR::ComputeSumForPointToPointICP(
-    RegistrationCudaR &registration) {
+void RegistrationCudaKernelCaller::ComputeSumForPointToPointICP(
+    RegistrationCuda &registration) {
     const dim3 blocks(DIV_CEILING(registration.correspondences_.indices_.size(),
                                   THREAD_1D_UNIT));
     const dim3 threads(THREAD_1D_UNIT);
@@ -294,7 +295,7 @@ void RegistrationCudaKernelCallerR::ComputeSumForPointToPointICP(
 
 __global__
 void BuildLinearSystemForPointToPointICPKernel(
-    RegistrationCudaDeviceR estimation,
+    RegistrationCudaDevice estimation,
     const Vector3f mean_source, const Vector3f mean_target) {
     __shared__ float local_sum0[THREAD_1D_UNIT];
     __shared__ float local_sum1[THREAD_1D_UNIT];
@@ -351,8 +352,8 @@ void BuildLinearSystemForPointToPointICPKernel(
     }
 }
 
-void RegistrationCudaKernelCallerR::BuildLinearSystemForPointToPointICP(
-    RegistrationCudaR &registration,
+void RegistrationCudaKernelCaller::BuildLinearSystemForPointToPointICP(
+    RegistrationCuda &registration,
     const Vector3f &mean_source, const Vector3f &mean_target) {
 
     const dim3 blocks(DIV_CEILING(registration.correspondences_.indices_.size(),
@@ -366,7 +367,7 @@ void RegistrationCudaKernelCallerR::BuildLinearSystemForPointToPointICP(
 }
 
 __global__
-void ComputeInformationMatrixKernel(RegistrationCudaDeviceR estimation) {
+void ComputeInformationMatrixKernel(RegistrationCudaDevice estimation) {
     __shared__ float local_sum0[THREAD_1D_UNIT];
     __shared__ float local_sum1[THREAD_1D_UNIT];
     __shared__ float local_sum2[THREAD_1D_UNIT];
@@ -414,8 +415,8 @@ void ComputeInformationMatrixKernel(RegistrationCudaDeviceR estimation) {
     }
 }
 
-void RegistrationCudaKernelCallerR::ComputeInformationMatrix(
-    RegistrationCudaR &estimation) {
+void RegistrationCudaKernelCaller::ComputeInformationMatrix(
+    RegistrationCuda &estimation) {
     const dim3 blocks(DIV_CEILING(estimation.correspondences_.indices_.size(),
                                   THREAD_1D_UNIT));
     const dim3 threads(THREAD_1D_UNIT);

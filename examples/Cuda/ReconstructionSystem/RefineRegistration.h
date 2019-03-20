@@ -7,7 +7,6 @@
 #include <Open3D/Open3D.h>
 
 #include <Cuda/Registration/RegistrationCuda.h>
-#include <Cuda/Registration/ColoredICPCuda.h>
 #include <Cuda/Registration/FastGlobalRegistrationCuda.h>
 
 #include "examples/Cuda/DatasetConfig.h"

@@ -2,6 +2,7 @@
 // Created by wei on 1/14/19.
 //
 
+#include <Open3D/Open3D.h>
 #include "CorrespondenceSetCuda.h"
 
 namespace open3d {

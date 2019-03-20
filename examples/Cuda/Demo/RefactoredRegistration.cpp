@@ -8,7 +8,6 @@
 
 #include <Cuda/Odometry/RGBDOdometryCuda.h>
 #include <Cuda/Geometry/PointCloudCuda.h>
-#include <Cuda/Registration/RegistrationCudaRefactor.h>
 #include <Cuda/Registration/RegistrationCuda.h>
 
 #include "examples/Cuda/DatasetConfig.h"
@@ -26,8 +25,8 @@ int TwoFragmentRegistration(
     auto target = io::CreatePointCloudFromFile(target_ply_path);
 
     /** Load data **/
-    cuda::RegistrationCudaR registration(
-        registration::TransformationEstimationType::PointToPoint);
+    cuda::RegistrationCuda registration(
+        registration::TransformationEstimationType::PointToPlane);
     registration.Initialize(*source, *target, 0.07f);
 
     /** Prepare visualizer **/
