@@ -6,6 +6,7 @@
 
 #include "PointCloudCuda.h"
 #include <src/Cuda/Container/ArrayCudaDevice.cuh>
+#include <Cuda/Common/ReductionCuda.h>
 
 namespace open3d {
 namespace cuda {
@@ -90,7 +91,7 @@ void GetMinBoundKernel(PointCloudCudaDevice pcl,
     local_min_z[tid] = vertex(2);
     __syncthreads();
 
-    TripleBlockReduceMin<float>(local_min_x, local_min_y, local_min_z, tid);
+    BlockReduceMin<float>(tid, local_min_x, local_min_y, local_min_z);
 
     if (tid == 0) {
         atomicMinf(&(min_bound[0](0)), local_min_x[0]);
@@ -127,7 +128,7 @@ void GetMaxBoundKernel(PointCloudCudaDevice pcl,
     local_max_z[tid] = vertex(2);
     __syncthreads();
 
-    TripleBlockReduceMax<float>(local_max_x, local_max_y, local_max_z, tid);
+    BlockReduceMax<float>(tid, local_max_x, local_max_y, local_max_z);
 
     if (tid == 0) {
         atomicMaxf(&(max_bound[0](0)), local_max_x[0]);
@@ -172,7 +173,7 @@ void ComputeSumKernel(PointCloudCudaDevice device,
     local_sum2[tid] = vertex(2);
     __syncthreads();
 
-    TripleBlockReduceSum<float>(local_sum0, local_sum1, local_sum2, tid);
+    BlockReduceSum<float>(tid, local_sum0, local_sum1, local_sum2);
 
     if (tid == 0) {
         atomicAdd(&sum[0](0), local_sum0[0]);
@@ -210,7 +211,7 @@ void SubMeanAndGetMaxScaleKernel(PointCloudCudaDevice device,
     local_max[tid] = vertex.norm();
     __syncthreads();
 
-    BlockReduceMax<float>(local_max, tid);
+    BlockReduceMax<float>(tid, local_max);
 
     if (tid == 0) {
         atomicMaxf(&scale[0], local_max[0]);

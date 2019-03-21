@@ -3,6 +3,7 @@
 //
 
 #include "RGBDOdometryCudaDevice.cuh"
+#include <Cuda/Common/ReductionCuda.h>
 #include <math_constants.h>
 
 namespace open3d {
@@ -63,7 +64,7 @@ void DoSingleIterationKernel(RGBDOdometryCudaDevice<N> odometry, size_t level) {
         local_sum2[tid] = mask ? JtJ(i + 2) : 0;
         __syncthreads();
 
-        TripleBlockReduceSum<float>(local_sum0, local_sum1, local_sum2, tid);
+        BlockReduceSum<float>(tid, local_sum0, local_sum1, local_sum2);
 
         if (tid == 0) {
             atomicAdd(&odometry.results_.at(i + 0), local_sum0[0]);
@@ -81,7 +82,7 @@ void DoSingleIterationKernel(RGBDOdometryCudaDevice<N> odometry, size_t level) {
         local_sum2[tid] = mask ? Jtr(i + 2) : 0;
         __syncthreads();
 
-        TripleBlockReduceSum<float>(local_sum0, local_sum1, local_sum2, tid);
+        BlockReduceSum<float>(tid, local_sum0, local_sum1, local_sum2);
 
         if (tid == 0) {
             atomicAdd(&odometry.results_.at(i + 0 + OFFSET1), local_sum0[0]);
@@ -99,7 +100,7 @@ void DoSingleIterationKernel(RGBDOdometryCudaDevice<N> odometry, size_t level) {
         local_sum1[tid] = mask ? 1 : 0;
         __syncthreads();
 
-        DoubleBlockReduceSum<float>(local_sum0, local_sum1, tid);
+        BlockReduceSum<float>(tid, local_sum0, local_sum1);
 
         if (tid == 0) {
             atomicAdd(&odometry.results_.at(0 + OFFSET2), local_sum0[0]);
@@ -161,7 +162,7 @@ void ComputeInformationMatrixKernel(RGBDOdometryCudaDevice<N> odometry) {
         local_sum2[tid] = mask ? JtJ(i + 2) : 0;
         __syncthreads();
 
-        TripleBlockReduceSum<float>(local_sum0, local_sum1, local_sum2, tid);
+        BlockReduceSum<float>(tid, local_sum0, local_sum1, local_sum2);
 
         if (tid == 0) {
             atomicAdd(&odometry.results_.at(i + 0), local_sum0[0]);
@@ -268,14 +269,12 @@ void ComputeInitCorrespondenceMeanKernel(
         odometry.correspondences_.push_back(Vector4i(x, y, x_target, y_target));
     }
 
-    local_sum0[tid] = mask ?
-                      odometry.source_intensity_[0](x, y)(0) : 0;
-    local_sum1[tid] = mask ?
-                      odometry.target_intensity_[0](x_target, y_target)(0) : 0;
+    local_sum0[tid] = mask ? odometry.source_intensity_[0](x, y)(0) : 0;
+    local_sum1[tid] = mask ? odometry.target_intensity_[0](x_target, y_target)(0) : 0;
     local_sum2[tid] = mask ? 1 : 0;
     __syncthreads();
 
-    TripleBlockReduceSum<float>(local_sum0, local_sum1, local_sum2, tid);
+    BlockReduceSum<float>(tid, local_sum0, local_sum1, local_sum2);
 
     if (tid == 0) {
         atomicAdd(&means[0], local_sum0[0]);

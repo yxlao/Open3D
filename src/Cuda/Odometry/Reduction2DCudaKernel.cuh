@@ -32,7 +32,7 @@ void ReduceSum2DKernel(ImageCudaDevice<Scalar, Channel> src, Scalar *sum) {
         local_sum[tid] = Scalar(src.at(x, y)(0));
         __syncthreads();
 
-        BlockReduceSum<Scalar>(local_sum, tid);
+        BlockReduceSum<Scalar>(tid, local_sum);
         if (tid == 0) atomicAdd(sum, local_sum[0]);
     }
 }

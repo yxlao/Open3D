@@ -6,6 +6,7 @@
 
 #include "TriangleMeshCuda.h"
 #include <src/Cuda/Container/ArrayCudaDevice.cuh>
+#include <Cuda/Common/ReductionCuda.h>
 
 namespace open3d {
 namespace cuda {
@@ -26,7 +27,7 @@ void GetMinBoundKernel(TriangleMeshCudaDevice mesh,
     local_min_z[tid] = vertex(2);
     __syncthreads();
 
-    TripleBlockReduceMin<float>(local_min_x, local_min_y, local_min_z, tid);
+    BlockReduceMin<float>(tid, local_min_x, local_min_y, local_min_z);
 
     if (tid == 0) {
         atomicMinf(&(min_bound[0](0)), local_min_x[0]);
@@ -63,7 +64,7 @@ void GetMaxBoundKernel(TriangleMeshCudaDevice mesh,
     local_max_z[tid] = vertex(2);
     __syncthreads();
 
-    TripleBlockReduceMax<float>(local_max_x, local_max_y, local_max_z, tid);
+    BlockReduceMax<float>(tid, local_max_x, local_max_y, local_max_z);
 
     if (tid == 0) {
         atomicMaxf(&(max_bound[0](0)), local_max_x[0]);
