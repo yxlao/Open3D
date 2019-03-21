@@ -30,22 +30,23 @@ void DoSingleIterationKernel(RGBDOdometryCudaDevice<N> odometry, size_t level) {
         return;
 
     int x_target = -1, y_target = -1;
-    float residual_I, residual_D;
+    float d_target;
     Vector3f X_source_on_target;
-    bool mask = odometry.ComputePixelwiseCorrespondenceAndResidual(
-        x, y, level, x_target, y_target,
-        X_source_on_target, residual_I, residual_D);
+    bool mask = odometry.ComputePixelwiseCorrespondence(
+        x, y, level, x_target, y_target, X_source_on_target, d_target);
 
+    float residual_I, residual_D;
     Vector6f jacobian_I, jacobian_D, Jtr;
     HessianCuda<6> JtJ;
-    mask = mask && odometry.ComputePixelwiseJacobian(
-        x_target, y_target, level, X_source_on_target,
-        jacobian_I, jacobian_D);
+    mask = mask && odometry.ComputePixelwiseJacobianAndResidual(
+        x, y, x_target, y_target, level, X_source_on_target, d_target,
+        jacobian_I, jacobian_D, residual_I, residual_D);
     if (mask) {
         odometry.correspondences_.push_back(Vector4i(x, y, x_target, y_target));
         ComputeJtJAndJtr(jacobian_I, jacobian_D, residual_I, residual_D,
                          JtJ, Jtr);
-//        printf("- (%d %d) -> "
+
+        //        printf("- (%d %d) -> "
 //               "(%f %f %f %f %f %f) - %f "
 //               "(%f %f %f %f %f %f) - %f\n",
 //            x_target, y_target,
@@ -258,11 +259,10 @@ void ComputeInitCorrespondenceMeanKernel(
         return;
 
     int x_target = -1, y_target = -1;
-    float residual_I, residual_D;
+    float d_target;
     Vector3f X_source_on_target;
-    bool mask = odometry.ComputePixelwiseCorrespondenceAndResidual(
-        x, y, 0, x_target, y_target,
-        X_source_on_target, residual_I, residual_D);
+    bool mask = odometry.ComputePixelwiseCorrespondence(
+        x, y, 0, x_target, y_target, X_source_on_target, d_target);
 
     if (mask) {
         odometry.correspondences_.push_back(Vector4i(x, y, x_target, y_target));

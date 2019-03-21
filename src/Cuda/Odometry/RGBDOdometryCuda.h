@@ -105,16 +105,16 @@ public:
     }
 
 public:
-    __DEVICE__ bool ComputePixelwiseCorrespondenceAndResidual(
+    __DEVICE__ bool ComputePixelwiseCorrespondence(
         int x_source, int y_source, size_t level,
         int &x_target, int &y_target,
-        Vector3f &X_source_on_target,
-        float &residual_I, float &residual_D);
+        Vector3f &X_source_on_target, float &d_target);
 
-    __DEVICE__ bool ComputePixelwiseJacobian(
-        int x_target, int y_target, size_t level,
-        const Vector3f &X_target,
-        Vector6f &jacobian_I, Vector6f &jacobian_D);
+    __DEVICE__ bool ComputePixelwiseJacobianAndResidual(
+        int x_source, int y_source, int x_target, int y_target, size_t level,
+        const Vector3f &X_source_on_target, const float &d_target,
+        Vector6f &jacobian_I, Vector6f &jacobian_D,
+        float &residual_I, float &residual_D);
 
     __DEVICE__ bool ComputePixelwiseCorrespondenceAndInformationJacobian(
         int x_source, int y_source, /* Always size 0 */

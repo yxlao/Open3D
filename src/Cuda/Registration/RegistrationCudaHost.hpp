@@ -139,6 +139,18 @@ Eigen::Matrix6d RegistrationCuda::ComputeInformationMatrix() {
     return Eigen::Matrix6d::Identity() + JtJ;
 }
 
+Eigen::Matrix6d RegistrationCuda::ComputeInformationMatrix(
+    geometry::PointCloud &source,
+    geometry::PointCloud &target,
+    float max_correspondence_distance,
+    const Eigen::Matrix4d &init) {
+
+    RegistrationCuda registration(
+        registration::TransformationEstimationType::PointToPoint);
+    registration.Initialize(source, target, max_correspondence_distance, init);
+    return registration.ComputeInformationMatrix();
+}
+
 /* ICP */
 RegistrationResultCuda RegistrationCuda::DoSingleIteration(int iter) {
     RegistrationResultCuda result;

@@ -61,17 +61,8 @@ std::vector<Match> MatchFragments(DatasetConfig &config) {
                 auto result = fgr.ComputeRegistration();
                 match.trans_source_to_target = result.transformation_;
 
-                /**!!! THIS SHOULD BE REFACTORED !!!**/
-                cuda::RegistrationCuda registration(
-                    registration::TransformationEstimationType::PointToPoint);
-                auto source_copy = *source;
-                source_copy.Transform(result.transformation_);
-                registration.Initialize(source_copy, *target,
-                                        config.voxel_size_ * 1.4f);
-                registration.transform_source_to_target_ =
-                    result.transformation_;
-                match.information = registration.ComputeInformationMatrix();
-
+                match.information = cuda::RegistrationCuda::ComputeInformationMatrix(
+                    *source, *target, config.voxel_size_ * 1.4f, result.transformation_);
                 match.success = match.trans_source_to_target.trace() != 4.0
                     && match.information(5, 5) /
                         std::min(source->points_.size(),

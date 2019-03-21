@@ -121,6 +121,13 @@ public:
     RegistrationResultCuda ComputeICP(int iter = 60);
     Eigen::Matrix6d ComputeInformationMatrix();
 
+    /** Designed for FGR **/
+    static Eigen::Matrix6d ComputeInformationMatrix(
+        geometry::PointCloud &source,
+        geometry::PointCloud &target,
+        float max_correspondence_distance,
+        const Eigen::Matrix4d &init = Eigen::Matrix4d::Identity());
+
     /* Components for ICP */
     RegistrationResultCuda DoSingleIteration(int iter);
     void GetCorrespondences();
@@ -181,7 +188,7 @@ __GLOBAL__ void ComputeSumForPointToPointICPKernel(
     RegistrationCudaDevice registration);
 __GLOBAL__ void BuildLinearSystemForPointToPointICPKernel(
     RegistrationCudaDevice registration,
-    const Vector3f mean_source, const Vector3f mean_target);
+    Vector3f mean_source, Vector3f mean_target);
 
 __GLOBAL__ void ComputeInformationMatrixKernel(
     RegistrationCudaDevice registration);

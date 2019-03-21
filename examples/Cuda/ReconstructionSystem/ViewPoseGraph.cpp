@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
     DatasetConfig config;
 
     std::string config_path = argc > 1 ? argv[1] :
-        kDefaultDatasetConfigDir + "/cmu/zimo.json";
+        kDefaultDatasetConfigDir + "/tum/fr3_household.json";
 
     bool is_success = io::ReadIJsonConvertible(config_path, config);
     if (! is_success) return 1;

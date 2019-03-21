@@ -296,7 +296,7 @@ void RegistrationCudaKernelCaller::ComputeSumForPointToPointICP(
 __global__
 void BuildLinearSystemForPointToPointICPKernel(
     RegistrationCudaDevice estimation,
-    const Vector3f mean_source, const Vector3f mean_target) {
+    Vector3f mean_source, Vector3f mean_target) {
     __shared__ float local_sum0[THREAD_1D_UNIT];
     __shared__ float local_sum1[THREAD_1D_UNIT];
     __shared__ float local_sum2[THREAD_1D_UNIT];

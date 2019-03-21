@@ -17,11 +17,10 @@ namespace cuda {
  */
 template<size_t N>
 __device__
-bool RGBDOdometryCudaDevice<N>::ComputePixelwiseCorrespondenceAndResidual(
+bool RGBDOdometryCudaDevice<N>::ComputePixelwiseCorrespondence(
     int x_source, int y_source, size_t level,
     int &x_target, int &y_target,
-    Vector3f &X_source_on_target,
-    float &residual_I, float &residual_D) {
+    Vector3f &X_source_on_target, float &d_target) {
 
     /** Check 1: depth valid in source? **/
     float d_source = source_depth_[level].at(x_source, y_source)(0);
@@ -41,27 +40,29 @@ bool RGBDOdometryCudaDevice<N>::ComputePixelwiseCorrespondenceAndResidual(
     if (!mask) return false;
 
     /** Check 3: depth valid in target? Occlusion? -> 1ms **/
-    float d_target = target_depth_[level].at(p_warped(0), p_warped(1))(0);
+    d_target = target_depth_[level].at(p_warped(0), p_warped(1))(0);
     mask = IsValidDepth(d_target)
         && IsValidDepthDiff(d_target - X_source_on_target(2));
     if (!mask) return false;
 
     x_target = p_warped(0);
     y_target = p_warped(1);
-    residual_I = sqrt_coeff_I_ * (
-        target_intensity_[level].at(x_target, y_target)(0) -
-            source_intensity_[level].at(x_source, y_source)(0));
-    residual_D = sqrt_coeff_D_ * (d_target - X_source_on_target(2));
 
     return true;
 }
 
 template<size_t N>
 __device__
-bool RGBDOdometryCudaDevice<N>::ComputePixelwiseJacobian(
-    int x_target, int y_target, size_t level,
-    const Vector3f &X_target,
-    Vector6f &jacobian_I, Vector6f &jacobian_D) {
+bool RGBDOdometryCudaDevice<N>::ComputePixelwiseJacobianAndResidual(
+    int x_source, int y_source, int x_target, int y_target, size_t level,
+    const Vector3f &X_source_on_target, const float &d_target,
+    Vector6f &jacobian_I, Vector6f &jacobian_D,
+    float &residual_I, float &residual_D) {
+
+    residual_I = sqrt_coeff_I_ * (
+        target_intensity_[level].at(x_target, y_target)(0) -
+            source_intensity_[level].at(x_source, y_source)(0));
+    residual_D = sqrt_coeff_D_ * (d_target - X_source_on_target(2));
 
     /********** Phase 2: Build linear system **********/
     /** Checks passed, let's rock! -> 3ms, can be 2ms faster if we don't use
@@ -94,31 +95,31 @@ bool RGBDOdometryCudaDevice<N>::ComputePixelwiseJacobian(
 
     float fx = intrinsics_[level].fx_;
     float fy = intrinsics_[level].fy_;
-    float inv_Z = 1.0f / X_target(2);
+    float inv_Z = 1.0f / X_source_on_target(2);
     float fx_on_Z = fx * inv_Z;
     float fy_on_Z = fy * inv_Z;
 
     float c0 = dx_I * fx_on_Z;
     float c1 = dy_I * fy_on_Z;
-    float c2 = -(c0 * X_target(0) + c1 * X_target(1)) * inv_Z;
+    float c2 = -(c0 * X_source_on_target(0) + c1 * X_source_on_target(1)) * inv_Z;
 
-    jacobian_I(0) = sqrt_coeff_I_ * (-X_target(2) * c1 + X_target(1) * c2);
-    jacobian_I(1) = sqrt_coeff_I_ * (X_target(2) * c0 - X_target(0) * c2);
-    jacobian_I(2) = sqrt_coeff_I_ * (-X_target(1) * c0 + X_target(0) * c1);
+    jacobian_I(0) = sqrt_coeff_I_ * (-X_source_on_target(2) * c1 + X_source_on_target(1) * c2);
+    jacobian_I(1) = sqrt_coeff_I_ * (X_source_on_target(2) * c0 - X_source_on_target(0) * c2);
+    jacobian_I(2) = sqrt_coeff_I_ * (-X_source_on_target(1) * c0 + X_source_on_target(0) * c1);
     jacobian_I(3) = sqrt_coeff_I_ * c0;
     jacobian_I(4) = sqrt_coeff_I_ * c1;
     jacobian_I(5) = sqrt_coeff_I_ * c2;
 
     float d0 = dx_D * fx_on_Z;
     float d1 = dy_D * fy_on_Z;
-    float d2 = -(d0 * X_target(0) + d1 * X_target(1)) * inv_Z;
+    float d2 = -(d0 * X_source_on_target(0) + d1 * X_source_on_target(1)) * inv_Z;
 
     jacobian_D(0) = sqrt_coeff_D_ *
-        ((-X_target(2) * d1 + X_target(1) * d2) - X_target(1));
+        ((-X_source_on_target(2) * d1 + X_source_on_target(1) * d2) - X_source_on_target(1));
     jacobian_D(1) = sqrt_coeff_D_ *
-        ((X_target(2) * d0 - X_target(0) * d2) + X_target(0));
+        ((X_source_on_target(2) * d0 - X_source_on_target(0) * d2) + X_source_on_target(0));
     jacobian_D(2) = sqrt_coeff_D_ *
-        (-X_target(1) * d0 + X_target(0) * d1);
+        (-X_source_on_target(1) * d0 + X_source_on_target(0) * d1);
     jacobian_D(3) = sqrt_coeff_D_ * d0;
     jacobian_D(4) = sqrt_coeff_D_ * d1;
     jacobian_D(5) = sqrt_coeff_D_ * (d2 - 1.0f);
