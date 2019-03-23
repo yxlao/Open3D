@@ -77,6 +77,10 @@ void OptimizeImageCoorNonrigid(
 #pragma omp parallel for schedule(static)
 #endif
         for (int c = 0; c < n_camera; c++) {
+            if (visiblity_image_to_vertex[c].size() == 0) {
+                continue;
+            }
+
             int nonrigidval = warping_fields[c].anchor_w_ *
                               warping_fields[c].anchor_h_ * 2;
             double rr_reg = 0.0;
