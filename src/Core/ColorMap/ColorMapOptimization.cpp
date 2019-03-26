@@ -140,6 +140,10 @@ void OptimizeImageCoorNonrigid(
                 }
             }
             size_t num_selected_cols = selected_col;
+            if (num_selected_cols == 0) {
+                PrintDebug("num_selected_cols == 0, camera %d skipped\n", c);
+                continue;
+            }
 
             // col_selection_matrix is used to map columns to selected columns
             Eigen::SparseMatrix<double> col_selection_matrix(num_cols,
