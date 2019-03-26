@@ -12,19 +12,20 @@
 #include "examples/Cuda/DatasetConfig.h"
 
 using namespace open3d;
+using namespace open3d::utility;
+using namespace open3d::io;
+using namespace open3d::registration;
 
 namespace IntegrateScene {
 void IntegrateFragment(
     int fragment_id, cuda::ScalableTSDFVolumeCuda<8> &volume,
     DatasetConfig &config) {
 
-    registration::PoseGraph global_pose_graph;
-    io::ReadPoseGraph(config.GetPoseGraphFileForRefinedScene(true),
-                      global_pose_graph);
+    PoseGraph global_pose_graph;
+    ReadPoseGraph(config.GetPoseGraphFileForRefinedScene(true), global_pose_graph);
 
-    registration::PoseGraph local_pose_graph;
-    io::ReadPoseGraph(config.GetPoseGraphFileForFragment(fragment_id, true),
-                      local_pose_graph);
+    PoseGraph local_pose_graph;
+    ReadPoseGraph(config.GetPoseGraphFileForFragment(fragment_id, true), local_pose_graph);
 
     cuda::PinholeCameraIntrinsicCuda intrinsics(config.intrinsic_);
     cuda::RGBDImageCuda rgbd((float) config.max_depth_,
@@ -35,11 +36,11 @@ void IntegrateFragment(
                              (int) config.color_files_.size());
 
     for (int i = begin; i < end; ++i) {
-        utility::PrintDebug("Integrating frame %d ...\n", i);
+        PrintDebug("Integrating frame %d ...\n", i);
 
         geometry::Image depth, color;
-        io::ReadImage(config.depth_files_[i], depth);
-        io::ReadImage(config.color_files_[i], color);
+        ReadImage(config.depth_files_[i], depth);
+        ReadImage(config.color_files_[i], color);
         rgbd.Upload(depth, color);
 
         /* Use ground truth trajectory */
@@ -53,9 +54,9 @@ void IntegrateFragment(
 }
 
 int Run(DatasetConfig &config) {
-    SetVerbosityLevel(utility::VerbosityLevel::VerboseDebug);
+    SetVerbosityLevel(VerbosityLevel::VerboseDebug);
 
-    utility::Timer timer;
+    Timer timer;
     timer.Start();
 
     cuda::TransformCuda trans = cuda::TransformCuda::Identity();
@@ -80,10 +81,9 @@ int Run(DatasetConfig &config) {
     mesher.MarchingCubes(tsdf_volume);
     auto mesh = mesher.mesh().Download();
 
-    io::WriteTriangleMeshToPLY(config.GetReconstructedSceneFile(), *mesh);
+    WriteTriangleMeshToPLY(config.GetReconstructedSceneFile(), *mesh);
     timer.Stop();
-    utility::PrintInfo("IntegrateScene takes %.3f s\n", timer.GetDuration() /
-        1000.0f);
+    PrintInfo("IntegrateScene takes %.3f s\n", timer.GetDuration() * 1e-3);
 
     return 0;
 }

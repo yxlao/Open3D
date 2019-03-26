@@ -5,8 +5,8 @@
 #include "NNCudaKernel.cuh"
 #include "RGBDImageCudaKernel.cuh"
 
-#include "LinearAlgebraCuda.h"
-#include <src/Cuda/Common/Common.h>
+#include <Cuda/Common/LinearAlgebraCuda.h>
+#include <Cuda/Common/Common.h>
 
 namespace open3d {
 

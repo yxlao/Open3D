@@ -6,11 +6,14 @@
 #include "examples/Cuda/DatasetConfig.h"
 
 using namespace open3d;
+using namespace open3d::io;
+using namespace open3d::utility;
+using namespace open3d::geometry;
+using namespace open3d::registration;
 
-std::shared_ptr<geometry::LineSet> VisualizePoseGraph(
-    registration::PoseGraph &pose_graph) {
-    std::shared_ptr<geometry::LineSet> pose_graph_vis =
-        std::make_shared<geometry::LineSet>();
+std::shared_ptr<LineSet> VisualizePoseGraph(PoseGraph &pose_graph) {
+    std::shared_ptr<LineSet> pose_graph_vis =
+        std::make_shared<LineSet>();
 
     int cnt = 0;
 
@@ -81,15 +84,15 @@ int main(int argc, char **argv) {
     std::string config_path = argc > 1 ? argv[1] :
         kDefaultDatasetConfigDir + "/tum/fr3_household.json";
 
-    bool is_success = io::ReadIJsonConvertible(config_path, config);
+    bool is_success = ReadIJsonConvertible(config_path, config);
     if (! is_success) return 1;
 
-    registration::PoseGraph pose_graph_cuda;
+    PoseGraph pose_graph_cuda;
     std::string path_cuda = config.GetPoseGraphFileForRefinedScene(true);
-    io::ReadPoseGraph(path_cuda, pose_graph_cuda);
+    ReadPoseGraph(path_cuda, pose_graph_cuda);
 
     auto pose_graph_vis_cuda = VisualizePoseGraph(pose_graph_cuda);
-    auto mesh = io::CreateMeshFromFile(config.GetReconstructedSceneFile());
+    auto mesh = CreateMeshFromFile(config.GetReconstructedSceneFile());
 
     visualization::DrawGeometries({pose_graph_vis_cuda, mesh});
 

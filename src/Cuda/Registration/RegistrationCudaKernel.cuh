@@ -10,7 +10,7 @@
 #include <Cuda/Container/ArrayCudaDevice.cuh>
 #include <Cuda/Container/Array2DCudaDevice.cuh>
 
-#include <RegistrationCuda.h>
+#include "RegistrationCuda.h"
 
 namespace open3d {
 namespace cuda {

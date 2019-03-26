@@ -26,7 +26,6 @@
 
 #include "Visualizer.h"
 
-#include <Cuda/Visualization/Shader/GeometryRendererCuda.h>
 #include <Open3D/Geometry/TriangleMesh.h>
 
 namespace open3d {
@@ -352,23 +351,6 @@ bool Visualizer::AddGeometry(
         }
         geometry_renderer_ptrs_.push_back(renderer_ptr);
     }
-
-    else if (geometry_ptr->GetGeometryType() ==
-        geometry::Geometry::GeometryType::TriangleMeshCuda) {
-        auto renderer_ptr = std::make_shared<glsl::TriangleMeshCudaRenderer>();
-        if (renderer_ptr->AddGeometry(geometry_ptr) == false) {
-            return false;
-        }
-        geometry_renderer_ptrs_.push_back(renderer_ptr);
-    } else if (geometry_ptr->GetGeometryType() ==
-        geometry::Geometry::GeometryType::PointCloudCuda) {
-        auto renderer_ptr = std::make_shared<glsl::PointCloudCudaRenderer>();
-        if (renderer_ptr->AddGeometry(geometry_ptr) == false) {
-            return false;
-        }
-        geometry_renderer_ptrs_.push_back(renderer_ptr);
-    }
-
     else {
         return false;
     }

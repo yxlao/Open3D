@@ -1,14 +1,14 @@
 {
   "name": "CMU - NSH",
   "path_dataset": "/media/wei/Data/data/cmu/nsh/",
-  "path_intrinsic": "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda/ReconstructionSystem/config/intrinsics/camera_nsh.json",
-  "n_frames_per_fragment": 200,
+  "path_intrinsic": "",
+  "n_frames_per_fragment": 100,
   "n_keyframes_per_n_frame": 10,
   "max_depth": 5.0,
   "min_depth": 0.1,
   "voxel_size": 0.07,
   "max_depth_diff": 0.07,
-  "depth_factor": 909.09,
+  "depth_factor": 1000.0,
   "preference_loop_closure_odometry": 0.1,
   "preference_loop_closure_registration": 20.0,
   "tsdf_cubic_size": 5.0

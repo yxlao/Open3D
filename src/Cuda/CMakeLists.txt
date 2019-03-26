@@ -40,7 +40,8 @@ set(CUDA_NVCC_FLAGS
         --expt-relaxed-constexpr)
 
 # create (should be static) library
-cuda_add_library(Cuda
+set(OPEN3D_CUDA_MODULE "Open3DCuda" CACHE STRING "CUDA component library")
+cuda_add_library(${OPEN3D_CUDA_MODULE}
         ${CUDA_ALL_HEADER_FILES} ${CUDA_ALL_SOURCE_FILES}
         ${CUDA_ALL_CUDA_HEADER_FILES} ${CUDA_ALL_CUDA_SOURCE_FILES}
         $<TARGET_OBJECTS:Camera>
@@ -52,8 +53,8 @@ cuda_add_library(Cuda
         $<TARGET_OBJECTS:Utility>
         $<TARGET_OBJECTS:IO>
         $<TARGET_OBJECTS:Visualization>)
-target_link_libraries(Cuda ${3RD_PARTY_LIBRARIES})
-target_include_directories(Cuda PUBLIC ${3RDPARTY_INCLUDE_DIRS})
+target_link_libraries(${OPEN3D_CUDA_MODULE} ${3RDPARTY_LIBRARIES})
+target_include_directories(${OPEN3D_CUDA_MODULE} PUBLIC ${3RDPARTY_INCLUDE_DIRS})
 
 # create subgroups
 ADD_SOURCE_GROUP(Common)
@@ -75,7 +76,7 @@ ADD_CUDA_SOURCE_GROUP(Visualization)
 
 Directories(. CUDA_INCLUDE_DIRS)
 set(CUDA_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS} PARENT_SCOPE)
-target_include_directories(Cuda PUBLIC ${CUDA_INCLUDE_DIRS})
+# target_include_directories(Cuda PUBLIC ${CUDA_INCLUDE_DIRS})
 
 #install headers
 install(DIRECTORY "."

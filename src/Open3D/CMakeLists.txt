@@ -1,16 +1,3 @@
-## >>> WEI: Workaround here, need to split visualization part
-find_package(CUDA 8.0 REQUIRED)
-find_package(OpenCV REQUIRED)
-list(APPEND 3RDPARTY_INCLUDE_DIRS ${CUDA_TOOLKIT_INCLUDE}
-        ${OpenCV_INCLUDE_DIRS})
-list(APPEND 3RDPARTY_LIBRARIES
-        ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES} ${CUDA_curand_LIBRARY}
-        ${OpenCV_LIBS})
-include_directories(${PROJECT_SOURCE_DIR})
-include_directories(${3RDPARTY_INCLUDE_DIRS})
-link_directories(${3RDPARTY_LIBRARY_DIRS})
-## <<< End of workaround
-
 # Subdirectories
 add_subdirectory(Camera)
 add_subdirectory(ColorMap)

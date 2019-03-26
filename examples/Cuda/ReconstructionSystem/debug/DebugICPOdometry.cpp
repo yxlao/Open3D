@@ -4,30 +4,28 @@
 
 #include <vector>
 #include <string>
-#include <Core/Core.h>
-#include <IO/IO.h>
-#include <Visualization/Visualization.h>
 
+#include <Open3D/Open3D.h>
 #include <Cuda/Registration/RegistrationCuda.h>
-#include <Cuda/Registration/ColoredICPCuda.h>
 #include <Cuda/Registration/FastGlobalRegistrationCuda.h>
-
-#include <Core/Registration/PoseGraph.h>
-#include <Core/Registration/GlobalOptimization.h>
 
 #include "examples/Cuda/DatasetConfig.h"
 
 using namespace open3d;
+using namespace open3d::utility;
+using namespace open3d::io;
+using namespace open3d::registration;
+using namespace open3d::visualization;
 
 std::vector<Match> MatchFragments(DatasetConfig &config) {
     std::vector<Match> matches;
 
-    for (int s = 20; s < config.thumbnail_fragment_files_.size() - 1; ++s) {
+    for (int s = 0; s < config.thumbnail_fragment_files_. size() - 1; ++s) {
         auto source = CreatePointCloudFromFile(config.thumbnail_fragment_files_[s]);
 
         PoseGraph pose_graph_s;
         ReadPoseGraph(config.GetPoseGraphFileForFragment(s, true),
-                      pose_graph_s);
+                          pose_graph_s);
 
         auto rbegin = pose_graph_s.nodes_.rbegin();
         Eigen::Matrix4d init_source_to_target = rbegin->pose_.inverse();
@@ -49,11 +47,11 @@ std::vector<Match> MatchFragments(DatasetConfig &config) {
             registration.transform_source_to_target_;
         match.information = registration.ComputeInformationMatrix();
         match.success = true;
-        PrintDebug("Pair (%d %d) odometry computed.\n", match.s, match.t);
+        utility::PrintDebug("Pair (%d %d) odometry computed.\n",
+                            match.s,
+                            match.t);
         matches.push_back(match);
 
-//        DrawGeometries({source}, "source");
-//        DrawGeometries({target}, "target");
         DrawGeometries({source, target});
         source->Transform(match.trans_source_to_target);
         DrawGeometries({source, target});
@@ -66,10 +64,10 @@ int main(int argc, char **argv) {
     DatasetConfig config;
 
     std::string config_path = argc > 1 ? argv[1] :
-        kDefaultDatasetConfigDir + "/cmu/test_corridor.json";
+                              kDefaultDatasetConfigDir
+                                  + "/stanford/lounge.json";
 
-
-    bool is_success = ReadIJsonConvertible(config_path, config);
+    bool is_success = io::ReadIJsonConvertible(config_path, config);
     if (!is_success) return 1;
 
     SetVerbosityLevel(VerbosityLevel::VerboseDebug);
@@ -79,7 +77,7 @@ int main(int argc, char **argv) {
     filesystem::MakeDirectory(config.path_dataset_ + "/scene_cuda");
 
     is_success = config.GetThumbnailFragmentFiles();
-    if (! is_success) {
+    if (!is_success) {
         PrintError("Unable to get fragment files\n");
         return -1;
     }
@@ -87,7 +85,6 @@ int main(int argc, char **argv) {
     auto matches = MatchFragments(config);
     timer.Stop();
 
-    PrintInfo("RegisterFragments takes %.3f s\n",
-              timer.GetDuration() / 1000.0f);
+    PrintInfo("RegisterFragments takes %.3f s\n", timer.GetDuration() * 1e-3);
     return 0;
 }

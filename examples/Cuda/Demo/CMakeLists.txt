@@ -14,6 +14,5 @@ EXAMPLE_CUDA(UniformFusionSystemCuda ${CMAKE_PROJECT_NAME})
 # Odometry
 EXAMPLE_CUDA(RGBDOdometryCuda ${CMAKE_PROJECT_NAME} Cuda)
 EXAMPLE_CUDA(RGBDOdometryCudaVisualizer ${CMAKE_PROJECT_NAME} Cuda)
-EXAMPLE_CUDA(CompareRGBDOdometry ${CMAKE_PROJECT_NAME})
 
 EXAMPLE_CUDA(RefactoredRegistration ${CMAKE_PROJECT_NAME} Cuda)

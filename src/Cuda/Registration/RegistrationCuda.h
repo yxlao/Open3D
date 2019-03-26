@@ -10,7 +10,7 @@
 
 #include <Cuda/Container/ArrayCuda.h>
 #include <Cuda/Geometry/PointCloudCuda.h>
-#include <CorrespondenceSetCuda.h>
+#include <Cuda/Registration/CorrespondenceSetCuda.h>
 
 namespace open3d {
 

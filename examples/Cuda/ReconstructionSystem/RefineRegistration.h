@@ -12,12 +12,16 @@
 #include "examples/Cuda/DatasetConfig.h"
 
 using namespace open3d;
+using namespace open3d::utility;
+using namespace open3d::io;
+using namespace open3d::geometry;
+using namespace open3d::registration;
 
 namespace RefineRegistration {
 
 std::tuple<Eigen::Matrix4d, Eigen::Matrix6d>
     MultiScaleICP(
-        const geometry::PointCloud &source, const geometry::PointCloud& target,
+        const PointCloud &source, const PointCloud& target,
         const Eigen::Matrix4d &init_trans,
         const float voxel_size,
         const std::vector<int> &iters = {50, 30, 14},
@@ -33,8 +37,7 @@ std::tuple<Eigen::Matrix4d, Eigen::Matrix6d>
         auto source_down = VoxelDownSample(source, voxel_size_level);
         auto target_down = VoxelDownSample(target, voxel_size_level);
 
-        cuda::RegistrationCuda registration(
-            registration::TransformationEstimationType::ColoredICP);
+        cuda::RegistrationCuda registration(TransformationEstimationType::ColoredICP);
         registration.Initialize(*source_down, *target_down,
                                 voxel_size_level * 1.4f,
                                 transformation);
@@ -52,9 +55,8 @@ std::tuple<Eigen::Matrix4d, Eigen::Matrix6d>
 
 std::vector<Match> MatchFragments(DatasetConfig &config) {
 
-    registration::PoseGraph pose_graph;
-    io::ReadPoseGraph(config.GetPoseGraphFileForScene(true),
-        pose_graph);
+    PoseGraph pose_graph;
+    ReadPoseGraph(config.GetPoseGraphFileForScene(true), pose_graph);
 
     std::vector<Match> matches;
 
@@ -64,16 +66,13 @@ std::vector<Match> MatchFragments(DatasetConfig &config) {
         match.t = edge.target_node_id_;
         match.success = true;
 
-        auto source = io::CreatePointCloudFromFile(config.fragment_files_[match
-                                                                       .s]);
-        auto target = io::CreatePointCloudFromFile(config.fragment_files_[match
-                                                                       .t]);
+        auto source = CreatePointCloudFromFile(config.fragment_files_[match.s]);
+        auto target = CreatePointCloudFromFile(config.fragment_files_[match.t]);
 
         std::tie(match.trans_source_to_target, match.information) =
-            MultiScaleICP(*source, *target,
-                edge.transformation_, config.voxel_size_);
+            MultiScaleICP(*source, *target, edge.transformation_, config.voxel_size_);
 
-        utility::PrintInfo("Point cloud odometry (%d %d)\n", match.s, match.t);
+        PrintInfo("Point cloud odometry (%d %d)\n", match.s, match.t);
 
         matches.push_back(match);
     }
@@ -83,7 +82,7 @@ std::vector<Match> MatchFragments(DatasetConfig &config) {
 
 void MakePoseGraphForRefinedScene(
     const std::vector<Match> &matches, DatasetConfig &config) {
-    registration::PoseGraph pose_graph;
+    PoseGraph pose_graph;
 
     /* world_to_frag0 */
     Eigen::Matrix4d trans_odometry = Eigen::Matrix4d::Identity();
@@ -96,54 +95,53 @@ void MakePoseGraphForRefinedScene(
             trans_odometry = match.trans_source_to_target * trans_odometry;
             auto trans_odometry_inv = trans_odometry.inverse();
 
-            pose_graph.nodes_.emplace_back(registration::PoseGraphNode
-            (trans_odometry_inv));
-            pose_graph.edges_.emplace_back(registration::PoseGraphEdge(
+            pose_graph.nodes_.emplace_back(PoseGraphNode(trans_odometry_inv));
+            pose_graph.edges_.emplace_back(PoseGraphEdge(
                 match.s, match.t,
                 match.trans_source_to_target, match.information,
                 false));
         } else {
-            pose_graph.edges_.emplace_back(registration::PoseGraphEdge(
+            pose_graph.edges_.emplace_back(PoseGraphEdge(
                 match.s, match.t,
                 match.trans_source_to_target, match.information,
                 true));
         }
     }
 
-    io::WritePoseGraph(config.GetPoseGraphFileForRefinedScene(false),
+    WritePoseGraph(config.GetPoseGraphFileForRefinedScene(false),
         pose_graph);
 }
 
 void OptimizePoseGraphForScene(DatasetConfig &config) {
 
-    registration::PoseGraph pose_graph;
-    io::ReadPoseGraph(config.GetPoseGraphFileForRefinedScene(false),
+    PoseGraph pose_graph;
+    ReadPoseGraph(config.GetPoseGraphFileForRefinedScene(false),
         pose_graph);
 
-    registration::GlobalOptimizationConvergenceCriteria criteria;
-    registration::GlobalOptimizationOption option(
+    GlobalOptimizationConvergenceCriteria criteria;
+    GlobalOptimizationOption option(
         config.voxel_size_ * 1.4, 0.25,
         config.preference_loop_closure_registration_, 0);
-    registration::GlobalOptimizationLevenbergMarquardt optimization_method;
-    registration::GlobalOptimization(pose_graph, optimization_method,
+    GlobalOptimizationLevenbergMarquardt optimization_method;
+    GlobalOptimization(pose_graph, optimization_method,
                        criteria, option);
 
     auto pose_graph_prunned = CreatePoseGraphWithoutInvalidEdges(
         pose_graph, option);
 
-    io::WritePoseGraph(config.GetPoseGraphFileForRefinedScene(true),
+    WritePoseGraph(config.GetPoseGraphFileForRefinedScene(true),
                    *pose_graph_prunned);
 }
 
 int Run(DatasetConfig &config) {
-    utility::Timer timer;
+    Timer timer;
     timer.Start();
 
-    utility::filesystem::MakeDirectory(config.path_dataset_ + "/scene_cuda");
+    filesystem::MakeDirectory(config.path_dataset_ + "/scene_cuda");
 
     bool is_success = config.GetFragmentFiles();
     if (! is_success) {
-        utility::PrintError("Unable to get fragment files\n");
+        PrintError("Unable to get fragment files\n");
         return -1;
     }
 
@@ -152,8 +150,7 @@ int Run(DatasetConfig &config) {
     OptimizePoseGraphForScene(config);
 
     timer.Stop();
-    utility::PrintInfo("RefineRegistration takes %.3f s\n",
-              timer.GetDuration() / 1000.0f);
+    PrintInfo("RefineRegistration takes %.3f s\n", timer.GetDuration() * 1e-3);
     return 0;
 }
 }

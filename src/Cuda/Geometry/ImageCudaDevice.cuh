@@ -5,11 +5,13 @@
 #pragma once
 
 #include "ImageCuda.h"
-#include "LinearAlgebraCuda.h"
+
 #include <iostream>
 #include <driver_types.h>
-#include <src/Cuda/Common/UtilsCuda.h>
 #include <vector_types.h>
+
+#include <Cuda/Common/LinearAlgebraCuda.h>
+#include <Cuda/Common/UtilsCuda.h>
 
 namespace open3d {
 
