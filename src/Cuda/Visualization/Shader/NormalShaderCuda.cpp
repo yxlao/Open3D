@@ -28,6 +28,9 @@
 
 #include <Open3D/Geometry/PointCloud.h>
 #include <Open3D/Geometry/TriangleMesh.h>
+#include <Cuda/Geometry/PointCloudCuda.h>
+#include <Cuda/Geometry/TriangleMeshCuda.h>
+
 #include <Open3D/Visualization/Shader/Shader.h>
 
 namespace open3d {

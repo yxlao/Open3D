@@ -23,6 +23,5 @@ include_directories(${3RDPARTY_INCLUDE_DIRS})
 link_directories(${3RDPARTY_LIBRARY_DIRS})
 
 add_subdirectory(Demo)
-add_subdirectory(Profile)
 add_subdirectory(ReconstructionSystem)
 

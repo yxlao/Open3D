@@ -2,8 +2,9 @@
 // Created by wei on 2/5/19.
 //
 
+#include <Eigen/Eigen>
 #include <Open3D/Open3D.h>
-#include "examples/Cuda/DatasetConfig.h"
+#include "DatasetConfig.h"
 
 using namespace open3d;
 using namespace open3d::io;
@@ -23,33 +24,27 @@ std::shared_ptr<LineSet> VisualizePoseGraph(PoseGraph &pose_graph) {
         auto pose = node.pose_;
 
         double norm = 0.1;
-        pose_graph_vis->points_.emplace_back(
-            (pose * Eigen::Vector4d(0, 0, 0, 1)).hnormalized());
-        pose_graph_vis->points_.emplace_back(
-            (pose * (norm * Eigen::Vector4d(1, 1, 2, 1/norm))).hnormalized());
-        pose_graph_vis->points_.emplace_back(
-            (pose * (norm * Eigen::Vector4d(1, -1, 2, 1/norm))).hnormalized());
-        pose_graph_vis->points_.emplace_back(
-            (pose * (norm * Eigen::Vector4d(-1, -1, 2, 1/norm))).hnormalized());
-        pose_graph_vis->points_.emplace_back(
-            (pose * (norm * Eigen::Vector4d(-1, 1, 2, 1/norm))).hnormalized());
+        Eigen::Vector4d ph;
 
-        pose_graph_vis->lines_.emplace_back(
-            Eigen::Vector2i(cnt + 0, cnt + 1));
-        pose_graph_vis->lines_.emplace_back(
-            Eigen::Vector2i(cnt + 0, cnt + 2));
-        pose_graph_vis->lines_.emplace_back(
-            Eigen::Vector2i(cnt + 0, cnt + 3));
-        pose_graph_vis->lines_.emplace_back(
-            Eigen::Vector2i(cnt + 0, cnt + 4));
-        pose_graph_vis->lines_.emplace_back(
-            Eigen::Vector2i(cnt + 1, cnt + 2));
-        pose_graph_vis->lines_.emplace_back(
-            Eigen::Vector2i(cnt + 2, cnt + 3));
-        pose_graph_vis->lines_.emplace_back(
-            Eigen::Vector2i(cnt + 3, cnt + 4));
-        pose_graph_vis->lines_.emplace_back(
-            Eigen::Vector2i(cnt + 4, cnt + 1));
+        ph = pose * Eigen::Vector4d(0, 0, 0, 1);
+        pose_graph_vis->points_.emplace_back(ph.hnormalized());
+        ph = pose * (norm * Eigen::Vector4d(1, 1, 2, 1/norm));
+        pose_graph_vis->points_.emplace_back(ph.hnormalized());
+        ph = pose * (norm * Eigen::Vector4d(1, -1, 2, 1/norm));
+        pose_graph_vis->points_.emplace_back(ph.hnormalized());
+        ph = pose * (norm * Eigen::Vector4d(-1, -1, 2, 1/norm));
+        pose_graph_vis->points_.emplace_back(ph.hnormalized());
+        ph = pose * (norm * Eigen::Vector4d(-1, 1, 2, 1/norm));
+        pose_graph_vis->points_.emplace_back(ph.hnormalized());
+
+        pose_graph_vis->lines_.emplace_back(Eigen::Vector2i(cnt + 0, cnt + 1));
+        pose_graph_vis->lines_.emplace_back(Eigen::Vector2i(cnt + 0, cnt + 2));
+        pose_graph_vis->lines_.emplace_back(Eigen::Vector2i(cnt + 0, cnt + 3));
+        pose_graph_vis->lines_.emplace_back(Eigen::Vector2i(cnt + 0, cnt + 4));
+        pose_graph_vis->lines_.emplace_back(Eigen::Vector2i(cnt + 1, cnt + 2));
+        pose_graph_vis->lines_.emplace_back(Eigen::Vector2i(cnt + 2, cnt + 3));
+        pose_graph_vis->lines_.emplace_back(Eigen::Vector2i(cnt + 3, cnt + 4));
+        pose_graph_vis->lines_.emplace_back(Eigen::Vector2i(cnt + 4, cnt + 1));
 
         for (int k = 0; k < kEdgesPerFrustum; ++k) {
             pose_graph_vis->colors_.emplace_back(Eigen::Vector3d(1, 0, 0));
@@ -82,7 +77,7 @@ int main(int argc, char **argv) {
     DatasetConfig config;
 
     std::string config_path = argc > 1 ? argv[1] :
-        kDefaultDatasetConfigDir + "/tum/fr3_household.json";
+        kDefaultDatasetConfigDir + "/cmu/zimo.json";
 
     bool is_success = ReadIJsonConvertible(config_path, config);
     if (! is_success) return 1;

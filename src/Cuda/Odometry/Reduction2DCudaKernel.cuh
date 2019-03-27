@@ -3,8 +3,8 @@
 //
 
 #include "Reduction2DCuda.h"
-#include <src/Cuda/Common/UtilsCuda.h>
-#include <src/Cuda/Geometry/ImageCudaDevice.cuh>
+#include <Cuda/Common/UtilsCuda.h>
+#include <Cuda/Geometry/ImageCudaDevice.cuh>
 
 namespace open3d {
 

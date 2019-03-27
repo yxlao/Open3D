@@ -27,26 +27,24 @@
 #include <iostream>
 #include <memory>
 
-#include <Core/Core.h>
-#include <IO/IO.h>
-#include <Visualization/Visualization.h>
+#include <Open3D/Open3D.h>
+#include <Cuda/Open3DCuda.h>
 
-#include <Cuda/Integration/UniformTSDFVolumeCuda.h>
-#include <Cuda/Integration/UniformMeshVolumeCuda.h>
+#include "Utils.h"
 
-#include "examples/Cuda/Utils.h"
+using namespace open3d;
+using namespace open3d::utility;
+using namespace open3d::io;
+using namespace open3d::camera;
+using namespace open3d::geometry;
+using namespace open3d::visualization;
 
 int main(int argc, char *argv[]) {
-    using namespace open3d;
-
     SetVerbosityLevel(VerbosityLevel::VerboseDebug);
-    std::string base_path =
-        "/home/wei/Work/data/tum/rgbd_dataset_freiburg3_long_office_household/";
 
-    auto camera_trajectory = CreatePinholeCameraTrajectoryFromFile(
-        base_path + "/trajectory.log");
-    auto rgbd_filenames = ReadDataAssociation(
-        base_path + "/data_association.txt");
+    std::string base_path = "/home/wei/Work/data/tum/rgbd_dataset_freiburg3_long_office_household/";
+    auto camera_trajectory = CreatePinholeCameraTrajectoryFromFile(base_path + "/trajectory.log");
+    auto rgbd_filenames = ReadDataAssociation(base_path + "/data_association.txt");
 
     int index = 0;
     int save_index = 0;
@@ -66,9 +64,9 @@ int main(int argc, char *argv[]) {
         cuda::VertexWithNormalAndColor, 4000000, 8000000);
 
     Image depth, color;
-    cuda::RGBDImageCuda rgbd(0.1f, 4.0f, 5000.0f);
+    cuda::RGBDImageCuda rgbd(640, 480, 4.0f, 5000.0f);
 
-    VisualizerWithCustomAnimation visualizer;
+    VisualizerWithCudaModule visualizer;
     if (! visualizer.CreateVisualizerWindow("UniformFusion", 640, 480, 0, 0)) {
         PrintWarning("Failed creating OpenGL window.\n");
         return 0;
@@ -101,16 +99,6 @@ int main(int argc, char *argv[]) {
         visualizer.GetViewControl().ConvertFromPinholeCameraParameters(
             camera_trajectory->parameters_[index]);
         index++;
-
-        if ((index > 0 && index % 2000 == 0)
-            || index == camera_trajectory->parameters_.size()) {
-            mesher.MarchingCubes(tsdf_volume);
-            WriteTriangleMeshToPLY(
-                "fragment-" + std::to_string(save_index) + ".ply",
-                *mesher.mesh().Download());
-            save_index++;
-        }
-        timer.Signal();
     }
 
     return 0;

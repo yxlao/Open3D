@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <src/Cuda/Common/UtilsCuda.h>
+#include <Cuda/Common/UtilsCuda.h>
 #include <GL/glew.h>
 #include <cuda_gl_interop.h>
 #include <cassert>

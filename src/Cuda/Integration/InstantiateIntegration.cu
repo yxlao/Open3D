@@ -2,8 +2,8 @@
 // Created by wei on 10/10/18.
 //
 
-#include <src/Cuda/Container/HashTableCudaDevice.cuh>
-#include <src/Cuda/Container/HashTableCudaKernel.cuh>
+#include <Cuda/Container/HashTableCudaDevice.cuh>
+#include <Cuda/Container/HashTableCudaKernel.cuh>
 
 #include "UniformTSDFVolumeCudaDevice.cuh"
 #include "UniformTSDFVolumeCudaKernel.cuh"

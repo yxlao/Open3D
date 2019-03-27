@@ -10,14 +10,11 @@
 
 #include <Open3D/Open3D.h>
 #include <Open3D/Registration/GlobalOptimization.h>
-
-#include <Cuda/Odometry/RGBDOdometryCuda.h>
-#include <Cuda/Integration/ScalableTSDFVolumeCuda.h>
-#include <Cuda/Integration/ScalableMeshVolumeCuda.h>
+#include <Cuda/Open3DCuda.h>
 
 #include <opencv2/opencv.hpp>
 
-#include "examples/Cuda/DatasetConfig.h"
+#include "DatasetConfig.h"
 #include "ORBPoseEstimation.h"
 
 using namespace open3d;
@@ -49,8 +46,7 @@ void MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
     // world_to_source
     Eigen::Matrix4d trans_odometry = Eigen::Matrix4d::Identity();
     PoseGraph pose_graph;
-    pose_graph.nodes_.emplace_back(
-        registration::PoseGraphNode(trans_odometry));
+    pose_graph.nodes_.emplace_back(PoseGraphNode(trans_odometry));
 
     /** Add odometry and keyframe info **/
     std::vector<ORBPoseEstimation::KeyframeInfo> keyframe_infos;

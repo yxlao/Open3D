@@ -15,7 +15,7 @@
 #include <Core/Registration/GlobalOptimization.h>
 #include <Core/Registration/FastGlobalRegistration.h>
 
-#include "examples/Cuda/DatasetConfig.h"
+#include "examples/Cuda/ReconstructionSystem/DatasetConfig.h"
 #include "Analyzer.h"
 
 using namespace open3d;

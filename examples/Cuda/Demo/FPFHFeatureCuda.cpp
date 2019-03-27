@@ -2,25 +2,33 @@
 // Created by wei on 1/23/19.
 //
 
-#include <Core/Core.h>
-#include <IO/IO.h>
-#include <Visualization/Visualization.h>
-#include <Cuda/Registration/FeatureExtractorCuda.h>
-#include <Cuda/Geometry/NNCuda.h>
-#include "examples/Cuda/Utils.h"
+#include <Open3D/Open3D.h>
+#include <Cuda/Open3DCuda.h>
+#include "Utils.h"
+
+using namespace open3d;
+using namespace open3d::io;
+using namespace open3d::utility;
+using namespace open3d::geometry;
 
 int main(int argc, char **argv) {
-    using namespace open3d;
+    std::string source_path, target_path;
+    if (argc > 2) {
+        source_path = argv[1];
+        target_path = argv[2];
+    } else { /** point clouds in ColoredICP is too flat **/
+        std::string test_data_path = "../../../examples/TestData/ICP";
+        source_path = test_data_path + "/cloud_bin_0.pcd";
+        target_path = test_data_path + "/cloud_bin_1.pcd";
+    }
+
     SetVerbosityLevel(VerbosityLevel::VerboseDebug);
 
-    std::string filepath = "/home/wei/Work/data/stanford/lounge/fragments";
-    auto source_origin = CreatePointCloudFromFile(
-        filepath + "/fragment_003.ply");
-    auto target_origin = CreatePointCloudFromFile(
-        filepath + "/fragment_012.ply");
+    auto source_origin = CreatePointCloudFromFile(source_path);
+    auto target_origin = CreatePointCloudFromFile(target_path);
 
-    auto source = open3d::VoxelDownSample(*source_origin, 0.05);
-    auto target = open3d::VoxelDownSample(*target_origin, 0.05);
+    auto source = VoxelDownSample(*source_origin, 0.05);
+    auto target = VoxelDownSample(*target_origin, 0.05);
 
     auto source_feature_cpu = PreprocessPointCloud(*source);
     auto target_feature_cpu = PreprocessPointCloud(*target);

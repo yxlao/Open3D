@@ -30,7 +30,9 @@
 #include <Eigen/Core>
 #include <Open3D/Visualization/Shader/ShaderWrapper.h>
 
-#include <src/Cuda/Common/UtilsCuda.h>
+#include <Cuda/Common/UtilsCuda.h>
+#include <Cuda/Common/LinearAlgebraCuda.h>
+
 #ifdef __CUDACC__
 #include <cuda_gl_interop.h>
 #endif

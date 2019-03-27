@@ -5,8 +5,8 @@
 #pragma once
 
 #include "GeometryClasses.h"
-#include <src/Cuda/Common/Common.h>
-#include <src/Cuda/Common/LinearAlgebraCuda.h>
+#include <Cuda/Common/Common.h>
+#include <Cuda/Common/LinearAlgebraCuda.h>
 #include <Open3D/Geometry/Image.h>
 
 #include <cstdlib>

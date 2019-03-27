@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <src/Cuda/Common/Common.h>
+#include <Cuda/Common/Common.h>
 #include "ContainerClasses.h"
 
 #include <cstdlib>

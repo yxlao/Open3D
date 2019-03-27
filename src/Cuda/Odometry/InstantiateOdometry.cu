@@ -8,8 +8,8 @@
 
 #include "Reduction2DCudaKernel.cuh"
 
-#include <src/Cuda/Geometry/ImageCudaDevice.cuh>
-#include <src/Cuda/Geometry/ImageCudaKernel.cuh>
+#include <Cuda/Geometry/ImageCudaDevice.cuh>
+#include <Cuda/Geometry/ImageCudaKernel.cuh>
 
 namespace open3d {
 namespace cuda {

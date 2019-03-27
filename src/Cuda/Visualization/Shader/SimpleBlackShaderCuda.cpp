@@ -28,7 +28,7 @@
 #include "CudaGLInterp.h"
 
 #include <Open3D/Geometry/PointCloud.h>
-#include <src/Cuda/Geometry/TriangleMeshCuda.h>
+#include <Cuda/Geometry/TriangleMeshCuda.h>
 #include <Open3D/Visualization/Shader/Shader.h>
 #include <Open3D/Visualization/Utility/ColorMap.h>
 

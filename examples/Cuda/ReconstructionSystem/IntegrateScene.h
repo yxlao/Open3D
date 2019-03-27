@@ -6,10 +6,9 @@
 #include <string>
 
 #include <Open3D/Open3D.h>
-#include <Cuda/Integration/ScalableTSDFVolumeCuda.h>
-#include <Cuda/Integration/ScalableMeshVolumeCuda.h>
+#include <Cuda/Open3DCuda.h>
 
-#include "examples/Cuda/DatasetConfig.h"
+#include "DatasetConfig.h"
 
 using namespace open3d;
 using namespace open3d::utility;

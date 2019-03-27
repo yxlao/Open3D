@@ -8,15 +8,15 @@
 
 #include <math.h>
 
-#include <src/Cuda/Common/JacobianCuda.h>
-#include <src/Cuda/Common/UtilsCuda.h>
-#include <src/Cuda/Common/LinearAlgebraCuda.h>
-#include <src/Cuda/Common/TransformCuda.h>
+#include <Cuda/Common/JacobianCuda.h>
+#include <Cuda/Common/UtilsCuda.h>
+#include <Cuda/Common/LinearAlgebraCuda.h>
+#include <Cuda/Common/TransformCuda.h>
 
 #include <Open3D/Odometry/OdometryOption.h>
 
-#include <src/Cuda/Camera/PinholeCameraIntrinsicCuda.h>
-#include <src/Cuda/Container/ArrayCuda.h>
+#include <Cuda/Camera/PinholeCameraIntrinsicCuda.h>
+#include <Cuda/Container/ArrayCuda.h>
 
 #include <Cuda/Geometry/RGBDImageCuda.h>
 #include <Cuda/Geometry/ImageCuda.h>

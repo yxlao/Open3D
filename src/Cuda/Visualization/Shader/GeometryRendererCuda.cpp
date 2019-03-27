@@ -3,6 +3,8 @@
 //
 
 #include "GeometryRendererCuda.h"
+#include <Cuda/Geometry/TriangleMeshCuda.h>
+#include <Cuda/Geometry/PointCloudCuda.h>
 
 namespace open3d {
 namespace visualization {

@@ -5,7 +5,7 @@
 #pragma once
 
 #include "PointCloudCuda.h"
-#include <src/Cuda/Container/ArrayCudaDevice.cuh>
+#include <Cuda/Container/ArrayCudaDevice.cuh>
 #include <Cuda/Common/ReductionCuda.h>
 
 namespace open3d {
@@ -40,6 +40,41 @@ void PointCloudCudaKernelCaller::BuildFromRGBDImage(
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
     BuildFromRGBDImageKernel << < blocks, threads >> > (
         *pcl.device_, *rgbd.device_, intrinsic);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+}
+
+__global__
+void BuildFromDepthAndIntensityImageKernel(PointCloudCudaDevice pcl,
+                                           ImageCudaDevice<float, 1> depth,
+                                           ImageCudaDevice<float, 1> intensity,
+                                           PinholeCameraIntrinsicCuda intrinsic) {
+    const int x = threadIdx.x + blockIdx.x * blockDim.x;
+    const int y = threadIdx.y + blockIdx.y * blockDim.y;
+
+    if (x >= depth.width_ || y >= depth.height_) return;
+
+    float d = depth.at(x, y)(0);
+    if (d == 0 || isnan(d)) return;
+
+    Vector3f point = intrinsic.InverseProjectPixel(Vector2i(x, y), d);
+    int index = pcl.points_.push_back(point);
+    if (pcl.type_ & VertexWithColor) {
+        pcl.colors_[index] = Vector3f(intensity.at(x, y)(0));
+    }
+}
+
+__host__
+void PointCloudCudaKernelCaller::BuildFromDepthAndIntensityImage(
+    PointCloudCuda &pcl,
+    ImageCuda<float, 1> &depth,
+    ImageCuda<float, 1> &intensity,
+    PinholeCameraIntrinsicCuda &intrinsic) {
+    const dim3 blocks(DIV_CEILING(depth.width_, THREAD_2D_UNIT),
+                      DIV_CEILING(depth.height_, THREAD_2D_UNIT));
+    const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+    BuildFromDepthAndIntensityImageKernel << < blocks, threads >> > (
+        *pcl.device_, *depth.device_, *intensity.device_, intrinsic);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }

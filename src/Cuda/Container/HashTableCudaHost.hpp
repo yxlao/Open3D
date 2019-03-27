@@ -10,7 +10,7 @@
 #include "LinkedListCudaHost.hpp"
 #include "MemoryHeapCudaHost.hpp"
 
-#include <src/Cuda/Common/UtilsCuda.h>
+#include <Cuda/Common/UtilsCuda.h>
 
 #include <cassert>
 #include <tuple>

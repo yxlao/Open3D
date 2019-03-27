@@ -4,12 +4,12 @@
 
 #pragma once
 
-#include <src/Cuda/Common/UtilsCuda.h>
+#include <Cuda/Common/UtilsCuda.h>
 #include <Open3D/Geometry/PointCloud.h>
-#include <src/Cuda/Geometry/PointCloudCuda.h>
-#include <src/Cuda/Registration/FeatureExtractorCuda.h>
-#include <src/Cuda/Registration/RegistrationCuda.h>
-#include <src/Cuda/Geometry/NNCuda.h>
+#include <Cuda/Geometry/PointCloudCuda.h>
+#include <Cuda/Registration/FeatureExtractorCuda.h>
+#include <Cuda/Registration/RegistrationCuda.h>
+#include <Cuda/Geometry/NNCuda.h>
 
 namespace open3d {
 namespace cuda {

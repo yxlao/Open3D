@@ -5,7 +5,7 @@
 #pragma once
 
 #include "Array2DCuda.h"
-#include <src/Cuda/Common/UtilsCuda.h>
+#include <Cuda/Common/UtilsCuda.h>
 
 namespace open3d {
 namespace cuda {

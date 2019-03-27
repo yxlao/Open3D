@@ -7,11 +7,11 @@
 #include "IntegrationClasses.h"
 #include "UniformTSDFVolumeCuda.h"
 
-#include <src/Cuda/Common/UtilsCuda.h>
+#include <Cuda/Common/UtilsCuda.h>
 
-#include <src/Cuda/Container/ArrayCuda.h>
-#include <src/Cuda/Geometry/TriangleMeshCuda.h>
-#include <src/Cuda/Common/LinearAlgebraCuda.h>
+#include <Cuda/Container/ArrayCuda.h>
+#include <Cuda/Geometry/TriangleMeshCuda.h>
+#include <Cuda/Common/LinearAlgebraCuda.h>
 
 #include <memory>
 

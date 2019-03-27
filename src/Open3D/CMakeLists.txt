@@ -31,18 +31,18 @@ install(DIRECTORY   "${CMAKE_CURRENT_SOURCE_DIR}"
 # note: adding at least one real source file to any target that references
 # reference: https://cmake.org/cmake/help/v3.12/command/add_library.html#object-libraries
 add_library(${CMAKE_PROJECT_NAME}
-    Open3DConfig.h
-    Open3DConfig.cpp
-    $<TARGET_OBJECTS:Camera>
-    $<TARGET_OBJECTS:ColorMap>
-    $<TARGET_OBJECTS:Geometry>
-    $<TARGET_OBJECTS:Integration>
-    $<TARGET_OBJECTS:Odometry>
-    $<TARGET_OBJECTS:Registration>
-    $<TARGET_OBJECTS:Utility>
-    $<TARGET_OBJECTS:IO>
-    $<TARGET_OBJECTS:Visualization>
-)
+        Open3DConfig.h
+        Open3DConfig.cpp
+        $<TARGET_OBJECTS:Camera>
+        $<TARGET_OBJECTS:ColorMap>
+        $<TARGET_OBJECTS:Geometry>
+        $<TARGET_OBJECTS:Integration>
+        $<TARGET_OBJECTS:Odometry>
+        $<TARGET_OBJECTS:Registration>
+        $<TARGET_OBJECTS:Utility>
+        $<TARGET_OBJECTS:IO>
+        $<TARGET_OBJECTS:Visualization>
+        )
 
 # headless rendering
 if (ENABLE_HEADLESS_RENDERING)
@@ -53,10 +53,10 @@ else ()
     find_package(OpenGL REQUIRED)
     target_link_libraries(${CMAKE_PROJECT_NAME} ${OPENGL_LIBRARIES})
 endif ()
-target_link_libraries(${CMAKE_PROJECT_NAME}
-                      ${3RDPARTY_LIBRARIES}
-                      ${OMP_LIBRARIES})
 
+target_link_libraries(${CMAKE_PROJECT_NAME}
+        ${3RDPARTY_LIBRARIES}
+        ${OMP_LIBRARIES})
 
 # input_dirs: a list of absolute paths in the source dir
 # output_dirs: a list of relative paths in the install dir
@@ -93,9 +93,9 @@ SourcePath2InstallPath("${3RDPARTY_INCLUDE_DIRS_AT_INSTALL}" INSTALL_3RDPARTY_IN
 
 # set Open3D include directories
 list(APPEND CONFIG_Open3D_INCLUDE_DIRS
-    ${CMAKE_INSTALL_PREFIX}/include
-    ${INSTALL_3RDPARTY_INCLUDE_DIRS}
-)
+        ${CMAKE_INSTALL_PREFIX}/include
+        ${INSTALL_3RDPARTY_INCLUDE_DIRS}
+        )
 list(REMOVE_DUPLICATES CONFIG_Open3D_INCLUDE_DIRS)
 
 
@@ -144,24 +144,24 @@ endif()
 
 # set Open3D library directories
 list(APPEND CONFIG_Open3D_LIBRARY_DIRS
-    "${CMAKE_INSTALL_PREFIX}/lib"
-    ${3RDPARTY_LIBRARY_DIRS}
-    ${OMP_LIBRARY_DIRS})
+        "${CMAKE_INSTALL_PREFIX}/lib"
+        ${3RDPARTY_LIBRARY_DIRS}
+        ${OMP_LIBRARY_DIRS})
 
 include(CMakePackageConfigHelpers)
 
 # find_package Open3D
 configure_package_config_file(Open3DConfig.cmake.in
-                              "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/Open3DConfig.cmake"
-                              INSTALL_DESTINATION ${INSTALL_CMAKE_DIR}
-                              PATH_VARS CONFIG_Open3D_INCLUDE_DIRS CONFIG_Open3D_LIBRARY_DIRS
-                              NO_SET_AND_CHECK_MACRO
-                              NO_CHECK_REQUIRED_COMPONENTS_MACRO)
+        "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/Open3DConfig.cmake"
+        INSTALL_DESTINATION ${INSTALL_CMAKE_DIR}
+        PATH_VARS CONFIG_Open3D_INCLUDE_DIRS CONFIG_Open3D_LIBRARY_DIRS
+        NO_SET_AND_CHECK_MACRO
+        NO_CHECK_REQUIRED_COMPONENTS_MACRO)
 
 # find_package Open3D Version
 write_basic_package_version_file("${PROJECT_BINARY_DIR}/Open3DConfigVersion.cmake"
-                                 VERSION ${PROJECT_VERSION}
-                                 COMPATIBILITY ExactVersion)
+        VERSION ${PROJECT_VERSION}
+        COMPATIBILITY ExactVersion)
 
 # install
 install(TARGETS ${CMAKE_PROJECT_NAME}
@@ -181,9 +181,9 @@ install(FILES
 # uninstall target
 if (NOT TARGET uninstall)
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
-                   "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
-                   IMMEDIATE @ONLY)
+            "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+            IMMEDIATE @ONLY)
 
     add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P
-                      ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+            ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 endif ()

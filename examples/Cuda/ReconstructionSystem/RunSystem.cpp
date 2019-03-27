@@ -2,7 +2,7 @@
 // Created by wei on 2/4/19.
 //
 
-#include "examples/Cuda/DatasetConfig.h"
+#include "DatasetConfig.h"
 
 #include "MakeFragments.h"
 #include "RegisterFragments.h"

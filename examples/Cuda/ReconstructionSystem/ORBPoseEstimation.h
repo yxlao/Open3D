@@ -3,11 +3,11 @@
 //
 
 #include <Open3D/Open3D.h>
+#include <Cuda/Open3DCuda.h>
 
 #include <opencv2/opencv.hpp>
-#include <Cuda/Geometry/RGBDImageCuda.h>
-#include <Cuda/Geometry/PointCloudCuda.h>
-#include "examples/Cuda/DatasetConfig.h"
+
+#include "DatasetConfig.h"
 
 using namespace open3d;
 

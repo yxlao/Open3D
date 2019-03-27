@@ -4,7 +4,7 @@
 
 #include "RGBDOdometryCudaHost.hpp"
 
-#include <src/Cuda/Geometry/ImageCudaHost.hpp>
+#include <Cuda/Geometry/ImageCudaHost.hpp>
 
 namespace open3d {
 namespace cuda {

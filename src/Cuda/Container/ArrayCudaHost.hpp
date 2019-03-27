@@ -5,8 +5,8 @@
 #pragma once
 
 #include "ArrayCuda.h"
-#include <src/Cuda/Common/UtilsCuda.h>
-#include <src/Cuda/Common/LinearAlgebraCuda.h>
+#include <Cuda/Common/UtilsCuda.h>
+#include <Cuda/Common/LinearAlgebraCuda.h>
 
 #include <Open3D/Utility/Console.h>
 #include <cuda_runtime.h>

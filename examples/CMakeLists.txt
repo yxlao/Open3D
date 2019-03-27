@@ -4,7 +4,9 @@ if (BUILD_CPP_EXAMPLES)
 endif ()
 
 # Cuda module -- Enable it here
-add_subdirectory(Cuda)
+if (BUILD_CUDA_EXAMPLES)
+    add_subdirectory(Cuda)
+endif()
 
 # Python examples
 if (BUILD_PYTHON_MODULE)

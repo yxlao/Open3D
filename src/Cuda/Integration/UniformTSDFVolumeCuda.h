@@ -6,12 +6,12 @@
 
 #include "IntegrationClasses.h"
 
-#include <src/Cuda/Geometry/ImageCuda.h>
-#include <src/Cuda/Camera/PinholeCameraIntrinsicCuda.h>
-#include <src/Cuda/Geometry/RGBDImageCuda.h>
-#include <src/Cuda/Common/TransformCuda.h>
-#include <src/Cuda/Geometry/TriangleMeshCuda.h>
-#include <src/Cuda/Common/LinearAlgebraCuda.h>
+#include <Cuda/Geometry/ImageCuda.h>
+#include <Cuda/Camera/PinholeCameraIntrinsicCuda.h>
+#include <Cuda/Geometry/RGBDImageCuda.h>
+#include <Cuda/Common/TransformCuda.h>
+#include <Cuda/Geometry/TriangleMeshCuda.h>
+#include <Cuda/Common/LinearAlgebraCuda.h>
 
 #include <cstdlib>
 #include <memory>

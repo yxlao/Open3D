@@ -6,7 +6,7 @@
 
 #include "PointCloudCuda.h"
 
-#include <src/Cuda/Container/ArrayCuda.h>
+#include <Cuda/Container/ArrayCuda.h>
 
 namespace open3d {
 
@@ -164,6 +164,13 @@ void PointCloudCuda::Build(RGBDImageCuda &rgbd,
     if (type_ & VertexWithColor) {
         colors_.set_iterator(points_.size());
     }
+}
+
+void PointCloudCuda::Build(ImageCuda<float, 1> &depth,
+                           ImageCuda<float, 1> &intensity,
+                           PinholeCameraIntrinsicCuda &intrinsic) {
+    Reset();
+    PointCloudCudaKernelCaller::BuildFromDepthAndIntensityImage(*this, depth, intensity, intrinsic);
 }
 
 void PointCloudCuda::Build(ImageCuda<float, 1> &depth,

@@ -2,7 +2,7 @@
 // Created by wei on 1/21/19.
 //
 
-#include <src/Cuda/Geometry/NNCuda.h>
+#include <Cuda/Geometry/NNCuda.h>
 #include "FastGlobalRegistrationCuda.h"
 
 namespace open3d {

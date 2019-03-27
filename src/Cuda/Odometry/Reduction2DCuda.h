@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include <src/Cuda/Common/UtilsCuda.h>
-#include <src/Cuda/Geometry/ImageCuda.h>
-#include <src/Cuda/Common/LinearAlgebraCuda.h>
+#include <Cuda/Common/UtilsCuda.h>
+#include <Cuda/Geometry/ImageCuda.h>
+#include <Cuda/Common/LinearAlgebraCuda.h>
 
 /**
  * Reduction is a PER-BLOCK operation.

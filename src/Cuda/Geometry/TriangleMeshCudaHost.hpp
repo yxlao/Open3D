@@ -6,7 +6,7 @@
 
 #include "TriangleMeshCuda.h"
 
-#include <src/Cuda/Container/ArrayCuda.h>
+#include <Cuda/Container/ArrayCuda.h>
 
 namespace open3d {
 namespace cuda {

@@ -5,8 +5,8 @@
 #pragma once
 
 #include "ImageCuda.h"
-#include <src/Cuda/Common/LinearAlgebraCuda.h>
-#include <src/Cuda/Common/UtilsCuda.h>
+#include <Cuda/Common/LinearAlgebraCuda.h>
+#include <Cuda/Common/UtilsCuda.h>
 
 #include <cuda_runtime.h>
 #include <driver_types.h>

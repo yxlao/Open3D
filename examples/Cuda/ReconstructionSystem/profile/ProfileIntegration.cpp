@@ -14,7 +14,7 @@
 #include <Cuda/Integration/ScalableTSDFVolumeCuda.h>
 #include <Cuda/Integration/ScalableMeshVolumeCuda.h>
 
-#include "examples/Cuda/DatasetConfig.h"
+#include "examples/Cuda/ReconstructionSystem/DatasetConfig.h"
 #include "Analyzer.h"
 
 using namespace open3d;

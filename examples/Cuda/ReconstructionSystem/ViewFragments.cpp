@@ -3,7 +3,7 @@
 //
 
 #include <Open3D/Open3D.h>
-#include "examples/Cuda/DatasetConfig.h"
+#include "DatasetConfig.h"
 
 using namespace open3d;
 using namespace open3d::io;

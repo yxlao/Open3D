@@ -6,13 +6,12 @@
 #include <string>
 
 #include <Open3D/Open3D.h>
+#include <Cuda/Open3DCuda.h>
 
-#include <Cuda/Registration/RegistrationCuda.h>
-#include <Cuda/Registration/FastGlobalRegistrationCuda.h>
-
-#include "examples/Cuda/DatasetConfig.h"
+#include "DatasetConfig.h"
 
 using namespace open3d;
+using namespace open3d::registration;
 
 namespace RegisterFragments {
 std::vector<Match> MatchFragments(DatasetConfig &config) {

@@ -2,7 +2,7 @@
 // Created by wei on 11/9/18.
 //
 
-#include <src/Cuda/Container/HashTableCudaHost.hpp>
+#include <Cuda/Container/HashTableCudaHost.hpp>
 
 #include "UniformTSDFVolumeCudaHost.hpp"
 #include "UniformMeshVolumeCudaHost.hpp"

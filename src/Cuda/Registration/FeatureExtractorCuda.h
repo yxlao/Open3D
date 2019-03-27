@@ -4,8 +4,8 @@
 
 #include <Open3D/Geometry/PointCloud.h>
 #include <Open3D/Geometry/KDTreeFlann.h>
-#include <src/Cuda/Geometry/PointCloudCuda.h>
-#include <src/Cuda/Registration/CorrespondenceSetCuda.h>
+#include <Cuda/Geometry/PointCloudCuda.h>
+#include <Cuda/Registration/CorrespondenceSetCuda.h>
 
 #pragma once
 

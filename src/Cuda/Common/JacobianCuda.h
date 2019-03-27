@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <src/Cuda/Common/LinearAlgebraCuda.h>
+#include <Cuda/Common/LinearAlgebraCuda.h>
 #include <cstdlib>
 
 namespace open3d {

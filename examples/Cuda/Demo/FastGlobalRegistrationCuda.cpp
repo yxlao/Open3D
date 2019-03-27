@@ -1,62 +1,101 @@
 //
-// Created by wei on 1/23/19.
+// Created by wei on 3/1/19.
 //
 
-#include <Core/Core.h>
-#include <IO/IO.h>
-#include <Visualization/Visualization.h>
-#include <Core/Geometry/PointCloud.h>
-#include <Core/Registration/Registration.h>
-#include <Core/Registration/FastGlobalRegistration.h>
-#include <Core/Registration/ColoredICP.h>
-#include <iostream>
-#include <Cuda/Geometry/NNCuda.h>
-#include <Cuda/Registration/FastGlobalRegistrationCuda.h>
-#include "examples/Cuda/Utils.h"
+#include <string>
+#include <vector>
 
-int main(int argc, char **argv) {
-    using namespace open3d;
+#include <Open3D/Open3D.h>
+#include <Cuda/Open3DCuda.h>
+
+#include "Utils.h"
+
+using namespace open3d;
+using namespace open3d::utility;
+using namespace open3d::io;
+using namespace open3d::visualization;
+
+int FastGlobalRegistrationForPointClouds(
+    const std::string &source_ply_path,
+    const std::string &target_ply_path) {
 
     SetVerbosityLevel(VerbosityLevel::VerboseDebug);
 
-    std::string filepath = "/home/wei/Work/data/stanford/lounge/fragments_cuda";
-    auto source_origin = CreatePointCloudFromFile(
-        filepath + "/fragment_000.ply");
-    auto target_origin = CreatePointCloudFromFile(
-        filepath + "/fragment_003.ply");
+    auto source = CreatePointCloudFromFile(source_ply_path);
+    auto target = CreatePointCloudFromFile(target_ply_path);
 
-    auto source = VoxelDownSample(*source_origin, 0.05);
-    auto target = VoxelDownSample(*target_origin, 0.05);
+    auto source_down = VoxelDownSample(*source, 0.05);
+    auto target_down = VoxelDownSample(*target, 0.05);
 
-    EstimateNormals(*source, KDTreeSearchParamHybrid(0.1, 30));
-    EstimateNormals(*target, KDTreeSearchParamHybrid(0.1, 30));
+    auto source_cpu = *source_down;
+    auto target_cpu = *target_down;
 
-    /* Before */
-    VisualizeRegistration(*source, *target, Eigen::Matrix4d::Identity());
-
+    /** Load data **/
     cuda::FastGlobalRegistrationCuda fgr;
-    fgr.Initialize(*source, *target);
-    cuda::RegistrationResultCuda result;
-    for (int iter = 0; iter < 64; ++iter) {
-        result = fgr.DoSingleIteration(iter);
+    fgr.Initialize(*source_down, *target_down);
+
+    /** Prepare visualizer **/
+    VisualizerWithCudaModule visualizer;
+    if (!visualizer.CreateVisualizerWindow("Fast Global Registration",
+        640, 480,0, 0)) {
+        PrintWarning("Failed creating OpenGL window.\n");
+        return -1;
+    }
+    visualizer.BuildUtilities();
+    visualizer.UpdateWindowTitle();
+    visualizer.AddGeometry(source_down);
+    visualizer.AddGeometry(target_down);
+
+    bool finished = false;
+    int iter = 0, max_iter = 64;
+    visualizer.RegisterKeyCallback(GLFW_KEY_SPACE, [&](Visualizer *vis) {
+        if (finished) return false;
+
+        /* FGR (1 iteration) */
+        fgr.DoSingleIteration(iter++);
+
+        /* Update geometry */
+        *source_down = *fgr.source_.Download();
+        if (source_cpu.HasColors()) {
+            source_down->colors_ = source_cpu.colors_;
+        }
+        *target_down = *fgr.target_.Download();
+        if (target_cpu.HasColors()) {
+            target_down->colors_ = target_cpu.colors_;
+        }
+        vis->UpdateGeometry();
+
+        if (iter == 1) {
+            vis->ResetViewPoint(true);
+        }
+
+        /* Update flags */
+        if (iter >= max_iter)
+            finished = true;
+        return !finished;
+    });
+
+    bool should_close = false;
+    while (!should_close) {
+        should_close = !visualizer.PollEvents();
+    }
+    visualizer.DestroyVisualizerWindow();
+
+    return 0;
+}
+
+int main(int argc, char **argv) {
+    std::string source_path, target_path;
+    if (argc > 2) {
+        source_path = argv[1];
+        target_path = argv[2];
+    } else {
+        std::string test_data_path = "/media/wei/Data/data/redwood_simulated/livingroom1-clean/fragments_cuda";
+        source_path = test_data_path + "/fragment_005.ply";
+        target_path = test_data_path + "/fragment_008.ply";
     }
 
-    std::cout << "cpu: " << GetInformationMatrixFromPointClouds(
-        *source, *target, 0.07, result.transformation_)
-              << std::endl;
-
-    /** IT IS A WORKAROUND AND NEEDS BETTER IMPLEMENTATION **/
-    cuda::RegistrationCuda registration(
-        TransformationEstimationType::PointToPoint);
-    auto source_copy = *source;
-    source_copy.Transform(result.transformation_);
-    registration.Initialize(source_copy, *target, 0.07);
-    registration.transform_source_to_target_ = result.transformation_;
-    std::cout << "cuda: " << registration.ComputeInformationMatrix()
-              << std::endl;
-
-    /* After */
-    VisualizeRegistration(*source, *target, result.transformation_);
+    FastGlobalRegistrationForPointClouds(source_path, target_path);
 
     return 0;
 }

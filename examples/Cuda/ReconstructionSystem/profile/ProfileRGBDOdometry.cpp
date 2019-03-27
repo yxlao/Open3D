@@ -11,11 +11,11 @@
 #include <Cuda/Geometry/PointCloudCuda.h>
 #include <Visualization/Visualization.h>
 
-#include "../Utils.h"
+#include "examples/Cuda/Demo/Utils.h"
 
 using namespace open3d;
 
-#include "examples/Cuda/DatasetConfig.h"
+#include "examples/Cuda/ReconstructionSystem/DatasetConfig.h"
 #include "Analyzer.h"
 
 double ProfileOdometry(

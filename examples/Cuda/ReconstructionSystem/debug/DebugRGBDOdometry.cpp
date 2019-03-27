@@ -4,17 +4,13 @@
 
 #include <vector>
 #include <string>
+
 #include <Open3D/Open3D.h>
+#include <Open3D/Registration/GlobalOptimization.h>
+#include <Cuda/Open3DCuda.h>
 
-#include <Cuda/Odometry/RGBDOdometryCuda.h>
-#include <Cuda/Integration/ScalableTSDFVolumeCuda.h>
-#include <Cuda/Integration/ScalableMeshVolumeCuda.h>
-
-#include <Cuda/Registration/RegistrationCuda.h>
-#include <Cuda/Registration/FastGlobalRegistrationCuda.h>
-
-#include "examples/Cuda/ReconstructionSystem/ORBPoseEstimation.h"
-#include "examples/Cuda/DatasetConfig.h"
+#include "../DatasetConfig.h"
+#include "../ORBPoseEstimation.h"
 
 using namespace open3d;
 using namespace open3d::utility;
@@ -22,6 +18,7 @@ using namespace open3d::io;
 using namespace open3d::registration;
 using namespace open3d::odometry;
 using namespace open3d::geometry;
+using namespace open3d::visualization;
 
 PoseGraph MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
 
@@ -60,8 +57,10 @@ PoseGraph MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
 
         /** Insert a keyframe **/
         if (config.with_opencv_ && s % config.n_keyframes_per_n_frame_ == 0) {
-            cv::Mat im;
-            .convertTo(im, CV_8U, 255.0);
+            cv::Mat im = cv::imread(config.color_files_[s]);
+            cv::cvtColor(im, im, cv::COLOR_BGR2GRAY);
+            im.convertTo(im, CV_8U, 255.0);
+
             std::vector<cv::KeyPoint> kp;
             cv::Mat desc;
             orb->detectAndCompute(im, cv::noArray(), kp, desc);

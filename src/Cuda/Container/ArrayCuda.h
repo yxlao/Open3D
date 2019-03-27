@@ -6,7 +6,7 @@
 
 #include "ContainerClasses.h"
 
-#include <src/Cuda/Common/Common.h>
+#include <Cuda/Common/Common.h>
 
 #include <cstdlib>
 #include <memory>

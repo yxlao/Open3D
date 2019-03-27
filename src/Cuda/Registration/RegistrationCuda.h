@@ -135,7 +135,7 @@ public:
     void ExtractResults(Eigen::Matrix6d &JtJ,
                         Eigen::Vector6d &Jtr,
                         float &rmse);
-    RegistrationResultCuda DoSingleIteration();
+    RegistrationResultCuda BuildAndSolveLinearSystem();
 
     /** Computes color gradients
       * 1. Get correspondence matrix on CPU

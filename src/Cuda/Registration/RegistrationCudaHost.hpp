@@ -153,28 +153,28 @@ Eigen::Matrix6d RegistrationCuda::ComputeInformationMatrix(
 
 /* ICP */
 RegistrationResultCuda RegistrationCuda::DoSingleIteration(int iter) {
-    RegistrationResultCuda result;
-    result.transformation_ = Eigen::Matrix4d::Identity();
-    result.fitness_ = result.inlier_rmse_ = 0;
+    RegistrationResultCuda delta;
+    delta.transformation_ = Eigen::Matrix4d::Identity();
+    delta.fitness_ = delta.inlier_rmse_ = 0;
 
     GetCorrespondences();
 
     if (correspondences_.indices_.size() < 10) {
         utility::PrintError("Insufficient correspondences: %d\n",
                             correspondences_.indices_.size());
-        return result;
+        return delta;
     }
 
-    result = DoSingleIteration();
+    delta = BuildAndSolveLinearSystem();
 
     utility::PrintDebug("Iteration %d: inlier rmse = %f, fitness = %f\n",
-                        iter, result.inlier_rmse_, result.fitness_);
+                        iter, delta.inlier_rmse_, delta.fitness_);
 
-    TransformSourcePointCloud(result.transformation_);
-    transform_source_to_target_ = result.transformation_ *
+    TransformSourcePointCloud(delta.transformation_);
+    transform_source_to_target_ = delta.transformation_ *
         transform_source_to_target_;
 
-    return result;
+    return delta;
 }
 
 void RegistrationCuda::GetCorrespondences() {
@@ -209,7 +209,7 @@ void RegistrationCuda::TransformSourcePointCloud(
     source_cpu_.Transform(source_to_target);
 }
 
-RegistrationResultCuda RegistrationCuda::DoSingleIteration() {
+RegistrationResultCuda RegistrationCuda::BuildAndSolveLinearSystem() {
     RegistrationResultCuda result;
 
     if (type_ == registration::TransformationEstimationType::PointToPoint) {

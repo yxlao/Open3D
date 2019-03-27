@@ -26,8 +26,8 @@
 
 #pragma once
 
-#include <src/Cuda/Common/Common.h>
-#include <src/Cuda/Common/LinearAlgebraCuda.h>
+#include <Cuda/Common/Common.h>
+#include <Cuda/Common/LinearAlgebraCuda.h>
 
 namespace open3d {
 

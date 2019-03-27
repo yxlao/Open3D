@@ -1,129 +1,175 @@
 //
-// Created by wei on 10/6/18.
+// Created by wei on 11/14/18.
 //
 
 #include <string>
 #include <vector>
 #include <Open3D/Open3D.h>
-#include <Cuda/Odometry/RGBDOdometryCuda.h>
-#include <Cuda/Integration/ScalableTSDFVolumeCuda.h>
-#include <Cuda/Integration/ScalableMeshVolumeCuda.h>
+#include <Cuda/Open3DCuda.h>
 
-#include "examples/Cuda/Utils.h"
+#include "Utils.h"
 
 using namespace open3d;
 
-void PrintHelp() {
-    PrintOpen3DVersion();
-    utility::PrintInfo("Usage :\n");
-    utility::PrintInfo("    > SequentialRGBDOdometryCuda [dataset_path]\n");
-}
+using namespace open3d::utility;
+using namespace open3d::io;
+using namespace open3d::geometry;
+using namespace open3d::camera;
+using namespace open3d::visualization;
 
-int main(int argc, char **argv) {
-    SetVerbosityLevel(utility::VerbosityLevel::VerboseDebug);
+int RGBDOdometry(
+    const std::string &source_color_path,
+    const std::string &source_depth_path,
+    const std::string &target_color_path,
+    const std::string &target_depth_path) {
 
-    std::string base_path = "/home/wei/Work/data/stanford/lounge";
-    auto rgbd_filenames = ReadDataAssociation(
-        base_path + "/data_association.txt");
+    SetVerbosityLevel(VerbosityLevel::VerboseDebug);
 
-    /* Load and copy trajectories */
-    camera::PinholeCameraTrajectory trajectory_gt;
-    io::ReadPinholeCameraTrajectoryFromLOG(
-        base_path + "/trajectory.log", trajectory_gt);
-    for (auto &param : trajectory_gt.parameters_) {
-        param.extrinsic_ = param.extrinsic_.inverse();
-    }
-    io::WritePinholeCameraTrajectoryToLOG("trajectory_gt.log", trajectory_gt);
+    /** Load data **/
+    Image source_color, source_depth, target_color, target_depth;
+    ReadImage(source_color_path, source_color);
+    ReadImage(source_depth_path, source_depth);
+    ReadImage(target_color_path, target_color);
+    ReadImage(target_depth_path, target_depth);
 
-    /* Intrinsics */
-    cuda::PinholeCameraIntrinsicCuda intrinsics(
-        camera::PinholeCameraIntrinsicParameters::PrimeSenseDefault);
+    float depth_trunc = 3.0;
+    float depth_scale = 1000.0;
+    cuda::RGBDImageCuda
+        source(source_color.width_, source_color.height_, depth_trunc, depth_scale),
+        target(target_color.width_, target_color.height_, depth_trunc, depth_scale);
+    source.Upload(source_depth, source_color);
+    target.Upload(target_depth, target_color);
 
-    /* Volumes */
-    float voxel_length = 0.01f;
-    cuda::TransformCuda extrinsics = cuda::TransformCuda::Identity();
-    cuda::ScalableTSDFVolumeCuda<8> tsdf_volume(
-        10000, 200000, voxel_length, 3 * voxel_length, extrinsics);
-
-    /* RGBD image container */
-    geometry::Image depth, color;
-    cuda::RGBDImageCuda rgbd_prev(640, 480, 4.0f, 1000.0f);
-    cuda::RGBDImageCuda rgbd_curr(640, 480, 4.0f, 1000.0f);
-    cuda::ScalableMeshVolumeCuda<8> mesher(
-        40000, cuda::VertexWithNormalAndColor, 6000000, 12000000);
-
-    /* Odometry class */
+    /** Prepare odometry class **/
     cuda::RGBDOdometryCuda<3> odometry;
-    odometry.SetIntrinsics(camera::PinholeCameraIntrinsic(
-        camera::PinholeCameraIntrinsicParameters::PrimeSenseDefault));
-    odometry.SetParameters(odometry::OdometryOption({20, 10, 5}, 0.07, 0.01), 0.5f);
+    odometry.SetIntrinsics(PinholeCameraIntrinsic(
+        PinholeCameraIntrinsicParameters::PrimeSenseDefault));
+    odometry.SetParameters(odometry::OdometryOption({20, 10, 5}, 0.07), 0.5);
+    odometry.Initialize(source, target);
+    odometry.transform_source_to_target_ = Eigen::Matrix4d::Identity();
 
-    /* Visualizer class */
-    visualization::Visualizer visualizer;
-    if (!visualizer.CreateVisualizerWindow("RGBD Odometry", 640, 480, 0, 0)) {
+    /** Prepare visualizer **/
+    VisualizerWithCudaModule visualizer;
+    if (!visualizer.CreateVisualizerWindow("RGBDOdometry", 640, 480, 0, 0)) {
         utility::PrintWarning("Failed creating OpenGL window.\n");
         return -1;
     }
     visualizer.BuildUtilities();
     visualizer.UpdateWindowTitle();
 
-    /* Mesher class */
-    std::shared_ptr<cuda::TriangleMeshCuda> mesh
-        = std::make_shared<cuda::TriangleMeshCuda>();
-    visualizer.AddGeometry(mesh);
+    /** Prepare point cloud (original) **/
+    std::shared_ptr<cuda::PointCloudCuda>
+        pcl_source = std::make_shared<cuda::PointCloudCuda>(
+        cuda::VertexWithColor, 640 * 480),
+        pcl_target = std::make_shared<cuda::PointCloudCuda>(
+        cuda::VertexWithColor, 640 * 480);
 
-    Eigen::Matrix4d target_to_world = trajectory_gt.parameters_[0].extrinsic_;
-    camera::PinholeCameraTrajectory trajectory;
+    int level = 2;
+    pcl_source->Build(odometry.source_depth_[level],
+                      odometry.source_intensity_[level],
+                      odometry.device_->intrinsics_[level]);
+    pcl_source->Build(odometry.target_depth_[level],
+                      odometry.target_intensity_[level],
+                      odometry.device_->intrinsics_[level]);
+    visualizer.AddGeometry(pcl_source);
+    visualizer.AddGeometry(pcl_target);
 
-    int save_index = 0;
-    for (int i = 0; i < rgbd_filenames.size(); ++i) {
-        std::cout << i << std::endl;
-        io::ReadImage(base_path + "/" + rgbd_filenames[i].first, depth);
-        io::ReadImage(base_path + "/" + rgbd_filenames[i].second, color);
-        rgbd_curr.Upload(depth, color);
+    /** Correspondence visualizer **/
+    std::shared_ptr<LineSet> lines = std::make_shared<LineSet>();
+    visualizer.AddGeometry(lines);
 
-        /* Odometry */
-        if (i >= 1) {
-            odometry.transform_source_to_target_ = Eigen::Matrix4d::Identity();
-            odometry.Initialize(rgbd_curr, rgbd_prev);
-            odometry.ComputeMultiScale();
+    const int kIterations[3] = {60, 60, 60};
+    bool finished = false;
+    int iter = kIterations[level];
 
-            target_to_world = target_to_world *
-                odometry.transform_source_to_target_;
+    bool is_success;
+    Eigen::Matrix4d delta;
+    float loss;
+    visualizer.RegisterKeyCallback(GLFW_KEY_SPACE, [&](Visualizer *vis) {
+        if (finished) return false;
+
+        /* Odometry (1 iteration) */
+        std::tie(is_success, delta, loss)
+            = odometry.DoSingleIteration(level, iter);
+        odometry.transform_source_to_target_ = delta *
+            odometry.transform_source_to_target_;
+
+        /* Update correspondences */
+        lines->points_.clear();
+        lines->lines_.clear();
+        lines->colors_.clear();
+        auto &intrinsic = odometry.device_->intrinsics_[level];
+        auto correspondences = odometry.correspondences_.Download();
+        auto src_depth = odometry.source_depth_[level].DownloadImage();
+        auto tgt_depth = odometry.target_depth_[level].DownloadImage();
+        for (int i = 0; i < correspondences.size(); ++i) {
+            auto &c = correspondences[i];
+
+            auto p_src = cuda::Vector2i(c(0), c(1));
+            auto X_src = intrinsic.InverseProjectPixel(
+                p_src, *geometry::PointerAt<float>(*src_depth, c(0), c(1)));
+            Eigen::Vector4d X_src_h = odometry.transform_source_to_target_ *
+                Eigen::Vector4d(X_src(0), X_src(1), X_src(2), 1.0);
+            lines->points_.emplace_back(X_src_h.hnormalized());
+
+            auto p_tgt = cuda::Vector2i(c(2), c(3));
+            auto X_tgt = intrinsic.InverseProjectPixel(
+                p_tgt, *geometry::PointerAt<float>(*tgt_depth, c(2), c(3)));
+            lines->points_.emplace_back(X_tgt(0), X_tgt(1), X_tgt(2));
+            lines->colors_.emplace_back(0, 0, 1);
+            lines->lines_.emplace_back(Eigen::Vector2i(2 * i + 1, 2 * i));
         }
 
-        camera::PinholeCameraParameters params;
-        params.intrinsic_ = camera::PinholeCameraIntrinsic(
-            camera::PinholeCameraIntrinsicParameters::PrimeSenseDefault);
-        params.extrinsic_ = target_to_world;
-        trajectory.parameters_.emplace_back(params);
+        /* Update point cloud */
+        pcl_source->Transform(delta);
 
-        /* Integration */
-        extrinsics.FromEigen(target_to_world);
-        tsdf_volume.Integrate(rgbd_curr, intrinsics, extrinsics);
+        /* Re-bind geometry */
+        vis->UpdateGeometry();
 
-        /* Meshing */
-        mesher.MarchingCubes(tsdf_volume);
-        *mesh = mesher.mesh();
-        visualizer.PollEvents();
-        visualizer.UpdateGeometry();
-
-        /* Log extrinsic files */
-        params.extrinsic_ = extrinsics.ToEigen().inverse();
-        visualizer.GetViewControl().ConvertFromPinholeCameraParameters(params);
-
-        if (i > 0 && i % 2000 == 0) {
-            tsdf_volume.GetAllSubvolumes();
-            mesher.MarchingCubes(tsdf_volume);
-            io::WriteTriangleMeshToPLY(
-                "fragment-" + std::to_string(save_index) + ".ply",
-                *mesher.mesh().Download());
-            save_index++;
+        /* Update masks */
+        --iter;
+        if (iter == 0) {
+            --level;
+            if (level < 0) {
+                finished = true;
+            } else {
+                pcl_source->Build(odometry.source_depth_[level],
+                                  odometry.source_intensity_[level],
+                                  odometry.device_->intrinsics_[level]);
+                pcl_source->Build(odometry.target_depth_[level],
+                                  odometry.target_intensity_[level],
+                                  odometry.device_->intrinsics_[level]);
+                iter = kIterations[level];
+            }
         }
-        rgbd_prev.CopyFrom(rgbd_curr);
+        return !finished;
+    });
+
+    bool should_close = false;
+    while (!should_close) {
+        should_close = !visualizer.PollEvents();
     }
-
-    io::WritePinholeCameraTrajectoryToLOG("trajectory_cuda.log", trajectory);
+    visualizer.DestroyVisualizerWindow();
 
     return 0;
+}
+
+int main(int argc, char **argv) {
+    std::string source_color_path, source_depth_path,
+        target_color_path, target_depth_path;
+    if (argc > 4) {
+        source_color_path = argv[1];
+        source_depth_path = argv[2];
+        target_color_path = argv[3];
+        target_depth_path = argv[4];
+    } else {
+        std::string test_data_path = "../../../examples/TestData/RGBD";
+        source_color_path = test_data_path + "/color/00000.jpg";
+        source_depth_path = test_data_path + "/depth/00000.png";
+        target_color_path = test_data_path + "/color/00002.jpg";
+        target_depth_path = test_data_path + "/depth/00002.png";
+    }
+
+    return RGBDOdometry(source_color_path, source_depth_path,
+                        target_color_path, target_depth_path);
 }

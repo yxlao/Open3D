@@ -8,7 +8,7 @@
 
 namespace open3d {
 namespace visualization {
-class VisualizerWithCudaModule : public Visualizer {
+class VisualizerWithCudaModule : public VisualizerWithKeyCallback {
 public:
     /// Visualizer should be updated accordingly.
     virtual bool AddGeometry(

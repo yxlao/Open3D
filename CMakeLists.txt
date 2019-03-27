@@ -11,21 +11,21 @@ endif()
 # central location for specifying the Open3D version
 file(STRINGS "src/Open3D/version.txt" OPEN3D_VERSION_READ)
 foreach(ver ${OPEN3D_VERSION_READ})
-  if (ver MATCHES "OPEN3D_VERSION_(MAJOR|MINOR|PATCH|TWEAK) +([^ ]+)$")
-    set(OPEN3D_VERSION_${CMAKE_MATCH_1} "${CMAKE_MATCH_2}" CACHE INTERNAL "")
-  endif()
+    if (ver MATCHES "OPEN3D_VERSION_(MAJOR|MINOR|PATCH|TWEAK) +([^ ]+)$")
+        set(OPEN3D_VERSION_${CMAKE_MATCH_1} "${CMAKE_MATCH_2}" CACHE INTERNAL "")
+    endif()
 endforeach()
 string(CONCAT OPEN3D_VERSION "${OPEN3D_VERSION_MAJOR}"
-                             ".${OPEN3D_VERSION_MINOR}"
-                             ".${OPEN3D_VERSION_PATCH}"
-                             ".${OPEN3D_VERSION_TWEAK}")
+        ".${OPEN3D_VERSION_MINOR}"
+        ".${OPEN3D_VERSION_PATCH}"
+        ".${OPEN3D_VERSION_TWEAK}")
 project(Open3D VERSION ${OPEN3D_VERSION})
 message(STATUS "Open3D ${PROJECT_VERSION}")
 
 # npm version has to be MAJOR.MINOR.PATCH
 string(CONCAT PROJECT_VERSION_THREE_NUMBER "${OPEN3D_VERSION_MAJOR}"
-                                           ".${OPEN3D_VERSION_MINOR}"
-                                           ".${OPEN3D_VERSION_PATCH}")
+        ".${OPEN3D_VERSION_MINOR}"
+        ".${OPEN3D_VERSION_PATCH}")
 
 # pypi package name controls specifies the repository name on pypi
 # possbie names include:
@@ -48,7 +48,7 @@ set(PROJECT_ISSUES  "https://github.com/IntelVCL/Open3D/issues")
 
 # configure a header file to pass the version settings to the source code
 configure_file("${PROJECT_SOURCE_DIR}/src/Open3D/Open3DConfig.h.in"
-               "${PROJECT_SOURCE_DIR}/src/Open3D/Open3DConfig.h")
+        "${PROJECT_SOURCE_DIR}/src/Open3D/Open3DConfig.h")
 
 if(WIN32 AND NOT CYGWIN)
     set(DEF_INSTALL_CMAKE_DIR CMake)
@@ -56,7 +56,7 @@ else()
     set(DEF_INSTALL_CMAKE_DIR lib/cmake/Open3D)
 endif()
 set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH
-    "Installation directory for CMake files")
+        "Installation directory for CMake files")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/3rdparty/CMake)
 
@@ -81,11 +81,14 @@ option(BUILD_TINYFILEDIALOGS     "Build tinyfiledialogs from source"        ON)
 option(ENABLE_JUPYTER            "Enable Jupyter support for Open3D"        ON)
 option(STATIC_WINDOWS_RUNTIME    "Use static (MT/MTd) Windows runtime"      OFF)
 
+option(BUILD_CUDA_MODULE         "Build the CUDA module"                    ON)
+option(BUILD_CUDA_EXAMPLES       "Build the CUDA example programs"          ON)
+
 # default built type
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING
-        "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
-        FORCE)
+            "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
+            FORCE)
 endif ()
 
 # if dynamic link is added, use if (WIN32) macro
@@ -200,17 +203,14 @@ endmacro(ADD_SOURCE_GROUP)
 
 # Handling dependencies
 add_subdirectory(3rdparty)
-include_directories(${PROJECT_SOURCE_DIR})
-include_directories(${3RDPARTY_INCLUDE_DIRS})
-
 link_directories(${3RDPARTY_LIBRARY_DIRS})
 
 # set include directories
 include_directories(
-    ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_SOURCE_DIR}/3rdparty
-    ${3RDPARTY_INCLUDE_DIRS}
-    ${PROJECT_SOURCE_DIR}/3rdparty/librealsense/include
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR}/3rdparty
+        ${3RDPARTY_INCLUDE_DIRS}
+        ${PROJECT_SOURCE_DIR}/3rdparty/librealsense/include
 )
 
 # Open3D library
@@ -221,14 +221,14 @@ add_subdirectory(examples)
 
 # `make check-style` errors if styling is not compliant
 add_custom_target(check-style
-    COMMAND ${CMAKE_COMMAND}
-    -DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
-    -P ${CMAKE_CURRENT_SOURCE_DIR}/util/scripts/check-style.cmake
-)
+        COMMAND ${CMAKE_COMMAND}
+        -DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/util/scripts/check-style.cmake
+        )
 
 # `make apply-style` runs clang-format to format all source code
 add_custom_target(apply-style
-    COMMAND ${CMAKE_COMMAND}
-    -DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
-    -P ${CMAKE_CURRENT_SOURCE_DIR}/util/scripts/apply-style.cmake
-)
+        COMMAND ${CMAKE_COMMAND}
+        -DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/util/scripts/apply-style.cmake
+        )
