@@ -9,8 +9,9 @@
 #include <Open3D/Utility/Console.h>
 #include <Open3D/Utility/Timer.h>
 
-#include "driver_types.h"
-#include "cuda_runtime_api.h"
+#include <cuda_runtime_api.h>
+#include <device_launch_parameters.h>
+#include <driver_types.h>
 
 #include "Common.h"
 #include "HelperCuda.h"

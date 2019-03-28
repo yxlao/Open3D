@@ -15,13 +15,13 @@ void CreateKernel(ScalableTSDFVolumeCudaDevice<N> server) {
     if (index >= server.value_capacity_) return;
 
     const size_t offset = (N * N * N) * index;
-    UniformTSDFVolumeCudaDevice < N > &subvolume = server.hash_table()
-        .memory_heap_value().value_at(index);
+    UniformTSDFVolumeCudaDevice < N > &subvolume = server.hash_table_
+        .memory_heap_value_.value_at(index);
 
     /** Assign memory **/
-    subvolume.Create(&server.tsdf_memory_pool()[offset],
-                     &server.weight_memory_pool()[offset],
-                     &server.color_memory_pool()[offset]);
+    subvolume.tsdf_ = &server.tsdf_memory_pool_[offset];
+    subvolume.weight_ = &server.weight_memory_pool_[offset];
+    subvolume.color_ = &server.color_memory_pool_[offset];
 
     /** Assign property **/
     subvolume.voxel_length_ = server.voxel_length_;
@@ -91,7 +91,7 @@ void IntegrateSubvolumesKernel(ScalableTSDFVolumeCudaDevice<N> server,
 #endif
 
     HashEntry<Vector3i>
-        &entry = server.active_subvolume_entry_array().at(entry_idx);
+        &entry = server.active_subvolume_entry_array_.at(entry_idx);
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
     assert(entry.internal_addr >= 0);
 #endif
@@ -122,12 +122,12 @@ void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaDevice<N> server,
     const int bucket_idx = threadIdx.x + blockIdx.x * blockDim.x;
     if (bucket_idx >= server.bucket_count_) return;
 
-    auto &hash_table = server.hash_table();
+    auto &hash_table = server.hash_table_;
 
     int bucket_base_idx = bucket_idx * BUCKET_SIZE;
 #pragma unroll 1
     for (size_t i = 0; i < BUCKET_SIZE; ++i) {
-        HashEntry<Vector3i> &entry = hash_table.entry_array().at(
+        HashEntry<Vector3i> &entry = hash_table.entry_array_.at(
             bucket_base_idx + i);
         if (entry.internal_addr != NULLPTR_CUDA) {
             Vector3f
@@ -141,7 +141,7 @@ void GetSubvolumesInFrustumKernel(ScalableTSDFVolumeCudaDevice<N> server,
     }
 
     LinkedListCudaDevice<HashEntry<Vector3i>> &linked_list =
-        hash_table.entry_list_array().at(bucket_idx);
+        hash_table.entry_list_array_.at(bucket_idx);
     int node_ptr = linked_list.head_node_ptr();
     while (node_ptr != NULLPTR_CUDA) {
         LinkedListNodeCuda<HashEntry<Vector3i>> &linked_list_node =
@@ -180,12 +180,12 @@ void GetAllSubvolumesKernel(ScalableTSDFVolumeCudaDevice<N> server) {
     const int bucket_idx = threadIdx.x + blockIdx.x * blockDim.x;
     if (bucket_idx >= server.bucket_count_) return;
 
-    auto &hash_table = server.hash_table();
+    auto &hash_table = server.hash_table_;
 
     int bucket_base_idx = bucket_idx * BUCKET_SIZE;
 #pragma unroll 1
     for (size_t i = 0; i < BUCKET_SIZE; ++i) {
-        HashEntry<Vector3i> &entry = hash_table.entry_array().at(
+        HashEntry<Vector3i> &entry = hash_table.entry_array_.at(
             bucket_base_idx + i);
         if (entry.internal_addr != NULLPTR_CUDA) {
             server.ActivateSubvolume(entry);
@@ -193,7 +193,7 @@ void GetAllSubvolumesKernel(ScalableTSDFVolumeCudaDevice<N> server) {
     }
 
     LinkedListCudaDevice<HashEntry<Vector3i>> &linked_list =
-        hash_table.entry_list_array().at(bucket_idx);
+        hash_table.entry_list_array_.at(bucket_idx);
     int node_ptr = linked_list.head_node_ptr();
     while (node_ptr != NULLPTR_CUDA) {
         LinkedListNodeCuda<HashEntry<Vector3i>> &linked_list_node =

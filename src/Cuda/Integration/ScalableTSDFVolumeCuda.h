@@ -26,7 +26,7 @@ public:
     Vector3i, UniformTSDFVolumeCudaDevice<N>, SpatialHasher>
         SpatialHashTableCudaDevice;
 
-private:
+public:
     /** (N * N * N) * value_capacity **/
     float *tsdf_memory_pool_;
     uchar *weight_memory_pool_;
@@ -61,29 +61,6 @@ public:
     float sdf_trunc_;
     TransformCuda transform_volume_to_world_;
     TransformCuda transform_world_to_volume_;
-
-public:
-    __HOSTDEVICE__ inline SpatialHashTableCudaDevice &hash_table() {
-        return hash_table_;
-    }
-
-    __HOSTDEVICE__ inline float *tsdf_memory_pool() {
-        return tsdf_memory_pool_;
-    }
-    __HOSTDEVICE__ inline uchar *weight_memory_pool() {
-        return weight_memory_pool_;
-    }
-    __HOSTDEVICE__ inline Vector3b *color_memory_pool() {
-        return color_memory_pool_;
-    }
-
-    __HOSTDEVICE__ inline ArrayCudaDevice<HashEntry<Vector3i>> &
-    active_subvolume_entry_array() {
-        return active_subvolume_entry_array_;
-    }
-    __HOSTDEVICE__ inline int *active_subvolume_indices() {
-        return active_subvolume_indices_;
-    }
 
 public:
     /** This adds the entry into the active entry array,

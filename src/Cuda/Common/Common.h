@@ -6,6 +6,7 @@
 #include <cmath>
 
 namespace open3d {
+
 #if defined(__CUDACC__)
 #define __ALIGN__(n)  __align__(n)
 /* Use these to avoid redundant conditional macro code ONLY in headers */

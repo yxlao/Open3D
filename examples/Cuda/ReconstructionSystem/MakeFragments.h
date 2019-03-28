@@ -142,12 +142,8 @@ void MakePoseGraphForFragment(int fragment_id, DatasetConfig &config) {
                             information = odometry.ComputeInformationMatrix();
 
                         pose_graph.edges_.emplace_back(
-                            PoseGraphEdge(
-                                s - begin,
-                                t - begin,
-                                trans,
-                                information,
-                                true));
+                            PoseGraphEdge(s - begin, t - begin,
+                                          trans, information, true));
                     }
                 }
             }

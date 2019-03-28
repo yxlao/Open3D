@@ -20,7 +20,7 @@ namespace open3d {
 namespace cuda {
 template<size_t N>
 class UniformTSDFVolumeCudaDevice {
-private:
+public:
     /** [N * N * N] **/
     float *tsdf_;
     uchar *weight_;
@@ -89,12 +89,6 @@ public:
     __DEVICE__ uchar WeightAt(const Vector3f &X);
     __DEVICE__ Vector3b ColorAt(const Vector3f &X);
     __DEVICE__ Vector3f GradientAt(const Vector3f &X);
-
-public:
-    /** WARNING!!! DO NOT USE IT!!!
-      * This method is reserved for ScalableTSDFVolumeCudaDevice
-      * That class requires us to initialize memory ON GPU. */
-    __DEVICE__ void Create(float *tsdf, uchar *weight, Vector3b *color);
 
 public:
     __DEVICE__ void Integrate(const Vector3i &X,

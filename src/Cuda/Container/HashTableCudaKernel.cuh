@@ -22,16 +22,14 @@ void CreateKernel(
     int bucket_base_idx = bucket_idx * BUCKET_SIZE;
 #pragma unroll 1
     for (int i = 0; i < BUCKET_SIZE; ++i) {
-        device.entry_array().at(
-            bucket_base_idx + i).Clear(); /* Clear == Create */
+        device.entry_array_.at(bucket_base_idx + i).Clear(); /* Clear == Create */
     }
 
-    int *head_node_ptr =
-        &(device.entry_list_head_node_ptrs_memory_pool()[bucket_idx]);
-    int *size_ptr = &(device.entry_list_size_ptrs_memory_pool()[bucket_idx]);
+    int *head_node_ptr = &device.entry_list_head_node_ptrs_memory_pool_[bucket_idx];
+    int *size_ptr = &device.entry_list_size_ptrs_memory_pool_[bucket_idx];
 
-    device.entry_list_array().at(bucket_idx).Create(
-        device.memory_heap_entry_list_node(),
+    device.entry_list_array_.at(bucket_idx).Create(
+        device.memory_heap_entry_list_node_,
         head_node_ptr,
         size_ptr);
 }
@@ -55,7 +53,7 @@ void ReleaseKernel(
     const int bucket_idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (bucket_idx >= device.bucket_count_) return;
 
-    device.entry_list_array().at(bucket_idx).Release();
+    device.entry_list_array_.at(bucket_idx).Release();
 }
 
 template<typename Key, typename Value, typename Hasher>
@@ -65,8 +63,7 @@ void HashTableCudaKernelCaller<Key, Value, Hasher>::Release(
 
     const int blocks = DIV_CEILING(hash_table.bucket_count_, THREAD_1D_UNIT);
     const int threads = THREAD_1D_UNIT;
-    ReleaseKernel<< < blocks, threads >> >(
-        *hash_table.device_);
+    ReleaseKernel<< < blocks, threads >> >(*hash_table.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
@@ -80,9 +77,9 @@ void ResetKernel(HashTableCudaDevice<Key, Value, Hasher> device) {
     int bucket_base_idx = bucket_idx * BUCKET_SIZE;
 #pragma unroll 1
     for (int i = 0; i < BUCKET_SIZE; ++i) {
-        device.entry_array().at(bucket_base_idx + i).Clear();
+        device.entry_array_.at(bucket_base_idx + i).Clear();
     }
-    device.entry_list_array().at(bucket_idx).Clear();
+    device.entry_list_array_.at(bucket_idx).Clear();
 }
 
 template<typename Key, typename Value, typename Hasher>
@@ -108,19 +105,19 @@ void GetAssignedEntriesKernel(
     int bucket_base_idx = bucket_idx * BUCKET_SIZE;
 #pragma unroll 1
     for (int i = 0; i < BUCKET_SIZE; ++i) {
-        Entry &entry = device.entry_array().at(bucket_base_idx + i);
+        Entry &entry = device.entry_array_.at(bucket_base_idx + i);
         if (entry.internal_addr != NULLPTR_CUDA) {
-            device.assigned_entry_array().push_back(entry);
+            device.assigned_entry_array_.push_back(entry);
         }
     }
 
     LinkedListCudaDevice<Entry> &linked_list =
-        device.entry_list_array().at(bucket_idx);
+        device.entry_list_array_.at(bucket_idx);
     int node_ptr = linked_list.head_node_ptr();
     while (node_ptr != NULLPTR_CUDA) {
         LinkedListNodeCuda<Entry> &linked_list_node =
             linked_list.get_node(node_ptr);
-        device.assigned_entry_array().push_back(linked_list_node.data);
+        device.assigned_entry_array_.push_back(linked_list_node.data);
         node_ptr = linked_list_node.next_node_ptr;
     }
 }
@@ -211,13 +208,13 @@ void ProfileKernel(
     int bucket_base_idx = bucket_idx * BUCKET_SIZE;
     int array_entry_cnt = 0;
     for (int i = 0; i < BUCKET_SIZE; ++i) {
-        if (!device.entry_array().at(bucket_base_idx + i).IsEmpty()) {
+        if (!device.entry_array_.at(bucket_base_idx + i).IsEmpty()) {
             array_entry_cnt++;
         }
     }
 
     LinkedListCudaDevice<Entry> &linked_list =
-        device.entry_list_array().at(bucket_idx);
+        device.entry_list_array_.at(bucket_idx);
 
     int linked_list_entry_cnt = 0;
     int node_ptr = linked_list.head_node_ptr();

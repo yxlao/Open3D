@@ -15,14 +15,14 @@ int main(int argc, char **argv) {
     DatasetConfig config;
 
     std::string config_path = argc > 1 ? argv[1] :
-        kDefaultDatasetConfigDir + "/cmu/nsh.json";
+        kDefaultDatasetConfigDir + "/indoor_lidar_rgbd/apartment.json";
 
     bool is_success = ReadIJsonConvertible(config_path, config);
     if (! is_success) return 1;
 
-//    auto mesh = CreateMeshFromFile(config.GetReconstructedSceneFile());
-//    mesh->ComputeTriangleNormals();
-//    DrawGeometries({mesh});
+    auto mesh = CreateMeshFromFile(config.GetReconstructedSceneFile());
+    mesh->ComputeTriangleNormals();
+    visualization::DrawGeometries({mesh});
 
     config.GetFragmentFiles();
     for (auto &ply_filename : config.fragment_files_) {

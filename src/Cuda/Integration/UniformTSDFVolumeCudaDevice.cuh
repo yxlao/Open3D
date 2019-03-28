@@ -13,16 +13,6 @@ namespace cuda {
 /**
  * Server end
  */
-/** Reserved for ScalableTSDFVolumeCuda **/
-template<size_t N>
-__device__
-inline void UniformTSDFVolumeCudaDevice<N>::Create(
-    float *tsdf, uchar *weight, Vector3b *color) {
-    tsdf_ = tsdf;
-    weight_ = weight;
-    color_ = color;
-}
-
 /** Coordinate conversions **/
 template<size_t N>
 __device__
@@ -86,8 +76,8 @@ UniformTSDFVolumeCudaDevice<N>::gradient(const Vector3i &X) {
 
 #pragma unroll 1
     for (size_t k = 0; k < 3; ++k) {
-        X1(k) = min(X(k) + 1, int(N) - 1);
-        X0(k) = max(X(k) - 1, 0);
+        X1(k) = O3D_MIN(X(k) + 1, int(N) - 1);
+        X0(k) = O3D_MAX(X(k) - 1, 0);
         n(k) = tsdf_[IndexOf(X1)] - tsdf_[IndexOf(X0)];
         X1(k) = X0(k) = X(k);
     }

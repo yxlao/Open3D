@@ -81,7 +81,7 @@ public:
     typedef LinkedListNodeCuda<Entry> LinkedListNodeEntryCuda;
     int bucket_count_;
 
-private:
+public:
     Hasher hasher_;
 
     /* bucket_count_ x BUCKET_SIZE */
@@ -109,7 +109,7 @@ private:
       *   is very slow (imagine thousands of kernel querying per element
       *   mallocing simultaneously.
       * - So we choose external allocation for LinkedLists, and manage them
-      *   on kernels. */
+      *   on kernels calls. */
     int *entry_list_head_node_ptrs_memory_pool_;
     int *entry_list_size_ptrs_memory_pool_;
 
@@ -131,30 +131,6 @@ public:
 
     __DEVICE__ int New(const Key &key);
     __DEVICE__ int Delete(const Key &key);
-
-    __DEVICE__ inline ArrayCudaDevice<Entry> &entry_array() {
-        return entry_array_;
-    }
-    __DEVICE__ inline ArrayCudaDevice<LinkedListEntryCudaDevice>
-    &entry_list_array() {
-        return entry_list_array_;
-    }
-    __DEVICE__ inline ArrayCudaDevice<Entry> &assigned_entry_array() {
-        return assigned_entry_array_;
-    }
-    __DEVICE__ inline MemoryHeapCudaDevice<LinkedListNodeEntryCuda>
-    &memory_heap_entry_list_node() {
-        return memory_heap_entry_list_node_;
-    }
-    __DEVICE__ inline MemoryHeapCudaDevice<Value> &memory_heap_value() {
-        return memory_heap_value_;
-    }
-    __DEVICE__ inline int *&entry_list_head_node_ptrs_memory_pool() {
-        return entry_list_head_node_ptrs_memory_pool_;
-    }
-    __DEVICE__ inline int *&entry_list_size_ptrs_memory_pool() {
-        return entry_list_size_ptrs_memory_pool_;
-    }
 
     friend class HashTableCuda<Key, Value, Hasher>;
 };

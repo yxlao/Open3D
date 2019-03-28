@@ -20,7 +20,7 @@ void VertexAllocationKernel(
 
     const int subvolume_idx = blockIdx.x;
     const HashEntry<Vector3i> &subvolume_entry =
-        tsdf_volume.active_subvolume_entry_array()[subvolume_idx];
+        tsdf_volume.active_subvolume_entry_array_[subvolume_idx];
 
     const Vector3i Xsv = subvolume_entry.key;
     const Vector3i Xlocal = Vector3i(threadIdx.x, threadIdx.y, threadIdx.z);
@@ -72,7 +72,7 @@ void VertexExtractionKernel(
 
     const int subvolume_idx = blockIdx.x;
     const HashEntry<Vector3i> &subvolume_entry =
-        tsdf_volume.active_subvolume_entry_array()[subvolume_idx];
+        tsdf_volume.active_subvolume_entry_array_[subvolume_idx];
 
     const Vector3i Xsv = subvolume_entry.key;
     const Vector3i Xlocal = Vector3i(threadIdx.x, threadIdx.y, threadIdx.z);
@@ -125,7 +125,7 @@ void TriangleExtractionKernel(
 
     const int subvolume_idx = blockIdx.x;
     const HashEntry<Vector3i> &subvolume_entry =
-        tsdf_volume.active_subvolume_entry_array()[subvolume_idx];
+        tsdf_volume.active_subvolume_entry_array_[subvolume_idx];
 
     const Vector3i Xsv = subvolume_entry.key;
     const Vector3i Xlocal = Vector3i(threadIdx.x, threadIdx.y, threadIdx.z);
