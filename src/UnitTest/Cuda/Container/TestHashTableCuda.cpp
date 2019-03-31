@@ -54,7 +54,7 @@ TEST(HashTableCuda, HashTableProfiling) {
         std::vector<int> subvalues(
             values.begin() + i * num_per_iter,
             values.begin() + (i + 1) * num_per_iter);
-        table.New(subkeys, subvalues);
+        table.Insert(subkeys, subvalues);
         table.ResetLocks();
     }
     auto downloaded = table.Download();
@@ -138,7 +138,7 @@ TEST(HashTableCuda, HashTableInsertionAndDelete) {
         std::vector<int> subvalues(
             values.begin() + i * num_per_iter,
             values.begin() + (i + 1) * num_per_iter);
-        table.New(subkeys, subvalues);
+        table.Insert(subkeys, subvalues);
         table.ResetLocks();
     }
     auto downloaded = table.Download();

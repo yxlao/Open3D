@@ -142,7 +142,7 @@ public:
     typedef LinkedListCudaDevice<Entry> LinkedListEntryCudaDevice;
     typedef LinkedListNodeCuda<Entry> LinkedListNodeEntryCuda;
 
-private:
+public:
     Hasher hasher_;
 
     MemoryHeapCuda<LinkedListNodeEntryCuda> memory_heap_entry_list_node_;
@@ -178,43 +178,20 @@ public:
     void ResetLocks();
     void GetAssignedEntries();
 
-    /**
-     * The internal data structure is too complicated to be separately dumped.
-     * We try to pre-process them before dumping them to CPU.
-     * @param pairs
-     * @return pair count
-     */
-    void New(std::vector<Key> &keys, std::vector<Value> &values);
+    /** If Value is a simple type
+      * (e.g. int, float, simple structures),
+      * call this to assign new data **/
+    std::vector<int> Insert(std::vector<Key> &keys, std::vector<Value> &values);
+
+    /** If Value is too large to assign, or is a pointer to memory on GPU
+      * (e.g. UniformTSDFVolumeCudaDevice),
+      * call this to allocate new data, then process is in other launches **/
+    std::vector<int> New(std::vector<Key> &keys);
+
     void Delete(std::vector<Key> &keys);
     std::tuple<std::vector<int>, std::vector<int>> Profile();
     std::tuple<std::vector<Key>, std::vector<Value>> Download();
     std::vector<Entry> DownloadAssignedEntries();
-
-    const Hasher &hasher() const {
-        return hasher_;
-    }
-    const ArrayCuda<Entry> &entry_array() const {
-        return entry_array_;
-    }
-    const ArrayCuda<LinkedListEntryCudaDevice> &entry_list_array() const {
-        return entry_list_array_;
-    }
-    const ArrayCuda<Entry> &assigned_entry_array() const {
-        return assigned_entry_array_;
-    };
-    ArrayCuda<Entry> &assigned_entry_array() {
-        return assigned_entry_array_;
-    }
-    const MemoryHeapCuda<LinkedListNodeEntryCuda> &
-    memory_heap_entry_list_node() const {
-        return memory_heap_entry_list_node_;
-    }
-    const MemoryHeapCuda<Value> &memory_heap_value() const {
-        return memory_heap_value_;
-    }
-    const ArrayCuda<int> &lock_array() const {
-        return lock_array_;
-    }
 };
 
 template<typename Key, typename Value, typename Hasher>
@@ -224,12 +201,20 @@ public:
     static void Release(HashTableCuda<Key, Value, Hasher> &hash_table);
 
     static void Reset(HashTableCuda<Key, Value, Hasher> &hash_table);
-    static void GetAssignedEntries(HashTableCuda<Key, Value, Hasher> &hash_table);
+    static void GetAssignedEntries(HashTableCuda<Key,
+                                                 Value,
+                                                 Hasher> &hash_table);
 
     static void Insert(HashTableCuda<Key, Value, Hasher> &hash_table,
                        ArrayCuda<Key> &keys,
                        ArrayCuda<Value> &values,
+                       ArrayCuda<int> &results,
                        int num_pairs);
+
+    static void New(HashTableCuda<Key, Value, Hasher> &hash_table,
+                    ArrayCuda<Key> &keys,
+                    ArrayCuda<int> &results,
+                    int num_pairs);
 
     static void Delete(HashTableCuda<Key, Value, Hasher> &hash_table,
                        ArrayCuda<Key> &keys,
@@ -257,12 +242,22 @@ template<typename Key, typename Value, typename Hasher>
 __GLOBAL__
 void GetAssignedEntriesKernel(HashTableCudaDevice<Key, Value, Hasher> device);
 
+template<typename Key, typename Value, typename Hasher>
+__GLOBAL__
+void NewKernel(
+    HashTableCudaDevice<Key, Value, Hasher> device,
+    ArrayCudaDevice<Key> keys,
+    ArrayCudaDevice<int> results,
+    int num_pairs);
+
 /** Insert **/
 template<typename Key, typename Value, typename Hasher>
 __GLOBAL__
 void InsertKernel(
     HashTableCudaDevice<Key, Value, Hasher> device,
-    ArrayCudaDevice<Key> keys, ArrayCudaDevice<Value> values,
+    ArrayCudaDevice<Key> keys,
+    ArrayCudaDevice<Value> values,
+    ArrayCudaDevice<int> results,
     int num_pairs);
 
 /** Delete **/

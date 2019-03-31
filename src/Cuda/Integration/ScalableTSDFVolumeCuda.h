@@ -252,10 +252,11 @@ public:
     void Reset();
     void UpdateDevice();
 
+    /** We can download occupied subvolumes in parallel **/
     std::pair<std::vector<Vector3i>,                      /* Keys */
-              std::vector<std::tuple<std::vector<float>,  /* TSDF volumes */
-                                     std::vector<uchar>,
-                                     std::vector<Vector3b>>>> DownloadVolumes();
+              std::vector<std::tuple<std::vector<float>,  std::vector<uchar>, std::vector<Vector3b>>>>
+              DownloadVolumes();
+    /** However, we can only upload them one by one. Thread conflict will lose info. **/
     void UploadVolume(const Vector3i &key,
                       const std::tuple<std::vector<float>,
                                        std::vector<uchar>,

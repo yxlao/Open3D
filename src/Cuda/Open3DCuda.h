@@ -30,6 +30,8 @@
 #include <Cuda/Integration/ScalableTSDFVolumeCuda.h>
 #include <Cuda/Integration/ScalableMeshVolumeCuda.h>
 
+#include <Cuda/IO/ClassIO/ScalableTSDFVolumeCudaIO.h>
+
 #include <Cuda/Odometry/RGBDOdometryCuda.h>
 
 #include <Cuda/Registration/FeatureExtractorCuda.h>

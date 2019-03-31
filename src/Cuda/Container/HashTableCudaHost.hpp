@@ -43,20 +43,20 @@ HashTableCuda<Key, Value, Hasher>::HashTableCuda(
     bucket_count_ = other.bucket_count_;
     max_value_capacity_ = other.max_value_capacity_;
     max_linked_list_node_capacity_ = other.max_linked_list_node_capacity_;
-    hasher_ = other.hasher();
+    hasher_ = other.hasher_;
 
     device_ = other.device_;
 
     /** No need to call UpdateDevice(), they should have been copied to
      * other.device_ and assigned to device_; */
 
-    memory_heap_entry_list_node_ = other.memory_heap_entry_list_node();
-    memory_heap_value_ = other.memory_heap_value();
+    memory_heap_entry_list_node_ = other.memory_heap_entry_list_node_;
+    memory_heap_value_ = other.memory_heap_value_;
 
-    entry_array_ = other.entry_array();
-    entry_list_array_ = other.entry_list_array();
-    lock_array_ = other.lock_array();
-    assigned_entry_array_ = other.assigned_entry_array();
+    entry_array_ = other.entry_array_;
+    entry_list_array_ = other.entry_list_array_;
+    lock_array_ = other.lock_array_;
+    assigned_entry_array_ = other.assigned_entry_array_;
 }
 
 template<typename Key, typename Value, typename Hasher>
@@ -66,17 +66,17 @@ HashTableCuda<Key, Value, Hasher> &HashTableCuda<Key, Value, Hasher>::operator=(
         bucket_count_ = other.bucket_count_;
         max_value_capacity_ = other.max_value_capacity_;
         max_linked_list_node_capacity_ = other.max_linked_list_node_capacity_;
-        hasher_ = other.hasher();
+        hasher_ = other.hasher_;
 
         device_ = other.device_;
 
-        memory_heap_entry_list_node_ = other.memory_heap_entry_list_node();
-        memory_heap_value_ = other.memory_heap_value();
+        memory_heap_entry_list_node_ = other.memory_heap_entry_list_node_;
+        memory_heap_value_ = other.memory_heap_value_;
 
-        entry_array_ = other.entry_array();
-        entry_list_array_ = other.entry_list_array();
-        lock_array_ = other.lock_array();
-        assigned_entry_array_ = other.assigned_entry_array();
+        entry_array_ = other.entry_array_;
+        entry_list_array_ = other.entry_list_array_;
+        lock_array_ = other.lock_array_;
+        assigned_entry_array_ = other.assigned_entry_array_;
     }
 
     return *this;
@@ -197,7 +197,7 @@ void HashTableCuda<Key, Value, Hasher>::GetAssignedEntries() {
 }
 
 template<typename Key, typename Value, typename Hasher>
-void HashTableCuda<Key, Value, Hasher>::New(
+std::vector<int> HashTableCuda<Key, Value, Hasher>::Insert(
     std::vector<Key> &keys, std::vector<Value> &values) {
     assert(device_ != nullptr);
 
@@ -206,13 +206,36 @@ void HashTableCuda<Key, Value, Hasher>::New(
     ArrayCuda<Value> values_cuda(values.size());
     values_cuda.Upload(values);
 
+    ArrayCuda<int> results_cuda(keys.size());
+    results_cuda.Memset(-1);
+
     HashTableCudaKernelCaller<Key, Value, Hasher>::Insert(
-        *this, keys_cuda, values_cuda, keys.size());
+        *this, keys_cuda, values_cuda, results_cuda, keys.size());
+
+    auto results = results_cuda.DownloadAll();
+    return results;
 }
 
 template<typename Key, typename Value, typename Hasher>
-void HashTableCuda<Key, Value, Hasher>
-::Delete(std::vector<Key> &keys) {
+std::vector<int> HashTableCuda<Key, Value, Hasher>::New(std::vector<Key> &keys) {
+    assert(device_ != nullptr);
+
+    ArrayCuda<Key> keys_cuda(keys.size());
+    keys_cuda.Upload(keys);
+
+    ArrayCuda<int> results_cuda(keys.size());
+    results_cuda.Memset(-1);
+
+    HashTableCudaKernelCaller<Key, Value, Hasher>::New(
+        *this, keys_cuda, results_cuda, keys.size());
+
+    auto results = results_cuda.DownloadAll();
+    return results;
+}
+
+template<typename Key, typename Value, typename Hasher>
+void HashTableCuda<Key, Value, Hasher>::Delete(
+    std::vector<Key> &keys) {
     assert(device_ != nullptr);
 
     ArrayCuda<Key> keys_cuda(keys.size());

@@ -218,6 +218,10 @@ void IntegrateForFragment(int fragment_id, DatasetConfig &config) {
     }
 
     tsdf_volume.GetAllSubvolumes();
+    if (fragment_id < 5) {
+        WriteTSDFVolumeToBIN(config.GetBinFileForFragment(fragment_id), tsdf_volume);
+    }
+
     cuda::ScalableMeshVolumeCuda<8> mesher(
         tsdf_volume.active_subvolume_entry_array().size(),
         cuda::VertexWithNormalAndColor, 10000000, 20000000);

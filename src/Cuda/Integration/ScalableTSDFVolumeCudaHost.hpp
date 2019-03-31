@@ -78,7 +78,7 @@ void ScalableTSDFVolumeCuda<N>::Create(
 
     if (device_ != nullptr) {
         utility::PrintError("[ScalableTSDFVolumeCuda] Already created, "
-                           "abort!\n");
+                            "abort!\n");
         return;
     }
 
@@ -198,6 +198,34 @@ ScalableTSDFVolumeCuda<N>::DownloadVolumes() {
     }
 
     return std::make_pair(std::move(keys), std::move(volumes));
+}
+
+template<size_t N>
+void ScalableTSDFVolumeCuda<N>::UploadVolume(
+    const Vector3i &key,
+    const std::tuple<std::vector<float>,
+                     std::vector<uchar>,
+                     std::vector<Vector3b>> &volume) {
+
+    std::vector<Vector3i> keys = {key};
+    hash_table_.ResetLocks();
+    std::vector<int> value_addrs = hash_table_.New(keys);
+
+    auto &tsdf = std::get<0>(volume);
+    auto &weight = std::get<1>(volume);
+    auto &color = std::get<2>(volume);
+
+    const int NNN = (N * N * N);
+    const int offset = NNN * value_addrs[0];
+    CheckCuda(cudaMemcpy(&device_->tsdf_memory_pool_[offset], tsdf.data(),
+                         sizeof(float) * NNN,
+                         cudaMemcpyHostToDevice));
+    CheckCuda(cudaMemcpy(&device_->weight_memory_pool_[offset], weight.data(),
+                         sizeof(uchar) * NNN,
+                         cudaMemcpyHostToDevice));
+    CheckCuda(cudaMemcpy(&device_->color_memory_pool_[offset], color.data(),
+                         sizeof(Vector3b) * NNN,
+                         cudaMemcpyHostToDevice));
 }
 
 template<size_t N>

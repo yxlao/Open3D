@@ -148,6 +148,14 @@ public:
         return ss.str();
     }
 
+    std::string GetBinFileForFragment(int fragment_id) {
+        std::stringstream ss;
+        ss << path_dataset_ << "/fragments_cuda/fragment_";
+        ss << std::setw(3) << std::setfill('0') << fragment_id;
+        ss << ".bin";
+        return ss.str();
+    }
+
     std::string GetThumbnailPlyFileForFragment(int fragment_id) {
         std::stringstream ss;
         ss << path_dataset_ << "/fragments_cuda/thumbnails/fragment_";

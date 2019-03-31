@@ -63,9 +63,9 @@ public:
     void Upload(const T *data, int size);
 
     /** Download size() elements **/
-    std::vector<T> Download();
+    std::vector<T> Download() ;
     /** Download max_capacity_ elements **/
-    std::vector<T> DownloadAll();
+    std::vector<T> DownloadAll() ;
 
     /** Fill non-trivial values **/
     void Fill(const T &val);

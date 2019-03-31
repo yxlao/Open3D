@@ -24,4 +24,4 @@ link_directories(${3RDPARTY_LIBRARY_DIRS})
 
 add_subdirectory(Demo)
 add_subdirectory(ReconstructionSystem)
-
+add_subdirectory(Experiment)
