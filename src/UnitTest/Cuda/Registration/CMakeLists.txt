@@ -1,6 +1,5 @@
-add_executable(TestCorrespondenceSetCuda TestCorrespondenceSetCuda.cpp)
-target_link_libraries(TestCorrespondenceSetCuda ${CMAKE_PROJECT_NAME}
+# Registration
+UNIT_TEST_CUDA(TestCorrespondenceSetCuda ${CMAKE_PROJECT_NAME} ${OPEN3D_CUDA_MODULE}
         ${GTEST_LIBRARIES} pthread)
-
-add_executable(TestColoredICPCuda TestColoredICPCuda.cpp)
-target_link_libraries(TestColoredICPCuda ${GTEST_LIBRARIES} pthread)
+UNIT_TEST_CUDA(TestColoredICPCuda ${CMAKE_PROJECT_NAME} ${OPEN3D_CUDA_MODULE}
+        ${GTEST_LIBRARIES} pthread)

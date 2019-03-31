@@ -16,6 +16,8 @@ namespace cuda {
 template
 class ImageCuda<ushort, 1>;
 template
+class ImageCuda<int, 1>;
+template
 class ImageCuda<uchar, 4>;
 template
 class ImageCuda<uchar, 3>;

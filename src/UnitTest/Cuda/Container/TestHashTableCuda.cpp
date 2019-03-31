@@ -2,11 +2,13 @@
 // Created by wei on 9/24/18.
 //
 
+#include <Open3D/Open3D.h>
+
 #include <Cuda/Container/ArrayCuda.h>
 #include <Cuda/Container/LinkedListCuda.h>
 #include <Cuda/Container/HashTableCuda.h>
 #include <Cuda/Common/UtilsCuda.h>
-#include <Core/Core.h>
+
 #include <cuda.h>
 #include <vector>
 #include <unordered_map>
@@ -15,6 +17,7 @@
 #include <gtest/gtest.h>
 
 using namespace open3d;
+using namespace open3d::utility;
 using namespace open3d::cuda;
 
 TEST(HashTableCuda, HashTableProfiling) {

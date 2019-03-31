@@ -2,20 +2,21 @@
 // Created by wei on 10/10/18.
 //
 
+#include <Open3D/Open3D.h>
 #include <Cuda/Integration/UniformTSDFVolumeCuda.h>
 #include <Cuda/Integration/UniformMeshVolumeCuda.h>
 #include <Cuda/Common/LinearAlgebraCuda.h>
-#include <Core/Core.h>
-#include <Eigen/Eigen>
-#include <IO/IO.h>
 
-#include "UnitTest.h"
+#include <Eigen/Eigen>
 
 #include <opencv2/opencv.hpp>
 #include <vector>
+#include <gtest/gtest.h>
 
 using namespace open3d;
 using namespace open3d::cuda;
+using namespace open3d::utility;
+using namespace open3d::geometry;
 
 TEST(UniformTSDFVolumeCuda, UploadAndDownload) {
     //const size_t N = 512;
@@ -69,13 +70,13 @@ TEST(UniformTSDFVolumeCuda, UploadAndDownload) {
 TEST(UniformTSDFVolumeCuda, RayCasting) {
     using namespace open3d;
     Image depth, color;
-    ReadImage("../../examples/TestData/RGBD/depth/00000.png", depth);
-    ReadImage("../../examples/TestData/RGBD/color/00000.jpg", color);
+    io::ReadImage("../../../examples/TestData/RGBD/depth/00000.png", depth);
+    io::ReadImage("../../../examples/TestData/RGBD/color/00000.jpg", color);
     RGBDImageCuda rgbd;
     rgbd.Upload(depth, color);
 
     PinholeCameraIntrinsicCuda intrinsics(
-        PinholeCameraIntrinsicParameters::PrimeSenseDefault);
+        camera::PinholeCameraIntrinsicParameters::PrimeSenseDefault);
 
     TransformCuda transform = TransformCuda::Identity();
 
@@ -88,7 +89,7 @@ TEST(UniformTSDFVolumeCuda, RayCasting) {
         volume.Integrate(rgbd, intrinsics, extrinsics);
     }
 
-    ImageCuda<Vector3f> raycaster;
+    ImageCuda<float, 3> raycaster;
     raycaster.Create(depth.width_, depth.height_);
 
     Timer timer;

@@ -155,7 +155,9 @@ void ImageCuda<Scalar, Channel>::Upload(geometry::Image &image) {
     assert(image.width_ > 0 && image.height_ > 0);
 
     /* Type checking */
-    if (typeid(Scalar) == typeid(ushort) && Channel == 1) {
+    if (typeid(Scalar) == typeid(int) && Channel == 1) {
+        assert(image.bytes_per_channel_ == 4 && image.num_of_channels_ == 1);
+    } else if (typeid(Scalar) == typeid(ushort) && Channel == 1) {
         assert(image.bytes_per_channel_ == 2 && image.num_of_channels_ == 1);
     } else if (typeid(Scalar) == typeid(uchar) && Channel == 3) {
         assert(image.bytes_per_channel_ == 1 && image.num_of_channels_ == 3);
@@ -193,7 +195,9 @@ std::shared_ptr<geometry::Image> ImageCuda<Scalar, Channel>::DownloadImage() {
         return image;
     }
 
-    if (typeid(Scalar) == typeid(ushort) && Channel == 1) {
+    if (typeid(Scalar) == typeid(int) && Channel == 1) {
+        image->PrepareImage(width_, height_, 1, 4);
+    } else if (typeid(Scalar) == typeid(ushort) && Channel == 1) {
         image->PrepareImage(width_, height_, 1, 2);
     } else if (typeid(Scalar) == typeid(uchar) && Channel == 3) {
         image->PrepareImage(width_, height_, 3, 1);
@@ -363,7 +367,9 @@ void ImageCuda<Scalar, Channel>::Upload(cv::Mat &m) {
     assert(m.rows > 0 && m.cols > 0);
 
     /* Type checking */
-    if (typeid(Scalar) == typeid(ushort) && Channel == 1) {
+    if (typeid(Scalar) == typeid(int) && Channel == 1) {
+        assert(m.type() == CV_32SC1);
+    } else if (typeid(Scalar) == typeid(ushort) && Channel == 1) {
         assert(m.type() == CV_16UC1);
     } else if (typeid(Scalar) == typeid(uchar) && Channel == 4) {
         assert(m.type() == CV_8UC4);
@@ -379,7 +385,7 @@ void ImageCuda<Scalar, Channel>::Upload(cv::Mat &m) {
         assert(m.type() == CV_32FC1);
     } else {
         utility::PrintWarning("[ImageCuda] Unsupported format %d,"
-                              "@Upload aborted.\n");
+                              "@Upload aborted.\n", m.type());
         return;
     }
 
@@ -402,7 +408,9 @@ cv::Mat ImageCuda<Scalar, Channel>::DownloadMat() {
         return m;
     }
 
-    if (typeid(Scalar) == typeid(ushort) && Channel == 1) {
+    if (typeid(Scalar) == typeid(int) && Channel == 1) {
+        m = cv::Mat(height_, width_, CV_32SC1);
+    } else if (typeid(Scalar) == typeid(ushort) && Channel == 1) {
         m = cv::Mat(height_, width_, CV_16UC1);
     } else if (typeid(Scalar) == typeid(uchar) && Channel == 4) {
         m = cv::Mat(height_, width_, CV_8UC4);

@@ -4,39 +4,36 @@
 
 #include <Open3D/Open3D.h>
 #include <Cuda/Geometry/ImageCuda.h>
-#include <Cuda/Geometry/ImagePyramidCuda.h>
-#include <Cuda/Common/LinearAlgebraCuda.h>
 #include <opencv2/opencv.hpp>
 #include <gtest/gtest.h>
 
 using namespace open3d;
+using namespace open3d::utility;
 using namespace open3d::cuda;
 
-template<typename T>
-void CheckUploadAndDownloadConsistency(std::string path) {
+template<typename T, size_t N>
+void CheckUploadAndDownloadConsistency(const std::string &path) {
     cv::Mat image = cv::imread(path, cv::IMREAD_UNCHANGED);
     cv::imshow("raw", image);
     cv::waitKey(10);
 
-    utility::Timer timer;
-    ImageCuda<T> image_cuda, image_cuda_copy;
+    Timer timer;
+    ImageCuda<T, N> image_cuda, image_cuda_copy;
 
     timer.Start();
     image_cuda.Upload(image);
     timer.Stop();
-    utility::PrintInfo("Upload finished in %.3f milliseconds...\n", timer
-    .GetDuration());
+    PrintInfo("Upload finished in %.3f milliseconds...\n", timer.GetDuration());
 
     timer.Start();
     image_cuda_copy.CopyFrom(image_cuda);
     timer.Stop();
-    utility::PrintInfo("Copy finished in %.3f milliseconds...\n", timer
-    .GetDuration());
+    PrintInfo("Copy finished in %.3f milliseconds...\n", timer.GetDuration());
 
     timer.Start();
     cv::Mat downloaded_image = image_cuda.DownloadMat();
     timer.Stop();
-    utility::PrintInfo("Download finished in %.3f milliseconds...\n",
+    PrintInfo("Download finished in %.3f milliseconds...\n",
               timer.GetDuration());
     cv::Mat downloaded_image_copy = image_cuda_copy.DownloadMat();
 
@@ -58,62 +55,58 @@ void CheckUploadAndDownloadConsistency(std::string path) {
                 EXPECT_EQ(image.at<uchar>(i, j),
                           downloaded_image_copy.at<uchar>(i, j));
             } else {
-                utility::PrintInfo("Unsupported image type %d\n", image.type());
+                PrintInfo("Unsupported image type %d\n", image.type());
             }
         }
     }
-    utility::PrintInfo("Consistency check passed.\n");
+    PrintInfo("Consistency check passed.\n");
 }
 
-template<typename T>
-void CheckDownsampling(std::string path) {
+template<typename T, size_t N>
+void CheckDownsampling(const std::string &path) {
     using namespace open3d;
     cv::Mat image = cv::imread(path, cv::IMREAD_UNCHANGED);
 
-    utility::Timer timer;
-    ImageCuda<T> image_cuda, image_cuda_low;
+    Timer timer;
+    ImageCuda<T, N> image_cuda, image_cuda_low;
 
     timer.Start();
     image_cuda.Upload(image);
     timer.Stop();
-    utility::PrintInfo("Upload finished in %.3f milliseconds...\n", timer
-    .GetDuration());
+    PrintInfo("Upload finished in %.3f milliseconds...\n", timer.GetDuration());
 
     timer.Start();
-    image_cuda_low = image_cuda.Downsample(BoxFilterWithHoles);
+    image_cuda_low = image_cuda.Downsample(BoxFilter);
     timer.Stop();
-    utility::PrintInfo("Downsample finished in %.3f milliseconds...\n",
-              timer.GetDuration());
+    PrintInfo("Downsample finished in %.3f milliseconds...\n", timer.GetDuration());
 
     timer.Start();
     cv::Mat downloaded = image_cuda_low.DownloadMat();
     timer.Stop();
-    utility::PrintInfo("Download finished in %.3f milliseconds...\n",
-              timer.GetDuration());
+    PrintInfo("Download finished in %.3f milliseconds...\n", timer.GetDuration());
 
     cv::imshow("downsampled", downloaded);
     cv::waitKey(10);
     cv::destroyAllWindows();
 }
 
-template<typename T>
-void CheckGaussian(std::string path) {
+template<typename T, size_t N>
+void CheckGaussian(const std::string &path) {
     using namespace open3d;
     cv::Mat image = cv::imread(path, cv::IMREAD_UNCHANGED);
 
-    utility::Timer timer;
-    ImageCuda<T> image_cuda;
+    Timer timer;
+    ImageCuda<T, N> image_cuda;
 
     timer.Start();
     image_cuda.Upload(image);
     timer.Stop();
-    utility::PrintInfo("Upload finished in %.3f milliseconds...\n", timer
-    .GetDuration());
+    PrintInfo("Upload finished in %.3f milliseconds...\n", timer.GetDuration());
 
     timer.Start();
-    ImageCuda<T> image_cuda_blurred = image_cuda.Gaussian(Gaussian3x3, false);
+    ImageCuda<T, N> image_cuda_blurred = image_cuda.Gaussian(Gaussian3x3);
     timer.Stop();
-    utility::PrintInfo("Gaussian3x3 finished in %.3f milliseconds...\n",
+    PrintInfo("Gaussian3x3 finished in %.3f milliseconds...\n",
               timer.GetDuration());
 
     cv::Mat downloaded = image_cuda_blurred.DownloadMat();
@@ -121,9 +114,9 @@ void CheckGaussian(std::string path) {
     cv::waitKey(10);
 
     timer.Start();
-    image_cuda_blurred = image_cuda.Gaussian(Gaussian5x5, false);
+    image_cuda_blurred = image_cuda.Gaussian(Gaussian5x5);
     timer.Stop();
-    utility::PrintInfo("Gaussian5x5 finished in %.3f milliseconds...\n",
+    PrintInfo("Gaussian5x5 finished in %.3f milliseconds...\n",
               timer.GetDuration());
 
     downloaded = image_cuda_blurred.DownloadMat();
@@ -131,9 +124,9 @@ void CheckGaussian(std::string path) {
     cv::waitKey(10);
 
     timer.Start();
-    image_cuda_blurred = image_cuda.Gaussian(Gaussian7x7, false);
+    image_cuda_blurred = image_cuda.Gaussian(Gaussian7x7);
     timer.Stop();
-    utility::PrintInfo("Gaussian7x7 finished in %.3f milliseconds...\n",
+    PrintInfo("Gaussian7x7 finished in %.3f milliseconds...\n",
               timer.GetDuration());
 
     downloaded = image_cuda_blurred.DownloadMat();
@@ -142,19 +135,18 @@ void CheckGaussian(std::string path) {
     cv::destroyAllWindows();
 }
 
-template<typename T>
-void CheckBilateral(std::string path) {
+template<typename T, size_t N>
+void CheckBilateral(const std::string &path) {
     using namespace open3d;
     cv::Mat image = cv::imread(path, cv::IMREAD_UNCHANGED);
 
-    utility::Timer timer;
-    ImageCuda<T> image_cuda, filtered_image_cuda;
+    Timer timer;
+    ImageCuda<T, N> image_cuda, filtered_image_cuda;
 
     timer.Start();
     image_cuda.Upload(image);
     timer.Stop();
-    utility::PrintInfo("Upload finished in %.3f milliseconds...\n", timer
-    .GetDuration());
+    PrintInfo("Upload finished in %.3f milliseconds...\n", timer.GetDuration());
 
     float val_sigma = 20;
     timer.Start();
@@ -162,26 +154,24 @@ void CheckBilateral(std::string path) {
     timer.Stop();
 
     cv::Mat downloaded = filtered_image_cuda.DownloadMat();
-    utility::PrintInfo("Sigma: %.3f in  %.3f milliseconds\n",
+    PrintInfo("Sigma: %.3f in  %.3f milliseconds\n",
               val_sigma, timer.GetDuration());
     cv::imshow("Bilateral", downloaded);
     cv::waitKey(10);
 }
 
-template<typename T>
-void CheckToFloatConversion(std::string path, float scale, float offset) {
+template<typename T, size_t N>
+void CheckToFloatConversion(const std::string &path, float scale, float offset) {
     using namespace open3d;
     cv::Mat image = cv::imread(path, cv::IMREAD_UNCHANGED);
 
-    utility::Timer timer;
-    ImageCuda<T> image_cuda;
-    ImageCuda<typename T::VecTypef> imagef_cuda;
+    Timer timer;
+    ImageCuda<T, N> image_cuda;
+    ImageCuda<float, N> imagef_cuda;
     timer.Start();
     image_cuda.Upload(image);
     timer.Stop();
-    utility::PrintInfo("Upload finished in %.3f milliseconds...\n", timer
-    .GetDuration
-    ());
+    PrintInfo("Upload finished in %.3f milliseconds...\n", timer.GetDuration());
 
     int iter = 100;
     timer.Start();
@@ -189,7 +179,7 @@ void CheckToFloatConversion(std::string path, float scale, float offset) {
         imagef_cuda = image_cuda.ConvertToFloat(scale, offset);
     }
     timer.Stop();
-    utility::PrintInfo("Conversion finished in %.3f milliseconds...\n",
+    PrintInfo("Conversion finished in %.3f milliseconds...\n",
               timer.GetDuration() / iter);
 
     cv::Mat downloaded = imagef_cuda.DownloadMat();
@@ -211,7 +201,7 @@ void CheckToFloatConversion(std::string path, float scale, float offset) {
                 float converted = downloaded.at<float>(i, j);
                 EXPECT_NEAR(raw * scale + offset, converted, kEpsilon);
             } else {
-                utility::PrintInfo("Unsupported image type %d\n", image.type());
+                PrintInfo("Unsupported image type %d\n", image.type());
             }
         }
     }
@@ -221,23 +211,23 @@ void CheckToFloatConversion(std::string path, float scale, float offset) {
     cv::destroyAllWindows();
 }
 
-template<typename T>
-void CheckGradient(std::string path) {
+template<typename T, size_t N>
+void CheckGradient(const std::string &path) {
     using namespace open3d;
     cv::Mat image = cv::imread(path, cv::IMREAD_UNCHANGED);
 
-    utility::Timer timer;
-    ImageCuda<T> image_cuda;
+    Timer timer;
+    ImageCuda<T, N> image_cuda;
     timer.Start();
     image_cuda.Upload(image);
     timer.Stop();
-    utility::PrintInfo("Upload finished in %.3f milliseconds...\n", timer
+    PrintInfo("Upload finished in %.3f milliseconds...\n", timer
     .GetDuration());
 
     timer.Start();
-    auto gradients = image_cuda.Sobel(false);
+    auto gradients = image_cuda.Sobel();
     timer.Stop();
-    utility::PrintInfo("Gradient finished in %.3f milliseconds...\n",
+    PrintInfo("Gradient finished in %.3f milliseconds...\n",
               timer.GetDuration());
     auto dx = std::get<0>(gradients);
     auto dy = std::get<1>(gradients);
@@ -250,23 +240,23 @@ void CheckGradient(std::string path) {
     cv::destroyAllWindows();
 }
 
-template<typename T>
-void CheckShift(std::string path) {
+template<typename T, size_t N>
+void CheckShift(const std::string &path) {
     using namespace open3d;
     cv::Mat image = cv::imread(path, cv::IMREAD_UNCHANGED);
 
-    utility::Timer timer;
-    ImageCuda<T> image_cuda;
+    Timer timer;
+    ImageCuda<T, N> image_cuda;
     timer.Start();
     image_cuda.Upload(image);
     timer.Stop();
-    utility::PrintInfo("Upload finished in %.3f milliseconds...\n", timer
+    PrintInfo("Upload finished in %.3f milliseconds...\n", timer
     .GetDuration());
 
     timer.Start();
-    ImageCuda<T> shifted_image = image_cuda.Shift(-120.2f, 135.8f);
+    ImageCuda<T, N> shifted_image = image_cuda.Shift(-120.2f, 135.8f);
     timer.Stop();
-    utility::PrintInfo("Shifting finished in %.3f milliseconds...\n",
+    PrintInfo("Shifting finished in %.3f milliseconds...\n",
               timer.GetDuration());
 
     cv::Mat downloaded = shifted_image.DownloadMat();
@@ -275,46 +265,7 @@ void CheckShift(std::string path) {
     cv::destroyAllWindows();
 }
 
-template<typename T, size_t N>
-void CheckPyramid(std::string path) {
-    using namespace open3d;
-    cv::Mat image = cv::imread(path, cv::IMREAD_UNCHANGED);
-    ImageCuda<T> image_cuda;
-    image_cuda.Upload(image);
-
-    utility::Timer timer;
-    ImagePyramidCuda<T, N> pyramid;
-    timer.Start();
-    pyramid.Build(image_cuda);
-    timer.Stop();
-    utility::PrintInfo("> pass 1 finished in %.3f milliseconds...\n",
-              timer.GetDuration());
-
-    /* Test memory-use */
-    timer.Start();
-    pyramid.Build(image_cuda);
-    timer.Stop();
-    utility::PrintInfo("> pass 2 finished in %.3f milliseconds...\n",
-              timer.GetDuration());
-
-    timer.Start();
-    pyramid.Build(image_cuda);
-    timer.Stop();
-    utility::PrintInfo("> pass 3 finished in %.3f milliseconds...\n",
-              timer.GetDuration());
-
-    std::vector<cv::Mat> downloaded_images = pyramid.DownloadMats();
-    std::stringstream ss;
-    for (int level = 0; level < N; ++level) {
-        ss.str("");
-        ss << "level-" << level;
-        cv::imshow(ss.str(), downloaded_images[level]);
-    }
-    cv::waitKey(10);
-    cv::destroyAllWindows();
-}
-
-void CheckRGBToIntensity(std::string path) {
+void CheckRGBToIntensity(const std::string &path) {
     using namespace open3d;
     cv::Mat image = cv::imread(path, cv::IMREAD_UNCHANGED);
     cv::cvtColor(image, image, cv::COLOR_BGR2RGB);
@@ -322,18 +273,18 @@ void CheckRGBToIntensity(std::string path) {
     cv::Mat intensity;
     cv::cvtColor(image, intensity, cv::COLOR_RGB2GRAY);
 
-    ImageCuda<Vector3b> image_cuda;
+    ImageCuda<uchar, 3> image_cuda;
     image_cuda.Upload(image);
-    ImageCuda<Vector1f> intensity_cuda = image_cuda.ConvertRGBToIntensity();
+    ImageCuda<float, 1> intensity_cuda = image_cuda.ConvertRGBToIntensity();
 
     cv::imshow("intensity", intensity_cuda.DownloadMat());
     cv::imshow("intensity cv", intensity);
     cv::waitKey(-1);
 }
 
-const std::string kDepthPath = "../../examples/TestData/RGBD/other_formats/TUM_depth.png";
-const std::string kColorPath = "../../examples/TestData/RGBD/other_formats/TUM_color.png";
-const std::string kGrayPath  = "../../examples/TestData/lena_gray.jpg";
+const std::string kDepthPath = "../../../examples/TestData/RGBD/other_formats/TUM_depth.png";
+const std::string kColorPath = "../../../examples/TestData/RGBD/other_formats/TUM_color.png";
+const std::string kGrayPath  = "../../../examples/TestData/lena_gray.jpg";
 
 TEST(ImageCuda, ConvertRGBToIntensity) {
     using namespace open3d;
@@ -342,58 +293,51 @@ TEST(ImageCuda, ConvertRGBToIntensity) {
 
 TEST(ImageCuda, UploadAndDownload) {
     using namespace open3d;
-    CheckUploadAndDownloadConsistency<Vector1s>(kDepthPath);
-    CheckUploadAndDownloadConsistency<Vector3b>(kColorPath);
-    CheckUploadAndDownloadConsistency<Vector1b>(kGrayPath);
+    CheckUploadAndDownloadConsistency<ushort, 1>(kDepthPath);
+    CheckUploadAndDownloadConsistency<uchar, 3>(kColorPath);
+    CheckUploadAndDownloadConsistency<uchar, 1>(kGrayPath);
 }
 
 TEST(ImageCuda, Downsampling) {
     using namespace open3d;
-    CheckDownsampling<Vector1s>(kDepthPath);
-    CheckDownsampling<Vector3b>(kColorPath);
-    CheckDownsampling<Vector1b>(kGrayPath);
+    CheckDownsampling<ushort, 1>(kDepthPath);
+    CheckDownsampling<uchar, 3>(kColorPath);
+    CheckDownsampling<uchar, 1>(kGrayPath);
 }
 
 TEST(ImageCuda, ToFloatConversion) {
     using namespace open3d;
-    CheckToFloatConversion<Vector1s>(kDepthPath, 1.0f / 5000.0f, 0.0f);
-    CheckToFloatConversion<Vector3b>(kColorPath, 1.0f / 255.0f, 0.0f);
-    CheckToFloatConversion<Vector1b>(kGrayPath, 1.0f / 255.0f, 0.0f);
+    CheckToFloatConversion<ushort, 1>(kDepthPath, 1.0f / 5000.0f, 0.0f);
+    CheckToFloatConversion<uchar, 3>(kColorPath, 1.0f / 255.0f, 0.0f);
+    CheckToFloatConversion<uchar, 1>(kGrayPath, 1.0f / 255.0f, 0.0f);
 }
 
 TEST(ImageCuda, Sobel) {
     using namespace open3d;
-    CheckGradient<Vector1s>(kDepthPath);
-    CheckGradient<Vector3b>(kColorPath);
-    CheckGradient<Vector1b>(kGrayPath);
+    CheckGradient<ushort, 1>(kDepthPath);
+    CheckGradient<uchar, 3>(kColorPath);
+    CheckGradient<uchar, 1>(kGrayPath);
 }
 
 TEST(ImageCuda, Gaussian) {
     using namespace open3d;
-    CheckGaussian<Vector1s>(kDepthPath);
-    CheckGaussian<Vector3b>(kColorPath);
-    CheckGaussian<Vector1b>(kGrayPath);
+    CheckGaussian<ushort, 1>(kDepthPath);
+    CheckGaussian<uchar, 3>(kColorPath);
+    CheckGaussian<uchar, 1>(kGrayPath);
 }
 
 TEST(ImageCuda, Bilateral) {
     using namespace open3d;
-    CheckBilateral<Vector1s>(kDepthPath);
-    CheckBilateral<Vector3b>(kColorPath);
-    CheckBilateral<Vector1b>(kGrayPath);
-}
-
-TEST(ImageCuda, Pyramid) {
-    using namespace open3d;
-    CheckPyramid<Vector1s, 4>(kDepthPath);
-    CheckPyramid<Vector3b, 4>(kColorPath);
-    CheckPyramid<Vector1b, 4>(kGrayPath);
+    CheckBilateral<ushort, 1>(kDepthPath);
+    CheckBilateral<uchar, 3>(kColorPath);
+    CheckBilateral<uchar, 1>(kGrayPath);
 }
 
 TEST(ImageCuda, Shift) {
     using namespace open3d;
-    CheckShift<Vector1s>(kDepthPath);
-    CheckShift<Vector3b>(kColorPath);
-    CheckShift<Vector1b>(kGrayPath);
+    CheckShift<ushort, 1>(kDepthPath);
+    CheckShift<uchar, 3>(kColorPath);
+    CheckShift<uchar, 1>(kGrayPath);
 }
 
 int main(int argc, char **argv) {

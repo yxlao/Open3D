@@ -3,17 +3,19 @@
 //
 
 #include <gtest/gtest.h>
-#include <IO/IO.h>
+#include <Open3D/Open3D.h>
 #include <Cuda/Geometry/TriangleMeshCuda.h>
 
 using namespace open3d;
+using namespace open3d::geometry;
+using namespace open3d::io;
 using namespace open3d::cuda;
 
 TEST(TriangleMeshCuda, GetMinMaxBound) {
     using namespace open3d;
 
     TriangleMesh mesh;
-    ReadTriangleMesh("examples/fragment-0.ply", mesh);
+    ReadTriangleMesh("../../../examples/TestData/bathtub_0154.ply", mesh);
     Eigen::Vector3d min_bound = mesh.GetMinBound();
     Eigen::Vector3d max_bound = mesh.GetMaxBound();
 

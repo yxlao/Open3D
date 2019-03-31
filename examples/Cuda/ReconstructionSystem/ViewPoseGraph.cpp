@@ -77,13 +77,13 @@ int main(int argc, char **argv) {
     DatasetConfig config;
 
     std::string config_path = argc > 1 ? argv[1] :
-        kDefaultDatasetConfigDir + "/cmu/zimo.json";
+        kDefaultDatasetConfigDir + "/cmu/ship.json";
 
     bool is_success = ReadIJsonConvertible(config_path, config);
     if (! is_success) return 1;
 
     PoseGraph pose_graph_cuda;
-    std::string path_cuda = config.GetPoseGraphFileForRefinedScene(true);
+    const std::string &path_cuda = config.GetPoseGraphFileForRefinedScene(true);
     ReadPoseGraph(path_cuda, pose_graph_cuda);
 
     auto pose_graph_vis_cuda = VisualizePoseGraph(pose_graph_cuda);

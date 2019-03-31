@@ -14,6 +14,8 @@ namespace cuda {
 template
 class ImageCudaDevice<ushort, 1>;
 template
+class ImageCudaDevice<int, 1>;
+template
 class ImageCudaDevice<uchar, 4>;
 template
 class ImageCudaDevice<uchar, 3>;
@@ -28,6 +30,8 @@ class ImageCudaDevice<float, 1>;
 
 template
 class ImageCudaKernelCaller<ushort, 1>;
+template
+class ImageCudaKernelCaller<int, 1>;
 template
 class ImageCudaKernelCaller<uchar, 4>;
 template

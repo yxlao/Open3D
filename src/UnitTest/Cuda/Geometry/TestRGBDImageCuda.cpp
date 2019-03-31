@@ -2,20 +2,21 @@
 // Created by wei on 11/5/18.
 //
 
-#include "UnitTest.h"
-#include <Core/Core.h>
+#include <Open3D/Open3D.h>
 #include <Cuda/Geometry/RGBDImageCuda.h>
 #include <opencv2/opencv.hpp>
+#include <gtest/gtest.h>
 
 using namespace open3d;
 using namespace open3d::cuda;
+using namespace open3d::utility;
 
 TEST(RGBDImageCuda, Reuse) {
 
-    const std::string kDepthPath = "../../examples/TestData/RGBD/other_formats/TUM_depth.png";
-    const std::string kColorPath = "../../examples/TestData/RGBD/other_formats/TUM_color.png";
+    const std::string kDepthPath = "../../../examples/TestData/RGBD/other_formats/TUM_depth.png";
+    const std::string kColorPath = "../../../examples/TestData/RGBD/other_formats/TUM_color.png";
 
-    RGBDImageCuda rgbd_image;
+    RGBDImageCuda rgbd_image(640, 480, 3.0, 5000.0);
 
     Timer timer;
     int iters = 1000;

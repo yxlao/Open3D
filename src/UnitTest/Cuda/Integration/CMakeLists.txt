@@ -1,7 +1,5 @@
-add_executable(TestScalableTSDFVolumeCuda TestScalableTSDFVolumeCuda.cpp)
-target_link_libraries(TestScalableTSDFVolumeCuda ${CMAKE_PROJECT_NAME}
+# Integration
+UNIT_TEST_CUDA(TestScalableTSDFVolumeCuda ${CMAKE_PROJECT_NAME} ${OPEN3D_CUDA_MODULE}
         ${GTEST_LIBRARIES} pthread)
-
-add_executable(TestUniformTSDFVolumeCuda TestUniformTSDFVolumeCuda.cpp)
-target_link_libraries(TestUniformTSDFVolumeCuda ${CMAKE_PROJECT_NAME}
+UNIT_TEST_CUDA(TestUniformTSDFVolumeCuda ${CMAKE_PROJECT_NAME} ${OPEN3D_CUDA_MODULE}
         ${GTEST_LIBRARIES} pthread)

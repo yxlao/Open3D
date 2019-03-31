@@ -6,7 +6,10 @@ include_directories(${GTEST_INCLUDE_DIRS})
 
 include_directories(".")
 
-add_subdirectory(Cuda)
+if (BUILD_CUDA_MODULE)
+    message(STATUS "Building Cuda UnitTests")
+    add_subdirectory(Cuda)
+endif()
 
 # > This is too general and lacks scalability
 # > We test our separated files in Cuda/

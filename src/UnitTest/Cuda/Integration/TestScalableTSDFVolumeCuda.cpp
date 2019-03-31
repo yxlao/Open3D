@@ -2,19 +2,19 @@
 // Created by wei on 10/20/18.
 //
 
+#include <Open3D/Open3D.h>
 #include <Cuda/Integration/ScalableTSDFVolumeCuda.h>
 #include <Cuda/Geometry/ImageCuda.h>
-#include <Core/Core.h>
-#include <IO/IO.h>
 #include <opencv2/opencv.hpp>
-#include "UnitTest.h"
+#include <gtest/gtest.h>
 
 using namespace open3d;
 using namespace open3d::cuda;
+using namespace open3d::io;
+using namespace open3d::geometry;
+using namespace open3d::utility;
 
 TEST(ScalableTSDFVolumeCuda, Create) {
-    using namespace open3d;
-
     ScalableTSDFVolumeCuda<8> volume;
     volume.Create(10000, 200000);
 
@@ -26,14 +26,14 @@ TEST(ScalableTSDFVolumeCuda, TouchSubvolumes) {
     using namespace open3d;
 
     Image depth, color;
-    ReadImage("../../examples/TestData/RGBD/depth/00000.png", depth);
-    ReadImage("../../examples/TestData/RGBD/color/00000.jpg", color);
+    ReadImage("../../../examples/TestData/RGBD/depth/00000.png", depth);
+    ReadImage("../../../examples/TestData/RGBD/color/00000.jpg", color);
 
-    RGBDImageCuda rgbd(0.1f, 3.5f, 1000.0f);
+    RGBDImageCuda rgbd(640, 480, 3.0, 1000.0f);
     rgbd.Upload(depth, color);
 
     PinholeCameraIntrinsicCuda intrinsics(
-        PinholeCameraIntrinsicParameters::PrimeSenseDefault);
+        camera::PinholeCameraIntrinsicParameters::PrimeSenseDefault);
 
     float voxel_length = 0.01f;
     TransformCuda extrinsics = TransformCuda::Identity();
@@ -44,7 +44,7 @@ TEST(ScalableTSDFVolumeCuda, TouchSubvolumes) {
                                      voxel_length, 3 * voxel_length,
                                      extrinsics);
 
-    volume.TouchSubvolumes(rgbd.depthf(), intrinsics, extrinsics);
+    volume.TouchSubvolumes(rgbd.depth_, intrinsics, extrinsics);
     volume.GetSubvolumesInFrustum(intrinsics, extrinsics);
 
     auto entry_vector = volume.active_subvolume_entry_array().Download();
@@ -57,14 +57,14 @@ TEST(ScalableTSDFVolumeCuda, TouchSubvolumes) {
 TEST(ScalableTSDFVolumeCuda, Integration) {
     using namespace open3d;
     Image depth, color;
-    ReadImage("../../examples/TestData/RGBD/depth/00000.png", depth);
-    ReadImage("../../examples/TestData/RGBD/color/00000.jpg", color);
+    ReadImage("../../../examples/TestData/RGBD/depth/00000.png", depth);
+    ReadImage("../../../examples/TestData/RGBD/color/00000.jpg", color);
 
-    RGBDImageCuda rgbd(0.1f, 3.5f, 1000.0f);
+    RGBDImageCuda rgbd(640, 480, 3.0, 1000.0f);
     rgbd.Upload(depth, color);
 
     PinholeCameraIntrinsicCuda intrinsics(
-        PinholeCameraIntrinsicParameters::PrimeSenseDefault);
+        camera::PinholeCameraIntrinsicParameters::PrimeSenseDefault);
 
     float voxel_length = 0.01f;
     TransformCuda extrinsics = TransformCuda::Identity();
@@ -97,14 +97,14 @@ TEST(ScalableTSDFVolumeCuda, Integration) {
 TEST(ScalableTSDFVolumeCuda, RayCasting) {
     using namespace open3d;
     Image depth, color;
-    ReadImage("../../examples/TestData/RGBD/depth/00000.png", depth);
-    ReadImage("../../examples/TestData/RGBD/color/00000.jpg", color);
+    ReadImage("../../../examples/TestData/RGBD/depth/00000.png", depth);
+    ReadImage("../../../examples/TestData/RGBD/color/00000.jpg", color);
 
-    RGBDImageCuda rgbd(0.1f, 3.5f, 1000.0f);
+    RGBDImageCuda rgbd(640, 480, 3.0, 1000.0f);
     rgbd.Upload(depth, color);
 
     PinholeCameraIntrinsicCuda intrinsics(
-        PinholeCameraIntrinsicParameters::PrimeSenseDefault);
+        camera::PinholeCameraIntrinsicParameters::PrimeSenseDefault);
 
     float voxel_length = 0.01f;
     TransformCuda extrinsics = TransformCuda::Identity();
@@ -116,7 +116,7 @@ TEST(ScalableTSDFVolumeCuda, RayCasting) {
                                      voxel_length, 3 * voxel_length,
                                      extrinsics);
 
-    ImageCuda<Vector3f> raycaster(depth.width_, depth.height_);
+    ImageCuda<float, 3> raycaster(depth.width_, depth.height_);
 
     Timer timer;
     const int iters = 10;

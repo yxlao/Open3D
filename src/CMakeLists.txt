@@ -7,9 +7,9 @@ if (BUILD_CUDA_MODULE)
 endif()
 
 # > Disable this before we fix everything
-# if (BUILD_UNIT_TESTS)
-#    add_subdirectory(UnitTest)
-# endif ()
+if (BUILD_UNIT_TESTS)
+    add_subdirectory(UnitTest)
+endif ()
 
 if (BUILD_PYTHON_MODULE)
     add_subdirectory(Python)

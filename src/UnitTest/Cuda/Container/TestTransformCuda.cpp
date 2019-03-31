@@ -4,11 +4,12 @@
 
 #include <Cuda/Common/TransformCuda.h>
 #include <Eigen/Eigen>
-#include <Core/Core.h>
+#include <Open3D/Open3D.h>
 
 #include <gtest/gtest.h>
 
 using namespace open3d;
+using namespace open3d::utility;
 using namespace open3d::cuda;
 
 TEST(TransformCuda, Transform) {

@@ -2,10 +2,10 @@
 // Created by wei on 10/17/18.
 //
 
+#include <Open3D/Open3D.h>
 #include <Cuda/Container/ArrayCuda.h>
 #include <Cuda/Container/LinkedListCuda.h>
 #include <Cuda/Container/HashTableCuda.h>
-#include <Core/Core.h>
 
 #include <vector>
 #include <unordered_map>
@@ -14,10 +14,10 @@
 #include <gtest/gtest.h>
 
 using namespace open3d;
+using namespace open3d::utility;
 using namespace open3d::cuda;
 
 TEST(LinkedListCuda, LinkedListInsertAndDownload) {
-
     Timer timer;
     std::random_device rd;
     std::default_random_engine rd_engine(rd());

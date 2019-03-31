@@ -2,16 +2,18 @@
 // Created by wei on 10/2/18.
 //
 
+#include <Open3D/Open3D.h>
 #include <Cuda/Odometry/Reduction2DCuda.h>
 #include <Cuda/Geometry/ImageCuda.h>
-#include <Core/Core.h>
 #include <opencv2/opencv.hpp>
 #include <gtest/gtest.h>
 
-const std::string kBasePath = "../../examples/TestData/";
+const std::string kBasePath = "../../../examples/TestData/";
 
 using namespace open3d;
 using namespace open3d::cuda;
+using namespace open3d::utility;
+using namespace open3d::io;
 
 TEST(ReductionCuda, SumInt) {
     using namespace open3d;
@@ -19,7 +21,8 @@ TEST(ReductionCuda, SumInt) {
     cv::Mat im = cv::imread(kBasePath + "RGBD/other_formats/TUM_color.png",
                             cv::IMREAD_UNCHANGED);
     cv::cvtColor(im, im, cv::COLOR_BGR2GRAY);
-    ImageCuda<Vector1b> im_cuda;
+    im.convertTo(im, CV_32SC1);
+    ImageCuda<int, 1> im_cuda;
     im_cuda.Upload(im);
 
     {
@@ -27,7 +30,7 @@ TEST(ReductionCuda, SumInt) {
         int sum_cpu = 0;
         for (int i = 0; i < im.rows; ++i) {
             for (int j = 0; j < im.cols; ++j) {
-                sum_cpu += im.at<uchar>(i, j);
+                sum_cpu += im.at<int>(i, j);
             }
         }
 
@@ -36,7 +39,7 @@ TEST(ReductionCuda, SumInt) {
         const int test_cases = 10000;
         for (int i = 0; i < test_cases; ++i) {
             timer.Start();
-            int sum = ReduceSum2D<Vector1b, int>(im_cuda);
+            int sum = ReduceSum2D<int, 1>(im_cuda);
             timer.Stop();
 
             EXPECT_EQ(sum_cpu * TEST_ARRAY_SIZE, sum);
@@ -48,7 +51,7 @@ TEST(ReductionCuda, SumInt) {
         float time_v2 = 0;
         for (int i = 0; i < test_cases; ++i) {
             timer.Start();
-            int sum = ReduceSum2DShuffle<Vector1b, int>(im_cuda);
+            int sum = ReduceSum2DShuffle<int, 1>(im_cuda);
             timer.Stop();
             EXPECT_EQ(sum_cpu * TEST_ARRAY_SIZE, sum);
             time_v2 += timer.GetDuration();
@@ -59,7 +62,7 @@ TEST(ReductionCuda, SumInt) {
         float time_v3 = 0;
         for (int i = 0; i < test_cases; ++i) {
             timer.Start();
-            int sum = AtomicSum<Vector1b, int>(im_cuda);
+            int sum = AtomicSum<int, 1>(im_cuda);
             timer.Stop();
             EXPECT_EQ(sum_cpu * TEST_ARRAY_SIZE, sum);
             time_v3 += timer.GetDuration();
@@ -79,8 +82,8 @@ TEST(ReductionCuda, SumFloat) {
 
     cv::Mat im = cv::imread(kBasePath + "RGBD/other_formats/TUM_depth.png",
                             cv::IMREAD_UNCHANGED);
-    ImageCuda<Vector1s> im_cuda;
-    ImageCuda<Vector1f> imf_cuda;
+    ImageCuda<ushort, 1> im_cuda;
+    ImageCuda<float, 1> imf_cuda;
     im_cuda.Upload(im);
     imf_cuda = im_cuda.ConvertToFloat();
     cv::Mat imf = imf_cuda.DownloadMat();
@@ -108,7 +111,7 @@ TEST(ReductionCuda, SumFloat) {
         const int test_cases = 10000;
         for (int i = 0; i < test_cases; ++i) {
             timer.Start();
-            float sum = ReduceSum2D<Vector1f, float>(imf_cuda);
+            float sum = ReduceSum2D<float, 1>(imf_cuda);
             timer.Stop();
             EXPECT_NEAR(sum / (TEST_ARRAY_SIZE), sum_cpu,
                         kPixelNumbers * kFactor * kEpsilon);
@@ -119,7 +122,7 @@ TEST(ReductionCuda, SumFloat) {
         float time_v2 = 0;
         for (int i = 0; i < test_cases; ++i) {
             timer.Start();
-            float sum = ReduceSum2DShuffle<Vector1f, float>(imf_cuda);
+            float sum = ReduceSum2DShuffle<float, 1>(imf_cuda);
             timer.Stop();
             EXPECT_NEAR(sum / (TEST_ARRAY_SIZE), sum_cpu,
                         kPixelNumbers * kFactor * kEpsilon);
@@ -130,7 +133,7 @@ TEST(ReductionCuda, SumFloat) {
         float time_v3 = 0;
         for (int i = 0; i < test_cases; ++i) {
             timer.Start();
-            float sum = AtomicSum<Vector1f, float>(imf_cuda);
+            float sum = AtomicSum<float, 1>(imf_cuda);
             timer.Stop();
             EXPECT_NEAR(sum / (TEST_ARRAY_SIZE), sum_cpu,
                         kPixelNumbers * kFactor * kEpsilon);

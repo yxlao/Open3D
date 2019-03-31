@@ -8,7 +8,7 @@
 
 using namespace open3d;
 
-std::string path = "/media/wei/TOSHIBA EXT/IROS-2019/bundlefusion/";
+const std::string &path = "/media/wei/TOSHIBA EXT/IROS-2019/bundlefusion/";
 
 //"/home/wei/";
 

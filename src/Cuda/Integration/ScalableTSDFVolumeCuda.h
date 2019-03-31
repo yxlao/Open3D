@@ -256,6 +256,10 @@ public:
               std::vector<std::tuple<std::vector<float>,  /* TSDF volumes */
                                      std::vector<uchar>,
                                      std::vector<Vector3b>>>> DownloadVolumes();
+    void UploadVolume(const Vector3i &key,
+                      const std::tuple<std::vector<float>,
+                                       std::vector<uchar>,
+                                       std::vector<Vector3b>> &volume);
 
 public:
     /** Hash_table based integration is non-trivial,

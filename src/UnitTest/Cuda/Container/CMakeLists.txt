@@ -1,21 +1,14 @@
 # Containers
-add_executable(TestHashTableCuda TestHashTableCuda.cpp)
-target_link_libraries(TestHashTableCuda ${CMAKE_PROJECT_NAME}
-        ${3RDPARTY_LIBRARIES}
+UNIT_TEST_CUDA(TestArrayCuda ${CMAKE_PROJECT_NAME} ${OPEN3D_CUDA_MODULE}
+        ${GTEST_LIBRARIES} pthread)
+UNIT_TEST_CUDA(TestHashTableCuda ${CMAKE_PROJECT_NAME} ${OPEN3D_CUDA_MODULE}
+        ${GTEST_LIBRARIES} pthread)
+UNIT_TEST_CUDA(TestLinkedListCuda ${CMAKE_PROJECT_NAME} ${OPEN3D_CUDA_MODULE}
         ${GTEST_LIBRARIES} pthread)
 
-add_executable(TestArrayCuda TestArrayCuda.cpp)
-target_link_libraries(TestArrayCuda ${CMAKE_PROJECT_NAME}
+UNIT_TEST_CUDA(TestMatrixCuda ${CMAKE_PROJECT_NAME} ${OPEN3D_CUDA_MODULE}
         ${GTEST_LIBRARIES} pthread)
-
-add_executable(TestLinkedListCuda TestLinkedListCuda.cpp)
-target_link_libraries(TestLinkedListCuda ${CMAKE_PROJECT_NAME}
+UNIT_TEST_CUDA(TestLinearAlgebraCuda ${CMAKE_PROJECT_NAME} ${OPEN3D_CUDA_MODULE}
         ${GTEST_LIBRARIES} pthread)
-
-add_executable(TestMatrixCuda TestMatrixCuda.cpp)
-target_link_libraries(TestMatrixCuda ${CMAKE_PROJECT_NAME}
-        ${GTEST_LIBRARIES} pthread)
-
-add_executable(TestLinearAlgebraCuda TestLinearAlgebraCuda.cpp)
-target_link_libraries(TestLinearAlgebraCuda ${CMAKE_PROJECT_NAME}
+UNIT_TEST_CUDA(TestTransformCuda ${CMAKE_PROJECT_NAME} ${OPEN3D_CUDA_MODULE}
         ${GTEST_LIBRARIES} pthread)
