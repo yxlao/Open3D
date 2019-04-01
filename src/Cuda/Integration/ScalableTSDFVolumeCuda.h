@@ -257,10 +257,8 @@ public:
               std::vector<std::tuple<std::vector<float>,  std::vector<uchar>, std::vector<Vector3b>>>>
               DownloadVolumes();
     /** However, we can only upload them one by one. Thread conflict will lose info. **/
-    void UploadVolume(const Vector3i &key,
-                      const std::tuple<std::vector<float>,
-                                       std::vector<uchar>,
-                                       std::vector<Vector3b>> &volume);
+    std::vector<int> UploadVolume(std::vector<Vector3i> &key,
+                                  std::vector<std::tuple<std::vector<float>, std::vector<uchar>, std::vector<Vector3b>>> &volume);
 
 public:
     /** Hash_table based integration is non-trivial,

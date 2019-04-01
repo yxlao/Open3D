@@ -106,25 +106,65 @@ bool ReadTSDFVolumeFromBIN(const std::string &filename,
     }
 
     /** values **/
-    for (int i = 0; i < num_volumes; ++i) {
-        utility::PrintDebug("Reading subvolume %d / %d\n", i, num_volumes);
-        if (fread(tsdf.data(), sizeof(float), tsdf.size(), fid) < tsdf.size()) {
-            utility::PrintWarning("Read BIN failed: unable to read TSDF\n");
-            return false;
-        }
-        if (fread(weight.data(), sizeof(uchar), weight.size(), fid) < weight.size()) {
-            utility::PrintWarning("Read BIN failed: unable to read weight\n");
-            return false;
-        }
-        if (fread(color.data(), sizeof(cuda::Vector3b), color.size(), fid) < color.size()) {
-            utility::PrintWarning("Read BIN failed: unable to read color\n");
-            return false;
+    int batch_size = 5000;
+    int num_batches = (num_volumes + batch_size - 1) / batch_size;
+
+    std::vector<int> failed_indices;
+    std::vector<cuda::Vector3i> failed_keys;
+    std::vector<std::tuple<std::vector<float>, std::vector<uchar>, std::vector<cuda::Vector3b>>>
+        failed_subvolumes;
+
+
+    for (int b = 0; b < num_batches; ++b) {
+        std::vector<cuda::Vector3i> block_keys;
+        std::vector<std::tuple<std::vector<float>, std::vector<uchar>, std::vector<cuda::Vector3b>>>
+            block_subvolumes;
+
+        int begin = b * batch_size;
+        int end = std::min((b + 1) * batch_size, num_volumes);
+
+        for (int i = begin; i < end; ++i) {
+            if (fread(tsdf.data(), sizeof(float), tsdf.size(), fid) < tsdf.size()) {
+                utility::PrintWarning("Read BIN failed: unable to read TSDF\n");
+                return false;
+            }
+            if (fread(weight.data(), sizeof(uchar), weight.size(), fid) < weight.size()) {
+                utility::PrintWarning("Read BIN failed: unable to read weight\n");
+                return false;
+            }
+            if (fread(color.data(), sizeof(cuda::Vector3b), color.size(), fid) < color.size()) {
+                utility::PrintWarning("Read BIN failed: unable to read color\n");
+                return false;
+            }
+
+            block_keys.emplace_back(keys[i]);
+            block_subvolumes.emplace_back(std::make_tuple(tsdf, weight, color));
         }
 
-        volume.UploadVolume(keys[i], std::make_tuple(tsdf, weight, color));
+        failed_indices = volume.UploadVolume(block_keys, block_subvolumes);
+        for (auto &i : failed_indices) {
+            failed_keys.emplace_back(block_keys[i]);
+            failed_subvolumes.emplace_back(std::move(block_subvolumes[i]));
+        }
+    }
+    fclose(fid);
+
+    while (failed_indices.size() > 0) {
+        failed_indices = volume.UploadVolume(failed_keys, failed_subvolumes);
+
+        std::vector<cuda::Vector3i> tmp_failed_keys;
+        std::vector<std::tuple<std::vector<float>, std::vector<uchar>, std::vector<cuda::Vector3b>>>
+            tmp_failed_subvolumes;
+
+        for (auto &i : failed_indices) {
+            tmp_failed_keys.emplace_back(failed_keys[i]);
+            tmp_failed_subvolumes.emplace_back(std::move(failed_subvolumes[i]));
+        }
+
+        std::swap(failed_keys, tmp_failed_keys);
+        std::swap(failed_subvolumes, tmp_failed_subvolumes);
     }
 
-    fclose(fid);
     return true;
 }
 

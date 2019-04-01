@@ -201,31 +201,45 @@ ScalableTSDFVolumeCuda<N>::DownloadVolumes() {
 }
 
 template<size_t N>
-void ScalableTSDFVolumeCuda<N>::UploadVolume(
-    const Vector3i &key,
-    const std::tuple<std::vector<float>,
-                     std::vector<uchar>,
-                     std::vector<Vector3b>> &volume) {
+std::vector<int> ScalableTSDFVolumeCuda<N>::UploadVolume(
+    std::vector<Vector3i> &keys,
+    std::vector<std::tuple<std::vector<float>,
+        std::vector<uchar>,
+        std::vector<Vector3b>>> &volumes) {
 
-    std::vector<Vector3i> keys = {key};
     hash_table_.ResetLocks();
     std::vector<int> value_addrs = hash_table_.New(keys);
-
-    auto &tsdf = std::get<0>(volume);
-    auto &weight = std::get<1>(volume);
-    auto &color = std::get<2>(volume);
+    std::vector<int> failed_indices;
 
     const int NNN = (N * N * N);
-    const int offset = NNN * value_addrs[0];
-    CheckCuda(cudaMemcpy(&device_->tsdf_memory_pool_[offset], tsdf.data(),
-                         sizeof(float) * NNN,
+    int cnt = 0;
+    for (int i = 0; i < value_addrs.size(); ++i) {
+        int addr = value_addrs[i];
+        if (addr < 0) {
+            failed_indices.emplace_back(i);
+            continue;
+        }
+
+        const int offset = NNN * addr;
+
+        auto &tsdf = std::get<0>(volumes[i]);
+        auto &weight = std::get<1>(volumes[i]);
+        auto &color = std::get<2>(volumes[i]);
+
+        CheckCuda(cudaMemcpy(&device_->tsdf_memory_pool_[offset], tsdf.data(),
+                             sizeof(float) * NNN,
                          cudaMemcpyHostToDevice));
-    CheckCuda(cudaMemcpy(&device_->weight_memory_pool_[offset], weight.data(),
-                         sizeof(uchar) * NNN,
+        CheckCuda(cudaMemcpy(&device_->weight_memory_pool_[offset], weight.data(),
+                             sizeof(uchar) * NNN,
                          cudaMemcpyHostToDevice));
-    CheckCuda(cudaMemcpy(&device_->color_memory_pool_[offset], color.data(),
-                         sizeof(Vector3b) * NNN,
+        CheckCuda(cudaMemcpy(&device_->color_memory_pool_[offset], color.data(),
+                             sizeof(Vector3b) * NNN,
                          cudaMemcpyHostToDevice));
+        ++cnt;
+    }
+    utility::PrintInfo("%d / %d subvolumes uploaded\n", cnt, value_addrs.size());
+
+    return failed_indices;
 }
 
 template<size_t N>
