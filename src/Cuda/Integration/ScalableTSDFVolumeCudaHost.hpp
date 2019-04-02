@@ -19,11 +19,11 @@ ScalableTSDFVolumeCuda<N>::ScalableTSDFVolumeCuda() {
 
 template<size_t N>
 ScalableTSDFVolumeCuda<N>::ScalableTSDFVolumeCuda(
-    int bucket_count,
-    int value_capacity,
     float voxel_length,
     float sdf_trunc,
-    TransformCuda &transform_volume_to_world) {
+    const TransformCuda &transform_volume_to_world,
+    int bucket_count,
+    int value_capacity) {
 
     voxel_length_ = voxel_length;
     sdf_trunc_ = sdf_trunc;
@@ -36,7 +36,7 @@ template<size_t N>
 ScalableTSDFVolumeCuda<N>::ScalableTSDFVolumeCuda(
     const ScalableTSDFVolumeCuda<N> &other) {
     device_ = other.device_;
-    hash_table_ = other.hash_table();
+    hash_table_ = other.hash_table_;
 
     bucket_count_ = other.bucket_count_;
     value_capacity_ = other.value_capacity_;
@@ -53,7 +53,7 @@ ScalableTSDFVolumeCuda<N> &ScalableTSDFVolumeCuda<N>::operator=(
         Release();
 
         device_ = other.device_;
-        hash_table_ = other.hash_table();
+        hash_table_ = other.hash_table_;
 
         bucket_count_ = other.bucket_count_;
         value_capacity_ = other.value_capacity_;
@@ -153,16 +153,26 @@ void ScalableTSDFVolumeCuda<N>::UpdateDevice() {
     }
 }
 
+
+template<size_t N>
+std::vector<Vector3i>
+ScalableTSDFVolumeCuda<N>::DownloadKeys() {
+    assert(device_ != nullptr);
+
+    auto keys = hash_table_.DownloadKeys();
+    return std::move(keys);
+}
+
 template<size_t N>
 std::pair<std::vector<Vector3i>,
           std::vector<ScalableTSDFVolumeCpuData>>
 ScalableTSDFVolumeCuda<N>::DownloadVolumes() {
     assert(device_ != nullptr);
 
-    auto hash_table = hash_table_.Download();
-    std::vector<Vector3i> &keys = std::get<0>(hash_table);
+    auto key_value_pairs = hash_table_.DownloadKeyValuePairs();
+    std::vector<Vector3i> &keys = key_value_pairs.first;
     std::vector<UniformTSDFVolumeCudaDevice<N>>
-        &subvolumes_device = std::get<1>(hash_table);
+        &subvolumes_device = key_value_pairs.second;
 
     assert(keys.size() == subvolumes_device.size());
 
@@ -193,22 +203,76 @@ ScalableTSDFVolumeCuda<N>::DownloadVolumes() {
     return std::make_pair(std::move(keys), std::move(subvolumes));
 }
 
+
+/** We can easily download occupied subvolumes in parallel
+  * However, uploading is not guaranteed to be correct
+  * due to thread conflicts **/
 template<size_t N>
-std::vector<int> ScalableTSDFVolumeCuda<N>::UploadVolume(
+std::vector<int> ScalableTSDFVolumeCuda<N>::UploadKeys(
+    std::vector<Vector3i> &keys){
+
+    std::vector<Vector3i> keys_to_attempt = keys;
+    std::vector<int> value_addrs(keys.size());
+    std::vector<int> index_map(keys.size());
+    for (int i = 0; i < index_map.size(); ++i) {
+        index_map[i] = i;
+    }
+
+    const int kTotalAttempt = 10;
+    int attempt = 0;
+    while (attempt++ < kTotalAttempt) {
+        hash_table_.ResetLocks();
+        std::vector<int> ret_value_addrs = hash_table_.New(keys_to_attempt);
+
+        std::vector<int> new_index_map;
+        std::vector<Vector3i> new_keys_to_attempt;
+        for (int i = 0; i < keys_to_attempt.size(); ++i) {
+            int addr = ret_value_addrs[i];
+            /** Failed to allocate due to thread locks **/
+            if (addr < 0) {
+                new_index_map.emplace_back(index_map[i]);
+                new_keys_to_attempt.emplace_back(keys_to_attempt[i]);
+            } else {
+                value_addrs[index_map[i]] = addr;
+            }
+        }
+
+        utility::PrintInfo("%d / %d subvolume info uploaded\n",
+                           keys_to_attempt.size() - new_keys_to_attempt.size(),
+                           keys_to_attempt.size());
+
+        if (new_keys_to_attempt.empty()) {
+            break;
+        }
+
+        std::swap(index_map, new_index_map);
+        std::swap(keys_to_attempt, new_keys_to_attempt);
+    }
+
+    if (attempt == kTotalAttempt) {
+        utility::PrintWarning("Reach maximum attempts, "
+                              "%d subvolumes may fail to be inserted!\n",
+                              keys_to_attempt.size());
+    }
+
+    return std::move(value_addrs);
+}
+
+
+template<size_t N>
+bool ScalableTSDFVolumeCuda<N>::UploadVolumes(
     std::vector<Vector3i> &keys,
     std::vector<ScalableTSDFVolumeCpuData> &values) {
 
-    hash_table_.ResetLocks();
-    std::vector<int> value_addrs = hash_table_.New(keys);
-    std::vector<int> failed_key_indices;
+    auto value_addrs = UploadKeys(keys);
 
     const int NNN = (N * N * N);
-    int cnt = 0;
-
+    bool ret = true;
     for (int i = 0; i < value_addrs.size(); ++i) {
         int addr = value_addrs[i];
+
         if (addr < 0) {
-            failed_key_indices.emplace_back(i);
+            ret = false;
             continue;
         }
 
@@ -225,13 +289,8 @@ std::vector<int> ScalableTSDFVolumeCuda<N>::UploadVolume(
                              values[i].color_.data(),
                              sizeof(Vector3b) * NNN,
                              cudaMemcpyHostToDevice));
-        ++cnt;
     }
-
-    utility::PrintInfo("%d / %d subvolumes uploaded\n",
-                       cnt, value_addrs.size());
-
-    return failed_key_indices;
+    return ret;
 }
 
 template<size_t N>

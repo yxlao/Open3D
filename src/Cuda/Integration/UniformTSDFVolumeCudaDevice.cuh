@@ -89,10 +89,8 @@ UniformTSDFVolumeCudaDevice<N>::gradient(const Vector3i &X) {
 template<size_t N>
 __device__
 float UniformTSDFVolumeCudaDevice<N>::TSDFAt(const Vector3f &X) {
-    Vector3i
-    Xi = X.template cast<int>();
-    Vector3f
-    r = X - Xi.template cast<float>();
+    Vector3i Xi = X.template cast<int>();
+    Vector3f r = X - Xi.template cast<float>();
 
     return (1 - r(0)) * (
         (1 - r(1)) * (

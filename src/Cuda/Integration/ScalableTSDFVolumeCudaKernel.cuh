@@ -106,7 +106,7 @@ void ScalableTSDFVolumeCudaKernelCaller<N>::IntegrateSubvolumes(
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
 
-    const dim3 blocks(volume.active_subvolume_entry_array().size());
+    const dim3 blocks(volume.active_subvolume_entry_array_.size());
     const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
     IntegrateSubvolumesKernel << < blocks, threads >> > (
         *volume.device_, *rgbd.device_, camera, transform_camera_to_world);
@@ -218,18 +218,17 @@ void ScalableTSDFVolumeCudaKernelCaller<N>::GetAllSubvolumes(
 template<size_t N>
 __global__
 void RayCastingKernel(ScalableTSDFVolumeCudaDevice<N> server,
-                      ImageCudaDevice<float, 3> normal,
+                      ImageCudaDevice<float, 3> vertex,
                       PinholeCameraIntrinsicCuda camera,
                       TransformCuda transform_camera_to_world) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
 
-    if (x >= normal.width_ || y >= normal.height_) return;
+    if (x >= vertex.width_ || y >= vertex.height_) return;
 
     Vector2i p = Vector2i(x, y);
-    Vector3f
-    n = server.RayCasting(p, camera, transform_camera_to_world);
-    normal.at(x, y) = (n == Vector3f::Zeros()) ? n : 0.5f * n + Vector3f(0.5f);
+    Vector3f v = server.RayCasting(p, camera, transform_camera_to_world);
+    vertex.at(x, y) = v;
 }
 
 template<size_t N>
@@ -244,6 +243,52 @@ void ScalableTSDFVolumeCudaKernelCaller<N>::RayCasting(
     const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
     RayCastingKernel << < blocks, threads >> > (
         *volume.device_, *image.device_, camera, transform_camera_to_world);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+}
+
+template<size_t N>
+__global__
+void DownSampleKernel(ScalableTSDFVolumeCudaDevice<N> volume,
+                      ScalableTSDFVolumeCudaDevice<N/2> volume_down) {
+//    UniformTSDFVolumeCudaDevice<N> *subvolume =
+//        volume.QuerySubvolume(blockIdx.x);
+//    UniformTSDFVolumeCudaDevice<N/2> *subvolume_down =
+//        volume_down.QuerySubvolume(blockIdx.x);
+//
+//    int x = 2 * threadIdx.x, y = 2 * threadIdx.y, z = 2 * threadIdx.z;
+//
+//    float sum_tsdf = 0;
+//    float sum_weight = 0;
+//    Vector3f sum_color = Vector3f(0);
+//    for (int i = 0; i < 8; ++i) {
+//        int idx = subvolume->IndexOf(x + (i & 4), y + (i & 2), z + (i & 1));
+//        sum_tsdf += subvolume->tsdf_[idx];
+//        sum_weight += (float) subvolume->weight_[idx];
+//
+//        const Vector3b &color = subvolume->color_[idx];
+//        sum_color(0) += (float) color(0);
+//        sum_color(1) += (float) color(1);
+//        sum_color(2) += (float) color(2);
+//    }
+//
+//    int idx = subvolume->IndexOf(threadIdx.x, threadIdx.y, threadIdx.z);
+//    subvolume_down->tsdf_[idx] = 0.125f * sum_tsdf;
+//    subvolume_down->weight_[idx] = uchar (0.125f * sum_weight);
+//
+//    sum_color *= 0.125f;
+//    subvolume_down->color_[idx] = sum_color.template saturate_cast<uchar>();
+}
+
+template<size_t N>
+void ScalableTSDFVolumeCudaKernelCaller<N>::DownSample(
+    ScalableTSDFVolumeCuda<N> &volume,
+    ScalableTSDFVolumeCuda<N/2> &volume_down) {
+
+    const dim3 blocks(volume.active_subvolume_entry_array_.size());
+    const dim3 threads(N/2, N/2, N/2);
+    DownSampleKernel << < blocks, threads >> > (
+        *volume.device_, *volume_down.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }

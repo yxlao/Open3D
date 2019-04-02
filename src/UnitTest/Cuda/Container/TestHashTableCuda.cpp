@@ -57,7 +57,7 @@ TEST(HashTableCuda, HashTableProfiling) {
         table.Insert(subkeys, subvalues);
         table.ResetLocks();
     }
-    auto downloaded = table.Download();
+    auto downloaded = table.DownloadKeyValuePairs();
     std::vector<Vector3i> downloaded_keys = std::get<0>(downloaded);
     std::vector<int> downloaded_values = std::get<1>(downloaded);
     for (int i = 0; i < downloaded_keys.size(); ++i) {
@@ -83,7 +83,7 @@ TEST(HashTableCuda, HashTableProfiling) {
         table.Delete(subkeys);
         table.ResetLocks();
     }
-    downloaded = table.Download();
+    downloaded = table.DownloadKeyValuePairs();
     downloaded_keys = std::get<0>(downloaded);
     downloaded_values = std::get<1>(downloaded);
     PrintInfo("Deletion passed, %d entries remains.\n",
@@ -141,7 +141,7 @@ TEST(HashTableCuda, HashTableInsertionAndDelete) {
         table.Insert(subkeys, subvalues);
         table.ResetLocks();
     }
-    auto downloaded = table.Download();
+    auto downloaded = table.DownloadKeyValuePairs();
     std::vector<Vector3i> downloaded_keys = std::get<0>(downloaded);
     std::vector<int> downloaded_values = std::get<1>(downloaded);
     PrintInfo("Uploading passed, %d / %d entries uploaded.\n",
@@ -169,7 +169,7 @@ TEST(HashTableCuda, HashTableInsertionAndDelete) {
         table.Delete(subkeys);
         table.ResetLocks();
     }
-    downloaded = table.Download();
+    downloaded = table.DownloadKeyValuePairs();
     downloaded_keys = std::get<0>(downloaded);
     downloaded_values = std::get<1>(downloaded);
     PrintInfo("Delete passed, %d entries remains.\n",

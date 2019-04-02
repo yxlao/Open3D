@@ -114,17 +114,17 @@ public:
 
 public:
     ScalableMeshVolumeCuda();
-    ScalableMeshVolumeCuda(int max_subvolumes,
-                           VertexType type,
-                           int max_vertices,
-                           int max_triangles);
+    ScalableMeshVolumeCuda(VertexType type,
+                           int max_subvolumes,
+                           int max_vertices = 2000000,
+                           int max_triangles = 4000000);
     ScalableMeshVolumeCuda(const ScalableMeshVolumeCuda<N> &other);
     ScalableMeshVolumeCuda<N> &operator=(
         const ScalableMeshVolumeCuda<N> &other);
     ~ScalableMeshVolumeCuda();
 
-    void Create(int max_subvolumes,
-                VertexType type, int max_vertices, int max_triangles);
+    void Create(VertexType type, int max_subvolumes,
+                int max_vertices, int max_triangles);
     void Release();
     void Reset();
     void UpdateDevice();

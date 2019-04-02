@@ -27,7 +27,7 @@ int HashTableCudaDevice<Key, Value, Hasher>::GetInternalAddrByKey(
     int bucket_base_idx = bucket_idx * BUCKET_SIZE;
 
     /* 1. Search in the ordered array */
-#pragma unroll 1
+//#pragma unroll 1
     for (int i = 0; i < BUCKET_SIZE; ++i) {
         const Entry &entry = entry_array_[bucket_base_idx + i];
         if (entry.Matches(key)) {
@@ -51,18 +51,14 @@ int HashTableCudaDevice<Key, Value, Hasher>::GetInternalAddrByKey(
 
 template<typename Key, typename Value, typename Hasher>
 __device__
-    Value
-*
-HashTableCudaDevice<Key, Value, Hasher>::GetValuePtrByInternalAddr(
+Value *HashTableCudaDevice<Key, Value, Hasher>::GetValuePtrByInternalAddr(
     const int addr) {
     return &(memory_heap_value_.value_at(addr));
 }
 
 template<typename Key, typename Value, typename Hasher>
 __device__
-    Value
-*
-HashTableCudaDevice<Key, Value, Hasher>::GetValuePtrByKey(
+Value* HashTableCudaDevice<Key, Value, Hasher>::GetValuePtrByKey(
     const Key &key) {
     int internal_ptr = GetInternalAddrByKey(key);
     if (internal_ptr == NULLPTR_CUDA) return nullptr;
@@ -71,9 +67,7 @@ HashTableCudaDevice<Key, Value, Hasher>::GetValuePtrByKey(
 
 template<typename Key, typename Value, typename Hasher>
 __device__
-    Value
-*
-HashTableCudaDevice<Key, Value, Hasher>::operator[](const Key &key) {
+Value* HashTableCudaDevice<Key, Value, Hasher>::operator[](const Key &key) {
     return GetValuePtrByKey(key);
 }
 

@@ -27,7 +27,7 @@ PoseGraph DebugOdometryForFragment(int fragment_id, DatasetConfig &config) {
     odometry.SetParameters(OdometryOption({20, 10, 5},
                                           config.max_depth_diff_,
                                           config.min_depth_,
-                                          config.max_depth_), 0.8wf);
+                                          config.max_depth_), 0.8f);
 
     cuda::RGBDImageCuda rgbd_source((float) config.max_depth_,
                                     (float) config.depth_factor_);
@@ -185,8 +185,6 @@ void IntegrateForFragment(int fragment_id, PoseGraph &pose_graph,
     cuda::PinholeCameraIntrinsicCuda intrinsic(config.intrinsic_);
     cuda::TransformCuda trans = cuda::TransformCuda::Identity();
     cuda::ScalableTSDFVolumeCuda<8> tsdf_volume(
-        20000,
-        400000,
         voxel_length,
         (float) config.tsdf_truncation_,
         trans);
@@ -216,8 +214,8 @@ void IntegrateForFragment(int fragment_id, PoseGraph &pose_graph,
 
     tsdf_volume.GetAllSubvolumes();
     cuda::ScalableMeshVolumeCuda<8> mesher(
-        tsdf_volume.active_subvolume_entry_array().size(),
-        cuda::VertexWithNormalAndColor, 10000000, 20000000);
+        cuda::VertexWithNormalAndColor,
+        tsdf_volume.active_subvolume_entry_array_.size());
     mesher.MarchingCubes(tsdf_volume);
     auto mesh = mesher.mesh().Download();
 

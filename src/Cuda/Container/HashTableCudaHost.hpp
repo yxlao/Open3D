@@ -246,24 +246,43 @@ void HashTableCuda<Key, Value, Hasher>::Delete(
 }
 
 template<typename Key, typename Value, typename Hasher>
+std::vector<Key> HashTableCuda<Key, Value, Hasher>::DownloadKeys() {
+    assert(device_ != nullptr);
+
+    GetAssignedEntries();
+    int assigned_entry_array_size = assigned_entry_array_.size();
+    if (assigned_entry_array_size == 0)
+        return std::vector<Key>();
+
+    std::vector<Entry> assigned_entries = assigned_entry_array_.Download();
+    std::vector<Value> memory_heap_values = memory_heap_value_.DownloadValue();
+    std::vector<Key> keys(assigned_entry_array_.size());
+
+    keys.resize(assigned_entry_array_size);
+    for (int i = 0; i < assigned_entry_array_size; ++i) {
+        Entry &entry = assigned_entries[i];
+        keys[i] = entry.key;
+    }
+
+    return std::move(keys);
+}
+
+template<typename Key, typename Value, typename Hasher>
 std::pair<std::vector<Key>, std::vector<Value>>
-HashTableCuda<Key, Value, Hasher>::Download() {
+HashTableCuda<Key, Value, Hasher>::DownloadKeyValuePairs() {
     assert(device_ != nullptr);
 
     std::vector<Key> keys;
     std::vector<Value> values;
 
     GetAssignedEntries();
-
     int assigned_entry_array_size = assigned_entry_array_.size();
     if (assigned_entry_array_size == 0)
         return std::make_pair(keys, values);
 
-    GetAssignedEntries();
     std::vector<Entry> assigned_entries = assigned_entry_array_.Download();
     std::vector<Value> memory_heap_values = memory_heap_value_.DownloadValue();
 
-    /* It could be very memory-consuming when we try to dump VoxelBlocks ... */
     keys.resize(assigned_entry_array_size);
     values.resize(assigned_entry_array_size);
     for (int i = 0; i < assigned_entry_array_size; ++i) {
@@ -272,12 +291,12 @@ HashTableCuda<Key, Value, Hasher>::Download() {
         values[i] = memory_heap_values[entry.internal_addr];
     }
 
-    return std::make_pair(keys, values);
+    return std::make_pair(std::move(keys), std::move(values));
 }
 
 template<typename Key, typename Value, typename Hasher>
 std::vector<HashEntry<Key>> HashTableCuda<Key, Value, Hasher>
-::DownloadAssignedEntries() {
+    ::DownloadAssignedEntries() {
     assert(device_ != nullptr);
 
     std::vector<Entry> ret;

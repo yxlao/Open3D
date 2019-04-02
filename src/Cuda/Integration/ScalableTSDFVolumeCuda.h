@@ -240,7 +240,7 @@ public:
         SpatialHashTableCuda;
     std::shared_ptr<ScalableTSDFVolumeCudaDevice<N>> device_ = nullptr;
 
-private:
+public:
     SpatialHashTableCuda hash_table_;
     ArrayCuda<HashEntry<Vector3i>> active_subvolume_entry_array_;
 
@@ -254,9 +254,13 @@ public:
 
 public:
     ScalableTSDFVolumeCuda();
-    ScalableTSDFVolumeCuda(int bucket_count, int value_capacity,
-                           float voxel_length, float sdf_trunc,
-                           TransformCuda &transform_volume_to_world);
+    ScalableTSDFVolumeCuda(float voxel_length, float sdf_trunc,
+                           const TransformCuda &transform_volume_to_world
+                           = TransformCuda::Identity(),
+                           /* 20,000 buckets, 200,000 + 200,000 entries */
+                           int bucket_count = 20000,
+                           /* 400,000 entries -> 400,000 values */
+                           int value_capacity = 400000);
     ScalableTSDFVolumeCuda(const ScalableTSDFVolumeCuda<N> &other);
     ScalableTSDFVolumeCuda<N> &operator=(const ScalableTSDFVolumeCuda<N> &other);
     ~ScalableTSDFVolumeCuda();
@@ -268,23 +272,27 @@ public:
     void Reset();
     void UpdateDevice();
 
-    /** We can download occupied subvolumes in parallel **/
-    std::pair<std::vector<Vector3i>,                      /* Keys */
+
+    std::vector<Vector3i> DownloadKeys();
+    std::pair<std::vector<Vector3i>,
               std::vector<ScalableTSDFVolumeCpuData>> DownloadVolumes();
-    /** However, we can only upload them one by one. Thread conflict will lose info. **/
-    std::vector<int> UploadVolume(std::vector<Vector3i> &key,
-                                  std::vector<ScalableTSDFVolumeCpuData> &volume);
+
+    /** Return addr index in cuda **/
+    std::vector<int> UploadKeys(std::vector<Vector3i> &keys);
+    bool UploadVolumes(std::vector<Vector3i> &key,
+                       std::vector<ScalableTSDFVolumeCpuData> &volume);
 
 public:
     /** Hash_table based integration is non-trivial,
-     *  it requires 3: pre-allocation, get volumes, and integration
+     *  it requires 3 passes: pre-allocation, get volumes, and integration
      *  NOTE: we cannot merge stage 1 and 2:
      *  - TouchBlocks allocate blocks in parallel.
-     *  - If we return only newly allocated volumes, then we fail to capture
+     *    If we return only newly allocated volumes, then we fail to capture
      *    already allocated volumes.
      *  - If we capture all the allocated volume indices in parallel, then
      *    there will be duplicates. (thread1 allocate and return, thread2
-     *    capture it and return again). **/
+     *    capture it and return again).
+     **/
     void TouchSubvolumes(ImageCuda<float, 1> &depth,
                          PinholeCameraIntrinsicCuda &camera,
                          TransformCuda &transform_camera_to_world);
@@ -304,19 +312,7 @@ public:
                     PinholeCameraIntrinsicCuda &camera,
                     TransformCuda &transform_camera_to_world);
 
-public:
-    SpatialHashTableCuda &hash_table() {
-        return hash_table_;
-    }
-    const SpatialHashTableCuda &hash_table() const {
-        return hash_table_;
-    }
-    ArrayCuda<HashEntry<Vector3i>> &active_subvolume_entry_array() {
-        return active_subvolume_entry_array_;
-    }
-    const ArrayCuda<HashEntry<Vector3i>> &active_subvolume_entry_array() const {
-        return active_subvolume_entry_array_;
-    }
+    ScalableTSDFVolumeCuda<N / 2> DownSample();
 };
 
 template<size_t N>
@@ -344,6 +340,9 @@ public:
                            ImageCuda<float, 3> &normal,
                            PinholeCameraIntrinsicCuda &camera,
                            TransformCuda &transform_camera_to_world);
+
+    static void DownSample(ScalableTSDFVolumeCuda<N> &volume,
+                           ScalableTSDFVolumeCuda<N / 2> &volume_down);
 };
 
 template<size_t N>
@@ -377,9 +376,14 @@ void GetAllSubvolumesKernel(ScalableTSDFVolumeCudaDevice<N> device);
 template<size_t N>
 __GLOBAL__
 void RayCastingKernel(ScalableTSDFVolumeCudaDevice<N> device,
-                      ImageCudaDevice<float, 3> normal,
+                      ImageCudaDevice<float, 3> vertex,
                       PinholeCameraIntrinsicCuda camera,
                       TransformCuda transform_camera_to_world);
+
+template<size_t N>
+__GLOBAL__
+void DownSampleKernel(ScalableTSDFVolumeCudaDevice<N> device,
+                      ScalableTSDFVolumeCudaDevice<N / 2> device_down);
 
 } // cuda
 } // open3d

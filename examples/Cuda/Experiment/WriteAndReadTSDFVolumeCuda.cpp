@@ -23,8 +23,6 @@ void IntegrateAndWriteFragment(int fragment_id, DatasetConfig &config) {
     cuda::PinholeCameraIntrinsicCuda intrinsic(config.intrinsic_);
     cuda::TransformCuda trans = cuda::TransformCuda::Identity();
     cuda::ScalableTSDFVolumeCuda<8> tsdf_volume(
-        20000,
-        400000,
         voxel_length,
         (float) config.tsdf_truncation_,
         trans);
@@ -65,8 +63,8 @@ void IntegrateAndWriteFragment(int fragment_id, DatasetConfig &config) {
     utility::PrintInfo("Write takes %f ms\n", timer.GetDuration());
 
     cuda::ScalableMeshVolumeCuda<8> mesher(
-        tsdf_volume.active_subvolume_entry_array().size(),
-        cuda::VertexWithNormalAndColor, 10000000, 20000000);
+        cuda::VertexWithNormalAndColor,
+        tsdf_volume.active_subvolume_entry_array_.size());
     mesher.MarchingCubes(tsdf_volume);
     auto mesh = mesher.mesh().Download();
     visualization::DrawGeometries({mesh});
@@ -82,8 +80,6 @@ void ReadFragment(int fragment_id, DatasetConfig &config) {
 
     cuda::TransformCuda trans = cuda::TransformCuda::Identity();
     cuda::ScalableTSDFVolumeCuda<8> tsdf_volume(
-        20000,
-        400000,
         voxel_length,
         (float) config.tsdf_truncation_,
         trans);
@@ -98,8 +94,8 @@ void ReadFragment(int fragment_id, DatasetConfig &config) {
 
     tsdf_volume.GetAllSubvolumes();
     cuda::ScalableMeshVolumeCuda<8> mesher(
-        tsdf_volume.active_subvolume_entry_array().size(),
-        cuda::VertexWithNormalAndColor, 10000000, 20000000);
+        cuda::VertexWithNormalAndColor,
+        tsdf_volume.active_subvolume_entry_array_.size());
     mesher.MarchingCubes(tsdf_volume);
     auto mesh = mesher.mesh().Download();
     visualization::DrawGeometries({mesh});
@@ -113,9 +109,9 @@ int main(int argc, char **argv) {
     if (!is_success) return 1;
     config.GetFragmentFiles();
 
-    for (int i = 15; i < config.fragment_files_.size(); ++i) {
+    for (int i = 0; i < config.fragment_files_.size(); ++i) {
         utility::PrintInfo("%d\n", i);
         IntegrateAndWriteFragment(i, config);
-//        ReadFragment(i, config);
+        ReadFragment(i, config);
     }
 }

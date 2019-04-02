@@ -40,14 +40,14 @@ TEST(ScalableTSDFVolumeCuda, TouchSubvolumes) {
     extrinsics(0, 3) = 10.0f;
     extrinsics(1, 3) = -10.0f;
     extrinsics(2, 3) = 1.0f;
-    ScalableTSDFVolumeCuda<8> volume(10000, 200000,
-                                     voxel_length, 3 * voxel_length,
-                                     extrinsics);
+    ScalableTSDFVolumeCuda<8> volume(voxel_length, 3 * voxel_length,
+                                     extrinsics,
+                                     10000, 200000);
 
     volume.TouchSubvolumes(rgbd.depth_, intrinsics, extrinsics);
     volume.GetSubvolumesInFrustum(intrinsics, extrinsics);
 
-    auto entry_vector = volume.active_subvolume_entry_array().Download();
+    auto entry_vector = volume.active_subvolume_entry_array_.Download();
     for (auto &entry : entry_vector) {
         PrintInfo("%d %d %d %d\n", entry.key(0), entry.key(1), entry.key(2),
             entry.internal_addr);
@@ -68,9 +68,9 @@ TEST(ScalableTSDFVolumeCuda, Integration) {
 
     float voxel_length = 0.01f;
     TransformCuda extrinsics = TransformCuda::Identity();
-    ScalableTSDFVolumeCuda<8> volume(10000, 200000,
-                                     voxel_length, 3 * voxel_length,
-                                     extrinsics);
+    ScalableTSDFVolumeCuda<8> volume(voxel_length, 3 * voxel_length,
+                                     extrinsics,
+                                     10000, 200000);
     Timer timer;
     timer.Start();
     for (int i = 0; i < 10; ++i) {
@@ -81,12 +81,12 @@ TEST(ScalableTSDFVolumeCuda, Integration) {
 
     PrintInfo("Downloading volumes: \n");
     auto result = volume.DownloadVolumes();
-    auto &keys = std::get<0>(result);
-    auto &volumes = std::get<1>(result);
+    auto &keys = result.first;
+    auto &volumes = result.second;
     for (int i = 0; i < keys.size(); ++i) {
         float sum_tsdf = 0;
         auto &volume = volumes[i];
-        auto &tsdf = std::get<0>(volume);
+        auto &tsdf = volume.tsdf_;
         for (int k = 0; k < 512; ++k) {
             sum_tsdf += fabsf(tsdf[k]);
         }
@@ -112,9 +112,9 @@ TEST(ScalableTSDFVolumeCuda, RayCasting) {
     extrinsics(1, 3) = -10.0f;
     extrinsics(2, 3) = 1.0f;
 
-    ScalableTSDFVolumeCuda<8> volume(10000, 200000,
-                                     voxel_length, 3 * voxel_length,
-                                     extrinsics);
+    ScalableTSDFVolumeCuda<8> volume(voxel_length, 3 * voxel_length,
+                                     extrinsics,
+                                     10000, 200000);
 
     ImageCuda<float, 3> raycaster(depth.width_, depth.height_);
 
@@ -132,6 +132,16 @@ TEST(ScalableTSDFVolumeCuda, RayCasting) {
         cv::waitKey(10);
     }
     cv::waitKey(-1);
+
+    cv::Mat ray_casted = raycaster.DownloadMat();
+    cv::Mat read = cv::imread("../../../examples/TestData/RGBD/depth/00000.png", cv::IMREAD_UNCHANGED);
+    for (int i = 0; i < ray_casted.rows; ++i) {
+        for (int j = 0; j < ray_casted.cols; ++j) {
+            std::cout << ray_casted.at<cv::Vec3f>(i, j)[2] * 1000 << " "
+                      << read.at<ushort>(i, j) << std::endl;
+        }
+    }
+
     PrintInfo("Raycasting takes %f milliseconds\n", time / iters);
 }
 

@@ -58,11 +58,12 @@ int Run(DatasetConfig &config) {
     Timer timer;
     timer.Start();
 
+    /** Larger for integrating entire scene **/
     cuda::TransformCuda trans = cuda::TransformCuda::Identity();
     cuda::ScalableTSDFVolumeCuda<8> tsdf_volume(
-        40000, 600000,
         (float) config.tsdf_cubic_size_ / 512,
-        (float) config.tsdf_truncation_, trans);
+        (float) config.tsdf_truncation_, trans,
+        40000, 600000);
 
     bool is_success = config.GetFragmentFiles();
     if (!is_success) {
@@ -74,9 +75,12 @@ int Run(DatasetConfig &config) {
     }
 
     tsdf_volume.GetAllSubvolumes();
+
+    /** Larger scene, larger points **/
     cuda::ScalableMeshVolumeCuda<8> mesher(
-        tsdf_volume.active_subvolume_entry_array().size(),
-        cuda::VertexWithNormalAndColor, 20000000, 40000000);
+        cuda::VertexWithNormalAndColor,
+        tsdf_volume.active_subvolume_entry_array_.size(),
+        20000000, 40000000);
     mesher.MarchingCubes(tsdf_volume);
     auto mesh = mesher.mesh().Download();
 

@@ -14,8 +14,7 @@ void VertexAllocationKernel(
     ScalableMeshVolumeCudaDevice<N> server,
     ScalableTSDFVolumeCudaDevice<N> tsdf_volume) {
 
-    __shared__
-    UniformTSDFVolumeCudaDevice<N> *neighbor_subvolumes[27];
+    __shared__ UniformTSDFVolumeCudaDevice<N> *neighbor_subvolumes[27];
     __shared__ int neighbor_subvolume_indices[27];
 
     const int subvolume_idx = blockIdx.x;
@@ -66,8 +65,7 @@ void VertexExtractionKernel(
     ScalableMeshVolumeCudaDevice<N> server,
     ScalableTSDFVolumeCudaDevice<N> tsdf_volume) {
 
-    __shared__
-    UniformTSDFVolumeCudaDevice<N> *neighbor_subvolumes[27];
+    __shared__ UniformTSDFVolumeCudaDevice<N> *neighbor_subvolumes[27];
     __shared__ int neighbor_subvolume_indices[27];
 
     const int subvolume_idx = blockIdx.x;

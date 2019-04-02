@@ -26,9 +26,9 @@ ScalableMeshVolumeCuda<N>::ScalableMeshVolumeCuda() {
 
 template<size_t N>
 ScalableMeshVolumeCuda<N>::ScalableMeshVolumeCuda(
-    int max_subvolumes,
-    VertexType type, int max_vertices, int max_triangles) {
-    Create(max_subvolumes, type, max_vertices, max_triangles);
+    VertexType type,
+    int max_subvolumes, int max_vertices, int max_triangles) {
+    Create(type, max_subvolumes, max_vertices, max_triangles);
 }
 
 template<size_t N>
@@ -67,11 +67,11 @@ ScalableMeshVolumeCuda<N>::~ScalableMeshVolumeCuda() {
 
 template<size_t N>
 void ScalableMeshVolumeCuda<N>::Create(
-    int max_subvolumes,
-    VertexType type, int max_vertices, int max_triangles) {
+    VertexType type, int max_subvolumes,
+    int max_vertices, int max_triangles) {
     if (device_ != nullptr) {
-        utility::PrintError("[ScalableMeshVolumeCuda]: Already created, "
-                          "abort!\n");
+        utility::PrintError("[ScalableMeshVolumeCuda]: "
+                            "Already created, abort!\n");
         return;
     }
 
@@ -179,7 +179,7 @@ void ScalableMeshVolumeCuda<N>::MarchingCubes(
     assert(device_ != nullptr && vertex_type_ != VertexTypeUnknown);
 
     mesh_.Reset();
-    active_subvolumes_ = tsdf_volume.active_subvolume_entry_array().size();
+    active_subvolumes_ = tsdf_volume.active_subvolume_entry_array_.size();
     utility::PrintDebug("Active subvolumes: %d\n", active_subvolumes_);
 
     if (active_subvolumes_ <= 0) {

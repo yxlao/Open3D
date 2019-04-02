@@ -110,7 +110,7 @@ bool ReadTSDFVolumeFromBIN(const std::string &filename,
      * - split all the pairs them into batches can increase success rate;
      * - we should retry to insert stubborn failure pairs until they get in. **/
     if (batch_size <= 0) {
-        batch_size = int(volume.hash_table().bucket_count_ * 0.2f);
+        batch_size = int(volume.hash_table_.bucket_count_ * 0.2f);
     }
     int num_batches = (num_volumes + batch_size - 1) / batch_size;
     for (int batch = 0; batch < num_batches; ++batch) {
@@ -136,39 +136,15 @@ bool ReadTSDFVolumeFromBIN(const std::string &filename,
                 utility::PrintWarning("Read BIN failed: unable to read color\n");
                 return false;
             }
+
             batch_keys.emplace_back(keys[i]);
             batch_subvolumes.emplace_back(cuda::ScalableTSDFVolumeCpuData(
                 tsdf_buffer, weight_buffer, color_buffer));
         }
 
-        failed_key_indices = volume.UploadVolume(batch_keys, batch_subvolumes);
-        for (auto &i : failed_key_indices) {
-            failed_keys.emplace_back(batch_keys[i]);
-            failed_subvolumes.emplace_back(std::move(batch_subvolumes[i]));
-        }
+        volume.UploadVolumes(batch_keys, batch_subvolumes);
     }
     fclose(fid);
-
-    /** retry -- hopefully everything will be re-inserted **/
-    int iter = 0;
-    while (failed_key_indices.size() > 0 && iter++ < 10) {
-        failed_key_indices = volume.UploadVolume(failed_keys, failed_subvolumes);
-
-        std::vector<cuda::Vector3i> tmp_failed_keys;
-        std::vector<cuda::ScalableTSDFVolumeCpuData> tmp_failed_subvolumes;
-        for (auto &i : failed_key_indices) {
-            tmp_failed_keys.emplace_back(failed_keys[i]);
-            tmp_failed_subvolumes.emplace_back(std::move(failed_subvolumes[i]));
-        }
-
-        std::swap(failed_keys, tmp_failed_keys);
-        std::swap(failed_subvolumes, tmp_failed_subvolumes);
-    }
-    if (failed_key_indices.size() > 0) {
-        utility::PrintWarning("Reached maximal retry numbers, "
-                              "%d subvolumes remain uninserted\n",
-                              failed_key_indices.size());
-    }
 
     return true;
 }

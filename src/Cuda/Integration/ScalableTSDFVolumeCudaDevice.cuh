@@ -11,6 +11,7 @@
 
 #include <Cuda/Container/MemoryHeapCudaDevice.cuh>
 #include <Cuda/Container/MemoryHeapCudaKernel.cuh>
+#include <Cuda/Open3DCuda.h>
 
 namespace open3d {
 namespace cuda {
@@ -116,9 +117,7 @@ ScalableTSDFVolumeCudaDevice<N>::voxelf_local_to_global(
 /** Query **/
 template<size_t N>
 __device__
-UniformTSDFVolumeCudaDevice<N>
-*
-ScalableTSDFVolumeCudaDevice<N>::QuerySubvolume(
+UniformTSDFVolumeCudaDevice<N>* ScalableTSDFVolumeCudaDevice<N>::QuerySubvolume(
     const Vector3i &Xsv) {
     return hash_table_[Xsv];
 }
@@ -127,8 +126,7 @@ ScalableTSDFVolumeCudaDevice<N>::QuerySubvolume(
 template<size_t N>
 __device__
 float &ScalableTSDFVolumeCudaDevice<N>::tsdf(const Vector3i &X) {
-    Vector3i
-        Xsv = voxel_locate_subvolume(X);
+    Vector3i Xsv = voxel_locate_subvolume(X);
     UniformTSDFVolumeCudaDevice<N> *subvolume = QuerySubvolume(Xsv);
     return subvolume == nullptr ?
            tsdf_dummy_ : subvolume->tsdf(voxel_global_to_local(X, Xsv));
@@ -163,10 +161,8 @@ ScalableTSDFVolumeCudaDevice<N>::color(const Vector3i &X) {
 template<size_t N>
 __device__
 float ScalableTSDFVolumeCudaDevice<N>::TSDFAt(const Vector3f &X) {
-    Vector3i
-        Xi = X.template cast<int>();
-    Vector3f
-        r = Vector3f(X(0) - Xi(0), X(1) - Xi(1), X(2) - Xi(2));
+    Vector3i Xi = X.template cast<int>();
+    Vector3f r = Vector3f(X(0) - Xi(0), X(1) - Xi(1), X(2) - Xi(2));
 
     return (1 - r(0)) * (
         (1 - r(1)) * (
@@ -245,10 +241,8 @@ __device__
 Vector3f
 ScalableTSDFVolumeCudaDevice<N>::GradientAt(
     const Vector3f &X) {
-    Vector3f
-        n = Vector3f::Zeros();
-    Vector3f
-        X0 = X, X1 = X;
+    Vector3f n = Vector3f::Zeros();
+    Vector3f X0 = X, X1 = X;
 
     const float half_gap = voxel_length_;
 #pragma unroll 1
@@ -338,10 +332,8 @@ ScalableTSDFVolumeCudaDevice<N>::gradient(
         X0(k) -= 1;
         X1(k) += 1;
 
-        Vector3i
-            dXsv0 = NeighborOffsetOfBoundaryVoxel(X0);
-        Vector3i
-            dXsv1 = NeighborOffsetOfBoundaryVoxel(X1);
+        Vector3i dXsv0 = NeighborOffsetOfBoundaryVoxel(X0);
+        Vector3i dXsv1 = NeighborOffsetOfBoundaryVoxel(X1);
 
         UniformTSDFVolumeCudaDevice<N> *subvolume0 =
             cached_subvolumes[LinearizeNeighborOffset(dXsv0)];
@@ -724,7 +716,7 @@ Vector3f ScalableTSDFVolumeCudaDevice<N>::RayCasting(
     Vector3f ray_c = camera.InverseProjectPixel(p, 1.0f).normalized();
 
     /** TODO: throw it into parameters **/
-    const float t_min = 0.2f / ray_c(2);
+    const float t_min = 0.1f / ray_c(2);
     const float t_max = 3.0f / ray_c(2);
 
     const Vector3f camera_origin_v = transform_world_to_volume_ *
@@ -732,11 +724,12 @@ Vector3f ScalableTSDFVolumeCudaDevice<N>::RayCasting(
     const Vector3f ray_v = transform_world_to_volume_.Rotate(
         transform_camera_to_world.Rotate(ray_c));
 
-    float t_prev = 0, tsdf_prev = 0;
+    float t_prev = 0, tsdf_prev = sdf_trunc_;
+    const float block_step_size = int(N) * voxel_length_;
     Vector3i Xsv_prev = Vector3i(INT_MIN, INT_MIN, INT_MIN);
     UniformTSDFVolumeCudaDevice<N> *subvolume = nullptr;
 
-    /** Do NOT use #pragma unroll: it will make it slow **/
+    /** Do NOT use #pragma unroll: it will slow it down **/
     float t_curr = t_min;
     while (t_curr < t_max) {
         Vector3f Xv_t = camera_origin_v + t_curr * ray_v;
@@ -745,33 +738,22 @@ Vector3f ScalableTSDFVolumeCudaDevice<N>::RayCasting(
         Vector3i Xlocal_t = voxel_global_to_local(X_t, Xsv_t);
 
         subvolume = (Xsv_t == Xsv_prev) ? subvolume : QuerySubvolume(Xsv_t);
+        bool is_subvolume_valid = subvolume != nullptr;
 
-        float tsdf_curr = subvolume == nullptr ? 0 : subvolume->tsdf(Xlocal_t);
-        float step_size = tsdf_curr == 0 ?
-                          (subvolume == nullptr ?
-                           int(N) * voxel_length_ * 0.5f : sdf_trunc_)
-                                         : fmaxf(tsdf_curr, voxel_length_);
+        float tsdf_curr = is_subvolume_valid ? subvolume->tsdf(Xlocal_t)
+                                             : tsdf_prev;
+        uchar weight_curr = is_subvolume_valid ? subvolume->weight(Xlocal_t)
+                                               : 0;
+        float step_size = is_subvolume_valid ? fmaxf(tsdf_curr, voxel_length_)
+                                             : block_step_size;
 
-        if (tsdf_prev > 0 && tsdf_curr < 0) { /** Zero crossing **/
+        /** Zero crossing **/
+        if (tsdf_prev > 0 && weight_curr > 0 && tsdf_curr <= 0) {
             float t_intersect = (t_curr * tsdf_prev - t_prev * tsdf_curr)
                 / (tsdf_prev - tsdf_curr);
-
-            Vector3f Xv_surface = camera_origin_v + t_intersect * ray_v;
-            Vector3f X_surface = volume_to_voxelf(Xv_surface);
-
-            Vector3i Xsv_surface = voxelf_locate_subvolume(X_surface);
-            Vector3f Xlocal_surface = voxelf_global_to_local(
-                X_surface, Xsv_surface);
-
-            subvolume = (Xsv_t == Xsv_surface) ?
-                        subvolume : QuerySubvolume(Xsv_surface);
-
-            Vector3f normal_surface =
-                (subvolume == nullptr || OnBoundaryf(Xlocal_surface, true)) ?
-                this->GradientAt(X_surface) : subvolume->GradientAt(Xlocal_surface);
-
-            return transform_camera_to_world.Inverse().Rotate(
-                transform_volume_to_world_.Rotate(normal_surface)).normalized();
+            return (transform_camera_to_world.Inverse() * (
+                transform_volume_to_world_ * (
+                    camera_origin_v + t_intersect * ray_v)));
         }
 
         tsdf_prev = tsdf_curr;

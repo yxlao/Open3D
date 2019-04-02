@@ -178,21 +178,24 @@ public:
     void ResetLocks();
     void GetAssignedEntries();
 
-    /** If Value is a simple type
-      * (e.g. int, float, simple structures),
-      * call this to assign new data **/
+    /** 1. If Value is a simple type (e.g. int, float, simple structures),
+      *    call Insert this to assign new data
+      * 2. If Value is too large to assign, or is a pointer to memory on GPU
+      *    (e.g. UniformTSDFVolumeCudaDevice),
+      *    call New to allocate new data, then process in other kernels
+      * @return: allocated memory indices
+      **/
     std::vector<int> Insert(std::vector<Key> &keys, std::vector<Value> &values);
-
-    /** If Value is too large to assign, or is a pointer to memory on GPU
-      * (e.g. UniformTSDFVolumeCudaDevice),
-      * call this to allocate new data, then process is in other launches **/
     std::vector<int> New(std::vector<Key> &keys);
-
     void Delete(std::vector<Key> &keys);
 
+    std::pair<std::vector<Key>, std::vector<Value>> DownloadKeyValuePairs();
+    std::vector<Key> DownloadKeys();
+
     std::pair<std::vector<int>, std::vector<int>> Profile();
-    std::pair<std::vector<Key>, std::vector<Value>> Download();
     std::vector<Entry> DownloadAssignedEntries();
+
+
 };
 
 template<typename Key, typename Value, typename Hasher>
