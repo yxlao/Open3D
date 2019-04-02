@@ -9,12 +9,10 @@
 namespace open3d {
 namespace io {
 
-template<size_t N>
 bool WriteTSDFVolumeToBIN(const std::string &filename,
-                          cuda::ScalableTSDFVolumeCuda<N> &volume);
-template<size_t N>
+                          cuda::ScalableTSDFVolumeCuda &volume);
 bool ReadTSDFVolumeFromBIN(const std::string &filename,
-                           cuda::ScalableTSDFVolumeCuda<N> &volume,
+                           cuda::ScalableTSDFVolumeCuda &volume,
                            int batch_size = 5000);
 
 }

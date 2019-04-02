@@ -15,10 +15,10 @@ using namespace open3d::geometry;
 using namespace open3d::utility;
 
 TEST(ScalableTSDFVolumeCuda, Create) {
-    ScalableTSDFVolumeCuda<8> volume;
-    volume.Create(10000, 200000);
+    ScalableTSDFVolumeCuda volume;
+    volume.Create(8, 10000, 200000);
 
-    ScalableTSDFVolumeCuda<8> volume_copy;
+    ScalableTSDFVolumeCuda volume_copy;
     volume_copy = volume;
 }
 
@@ -40,9 +40,9 @@ TEST(ScalableTSDFVolumeCuda, TouchSubvolumes) {
     extrinsics(0, 3) = 10.0f;
     extrinsics(1, 3) = -10.0f;
     extrinsics(2, 3) = 1.0f;
-    ScalableTSDFVolumeCuda<8> volume(voxel_length, 3 * voxel_length,
-                                     extrinsics,
-                                     10000, 200000);
+    ScalableTSDFVolumeCuda volume(8, voxel_length, 3 * voxel_length,
+                                  extrinsics,
+                                  10000, 200000);
 
     volume.TouchSubvolumes(rgbd.depth_, intrinsics, extrinsics);
     volume.GetSubvolumesInFrustum(intrinsics, extrinsics);
@@ -68,9 +68,9 @@ TEST(ScalableTSDFVolumeCuda, Integration) {
 
     float voxel_length = 0.01f;
     TransformCuda extrinsics = TransformCuda::Identity();
-    ScalableTSDFVolumeCuda<8> volume(voxel_length, 3 * voxel_length,
-                                     extrinsics,
-                                     10000, 200000);
+    ScalableTSDFVolumeCuda volume(8, voxel_length, 3 * voxel_length,
+                                  extrinsics,
+                                  10000, 200000);
     Timer timer;
     timer.Start();
     for (int i = 0; i < 10; ++i) {
@@ -112,9 +112,9 @@ TEST(ScalableTSDFVolumeCuda, RayCasting) {
     extrinsics(1, 3) = -10.0f;
     extrinsics(2, 3) = 1.0f;
 
-    ScalableTSDFVolumeCuda<8> volume(voxel_length, 3 * voxel_length,
-                                     extrinsics,
-                                     10000, 200000);
+    ScalableTSDFVolumeCuda volume(8, voxel_length, 3 * voxel_length,
+                                  extrinsics,
+                                  10000, 200000);
 
     ImageCuda<float, 3> raycaster(depth.width_, depth.height_);
 

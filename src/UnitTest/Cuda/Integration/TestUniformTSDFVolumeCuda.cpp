@@ -29,8 +29,8 @@ TEST(UniformTSDFVolumeCuda, UploadAndDownload) {
     weight.resize(NNN);
     color.resize(NNN);
 
-    UniformTSDFVolumeCuda<N> volume;
-    volume.Create();
+    UniformTSDFVolumeCuda volume;
+    volume.Create(N);
 
     int cnt = 0;
     for (int i = 0; i < N; ++i) {
@@ -82,7 +82,7 @@ TEST(UniformTSDFVolumeCuda, RayCasting) {
 
     const float voxel_length = 0.01f;
     transform.SetTranslation(Vector3f(-voxel_length * 256));
-    UniformTSDFVolumeCuda<512> volume(voxel_length, voxel_length * 3, transform);
+    UniformTSDFVolumeCuda volume(512, voxel_length, voxel_length * 3, transform);
 
     TransformCuda extrinsics = TransformCuda::Identity();
     for (int i = 0; i < 10; ++i) {

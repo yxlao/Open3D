@@ -13,35 +13,39 @@ namespace cuda {
 /**
  * Client end
  */
-template<size_t N>
-UniformTSDFVolumeCuda<N>::UniformTSDFVolumeCuda() {}
 
-template<size_t N>
-UniformTSDFVolumeCuda<N>::UniformTSDFVolumeCuda(
-    float voxel_length, float sdf_trunc,
+UniformTSDFVolumeCuda::UniformTSDFVolumeCuda() {
+    N_ = -1;
+}
+
+
+UniformTSDFVolumeCuda::UniformTSDFVolumeCuda(
+    int N, float voxel_length, float sdf_trunc,
     TransformCuda &volume_to_world) {
 
     voxel_length_ = voxel_length;
     sdf_trunc_ = sdf_trunc;
     transform_volume_to_world_ = volume_to_world;
 
-    Create();
+    Create(N);
 }
 
-template<size_t N>
-UniformTSDFVolumeCuda<N>::UniformTSDFVolumeCuda(
-    const UniformTSDFVolumeCuda<N> &other) {
 
+UniformTSDFVolumeCuda::UniformTSDFVolumeCuda(
+    const UniformTSDFVolumeCuda &other) {
+
+    N_ = other.N_;
     device_ = other.device_;
     voxel_length_ = other.voxel_length_;
     sdf_trunc_ = other.sdf_trunc_;
     transform_volume_to_world_ = other.transform_volume_to_world_;
 }
 
-template<size_t N>
-UniformTSDFVolumeCuda<N> &UniformTSDFVolumeCuda<N>::operator=(
-    const UniformTSDFVolumeCuda<N> &other) {
+
+UniformTSDFVolumeCuda &UniformTSDFVolumeCuda::operator=(
+    const UniformTSDFVolumeCuda &other) {
     if (this != &other) {
+        N_ = other.N_;
         device_ = other.device_;
         voxel_length_ = other.voxel_length_;
         sdf_trunc_ = other.sdf_trunc_;
@@ -50,21 +54,22 @@ UniformTSDFVolumeCuda<N> &UniformTSDFVolumeCuda<N>::operator=(
     return *this;
 }
 
-template<size_t N>
-UniformTSDFVolumeCuda<N>::~UniformTSDFVolumeCuda() {
+
+UniformTSDFVolumeCuda::~UniformTSDFVolumeCuda() {
     Release();
 }
 
-template<size_t N>
-void UniformTSDFVolumeCuda<N>::Create() {
+
+void UniformTSDFVolumeCuda::Create(int N) {
     if (device_ != nullptr) {
         utility::PrintError("[UniformTSDFVolumeCuda] Already created, "
                             "abort!\n");
         return;
     }
 
-    device_ = std::make_shared<UniformTSDFVolumeCudaDevice<N>>();
-    const size_t NNN = N * N * N;
+    N_ = N;
+    device_ = std::make_shared<UniformTSDFVolumeCudaDevice>();
+    const size_t NNN = N_ * N_ * N_;
     CheckCuda(cudaMalloc(&(device_->tsdf_), sizeof(float) * NNN));
     CheckCuda(cudaMalloc(&(device_->weight_), sizeof(uchar) * NNN));
     CheckCuda(cudaMalloc(&(device_->color_), sizeof(Vector3b) * NNN));
@@ -73,8 +78,8 @@ void UniformTSDFVolumeCuda<N>::Create() {
     Reset();
 }
 
-template<size_t N>
-void UniformTSDFVolumeCuda<N>::Release() {
+
+void UniformTSDFVolumeCuda::Release() {
     if (device_ != nullptr && device_.use_count() == 1) {
         CheckCuda(cudaFree(device_->tsdf_));
         CheckCuda(cudaFree(device_->weight_));
@@ -84,9 +89,11 @@ void UniformTSDFVolumeCuda<N>::Release() {
     device_ = nullptr;
 }
 
-template<size_t N>
-void UniformTSDFVolumeCuda<N>::UpdateDevice() {
+
+void UniformTSDFVolumeCuda::UpdateDevice() {
     if (device_ != nullptr) {
+        device_->N_ = N_;
+
         device_->voxel_length_ = voxel_length_;
         device_->inv_voxel_length_ = 1.0f / voxel_length_;
 
@@ -97,23 +104,23 @@ void UniformTSDFVolumeCuda<N>::UpdateDevice() {
     }
 }
 
-template<size_t N>
-void UniformTSDFVolumeCuda<N>::Reset() {
+
+void UniformTSDFVolumeCuda::Reset() {
     if (device_ != nullptr) {
-        const size_t NNN = N * N * N;
+        const size_t NNN = N_ * N_ * N_;
         CheckCuda(cudaMemset(device_->tsdf_, 0, sizeof(float) * NNN));
         CheckCuda(cudaMemset(device_->weight_, 0, sizeof(uchar) * NNN));
         CheckCuda(cudaMemset(device_->color_, 0, sizeof(Vector3b) * NNN));
     }
 }
 
-template<size_t N>
-void UniformTSDFVolumeCuda<N>::UploadVolume(std::vector<float> &tsdf,
+
+void UniformTSDFVolumeCuda::UploadVolume(std::vector<float> &tsdf,
                                             std::vector<uchar> &weight,
                                             std::vector<Vector3b> &color) {
     assert(device_ != nullptr);
 
-    const size_t NNN = N * N * N;
+    const size_t NNN = N_ * N_ * N_;
     assert(tsdf.size() == NNN);
     assert(weight.size() == NNN);
     assert(color.size() == NNN);
@@ -129,9 +136,9 @@ void UniformTSDFVolumeCuda<N>::UploadVolume(std::vector<float> &tsdf,
                          cudaMemcpyHostToDevice));
 }
 
-template<size_t N>
+
 std::tuple<std::vector<float>, std::vector<uchar>, std::vector<Vector3b>>
-UniformTSDFVolumeCuda<N>::DownloadVolume() {
+UniformTSDFVolumeCuda::DownloadVolume() {
     assert(device_ != nullptr);
 
     std::vector<float> tsdf;
@@ -143,7 +150,7 @@ UniformTSDFVolumeCuda<N>::DownloadVolume() {
         return std::make_tuple(tsdf, weight, color);
     }
 
-    const size_t NNN = N * N * N;
+    const size_t NNN = N_ * N_ * N_;
     tsdf.resize(NNN);
     weight.resize(NNN);
     color.resize(NNN);
@@ -162,21 +169,21 @@ UniformTSDFVolumeCuda<N>::DownloadVolume() {
         std::move(tsdf), std::move(weight), std::move(color));
 }
 
-template<size_t N>
-void UniformTSDFVolumeCuda<N>::Integrate(RGBDImageCuda &rgbd,
+
+void UniformTSDFVolumeCuda::Integrate(RGBDImageCuda &rgbd,
                                          PinholeCameraIntrinsicCuda &camera,
                                          TransformCuda &transform_camera_to_world) {
     assert(device_ != nullptr);
-    UniformTSDFVolumeCudaKernelCaller<N>::Integrate(
+    UniformTSDFVolumeCudaKernelCaller::Integrate(
         *this, rgbd, camera, transform_camera_to_world);
 }
 
-template<size_t N>
-void UniformTSDFVolumeCuda<N>::RayCasting(ImageCuda<float, 3> &image,
+
+void UniformTSDFVolumeCuda::RayCasting(ImageCuda<float, 3> &image,
                                           PinholeCameraIntrinsicCuda &camera,
                                           TransformCuda &transform_camera_to_world) {
     assert(device_ != nullptr);
-    UniformTSDFVolumeCudaKernelCaller<N>::RayCasting(
+    UniformTSDFVolumeCudaKernelCaller::RayCasting(
         *this, image, camera, transform_camera_to_world);
 }
 } // cuda

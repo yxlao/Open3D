@@ -14,61 +14,61 @@ namespace cuda {
  * Server end
  */
 /** Coordinate conversions **/
-template<size_t N>
+
 __device__
-inline bool UniformTSDFVolumeCudaDevice<N>::InVolume(const Vector3i &X) {
-    return 0 <= X(0) && X(0) < (N - 1)
-        && 0 <= X(1) && X(1) < (N - 1)
-        && 0 <= X(2) && X(2) < (N - 1);
+inline bool UniformTSDFVolumeCudaDevice::InVolume(const Vector3i &X) {
+    return 0 <= X(0) && X(0) < (N_ - 1)
+        && 0 <= X(1) && X(1) < (N_ - 1)
+        && 0 <= X(2) && X(2) < (N_ - 1);
 }
 
-template<size_t N>
+
 __device__
-inline bool UniformTSDFVolumeCudaDevice<N>::InVolumef(const Vector3f &X) {
-    return 0 <= X(0) && X(0) < (N - 1)
-        && 0 <= X(1) && X(1) < (N - 1)
-        && 0 <= X(2) && X(2) < (N - 1);
+inline bool UniformTSDFVolumeCudaDevice::InVolumef(const Vector3f &X) {
+    return 0 <= X(0) && X(0) < (N_ - 1)
+        && 0 <= X(1) && X(1) < (N_ - 1)
+        && 0 <= X(2) && X(2) < (N_ - 1);
 }
 
-template<size_t N>
+
 __device__
 inline Vector3f
-UniformTSDFVolumeCudaDevice<N>::world_to_voxelf(
+UniformTSDFVolumeCudaDevice::world_to_voxelf(
     const Vector3f &Xw) {
     return volume_to_voxelf(transform_world_to_volume_ * Xw);
 }
-template<size_t N>
+
 __device__
 inline Vector3f
-UniformTSDFVolumeCudaDevice<N>::voxelf_to_world(
+UniformTSDFVolumeCudaDevice::voxelf_to_world(
     const Vector3f &X) {
     return transform_volume_to_world_ * voxelf_to_volume(X);
 }
 
-template<size_t N>
+
 __device__
 inline Vector3f
-UniformTSDFVolumeCudaDevice<N>::voxelf_to_volume(
+UniformTSDFVolumeCudaDevice::voxelf_to_volume(
     const Vector3f &X) {
     return Vector3f((X(0) + 0.5f) * voxel_length_,
                     (X(1) + 0.5f) * voxel_length_,
                     (X(2) + 0.5f) * voxel_length_);
 }
 
-template<size_t N>
+
 __device__
 inline Vector3f
-UniformTSDFVolumeCudaDevice<N>::volume_to_voxelf(
+UniformTSDFVolumeCudaDevice::volume_to_voxelf(
     const Vector3f &Xv) {
     return Vector3f(Xv(0) * inv_voxel_length_ - 0.5f,
                     Xv(1) * inv_voxel_length_ - 0.5f,
                     Xv(2) * inv_voxel_length_ - 0.5f);
 }
 
-template<size_t N>
+
 __device__
     Vector3f
-UniformTSDFVolumeCudaDevice<N>::gradient(const Vector3i &X) {
+UniformTSDFVolumeCudaDevice::gradient(const Vector3i &X) {
     Vector3f
     n = Vector3f::Zeros();
     Vector3i
@@ -76,7 +76,7 @@ UniformTSDFVolumeCudaDevice<N>::gradient(const Vector3i &X) {
 
 #pragma unroll 1
     for (size_t k = 0; k < 3; ++k) {
-        X1(k) = O3D_MIN(X(k) + 1, int(N) - 1);
+        X1(k) = O3D_MIN(X(k) + 1, N_ - 1);
         X0(k) = O3D_MAX(X(k) - 1, 0);
         n(k) = tsdf_[IndexOf(X1)] - tsdf_[IndexOf(X0)];
         X1(k) = X0(k) = X(k);
@@ -86,9 +86,9 @@ UniformTSDFVolumeCudaDevice<N>::gradient(const Vector3i &X) {
 
 /** Interpolations. **/
 /** Ensure it is called within [0, N - 1)^3 **/
-template<size_t N>
+
 __device__
-float UniformTSDFVolumeCudaDevice<N>::TSDFAt(const Vector3f &X) {
+float UniformTSDFVolumeCudaDevice::TSDFAt(const Vector3f &X) {
     Vector3i Xi = X.template cast<int>();
     Vector3f r = X - Xi.template cast<float>();
 
@@ -109,10 +109,10 @@ float UniformTSDFVolumeCudaDevice<N>::TSDFAt(const Vector3f &X) {
         ));
 }
 
-template<size_t N>
+
 __device__
     uchar
-UniformTSDFVolumeCudaDevice<N>::WeightAt(const Vector3f &X) {
+UniformTSDFVolumeCudaDevice::WeightAt(const Vector3f &X) {
     Vector3i
     Xi = X.template cast<int>();
     Vector3f
@@ -135,10 +135,10 @@ UniformTSDFVolumeCudaDevice<N>::WeightAt(const Vector3f &X) {
         )));
 }
 
-template<size_t N>
+
 __device__
     Vector3b
-UniformTSDFVolumeCudaDevice<N>::ColorAt(const Vector3f &X) {
+UniformTSDFVolumeCudaDevice::ColorAt(const Vector3f &X) {
     Vector3i
     Xi = X.template cast<int>();
     Vector3f
@@ -164,10 +164,10 @@ UniformTSDFVolumeCudaDevice<N>::ColorAt(const Vector3f &X) {
     return colorf.template saturate_cast<uchar>();
 }
 
-template<size_t N>
+
 __device__
     Vector3f
-UniformTSDFVolumeCudaDevice<N>::GradientAt(const Vector3f &X) {
+UniformTSDFVolumeCudaDevice::GradientAt(const Vector3f &X) {
     Vector3f
     n = Vector3f::Zeros();
 
@@ -179,7 +179,7 @@ UniformTSDFVolumeCudaDevice<N>::GradientAt(const Vector3f &X) {
 #pragma unroll 1
     for (size_t k = 0; k < 3; k++) {
         X0(k) = fmaxf(X0(k) - half_gap, epsilon);
-        X1(k) = fminf(X1(k) + half_gap, N - 1 - epsilon);
+        X1(k) = fminf(X1(k) + half_gap, N_ - 1 - epsilon);
         n(k) = (TSDFAt(X1) - TSDFAt(X0));
 
         X0(k) = X1(k) = X(k);
@@ -188,9 +188,9 @@ UniformTSDFVolumeCudaDevice<N>::GradientAt(const Vector3f &X) {
 }
 
 /** High level methods **/
-template<size_t N>
+
 __device__
-void UniformTSDFVolumeCudaDevice<N>::Integrate(
+void UniformTSDFVolumeCudaDevice::Integrate(
     const Vector3i &X,
     RGBDImageCudaDevice &rgbd,
     PinholeCameraIntrinsicCuda &camera,
@@ -227,10 +227,10 @@ void UniformTSDFVolumeCudaDevice<N>::Integrate(
     weight_sum = uchar(fminf(weight_sum + 1.0f, 255));
 }
 
-template<size_t N>
+
 __device__
     Vector3f
-UniformTSDFVolumeCudaDevice<N>::RayCasting(
+UniformTSDFVolumeCudaDevice::RayCasting(
     const Vector2i &p,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {

@@ -184,7 +184,8 @@ void IntegrateForFragment(int fragment_id, PoseGraph &pose_graph,
 
     cuda::PinholeCameraIntrinsicCuda intrinsic(config.intrinsic_);
     cuda::TransformCuda trans = cuda::TransformCuda::Identity();
-    cuda::ScalableTSDFVolumeCuda<8> tsdf_volume(
+    cuda::ScalableTSDFVolumeCuda tsdf_volume(
+        8,
         voxel_length,
         (float) config.tsdf_truncation_,
         trans);
@@ -213,8 +214,8 @@ void IntegrateForFragment(int fragment_id, PoseGraph &pose_graph,
     }
 
     tsdf_volume.GetAllSubvolumes();
-    cuda::ScalableMeshVolumeCuda<8> mesher(
-        cuda::VertexWithNormalAndColor,
+    cuda::ScalableMeshVolumeCuda mesher(
+        cuda::VertexWithNormalAndColor, 8,
         tsdf_volume.active_subvolume_entry_array_.size());
     mesher.MarchingCubes(tsdf_volume);
     auto mesh = mesher.mesh().Download();

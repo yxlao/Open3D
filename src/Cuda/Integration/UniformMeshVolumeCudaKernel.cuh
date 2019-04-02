@@ -7,28 +7,29 @@
 
 namespace open3d {
 namespace cuda {
-template<size_t N>
+
 __global__
 void VertexAllocationKernel(
-    UniformMeshVolumeCudaDevice<N> server,
-    UniformTSDFVolumeCudaDevice<N> tsdf_volume) {
+    UniformMeshVolumeCudaDevice server,
+    UniformTSDFVolumeCudaDevice tsdf_volume) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
     const int z = threadIdx.z + blockIdx.z * blockDim.z;
 
-    if (x >= N - 1 || y >= N - 1 || z >= N - 1) return;
+    if (x >= server.N_ - 1 || y >= server.N_ - 1 || z >= server.N_ - 1)
+        return;
 
     Vector3i X = Vector3i(x, y, z);
     server.AllocateVertex(X, tsdf_volume);
 }
 
-template<size_t N>
-__host__
-void UniformMeshVolumeCudaKernelCaller<N>::VertexAllocation(
-    UniformMeshVolumeCuda<N> &mesher,
-    UniformTSDFVolumeCuda<N> &tsdf_volume) {
 
-    const int num_blocks = DIV_CEILING(N, THREAD_3D_UNIT);
+__host__
+void UniformMeshVolumeCudaKernelCaller::VertexAllocation(
+    UniformMeshVolumeCuda &mesher,
+    UniformTSDFVolumeCuda &tsdf_volume) {
+
+    const int num_blocks = DIV_CEILING(mesher.N_, THREAD_3D_UNIT);
     const dim3 blocks(num_blocks, num_blocks, num_blocks);
     const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
     VertexAllocationKernel << < blocks, threads >> > (
@@ -37,11 +38,11 @@ void UniformMeshVolumeCudaKernelCaller<N>::VertexAllocation(
     CheckCuda(cudaGetLastError());
 }
 
-template<size_t N>
+
 __global__
 void VertexExtractionKernel(
-    UniformMeshVolumeCudaDevice<N> server,
-    UniformTSDFVolumeCudaDevice<N> tsdf_volume) {
+    UniformMeshVolumeCudaDevice server,
+    UniformTSDFVolumeCudaDevice tsdf_volume) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
     const int z = threadIdx.z + blockIdx.z * blockDim.z;
@@ -50,13 +51,13 @@ void VertexExtractionKernel(
     server.ExtractVertex(X, tsdf_volume);
 }
 
-template<size_t N>
-__host__
-void UniformMeshVolumeCudaKernelCaller<N>::VertexExtraction(
-    UniformMeshVolumeCuda<N> &mesher,
-    UniformTSDFVolumeCuda<N> &tsdf_volume) {
 
-    const int num_blocks = DIV_CEILING(N, THREAD_3D_UNIT);
+__host__
+void UniformMeshVolumeCudaKernelCaller::VertexExtraction(
+    UniformMeshVolumeCuda &mesher,
+    UniformTSDFVolumeCuda &tsdf_volume) {
+
+    const int num_blocks = DIV_CEILING(mesher.N_, THREAD_3D_UNIT);
     const dim3 blocks(num_blocks, num_blocks, num_blocks);
     const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
     VertexExtractionKernel << < blocks, threads >> > (
@@ -65,26 +66,26 @@ void UniformMeshVolumeCudaKernelCaller<N>::VertexExtraction(
     CheckCuda(cudaGetLastError());
 }
 
-template<size_t N>
+
 __global__
 void TriangleExtractionKernel(
-    UniformMeshVolumeCudaDevice<N> server) {
+    UniformMeshVolumeCudaDevice server) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
     const int z = threadIdx.z + blockIdx.z * blockDim.z;
 
-    if (x >= N - 1 || y >= N - 1 || z >= N - 1) return;
+    if (x >= server.N_ - 1 || y >= server.N_ - 1 || z >= server.N_ - 1) return;
 
     Vector3i X = Vector3i(x, y, z);
     server.ExtractTriangle(X);
 }
 
-template<size_t N>
-__host__
-void UniformMeshVolumeCudaKernelCaller<N>::TriangleExtraction(
-    UniformMeshVolumeCuda<N> &mesher) {
 
-    const int num_blocks = DIV_CEILING(N, THREAD_3D_UNIT);
+__host__
+void UniformMeshVolumeCudaKernelCaller::TriangleExtraction(
+    UniformMeshVolumeCuda &mesher) {
+
+    const int num_blocks = DIV_CEILING(mesher.N_, THREAD_3D_UNIT);
     const dim3 blocks(num_blocks, num_blocks, num_blocks);
     const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
     TriangleExtractionKernel << < blocks, threads >> > (*mesher.device_);

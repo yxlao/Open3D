@@ -9,45 +9,40 @@
 
 #include "ScalableTSDFVolumeCudaDevice.cuh"
 
-
 namespace open3d {
 namespace cuda {
 /**
  * Server end
  */
-template<size_t N>
 __device__
 inline Vector3i
-ScalableMeshVolumeCudaDevice<N>::NeighborOffsetOfBoundaryVoxel(
+ScalableMeshVolumeCudaDevice::NeighborOffsetOfBoundaryVoxel(
     const Vector3i &Xlocal) {
-    return Vector3i(Xlocal(0) < 0 ? -1 : (Xlocal(0) >= N ? 1 : 0),
-                    Xlocal(1) < 0 ? -1 : (Xlocal(1) >= N ? 1 : 0),
-                    Xlocal(2) < 0 ? -1 : (Xlocal(2) >= N ? 1 : 0));
+    return Vector3i(Xlocal(0) < 0 ? -1 : (Xlocal(0) >= N_ ? 1 : 0),
+                    Xlocal(1) < 0 ? -1 : (Xlocal(1) >= N_ ? 1 : 0),
+                    Xlocal(2) < 0 ? -1 : (Xlocal(2) >= N_ ? 1 : 0));
 }
 
-template<size_t N>
 __device__
-inline int ScalableMeshVolumeCudaDevice<N>::LinearizeNeighborOffset(
+inline int ScalableMeshVolumeCudaDevice::LinearizeNeighborOffset(
     const Vector3i &dXsv) {
     /* return (dz + 1) * 9 + (dy + 1) * 3 + (dx + 1); */
     return 9 * dXsv(2) + 3 * dXsv(1) + dXsv(0) + 13;
 }
 
-template<size_t N>
 __device__
 inline Vector3i
-ScalableMeshVolumeCudaDevice<N>::BoundaryVoxelInNeighbor(
+ScalableMeshVolumeCudaDevice::BoundaryVoxelInNeighbor(
     const Vector3i &Xlocal, const Vector3i &dXsv) {
-    return Vector3i(Xlocal(0) - dXsv(0) * int(N),
-                    Xlocal(1) - dXsv(1) * int(N),
-                    Xlocal(2) - dXsv(2) * int(N));
+    return Vector3i(Xlocal(0) - dXsv(0) * int(N_),
+                    Xlocal(1) - dXsv(1) * int(N_),
+                    Xlocal(2) - dXsv(2) * int(N_));
 }
 
-template<size_t N>
 __device__
-void ScalableMeshVolumeCudaDevice<N>::AllocateVertex(
+void ScalableMeshVolumeCudaDevice::AllocateVertex(
     const Vector3i &Xlocal, int subvolume_idx,
-    UniformTSDFVolumeCudaDevice<N> *subvolume) {
+    UniformTSDFVolumeCudaDevice *subvolume) {
 
     uchar & table_index = table_indices(Xlocal, subvolume_idx);
     table_index = 0;
@@ -96,12 +91,11 @@ void ScalableMeshVolumeCudaDevice<N>::AllocateVertex(
     }
 }
 
-template<size_t N>
 __device__
-void ScalableMeshVolumeCudaDevice<N>::AllocateVertexOnBoundary(
+void ScalableMeshVolumeCudaDevice::AllocateVertexOnBoundary(
     const Vector3i &Xlocal, int subvolume_idx,
     int *cached_subvolume_indices,
-    UniformTSDFVolumeCudaDevice<N> **cached_subvolumes) {
+    UniformTSDFVolumeCudaDevice **cached_subvolumes) {
 
     uchar & table_index = table_indices(Xlocal, subvolume_idx);
     table_index = 0;
@@ -118,7 +112,7 @@ void ScalableMeshVolumeCudaDevice<N>::AllocateVertexOnBoundary(
         Vector3i
         dXsv_corner = NeighborOffsetOfBoundaryVoxel(Xlocal_corner);
         int neighbor_idx = LinearizeNeighborOffset(dXsv_corner);
-        UniformTSDFVolumeCudaDevice<N> *neighbor_subvolume =
+        UniformTSDFVolumeCudaDevice *neighbor_subvolume =
             cached_subvolumes[neighbor_idx];
 
         if (neighbor_subvolume == nullptr) return;
@@ -126,11 +120,9 @@ void ScalableMeshVolumeCudaDevice<N>::AllocateVertexOnBoundary(
         assert(cached_subvolume_indices[neighbor_idx] != NULLPTR_CUDA);
 #endif
 
-        Vector3i
-        Xlocal_corner_in_neighbor =
+        Vector3i Xlocal_corner_in_neighbor =
             BoundaryVoxelInNeighbor(Xlocal_corner, dXsv_corner);
-        uchar
-        weight = neighbor_subvolume->weight(Xlocal_corner_in_neighbor);
+        uchar weight = neighbor_subvolume->weight(Xlocal_corner_in_neighbor);
         if (weight == 0) return;
 
         float tsdf = neighbor_subvolume->tsdf(Xlocal_corner_in_neighbor);
@@ -173,13 +165,13 @@ void ScalableMeshVolumeCudaDevice<N>::AllocateVertexOnBoundary(
     }
 }
 
-template<size_t N>
+
 __device__
-void ScalableMeshVolumeCudaDevice<N>::ExtractVertex(
+void ScalableMeshVolumeCudaDevice::ExtractVertex(
     const Vector3i &Xlocal,
     int subvolume_idx, const Vector3i &Xsv,
-    ScalableTSDFVolumeCudaDevice<N> &tsdf_volume,
-    UniformTSDFVolumeCudaDevice<N> *subvolume) {
+    ScalableTSDFVolumeCudaDevice &tsdf_volume,
+    UniformTSDFVolumeCudaDevice *subvolume) {
 
     Vector3i & voxel_vertex_indices = vertex_indices(Xlocal, subvolume_idx);
     if (voxel_vertex_indices(0) != VERTEX_TO_ALLOCATE
@@ -242,13 +234,13 @@ void ScalableMeshVolumeCudaDevice<N>::ExtractVertex(
     }
 }
 
-template<size_t N>
+
 __device__
-void ScalableMeshVolumeCudaDevice<N>::ExtractVertexOnBoundary(
+void ScalableMeshVolumeCudaDevice::ExtractVertexOnBoundary(
     const Vector3i &Xlocal,
     int subvolume_idx, const Vector3i &Xsv,
-    ScalableTSDFVolumeCudaDevice<N> &tsdf_volume,
-    UniformTSDFVolumeCudaDevice<N> **cached_subvolumes) {
+    ScalableTSDFVolumeCudaDevice &tsdf_volume,
+    UniformTSDFVolumeCudaDevice **cached_subvolumes) {
 
     Vector3i & voxel_vertex_indices = vertex_indices(Xlocal, subvolume_idx);
     if (voxel_vertex_indices(0) != VERTEX_TO_ALLOCATE
@@ -286,7 +278,7 @@ void ScalableMeshVolumeCudaDevice<N>::ExtractVertexOnBoundary(
 #endif
 
             Vector3i
-            Xneighbor_axis = Xlocal_axis - int(N) * dXsv_axis;
+            Xneighbor_axis = Xlocal_axis - int(N_) * dXsv_axis;
             float tsdf_axis = cached_subvolumes[neighbor_idx]->tsdf(
                 Xneighbor_axis);
             Vector3b
@@ -325,9 +317,9 @@ void ScalableMeshVolumeCudaDevice<N>::ExtractVertexOnBoundary(
     }
 }
 
-template<size_t N>
+
 __device__
-void ScalableMeshVolumeCudaDevice<N>::ExtractTriangle(
+void ScalableMeshVolumeCudaDevice::ExtractTriangle(
     const Vector3i &Xlocal, int subvolume_idx) {
 
     const uchar table_index = table_indices(Xlocal, subvolume_idx);
@@ -365,9 +357,9 @@ void ScalableMeshVolumeCudaDevice<N>::ExtractTriangle(
     }
 }
 
-template<size_t N>
+
 __device__
-void ScalableMeshVolumeCudaDevice<N>::ExtractTriangleOnBoundary(
+void ScalableMeshVolumeCudaDevice::ExtractTriangleOnBoundary(
     const Vector3i &Xlocal, int subvolume_idx,
     int *cached_subvolume_indices) {
 

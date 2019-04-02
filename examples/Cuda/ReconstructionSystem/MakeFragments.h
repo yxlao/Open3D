@@ -187,8 +187,8 @@ void IntegrateForFragment(int fragment_id, DatasetConfig &config) {
 
     cuda::PinholeCameraIntrinsicCuda intrinsic(config.intrinsic_);
     cuda::TransformCuda trans = cuda::TransformCuda::Identity();
-    cuda::ScalableTSDFVolumeCuda<8> tsdf_volume(
-        voxel_length, (float) config.tsdf_truncation_, trans);
+    cuda::ScalableTSDFVolumeCuda tsdf_volume(
+        8, voxel_length, (float) config.tsdf_truncation_, trans);
 
     cuda::RGBDImageCuda rgbd((float) config.max_depth_,
                              (float) config.depth_factor_);
@@ -214,12 +214,12 @@ void IntegrateForFragment(int fragment_id, DatasetConfig &config) {
     }
 
     tsdf_volume.GetAllSubvolumes();
-    if (fragment_id < 5) {
-        WriteTSDFVolumeToBIN(config.GetBinFileForFragment(fragment_id), tsdf_volume);
-    }
+//    if (fragment_id < 5) {
+//        WriteTSDFVolumeToBIN(config.GetBinFileForFragment(fragment_id), tsdf_volume);
+//    }
 
-    cuda::ScalableMeshVolumeCuda<8> mesher(
-        cuda::VertexWithNormalAndColor,
+    cuda::ScalableMeshVolumeCuda mesher(
+        cuda::VertexWithNormalAndColor, 8,
         tsdf_volume.active_subvolume_entry_array_.size());
     mesher.MarchingCubes(tsdf_volume);
     auto mesh = mesher.mesh().Download();

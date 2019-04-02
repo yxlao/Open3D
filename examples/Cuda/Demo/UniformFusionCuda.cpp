@@ -58,10 +58,10 @@ int main(int argc, char *argv[]) {
     float voxel_length = 0.01f;
     cuda::TransformCuda extrinsics = cuda::TransformCuda::Identity();
     extrinsics.SetTranslation(cuda::Vector3f(-voxel_length * 256));
-    cuda::UniformTSDFVolumeCuda<512> tsdf_volume(
-        voxel_length, 3 * voxel_length, extrinsics);
-    cuda::UniformMeshVolumeCuda<512> mesher(
-        cuda::VertexWithNormalAndColor, 4000000, 8000000);
+    cuda::UniformTSDFVolumeCuda tsdf_volume(
+        512, voxel_length, 3 * voxel_length, extrinsics);
+    cuda::UniformMeshVolumeCuda mesher(
+        cuda::VertexWithNormalAndColor, 512, 4000000, 8000000);
 
     Image depth, color;
     cuda::RGBDImageCuda rgbd(640, 480, 4.0f, 5000.0f);

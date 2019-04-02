@@ -8,13 +8,13 @@
 
 namespace open3d {
 namespace cuda {
-template<size_t N>
+
 __global__
 void VertexAllocationKernel(
-    ScalableMeshVolumeCudaDevice<N> server,
-    ScalableTSDFVolumeCudaDevice<N> tsdf_volume) {
+    ScalableMeshVolumeCudaDevice server,
+    ScalableTSDFVolumeCudaDevice tsdf_volume) {
 
-    __shared__ UniformTSDFVolumeCudaDevice<N> *neighbor_subvolumes[27];
+    __shared__ UniformTSDFVolumeCudaDevice *neighbor_subvolumes[27];
     __shared__ int neighbor_subvolume_indices[27];
 
     const int subvolume_idx = blockIdx.x;
@@ -45,11 +45,11 @@ void VertexAllocationKernel(
     }
 }
 
-template<size_t N>
+
 __host__
-void ScalableMeshVolumeCudaKernelCaller<N>::VertexAllocation(
-    ScalableMeshVolumeCuda<N> &mesher,
-    ScalableTSDFVolumeCuda<N> &tsdf_volume) {
+void ScalableMeshVolumeCudaKernelCaller::VertexAllocation(
+    ScalableMeshVolumeCuda &mesher,
+    ScalableTSDFVolumeCuda &tsdf_volume) {
 
     const dim3 blocks(mesher.active_subvolumes_);
     const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
@@ -59,13 +59,13 @@ void ScalableMeshVolumeCudaKernelCaller<N>::VertexAllocation(
     CheckCuda(cudaGetLastError());
 }
 
-template<size_t N>
+
 __global__
 void VertexExtractionKernel(
-    ScalableMeshVolumeCudaDevice<N> server,
-    ScalableTSDFVolumeCudaDevice<N> tsdf_volume) {
+    ScalableMeshVolumeCudaDevice server,
+    ScalableTSDFVolumeCudaDevice tsdf_volume) {
 
-    __shared__ UniformTSDFVolumeCudaDevice<N> *neighbor_subvolumes[27];
+    __shared__ UniformTSDFVolumeCudaDevice *neighbor_subvolumes[27];
     __shared__ int neighbor_subvolume_indices[27];
 
     const int subvolume_idx = blockIdx.x;
@@ -97,11 +97,11 @@ void VertexExtractionKernel(
     }
 }
 
-template<size_t N>
+
 __host__
-void ScalableMeshVolumeCudaKernelCaller<N>::VertexExtraction(
-    ScalableMeshVolumeCuda<N> &mesher,
-    ScalableTSDFVolumeCuda<N> &tsdf_volume) {
+void ScalableMeshVolumeCudaKernelCaller::VertexExtraction(
+    ScalableMeshVolumeCuda &mesher,
+    ScalableTSDFVolumeCuda &tsdf_volume) {
 
     const dim3 blocks(mesher.active_subvolumes_);
     const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
@@ -112,13 +112,13 @@ void ScalableMeshVolumeCudaKernelCaller<N>::VertexExtraction(
 
 }
 
-template<size_t N>
+
 __global__
 void TriangleExtractionKernel(
-    ScalableMeshVolumeCudaDevice<N> server,
-    ScalableTSDFVolumeCudaDevice<N> tsdf_volume) {
+    ScalableMeshVolumeCudaDevice server,
+    ScalableTSDFVolumeCudaDevice tsdf_volume) {
 
-    __shared__ UniformTSDFVolumeCudaDevice<N> *neighbor_subvolumes[27];
+    __shared__ UniformTSDFVolumeCudaDevice *neighbor_subvolumes[27];
     __shared__ int neighbor_subvolume_indices[27];
 
     const int subvolume_idx = blockIdx.x;
@@ -145,10 +145,10 @@ void TriangleExtractionKernel(
     }
 }
 
-template<size_t N>
-void ScalableMeshVolumeCudaKernelCaller<N>::TriangleExtraction(
-    ScalableMeshVolumeCuda<N> &mesher,
-    ScalableTSDFVolumeCuda<N> &tsdf_volume) {
+
+void ScalableMeshVolumeCudaKernelCaller::TriangleExtraction(
+    ScalableMeshVolumeCuda &mesher,
+    ScalableTSDFVolumeCuda &tsdf_volume) {
 
     const dim3 blocks(mesher.active_subvolumes_);
     const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);

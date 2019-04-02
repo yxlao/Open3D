@@ -24,7 +24,7 @@ namespace open3d {
 namespace cuda {
 static const int VERTEX_TO_ALLOCATE = -1;
 
-template<size_t N>
+
 class UniformMeshVolumeCudaDevice {
 private:
     uchar *table_indices_;
@@ -53,14 +53,16 @@ private:
     TriangleMeshCudaDevice mesh_;
 
 public:
+    int N_;
+
     __DEVICE__ inline Vector3i Vectorize(size_t index) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
         assert(index < N * N * N);
 #endif
         Vector3i ret(0);
-        ret(0) = int(index % N);
-        ret(1) = int((index % (N * N)) / N);
-        ret(2) = int(index / (N * N));
+        ret(0) = int(index % N_);
+        ret(1) = int((index % (N_ * N_)) / N_);
+        ret(2) = int(index / (N_ * N_));
         return ret;
     }
 
@@ -69,7 +71,7 @@ public:
         assert(X(0) >= 0 && X(1) >= 0 && X(2) >= 0);
         assert(X(0) < N && X(1) < N && X(2) < N);
 #endif
-        return int(X(2) * (N * N) + X(1) * N + X(0));
+        return int(X(2) * (N_ * N_) + X(1) * N_ + X(0));
     }
     __DEVICE__ inline uchar &table_indices(const Vector3i &X) {
         return table_indices_[IndexOf(X)];
@@ -83,45 +85,47 @@ public:
 
 public:
     __DEVICE__ void AllocateVertex(
-        const Vector3i &X, UniformTSDFVolumeCudaDevice<N> &tsdf_volume);
+        const Vector3i &X, UniformTSDFVolumeCudaDevice &tsdf_volume);
     __DEVICE__ void ExtractVertex(
-        const Vector3i &X, UniformTSDFVolumeCudaDevice<N> &tsdf_volume);
+        const Vector3i &X, UniformTSDFVolumeCudaDevice &tsdf_volume);
     __DEVICE__ void ExtractTriangle(const Vector3i &X);
 
 public:
-    friend class UniformMeshVolumeCuda<N>;
+    friend class UniformMeshVolumeCuda;
 };
 
-template<size_t N>
+
 class UniformMeshVolumeCuda {
 public:
-    std::shared_ptr<UniformMeshVolumeCudaDevice<N> > device_ = nullptr;
+    std::shared_ptr<UniformMeshVolumeCudaDevice > device_ = nullptr;
     TriangleMeshCuda mesh_;
 
 public:
+    int N_;
     VertexType vertex_type_;
     int max_vertices_;
     int max_triangles_;
 
 public:
     UniformMeshVolumeCuda();
-    UniformMeshVolumeCuda(VertexType type, int max_vertices, int max_triangles);
-    UniformMeshVolumeCuda(const UniformMeshVolumeCuda<N> &other);
-    UniformMeshVolumeCuda<N> &operator=(
-        const UniformMeshVolumeCuda<N> &other);
+    UniformMeshVolumeCuda(VertexType type, int N,
+                          int max_vertices, int max_triangles);
+    UniformMeshVolumeCuda(const UniformMeshVolumeCuda &other);
+    UniformMeshVolumeCuda &operator=(
+        const UniformMeshVolumeCuda &other);
     ~UniformMeshVolumeCuda();
 
-    void Create(VertexType type, int max_vertices, int max_triangles);
+    void Create(VertexType type, int N, int max_vertices, int max_triangles);
     void Release();
     void Reset();
     void UpdateDevice();
 
 public:
-    void VertexAllocation(UniformTSDFVolumeCuda<N> &tsdf_volume);
-    void VertexExtraction(UniformTSDFVolumeCuda<N> &tsdf_volume);
+    void VertexAllocation(UniformTSDFVolumeCuda &tsdf_volume);
+    void VertexExtraction(UniformTSDFVolumeCuda &tsdf_volume);
     void TriangleExtraction();
 
-    void MarchingCubes(UniformTSDFVolumeCuda<N> &tsdf_volume);
+    void MarchingCubes(UniformTSDFVolumeCuda &tsdf_volume);
 
 public:
     TriangleMeshCuda &mesh() {
@@ -132,36 +136,36 @@ public:
     }
 };
 
-template<size_t N>
+
 class UniformMeshVolumeCudaKernelCaller {
 public:
     static void VertexAllocation(
-        UniformMeshVolumeCuda<N> &mesher,
-        UniformTSDFVolumeCuda<N> &tsdf_volume);
+        UniformMeshVolumeCuda &mesher,
+        UniformTSDFVolumeCuda &tsdf_volume);
 
     static __HOST__ void VertexExtraction(
-        UniformMeshVolumeCuda<N> &mesher,
-        UniformTSDFVolumeCuda<N> &tsdf_volume);
+        UniformMeshVolumeCuda &mesher,
+        UniformTSDFVolumeCuda &tsdf_volume);
 
     static __HOST__ void TriangleExtraction(
-        UniformMeshVolumeCuda<N> &mesher);
+        UniformMeshVolumeCuda &mesher);
 };
 
-template<size_t N>
+
 __GLOBAL__
 void VertexAllocationKernel(
-    UniformMeshVolumeCudaDevice<N> server,
-    UniformTSDFVolumeCudaDevice<N> tsdf_volume);
+    UniformMeshVolumeCudaDevice server,
+    UniformTSDFVolumeCudaDevice tsdf_volume);
 
-template<size_t N>
+
 __GLOBAL__
 void VertexExtractionKernel(
-    UniformMeshVolumeCudaDevice<N> server,
-    UniformTSDFVolumeCudaDevice<N> tsdf_volume);
+    UniformMeshVolumeCudaDevice server,
+    UniformTSDFVolumeCudaDevice tsdf_volume);
 
-template<size_t N>
+
 __GLOBAL__
 void TriangleExtractionKernel(
-    UniformMeshVolumeCudaDevice<N> server);
+    UniformMeshVolumeCudaDevice server);
 } // cuda
 } // open3d

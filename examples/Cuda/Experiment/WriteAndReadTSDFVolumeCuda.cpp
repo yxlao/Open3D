@@ -22,7 +22,8 @@ void IntegrateAndWriteFragment(int fragment_id, DatasetConfig &config) {
 
     cuda::PinholeCameraIntrinsicCuda intrinsic(config.intrinsic_);
     cuda::TransformCuda trans = cuda::TransformCuda::Identity();
-    cuda::ScalableTSDFVolumeCuda<8> tsdf_volume(
+    cuda::ScalableTSDFVolumeCuda tsdf_volume(
+        8,
         voxel_length,
         (float) config.tsdf_truncation_,
         trans);
@@ -62,8 +63,8 @@ void IntegrateAndWriteFragment(int fragment_id, DatasetConfig &config) {
     timer.Stop();
     utility::PrintInfo("Write takes %f ms\n", timer.GetDuration());
 
-    cuda::ScalableMeshVolumeCuda<8> mesher(
-        cuda::VertexWithNormalAndColor,
+    cuda::ScalableMeshVolumeCuda mesher(
+        cuda::VertexWithNormalAndColor, 8,
         tsdf_volume.active_subvolume_entry_array_.size());
     mesher.MarchingCubes(tsdf_volume);
     auto mesh = mesher.mesh().Download();
@@ -79,7 +80,8 @@ void ReadFragment(int fragment_id, DatasetConfig &config) {
     float voxel_length = config.tsdf_cubic_size_ / 512.0;
 
     cuda::TransformCuda trans = cuda::TransformCuda::Identity();
-    cuda::ScalableTSDFVolumeCuda<8> tsdf_volume(
+    cuda::ScalableTSDFVolumeCuda tsdf_volume(
+        8,
         voxel_length,
         (float) config.tsdf_truncation_,
         trans);
@@ -93,8 +95,8 @@ void ReadFragment(int fragment_id, DatasetConfig &config) {
     utility::PrintInfo("Read takes %f ms\n", timer.GetDuration());
 
     tsdf_volume.GetAllSubvolumes();
-    cuda::ScalableMeshVolumeCuda<8> mesher(
-        cuda::VertexWithNormalAndColor,
+    cuda::ScalableMeshVolumeCuda mesher(
+        cuda::VertexWithNormalAndColor, 8,
         tsdf_volume.active_subvolume_entry_array_.size());
     mesher.MarchingCubes(tsdf_volume);
     auto mesh = mesher.mesh().Download();

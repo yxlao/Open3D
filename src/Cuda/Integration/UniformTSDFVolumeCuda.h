@@ -18,9 +18,11 @@
 
 namespace open3d {
 namespace cuda {
-template<size_t N>
+
 class UniformTSDFVolumeCudaDevice {
 public:
+    int N_;
+
     /** [N * N * N] **/
     float *tsdf_;
     uchar *weight_;
@@ -43,9 +45,9 @@ public:
         assert(index < N * N * N);
 #endif
         Vector3i ret;
-        ret(0) = int(index % N);
-        ret(1) = int((index % (N * N)) / N);
-        ret(2) = int(index / (N * N));
+        ret(0) = int(index % N_);
+        ret(1) = int((index % (N_ * N_)) / N_);
+        ret(2) = int(index / (N_ * N_));
         return ret;
     }
     __DEVICE__ inline int IndexOf(const Vector3i &X) {
@@ -53,7 +55,7 @@ public:
         assert(X(0) >= 0 && X(1) >= 0 && X(2) >= 0);
         assert(X(0) < N && X(1) < N && X(2) < N);
 #endif
-        return int(X(2) * (N * N) + X(1) * N + X(0));
+        return int(X(2) * (N_ * N_) + X(1) * N_ + X(0));
     }
 
 public:
@@ -101,29 +103,31 @@ public:
                                    TransformCuda &transform_camera_to_world);
 
 public:
-    friend class UniformTSDFVolumeCuda<N>;
-    friend class ScalableTSDFVolumeCuda<N>;
+    friend class UniformTSDFVolumeCuda;
+    friend class ScalableTSDFVolumeCuda;
 };
 
-template<size_t N>
+
 class UniformTSDFVolumeCuda {
 public:
-    std::shared_ptr<UniformTSDFVolumeCudaDevice<N>> device_ = nullptr;
+    std::shared_ptr<UniformTSDFVolumeCudaDevice> device_ = nullptr;
 
 public:
+    int N_;
+
     float voxel_length_;
     float sdf_trunc_;
     TransformCuda transform_volume_to_world_;
 
 public:
     UniformTSDFVolumeCuda();
-    UniformTSDFVolumeCuda(float voxel_length, float sdf_trunc,
+    UniformTSDFVolumeCuda(int N, float voxel_length, float sdf_trunc,
                           TransformCuda &volume_to_world);
-    UniformTSDFVolumeCuda(const UniformTSDFVolumeCuda<N> &other);
-    UniformTSDFVolumeCuda<N> &operator=(const UniformTSDFVolumeCuda<N> &other);
+    UniformTSDFVolumeCuda(const UniformTSDFVolumeCuda &other);
+    UniformTSDFVolumeCuda &operator=(const UniformTSDFVolumeCuda &other);
     ~UniformTSDFVolumeCuda();
 
-    void Create();
+    void Create(int N);
     void Release();
     void UpdateDevice();
 
@@ -144,32 +148,32 @@ public:
                     TransformCuda &transform_camera_to_world);
 };
 
-template<size_t N>
+
 class UniformTSDFVolumeCudaKernelCaller {
 public:
     static void Integrate(
-        UniformTSDFVolumeCuda<N> &volume,
+        UniformTSDFVolumeCuda &volume,
         RGBDImageCuda &rgbd,
         PinholeCameraIntrinsicCuda &camera,
         TransformCuda &transform_camera_to_world);
 
     static void RayCasting(
-        UniformTSDFVolumeCuda<N> &volume,
+        UniformTSDFVolumeCuda &volume,
         ImageCuda<float, 3> &image,
         PinholeCameraIntrinsicCuda &camera,
         TransformCuda &transform_camera_to_world);
 };
 
-template<size_t N>
+
 __GLOBAL__
-void IntegrateKernel(UniformTSDFVolumeCudaDevice<N> server,
+void IntegrateKernel(UniformTSDFVolumeCudaDevice server,
                      RGBDImageCudaDevice depth,
                      PinholeCameraIntrinsicCuda camera,
                      TransformCuda transform_camera_to_world);
 
-template<size_t N>
+
 __GLOBAL__
-void RayCastingKernel(UniformTSDFVolumeCudaDevice<N> server,
+void RayCastingKernel(UniformTSDFVolumeCudaDevice server,
                       ImageCudaDevice<float, 3> image,
                       PinholeCameraIntrinsicCuda camera,
                       TransformCuda transform_camera_to_world);

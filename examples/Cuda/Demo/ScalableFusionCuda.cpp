@@ -51,13 +51,13 @@ int main(int argc, char *argv[]) {
 
     float voxel_length = 0.01f;
     cuda::TransformCuda extrinsics = cuda::TransformCuda::Identity();
-    cuda::ScalableTSDFVolumeCuda<8> tsdf_volume(
-        voxel_length, 3 * voxel_length, extrinsics);
+    cuda::ScalableTSDFVolumeCuda tsdf_volume(
+        8, voxel_length, 3 * voxel_length, extrinsics);
 
     Image depth, color;
     cuda::RGBDImageCuda rgbd(640, 480, 4.0f, 5000.0f);
-    cuda::ScalableMeshVolumeCuda<8> mesher(cuda::VertexWithNormalAndColor,
-                                           120000);
+    cuda::ScalableMeshVolumeCuda mesher(cuda::VertexWithNormalAndColor, 8,
+                                        120000);
 
     visualization::VisualizerWithCudaModule visualizer;
     if (!visualizer.CreateVisualizerWindow("ScalableFusion", 640, 480, 0, 0)) {

@@ -8,9 +8,9 @@
 
 namespace open3d {
 namespace cuda {
-template<size_t N>
+
 __global__
-void IntegrateKernel(UniformTSDFVolumeCudaDevice<N> server,
+void IntegrateKernel(UniformTSDFVolumeCudaDevice server,
                      RGBDImageCudaDevice rgbd,
                      PinholeCameraIntrinsicCuda camera,
                      TransformCuda transform_camera_to_world) {
@@ -18,21 +18,21 @@ void IntegrateKernel(UniformTSDFVolumeCudaDevice<N> server,
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
     const int z = threadIdx.z + blockIdx.z * blockDim.z;
 
-    if (x >= N || y >= N || z >= N) return;
+    if (x >= server.N_ || y >= server.N_ || z >= server.N_) return;
 
     Vector3i X = Vector3i(x, y, z);
     server.Integrate(X, rgbd, camera, transform_camera_to_world);
 }
 
-template<size_t N>
+
 __host__
-void UniformTSDFVolumeCudaKernelCaller<N>::Integrate(
-    UniformTSDFVolumeCuda<N> &volume,
+void UniformTSDFVolumeCudaKernelCaller::Integrate(
+    UniformTSDFVolumeCuda &volume,
     RGBDImageCuda &rgbd,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {
 
-    const int num_blocks = DIV_CEILING(N, THREAD_3D_UNIT);
+    const int num_blocks = DIV_CEILING(volume.N_, THREAD_3D_UNIT);
     const dim3 blocks(num_blocks, num_blocks, num_blocks);
     const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
     IntegrateKernel << < blocks, threads >> > (
@@ -41,9 +41,9 @@ void UniformTSDFVolumeCudaKernelCaller<N>::Integrate(
     CheckCuda(cudaGetLastError());
 }
 
-template<size_t N>
+
 __global__
-void RayCastingKernel(UniformTSDFVolumeCudaDevice<N> server,
+void RayCastingKernel(UniformTSDFVolumeCudaDevice server,
                       ImageCudaDevice<float, 3> image,
                       PinholeCameraIntrinsicCuda camera,
                       TransformCuda transform_camera_to_world) {
@@ -53,8 +53,7 @@ void RayCastingKernel(UniformTSDFVolumeCudaDevice<N> server,
     if (x >= image.width_ || y >= image.height_) return;
 
     Vector2i p = Vector2i(x, y);
-    Vector3f
-    n = server.RayCasting(p, camera, transform_camera_to_world);
+    Vector3f n = server.RayCasting(p, camera, transform_camera_to_world);
 
     image.at(x, y) = (n == Vector3f::Zeros()) ?
                      n : Vector3f((n(0) + 1) * 0.5f,
@@ -62,9 +61,9 @@ void RayCastingKernel(UniformTSDFVolumeCudaDevice<N> server,
                                   (n(2) + 1) * 0.5f);
 }
 
-template<size_t N>
-void UniformTSDFVolumeCudaKernelCaller<N>::RayCasting(
-    UniformTSDFVolumeCuda<N> &volume,
+
+void UniformTSDFVolumeCudaKernelCaller::RayCasting(
+    UniformTSDFVolumeCuda &volume,
     ImageCuda<float, 3> &image,
     PinholeCameraIntrinsicCuda &camera,
     TransformCuda &transform_camera_to_world) {

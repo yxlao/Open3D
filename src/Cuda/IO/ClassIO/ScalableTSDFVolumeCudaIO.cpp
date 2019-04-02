@@ -7,9 +7,8 @@
 namespace open3d {
 namespace io {
 
-template<size_t N>
 bool WriteTSDFVolumeToBIN(const std::string &filename,
-                          cuda::ScalableTSDFVolumeCuda<N> &volume) {
+                          cuda::ScalableTSDFVolumeCuda &volume) {
     auto key_value = volume.DownloadVolumes();
 
     auto keys = key_value.first;
@@ -24,7 +23,7 @@ bool WriteTSDFVolumeToBIN(const std::string &filename,
     }
 
     /** metadata **/
-    int num_volumes = keys.size(), volume_size = N;
+    int num_volumes = keys.size(), volume_size = volume.N_;
     if (fwrite(&num_volumes, sizeof(int), 1, fid) < 1) {
         utility::PrintWarning("Write BIN failed: unable to write num volumes\n");
         return false;
@@ -65,9 +64,8 @@ bool WriteTSDFVolumeToBIN(const std::string &filename,
     return true;
 }
 
-template<size_t N>
 bool ReadTSDFVolumeFromBIN(const std::string &filename,
-                           cuda::ScalableTSDFVolumeCuda<N> &volume,
+                           cuda::ScalableTSDFVolumeCuda &volume,
                            int batch_size) {
     FILE *fid = fopen(filename.c_str(), "rb");
     if (fid == NULL) {
@@ -86,7 +84,9 @@ bool ReadTSDFVolumeFromBIN(const std::string &filename,
         utility::PrintWarning("Read BIN failed: unable to read volume size\n");
         return false;
     }
-    assert(volume_size == N);
+    assert(volume_size == volume.N_);
+
+    int N = volume.N_;
     int NNN = N * N * N;
 
     /** keys **/
@@ -148,14 +148,5 @@ bool ReadTSDFVolumeFromBIN(const std::string &filename,
 
     return true;
 }
-
-template
-bool WriteTSDFVolumeToBIN(const std::string &filename,
-                          cuda::ScalableTSDFVolumeCuda<8> &volume);
-template
-bool ReadTSDFVolumeFromBIN(const std::string &filename,
-                           cuda::ScalableTSDFVolumeCuda<8> &volume,
-                           int batch_size);
-
 } // io
 } // open3d

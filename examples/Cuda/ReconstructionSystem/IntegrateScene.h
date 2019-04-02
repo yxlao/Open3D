@@ -17,7 +17,7 @@ using namespace open3d::registration;
 
 namespace IntegrateScene {
 void IntegrateFragment(
-    int fragment_id, cuda::ScalableTSDFVolumeCuda<8> &volume,
+    int fragment_id, cuda::ScalableTSDFVolumeCuda &volume,
     DatasetConfig &config) {
 
     PoseGraph global_pose_graph;
@@ -60,7 +60,8 @@ int Run(DatasetConfig &config) {
 
     /** Larger for integrating entire scene **/
     cuda::TransformCuda trans = cuda::TransformCuda::Identity();
-    cuda::ScalableTSDFVolumeCuda<8> tsdf_volume(
+    cuda::ScalableTSDFVolumeCuda tsdf_volume(
+        8,
         (float) config.tsdf_cubic_size_ / 512,
         (float) config.tsdf_truncation_, trans,
         40000, 600000);
@@ -77,8 +78,8 @@ int Run(DatasetConfig &config) {
     tsdf_volume.GetAllSubvolumes();
 
     /** Larger scene, larger points **/
-    cuda::ScalableMeshVolumeCuda<8> mesher(
-        cuda::VertexWithNormalAndColor,
+    cuda::ScalableMeshVolumeCuda mesher(
+        cuda::VertexWithNormalAndColor, 8,
         tsdf_volume.active_subvolume_entry_array_.size(),
         20000000, 40000000);
     mesher.MarchingCubes(tsdf_volume);
