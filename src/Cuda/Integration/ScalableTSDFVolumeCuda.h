@@ -212,6 +212,22 @@ public:
     friend class ScalableTSDFVolumeCuda<N>;
 };
 
+struct ScalableTSDFVolumeCpuData {
+public:
+    std::vector<float> tsdf_;
+    std::vector<uchar> weight_;
+    std::vector<Vector3b> color_;
+
+    ScalableTSDFVolumeCpuData() = default;
+    ScalableTSDFVolumeCpuData(
+        std::vector<float> tsdf_buffer,
+        std::vector<uchar> weight_buffer,
+        std::vector<Vector3b> color_buffer) :
+        tsdf_(std::move(tsdf_buffer)),
+        weight_(std::move(weight_buffer)),
+        color_(std::move(color_buffer)) {};
+};
+
 template<size_t N>
 class ScalableTSDFVolumeCuda {
 public:
@@ -254,11 +270,10 @@ public:
 
     /** We can download occupied subvolumes in parallel **/
     std::pair<std::vector<Vector3i>,                      /* Keys */
-              std::vector<std::tuple<std::vector<float>,  std::vector<uchar>, std::vector<Vector3b>>>>
-              DownloadVolumes();
+              std::vector<ScalableTSDFVolumeCpuData>> DownloadVolumes();
     /** However, we can only upload them one by one. Thread conflict will lose info. **/
     std::vector<int> UploadVolume(std::vector<Vector3i> &key,
-                                  std::vector<std::tuple<std::vector<float>, std::vector<uchar>, std::vector<Vector3b>>> &volume);
+                                  std::vector<ScalableTSDFVolumeCpuData> &volume);
 
 public:
     /** Hash_table based integration is non-trivial,

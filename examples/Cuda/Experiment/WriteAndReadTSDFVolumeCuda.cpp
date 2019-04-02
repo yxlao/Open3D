@@ -12,7 +12,7 @@ using namespace open3d::geometry;
 using namespace open3d::io;
 using namespace open3d::utility;
 
-void WriteFragment(int fragment_id, DatasetConfig &config) {
+void IntegrateAndWriteFragment(int fragment_id, DatasetConfig &config) {
 
     PoseGraph pose_graph;
     ReadPoseGraph(config.GetPoseGraphFileForFragment(fragment_id, true),
@@ -59,7 +59,8 @@ void WriteFragment(int fragment_id, DatasetConfig &config) {
     utility::PrintInfo("Integration takes %f ms\n", timer.GetDuration());
 
     timer.Start();
-    io::WriteTSDFVolumeToBIN("test.bin", tsdf_volume);
+    std::string filename = config.GetBinFileForFragment(fragment_id);
+    io::WriteTSDFVolumeToBIN(filename, tsdf_volume);
     timer.Stop();
     utility::PrintInfo("Write takes %f ms\n", timer.GetDuration());
 
@@ -79,7 +80,6 @@ void ReadFragment(int fragment_id, DatasetConfig &config) {
 
     float voxel_length = config.tsdf_cubic_size_ / 512.0;
 
-    cuda::PinholeCameraIntrinsicCuda intrinsic(config.intrinsic_);
     cuda::TransformCuda trans = cuda::TransformCuda::Identity();
     cuda::ScalableTSDFVolumeCuda<8> tsdf_volume(
         20000,
@@ -90,7 +90,9 @@ void ReadFragment(int fragment_id, DatasetConfig &config) {
 
     Timer timer;
     timer.Start();
-    io::ReadTSDFVolumeFromBIN("test.bin", tsdf_volume);
+
+    std::string filename = config.GetBinFileForFragment(fragment_id);
+    io::ReadTSDFVolumeFromBIN(filename, tsdf_volume);
     timer.Stop();
     utility::PrintInfo("Read takes %f ms\n", timer.GetDuration());
 
@@ -109,7 +111,11 @@ int main(int argc, char **argv) {
                               kDefaultDatasetConfigDir + "/stanford/lounge.json";
     bool is_success = io::ReadIJsonConvertible(config_path, config);
     if (!is_success) return 1;
+    config.GetFragmentFiles();
 
-    WriteFragment(0, config);
-    ReadFragment(0, config);
+    for (int i = 15; i < config.fragment_files_.size(); ++i) {
+        utility::PrintInfo("%d\n", i);
+        IntegrateAndWriteFragment(i, config);
+//        ReadFragment(i, config);
+    }
 }

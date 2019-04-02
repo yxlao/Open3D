@@ -155,91 +155,83 @@ void ScalableTSDFVolumeCuda<N>::UpdateDevice() {
 
 template<size_t N>
 std::pair<std::vector<Vector3i>,
-          std::vector<std::tuple<std::vector<float>,
-                                 std::vector<uchar>,
-                                 std::vector<Vector3b>>>>
+          std::vector<ScalableTSDFVolumeCpuData>>
 ScalableTSDFVolumeCuda<N>::DownloadVolumes() {
     assert(device_ != nullptr);
 
     auto hash_table = hash_table_.Download();
     std::vector<Vector3i> &keys = std::get<0>(hash_table);
     std::vector<UniformTSDFVolumeCudaDevice<N>>
-        &volume_servers = std::get<1>(hash_table);
+        &subvolumes_device = std::get<1>(hash_table);
 
-    assert(keys.size() == volume_servers.size());
+    assert(keys.size() == subvolumes_device.size());
 
-    std::vector<std::tuple<std::vector<float>,
-                           std::vector<uchar>,
-                           std::vector<Vector3b>>> volumes;
-    volumes.resize(volume_servers.size());
+    std::vector<ScalableTSDFVolumeCpuData> subvolumes;
+    subvolumes.resize(subvolumes_device.size());
 
-    for (int i = 0; i < volumes.size(); ++i) {
-        std::vector<float> tsdf;
-        std::vector<uchar> weight;
-        std::vector<Vector3b> color;
-
+    for (int i = 0; i < subvolumes.size(); ++i) {
+        auto &subvolume = subvolumes[i];
         const size_t NNN = N * N * N;
-        tsdf.resize(NNN);
-        weight.resize(NNN);
-        color.resize(NNN);
+        subvolume.tsdf_.resize(NNN);
+        subvolume.weight_.resize(NNN);
+        subvolume.color_.resize(NNN);
 
-        CheckCuda(cudaMemcpy(tsdf.data(), volume_servers[i].tsdf_,
+        CheckCuda(cudaMemcpy(subvolume.tsdf_.data(),
+                             subvolumes_device[i].tsdf_,
                              sizeof(float) * NNN,
                              cudaMemcpyDeviceToHost));
-        CheckCuda(cudaMemcpy(weight.data(), volume_servers[i].weight_,
+        CheckCuda(cudaMemcpy(subvolume.weight_.data(),
+                             subvolumes_device[i].weight_,
                              sizeof(uchar) * NNN,
                              cudaMemcpyDeviceToHost));
-        CheckCuda(cudaMemcpy(color.data(), volume_servers[i].color_,
+        CheckCuda(cudaMemcpy(subvolume.color_.data(),
+                             subvolumes_device[i].color_,
                              sizeof(Vector3b) * NNN,
                              cudaMemcpyDeviceToHost));
-
-        volumes[i] = std::make_tuple(
-            std::move(tsdf), std::move(weight), std::move(color));
     }
 
-    return std::make_pair(std::move(keys), std::move(volumes));
+    return std::make_pair(std::move(keys), std::move(subvolumes));
 }
 
 template<size_t N>
 std::vector<int> ScalableTSDFVolumeCuda<N>::UploadVolume(
     std::vector<Vector3i> &keys,
-    std::vector<std::tuple<std::vector<float>,
-        std::vector<uchar>,
-        std::vector<Vector3b>>> &volumes) {
+    std::vector<ScalableTSDFVolumeCpuData> &values) {
 
     hash_table_.ResetLocks();
     std::vector<int> value_addrs = hash_table_.New(keys);
-    std::vector<int> failed_indices;
+    std::vector<int> failed_key_indices;
 
     const int NNN = (N * N * N);
     int cnt = 0;
+
     for (int i = 0; i < value_addrs.size(); ++i) {
         int addr = value_addrs[i];
         if (addr < 0) {
-            failed_indices.emplace_back(i);
+            failed_key_indices.emplace_back(i);
             continue;
         }
 
         const int offset = NNN * addr;
-
-        auto &tsdf = std::get<0>(volumes[i]);
-        auto &weight = std::get<1>(volumes[i]);
-        auto &color = std::get<2>(volumes[i]);
-
-        CheckCuda(cudaMemcpy(&device_->tsdf_memory_pool_[offset], tsdf.data(),
+        CheckCuda(cudaMemcpy(&device_->tsdf_memory_pool_[offset],
+                             values[i].tsdf_.data(),
                              sizeof(float) * NNN,
-                         cudaMemcpyHostToDevice));
-        CheckCuda(cudaMemcpy(&device_->weight_memory_pool_[offset], weight.data(),
+                             cudaMemcpyHostToDevice));
+        CheckCuda(cudaMemcpy(&device_->weight_memory_pool_[offset],
+                             values[i].weight_.data(),
                              sizeof(uchar) * NNN,
-                         cudaMemcpyHostToDevice));
-        CheckCuda(cudaMemcpy(&device_->color_memory_pool_[offset], color.data(),
+                             cudaMemcpyHostToDevice));
+        CheckCuda(cudaMemcpy(&device_->color_memory_pool_[offset],
+                             values[i].color_.data(),
                              sizeof(Vector3b) * NNN,
-                         cudaMemcpyHostToDevice));
+                             cudaMemcpyHostToDevice));
         ++cnt;
     }
-    utility::PrintInfo("%d / %d subvolumes uploaded\n", cnt, value_addrs.size());
 
-    return failed_indices;
+    utility::PrintInfo("%d / %d subvolumes uploaded\n",
+                       cnt, value_addrs.size());
+
+    return failed_key_indices;
 }
 
 template<size_t N>

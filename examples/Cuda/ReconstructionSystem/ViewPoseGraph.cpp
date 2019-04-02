@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
     DatasetConfig config;
 
     std::string config_path = argc > 1 ? argv[1] :
-        kDefaultDatasetConfigDir + "/cmu/ship.json";
+        kDefaultDatasetConfigDir + "/stanford/lounge.json";
 
     bool is_success = ReadIJsonConvertible(config_path, config);
     if (! is_success) return 1;

@@ -14,7 +14,8 @@ bool WriteTSDFVolumeToBIN(const std::string &filename,
                           cuda::ScalableTSDFVolumeCuda<N> &volume);
 template<size_t N>
 bool ReadTSDFVolumeFromBIN(const std::string &filename,
-                           cuda::ScalableTSDFVolumeCuda<N> &volume);
+                           cuda::ScalableTSDFVolumeCuda<N> &volume,
+                           int batch_size = 5000);
 
 }
 }

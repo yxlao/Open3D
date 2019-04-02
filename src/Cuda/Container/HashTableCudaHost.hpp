@@ -246,7 +246,7 @@ void HashTableCuda<Key, Value, Hasher>::Delete(
 }
 
 template<typename Key, typename Value, typename Hasher>
-std::tuple<std::vector<Key>, std::vector<Value>>
+std::pair<std::vector<Key>, std::vector<Value>>
 HashTableCuda<Key, Value, Hasher>::Download() {
     assert(device_ != nullptr);
 
@@ -257,7 +257,7 @@ HashTableCuda<Key, Value, Hasher>::Download() {
 
     int assigned_entry_array_size = assigned_entry_array_.size();
     if (assigned_entry_array_size == 0)
-        return std::make_tuple(keys, values);
+        return std::make_pair(keys, values);
 
     GetAssignedEntries();
     std::vector<Entry> assigned_entries = assigned_entry_array_.Download();
@@ -272,7 +272,7 @@ HashTableCuda<Key, Value, Hasher>::Download() {
         values[i] = memory_heap_values[entry.internal_addr];
     }
 
-    return std::make_tuple(keys, values);
+    return std::make_pair(keys, values);
 }
 
 template<typename Key, typename Value, typename Hasher>
@@ -287,7 +287,7 @@ std::vector<HashEntry<Key>> HashTableCuda<Key, Value, Hasher>
 }
 
 template<typename Key, typename Value, typename Hasher>
-std::tuple<std::vector<int>, std::vector<int>>
+std::pair<std::vector<int>, std::vector<int>>
 HashTableCuda<Key, Value, Hasher>::Profile() {
     assert(device_ != nullptr);
 
@@ -300,7 +300,7 @@ HashTableCuda<Key, Value, Hasher>::Profile() {
     std::vector<int> array_entry_count = array_entry_count_cuda.DownloadAll();
     std::vector<int> list_entry_count = list_entry_count_cuda.DownloadAll();
 
-    return std::make_tuple(array_entry_count, list_entry_count);
+    return std::make_pair(array_entry_count, list_entry_count);
 }
 } // cuda
 } // open3d

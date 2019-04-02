@@ -189,8 +189,9 @@ public:
     std::vector<int> New(std::vector<Key> &keys);
 
     void Delete(std::vector<Key> &keys);
-    std::tuple<std::vector<int>, std::vector<int>> Profile();
-    std::tuple<std::vector<Key>, std::vector<Value>> Download();
+
+    std::pair<std::vector<int>, std::vector<int>> Profile();
+    std::pair<std::vector<Key>, std::vector<Value>> Download();
     std::vector<Entry> DownloadAssignedEntries();
 };
 
