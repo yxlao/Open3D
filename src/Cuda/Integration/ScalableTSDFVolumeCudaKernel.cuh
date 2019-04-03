@@ -111,7 +111,7 @@ void ScalableTSDFVolumeCudaKernelCaller::IntegrateSubvolumes(
     TransformCuda &transform_camera_to_world) {
 
     const dim3 blocks(volume.active_subvolume_entry_array_.size());
-    const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
+    const dim3 threads(volume.N_, volume.N_, volume.N_);
     IntegrateSubvolumesKernel << < blocks, threads >> > (
         *volume.device_, *rgbd.device_, camera, transform_camera_to_world);
     CheckCuda(cudaDeviceSynchronize());
@@ -255,35 +255,42 @@ void ScalableTSDFVolumeCudaKernelCaller::RayCasting(
 __global__
 void DownSampleKernel(ScalableTSDFVolumeCudaDevice volume,
                       ScalableTSDFVolumeCudaDevice volume_down) {
-//    UniformTSDFVolumeCudaDevice *subvolume =
-//        volume.QuerySubvolume(blockIdx.x);
-//    UniformTSDFVolumeCudaDevice<N/2> *subvolume_down =
-//        volume_down.QuerySubvolume(blockIdx.x);
-//
-//    int x = 2 * threadIdx.x, y = 2 * threadIdx.y, z = 2 * threadIdx.z;
-//
-//    float sum_tsdf = 0;
-//    float sum_weight = 0;
-//    Vector3f sum_color = Vector3f(0);
-//    for (int i = 0; i < 8; ++i) {
-//        int idx = subvolume->IndexOf(x + (i & 4), y + (i & 2), z + (i & 1));
-//        sum_tsdf += subvolume->tsdf_[idx];
-//        sum_weight += (float) subvolume->weight_[idx];
-//
-//        const Vector3b &color = subvolume->color_[idx];
-//        sum_color(0) += (float) color(0);
-//        sum_color(1) += (float) color(1);
-//        sum_color(2) += (float) color(2);
-//    }
-//
-//    int idx = subvolume->IndexOf(threadIdx.x, threadIdx.y, threadIdx.z);
-//    subvolume_down->tsdf_[idx] = 0.125f * sum_tsdf;
-//    subvolume_down->weight_[idx] = uchar (0.125f * sum_weight);
-//
-//    sum_color *= 0.125f;
-//    subvolume_down->color_[idx] = sum_color.template saturate_cast<uchar>();
-}
+    HashEntry<Vector3i> &entry =
+        volume.active_subvolume_entry_array_[blockIdx.x];
 
+    UniformTSDFVolumeCudaDevice *subvolume =
+        volume.QuerySubvolume(entry.key);
+    UniformTSDFVolumeCudaDevice *subvolume_down =
+        volume_down.QuerySubvolume(entry.key);
+
+    assert(subvolume != nullptr && subvolume_down != nullptr);
+
+    int x = 2 * threadIdx.x, y = 2 * threadIdx.y, z = 2 * threadIdx.z;
+
+    float sum_tsdf = 0;
+    float sum_weight = 0;
+    Vector3f sum_color = Vector3f(0);
+    for (int i = 0; i < 8; ++i) {
+        int idx = subvolume->IndexOf(
+            Vector3i(x + (i & 4), y + (i & 2), z + (i & 1)));
+        sum_tsdf += subvolume->tsdf_[idx];
+        sum_weight += (float) subvolume->weight_[idx];
+
+        const Vector3b &color = subvolume->color_[idx];
+        sum_color(0) += (float) color(0);
+        sum_color(1) += (float) color(1);
+        sum_color(2) += (float) color(2);
+    }
+
+    int idx = subvolume_down->IndexOf(
+        Vector3i(threadIdx.x, threadIdx.y, threadIdx.z));
+
+    subvolume_down->tsdf_[idx] = 0.125f * sum_tsdf;
+    subvolume_down->weight_[idx] = uchar (0.125f * sum_weight);
+
+    sum_color *= 0.125f;
+    subvolume_down->color_[idx] = sum_color.template saturate_cast<uchar>();
+}
 
 void ScalableTSDFVolumeCudaKernelCaller::DownSample(
     ScalableTSDFVolumeCuda &volume,

@@ -370,5 +370,18 @@ void ScalableTSDFVolumeCuda::RayCasting(
     ScalableTSDFVolumeCudaKernelCaller::RayCasting(
         *this, image, camera, transform_camera_to_world);
 }
+
+ScalableTSDFVolumeCuda ScalableTSDFVolumeCuda::DownSample() {
+    ScalableTSDFVolumeCuda volume_down(
+        N_ / 2, voxel_length_ * 2, sdf_trunc_ * 2);
+
+    auto keys = DownloadKeys();
+    volume_down.UploadKeys(keys);
+
+    GetAllSubvolumes();
+    ScalableTSDFVolumeCudaKernelCaller::DownSample(*this, volume_down);
+
+    return volume_down;
+}
 } // cuda
 } // open3d

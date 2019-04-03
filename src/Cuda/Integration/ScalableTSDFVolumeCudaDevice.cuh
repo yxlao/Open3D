@@ -564,8 +564,7 @@ void ScalableTSDFVolumeCudaDevice::CacheNeighborSubvolumes(
     int *cached_subvolume_indices,
     UniformTSDFVolumeCudaDevice **cached_subvolumes) {
 
-    Vector3i
-        Xsv_neighbor = Xsv + dXsv;
+    Vector3i Xsv_neighbor = Xsv + dXsv;
     int k = LinearizeNeighborOffset(dXsv);
 
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
@@ -636,7 +635,7 @@ void ScalableTSDFVolumeCudaDevice::TouchSubvolume(
     //    }
 
     /** 3D line from Xsv_near to Xsv_far
-    /** https://en.wikipedia.org/wiki/Digital_differential_analyzer_(graphics_algorithm) **/
+     * https://en.wikipedia.org/wiki/Digital_differential_analyzer_(graphics_algorithm) **/
     Vector3i
         DXsv = Xsv_far - Xsv_near;
     Vector3i

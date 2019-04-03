@@ -24,14 +24,26 @@ void VertexAllocationKernel(
     const Vector3i Xsv = subvolume_entry.key;
     const Vector3i Xlocal = Vector3i(threadIdx.x, threadIdx.y, threadIdx.z);
 
-    /** [0, 1, 2] -> [-1, 0, 1], query neighbors **/
-    if (Xlocal(0) < 3 && Xlocal(1) < 3 && Xlocal(2) < 3) {
-        tsdf_volume.CacheNeighborSubvolumes(
-            Xsv, Xlocal - Vector3i::Ones(),
-            neighbor_subvolume_indices,
-            neighbor_subvolumes);
+    /** query 27 neighbors **/
+    /** 1. If we have >= 27 threads,
+      * query in parallel ([0, 1, 2] -> [-1, 0, 1])
+      * 2. If we have < 27 threads, ask the 1st thread to do everything.
+      **/
+    if (server.N_ >= 3) {
+        if (Xlocal(0) < 3 && Xlocal(1) < 3 && Xlocal(2) < 3) {
+            tsdf_volume.CacheNeighborSubvolumes(
+                Xsv, Xlocal - Vector3i::Ones(),
+                neighbor_subvolume_indices,
+                neighbor_subvolumes);
+        }
+    } else if (Xlocal(0) == 0) {
+        for (int i = 0; i < 27; ++i) {
+            tsdf_volume.CacheNeighborSubvolumes(
+                Xsv, Vector3i(i / 9 - 1, (i % 9) / 3 - 1, i % 3 - 1),
+                neighbor_subvolume_indices,
+                neighbor_subvolumes);
+        }
     }
-
     __syncthreads();
 
     if (tsdf_volume.OnBoundary(Xlocal)) {
@@ -45,20 +57,18 @@ void VertexAllocationKernel(
     }
 }
 
-
 __host__
 void ScalableMeshVolumeCudaKernelCaller::VertexAllocation(
     ScalableMeshVolumeCuda &mesher,
     ScalableTSDFVolumeCuda &tsdf_volume) {
 
     const dim3 blocks(mesher.active_subvolumes_);
-    const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
+    const dim3 threads(mesher.N_, mesher.N_, mesher.N_);
     VertexAllocationKernel << < blocks, threads >> > (
         *mesher.device_, *tsdf_volume.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
-
 
 __global__
 void VertexExtractionKernel(
@@ -75,12 +85,20 @@ void VertexExtractionKernel(
     const Vector3i Xsv = subvolume_entry.key;
     const Vector3i Xlocal = Vector3i(threadIdx.x, threadIdx.y, threadIdx.z);
 
-    /** [0, 1, 2] -> [-1, 0, 1], query neighbors **/
-    if (Xlocal(0) < 3 && Xlocal(1) < 3 && Xlocal(2) < 3) {
-        tsdf_volume.CacheNeighborSubvolumes(
-            Xsv, Xlocal - Vector3i::Ones(),
-            neighbor_subvolume_indices,
-            neighbor_subvolumes);
+    if (server.N_ >= 3) {
+        if (Xlocal(0) < 3 && Xlocal(1) < 3 && Xlocal(2) < 3) {
+            tsdf_volume.CacheNeighborSubvolumes(
+                Xsv, Xlocal - Vector3i::Ones(),
+                neighbor_subvolume_indices,
+                neighbor_subvolumes);
+        }
+    } else if (Xlocal(0) == 0) {
+        for (int i = 0; i < 27; ++i) {
+            tsdf_volume.CacheNeighborSubvolumes(
+                Xsv, Vector3i(i / 9 - 1, (i % 9) / 3 - 1, i % 3 - 1),
+                neighbor_subvolume_indices,
+                neighbor_subvolumes);
+        }
     }
     __syncthreads();
 
@@ -97,21 +115,19 @@ void VertexExtractionKernel(
     }
 }
 
-
 __host__
 void ScalableMeshVolumeCudaKernelCaller::VertexExtraction(
     ScalableMeshVolumeCuda &mesher,
     ScalableTSDFVolumeCuda &tsdf_volume) {
 
     const dim3 blocks(mesher.active_subvolumes_);
-    const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
+    const dim3 threads(mesher.N_, mesher.N_, mesher.N_);
     VertexExtractionKernel << < blocks, threads >> > (
         *mesher.device_, *tsdf_volume.device_);
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 
 }
-
 
 __global__
 void TriangleExtractionKernel(
@@ -128,12 +144,20 @@ void TriangleExtractionKernel(
     const Vector3i Xsv = subvolume_entry.key;
     const Vector3i Xlocal = Vector3i(threadIdx.x, threadIdx.y, threadIdx.z);
 
-    /** [0, 1, 2] -> [-1, 0, 1], query neighbors **/
-    if (Xlocal(0) < 3 && Xlocal(1) < 3 && Xlocal(2) < 3) {
-        tsdf_volume.CacheNeighborSubvolumes(
-            Xsv, Xlocal - Vector3i::Ones(),
-            neighbor_subvolume_indices,
-            neighbor_subvolumes);
+    if (server.N_ >= 3) {
+        if (Xlocal(0) < 3 && Xlocal(1) < 3 && Xlocal(2) < 3) {
+            tsdf_volume.CacheNeighborSubvolumes(
+                Xsv, Xlocal - Vector3i::Ones(),
+                neighbor_subvolume_indices,
+                neighbor_subvolumes);
+        }
+    } else if (Xlocal(0) == 0) {
+        for (int i = 0; i < 27; ++i) {
+            tsdf_volume.CacheNeighborSubvolumes(
+                Xsv, Vector3i(i / 9 - 1, (i % 9) / 3 - 1, i % 3 - 1),
+                neighbor_subvolume_indices,
+                neighbor_subvolumes);
+        }
     }
     __syncthreads();
 
@@ -145,13 +169,12 @@ void TriangleExtractionKernel(
     }
 }
 
-
 void ScalableMeshVolumeCudaKernelCaller::TriangleExtraction(
     ScalableMeshVolumeCuda &mesher,
     ScalableTSDFVolumeCuda &tsdf_volume) {
 
     const dim3 blocks(mesher.active_subvolumes_);
-    const dim3 threads(THREAD_3D_UNIT, THREAD_3D_UNIT, THREAD_3D_UNIT);
+    const dim3 threads(mesher.N_, mesher.N_, mesher.N_);
     TriangleExtractionKernel << < blocks, threads >> > (
         *mesher.device_, *tsdf_volume.device_);
     CheckCuda(cudaDeviceSynchronize());

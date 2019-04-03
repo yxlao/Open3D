@@ -22,8 +22,6 @@ namespace cuda {
  */
 class ScalableMeshVolumeCudaDevice {
 private:
-    int N_;
-
     uchar *table_indices_memory_pool_;
     Vector3i *vertex_indices_memory_pool_;
 
@@ -32,6 +30,8 @@ private:
     TriangleMeshCudaDevice mesh_;
 
 public:
+    int N_;
+
     __DEVICE__ inline int IndexOf(const Vector3i &Xlocal,
                                   int subvolume_idx) {
 #ifdef CUDA_DEBUG_ENABLE_ASSERTION
