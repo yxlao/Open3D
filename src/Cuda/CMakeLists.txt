@@ -53,7 +53,7 @@ cuda_add_library(${OPEN3D_CUDA_MODULE}
         $<TARGET_OBJECTS:Utility>
         $<TARGET_OBJECTS:IO>
         $<TARGET_OBJECTS:Visualization>)
-target_link_libraries(${OPEN3D_CUDA_MODULE} ${3RDPARTY_LIBRARIES})
+target_link_libraries(${OPEN3D_CUDA_MODULE} ${3RDPARTY_LIBRARIES} -lz) # for zlib
 target_include_directories(${OPEN3D_CUDA_MODULE} PUBLIC ${3RDPARTY_INCLUDE_DIRS})
 
 # create subgroups
