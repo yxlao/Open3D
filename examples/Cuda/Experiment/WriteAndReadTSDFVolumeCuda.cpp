@@ -23,10 +23,7 @@ void IntegrateAndWriteFragment(int fragment_id, DatasetConfig &config) {
     cuda::PinholeCameraIntrinsicCuda intrinsic(config.intrinsic_);
     cuda::TransformCuda trans = cuda::TransformCuda::Identity();
     cuda::ScalableTSDFVolumeCuda tsdf_volume(
-        8,
-        voxel_length,
-        (float) config.tsdf_truncation_,
-        trans);
+        8, voxel_length, (float) config.tsdf_truncation_, trans);
 
     cuda::RGBDImageCuda rgbd((float) config.max_depth_,
                              (float) config.depth_factor_);
@@ -59,9 +56,9 @@ void IntegrateAndWriteFragment(int fragment_id, DatasetConfig &config) {
 
     timer.Start();
     std::string filename = config.GetBinFileForFragment(fragment_id);
-    io::WriteTSDFVolumeToBIN(filename, tsdf_volume);
+    io::WriteTSDFVolumeToBIN("test.bin", tsdf_volume, false);
     timer.Stop();
-    utility::PrintInfo("Write takes %f ms\n", timer.GetDuration());
+    utility::PrintInfo("Write TSDF takes %f ms\n", timer.GetDuration());
 
     cuda::ScalableMeshVolumeCuda mesher(
         cuda::VertexWithNormalAndColor, 8,
@@ -69,6 +66,17 @@ void IntegrateAndWriteFragment(int fragment_id, DatasetConfig &config) {
     mesher.MarchingCubes(tsdf_volume);
     auto mesh = mesher.mesh().Download();
     visualization::DrawGeometries({mesh});
+
+    PointCloud pcl;
+    pcl.points_ = mesh->vertices_;
+    pcl.normals_ = mesh->vertex_normals_;
+    pcl.colors_ = mesh->vertex_colors_;
+
+    /** Write original fragments **/
+    timer.Start();
+    WritePointCloudToPLY("test.ply", pcl);
+    timer.Stop();
+    utility::PrintInfo("Write ply takes %f ms\n", timer.GetDuration());
 }
 
 void ReadFragment(int fragment_id, DatasetConfig &config) {
@@ -81,16 +89,13 @@ void ReadFragment(int fragment_id, DatasetConfig &config) {
 
     cuda::TransformCuda trans = cuda::TransformCuda::Identity();
     cuda::ScalableTSDFVolumeCuda tsdf_volume(
-        8,
-        voxel_length,
-        (float) config.tsdf_truncation_,
-        trans);
+        8, voxel_length, (float) config.tsdf_truncation_, trans);
 
     Timer timer;
     timer.Start();
 
     std::string filename = config.GetBinFileForFragment(fragment_id);
-    io::ReadTSDFVolumeFromBIN(filename, tsdf_volume);
+    io::ReadTSDFVolumeFromBIN("test.bin", tsdf_volume, false);
     timer.Stop();
     utility::PrintInfo("Read takes %f ms\n", timer.GetDuration());
 

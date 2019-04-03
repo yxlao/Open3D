@@ -90,18 +90,14 @@ void IntegrateForOriginResolution(int fragment_id,
     cuda::TransformCuda trans = cuda::TransformCuda::Identity();
 
     cuda::ScalableTSDFVolumeCuda tsdf_volume(
-        8,
-        voxel_length,
-        (float) config.tsdf_truncation_,
-        trans);
+        8, voxel_length, (float) config.tsdf_truncation_, trans);
 
     cuda::RGBDImageCuda rgbd((float) config.max_depth_,
                              (float) config.depth_factor_);
 
     const int begin = fragment_id * config.n_frames_per_fragment_;
-    const int
-        end = std::min((fragment_id + 1) * config.n_frames_per_fragment_,
-                       (int) config.color_files_.size());
+    const int end = std::min((fragment_id + 1) * config.n_frames_per_fragment_,
+        (int) config.color_files_.size());
 
     Timer timer;
     timer.Start();
@@ -151,9 +147,7 @@ void IntegrateForCoarseSubvolume(int fragment_id,
 
     int factor = 1 << (scale - 1);
     cuda::ScalableTSDFVolumeCuda tsdf_volume(
-        8,
-        voxel_length * factor,
-        (float) config.tsdf_truncation_ * factor,
+        8, voxel_length * factor, (float) config.tsdf_truncation_ * factor,
         trans);
 
     cuda::RGBDImageCuda rgbd((float) config.max_depth_,
@@ -205,10 +199,7 @@ void ReadAndDownsampleFragment(int fragment_id, DatasetConfig &config) {
 
     cuda::TransformCuda trans = cuda::TransformCuda::Identity();
     cuda::ScalableTSDFVolumeCuda tsdf_volume(
-        8,
-        voxel_length,
-        (float) config.tsdf_truncation_,
-        trans);
+        8, voxel_length, (float) config.tsdf_truncation_, trans);
 
     Timer timer;
     timer.Start();
