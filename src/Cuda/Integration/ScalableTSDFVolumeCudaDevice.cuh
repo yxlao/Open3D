@@ -6,6 +6,7 @@
 
 #include "ScalableTSDFVolumeCuda.h"
 
+#include <Cuda/Common/Palatte.h>
 #include <Cuda/Container/HashTableCudaDevice.cuh>
 #include <Cuda/Container/HashTableCudaKernel.cuh>
 
@@ -664,12 +665,9 @@ void ScalableTSDFVolumeCudaDevice::Integrate(
     TransformCuda &transform_camera_to_world) {
 
     /** Projective data association - additional local to global transform **/
-    Vector3f
-        X = voxelf_local_to_global(Xlocal.template cast<float>(), entry.key);
-    Vector3f
-        Xw = voxelf_to_world(X);
-    Vector3f
-        Xc = transform_camera_to_world.Inverse() * Xw;
+    Vector3f X = voxelf_local_to_global(Xlocal.template cast<float>(), entry.key);
+    Vector3f Xw = voxelf_to_world(X);
+    Vector3f Xc = transform_camera_to_world.Inverse() * Xw;
     Vector2f p = camera.ProjectPoint(Xc);
 
     /** TSDF **/
@@ -678,7 +676,7 @@ void ScalableTSDFVolumeCudaDevice::Integrate(
 
     float tsdf = d - Xc(2);
     if (tsdf <= -sdf_trunc_) return;
-    tsdf = fminf(tsdf, sdf_trunc_);
+    tsdf = fminf(tsdf / sdf_trunc_, 1.0f);
 
     Vector3b color = rgbd.color_raw_.at(int(p(0)), int(p(1)));
 
@@ -743,7 +741,7 @@ Vector3f ScalableTSDFVolumeCudaDevice::RayCasting(
                                              : tsdf_prev;
         uchar weight_curr = is_subvolume_valid ? subvolume->weight(Xlocal_t)
                                                : 0;
-        float step_size = is_subvolume_valid ? fmaxf(tsdf_curr, voxel_length_)
+        float step_size = is_subvolume_valid ? fmaxf(tsdf_curr * sdf_trunc_, voxel_length_)
                                              : block_step_size;
 
         /** Zero crossing **/
@@ -762,6 +760,62 @@ Vector3f ScalableTSDFVolumeCudaDevice::RayCasting(
     }
 
     return ret;
+}
+
+__device__
+Vector3f ScalableTSDFVolumeCudaDevice::VolumeRendering(
+    const Vector2i &p,
+    PinholeCameraIntrinsicCuda &camera,
+    TransformCuda &transform_camera_to_world) {
+
+    Vector3f ret = Vector3f(0);
+    float sample_weight = 0;
+
+    Vector3f ray_c = camera.InverseProjectPixel(p, 1.0f).normalized();
+
+    /** TODO: throw it into parameters **/
+    const float t_min = 0.1f;
+    const float t_max = 3.0f;
+
+    const Vector3f camera_origin_v = transform_world_to_volume_ *
+        (transform_camera_to_world * Vector3f(0));
+    const Vector3f ray_v = transform_world_to_volume_.Rotate(
+        transform_camera_to_world.Rotate(ray_c));
+
+    float tsdf_prev = sdf_trunc_;
+    const float block_step_size = N_ * voxel_length_;
+    Vector3i Xsv_prev = Vector3i(INT_MIN, INT_MIN, INT_MIN);
+    UniformTSDFVolumeCudaDevice *subvolume = nullptr;
+
+    /** Do NOT use #pragma unroll: it will slow it down **/
+    float t_curr = t_min;
+    while (t_curr < t_max) {
+        Vector3f Xv_t = camera_origin_v + t_curr * ray_v;
+        Vector3i X_t = volume_to_voxelf(Xv_t).template cast<int>();
+        Vector3i Xsv_t = voxel_locate_subvolume(X_t);
+        Vector3i Xlocal_t = voxel_global_to_local(X_t, Xsv_t);
+
+        subvolume = (Xsv_t == Xsv_prev) ? subvolume : QuerySubvolume(Xsv_t);
+        bool is_subvolume_valid = subvolume != nullptr;
+
+        uchar weight_curr = is_subvolume_valid ? subvolume->weight(Xlocal_t)
+                                               : 0;
+        float tsdf_curr = is_subvolume_valid ? subvolume->tsdf(Xlocal_t)
+                                             : tsdf_prev;
+        float step_size = is_subvolume_valid ? fmaxf(tsdf_curr * sdf_trunc_, voxel_length_)
+                                             : block_step_size;
+        if (weight_curr > 0) {
+            float weight = expf(- fabsf(tsdf_curr));
+            ret += Jet(tsdf_curr, -0.5f, 0.5f) * weight;
+            sample_weight += weight;
+        }
+
+        tsdf_prev = tsdf_curr;
+        t_curr += step_size;
+        Xsv_prev = Xsv_t;
+    }
+
+    return ret / float(sample_weight);
 }
 } // cuda
 } // open3d

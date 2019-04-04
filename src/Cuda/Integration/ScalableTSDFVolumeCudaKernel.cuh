@@ -4,6 +4,7 @@
 
 #pragma once
 #include "ScalableTSDFVolumeCudaDevice.cuh"
+#include <Cuda/Common/Palatte.h>
 
 namespace open3d {
 namespace cuda {
@@ -251,6 +252,38 @@ void ScalableTSDFVolumeCudaKernelCaller::RayCasting(
     CheckCuda(cudaGetLastError());
 }
 
+__global__
+void VolumeRenderingKernel(ScalableTSDFVolumeCudaDevice server,
+                      ImageCudaDevice<float, 3> vertex,
+                      PinholeCameraIntrinsicCuda camera,
+                      TransformCuda transform_camera_to_world) {
+    const int x = threadIdx.x + blockIdx.x * blockDim.x;
+    const int y = threadIdx.y + blockIdx.y * blockDim.y;
+
+    if (x >= vertex.width_ || y >= vertex.height_) return;
+
+    Vector2i p = Vector2i(x, y);
+    Vector3f v = server.VolumeRendering(p, camera, transform_camera_to_world);
+    vertex.at(x, y) = v;
+}
+
+
+__host__
+void ScalableTSDFVolumeCudaKernelCaller::VolumeRendering(
+    ScalableTSDFVolumeCuda &volume,
+    ImageCuda<float, 3> &image,
+    PinholeCameraIntrinsicCuda &camera,
+    TransformCuda &transform_camera_to_world) {
+    const dim3 blocks(DIV_CEILING(image.width_, THREAD_2D_UNIT),
+                      DIV_CEILING(image.height_, THREAD_2D_UNIT));
+    const dim3 threads(THREAD_2D_UNIT, THREAD_2D_UNIT);
+    VolumeRenderingKernel << < blocks, threads >> > (
+        *volume.device_, *image.device_, camera, transform_camera_to_world);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+}
+
+
 
 __global__
 void DownSampleKernel(ScalableTSDFVolumeCudaDevice volume,
@@ -303,5 +336,47 @@ void ScalableTSDFVolumeCudaKernelCaller::DownSample(
     CheckCuda(cudaDeviceSynchronize());
     CheckCuda(cudaGetLastError());
 }
+
+__global__
+void ExtractVoxelsNearSurfaceKernel(ScalableTSDFVolumeCudaDevice volume,
+                                    PointCloudCudaDevice pcl,
+                                    float threshold) {
+    const int subvolume_idx = blockIdx.x;
+    const HashEntry<Vector3i> &subvolume_entry =
+        volume.active_subvolume_entry_array_[subvolume_idx];
+
+    const Vector3i Xsv = subvolume_entry.key;
+    const Vector3i Xlocal = Vector3i(threadIdx.x, threadIdx.y, threadIdx.z);
+
+    __shared__ UniformTSDFVolumeCudaDevice *subvolume;
+    if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0) {
+        subvolume = volume.QuerySubvolume(subvolume_entry.key);
+    }
+    __syncthreads();
+
+    float tsdf = subvolume->tsdf(Xlocal);
+    uchar weight = subvolume->weight(Xlocal);
+    if (weight > 0 && fabsf(tsdf) <= threshold) {
+        Vector3i Xglobal = volume.voxel_local_to_global(Xlocal, Xsv);
+        Vector3f Xworld = volume.voxelf_to_world(Xglobal.template cast<float>());
+
+        int addr = pcl.points_.push_back(Xworld);
+        pcl.colors_[addr] = Jet(tsdf, -0.5f, 0.5f);
+    }
+}
+
+void ScalableTSDFVolumeCudaKernelCaller::ExtractVoxelsNearSurfaces(
+    ScalableTSDFVolumeCuda &volume,
+    PointCloudCuda &pcl,
+    float threshold){
+
+    const dim3 blocks(volume.active_subvolume_entry_array_.size());
+    const dim3 threads(volume.N_, volume.N_, volume.N_);
+    ExtractVoxelsNearSurfaceKernel<< < blocks, threads >> > (
+        *volume.device_, *pcl.device_, threshold);
+    CheckCuda(cudaDeviceSynchronize());
+    CheckCuda(cudaGetLastError());
+}
+
 } // cuda
 } // open3d

@@ -371,6 +371,16 @@ void ScalableTSDFVolumeCuda::RayCasting(
         *this, image, camera, transform_camera_to_world);
 }
 
+void ScalableTSDFVolumeCuda::VolumeRendering(
+    ImageCuda<float, 3> &image,
+    PinholeCameraIntrinsicCuda &camera,
+    TransformCuda &transform_camera_to_world) {
+    assert(device_ != nullptr);
+
+    ScalableTSDFVolumeCudaKernelCaller::VolumeRendering(
+        *this, image, camera, transform_camera_to_world);
+}
+
 ScalableTSDFVolumeCuda ScalableTSDFVolumeCuda::DownSample() {
     ScalableTSDFVolumeCuda volume_down(
         N_ / 2, voxel_length_ * 2, sdf_trunc_ * 2);
@@ -382,6 +392,21 @@ ScalableTSDFVolumeCuda ScalableTSDFVolumeCuda::DownSample() {
     ScalableTSDFVolumeCudaKernelCaller::DownSample(*this, volume_down);
 
     return volume_down;
+}
+
+PointCloudCuda ScalableTSDFVolumeCuda::ExtractVoxelsNearSurface(
+    float threshold) {
+
+    GetAllSubvolumes();
+
+    PointCloudCuda pcl(VertexWithColor,
+        active_subvolume_entry_array_.size() * (N_ * N_ * N_));
+    pcl.points_.set_iterator(0);
+    ScalableTSDFVolumeCudaKernelCaller::ExtractVoxelsNearSurfaces(
+        *this, pcl, threshold);
+    pcl.colors_.set_iterator(pcl.points_.size());
+
+    return pcl;
 }
 } // cuda
 } // open3d

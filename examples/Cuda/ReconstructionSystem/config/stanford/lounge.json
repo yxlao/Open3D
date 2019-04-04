@@ -8,5 +8,5 @@
   "preference_loop_closure_odometry": 0.1,
   "preference_loop_closure_registration": 5.0,
   "tsdf_cubic_size": 3.0,
-  "with_opencv": false
+  "with_opencv": true
 }

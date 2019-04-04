@@ -36,7 +36,7 @@ void UniformMeshVolumeCudaDevice::AllocateVertex(
         if (weight == 0) return;
 
         float tsdf = tsdf_volume.tsdf(X_corner);
-        if (fabsf(tsdf) > tsdf_volume.sdf_trunc_) return;
+        if (fabsf(tsdf) > 0.95f) return;
 
         tmp_table_index |= ((tsdf < 0) ? (1 << corner) : 0);
     }

@@ -209,7 +209,7 @@ void UniformTSDFVolumeCudaDevice::Integrate(
 
     float tsdf = d - Xc(2);
     if (tsdf <= -sdf_trunc_) return;
-    tsdf = fminf(tsdf, sdf_trunc_);
+    tsdf = fminf(tsdf / sdf_trunc_, 1.0f);
 
     Vector3b color = rgbd.color_raw_.at(int(p(0)), int(p(1)));
 

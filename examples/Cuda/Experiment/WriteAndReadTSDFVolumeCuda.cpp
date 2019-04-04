@@ -56,27 +56,27 @@ void IntegrateAndWriteFragment(int fragment_id, DatasetConfig &config) {
 
     timer.Start();
     std::string filename = config.GetBinFileForFragment(fragment_id);
-    io::WriteTSDFVolumeToBIN("test.bin", tsdf_volume, false);
+    io::WriteTSDFVolumeToBIN(filename, tsdf_volume, false);
     timer.Stop();
     utility::PrintInfo("Write TSDF takes %f ms\n", timer.GetDuration());
 
-    cuda::ScalableMeshVolumeCuda mesher(
-        cuda::VertexWithNormalAndColor, 8,
-        tsdf_volume.active_subvolume_entry_array_.size());
-    mesher.MarchingCubes(tsdf_volume);
-    auto mesh = mesher.mesh().Download();
-    visualization::DrawGeometries({mesh});
-
-    PointCloud pcl;
-    pcl.points_ = mesh->vertices_;
-    pcl.normals_ = mesh->vertex_normals_;
-    pcl.colors_ = mesh->vertex_colors_;
-
-    /** Write original fragments **/
-    timer.Start();
-    WritePointCloudToPLY("test.ply", pcl);
-    timer.Stop();
-    utility::PrintInfo("Write ply takes %f ms\n", timer.GetDuration());
+//    cuda::ScalableMeshVolumeCuda mesher(
+//        cuda::VertexWithNormalAndColor, 8,
+//        tsdf_volume.active_subvolume_entry_array_.size());
+//    mesher.MarchingCubes(tsdf_volume);
+//    auto mesh = mesher.mesh().Download();
+//    visualization::DrawGeometries({mesh});
+//
+//    PointCloud pcl;
+//    pcl.points_ = mesh->vertices_;
+//    pcl.normals_ = mesh->vertex_normals_;
+//    pcl.colors_ = mesh->vertex_colors_;
+//
+//    /** Write original fragments **/
+//    timer.Start();
+//    WritePointCloudToPLY("test.ply", pcl);
+//    timer.Stop();
+//    utility::PrintInfo("Write ply takes %f ms\n", timer.GetDuration());
 }
 
 void ReadFragment(int fragment_id, DatasetConfig &config) {
@@ -95,17 +95,16 @@ void ReadFragment(int fragment_id, DatasetConfig &config) {
     timer.Start();
 
     std::string filename = config.GetBinFileForFragment(fragment_id);
-    io::ReadTSDFVolumeFromBIN("test.bin", tsdf_volume, false);
+    io::ReadTSDFVolumeFromBIN(filename, tsdf_volume, false);
     timer.Stop();
     utility::PrintInfo("Read takes %f ms\n", timer.GetDuration());
 
-    tsdf_volume.GetAllSubvolumes();
-    cuda::ScalableMeshVolumeCuda mesher(
-        cuda::VertexWithNormalAndColor, 8,
-        tsdf_volume.active_subvolume_entry_array_.size());
-    mesher.MarchingCubes(tsdf_volume);
-    auto mesh = mesher.mesh().Download();
-    visualization::DrawGeometries({mesh});
+//    tsdf_volume.GetAllSubvolumes();
+//    cuda::ScalableMeshVolumeCuda mesher(
+//        cuda::VertexWithNormalAndColor, 8,
+//        tsdf_volume.active_subvolume_entry_array_.size());
+//    mesher.MarchingCubes(tsdf_volume);auto mesh = mesher.mesh().Download();
+//    visualization::DrawGeometries({mesh});
 }
 
 int main(int argc, char **argv) {

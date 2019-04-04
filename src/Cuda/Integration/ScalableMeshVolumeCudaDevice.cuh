@@ -61,7 +61,7 @@ void ScalableMeshVolumeCudaDevice::AllocateVertex(
         if (weight == 0) return;
 
         float tsdf = subvolume->tsdf(Xlocal_corner);
-        if (fabsf(tsdf) >= subvolume->sdf_trunc_) return;
+        if (fabsf(tsdf) >= 0.95f) return;
 
         tmp_table_index |= ((tsdf < 0) ? (1 << corner) : 0);
     }
@@ -104,13 +104,11 @@ void ScalableMeshVolumeCudaDevice::AllocateVertexOnBoundary(
 
     /** There are early returns. #pragma unroll SLOWS it down **/
     for (size_t corner = 0; corner < 8; ++corner) {
-        Vector3i
-        Xlocal_corner = Vector3i(Xlocal(0) + shift[corner][0],
-                                 Xlocal(1) + shift[corner][1],
-                                 Xlocal(2) + shift[corner][2]);
+        Vector3i Xlocal_corner = Vector3i(Xlocal(0) + shift[corner][0],
+                                          Xlocal(1) + shift[corner][1],
+                                          Xlocal(2) + shift[corner][2]);
 
-        Vector3i
-        dXsv_corner = NeighborOffsetOfBoundaryVoxel(Xlocal_corner);
+        Vector3i dXsv_corner = NeighborOffsetOfBoundaryVoxel(Xlocal_corner);
         int neighbor_idx = LinearizeNeighborOffset(dXsv_corner);
         UniformTSDFVolumeCudaDevice *neighbor_subvolume =
             cached_subvolumes[neighbor_idx];
@@ -126,7 +124,7 @@ void ScalableMeshVolumeCudaDevice::AllocateVertexOnBoundary(
         if (weight == 0) return;
 
         float tsdf = neighbor_subvolume->tsdf(Xlocal_corner_in_neighbor);
-        if (fabsf(tsdf) >= neighbor_subvolume->sdf_trunc_) return;
+        if (fabsf(tsdf) >= 0.95f) return;
 
         tmp_table_index |= ((tsdf < 0) ? (1 << corner) : 0);
     }

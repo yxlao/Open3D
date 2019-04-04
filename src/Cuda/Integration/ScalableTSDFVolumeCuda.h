@@ -15,6 +15,7 @@
 #include <Cuda/Geometry/RGBDImageCuda.h>
 
 #include <memory>
+#include <Cuda/Geometry/PointCloudCuda.h>
 
 namespace open3d {
 namespace cuda {
@@ -208,6 +209,9 @@ public:
     __DEVICE__ Vector3f RayCasting(const Vector2i &p,
                                    PinholeCameraIntrinsicCuda &camera,
                                    TransformCuda &transform_camera_to_world);
+    __DEVICE__ Vector3f VolumeRendering(const Vector2i &p,
+                                        PinholeCameraIntrinsicCuda &camera,
+                                        TransformCuda &transform_camera_to_world);
 
 public:
     friend class ScalableTSDFVolumeCuda;
@@ -314,8 +318,13 @@ public:
     void RayCasting(ImageCuda<float, 3> &image,
                     PinholeCameraIntrinsicCuda &camera,
                     TransformCuda &transform_camera_to_world);
+    void VolumeRendering(ImageCuda<float, 3> &image,
+                         PinholeCameraIntrinsicCuda &camera,
+                         TransformCuda &transform_camera_to_world);
 
     ScalableTSDFVolumeCuda DownSample();
+
+    PointCloudCuda ExtractVoxelsNearSurface(float threshold);
 };
 
 
@@ -344,8 +353,18 @@ public:
                            PinholeCameraIntrinsicCuda &camera,
                            TransformCuda &transform_camera_to_world);
 
+    static void VolumeRendering(ScalableTSDFVolumeCuda &volume,
+                                ImageCuda<float, 3> &normal,
+                                PinholeCameraIntrinsicCuda &camera,
+                                TransformCuda &transform_camera_to_world);
+
     static void DownSample(ScalableTSDFVolumeCuda &volume,
                            ScalableTSDFVolumeCuda &volume_down);
+
+    static void ExtractVoxelsNearSurfaces(
+        ScalableTSDFVolumeCuda &volume,
+        PointCloudCuda &pcl,
+        float threshold);
 };
 
 
@@ -383,10 +402,20 @@ void RayCastingKernel(ScalableTSDFVolumeCudaDevice device,
                       PinholeCameraIntrinsicCuda camera,
                       TransformCuda transform_camera_to_world);
 
+__GLOBAL__
+void VolumeRenderingKernel(ScalableTSDFVolumeCudaDevice device,
+                           ImageCudaDevice<float, 3> color,
+                           PinholeCameraIntrinsicCuda camera,
+                           TransformCuda transform_camera_to_world);
+
 
 __GLOBAL__
 void DownSampleKernel(ScalableTSDFVolumeCudaDevice device,
                       ScalableTSDFVolumeCudaDevice device_down);
 
+__GLOBAL__
+void ExtractVoxelsNearSurfaceKernel(ScalableTSDFVolumeCudaDevice volume,
+                                    PointCloudCudaDevice pcl,
+                                    float threshold);
 } // cuda
 } // open3d
