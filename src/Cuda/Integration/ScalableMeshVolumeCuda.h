@@ -70,7 +70,6 @@ public:
     __DEVICE__ void AllocateVertex(
         const Vector3i &Xlocal, int subvolume_idx,
         UniformTSDFVolumeCudaDevice *subvolume);
-
     __DEVICE__ void AllocateVertexOnBoundary(
         const Vector3i &Xlocal, int subvolume_idx,
         int *cached_subvolume_indices,
@@ -81,7 +80,6 @@ public:
         const Vector3i &Xsv,
         ScalableTSDFVolumeCudaDevice &tsdf_volume,
         UniformTSDFVolumeCudaDevice *subvolume);
-
     __DEVICE__ void ExtractVertexOnBoundary(
         const Vector3i &Xlocal, int subvolume_idx,
         const Vector3i &Xsv,
@@ -89,7 +87,6 @@ public:
         UniformTSDFVolumeCudaDevice **cached_subvolumes);
 
     __DEVICE__ void ExtractTriangle(const Vector3i &Xlocal, int subvolume_idx);
-
     __DEVICE__ void ExtractTriangleOnBoundary(
         const Vector3i &Xlocal, int subvolume_idx,
         int *cached_subvolume_indices);

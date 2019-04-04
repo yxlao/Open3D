@@ -12,7 +12,7 @@ using namespace open3d::geometry;
 using namespace open3d::io;
 using namespace open3d::utility;
 
-void ReadAndRayCasting(int fragment_id, DatasetConfig &config) {
+void ReadAndComputeGradient(int fragment_id, DatasetConfig &config) {
 
     PoseGraph pose_graph;
     ReadPoseGraph(config.GetPoseGraphFileForFragment(fragment_id, true),

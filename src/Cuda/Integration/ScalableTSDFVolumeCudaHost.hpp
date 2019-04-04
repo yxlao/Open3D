@@ -393,20 +393,5 @@ ScalableTSDFVolumeCuda ScalableTSDFVolumeCuda::DownSample() {
 
     return volume_down;
 }
-
-PointCloudCuda ScalableTSDFVolumeCuda::ExtractVoxelsNearSurface(
-    float threshold) {
-
-    GetAllSubvolumes();
-
-    PointCloudCuda pcl(VertexWithColor,
-        active_subvolume_entry_array_.size() * (N_ * N_ * N_));
-    pcl.points_.set_iterator(0);
-    ScalableTSDFVolumeCudaKernelCaller::ExtractVoxelsNearSurfaces(
-        *this, pcl, threshold);
-    pcl.colors_.set_iterator(pcl.points_.size());
-
-    return pcl;
-}
 } // cuda
 } // open3d

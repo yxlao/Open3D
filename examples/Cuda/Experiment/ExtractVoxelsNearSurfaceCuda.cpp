@@ -1,9 +1,10 @@
 //
-// Created by wei on 4/3/19.
+// Created by wei on 4/4/19.
 //
 
 #include <Open3D/Open3D.h>
 #include <Cuda/Open3DCuda.h>
+#include <Cuda/Integration/Experiment/ScalableTSDFVolumeProcessorCuda.h>
 #include "../ReconstructionSystem/DatasetConfig.h"
 
 using namespace open3d;
@@ -12,7 +13,7 @@ using namespace open3d::geometry;
 using namespace open3d::io;
 using namespace open3d::utility;
 
-void ReadAndRayCasting(int fragment_id, DatasetConfig &config) {
+void ReadAndComputeGradient(int fragment_id, DatasetConfig &config) {
 
     PoseGraph pose_graph;
     ReadPoseGraph(config.GetPoseGraphFileForFragment(fragment_id, true),
@@ -32,7 +33,13 @@ void ReadAndRayCasting(int fragment_id, DatasetConfig &config) {
     timer.Stop();
     utility::PrintInfo("Read takes %f ms\n", timer.GetDuration());
 
-    cuda::PointCloudCuda pcl = tsdf_volume.ExtractVoxelsNearSurface(0.8f);
+    tsdf_volume.GetAllSubvolumes();
+    cuda::ScalableTSDFVolumeProcessorCuda gradient_volume(
+        8, tsdf_volume.active_subvolume_entry_array_.size());
+    gradient_volume.ComputeGradient(tsdf_volume);
+
+    cuda::PointCloudCuda pcl = gradient_volume.ExtractVoxelsNearSurface(
+        tsdf_volume, 0.8f);
     auto pcl_cpu = pcl.Download();
 
     visualization::DrawGeometries({pcl_cpu});
@@ -48,6 +55,6 @@ int main(int argc, char **argv) {
 
     for (int i = 0; i < config.fragment_files_.size(); ++i) {
         utility::PrintInfo("%d\n", i);
-        ReadAndRayCasting(i, config);
+        ReadAndComputeGradient(i, config);
     }
 }

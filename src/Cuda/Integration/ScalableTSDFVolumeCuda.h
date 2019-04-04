@@ -323,8 +323,6 @@ public:
                          TransformCuda &transform_camera_to_world);
 
     ScalableTSDFVolumeCuda DownSample();
-
-    PointCloudCuda ExtractVoxelsNearSurface(float threshold);
 };
 
 
@@ -360,11 +358,6 @@ public:
 
     static void DownSample(ScalableTSDFVolumeCuda &volume,
                            ScalableTSDFVolumeCuda &volume_down);
-
-    static void ExtractVoxelsNearSurfaces(
-        ScalableTSDFVolumeCuda &volume,
-        PointCloudCuda &pcl,
-        float threshold);
 };
 
 
@@ -413,9 +406,5 @@ __GLOBAL__
 void DownSampleKernel(ScalableTSDFVolumeCudaDevice device,
                       ScalableTSDFVolumeCudaDevice device_down);
 
-__GLOBAL__
-void ExtractVoxelsNearSurfaceKernel(ScalableTSDFVolumeCudaDevice volume,
-                                    PointCloudCudaDevice pcl,
-                                    float threshold);
 } // cuda
 } // open3d

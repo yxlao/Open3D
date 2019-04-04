@@ -8,3 +8,4 @@
 #include "UniformMeshVolumeCudaHost.hpp"
 #include "ScalableTSDFVolumeCudaHost.hpp"
 #include "ScalableMeshVolumeCudaHost.hpp"
+#include "Cuda/Integration/Experiment/ScalableTSDFVolumeProcessorCudaHost.hpp"

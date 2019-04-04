@@ -5,6 +5,7 @@
 #pragma once
 
 #include "ScalableTSDFVolumeCuda.h"
+#include "MarchingCubesConstCuda.h"
 
 #include <Cuda/Common/Palatte.h>
 #include <Cuda/Container/HashTableCudaDevice.cuh>
