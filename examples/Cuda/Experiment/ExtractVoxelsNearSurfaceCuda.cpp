@@ -23,17 +23,25 @@ void ReadAndComputeGradient(int fragment_id, DatasetConfig &config) {
 
     cuda::TransformCuda trans = cuda::TransformCuda::Identity();
     cuda::ScalableTSDFVolumeCuda tsdf_volume(
-        8, voxel_length, (float) config.tsdf_truncation_, trans);
+        8, voxel_length * 4, (float) config.tsdf_truncation_ * 4, trans);
 
     Timer timer;
     timer.Start();
 
     std::string filename = config.GetBinFileForFragment(fragment_id);
-    io::ReadTSDFVolumeFromBIN(filename, tsdf_volume);
+    io::ReadTSDFVolumeFromBIN("target.bin", tsdf_volume);
     timer.Stop();
     utility::PrintInfo("Read takes %f ms\n", timer.GetDuration());
 
+    utility::SetVerbosityLevel(utility::VerbosityLevel::VerboseDebug);
     tsdf_volume.GetAllSubvolumes();
+    cuda::ScalableMeshVolumeCuda mesher(
+        cuda::VertexWithNormalAndColor, 8,
+        tsdf_volume.active_subvolume_entry_array_.size());
+    mesher.MarchingCubes(tsdf_volume);
+    auto mesh = mesher.mesh().Download();
+    visualization::DrawGeometries({mesh});
+
     cuda::ScalableTSDFVolumeProcessorCuda gradient_volume(
         8, tsdf_volume.active_subvolume_entry_array_.size());
     gradient_volume.ComputeGradient(tsdf_volume);

@@ -23,7 +23,7 @@ void IntegrateAndWriteFragment(int fragment_id, DatasetConfig &config) {
     cuda::PinholeCameraIntrinsicCuda intrinsic(config.intrinsic_);
     cuda::TransformCuda trans = cuda::TransformCuda::Identity();
     cuda::ScalableTSDFVolumeCuda tsdf_volume(
-        8, voxel_length, (float) config.tsdf_truncation_, trans);
+        8, voxel_length * 4, (float) config.tsdf_truncation_ * 4, trans);
 
     cuda::RGBDImageCuda rgbd((float) config.max_depth_,
                              (float) config.depth_factor_);
@@ -56,16 +56,16 @@ void IntegrateAndWriteFragment(int fragment_id, DatasetConfig &config) {
 
     timer.Start();
     std::string filename = config.GetBinFileForFragment(fragment_id);
-    io::WriteTSDFVolumeToBIN(filename, tsdf_volume, false);
+    io::WriteTSDFVolumeToBIN("source.bin", tsdf_volume, false);
     timer.Stop();
     utility::PrintInfo("Write TSDF takes %f ms\n", timer.GetDuration());
 
-//    cuda::ScalableMeshVolumeCuda mesher(
-//        cuda::VertexWithNormalAndColor, 8,
-//        tsdf_volume.active_subvolume_entry_array_.size());
-//    mesher.MarchingCubes(tsdf_volume);
-//    auto mesh = mesher.mesh().Download();
-//    visualization::DrawGeometries({mesh});
+    cuda::ScalableMeshVolumeCuda mesher(
+        cuda::VertexWithNormalAndColor, 8,
+        tsdf_volume.active_subvolume_entry_array_.size());
+    mesher.MarchingCubes(tsdf_volume);
+    auto mesh = mesher.mesh().Download();
+    visualization::DrawGeometries({mesh});
 //
 //    PointCloud pcl;
 //    pcl.points_ = mesh->vertices_;
@@ -89,22 +89,23 @@ void ReadFragment(int fragment_id, DatasetConfig &config) {
 
     cuda::TransformCuda trans = cuda::TransformCuda::Identity();
     cuda::ScalableTSDFVolumeCuda tsdf_volume(
-        8, voxel_length, (float) config.tsdf_truncation_, trans);
+        8, voxel_length * 4, (float) config.tsdf_truncation_ * 4, trans);
 
     Timer timer;
     timer.Start();
 
     std::string filename = config.GetBinFileForFragment(fragment_id);
-    io::ReadTSDFVolumeFromBIN(filename, tsdf_volume, false);
+    io::ReadTSDFVolumeFromBIN("source.bin", tsdf_volume, false);
     timer.Stop();
     utility::PrintInfo("Read takes %f ms\n", timer.GetDuration());
 
-//    tsdf_volume.GetAllSubvolumes();
-//    cuda::ScalableMeshVolumeCuda mesher(
-//        cuda::VertexWithNormalAndColor, 8,
-//        tsdf_volume.active_subvolume_entry_array_.size());
-//    mesher.MarchingCubes(tsdf_volume);auto mesh = mesher.mesh().Download();
-//    visualization::DrawGeometries({mesh});
+    tsdf_volume.GetAllSubvolumes();
+    cuda::ScalableMeshVolumeCuda mesher(
+        cuda::VertexWithNormalAndColor, 8,
+        tsdf_volume.active_subvolume_entry_array_.size());
+    mesher.MarchingCubes(tsdf_volume);
+    auto mesh = mesher.mesh().Download();
+    visualization::DrawGeometries({mesh});
 }
 
 int main(int argc, char **argv) {
@@ -115,7 +116,7 @@ int main(int argc, char **argv) {
     if (!is_success) return 1;
     config.GetFragmentFiles();
 
-    for (int i = 0; i < config.fragment_files_.size(); ++i) {
+    for (int i = 0; i < 1; ++i) {//config.fragment_files_.size(); ++i) {
         utility::PrintInfo("%d\n", i);
         IntegrateAndWriteFragment(i, config);
         ReadFragment(i, config);

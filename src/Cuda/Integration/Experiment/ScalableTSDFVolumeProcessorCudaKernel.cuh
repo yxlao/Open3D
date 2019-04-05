@@ -13,7 +13,7 @@ namespace cuda {
 
 __global__
 void ComputeGradientKernel(
-    ScalableGradientVolumeCudaDevice server,
+    ScalableTSDFVolumeProcessorCudaDevice server,
     ScalableTSDFVolumeCudaDevice tsdf_volume) {
 
     __shared__ UniformTSDFVolumeCudaDevice *neighbor_subvolumes[27];
@@ -27,24 +27,11 @@ void ComputeGradientKernel(
     const Vector3i Xlocal = Vector3i(threadIdx.x, threadIdx.y, threadIdx.z);
 
     /** query 27 neighbors **/
-    /** 1. If we have >= 27 threads,
-      * query in parallel ([0, 1, 2] -> [-1, 0, 1])
-      * 2. If we have < 27 threads, ask the 1st thread to do everything.
-      **/
-    if (server.N_ >= 3) {
-        if (Xlocal(0) < 3 && Xlocal(1) < 3 && Xlocal(2) < 3) {
-            tsdf_volume.CacheNeighborSubvolumes(
-                Xsv, Xlocal - Vector3i::Ones(),
-                neighbor_subvolume_indices,
-                neighbor_subvolumes);
-        }
-    } else if (Xlocal(0) == 0) {
-        for (int i = 0; i < 27; ++i) {
-            tsdf_volume.CacheNeighborSubvolumes(
-                Xsv, Vector3i(i / 9 - 1, (i % 9) / 3 - 1, i % 3 - 1),
-                neighbor_subvolume_indices,
-                neighbor_subvolumes);
-        }
+    if (Xlocal(0) < 3 && Xlocal(1) < 3 && Xlocal(2) < 3) {
+        tsdf_volume.CacheNeighborSubvolumes(
+            Xsv, Xlocal - Vector3i::Ones(),
+            neighbor_subvolume_indices,
+            neighbor_subvolumes);
     }
     __syncthreads();
 
@@ -68,7 +55,7 @@ void ScalableGradientVolumeCudaKernelCaller::ComputeGradient(
 }
 
 __global__
-void ExtractVoxelsNearSurfaceKernel(ScalableGradientVolumeCudaDevice server,
+void ExtractVoxelsNearSurfaceKernel(ScalableTSDFVolumeProcessorCudaDevice server,
                                     ScalableTSDFVolumeCudaDevice volume,
                                     PointCloudCudaDevice pcl,
                                     float threshold) {

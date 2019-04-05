@@ -75,7 +75,7 @@ void BuildLinearSystemForColoredICPKernel(
         local_sum2[tid] = JtJ(i + 2);
         __syncthreads();
 
-        BlockReduceSum<float>(tid, local_sum0, local_sum1, local_sum2);
+        BlockReduceSum<float, THREAD_1D_UNIT>(tid, local_sum0, local_sum1, local_sum2);
 
         if (tid == 0) {
             atomicAdd(&estimation.results_.at(i + 0), local_sum0[0]);
@@ -93,7 +93,7 @@ void BuildLinearSystemForColoredICPKernel(
         local_sum2[tid] = Jtr(i + 2);
         __syncthreads();
 
-        BlockReduceSum<float>(tid, local_sum0, local_sum1, local_sum2);
+        BlockReduceSum<float, THREAD_1D_UNIT>(tid, local_sum0, local_sum1, local_sum2);
 
         if (tid == 0) {
             atomicAdd(&estimation.results_.at(i + 0 + OFFSET1), local_sum0[0]);
@@ -109,7 +109,7 @@ void BuildLinearSystemForColoredICPKernel(
         local_sum0[tid] = residual_I * residual_I + residual_G * residual_G;
         __syncthreads();
 
-        BlockReduceSum<float>(tid, local_sum0);
+        BlockReduceSum<float, THREAD_1D_UNIT>(tid, local_sum0);
 
         if (tid == 0) {
             atomicAdd(&estimation.results_.at(0 + OFFSET2), local_sum0[0]);
@@ -168,7 +168,7 @@ void BuildLinearSystemForPointToPlaneICPKernel(
         local_sum2[tid] = JtJ(i + 2);
         __syncthreads();
 
-        BlockReduceSum<float>(tid, local_sum0, local_sum1, local_sum2);
+        BlockReduceSum<float, THREAD_1D_UNIT>(tid, local_sum0, local_sum1, local_sum2);
 
         if (tid == 0) {
             atomicAdd(&estimation.results_.at(i + 0), local_sum0[0]);
@@ -187,7 +187,7 @@ void BuildLinearSystemForPointToPlaneICPKernel(
         local_sum2[tid] = Jtr(i + 2);
         __syncthreads();
 
-        BlockReduceSum<float>(tid, local_sum0, local_sum1, local_sum2);
+        BlockReduceSum<float, THREAD_1D_UNIT>(tid, local_sum0, local_sum1, local_sum2);
 
         if (tid == 0) {
             atomicAdd(&estimation.results_.at(i + 0 + OFFSET1), local_sum0[0]);
@@ -203,7 +203,7 @@ void BuildLinearSystemForPointToPlaneICPKernel(
         local_sum0[tid] = residual * residual;
         __syncthreads();
 
-        BlockReduceSum<float>(tid, local_sum0);
+        BlockReduceSum<float, THREAD_1D_UNIT>(tid, local_sum0);
 
         if (tid == 0) {
             atomicAdd(&estimation.results_.at(0 + OFFSET2), local_sum0[0]);
@@ -255,7 +255,7 @@ void ComputeSumForPointToPointICPKernel(
         local_sum2[tid] = source(2);
         __syncthreads();
 
-        BlockReduceSum<float>(tid, local_sum0, local_sum1, local_sum2);
+        BlockReduceSum<float, THREAD_1D_UNIT>(tid, local_sum0, local_sum1, local_sum2);
 
         if (tid == 0) {
             atomicAdd(&estimation.results_.at(0 + OFFSET1), local_sum0[0]);
@@ -272,7 +272,7 @@ void ComputeSumForPointToPointICPKernel(
         local_sum2[tid] = target(2);
         __syncthreads();
 
-        BlockReduceSum<float>(tid, local_sum0, local_sum1, local_sum2);
+        BlockReduceSum<float, THREAD_1D_UNIT>(tid, local_sum0, local_sum1, local_sum2);
 
         if (tid == 0) {
             atomicAdd(&estimation.results_.at(0 + OFFSET2), local_sum0[0]);
@@ -327,7 +327,7 @@ void BuildLinearSystemForPointToPointICPKernel(
         local_sum2[tid] = Sigma(i, 2);
         __syncthreads();
 
-        BlockReduceSum<float>(tid, local_sum0, local_sum1, local_sum2);
+        BlockReduceSum<float, THREAD_1D_UNIT>(tid, local_sum0, local_sum1, local_sum2);
 
         if (tid == 0) {
             atomicAdd(&estimation.results_.at(3 * i + 0), local_sum0[0]);
@@ -343,7 +343,7 @@ void BuildLinearSystemForPointToPointICPKernel(
         local_sum1[tid] = rmse;
         __syncthreads();
 
-        BlockReduceSum<float>(tid, local_sum0, local_sum1);
+        BlockReduceSum<float, THREAD_1D_UNIT>(tid, local_sum0, local_sum1);
 
         if (tid == 0) {
             atomicAdd(&estimation.results_.at(0 + OFFSET3), local_sum0[0]);
@@ -405,7 +405,7 @@ void ComputeInformationMatrixKernel(RegistrationCudaDevice estimation) {
         local_sum2[tid] = JtJ(i + 2);
         __syncthreads();
 
-        BlockReduceSum<float>(tid, local_sum0, local_sum1, local_sum2);
+        BlockReduceSum<float, THREAD_1D_UNIT>(tid, local_sum0, local_sum1, local_sum2);
 
         if (tid == 0) {
             atomicAdd(&estimation.results_.at(i + 0), local_sum0[0]);

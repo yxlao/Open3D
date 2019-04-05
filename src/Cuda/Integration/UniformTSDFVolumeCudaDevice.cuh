@@ -79,6 +79,7 @@ UniformTSDFVolumeCudaDevice::gradient(const Vector3i &X) {
         X1(k) = O3D_MIN(X(k) + 1, N_ - 1);
         X0(k) = O3D_MAX(X(k) - 1, 0);
         n(k) = tsdf_[IndexOf(X1)] - tsdf_[IndexOf(X0)];
+        n(k) *= 0.5;
         X1(k) = X0(k) = X(k);
     }
     return n;
@@ -180,7 +181,8 @@ UniformTSDFVolumeCudaDevice::GradientAt(const Vector3f &X) {
     for (size_t k = 0; k < 3; k++) {
         X0(k) = fmaxf(X0(k) - half_gap, epsilon);
         X1(k) = fminf(X1(k) + half_gap, N_ - 1 - epsilon);
-        n(k) = (TSDFAt(X1) - TSDFAt(X0));
+        n(k) = TSDFAt(X1) - TSDFAt(X0);
+        n(k) *= 0.5f;
 
         X0(k) = X1(k) = X(k);
     }

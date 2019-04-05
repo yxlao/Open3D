@@ -64,7 +64,7 @@ void DoSingleIterationKernel(RGBDOdometryCudaDevice<N> odometry, size_t level) {
         local_sum2[tid] = mask ? JtJ(i + 2) : 0;
         __syncthreads();
 
-        BlockReduceSum<float>(tid, local_sum0, local_sum1, local_sum2);
+        BlockReduceSum<float, THREAD_2D_UNIT * THREAD_2D_UNIT>(tid, local_sum0, local_sum1, local_sum2);
 
         if (tid == 0) {
             atomicAdd(&odometry.results_.at(i + 0), local_sum0[0]);
@@ -82,7 +82,7 @@ void DoSingleIterationKernel(RGBDOdometryCudaDevice<N> odometry, size_t level) {
         local_sum2[tid] = mask ? Jtr(i + 2) : 0;
         __syncthreads();
 
-        BlockReduceSum<float>(tid, local_sum0, local_sum1, local_sum2);
+        BlockReduceSum<float, THREAD_2D_UNIT * THREAD_2D_UNIT>(tid, local_sum0, local_sum1, local_sum2);
 
         if (tid == 0) {
             atomicAdd(&odometry.results_.at(i + 0 + OFFSET1), local_sum0[0]);
@@ -100,7 +100,7 @@ void DoSingleIterationKernel(RGBDOdometryCudaDevice<N> odometry, size_t level) {
         local_sum1[tid] = mask ? 1 : 0;
         __syncthreads();
 
-        BlockReduceSum<float>(tid, local_sum0, local_sum1);
+        BlockReduceSum<float, THREAD_2D_UNIT * THREAD_2D_UNIT>(tid, local_sum0, local_sum1);
 
         if (tid == 0) {
             atomicAdd(&odometry.results_.at(0 + OFFSET2), local_sum0[0]);
@@ -162,7 +162,7 @@ void ComputeInformationMatrixKernel(RGBDOdometryCudaDevice<N> odometry) {
         local_sum2[tid] = mask ? JtJ(i + 2) : 0;
         __syncthreads();
 
-        BlockReduceSum<float>(tid, local_sum0, local_sum1, local_sum2);
+        BlockReduceSum<float, THREAD_2D_UNIT * THREAD_2D_UNIT>(tid, local_sum0, local_sum1, local_sum2);
 
         if (tid == 0) {
             atomicAdd(&odometry.results_.at(i + 0), local_sum0[0]);
@@ -274,7 +274,7 @@ void ComputeInitCorrespondenceMeanKernel(
     local_sum2[tid] = mask ? 1 : 0;
     __syncthreads();
 
-    BlockReduceSum<float>(tid, local_sum0, local_sum1, local_sum2);
+    BlockReduceSum<float, THREAD_2D_UNIT * THREAD_2D_UNIT>(tid, local_sum0, local_sum1, local_sum2);
 
     if (tid == 0) {
         atomicAdd(&means[0], local_sum0[0]);

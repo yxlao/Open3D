@@ -136,11 +136,8 @@ float &ScalableTSDFVolumeCudaDevice::tsdf(const Vector3i &X) {
 
 
 __device__
-uchar
-&
-ScalableTSDFVolumeCudaDevice::weight(const Vector3i &X) {
-    Vector3i
-        Xsv = voxel_locate_subvolume(X);
+uchar &ScalableTSDFVolumeCudaDevice::weight(const Vector3i &X) {
+    Vector3i Xsv = voxel_locate_subvolume(X);
     UniformTSDFVolumeCudaDevice *subvolume = QuerySubvolume(Xsv);
 
     return subvolume == nullptr ?
@@ -253,6 +250,7 @@ ScalableTSDFVolumeCudaDevice::GradientAt(
         X1(k) += half_gap;
 
         n(k) = TSDFAt(X1) - TSDFAt(X0);
+        n(k) *= 0.5f;
 
         X0(k) = X(k);
         X1(k) = X(k);
@@ -324,10 +322,8 @@ ScalableTSDFVolumeCudaDevice::gradient(
     assert(-1 <= Xlocal(1) && Xlocal(1) <= N_);
     assert(-1 <= Xlocal(2) && Xlocal(2) <= N_);
 #endif
-    Vector3f
-        n = Vector3f::Zeros();
-    Vector3i
-        X0 = Xlocal, X1 = Xlocal;
+    Vector3f n = Vector3f::Zeros();
+    Vector3i X0 = Xlocal, X1 = Xlocal;
 
 #pragma unroll 1
     for (size_t k = 0; k < 3; ++k) {
@@ -346,6 +342,7 @@ ScalableTSDFVolumeCudaDevice::gradient(
         float tsdf1 = (subvolume1 == nullptr) ?
                       0 : subvolume1->tsdf(BoundaryVoxelInNeighbor(X1, dXsv1));
         n(k) = tsdf1 - tsdf0;
+        n(k) *= 0.5;
 
         X0(k) = X1(k) = Xlocal(k);
     }
@@ -367,24 +364,19 @@ float ScalableTSDFVolumeCudaDevice::TSDFOnBoundaryAt(
 #endif
 
     const Vector3i Xlocali = Xlocal.template cast<int>();
-    Vector3f
-        r = Vector3f(Xlocal(0) - Xlocali(0),
-                     Xlocal(1) - Xlocali(1),
-                     Xlocal(2) - Xlocali(2));
-    Vector3f
-        rneg = Vector3f(1.0f - r(0), 1.0f - r(1), 1.0f - r(2));
+    Vector3f r = Vector3f(Xlocal(0) - Xlocali(0),
+                          Xlocal(1) - Xlocali(1),
+                          Xlocal(2) - Xlocali(2));
+    Vector3f rneg = Vector3f(1.0f - r(0), 1.0f - r(1), 1.0f - r(2));
 
     float sum_weight_interp = 0;
     float sum_tsdf = 0;
 
     for (size_t k = 0; k < 8; ++k) {
-        Vector3i
-            offset_k = Vector3i(shift[k][0], shift[k][1], shift[k][2]);
-        Vector3i
-            Xlocali_k = Xlocali + offset_k;
+        Vector3i offset_k = Vector3i(shift[k][0], shift[k][1], shift[k][2]);
+        Vector3i Xlocali_k = Xlocali + offset_k;
 
-        Vector3i
-            dXsv_k = NeighborOffsetOfBoundaryVoxel(Xlocali_k);
+        Vector3i dXsv_k = NeighborOffsetOfBoundaryVoxel(Xlocali_k);
         UniformTSDFVolumeCudaDevice *subvolume =
             cached_subvolumes[LinearizeNeighborOffset(dXsv_k)];
 
@@ -421,12 +413,10 @@ ScalableTSDFVolumeCudaDevice::WeightOnBoundaryAt(
 #endif
 
     const Vector3i Xlocali = Xlocal.template cast<int>();
-    Vector3f
-        r = Vector3f(Xlocal(0) - Xlocali(0),
-                     Xlocal(1) - Xlocali(1),
-                     Xlocal(2) - Xlocali(2));
-    Vector3f
-        rneg = Vector3f(1.0f - r(0), 1.0f - r(1), 1.0f - r(2));
+    Vector3f r = Vector3f(Xlocal(0) - Xlocali(0),
+                          Xlocal(1) - Xlocali(1),
+                          Xlocal(2) - Xlocali(2));
+    Vector3f rneg = Vector3f(1.0f - r(0), 1.0f - r(1), 1.0f - r(2));
 
     float sum_weight_interp = 0;
     float sum_weight = 0;
@@ -475,16 +465,13 @@ ScalableTSDFVolumeCudaDevice::ColorOnBoundaryAt(
 #endif
 
     const Vector3i Xlocali = Xlocal.template cast<int>();
-    Vector3f
-        r = Vector3f(Xlocal(0) - Xlocali(0),
-                     Xlocal(1) - Xlocali(1),
+    Vector3f r = Vector3f(Xlocal(0) - Xlocali(0),
+                          Xlocal(1) - Xlocali(1),
                      Xlocal(2) - Xlocali(2));
-    Vector3f
-        rneg = Vector3f(1.0f - r(0), 1.0f - r(1), 1.0f - r(2));
+    Vector3f rneg = Vector3f(1.0f - r(0), 1.0f - r(1), 1.0f - r(2));
 
     float sum_weight_interp = 0;
-    Vector3f
-        sum_color = Vector3f::Zeros();
+    Vector3f sum_color = Vector3f::Zeros();
     for (size_t k = 0; k < 8; ++k) {
         Vector3i
             offset_k = Vector3i(shift[k][0], shift[k][1], shift[k][2]);
@@ -524,18 +511,17 @@ ScalableTSDFVolumeCudaDevice::GradientOnBoundaryAt(
     const Vector3f &Xlocal,
     UniformTSDFVolumeCudaDevice **cached_subvolumes) {
 
-    Vector3f
-        n = Vector3f::Zeros();
-    Vector3f
-        X0 = Xlocal, X1 = Xlocal;
+    Vector3f n = Vector3f::Zeros();
+    Vector3f X0 = Xlocal, X1 = Xlocal;
 
     const float half_gap = voxel_length_;
 #pragma unroll 1
     for (size_t k = 0; k < 3; ++k) {
         X0(k) -= half_gap;
         X1(k) += half_gap;
-        n(k) = TSDFOnBoundaryAt(X1, cached_subvolumes)
-            - TSDFOnBoundaryAt(X0, cached_subvolumes);
+        n(k) = (TSDFOnBoundaryAt(X1, cached_subvolumes)
+              - TSDFOnBoundaryAt(X0, cached_subvolumes));
+        n(k) *= 0.5f;
 
         X0(k) = X1(k) = Xlocal(k);
     }

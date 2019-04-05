@@ -16,7 +16,7 @@
 namespace open3d {
 namespace cuda {
 
-class ScalableGradientVolumeCudaDevice {
+class ScalableTSDFVolumeProcessorCudaDevice {
 public:
     Vector3f *gradient_memory_pool_;
 
@@ -42,7 +42,7 @@ public:
 
 class ScalableTSDFVolumeProcessorCuda {
 public:
-    std::shared_ptr<ScalableGradientVolumeCudaDevice> device_ = nullptr;
+    std::shared_ptr<ScalableTSDFVolumeProcessorCudaDevice> device_ = nullptr;
 
 public:
     int N_;
@@ -64,7 +64,6 @@ public:
 
 public:
     void ComputeGradient(ScalableTSDFVolumeCuda &tsdf_volume);
-
     PointCloudCuda ExtractVoxelsNearSurface(ScalableTSDFVolumeCuda &tsdf_volume,
                                             float threshold);
 };
@@ -80,10 +79,10 @@ public:
 };
 
 __GLOBAL__
-void ComputeGradientKernel(ScalableGradientVolumeCudaDevice server,
+void ComputeGradientKernel(ScalableTSDFVolumeProcessorCudaDevice server,
                            ScalableTSDFVolumeCudaDevice tsdf_volume);
 __GLOBAL__
-void ExtractVoxelsNearSurfaceKernel(ScalableGradientVolumeCudaDevice server,
+void ExtractVoxelsNearSurfaceKernel(ScalableTSDFVolumeProcessorCudaDevice server,
                                     ScalableTSDFVolumeCudaDevice volume,
                                     PointCloudCudaDevice pcl,
                                     float threshold);

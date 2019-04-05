@@ -208,7 +208,7 @@ void ComputeSumKernel(PointCloudCudaDevice device,
     local_sum2[tid] = vertex(2);
     __syncthreads();
 
-    BlockReduceSum<float>(tid, local_sum0, local_sum1, local_sum2);
+    BlockReduceSum<float, THREAD_1D_UNIT>(tid, local_sum0, local_sum1, local_sum2);
 
     if (tid == 0) {
         atomicAdd(&sum[0](0), local_sum0[0]);

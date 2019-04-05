@@ -60,16 +60,16 @@ void ScalableTSDFVolumeProcessorCuda::Create(
         return;
     }
 
-    assert(N_ > 0 && max_subvolumes > 0 && max_vertices > 0 && max_triangles > 0);
+    assert(N_ > 0 && max_subvolumes > 0);
 
-    device_ = std::make_shared<ScalableGradientVolumeCudaDevice>();
+    device_ = std::make_shared<ScalableTSDFVolumeProcessorCudaDevice>();
 
     N_ = N;
     max_subvolumes_ = max_subvolumes;
 
     const int NNN = N_ * N_ * N_;
     CheckCuda(cudaMalloc(&device_->gradient_memory_pool_,
-                         sizeof(uchar) * NNN * max_subvolumes_));
+                         sizeof(Vector3f) * NNN * max_subvolumes_));
 
     UpdateDevice();
     Reset();
@@ -90,7 +90,7 @@ void ScalableTSDFVolumeProcessorCuda::Reset() {
     if (device_ != nullptr) {
         const size_t NNN = N_ * N_ * N_;
         CheckCuda(cudaMemset(device_->gradient_memory_pool_, 0,
-                             sizeof(uchar) * NNN * max_subvolumes_));
+                             sizeof(Vector3f) * NNN * max_subvolumes_));
     }
 }
 
@@ -102,7 +102,7 @@ void ScalableTSDFVolumeProcessorCuda::UpdateDevice() {
 }
 
 void ScalableTSDFVolumeProcessorCuda::ComputeGradient(ScalableTSDFVolumeCuda &tsdf_volume){
-    assert(device_ != nullptr && vertex_type_ != VertexTypeUnknown);
+    assert(device_ != nullptr);
 
     active_subvolumes_ = tsdf_volume.active_subvolume_entry_array_.size();
     utility::PrintDebug("Active subvolumes: %d\n", active_subvolumes_);
@@ -119,8 +119,6 @@ void ScalableTSDFVolumeProcessorCuda::ComputeGradient(ScalableTSDFVolumeCuda &ts
 PointCloudCuda ScalableTSDFVolumeProcessorCuda::ExtractVoxelsNearSurface(
     ScalableTSDFVolumeCuda &tsdf_volume,
     float threshold) {
-
-    tsdf_volume.GetAllSubvolumes();
 
     PointCloudCuda pcl(VertexWithNormalAndColor,
                        tsdf_volume.active_subvolume_entry_array_.size()

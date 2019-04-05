@@ -40,6 +40,7 @@ ScalableTSDFVolumeCuda::ScalableTSDFVolumeCuda(
     N_ = other.N_;
     device_ = other.device_;
     hash_table_ = other.hash_table_;
+    active_subvolume_entry_array_ = other.active_subvolume_entry_array_;
 
     bucket_count_ = other.bucket_count_;
     value_capacity_ = other.value_capacity_;
@@ -58,6 +59,7 @@ ScalableTSDFVolumeCuda &ScalableTSDFVolumeCuda::operator=(
         N_ = other.N_;
         device_ = other.device_;
         hash_table_ = other.hash_table_;
+        active_subvolume_entry_array_ = other.active_subvolume_entry_array_;
 
         bucket_count_ = other.bucket_count_;
         value_capacity_ = other.value_capacity_;

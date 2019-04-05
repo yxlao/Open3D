@@ -15,6 +15,7 @@
 #include "ScalableMeshVolumeCudaKernel.cuh"
 
 #include "Cuda/Integration/Experiment/ScalableTSDFVolumeProcessorCudaKernel.cuh"
+#include "Cuda/Integration/Experiment/ScalableVolumeRegistrationCudaKernel.cuh"
 
 namespace open3d {
 namespace cuda {
