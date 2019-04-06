@@ -35,10 +35,14 @@ void ComputeGradientKernel(
     }
     __syncthreads();
 
-    server.gradient(Xlocal, subvolume_idx)
-        = tsdf_volume.OnBoundary(Xlocal, true)
-          ? neighbor_subvolumes[13]->gradient(Xlocal)
-          : tsdf_volume.gradient(Xlocal, neighbor_subvolumes);
+    if (neighbor_subvolumes[13]->weight(Xlocal) == 0) {
+        server.gradient(Xlocal, subvolume_idx) = Vector3f(0);
+    } else {
+        server.gradient(Xlocal, subvolume_idx)
+            = tsdf_volume.OnBoundary(Xlocal, true)
+              ? neighbor_subvolumes[13]->gradient(Xlocal)
+              : tsdf_volume.gradient(Xlocal, neighbor_subvolumes);
+    }
 }
 
 __host__
@@ -76,7 +80,7 @@ void ExtractVoxelsNearSurfaceKernel(ScalableTSDFVolumeProcessorCudaDevice server
     uchar weight = subvolume->weight(Xlocal);
     if (weight > 0 && fabsf(tsdf) <= threshold) {
         Vector3i Xglobal = volume.voxel_local_to_global(Xlocal, Xsv);
-        Vector3f Xworld = volume.voxelf_to_world(Xglobal.template cast<float>());
+        Vector3f Xworld = volume.voxelf_to_world(Xglobal.cast<float>());
 
         int addr = pcl.points_.push_back(Xworld);
         pcl.colors_[addr] = Jet(tsdf, -0.5f, 0.5f);

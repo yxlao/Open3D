@@ -47,7 +47,7 @@ void ReadAndComputeGradient(int fragment_id, DatasetConfig &config) {
     gradient_volume.ComputeGradient(tsdf_volume);
 
     cuda::PointCloudCuda pcl = gradient_volume.ExtractVoxelsNearSurface(
-        tsdf_volume, 0.8f);
+        tsdf_volume, 0.5f);
     auto pcl_cpu = pcl.Download();
 
     visualization::DrawGeometries({pcl_cpu});

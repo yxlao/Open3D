@@ -337,12 +337,27 @@ ScalableTSDFVolumeCudaDevice::gradient(
             cached_subvolumes[LinearizeNeighborOffset(dXsv0)];
         UniformTSDFVolumeCudaDevice *subvolume1 =
             cached_subvolumes[LinearizeNeighborOffset(dXsv1)];
+
+        uchar weight0 = (subvolume0 == nullptr) ?
+                        0 : subvolume0->weight(BoundaryVoxelInNeighbor(X0, dXsv0));
+        uchar weight1 = (subvolume1 == nullptr) ?
+                        0 : subvolume1->weight(BoundaryVoxelInNeighbor(X1, dXsv1));
+
         float tsdf0 = (subvolume0 == nullptr) ?
                       0 : subvolume0->tsdf(BoundaryVoxelInNeighbor(X0, dXsv0));
         float tsdf1 = (subvolume1 == nullptr) ?
                       0 : subvolume1->tsdf(BoundaryVoxelInNeighbor(X1, dXsv1));
-        n(k) = tsdf1 - tsdf0;
-        n(k) *= 0.5;
+
+        if (weight0 != 0 && weight1 != 0) {
+            n(k) = tsdf1 - tsdf0;
+            n(k) *= 0.5;
+        } else if (weight1 != 0) {
+            n(k) = tsdf1 - cached_subvolumes[13]->tsdf(Xlocal);
+        } else if (weight0 != 0) {
+            n(k) = cached_subvolumes[13]->tsdf(Xlocal) - tsdf0;
+        } else {
+            n(k) = 0;
+        }
 
         X0(k) = X1(k) = Xlocal(k);
     }

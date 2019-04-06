@@ -55,8 +55,9 @@ int RegistrationForTSDFVolumes(
     target.GetAllSubvolumes();
 
     auto pcl_source = ExtractVoxelsNearSurface(source);
-    pcl_source->Transform(init_source_to_target);
     auto pcl_target = ExtractVoxelsNearSurface(target);
+    pcl_source->Transform(init_source_to_target);
+
 
     cuda::ScalableVolumeRegistrationCuda registration;
     registration.Initialize(source, target, init_source_to_target);
@@ -74,12 +75,17 @@ int RegistrationForTSDFVolumes(
 
     bool finished = false;
     int iter = 0, max_iter = 800;
+
+    Eigen::Matrix4d prev_pose = init_source_to_target;
     visualizer.RegisterKeyCallback(GLFW_KEY_SPACE, [&](Visualizer *vis) {
         if (finished) return false;
 
         /* Registration (1 iteration) */
         auto delta = registration.DoSingleIteration(iter++);
-        pcl_source->Transform(delta.transformation_.inverse());
+
+        Eigen::Matrix4d curr_pose = registration.trans_source_to_target_;
+        pcl_source->Transform(curr_pose * prev_pose.inverse());
+        prev_pose = curr_pose;
 
         /* Updated source */
         vis->UpdateGeometry();
@@ -112,12 +118,15 @@ int main(int argc, char **argv) {
                   pose_graph_s);
     auto rbegin = pose_graph_s.nodes_.rbegin();
     Eigen::Matrix4d init_source_to_target = rbegin->pose_.inverse();
+    init_source_to_target = pose_graph_s.nodes_[70].pose_.inverse();
 
-    init_source_to_target = pose_graph_s.nodes_[1].pose_;
-    std::cout << init_source_to_target << std::endl;
+//    init_source_to_target = pose_graph_s.nodes_[3].pose_;
+//    std::cout << init_source_to_target << std::endl;
 
-    RegistrationForTSDFVolumes("target.bin", "target.bin",
-                               init_source_to_target, config);
+    RegistrationForTSDFVolumes("target.bin", "source.bin",
+                               init_source_to_target.inverse(), config);
+//    RegistrationForTSDFVolumes("source.bin", "target.bin",
+//                               init_source_to_target, config);
 
 //    auto source = ReadTSDFVolume("source.bin", config);
 //    auto target = ReadTSDFVolume("target.bin", config);

@@ -18,22 +18,21 @@ class ScalableVolumeRegistrationCudaDevice {
 public:
     ScalableTSDFVolumeCudaDevice source_;
     ScalableTSDFVolumeCudaDevice target_;
-    ScalableTSDFVolumeProcessorCudaDevice target_property_;
+    ScalableTSDFVolumeProcessorCudaDevice source_property_;
 
     ArrayCudaDevice<float> results_;
 
     TransformCuda trans_source_to_target_;
-    TransformCuda trans_target_to_source_;
 
     __DEVICE__ bool ComputeVoxelwiseJacobianAndResidual(
-        const Vector3i &Xlocal_target, const Vector3i &Xsv_target,
-        UniformTSDFVolumeCudaDevice* subvolume_target, int subvolume_target_idx,
+        const Vector3i &Xlocal_source, const Vector3i &Xsv_source,
+        UniformTSDFVolumeCudaDevice* subvolume_source, int subvolume_source_idx,
         Vector6f &jacobian, float &residual);
 };
 
 class ScalableVolumeRegistrationCuda {
 public:
-    int target_active_subvolumes_;
+    int source_active_subvolumes_;
 
     std::shared_ptr<ScalableVolumeRegistrationCudaDevice> device_ = nullptr;
 
@@ -48,7 +47,9 @@ public:
 public:
     ScalableTSDFVolumeCuda source_;
     ScalableTSDFVolumeCuda target_;
-    ScalableTSDFVolumeProcessorCuda target_property_;
+
+    ScalableTSDFVolumeProcessorCuda source_property_;
+
     ArrayCuda<float> results_;
 
     Eigen::Matrix4d trans_source_to_target_;

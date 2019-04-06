@@ -69,17 +69,25 @@ UniformTSDFVolumeCudaDevice::volume_to_voxelf(
 __device__
     Vector3f
 UniformTSDFVolumeCudaDevice::gradient(const Vector3i &X) {
-    Vector3f
-    n = Vector3f::Zeros();
-    Vector3i
-    X1 = X, X0 = X;
+    Vector3f n = Vector3f::Zeros();
+    Vector3i X1 = X, X0 = X;
 
 #pragma unroll 1
     for (size_t k = 0; k < 3; ++k) {
         X1(k) = O3D_MIN(X(k) + 1, N_ - 1);
         X0(k) = O3D_MAX(X(k) - 1, 0);
-        n(k) = tsdf_[IndexOf(X1)] - tsdf_[IndexOf(X0)];
-        n(k) *= 0.5;
+
+        if (weight_[IndexOf(X1)] != 0 && weight_[IndexOf(X0)] != 0) {
+            n(k) = tsdf_[IndexOf(X1)] - tsdf_[IndexOf(X0)];
+            n(k) *= 0.5;
+        } else if (weight_[IndexOf(X1)] != 0) {
+            n(k) = tsdf_[IndexOf(X1)] - tsdf_[IndexOf(X)];
+        } else if (weight_[IndexOf(X0)] != 0) {
+            n(k) = tsdf_[IndexOf(X)] - tsdf_[IndexOf(X0)];
+        } else {
+            n(k) = 0;
+        }
+
         X1(k) = X0(k) = X(k);
     }
     return n;

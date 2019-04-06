@@ -23,16 +23,20 @@ void BuildLinearSystemKernel(
     const int subvolume_idx = blockIdx.x;
 
     const HashEntry<Vector3i> &subvolume_entry =
-        registration.target_.active_subvolume_entry_array_[subvolume_idx];
+        registration.source_.active_subvolume_entry_array_[subvolume_idx];
 
     const Vector3i Xsv = subvolume_entry.key;
     const Vector3i Xlocal = Vector3i(threadIdx.x, threadIdx.y, threadIdx.z);
     const int tid = threadIdx.x + threadIdx.y * blockDim.x
                   + threadIdx.z * (blockDim.x * blockDim.y);
     if (tid == 0) {
-        subvolume = registration.target_.QuerySubvolume(Xsv);
+        subvolume = registration.source_.QuerySubvolume(Xsv);
     }
     __syncthreads();
+
+    local_sum0[tid] = 0;
+    local_sum1[tid] = 0;
+    local_sum2[tid] = 0;
 
     HessianCuda<6> JtJ;
     Vector6f jacobian, Jtr;
@@ -98,8 +102,8 @@ void BuildLinearSystemKernel(
 void ScalableVolumeRegistrationCudaKernelCaller::BuildLinearSystem(
     ScalableVolumeRegistrationCuda &registration) {
 
-    int N = registration.target_.N_;
-    const dim3 blocks(registration.target_active_subvolumes_);
+    int N = registration.source_.N_;
+    const dim3 blocks(registration.source_active_subvolumes_);
     const dim3 threads(N, N, N);
     BuildLinearSystemKernel<<< blocks, threads >>> (*registration.device_);
     CheckCuda(cudaDeviceSynchronize());

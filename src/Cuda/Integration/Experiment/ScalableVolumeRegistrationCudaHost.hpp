@@ -32,18 +32,17 @@ void ScalableVolumeRegistrationCuda::Release(){
 
     source_.Release();
     target_.Release();
-    target_property_.Release();
+    source_property_.Release();
     results_.Release();
 }
 
 void ScalableVolumeRegistrationCuda::UpdateDevice(){
     device_->source_ = *source_.device_;
     device_->target_ = *target_.device_;
-    device_->target_property_ = *target_property_.device_;
+    device_->source_property_ = *source_property_.device_;
     device_->results_ = *results_.device_;
 
     device_->trans_source_to_target_.FromEigen(trans_source_to_target_);
-    device_->trans_target_to_source_.FromEigen(trans_source_to_target_.inverse());
 }
 
 void ScalableVolumeRegistrationCuda::Initialize(ScalableTSDFVolumeCuda &source,
@@ -52,10 +51,10 @@ void ScalableVolumeRegistrationCuda::Initialize(ScalableTSDFVolumeCuda &source,
     source_ = source;
     target_ = target;
 
-    target_active_subvolumes_ = target_.active_subvolume_entry_array_.size();
-    target_property_ = ScalableTSDFVolumeProcessorCuda(
-        target_.N_, target_active_subvolumes_);
-    target_property_.ComputeGradient(target_);
+    source_active_subvolumes_ = source_.active_subvolume_entry_array_.size();
+    source_property_ = ScalableTSDFVolumeProcessorCuda(
+        source_.N_, source_active_subvolumes_);
+    source_property_.ComputeGradient(source_);
 
     trans_source_to_target_ = init;
 
@@ -75,9 +74,9 @@ RegistrationResultCuda ScalableVolumeRegistrationCuda::DoSingleIteration(
                         iter, delta.inlier_rmse_, delta.fitness_);
 
     trans_source_to_target_ =
-        trans_source_to_target_ * delta.transformation_.inverse();
+//        delta.transformation_.inverse() * trans_source_to_target_;
+        trans_source_to_target_ * delta.transformation_.inverse() ;
     device_->trans_source_to_target_.FromEigen(trans_source_to_target_);
-    device_->trans_target_to_source_.FromEigen(trans_source_to_target_.inverse());
 
     return delta;
 }
@@ -92,7 +91,7 @@ RegistrationResultCuda ScalableVolumeRegistrationCuda::BuildAndSolveLinearSystem
     Eigen::Vector6d Jtr;
     float rmse, inliers;
     ExtractResults(JtJ, Jtr, rmse, inliers);
-
+    std::cout << JtJ << "\n" << Jtr.transpose() << "\n";
     bool is_success;
     Eigen::Matrix4d extrinsic;
     std::tie(is_success, extrinsic) =
