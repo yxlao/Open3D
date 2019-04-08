@@ -24,11 +24,15 @@ public:
             const std::shared_ptr<const geometry::TriangleMesh> &before_mesh);
 
 protected:
+    bool UpdateMergedPointCloud(
+            const std::vector<size_t> &sub_mesh_select_index);
     void MouseButtonCallback(GLFWwindow *window,
                              int button,
                              int action,
                              int mods) override;
     std::shared_ptr<geometry::PointCloud> merged_pcd_;
+    std::vector<std::shared_ptr<const geometry::TriangleMesh>> sub_meshes_;
+    std::shared_ptr<const geometry::TriangleMesh> before_mesh_;
 };
 
 }  // namespace visualization

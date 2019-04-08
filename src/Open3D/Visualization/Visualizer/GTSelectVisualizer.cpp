@@ -6,6 +6,9 @@
 #include "Open3D/Geometry/PointCloud.h"
 #include "Open3D/Geometry/TriangleMesh.h"
 
+#include <numeric>
+#include <vector>
+
 namespace open3d {
 
 geometry::PointCloud mesh_to_pcd(const geometry::TriangleMesh &mesh) {
@@ -57,24 +60,64 @@ void GTSelectVisualizer::MouseButtonCallback(GLFWwindow *window,
     Visualizer::MouseButtonCallback(window, button, action, mods);
 }
 
+bool GTSelectVisualizer::UpdateMergedPointCloud(
+        const std::vector<size_t> &sub_mesh_select_index) {
+    bool rc = true;
+    if (merged_pcd_ == nullptr) {
+        merged_pcd_ = std::make_shared<geometry::PointCloud>();
+        rc = AddGeometry(merged_pcd_);
+    }
+    if (!rc) {
+        return rc;
+    }
+
+    // merged_pcd_->Clear();
+    // for (const size_t &select_index : sub_mesh_select_index) {
+    //     auto sub_mesh = sub_meshes_[select_index];
+    //     merged_pcd_->operator+=(mesh_to_pcd(*sub_mesh));
+    // }
+    // merged_pcd_->operator+=(mesh_to_pcd(*before_mesh_));
+    // utility::PrintInfo("merged_pcd_.points_.size() %d\n",
+    //                    merged_pcd_->points_.size());
+
+    // original_geometry_ptr_ = merged_pcd_;
+    // auto ptr = std::make_shared<geometry::PointCloud>();
+    // *ptr = (const geometry::PointCloud &)*original_geometry_ptr_;
+    // editing_geometry_ptr_ = ptr;
+    // editing_geometry_renderer_ptr_ =
+    //         std::make_shared<glsl::PointCloudRenderer>();
+    // if (editing_geometry_renderer_ptr_->AddGeometry(editing_geometry_ptr_) ==
+    //     false) {
+    //     return false;
+    // }
+    // ResetViewPoint(true);
+    // (geometry::PointCloud &)*editing_geometry_ptr_ =
+    //         (const geometry::PointCloud &)*original_geometry_ptr_;
+    // editing_geometry_renderer_ptr_->UpdateGeometry();
+    // is_redraw_required_ = true;
+    // UpdateWindowTitle();
+    UpdateGeometry();
+    return rc;
+}
+
 bool GTSelectVisualizer::AddSubMeshesAndBeforeMesh(
         const std::vector<std::shared_ptr<const geometry::TriangleMesh>>
                 &sub_meshes,
         const std::shared_ptr<const geometry::TriangleMesh> &before_mesh) {
-    // pcd = o3d.geometry.PointCloud()
-    // sub_meshes = [sub_meshes[i] for i in sub_mesh_indices]
-    // sub_pcds = meshes_to_pcds(sub_meshes)
-    // for sub_pcd in sub_pcds:
-    //     pcd += sub_pcd
-    // if before_mesh is not None:
-    //     pcd += mesh_to_pcd(before_mesh)
-    // return pcd
+    sub_meshes_ = sub_meshes;
+    before_mesh_ = before_mesh;
+    // std::vector<size_t> sub_mesh_select_index(
+    //         sub_meshes_.size());  // vector with 100 ints.
+    // std::iota(std::begin(sub_mesh_select_index),
+    //           std::end(sub_mesh_select_index), 0);
+
+    // Add merged_pcd_
     merged_pcd_ = std::make_shared<geometry::PointCloud>();
     for (const std::shared_ptr<const geometry::TriangleMesh> &sub_mesh :
-         sub_meshes) {
+         sub_meshes_) {
         merged_pcd_->operator+=(mesh_to_pcd(*sub_mesh));
     }
-    merged_pcd_->operator+=(mesh_to_pcd(*before_mesh));
+    merged_pcd_->operator+=(mesh_to_pcd(*before_mesh_));
     return AddGeometry(merged_pcd_);
 }
 

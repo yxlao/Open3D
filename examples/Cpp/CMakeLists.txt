@@ -41,3 +41,5 @@ EXAMPLE_CPP(ViewDistances             ${CMAKE_PROJECT_NAME})
 EXAMPLE_CPP(ViewPCDMatch              ${CMAKE_PROJECT_NAME})
 EXAMPLE_CPP(Visualizer                ${CMAKE_PROJECT_NAME})
 EXAMPLE_CPP(Voxelization              ${CMAKE_PROJECT_NAME})
+EXAMPLE_CPP(Demo                      ${CMAKE_PROJECT_NAME})
+
