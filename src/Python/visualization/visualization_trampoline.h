@@ -29,6 +29,7 @@
 #include <Python/open3d_pybind.h>
 #include <Open3D/Visualization/Visualizer/Visualizer.h>
 #include <Open3D/Visualization/Visualizer/ViewControl.h>
+#include <Open3D/Visualization/Visualizer/VisualizerWithEditing.h>
 
 using namespace open3d;
 
@@ -58,6 +59,13 @@ public:
     void BuildUtilities() override {
         PYBIND11_OVERLOAD(void, VisualizerBase, BuildUtilities, );
     }
+};
+
+template <class VisualizerWithEditingBase =
+                  visualization::VisualizerWithEditing>
+class PyVisualizerWithEditing : public PyVisualizer<VisualizerWithEditingBase> {
+public:
+    using PyVisualizer<VisualizerWithEditingBase>::PyVisualizer;
 };
 
 template <class ViewControlBase = visualization::ViewControl>

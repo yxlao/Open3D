@@ -32,6 +32,7 @@
 #include <Open3D/Visualization/Visualizer/Visualizer.h>
 #include <Open3D/Visualization/Visualizer/VisualizerWithKeyCallback.h>
 #include <Open3D/Visualization/Visualizer/VisualizerWithEditing.h>
+#include <Open3D/Visualization/Visualizer/GTSelectVisualizer.h>
 
 using namespace open3d;
 
@@ -153,6 +154,20 @@ void pybind_visualizer(py::module &m) {
             .def("get_picked_points",
                  &visualization::VisualizerWithEditing::GetPickedPoints,
                  "Function to get picked points");
+
+    py::class_<visualization::GTSelectVisualizer,
+               PyVisualizerWithEditing<visualization::GTSelectVisualizer>,
+               std::shared_ptr<visualization::GTSelectVisualizer>>
+            visualizer_gt_select(m, "GTSelectVisualizer", visualizer_edit,
+                                 "Visualizer GT selection capabilities.");
+    py::detail::bind_default_constructor<visualization::GTSelectVisualizer>(
+            visualizer_gt_select);
+    visualizer_gt_select.def(py::init<double, bool, const std::string &>())
+            .def("__repr__", [](const visualization::GTSelectVisualizer &vis) {
+                return std::string("GTSelectVisualizer with name ") +
+                       vis.GetWindowName();
+            });
+
     docstring::ClassMethodDocInject(m, "Visualizer", "add_geometry",
                                     map_visualizer_docstrings);
     docstring::ClassMethodDocInject(m, "Visualizer",
