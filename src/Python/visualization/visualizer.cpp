@@ -29,6 +29,7 @@
 #include "Python/docstring.h"
 
 #include <Open3D/Geometry/Image.h>
+#include <Open3D/Geometry/TriangleMesh.h>
 #include <Open3D/Visualization/Visualizer/Visualizer.h>
 #include <Open3D/Visualization/Visualizer/VisualizerWithKeyCallback.h>
 #include <Open3D/Visualization/Visualizer/VisualizerWithEditing.h>
@@ -163,14 +164,15 @@ void pybind_visualizer(py::module &m) {
     py::detail::bind_default_constructor<visualization::GTSelectVisualizer>(
             visualizer_gt_select);
     visualizer_gt_select.def(py::init<double, bool, const std::string &>())
-            .def("__repr__", [](const visualization::GTSelectVisualizer &vis) {
-                return std::string("GTSelectVisualizer with name ") +
-                       vis.GetWindowName();
-            });
-    //   .def("add_sub_meshes_and_before_mesh",
-    //        &visualization::GTSelectVisualizer::AddSubMeshesAndBeforeMesh,
-    //        "Add sub meshes and before mesh", "sub_meshes"_a,
-    //        "before_mesh"_a = nullptr);
+            .def("__repr__",
+                 [](const visualization::GTSelectVisualizer &vis) {
+                     return std::string("GTSelectVisualizer with name ") +
+                            vis.GetWindowName();
+                 })
+            .def("add_sub_meshes_and_before_mesh",
+                 &visualization::GTSelectVisualizer::AddSubMeshesAndBeforeMesh,
+                 "Add sub meshes and before mesh", "sub_meshes"_a,
+                 "before_mesh"_a);
 
     docstring::ClassMethodDocInject(m, "Visualizer", "add_geometry",
                                     map_visualizer_docstrings);

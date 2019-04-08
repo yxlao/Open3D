@@ -5,7 +5,8 @@ namespace open3d {
 
 namespace geometry {
 class PointCloud;
-}
+class TriangleMesh;
+}  // namespace geometry
 
 namespace visualization {
 
