@@ -167,6 +167,10 @@ void pybind_visualizer(py::module &m) {
                 return std::string("GTSelectVisualizer with name ") +
                        vis.GetWindowName();
             });
+    //   .def("add_sub_meshes_and_before_mesh",
+    //        &visualization::GTSelectVisualizer::AddSubMeshesAndBeforeMesh,
+    //        "Add sub meshes and before mesh", "sub_meshes"_a,
+    //        "before_mesh"_a = nullptr);
 
     docstring::ClassMethodDocInject(m, "Visualizer", "add_geometry",
                                     map_visualizer_docstrings);
