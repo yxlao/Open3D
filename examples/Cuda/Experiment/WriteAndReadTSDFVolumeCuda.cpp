@@ -23,7 +23,7 @@ void IntegrateAndWriteFragment(int fragment_id, DatasetConfig &config) {
     cuda::PinholeCameraIntrinsicCuda intrinsic(config.intrinsic_);
     cuda::TransformCuda trans = cuda::TransformCuda::Identity();
     cuda::ScalableTSDFVolumeCuda tsdf_volume(
-        8, voxel_length * 4, (float) config.tsdf_truncation_ * 4, trans);
+        8, voxel_length, (float) config.tsdf_truncation_, trans);
 
     cuda::RGBDImageCuda rgbd((float) config.max_depth_,
                              (float) config.depth_factor_);
@@ -56,7 +56,7 @@ void IntegrateAndWriteFragment(int fragment_id, DatasetConfig &config) {
 
     timer.Start();
     std::string filename = config.GetBinFileForFragment(fragment_id);
-    io::WriteTSDFVolumeToBIN("source.bin", tsdf_volume, false);
+    io::WriteTSDFVolumeToBIN("target-high.bin", tsdf_volume, false);
     timer.Stop();
     utility::PrintInfo("Write TSDF takes %f ms\n", timer.GetDuration());
 
@@ -89,13 +89,13 @@ void ReadFragment(int fragment_id, DatasetConfig &config) {
 
     cuda::TransformCuda trans = cuda::TransformCuda::Identity();
     cuda::ScalableTSDFVolumeCuda tsdf_volume(
-        8, voxel_length * 4, (float) config.tsdf_truncation_ * 4, trans);
+        8, voxel_length, (float) config.tsdf_truncation_, trans);
 
     Timer timer;
     timer.Start();
 
     std::string filename = config.GetBinFileForFragment(fragment_id);
-    io::ReadTSDFVolumeFromBIN("source.bin", tsdf_volume, false);
+    io::ReadTSDFVolumeFromBIN("target-high.bin", tsdf_volume, false);
     timer.Stop();
     utility::PrintInfo("Read takes %f ms\n", timer.GetDuration());
 
@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
     if (!is_success) return 1;
     config.GetFragmentFiles();
 
-    for (int i = 0; i < 1; ++i) {//config.fragment_files_.size(); ++i) {
+    for (int i = 1; i < 2; ++i) {//config.fragment_files_.size(); ++i) {
         utility::PrintInfo("%d\n", i);
         IntegrateAndWriteFragment(i, config);
         ReadFragment(i, config);

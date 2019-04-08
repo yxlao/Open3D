@@ -33,11 +33,11 @@ bool ScalableVolumeRegistrationCudaDevice::ComputeVoxelwiseJacobianAndResidual(
     float d_target = target_.tsdf(Xglobal_target);
 //    if (fabsf(d_target) >= 0.1f) return false;
 
-    float sqrt_w = 1; //sqrtf(w_target / 255.0f);
+    float sqrt_w = sqrtf(w_source * w_target / 65535.0f);
     residual = sqrt_w * (d_source - d_target);
 
     Vector3f grad_source = source_property_.gradient(
-        Xsv_source, subvolume_source_idx);
+        Xlocal_source, subvolume_source_idx);
 
 //    grad_source = 0.1f * Vector3f::Ones();
     float c = sqrt_w / source_.voxel_length_;
@@ -48,6 +48,9 @@ bool ScalableVolumeRegistrationCudaDevice::ComputeVoxelwiseJacobianAndResidual(
     jacobian(4) = c * grad_source(1);
     jacobian(5) = c * grad_source(2);
 
+//    printf("(%d %d %d) -> (%f %f %f %f %f %f)\n",
+//           Xglobal_source(0), Xglobal_source(1), Xglobal_source(2),
+//           jacobian(0), jacobian(1), jacobian(2), jacobian(3), jacobian(4), jacobian(5));
     return true;
 }
 }

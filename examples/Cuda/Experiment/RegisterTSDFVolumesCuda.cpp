@@ -23,7 +23,7 @@ ReadTSDFVolume(const std::string &filename, DatasetConfig &config) {
 
     cuda::TransformCuda trans = cuda::TransformCuda::Identity();
     cuda::ScalableTSDFVolumeCuda tsdf_volume(
-        8, voxel_length * 4, (float) config.tsdf_truncation_ * 4, trans);
+        8, voxel_length, (float) config.tsdf_truncation_, trans);
 
     Timer timer;
     timer.Start();
@@ -37,7 +37,7 @@ std::shared_ptr<PointCloud> ExtractVoxelsNearSurface(cuda::ScalableTSDFVolumeCud
         8, volume.active_subvolume_entry_array_.size());
     gradient_volume_target.ComputeGradient(volume);
     cuda::PointCloudCuda pcl_target = gradient_volume_target.ExtractVoxelsNearSurface(
-        volume, 0.8f);
+        volume, 0.5f);
     return pcl_target.Download();
 }
 
@@ -60,7 +60,14 @@ int RegistrationForTSDFVolumes(
 
 
     cuda::ScalableVolumeRegistrationCuda registration;
+    utility::Timer timer;
+    timer.Start();
     registration.Initialize(source, target, init_source_to_target);
+//    for (int i = 0; i < 15; ++i) {
+//        registration.DoSingleIteration(i);
+//    }
+    timer.Stop();
+    utility::PrintInfo("Registration takes %.3f ms\n", timer.GetDuration());
 
     /** Prepare visualizer **/
     visualization::VisualizerWithCudaModule visualizer;
@@ -118,12 +125,12 @@ int main(int argc, char **argv) {
                   pose_graph_s);
     auto rbegin = pose_graph_s.nodes_.rbegin();
     Eigen::Matrix4d init_source_to_target = rbegin->pose_.inverse();
-    init_source_to_target = pose_graph_s.nodes_[70].pose_.inverse();
+    init_source_to_target = pose_graph_s.nodes_[99].pose_.inverse();
 
 //    init_source_to_target = pose_graph_s.nodes_[3].pose_;
 //    std::cout << init_source_to_target << std::endl;
 
-    RegistrationForTSDFVolumes("target.bin", "source.bin",
+    RegistrationForTSDFVolumes("target-high.bin", "source-high.bin",
                                init_source_to_target.inverse(), config);
 //    RegistrationForTSDFVolumes("source.bin", "target.bin",
 //                               init_source_to_target, config);

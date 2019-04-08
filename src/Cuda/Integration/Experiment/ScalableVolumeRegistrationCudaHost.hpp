@@ -91,7 +91,7 @@ RegistrationResultCuda ScalableVolumeRegistrationCuda::BuildAndSolveLinearSystem
     Eigen::Vector6d Jtr;
     float rmse, inliers;
     ExtractResults(JtJ, Jtr, rmse, inliers);
-    std::cout << JtJ << "\n" << Jtr.transpose() << "\n";
+//    std::cout << JtJ << "\n" << Jtr.transpose() << "\n";
     bool is_success;
     Eigen::Matrix4d extrinsic;
     std::tie(is_success, extrinsic) =
