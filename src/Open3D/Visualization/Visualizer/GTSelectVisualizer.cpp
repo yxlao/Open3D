@@ -48,6 +48,11 @@ void GTSelectVisualizer::MouseButtonCallback(GLFWwindow *window,
             pointcloud_picker_ptr_->picked_indices_.push_back((size_t)index);
             is_redraw_required_ = true;
         }
+        // Try modifying point cloud
+        std::vector<size_t> sub_mesh_select_index(sub_meshes_.size());
+        std::iota(std::begin(sub_mesh_select_index),
+                  std::end(sub_mesh_select_index), 0);
+        UpdateMergedPointCloud(sub_mesh_select_index);
     } else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE &&
                (mods & GLFW_MOD_SHIFT)) {
         if (pointcloud_picker_ptr_->picked_indices_.empty() == false) {
@@ -60,44 +65,66 @@ void GTSelectVisualizer::MouseButtonCallback(GLFWwindow *window,
     Visualizer::MouseButtonCallback(window, button, action, mods);
 }
 
+void PrintPCDSize(const std::shared_ptr<const geometry::Geometry> &geometry,
+                  const std::string &name) {
+    auto pcd = std::dynamic_pointer_cast<const geometry::PointCloud>(geometry);
+    utility::PrintInfo("%s.points_.size() %d\n", name.c_str(),
+                       pcd->points_.size());
+}
+
 bool GTSelectVisualizer::UpdateMergedPointCloud(
         const std::vector<size_t> &sub_mesh_select_index) {
-    bool rc = true;
-    if (merged_pcd_ == nullptr) {
-        merged_pcd_ = std::make_shared<geometry::PointCloud>();
-        rc = AddGeometry(merged_pcd_);
-    }
-    if (!rc) {
-        return rc;
-    }
+    utility::PrintInfo("Checkpoint 1\n");
+    PrintPCDSize(original_geometry_ptr_, "original_geometry_ptr_");
+    PrintPCDSize(editing_geometry_ptr_, "editing_geometry_ptr_");
+    PrintPCDSize(merged_pcd_, "merged_pcd_");
+    PrintPCDSize(geometry_ptrs_[0], "geometry_ptrs_[0]");
+    PrintPCDSize(pointcloud_picker_ptr_->pointcloud_ptr_,
+                 "pointcloud_picker_ptr_->pointcloud_ptr_");
 
-    // merged_pcd_->Clear();
-    // for (const size_t &select_index : sub_mesh_select_index) {
-    //     auto sub_mesh = sub_meshes_[select_index];
-    //     merged_pcd_->operator+=(mesh_to_pcd(*sub_mesh));
-    // }
+    // Update merged_pcd_
+    merged_pcd_->Clear();
+    for (const size_t &select_index : sub_mesh_select_index) {
+        auto sub_mesh = sub_meshes_[select_index];
+        merged_pcd_->operator+=(mesh_to_pcd(*sub_mesh));
+    }
     // merged_pcd_->operator+=(mesh_to_pcd(*before_mesh_));
-    // utility::PrintInfo("merged_pcd_.points_.size() %d\n",
-    //                    merged_pcd_->points_.size());
 
-    // original_geometry_ptr_ = merged_pcd_;
-    // auto ptr = std::make_shared<geometry::PointCloud>();
-    // *ptr = (const geometry::PointCloud &)*original_geometry_ptr_;
-    // editing_geometry_ptr_ = ptr;
-    // editing_geometry_renderer_ptr_ =
-    //         std::make_shared<glsl::PointCloudRenderer>();
-    // if (editing_geometry_renderer_ptr_->AddGeometry(editing_geometry_ptr_) ==
-    //     false) {
-    //     return false;
-    // }
-    // ResetViewPoint(true);
-    // (geometry::PointCloud &)*editing_geometry_ptr_ =
-    //         (const geometry::PointCloud &)*original_geometry_ptr_;
-    // editing_geometry_renderer_ptr_->UpdateGeometry();
-    // is_redraw_required_ = true;
-    // UpdateWindowTitle();
+    // Update original_geometry_ptr_
+    original_geometry_ptr_ = merged_pcd_;
+
+    // Update editing_geometry_ptr_ and editing_geometry_ptr_
+    auto ptr = std::make_shared<geometry::PointCloud>();
+    *ptr = (const geometry::PointCloud &)*original_geometry_ptr_;
+    editing_geometry_ptr_ = ptr;
+    editing_geometry_renderer_ptr_ =
+            std::make_shared<glsl::PointCloudRenderer>();
+    if (editing_geometry_renderer_ptr_->AddGeometry(editing_geometry_ptr_) ==
+        false) {
+        return false;
+    }
+    (geometry::PointCloud &)*editing_geometry_ptr_ =
+            (const geometry::PointCloud &)*original_geometry_ptr_;
+    editing_geometry_renderer_ptr_->UpdateGeometry();
+    is_redraw_required_ = true;
+
+    // Update geometry_ptrs_[0]
+    geometry_ptrs_[0] = merged_pcd_;
+
+    // Update pointcloud_picker_ptr_
+    pointcloud_picker_ptr_->Clear();
+    pointcloud_picker_ptr_->SetPointCloud(geometry_ptrs_[0]);
+    utility::PrintInfo("Checkpoint 2\n");
+    PrintPCDSize(original_geometry_ptr_, "original_geometry_ptr_");
+    PrintPCDSize(editing_geometry_ptr_, "editing_geometry_ptr_");
+    PrintPCDSize(merged_pcd_, "merged_pcd_");
+    PrintPCDSize(geometry_ptrs_[0], "geometry_ptrs_[0]");
+    PrintPCDSize(pointcloud_picker_ptr_->pointcloud_ptr_,
+                 "pointcloud_picker_ptr_->pointcloud_ptr_");
+
     UpdateGeometry();
-    return rc;
+    UpdateRender();
+    return true;
 }
 
 bool GTSelectVisualizer::AddSubMeshesAndBeforeMesh(
@@ -106,10 +133,6 @@ bool GTSelectVisualizer::AddSubMeshesAndBeforeMesh(
         const std::shared_ptr<const geometry::TriangleMesh> &before_mesh) {
     sub_meshes_ = sub_meshes;
     before_mesh_ = before_mesh;
-    // std::vector<size_t> sub_mesh_select_index(
-    //         sub_meshes_.size());  // vector with 100 ints.
-    // std::iota(std::begin(sub_mesh_select_index),
-    //           std::end(sub_mesh_select_index), 0);
 
     // Add merged_pcd_
     merged_pcd_ = std::make_shared<geometry::PointCloud>();
