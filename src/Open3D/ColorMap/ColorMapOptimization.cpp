@@ -33,10 +33,10 @@
 #include "Open3D/Geometry/Image.h"
 #include "Open3D/Geometry/RGBDImage.h"
 #include "Open3D/Geometry/TriangleMesh.h"
-#include "Open3D/Utility/Console.h"
-#include "Open3D/Utility/Eigen.h"
 #include "Open3D/IO/ClassIO/ImageWarpingFieldIO.h"
 #include "Open3D/IO/ClassIO/PinholeCameraTrajectoryIO.h"
+#include "Open3D/Utility/Console.h"
+#include "Open3D/Utility/Eigen.h"
 
 namespace open3d {
 
