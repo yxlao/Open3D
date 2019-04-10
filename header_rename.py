@@ -93,6 +93,8 @@ def sort_includes(lines, file_path):
                 external_header_lines.append(header_line)
             elif '#include "'  in header_line:
                 open3d_header_lines.append(header_line)
+        # external_header_lines = list(sorted(external_header_lines))
+        # open3d_header_lines = list(sorted(open3d_header_lines))
 
         header_lines = []
         if self_header_line is not None:
