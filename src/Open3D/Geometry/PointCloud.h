@@ -26,10 +26,10 @@
 
 #pragma once
 
+#include <Eigen/Core>
+#include <memory>
 #include <tuple>
 #include <vector>
-#include <memory>
-#include <Eigen/Core>
 
 #include "Open3D/Geometry/Geometry3D.h"
 #include "Open3D/Geometry/KDTreeSearchParam.h"

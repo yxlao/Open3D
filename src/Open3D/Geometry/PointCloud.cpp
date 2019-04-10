@@ -28,8 +28,8 @@
 
 #include <Eigen/Dense>
 
-#include "Open3D/Utility/Console.h"
 #include "Open3D/Geometry/KDTreeFlann.h"
+#include "Open3D/Utility/Console.h"
 
 namespace open3d {
 namespace geometry {
