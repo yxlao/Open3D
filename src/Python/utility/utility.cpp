@@ -24,9 +24,10 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
+#include "Python/utility/utility.h"
+
 #include "Python/open3d_pybind.h"
 #include "Python/docstring.h"
-#include "Python/utility/utility.h"
 
 using namespace open3d;
 

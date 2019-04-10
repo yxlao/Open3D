@@ -24,13 +24,14 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
+
+#include <algorithm>
+
 #include "TestUtility/UnitTest.h"
 #include "Open3D/Geometry/PointCloud.h"
 #include "Open3D/Geometry/Image.h"
 #include "Open3D/Geometry/RGBDImage.h"
 #include "Open3D/Camera/PinholeCameraIntrinsic.h"
-
-#include <algorithm>
 
 using namespace Eigen;
 using namespace open3d;

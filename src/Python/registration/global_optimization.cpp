@@ -24,9 +24,9 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
+
 #include "Python/registration/registration.h"
 #include "Python/docstring.h"
-
 #include "Open3D/Registration/PoseGraph.h"
 #include "Open3D/Registration/GlobalOptimization.h"
 #include "Open3D/Registration/GlobalOptimizationMethod.h"

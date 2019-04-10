@@ -25,6 +25,7 @@
 // ----------------------------------------------------------------------------
 
 #include "Open3D/Open3DConfig.h"
+
 #include "Open3D/Utility/Console.h"
 
 namespace open3d {

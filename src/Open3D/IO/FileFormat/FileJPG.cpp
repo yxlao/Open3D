@@ -24,6 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
+
 #include <cstddef>
 #include <cstdio>
 #include <jpeglib.h>

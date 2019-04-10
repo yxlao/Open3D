@@ -26,10 +26,12 @@
 
 #pragma once
 
+
 #include <iostream>
 #include <vector>
 #include <tuple>
 #include <Eigen/Core>
+
 #include "Open3D/Odometry/OdometryOption.h"
 #include "Open3D/Utility/Eigen.h"
 

@@ -27,6 +27,7 @@
 #pragma once
 
 // Core
+
 #include "Open3D/Utility/Helper.h"
 #include "Open3D/Utility/Console.h"
 #include "Open3D/Utility/Timer.h"
@@ -53,8 +54,6 @@
 #include "Open3D/Integration/TSDFVolume.h"
 #include "Open3D/Integration/UniformTSDFVolume.h"
 #include "Open3D/Integration/ScalableTSDFVolume.h"
-
-// IO
 #include "Open3D/IO/ClassIO/PointCloudIO.h"
 #include "Open3D/IO/ClassIO/VoxelGridIO.h"
 #include "Open3D/IO/ClassIO/TriangleMeshIO.h"
@@ -64,8 +63,6 @@
 #include "Open3D/IO/ClassIO/IJsonConvertibleIO.h"
 #include "Open3D/IO/ClassIO/FeatureIO.h"
 #include "Open3D/IO/ClassIO/PoseGraphIO.h"
-
-// Visualization
 #include "Open3D/Visualization/Utility/BoundingBox.h"
 #include "Open3D/Visualization/Utility/SelectionPolygon.h"
 #include "Open3D/Visualization/Utility/SelectionPolygonVolume.h"
@@ -77,5 +74,4 @@
 #include "Open3D/Visualization/Visualizer/ViewControl.h"
 #include "Open3D/Visualization/Visualizer/ViewControlWithCustomAnimation.h"
 #include "Open3D/Visualization/Visualizer/ViewControlWithEditing.h"
-
 #include "Open3D/Open3DConfig.h"

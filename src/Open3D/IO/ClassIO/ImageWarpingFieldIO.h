@@ -26,8 +26,10 @@
 
 #pragma once
 
+
 #include <memory>
 #include <string>
+
 #include "Open3D/ColorMap/ImageWarpingField.h"
 
 namespace open3d {

@@ -24,10 +24,11 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "TestUtility/UnitTest.h"
 
 #include <Eigen/Core>
 #include <iostream>
+
+#include "TestUtility/UnitTest.h"
 
 using namespace std;
 using namespace unit_test;

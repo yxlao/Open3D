@@ -24,12 +24,13 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Open3D/IO/ClassIO/PointCloudIO.h"
 
 #include <cstdio>
 #include <sstream>
 #include <cstdint>
 #include <liblzf/lzf.h>
+
+#include "Open3D/IO/ClassIO/PointCloudIO.h"
 #include "Open3D/Utility/Console.h"
 #include "Open3D/Utility/Helper.h"
 

@@ -26,9 +26,11 @@
 
 #pragma once
 
+
 #include <vector>
 #include <memory>
 #include <Eigen/Core>
+
 #include "Open3D/Geometry/Geometry3D.h"
 
 namespace open3d {

@@ -26,8 +26,10 @@
 
 #pragma once
 
+
 #include <memory>
 #include <vector>
+
 #include "Open3D/ColorMap/EigenHelperForNonRigidOptimization.h"
 #include "Open3D/Utility/Eigen.h"
 

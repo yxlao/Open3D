@@ -24,12 +24,12 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "TestUtility/UnitTest.h"
-
-#include "Open3D/Geometry/Image.h"
-#include "Open3D/Geometry/RGBDImage.h"
 
 #include <vector>
+
+#include "TestUtility/UnitTest.h"
+#include "Open3D/Geometry/Image.h"
+#include "Open3D/Geometry/RGBDImage.h"
 
 using namespace open3d;
 using namespace std;

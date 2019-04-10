@@ -28,7 +28,6 @@
 
 #include <Eigen/Dense>
 #include <GLFW/glfw3.h>
-
 #include <cmath>  // jspark
 
 namespace open3d {

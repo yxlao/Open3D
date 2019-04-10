@@ -25,9 +25,10 @@
 // ----------------------------------------------------------------------------
 
 #include "Open3D/Utility/Eigen.h"
-#include <Eigen/Sparse>
 
+#include <Eigen/Sparse>
 #include <Eigen/Geometry>
+
 #include "Open3D/Utility/Console.h"
 
 namespace open3d {

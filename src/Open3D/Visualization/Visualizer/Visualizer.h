@@ -26,13 +26,13 @@
 
 #pragma once
 
+
 #include <string>
 #include <memory>
-
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include "Open3D/Geometry/Geometry.h"
 
+#include "Open3D/Geometry/Geometry.h"
 #include "Open3D/Visualization/Utility/ColorMap.h"
 #include "Open3D/Visualization/Utility/BoundingBox.h"
 #include "Open3D/Visualization/Visualizer/ViewControl.h"

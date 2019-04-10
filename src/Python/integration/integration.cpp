@@ -25,8 +25,8 @@
 // ----------------------------------------------------------------------------
 
 #include "Python/integration/integration.h"
-#include "Python/docstring.h"
 
+#include "Python/docstring.h"
 #include "Open3D/Integration/TSDFVolume.h"
 #include "Open3D/Integration/UniformTSDFVolume.h"
 #include "Open3D/Integration/ScalableTSDFVolume.h"

@@ -24,12 +24,12 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
+#include "Python/io/io.h"
+
 #include <unordered_map>
 #include <string>
 
-#include "Python/io/io.h"
 #include "Python/docstring.h"
-
 #include "Open3D/Camera/PinholeCameraIntrinsic.h"
 #include "Open3D/Camera/PinholeCameraTrajectory.h"
 #include "Open3D/IO/ClassIO/FeatureIO.h"

@@ -24,10 +24,11 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "TestUtility/UnitTest.h"
 
-#include "Open3D/Camera/PinholeCameraTrajectory.h"
 #include <json/json.h>
+
+#include "TestUtility/UnitTest.h"
+#include "Open3D/Camera/PinholeCameraTrajectory.h"
 
 using namespace Eigen;
 using namespace open3d;

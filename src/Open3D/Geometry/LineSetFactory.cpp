@@ -24,9 +24,10 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Open3D/Geometry/LineSet.h"
 
 #include <Eigen/Dense>
+
+#include "Open3D/Geometry/LineSet.h"
 #include "Open3D/Geometry/PointCloud.h"
 
 namespace open3d {

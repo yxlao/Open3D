@@ -24,10 +24,10 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
+
 #include <thread>
 
 #include "Open3D/Open3D.h"
-
 #include "Tools/ManuallyAlignPointCloud/VisualizerForAlignment.h"
 
 void PrintTransformation(const Eigen::Matrix4d &transformation) {

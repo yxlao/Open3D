@@ -24,9 +24,9 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
+
 #include "Python/visualization/visualization.h"
 #include "Python/docstring.h"
-
 #include "Open3D/Utility/FileSystem.h"
 #include "Open3D/Geometry/PointCloud.h"
 #include "Open3D/Geometry/TriangleMesh.h"

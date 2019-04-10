@@ -26,8 +26,10 @@
 
 #pragma once
 
+
 #include <vector>
 #include <Eigen/Core>
+
 #include "Open3D/Visualization/Shader/ShaderWrapper.h"
 
 namespace open3d {

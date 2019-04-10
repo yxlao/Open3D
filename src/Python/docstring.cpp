@@ -24,6 +24,8 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
+#include "Python/docstring.h"
+
 #include <string>
 #include <unordered_map>
 #include <tuple>
@@ -31,7 +33,6 @@
 #include <sstream>
 #include <regex>
 
-#include "Python/docstring.h"
 #include "Open3D/Utility/Helper.h"
 
 namespace open3d {

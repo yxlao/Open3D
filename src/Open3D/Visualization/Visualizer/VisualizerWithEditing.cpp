@@ -27,6 +27,7 @@
 #include "Open3D/Visualization/Visualizer/VisualizerWithEditing.h"
 
 #include <tinyfiledialogs/tinyfiledialogs.h>
+
 #include "Open3D/Geometry/PointCloud.h"
 #include "Open3D/Geometry/LineSet.h"
 #include "Open3D/Geometry/TriangleMesh.h"

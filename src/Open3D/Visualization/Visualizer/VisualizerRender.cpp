@@ -24,8 +24,8 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Open3D/Visualization/Visualizer/Visualizer.h"
 
+#include "Open3D/Visualization/Visualizer/Visualizer.h"
 #include "Open3D/Visualization/Visualizer/ViewParameters.h"
 #include "Open3D/Visualization/Visualizer/ViewTrajectory.h"
 #include "Open3D/Camera/PinholeCameraTrajectory.h"
@@ -33,7 +33,6 @@
 #include "Open3D/IO/ClassIO/ImageIO.h"
 #include "Open3D/IO/ClassIO/PointCloudIO.h"
 #include "Open3D/IO/ClassIO/IJsonConvertibleIO.h"
-
 #include "Open3D/Visualization/Utility/GLHelper.h"
 
 namespace open3d {

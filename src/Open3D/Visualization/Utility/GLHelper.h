@@ -26,8 +26,8 @@
 
 #pragma once
 
-#include <string>
 
+#include <string>
 #include <Eigen/Core>
 #include <GLFW/glfw3.h>
 

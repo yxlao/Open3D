@@ -26,8 +26,10 @@
 
 #pragma once
 
+
 #include <memory>
 #include <unordered_map>
+
 #include "Open3D/Integration/TSDFVolume.h"
 #include "Open3D/Utility/Helper.h"
 

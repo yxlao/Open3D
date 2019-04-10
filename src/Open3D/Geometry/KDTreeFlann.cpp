@@ -32,6 +32,7 @@
 #include "Open3D/Geometry/KDTreeFlann.h"
 
 #include <flann/flann.hpp>
+
 #include "Open3D/Geometry/PointCloud.h"
 #include "Open3D/Geometry/TriangleMesh.h"
 #include "Open3D/Geometry/HalfEdgeTriangleMesh.h"

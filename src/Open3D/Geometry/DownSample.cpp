@@ -24,12 +24,12 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Open3D/Geometry/PointCloud.h"
-#include "Open3D/Geometry/TriangleMesh.h"
 
 #include <unordered_map>
 #include <numeric>
 
+#include "Open3D/Geometry/PointCloud.h"
+#include "Open3D/Geometry/TriangleMesh.h"
 #include "Open3D/Utility/Helper.h"
 #include "Open3D/Utility/Console.h"
 #include "Open3D/Geometry/KDTreeFlann.h"

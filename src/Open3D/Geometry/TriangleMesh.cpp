@@ -28,8 +28,8 @@
 
 #include <unordered_map>
 #include <tuple>
-
 #include <Eigen/Dense>
+
 #include "Open3D/Utility/Helper.h"
 #include "Open3D/Utility/Console.h"
 

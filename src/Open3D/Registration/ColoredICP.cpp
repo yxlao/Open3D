@@ -27,12 +27,12 @@
 #include "Open3D/Registration/ColoredICP.h"
 
 #include <Eigen/Dense>
+#include <iostream>
+
 #include "Open3D/Geometry/PointCloud.h"
 #include "Open3D/Geometry/KDTreeFlann.h"
 #include "Open3D/Geometry/KDTreeSearchParam.h"
 #include "Open3D/Utility/Eigen.h"
-
-#include <iostream>
 #include "Open3D/Utility/Console.h"
 
 namespace open3d {

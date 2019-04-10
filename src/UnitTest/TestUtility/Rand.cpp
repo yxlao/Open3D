@@ -25,9 +25,10 @@
 // ----------------------------------------------------------------------------
 
 #include "UnitTest/TestUtility/Rand.h"
-#include "UnitTest/TestUtility/Raw.h"
 
 #include <iostream>
+
+#include "UnitTest/TestUtility/Raw.h"
 
 using namespace Eigen;
 using namespace std;

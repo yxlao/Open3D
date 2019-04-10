@@ -27,6 +27,7 @@
 #include "Open3D/ColorMap/ImageWarpingField.h"
 
 #include <json/json.h>
+
 #include "Open3D/Utility/Console.h"
 
 namespace open3d {
