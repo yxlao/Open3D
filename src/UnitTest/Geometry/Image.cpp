@@ -24,8 +24,8 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Open3D/Camera/PinholeCameraIntrinsic.h"
 #include "Open3D/Geometry/Image.h"
+#include "Open3D/Camera/PinholeCameraIntrinsic.h"
 #include "TestUtility/UnitTest.h"
 
 using namespace Eigen;

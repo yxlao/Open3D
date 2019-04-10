@@ -24,9 +24,9 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
+#include <liblzf/lzf.h>
 #include <cstdint>
 #include <cstdio>
-#include <liblzf/lzf.h>
 #include <sstream>
 
 #include "Open3D/IO/ClassIO/PointCloudIO.h"

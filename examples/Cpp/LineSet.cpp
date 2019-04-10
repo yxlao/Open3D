@@ -24,9 +24,9 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
+#include <Eigen/Dense>
 #include <cstdio>
 #include <vector>
-#include <Eigen/Dense>
 
 #include <Open3D/Open3D.h>
 

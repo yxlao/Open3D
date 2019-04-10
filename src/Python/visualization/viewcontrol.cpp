@@ -24,8 +24,8 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Open3D/IO/ClassIO/IJsonConvertibleIO.h"
 #include "Open3D/Visualization/Visualizer/ViewControl.h"
+#include "Open3D/IO/ClassIO/IJsonConvertibleIO.h"
 #include "Python/docstring.h"
 #include "Python/visualization/visualization.h"
 #include "Python/visualization/visualization_trampoline.h"

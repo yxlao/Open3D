@@ -34,7 +34,6 @@
 #include "Open3D/Registration/Registration.h"
 #include "Open3D/Registration/TransformationEstimation.h"
 #include "Python/docstring.h"
-#include "Python/docstring.h"
 
 using namespace open3d;
 

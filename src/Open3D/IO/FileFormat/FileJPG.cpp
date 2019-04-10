@@ -26,6 +26,7 @@
 
 #include <cstddef>
 #include <cstdio>
+
 #include <jpeglib.h>
 
 #include "Open3D/IO/ClassIO/ImageIO.h"

@@ -24,8 +24,8 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include <fstream>
 #include <json/json.h>
+#include <fstream>
 #include <sstream>
 
 #include "Open3D/IO/ClassIO/IJsonConvertibleIO.h"

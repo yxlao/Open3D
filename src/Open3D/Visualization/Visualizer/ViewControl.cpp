@@ -26,8 +26,8 @@
 
 #include "Open3D/Visualization/Visualizer/ViewControl.h"
 
-#include <Eigen/Dense>
 #include <GLFW/glfw3.h>
+#include <Eigen/Dense>
 #include <cmath>  // jspark
 
 namespace open3d {

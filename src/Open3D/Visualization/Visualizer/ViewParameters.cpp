@@ -26,8 +26,8 @@
 
 #include "Open3D/Visualization/Visualizer/ViewParameters.h"
 
-#include <Eigen/Dense>
 #include <json/json.h>
+#include <Eigen/Dense>
 
 #include "Open3D/Utility/Console.h"
 

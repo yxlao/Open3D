@@ -24,9 +24,9 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
+#include "Open3D/Geometry/PointCloud.h"
 #include "Open3D/Camera/PinholeCameraIntrinsic.h"
 #include "Open3D/Geometry/Image.h"
-#include "Open3D/Geometry/PointCloud.h"
 #include "Open3D/Geometry/RGBDImage.h"
 #include "Python/docstring.h"
 #include "Python/geometry/geometry.h"

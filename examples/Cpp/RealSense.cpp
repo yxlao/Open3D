@@ -24,10 +24,10 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include <iostream>
-#include <thread>
-#include <librealsense/rs.hpp>
 #include <Open3D/Open3D.h>
+#include <iostream>
+#include <librealsense/rs.hpp>
+#include <thread>
 
 using namespace open3d;
 

@@ -26,8 +26,8 @@
 
 #include "Open3D/Camera/PinholeCameraIntrinsic.h"
 
-#include <Eigen/Dense>
 #include <json/json.h>
+#include <Eigen/Dense>
 
 #include "Open3D/Utility/Console.h"
 

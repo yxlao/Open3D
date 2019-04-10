@@ -26,16 +26,16 @@
 
 #include "Open3D/Utility/Console.h"
 
-#include <cstdio>
-#include <cstdarg>
-#include <cstdlib>
-#include <string>
-#include <ctime>
 #include <algorithm>
+#include <cerrno>
 #include <climits>
 #include <cmath>
+#include <cstdarg>
 #include <cstdint>
-#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
+#include <string>
 #ifdef _WIN32
 #include <windows.h>
 #endif

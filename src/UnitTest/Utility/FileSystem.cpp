@@ -24,9 +24,9 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include <algorithm>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <algorithm>
 
 #include "Open3D/Utility/FileSystem.h"
 #include "TestUtility/UnitTest.h"
