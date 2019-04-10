@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "SelectionPolygon.h"
+#include "Open3D/Visualization/Utility/SelectionPolygon.h"
 
 #include <Open3D/Geometry/PointCloud.h>
 #include <Open3D/Geometry/TriangleMesh.h>

@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "SimpleBlackShader.h"
+#include "Open3D/Visualization/Shader/SimpleBlackShader.h"
 
 #include <Open3D/Geometry/PointCloud.h>
 #include <Open3D/Geometry/TriangleMesh.h>

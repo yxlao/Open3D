@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Feature.h"
+#include "Open3D/Registration/Feature.h"
 
 #include <Eigen/Dense>
 #include <Open3D/Utility/Console.h>

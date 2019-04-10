@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "PinholeCameraIntrinsic.h"
+#include "Open3D/Camera/PinholeCameraIntrinsic.h"
 
 #include <Eigen/Dense>
 #include <json/json.h>

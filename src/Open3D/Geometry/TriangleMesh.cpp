@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "TriangleMesh.h"
+#include "Open3D/Geometry/TriangleMesh.h"
 
 #include <unordered_map>
 #include <tuple>

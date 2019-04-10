@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Registration.h"
+#include "Open3D/Registration/Registration.h"
 
 #include <cstdlib>
 #include <ctime>

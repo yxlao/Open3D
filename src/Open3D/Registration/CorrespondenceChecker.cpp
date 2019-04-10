@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "CorrespondenceChecker.h"
+#include "Open3D/Registration/CorrespondenceChecker.h"
 
 #include <Eigen/Dense>
 #include <Open3D/Utility/Console.h>

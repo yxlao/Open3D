@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Simple2DShader.h"
+#include "Open3D/Visualization/Shader/Simple2DShader.h"
 
 #include <Open3D/Visualization/Shader/Shader.h>
 #include <Open3D/Visualization/Utility/SelectionPolygon.h>

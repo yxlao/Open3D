@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "IJsonConvertibleIO.h"
+#include "Open3D/IO/ClassIO/IJsonConvertibleIO.h"
 
 #include <unordered_map>
 #include <Open3D/Utility/Console.h>

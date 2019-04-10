@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "PoseGraph.h"
+#include "Open3D/Registration/PoseGraph.h"
 
 #include <json/json.h>
 #include <Open3D/Utility/Console.h>

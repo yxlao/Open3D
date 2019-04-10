@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "TransformationEstimation.h"
+#include "Open3D/Registration/TransformationEstimation.h"
 
 #include <Eigen/Geometry>
 #include <Open3D/Geometry/PointCloud.h>

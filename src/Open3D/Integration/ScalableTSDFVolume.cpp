@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "ScalableTSDFVolume.h"
+#include "Open3D/Integration/ScalableTSDFVolume.h"
 
 #include <unordered_set>
 

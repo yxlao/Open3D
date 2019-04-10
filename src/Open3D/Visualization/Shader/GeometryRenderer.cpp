@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "GeometryRenderer.h"
+#include "Open3D/Visualization/Shader/GeometryRenderer.h"
 
 #include <Open3D/Geometry/PointCloud.h>
 #include <Open3D/Geometry/LineSet.h>

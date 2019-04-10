@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Timer.h"
+#include "Open3D/Utility/Timer.h"
 
 #include <chrono>
 

@@ -25,7 +25,7 @@
 // ----------------------------------------------------------------------------
 
 #include "PinholeCameraIntrinsic.h"
-#include "PinholeCameraTrajectory.h"
+#include "Open3D/Camera/PinholeCameraTrajectory.h"
 
 #include <json/json.h>
 #include <Open3D/Utility/Console.h>

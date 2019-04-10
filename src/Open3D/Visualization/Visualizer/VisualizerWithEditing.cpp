@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "VisualizerWithEditing.h"
+#include "Open3D/Visualization/Visualizer/VisualizerWithEditing.h"
 
 #include <tinyfiledialogs/tinyfiledialogs.h>
 #include <Open3D/Geometry/PointCloud.h>

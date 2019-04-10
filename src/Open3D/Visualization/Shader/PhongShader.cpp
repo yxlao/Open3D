@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "PhongShader.h"
+#include "Open3D/Visualization/Shader/PhongShader.h"
 
 #include <Open3D/Geometry/PointCloud.h>
 #include <Open3D/Geometry/TriangleMesh.h>

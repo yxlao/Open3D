@@ -29,7 +29,7 @@
 #pragma warning(disable : 4267)
 #endif
 
-#include "KDTreeFlann.h"
+#include "Open3D/Geometry/KDTreeFlann.h"
 
 #include <flann/flann.hpp>
 #include <Open3D/Geometry/PointCloud.h>

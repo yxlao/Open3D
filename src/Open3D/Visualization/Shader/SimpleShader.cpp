@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "SimpleShader.h"
+#include "Open3D/Visualization/Shader/SimpleShader.h"
 
 #include <Open3D/Geometry/PointCloud.h>
 #include <Open3D/Geometry/VoxelGrid.h>

@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "ColorMapOptimizationJacobian.h"
+#include "Open3D/ColorMap/ColorMapOptimizationJacobian.h"
 
 #include <Open3D/ColorMap/ImageWarpingField.h>
 #include <Open3D/ColorMap/EigenHelperForNonRigidOptimization.h>

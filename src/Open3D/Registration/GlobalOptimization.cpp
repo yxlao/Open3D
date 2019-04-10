@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "GlobalOptimization.h"
+#include "Open3D/Registration/GlobalOptimization.h"
 
 #include <vector>
 #include <tuple>

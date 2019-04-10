@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "ImageIO.h"
+#include "Open3D/IO/ClassIO/ImageIO.h"
 
 #include <unordered_map>
 #include <Open3D/Utility/Console.h>

@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "ImageMaskShader.h"
+#include "Open3D/Visualization/Shader/ImageMaskShader.h"
 
 #include <algorithm>
 

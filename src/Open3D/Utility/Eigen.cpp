@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Eigen.h"
+#include "Open3D/Utility/Eigen.h"
 #include <Eigen/Sparse>
 
 #include <Eigen/Geometry>

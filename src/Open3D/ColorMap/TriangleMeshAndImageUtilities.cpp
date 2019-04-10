@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "TriangleMeshAndImageUtilities.h"
+#include "Open3D/ColorMap/TriangleMeshAndImageUtilities.h"
 
 #include <Open3D/Camera/PinholeCameraTrajectory.h>
 #include <Open3D/ColorMap/ImageWarpingField.h>

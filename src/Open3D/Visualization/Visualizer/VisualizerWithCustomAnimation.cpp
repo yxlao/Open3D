@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "VisualizerWithCustomAnimation.h"
+#include "Open3D/Visualization/Visualizer/VisualizerWithCustomAnimation.h"
 
 #include <thread>
 

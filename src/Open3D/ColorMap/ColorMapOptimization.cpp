@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "ColorMapOptimization.h"
+#include "Open3D/ColorMap/ColorMapOptimization.h"
 
 #include <Open3D/Camera/PinholeCameraTrajectory.h>
 #include <Open3D/ColorMap/ColorMapOptimizationJacobian.h>

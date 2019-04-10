@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "ImageShader.h"
+#include "Open3D/Visualization/Shader/ImageShader.h"
 
 #include <algorithm>
 

@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "ColoredICP.h"
+#include "Open3D/Registration/ColoredICP.h"
 
 #include <Eigen/Dense>
 #include <Open3D/Geometry/PointCloud.h>

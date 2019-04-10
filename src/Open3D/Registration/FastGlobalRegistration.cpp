@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "FastGlobalRegistration.h"
+#include "Open3D/Registration/FastGlobalRegistration.h"
 
 #include <ctime>
 

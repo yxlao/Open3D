@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Console.h"
+#include "Open3D/Utility/Console.h"
 
 #include <cstdio>
 #include <cstdarg>

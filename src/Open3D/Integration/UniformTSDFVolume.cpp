@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "UniformTSDFVolume.h"
+#include "Open3D/Integration/UniformTSDFVolume.h"
 
 #include <unordered_map>
 #include <thread>

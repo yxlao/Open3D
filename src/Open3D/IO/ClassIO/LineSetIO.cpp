@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "LineSetIO.h"
+#include "Open3D/IO/ClassIO/LineSetIO.h"
 
 #include <unordered_map>
 #include <Open3D/Utility/Console.h>

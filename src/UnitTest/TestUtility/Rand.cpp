@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Rand.h"
+#include "UnitTest/TestUtility/Rand.h"
 #include "Raw.h"
 
 #include <iostream>

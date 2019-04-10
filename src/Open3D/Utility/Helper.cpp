@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Helper.h"
+#include "Open3D/Utility/Helper.h"
 #include <unordered_set>
 #include <cctype>
 

@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "PinholeCameraTrajectoryIO.h"
+#include "Open3D/IO/ClassIO/PinholeCameraTrajectoryIO.h"
 
 #include <unordered_map>
 #include <Open3D/Utility/Console.h>
