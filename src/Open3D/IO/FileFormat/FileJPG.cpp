@@ -24,9 +24,11 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Open3D/IO/ClassIO/ImageIO.h"
-
+#include <cstddef>
+#include <cstdio>
 #include <jpeglib.h>
+
+#include "Open3D/IO/ClassIO/ImageIO.h"
 #include "Open3D/Utility/Console.h"
 
 namespace open3d {
