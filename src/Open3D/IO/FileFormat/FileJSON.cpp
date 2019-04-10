@@ -25,8 +25,8 @@
 // ----------------------------------------------------------------------------
 
 #include <fstream>
-#include <sstream>
 #include <json/json.h>
+#include <sstream>
 
 #include "Open3D/IO/ClassIO/IJsonConvertibleIO.h"
 #include "Open3D/Utility/Console.h"
