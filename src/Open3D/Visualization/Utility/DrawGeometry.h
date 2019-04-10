@@ -26,11 +26,11 @@
 
 #pragma once
 
-#include <string>
-#include <memory>
-#include <vector>
-#include <map>
 #include <functional>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 
 #include "Open3D/Geometry/Geometry.h"
 

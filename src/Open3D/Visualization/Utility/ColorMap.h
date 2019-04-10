@@ -26,8 +26,8 @@
 
 #pragma once
 
-#include <memory>
 #include <Eigen/Core>
+#include <memory>
 
 namespace open3d {
 namespace visualization {

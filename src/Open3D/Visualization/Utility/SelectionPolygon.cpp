@@ -29,10 +29,10 @@
 #include "Open3D/Geometry/PointCloud.h"
 #include "Open3D/Geometry/TriangleMesh.h"
 #include "Open3D/Utility/Console.h"
+#include "Open3D/Visualization/Utility/GLHelper.h"
+#include "Open3D/Visualization/Utility/SelectionPolygonVolume.h"
 #include "Open3D/Visualization/Visualizer/ViewControl.h"
 #include "Open3D/Visualization/Visualizer/ViewControlWithEditing.h"
-#include "Open3D/Visualization/Utility/SelectionPolygonVolume.h"
-#include "Open3D/Visualization/Utility/GLHelper.h"
 
 namespace open3d {
 namespace visualization {

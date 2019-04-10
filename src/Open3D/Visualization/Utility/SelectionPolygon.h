@@ -26,9 +26,9 @@
 
 #pragma once
 
-#include <vector>
-#include <memory>
 #include <Eigen/Core>
+#include <memory>
+#include <vector>
 
 #include "Open3D/Geometry/Geometry2D.h"
 #include "Open3D/Geometry/Image.h"
