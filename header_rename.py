@@ -103,7 +103,7 @@ def sort_includes(lines, file_path):
             elif 'def' in header_line:
                 abort_change = True
 
-        if ("Visualization/Shader" in str(file_path)):
+        if ("Visualization/Visualizer" in str(file_path)):
             external_header_lines = list(sorted(external_header_lines))
             open3d_header_lines = list(sorted(open3d_header_lines))
 
