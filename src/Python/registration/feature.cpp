@@ -24,7 +24,6 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-
 #include "Python/registration/registration.h"
 #include "Python/docstring.h"
 #include "Open3D/Geometry/PointCloud.h"

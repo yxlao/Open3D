@@ -24,7 +24,6 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-
 #include "Python/geometry/geometry_trampoline.h"
 #include "Python/geometry/geometry.h"
 #include "Python/docstring.h"

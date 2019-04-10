@@ -24,7 +24,6 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-
 #include <vector>
 
 #include "TestUtility/UnitTest.h"

@@ -24,7 +24,6 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-
 #include "Python/visualization/visualization.h"
 #include "Python/docstring.h"
 #include "Open3D/Utility/FileSystem.h"

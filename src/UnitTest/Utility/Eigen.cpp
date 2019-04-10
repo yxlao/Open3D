@@ -24,7 +24,6 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-
 #include "TestUtility/UnitTest.h"
 #include "Open3D/Utility/Eigen.h"
 

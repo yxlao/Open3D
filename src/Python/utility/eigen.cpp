@@ -24,7 +24,6 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-
 #include "Python/open3d_pybind.h"
 #include "Python/docstring.h"
 

@@ -24,7 +24,6 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-
 #include "TestUtility/UnitTest.h"
 #include "TestUtility/Raw.h"
 #include "Open3D/Geometry/LineSet.h"

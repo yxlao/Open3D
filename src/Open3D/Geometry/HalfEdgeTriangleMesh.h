@@ -26,7 +26,6 @@
 
 #pragma once
 
-
 #include <Eigen/Core>
 #include <unordered_map>
 

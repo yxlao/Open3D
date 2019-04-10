@@ -1,9 +1,13 @@
 from pathlib import Path
 import re
+import subprocess
 from pprint import pprint
 
 root_dir = Path("/home/ylao/repo/Open3D/src")
 
+def format_file(file_path):
+    cmd = ["/usr/bin/clang-format-5.0", "-i", str(file_path)]
+    subprocess.run(cmd)
 
 def fix_angle_brackets(lines):
     for line_idx in range(len(lines)):
@@ -96,8 +100,10 @@ def sort_includes(lines, file_path):
                 open3d_header_lines.append(header_line)
             elif 'def' in header_line:
                 abort_change = True
-        # external_header_lines = list(sorted(external_header_lines))
-        # open3d_header_lines = list(sorted(open3d_header_lines))
+
+        if "Open3D/Camera" in str(file_path):
+            external_header_lines = list(sorted(external_header_lines))
+            open3d_header_lines = list(sorted(open3d_header_lines))
 
         header_lines = []
         if self_header_line is not None:
@@ -122,6 +128,7 @@ def sort_includes(lines, file_path):
 def process_file(file_path, map_header_file_name_to_relative_path):
     with open(file_path, "r") as f:
         lines = f.readlines()
+    before_text = "".join(lines)
 
     lines = fix_self_include_header(lines, file_path)
     lines = fix_angle_brackets(lines)
@@ -133,6 +140,9 @@ def process_file(file_path, map_header_file_name_to_relative_path):
         for line in lines:
             f.write(line)
 
+    after_text = "".join(lines)
+    if before_text != after_text:
+        format_file(file_path)
 
 if __name__ == "__main__":
     cpp_file_paths = list(root_dir.glob("**/*.cpp"))

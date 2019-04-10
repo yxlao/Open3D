@@ -24,7 +24,6 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-
 #include <json/json.h>
 
 #include "TestUtility/UnitTest.h"

@@ -24,7 +24,6 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <algorithm>

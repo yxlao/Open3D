@@ -26,7 +26,6 @@
 
 #pragma once
 
-
 #include "Open3D/Geometry/RGBDImage.h"
 #include "Open3D/Geometry/PointCloud.h"
 #include "Open3D/Geometry/TriangleMesh.h"

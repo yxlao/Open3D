@@ -24,7 +24,6 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-
 #include "TestUtility/UnitTest.h"
 // #include "Open3D/ColorMap/ColorMapOptimization.h"
 #include "Open3D/Camera/PinholeCameraTrajectory.h"

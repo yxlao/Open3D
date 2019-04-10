@@ -24,7 +24,6 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-
 #include <cstdio>
 #include <sstream>
 #include <cstdint>

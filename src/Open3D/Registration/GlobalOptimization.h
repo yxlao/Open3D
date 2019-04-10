@@ -26,7 +26,6 @@
 
 #pragma once
 
-
 #include <memory>
 
 #include "Open3D/Registration/GlobalOptimizationMethod.h"

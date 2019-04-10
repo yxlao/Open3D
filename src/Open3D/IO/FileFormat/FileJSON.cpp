@@ -24,7 +24,6 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-
 #include <fstream>
 #include <sstream>
 #include <json/json.h>

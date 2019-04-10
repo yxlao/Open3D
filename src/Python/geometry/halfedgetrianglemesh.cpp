@@ -24,7 +24,6 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-
 #include <sstream>
 
 #include "Python/geometry/geometry_trampoline.h"

@@ -26,7 +26,6 @@
 
 #pragma once
 
-
 #include <Eigen/Core>
 
 #include "Open3D/Utility/Eigen.h"

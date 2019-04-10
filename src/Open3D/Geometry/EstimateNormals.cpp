@@ -24,7 +24,6 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-
 #include <Eigen/Eigenvalues>
 
 #include "Open3D/Geometry/PointCloud.h"

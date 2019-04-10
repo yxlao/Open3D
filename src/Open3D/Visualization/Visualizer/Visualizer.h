@@ -26,7 +26,6 @@
 
 #pragma once
 
-
 #include <string>
 #include <memory>
 #include <GL/glew.h>

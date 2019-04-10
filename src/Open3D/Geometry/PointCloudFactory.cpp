@@ -24,7 +24,6 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-
 #include <Eigen/Dense>
 
 #include "Open3D/Geometry/PointCloud.h"

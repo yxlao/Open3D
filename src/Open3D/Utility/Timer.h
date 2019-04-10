@@ -26,7 +26,6 @@
 
 #pragma once
 
-
 #include <string>
 
 namespace open3d {

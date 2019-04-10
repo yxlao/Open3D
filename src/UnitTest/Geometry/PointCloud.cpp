@@ -24,7 +24,6 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-
 #include <algorithm>
 
 #include "TestUtility/UnitTest.h"

@@ -26,7 +26,6 @@
 
 #pragma once
 
-
 #include <pybind11/pybind11.h>  // Include first to suppress compiler warnings
 #include <pybind11/detail/internals.h>
 #include <pybind11/stl.h>

@@ -24,7 +24,6 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-
 #include "Open3D/Visualization/Visualizer/Visualizer.h"
 #include "Open3D/Visualization/Visualizer/ViewParameters.h"
 #include "Open3D/Visualization/Visualizer/ViewTrajectory.h"

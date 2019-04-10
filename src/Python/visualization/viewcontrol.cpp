@@ -24,7 +24,6 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-
 #include "Python/visualization/visualization.h"
 #include "Python/visualization/visualization_trampoline.h"
 #include "Python/docstring.h"

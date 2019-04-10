@@ -26,7 +26,6 @@
 
 #pragma once
 
-
 #include "Python/open3d_pybind.h"
 
 void pybind_geometry(py::module &m);

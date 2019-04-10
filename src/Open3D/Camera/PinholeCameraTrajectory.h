@@ -26,9 +26,8 @@
 
 #pragma once
 
-
-#include <vector>
 #include <memory>
+#include <vector>
 
 #include "Open3D/Camera/PinholeCameraParameters.h"
 
