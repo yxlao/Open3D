@@ -77,7 +77,6 @@ if __name__ == "__main__":
         else:
             map_header_file_name_to_relative_path[
                 header_file_name] = str(header_relative_path)
-    print(map_header_file_name_to_relative_path)
 
     for file_path in file_paths:
         process_file(file_path, map_header_file_name_to_relative_path)
