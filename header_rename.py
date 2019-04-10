@@ -6,7 +6,7 @@ root_dir = Path("/home/ylao/repo/Open3D/src")
 def fix_angle_brackets(lines):
     for line_idx in range(len(lines)):
         line = lines[line_idx]
-        if "#include <" in line:
+        if "#include <Open3D" in line:
             print(f"Convert: {line}")
             line = line.replace('<', '"')
             line = line.replace('>', '"')
