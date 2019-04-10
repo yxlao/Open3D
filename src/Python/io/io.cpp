@@ -26,21 +26,21 @@
 
 #include "Python/io/io.h"
 
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
 
-#include "Python/docstring.h"
 #include "Open3D/Camera/PinholeCameraIntrinsic.h"
 #include "Open3D/Camera/PinholeCameraTrajectory.h"
 #include "Open3D/IO/ClassIO/FeatureIO.h"
+#include "Open3D/IO/ClassIO/IJsonConvertibleIO.h"
 #include "Open3D/IO/ClassIO/ImageIO.h"
 #include "Open3D/IO/ClassIO/LineSetIO.h"
-#include "Open3D/IO/ClassIO/IJsonConvertibleIO.h"
 #include "Open3D/IO/ClassIO/PinholeCameraTrajectoryIO.h"
 #include "Open3D/IO/ClassIO/PointCloudIO.h"
 #include "Open3D/IO/ClassIO/PoseGraphIO.h"
 #include "Open3D/IO/ClassIO/TriangleMeshIO.h"
 #include "Open3D/IO/ClassIO/VoxelGridIO.h"
+#include "Python/docstring.h"
 
 using namespace open3d;
 

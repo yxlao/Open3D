@@ -103,9 +103,8 @@ def sort_includes(lines, file_path):
             elif 'def' in header_line:
                 abort_change = True
 
-        if ("Visualization/" in str(file_path)):
-            external_header_lines = list(sorted(external_header_lines))
-            open3d_header_lines = list(sorted(open3d_header_lines))
+        external_header_lines = list(sorted(external_header_lines))
+        open3d_header_lines = list(sorted(open3d_header_lines))
 
         header_lines = []
         if self_header_line is not None:
