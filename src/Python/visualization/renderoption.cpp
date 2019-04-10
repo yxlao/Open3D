@@ -28,8 +28,8 @@
 #include "Python/visualization/visualization_trampoline.h"
 #include "Python/docstring.h"
 
-#include <Open3D/Visualization/Visualizer/RenderOption.h>
-#include <Open3D/IO/ClassIO/IJsonConvertibleIO.h>
+#include "Open3D/Visualization/Visualizer/RenderOption.h"
+#include "Open3D/IO/ClassIO/IJsonConvertibleIO.h"
 using namespace open3d;
 
 void pybind_renderoption(py::module &m) {

@@ -27,8 +27,8 @@
 #include "Python/registration/registration.h"
 #include "Python/docstring.h"
 
-#include <Open3D/Geometry/PointCloud.h>
-#include <Open3D/Registration/Feature.h>
+#include "Open3D/Geometry/PointCloud.h"
+#include "Open3D/Registration/Feature.h"
 
 using namespace open3d;
 

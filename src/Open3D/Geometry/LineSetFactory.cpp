@@ -27,7 +27,7 @@
 #include "LineSet.h"
 
 #include <Eigen/Dense>
-#include <Open3D/Geometry/PointCloud.h>
+#include "Open3D/Geometry/PointCloud.h"
 
 namespace open3d {
 namespace geometry {

@@ -30,9 +30,9 @@
 #include <unordered_map>
 #include <numeric>
 
-#include <Open3D/Utility/Helper.h>
-#include <Open3D/Utility/Console.h>
-#include <Open3D/Geometry/KDTreeFlann.h>
+#include "Open3D/Utility/Helper.h"
+#include "Open3D/Utility/Console.h"
+#include "Open3D/Geometry/KDTreeFlann.h"
 
 namespace open3d {
 

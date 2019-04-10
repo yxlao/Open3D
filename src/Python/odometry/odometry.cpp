@@ -27,11 +27,11 @@
 #include "Python/odometry/odometry.h"
 #include "Python/docstring.h"
 
-#include <Open3D/Geometry/Image.h>
-#include <Open3D/Geometry/RGBDImage.h>
-#include <Open3D/Odometry/Odometry.h>
-#include <Open3D/Odometry/OdometryOption.h>
-#include <Open3D/Odometry/RGBDOdometryJacobian.h>
+#include "Open3D/Geometry/Image.h"
+#include "Open3D/Geometry/RGBDImage.h"
+#include "Open3D/Odometry/Odometry.h"
+#include "Open3D/Odometry/OdometryOption.h"
+#include "Open3D/Odometry/RGBDOdometryJacobian.h"
 
 using namespace open3d;
 

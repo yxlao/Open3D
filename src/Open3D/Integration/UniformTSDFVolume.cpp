@@ -29,8 +29,8 @@
 #include <unordered_map>
 #include <thread>
 
-#include <Open3D/Utility/Helper.h>
-#include <Open3D/Integration/MarchingCubesConst.h>
+#include "Open3D/Utility/Helper.h"
+#include "Open3D/Integration/MarchingCubesConst.h"
 
 namespace open3d {
 namespace integration {

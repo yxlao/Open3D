@@ -28,7 +28,7 @@
 #include "Python/geometry/geometry.h"
 #include "Python/docstring.h"
 
-#include <Open3D/Geometry/HalfEdgeTriangleMesh.h>
+#include "Open3D/Geometry/HalfEdgeTriangleMesh.h"
 #include <sstream>
 
 using namespace open3d;

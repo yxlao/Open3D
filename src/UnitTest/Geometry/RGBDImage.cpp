@@ -26,8 +26,8 @@
 
 #include "TestUtility/UnitTest.h"
 
-#include <Open3D/Geometry/Image.h>
-#include <Open3D/Geometry/RGBDImage.h>
+#include "Open3D/Geometry/Image.h"
+#include "Open3D/Geometry/RGBDImage.h"
 
 #include <vector>
 

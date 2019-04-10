@@ -27,10 +27,10 @@
 #include "Python/registration/registration.h"
 #include "Python/docstring.h"
 
-#include <Open3D/Registration/PoseGraph.h>
-#include <Open3D/Registration/GlobalOptimization.h>
-#include <Open3D/Registration/GlobalOptimizationMethod.h>
-#include <Open3D/Registration/GlobalOptimizationConvergenceCriteria.h>
+#include "Open3D/Registration/PoseGraph.h"
+#include "Open3D/Registration/GlobalOptimization.h"
+#include "Open3D/Registration/GlobalOptimizationMethod.h"
+#include "Open3D/Registration/GlobalOptimizationConvergenceCriteria.h"
 
 using namespace open3d;
 

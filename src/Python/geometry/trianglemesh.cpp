@@ -28,7 +28,7 @@
 #include "Python/geometry/geometry.h"
 #include "Python/docstring.h"
 
-#include <Open3D/Geometry/TriangleMesh.h>
+#include "Open3D/Geometry/TriangleMesh.h"
 
 using namespace open3d;
 

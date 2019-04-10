@@ -27,7 +27,7 @@
 #pragma once
 
 #include <Eigen/Core>
-#include <Open3D/Registration/Registration.h>
+#include "Open3D/Registration/Registration.h"
 
 namespace open3d {
 

@@ -28,9 +28,9 @@
 
 #include <algorithm>
 
-#include <Open3D/Geometry/Image.h>
-#include <Open3D/Visualization/Shader/Shader.h>
-#include <Open3D/Visualization/Utility/ColorMap.h>
+#include "Open3D/Geometry/Image.h"
+#include "Open3D/Visualization/Shader/Shader.h"
+#include "Open3D/Visualization/Utility/ColorMap.h"
 
 namespace open3d {
 namespace visualization {

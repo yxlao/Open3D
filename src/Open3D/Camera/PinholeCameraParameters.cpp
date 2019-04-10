@@ -27,7 +27,7 @@
 #include "Open3D/Camera/PinholeCameraParameters.h"
 
 #include <json/json.h>
-#include <Open3D/Utility/Console.h>
+#include "Open3D/Utility/Console.h"
 
 namespace open3d {
 namespace camera {

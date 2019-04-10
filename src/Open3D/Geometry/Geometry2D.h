@@ -27,7 +27,7 @@
 #pragma once
 
 #include <Eigen/Core>
-#include <Open3D/Geometry/Geometry.h>
+#include "Open3D/Geometry/Geometry.h"
 
 namespace open3d {
 namespace geometry {

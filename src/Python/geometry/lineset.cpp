@@ -28,7 +28,7 @@
 #include "Python/geometry/geometry.h"
 #include "Python/docstring.h"
 
-#include <Open3D/Geometry/LineSet.h>
+#include "Open3D/Geometry/LineSet.h"
 
 using namespace open3d;
 

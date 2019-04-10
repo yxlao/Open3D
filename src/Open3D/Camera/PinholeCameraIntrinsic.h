@@ -27,7 +27,7 @@
 #pragma once
 
 #include <Eigen/Core>
-#include <Open3D/Utility/IJsonConvertible.h>
+#include "Open3D/Utility/IJsonConvertible.h"
 
 namespace open3d {
 namespace camera {

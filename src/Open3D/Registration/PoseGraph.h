@@ -29,8 +29,8 @@
 #include <vector>
 #include <memory>
 
-#include <Open3D/Utility/IJsonConvertible.h>
-#include <Open3D/Utility/Eigen.h>
+#include "Open3D/Utility/IJsonConvertible.h"
+#include "Open3D/Utility/Eigen.h"
 
 namespace open3d {
 namespace registration {

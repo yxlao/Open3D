@@ -28,7 +28,7 @@
 #include "Python/geometry/geometry.h"
 #include "Python/docstring.h"
 
-#include <Open3D/Geometry/KDTreeFlann.h>
+#include "Open3D/Geometry/KDTreeFlann.h"
 
 using namespace open3d;
 
