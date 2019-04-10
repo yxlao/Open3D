@@ -26,8 +26,8 @@
 
 #pragma once
 
-#include <vector>
 #include <Eigen/Core>
+#include <vector>
 
 #include "Open3D/Visualization/Shader/ShaderWrapper.h"
 
