@@ -3,6 +3,18 @@ from pathlib import Path
 root_dir = Path("/home/ylao/repo/Open3D/src")
 
 
+def fix_angle_brackets(lines):
+    for line_idx in range(len(lines)):
+        line = lines[line_idx]
+        if "#include <" in line:
+            print(f"Convert: {line}")
+            line = line.replace('<', '"')
+            line = line.replace('>', '"')
+            print(f"To: {line}")
+            lines[line_idx] = line
+    return lines
+
+
 def fix_self_include_header(lines, file_path):
     header_file_name = file_path.stem + ".h"
     header_file_relative_path = file_path.relative_to(
@@ -25,7 +37,7 @@ def process_file(file_path):
         lines = f.readlines()
 
     lines = fix_self_include_header(lines, file_path)
-    # lines = fix_angle_brackets(lines, file_path)
+    lines = fix_angle_brackets(lines)
     # lines = fix_relative_paths(lines, file_path)
 
     with open(file_path, "w") as f:
