@@ -82,10 +82,11 @@ def sort_includes(lines, file_path):
         if self_header_line_idx is not None:
             del header_lines[self_header_line_idx]
 
-        print("Before ==========")
-        pprint(header_lines)
-        print("=================")
+        # print("Before ==========")
+        # pprint(header_lines)
+        # print("=================")
 
+        abort_change = False
         external_header_lines = []
         open3d_header_lines = []
         for header_line in header_lines:
@@ -93,6 +94,8 @@ def sort_includes(lines, file_path):
                 external_header_lines.append(header_line)
             elif '#include "'  in header_line:
                 open3d_header_lines.append(header_line)
+            elif 'def' in header_line:
+                abort_change = True
         # external_header_lines = list(sorted(external_header_lines))
         # open3d_header_lines = list(sorted(open3d_header_lines))
 
@@ -106,11 +109,12 @@ def sort_includes(lines, file_path):
             header_lines.append("\n")
             header_lines += open3d_header_lines
 
-        print("After ==========")
-        pprint(header_lines)
-        print("================")
+        # print("After ==========")
+        # pprint(header_lines)
+        # print("================")
 
-        lines = before_header_lines + header_lines + after_header_lines
+        if not abort_change:
+            lines = before_header_lines + header_lines + after_header_lines
 
     return lines
 
