@@ -26,17 +26,17 @@
 
 #include "Open3D/Registration/GlobalOptimization.h"
 
-#include <vector>
-#include <tuple>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
+#include <tuple>
+#include <vector>
 
-#include "Open3D/Utility/Console.h"
-#include "Open3D/Utility/Timer.h"
-#include "Open3D/Utility/Eigen.h"
-#include "Open3D/Registration/PoseGraph.h"
-#include "Open3D/Registration/GlobalOptimizationMethod.h"
 #include "Open3D/Registration/GlobalOptimizationConvergenceCriteria.h"
+#include "Open3D/Registration/GlobalOptimizationMethod.h"
+#include "Open3D/Registration/PoseGraph.h"
+#include "Open3D/Utility/Console.h"
+#include "Open3D/Utility/Eigen.h"
+#include "Open3D/Utility/Timer.h"
 
 namespace open3d {
 

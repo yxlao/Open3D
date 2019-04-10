@@ -5,9 +5,11 @@ from pprint import pprint
 
 root_dir = Path("/home/ylao/repo/Open3D/src")
 
+
 def format_file(file_path):
     cmd = ["/usr/bin/clang-format-5.0", "-i", str(file_path)]
     subprocess.run(cmd)
+
 
 def fix_angle_brackets(lines):
     for line_idx in range(len(lines)):
@@ -96,12 +98,14 @@ def sort_includes(lines, file_path):
         for header_line in header_lines:
             if "#include <" in header_line:
                 external_header_lines.append(header_line)
-            elif '#include "'  in header_line:
+            elif '#include "' in header_line:
                 open3d_header_lines.append(header_line)
             elif 'def' in header_line:
                 abort_change = True
 
-        if "Open3D/Integration" in str(file_path) or "Open3D/IO" in str(file_path):
+        if ("Open3D/Odometry" in str(file_path) or
+            "Open3D/Registration" in str(file_path) or
+            "Open3D/Utility" in str(file_path)):
             external_header_lines = list(sorted(external_header_lines))
             open3d_header_lines = list(sorted(open3d_header_lines))
 
@@ -143,6 +147,7 @@ def process_file(file_path, map_header_file_name_to_relative_path):
     after_text = "".join(lines)
     if before_text != after_text:
         format_file(file_path)
+
 
 if __name__ == "__main__":
     cpp_file_paths = list(root_dir.glob("**/*.cpp"))

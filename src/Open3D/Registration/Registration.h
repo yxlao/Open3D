@@ -26,9 +26,9 @@
 
 #pragma once
 
-#include <vector>
-#include <tuple>
 #include <Eigen/Core>
+#include <tuple>
+#include <vector>
 
 #include "Open3D/Registration/CorrespondenceChecker.h"
 #include "Open3D/Registration/TransformationEstimation.h"

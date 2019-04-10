@@ -26,8 +26,8 @@
 
 #include "Open3D/Utility/Eigen.h"
 
-#include <Eigen/Sparse>
 #include <Eigen/Geometry>
+#include <Eigen/Sparse>
 
 #include "Open3D/Utility/Console.h"
 

@@ -29,10 +29,10 @@
 #include <cstdlib>
 #include <ctime>
 
-#include "Open3D/Utility/Console.h"
-#include "Open3D/Geometry/PointCloud.h"
 #include "Open3D/Geometry/KDTreeFlann.h"
+#include "Open3D/Geometry/PointCloud.h"
 #include "Open3D/Registration/Feature.h"
+#include "Open3D/Utility/Console.h"
 
 namespace open3d {
 

@@ -29,11 +29,11 @@
 #include <Eigen/Dense>
 #include <iostream>
 
-#include "Open3D/Geometry/PointCloud.h"
 #include "Open3D/Geometry/KDTreeFlann.h"
 #include "Open3D/Geometry/KDTreeSearchParam.h"
-#include "Open3D/Utility/Eigen.h"
+#include "Open3D/Geometry/PointCloud.h"
 #include "Open3D/Utility/Console.h"
+#include "Open3D/Utility/Eigen.h"
 
 namespace open3d {
 
