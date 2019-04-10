@@ -29,8 +29,6 @@
 #include <memory>
 
 #include "Open3D/Open3D.h"
-#include "Open3D/Utility/Console.h"
-#include "Open3D/Utility/Timer.h"
 
 using namespace open3d;
 
