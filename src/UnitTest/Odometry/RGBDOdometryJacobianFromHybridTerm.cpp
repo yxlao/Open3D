@@ -25,7 +25,7 @@
 // ----------------------------------------------------------------------------
 
 #include "TestUtility/UnitTest.h"
-#include "OdometryTools.h"
+#include "UnitTest/Odometry/OdometryTools.h"
 
 #include "Open3D/Geometry/RGBDImage.h"
 #include "Open3D/Odometry/RGBDOdometryJacobian.h"

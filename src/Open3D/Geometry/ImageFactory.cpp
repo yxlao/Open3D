@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Image.h"
+#include "Open3D/Geometry/Image.h"
 
 #include "Open3D/Camera/PinholeCameraIntrinsic.h"
 

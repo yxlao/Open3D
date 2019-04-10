@@ -28,7 +28,7 @@
 
 #include "Open3D/Open3D.h"
 
-#include "VisualizerForAlignment.h"
+#include "Tools/ManuallyAlignPointCloud/VisualizerForAlignment.h"
 
 void PrintTransformation(const Eigen::Matrix4d &transformation) {
     using namespace open3d;
