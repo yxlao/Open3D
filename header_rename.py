@@ -1,5 +1,6 @@
 from pathlib import Path
 import re
+from pprint import pprint
 
 root_dir = Path("/home/ylao/repo/Open3D/src")
 
@@ -49,6 +50,69 @@ def fix_header_relative_paths(lines,
     return lines
 
 
+def sort_includes(lines, file_path):
+    header_file_name = file_path.stem + ".h"
+    header_relative_path = file_path.relative_to(
+        root_dir).parent / header_file_name
+
+    start_line_idx = -1
+    end_line_idx = -1
+    for line_idx in range(len(lines)):
+        line = lines[line_idx]
+        include_str = "#include "
+        if line[:len(include_str)] == include_str:
+            if start_line_idx == -1:
+                start_line_idx = line_idx
+            end_line_idx = line_idx
+
+    if start_line_idx != -1:
+        before_header_lines = lines[:start_line_idx]
+        header_lines = lines[start_line_idx:end_line_idx + 1]
+        after_header_lines = lines[end_line_idx + 1:]
+
+        self_header_line = None
+        self_header_line_idx = None
+        for header_line_idx in range(len(header_lines)):
+            header_line = header_lines[header_line_idx]
+            match = re.search('#include "(.*)"\n', header_line)
+            if match and str(header_relative_path) == match.group(1):
+                self_header_line = header_line
+                self_header_line_idx = header_line_idx
+                break
+        if self_header_line_idx is not None:
+            del header_lines[self_header_line_idx]
+
+        print("Before ==========")
+        pprint(header_lines)
+        print("=================")
+
+        external_header_lines = []
+        open3d_header_lines = []
+        for header_line in header_lines:
+            if "#include <" in header_line:
+                external_header_lines.append(header_line)
+            elif '#include "'  in header_line:
+                open3d_header_lines.append(header_line)
+
+        header_lines = []
+        if self_header_line is not None:
+            header_lines.append(self_header_line)
+        if len(external_header_lines) > 0:
+            header_lines.append("\n")
+            header_lines += external_header_lines
+        if len(open3d_header_lines) > 0:
+            header_lines.append("\n")
+            header_lines += open3d_header_lines
+
+        print("After ==========")
+        pprint(header_lines)
+        print("================")
+
+        lines = before_header_lines + header_lines + after_header_lines
+
+    return lines
+
+
 def process_file(file_path, map_header_file_name_to_relative_path):
     with open(file_path, "r") as f:
         lines = f.readlines()
@@ -57,6 +121,7 @@ def process_file(file_path, map_header_file_name_to_relative_path):
     lines = fix_angle_brackets(lines)
     lines = fix_header_relative_paths(lines,
                                       map_header_file_name_to_relative_path)
+    lines = sort_includes(lines, file_path)
 
     with open(file_path, "w") as f:
         for line in lines:
