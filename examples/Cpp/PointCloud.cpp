@@ -28,7 +28,7 @@
 #include <iostream>
 #include <memory>
 
-#include <Open3D/Open3D.h>
+#include "Open3D/Open3D.h"
 
 void PrintPointCloud(const open3d::geometry::PointCloud &pointcloud) {
     using namespace open3d;

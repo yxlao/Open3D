@@ -24,11 +24,12 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include <Open3D/Odometry/Odometry.h>
-#include <Open3D/Open3D.h>
-#include <Open3D/Utility/Console.h>
 #include <iostream>
 #include <memory>
+
+#include "Open3D/Odometry/Odometry.h"
+#include "Open3D/Open3D.h"
+#include "Open3D/Utility/Console.h"
 
 void PrintHelp(char* argv[]) {
     using namespace open3d;

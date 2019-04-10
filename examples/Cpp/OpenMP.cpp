@@ -30,10 +30,10 @@
 #ifdef _OPENMP
 #include <omp.h>
 #endif
-#include <Open3D/Open3D.h>
-#include <Open3D/Utility/Console.h>
 #include <Eigen/Dense>
 #include <Eigen/SVD>
+#include "Open3D/Open3D.h"
+#include "Open3D/Utility/Console.h"
 
 #define NUM_THREADS 4
 #define NUM_START 1

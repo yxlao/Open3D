@@ -3,7 +3,7 @@ import re
 import subprocess
 from pprint import pprint
 
-root_dir = Path("/home/ylao/repo/Open3D/src")
+root_dir = Path("/home/ylao/repo/Open3D/examples")
 
 
 def format_file(file_path):
