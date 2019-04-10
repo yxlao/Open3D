@@ -32,8 +32,8 @@
 #define TEST_DATA_DIR
 #endif
 
-#include <gtest/gtest.h>
 #include <Eigen/Core>
+#include <gtest/gtest.h>
 #include <vector>
 
 #include "UnitTest/TestUtility/Print.h"

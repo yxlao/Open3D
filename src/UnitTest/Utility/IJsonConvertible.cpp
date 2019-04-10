@@ -26,8 +26,8 @@
 
 #include <json/json.h>
 
-#include "TestUtility/UnitTest.h"
 #include "Open3D/Utility/IJsonConvertible.h"
+#include "TestUtility/UnitTest.h"
 
 using namespace Eigen;
 using namespace open3d;

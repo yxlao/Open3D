@@ -26,8 +26,8 @@
 
 #include "UnitTest/TestUtility/Raw.h"
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 
 using namespace std;

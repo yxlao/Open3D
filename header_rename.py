@@ -103,9 +103,7 @@ def sort_includes(lines, file_path):
             elif 'def' in header_line:
                 abort_change = True
 
-        if ("Open3D/Odometry" in str(file_path) or
-            "Open3D/Registration" in str(file_path) or
-            "Open3D/Utility" in str(file_path)):
+        if ("UnitTest" in str(file_path)):
             external_header_lines = list(sorted(external_header_lines))
             open3d_header_lines = list(sorted(open3d_header_lines))
 
