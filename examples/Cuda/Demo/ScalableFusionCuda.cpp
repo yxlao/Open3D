@@ -41,23 +41,29 @@ using namespace open3d::utility;
 int main(int argc, char *argv[]) {
     using namespace open3d;
 
-    std::string base_path = "/home/wei/Work/data/tum/rgbd_dataset_freiburg3_long_office_household/";
-    auto camera_trajectory = CreatePinholeCameraTrajectoryFromFile(base_path + "/trajectory.log");
-    auto rgbd_filenames = ReadDataAssociation(base_path + "/data_association.txt");
+//    std::string base_path = "/home/wei/Work/data/tum/rgbd_dataset_freiburg3_long_office_household/";
+    std::string base_path = "/media/wei/Data/data/cmu/a_floor/";
+    auto camera_trajectory =
+        CreatePinholeCameraTrajectoryFromFile(base_path + "/trajectory.log");
+    auto rgbd_filenames =
+        ReadDataAssociation(base_path + "/data_association.txt");
 
     int index = 0;
-    cuda::PinholeCameraIntrinsicCuda intrinsics(
-        PinholeCameraIntrinsicParameters::PrimeSenseDefault);
+    cuda::PinholeCameraIntrinsicCuda intrinsics(1368, 1096,
+                                                1359.38 / 2,
+                                                1359.38 / 2,
+                                                1395.56 / 2,
+                                                1105.93 / 2);
 
-    float voxel_length = 0.01f;
+    float voxel_length = 0.04f;
     cuda::TransformCuda extrinsics = cuda::TransformCuda::Identity();
     cuda::ScalableTSDFVolumeCuda tsdf_volume(
-        8, voxel_length, 3 * voxel_length, extrinsics);
+        8, voxel_length, 3 * voxel_length, 8.0f, extrinsics);
 
-    Image depth, color;
-    cuda::RGBDImageCuda rgbd(640, 480, 4.0f, 5000.0f);
-    cuda::ScalableMeshVolumeCuda mesher(cuda::VertexWithNormalAndColor, 8,
-                                        120000);
+    cuda::RGBDImageCuda rgbd(1368, 1096, 8.0f, 1000.0f);
+    cuda::ScalableMeshVolumeCuda
+        mesher(cuda::VertexWithNormalAndColor, 8, 80000, 20000000, 40000000);
+
 
     visualization::VisualizerWithCudaModule visualizer;
     if (!visualizer.CreateVisualizerWindow("ScalableFusion", 640, 480, 0, 0)) {
@@ -72,10 +78,13 @@ int main(int argc, char *argv[]) {
     visualizer.AddGeometry(mesh);
 
     Timer timer;
-    for (int i = 0; i < rgbd_filenames.size() - 1; ++i) {
-        PrintDebug("Processing frame %d ...\n", index);
-        ReadImage(base_path + rgbd_filenames[i].first, depth);
-        ReadImage(base_path + rgbd_filenames[i].second, color);
+    for (int i = 0; i < rgbd_filenames.size(); ++i) {
+        PrintInfo("Processing frame %d ...\n", index);
+        if (i == 112) continue;
+        cv::Mat depth = cv::imread(base_path + rgbd_filenames[i].first,
+                                   cv::IMREAD_UNCHANGED);
+        cv::Mat color = cv::imread(base_path + rgbd_filenames[i].second);
+        cv::resize(color, color, cv::Size(0.5 * color.cols, 0.5 * color.rows));
         rgbd.Upload(depth, color);
 
         /* Use ground truth trajectory */
@@ -96,5 +105,10 @@ int main(int argc, char *argv[]) {
             camera_trajectory->parameters_[index]);
         index++;
     }
+
+    tsdf_volume.GetAllSubvolumes();
+    mesher.MarchingCubes(tsdf_volume);
+    auto final_mesh = mesher.mesh().Download();
+    WriteTriangleMeshToPLY(base_path + "/integrated.ply", *final_mesh);
 }
 

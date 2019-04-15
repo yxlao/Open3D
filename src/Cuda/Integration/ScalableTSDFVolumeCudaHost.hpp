@@ -23,12 +23,14 @@ ScalableTSDFVolumeCuda::ScalableTSDFVolumeCuda(
     int N,
     float voxel_length,
     float sdf_trunc,
+    float max_range,
     const TransformCuda &transform_volume_to_world,
     int bucket_count,
     int value_capacity) {
 
     voxel_length_ = voxel_length;
     sdf_trunc_ = sdf_trunc;
+    max_range_ = max_range;
     transform_volume_to_world_ = transform_volume_to_world;
 
     Create(N, bucket_count, value_capacity);
@@ -47,6 +49,7 @@ ScalableTSDFVolumeCuda::ScalableTSDFVolumeCuda(
 
     voxel_length_ = other.voxel_length_;
     sdf_trunc_ = other.sdf_trunc_;
+    max_range_ = other.max_range_;
     transform_volume_to_world_ = other.transform_volume_to_world_;
 }
 
@@ -66,6 +69,7 @@ ScalableTSDFVolumeCuda &ScalableTSDFVolumeCuda::operator=(
 
         voxel_length_ = other.voxel_length_;
         sdf_trunc_ = other.sdf_trunc_;
+        max_range_ = other.max_range_;
         transform_volume_to_world_ = other.transform_volume_to_world_;
     }
 
@@ -155,6 +159,8 @@ void ScalableTSDFVolumeCuda::UpdateDevice() {
         device_->voxel_length_ = voxel_length_;
         device_->inv_voxel_length_ = 1.0f / voxel_length_;
         device_->sdf_trunc_ = sdf_trunc_;
+        device_->max_range_ = max_range_;
+
         device_->transform_volume_to_world_ =
             transform_volume_to_world_;
         device_->transform_world_to_volume_ =

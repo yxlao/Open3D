@@ -188,6 +188,7 @@ void IntegrateForFragment(int fragment_id, PoseGraph &pose_graph,
         8,
         voxel_length,
         (float) config.tsdf_truncation_,
+        (float) config.max_depth_,
         trans);
 
     cuda::RGBDImageCuda rgbd((float) config.max_depth_,

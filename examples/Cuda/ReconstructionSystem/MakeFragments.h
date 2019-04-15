@@ -188,7 +188,10 @@ void IntegrateForFragment(int fragment_id, DatasetConfig &config) {
     cuda::PinholeCameraIntrinsicCuda intrinsic(config.intrinsic_);
     cuda::TransformCuda trans = cuda::TransformCuda::Identity();
     cuda::ScalableTSDFVolumeCuda tsdf_volume(
-        8, voxel_length, (float) config.tsdf_truncation_, trans);
+        8, voxel_length,
+        (float) config.tsdf_truncation_,
+        (float) config.max_depth_,
+        trans);
 
     cuda::RGBDImageCuda rgbd((float) config.max_depth_,
                              (float) config.depth_factor_);

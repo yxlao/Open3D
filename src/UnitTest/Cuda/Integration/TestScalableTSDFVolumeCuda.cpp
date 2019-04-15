@@ -40,7 +40,8 @@ TEST(ScalableTSDFVolumeCuda, TouchSubvolumes) {
     extrinsics(0, 3) = 10.0f;
     extrinsics(1, 3) = -10.0f;
     extrinsics(2, 3) = 1.0f;
-    ScalableTSDFVolumeCuda volume(8, voxel_length, 3 * voxel_length,
+    ScalableTSDFVolumeCuda volume(8, voxel_length,
+                                  3 * voxel_length, 3.0f,
                                   extrinsics,
                                   10000, 200000);
 
@@ -68,7 +69,8 @@ TEST(ScalableTSDFVolumeCuda, Integration) {
 
     float voxel_length = 0.01f;
     TransformCuda extrinsics = TransformCuda::Identity();
-    ScalableTSDFVolumeCuda volume(8, voxel_length, 3 * voxel_length,
+    ScalableTSDFVolumeCuda volume(8, voxel_length,
+                                  3 * voxel_length, 3.0f,
                                   extrinsics,
                                   10000, 200000);
     Timer timer;
@@ -112,7 +114,8 @@ TEST(ScalableTSDFVolumeCuda, RayCasting) {
     extrinsics(1, 3) = -10.0f;
     extrinsics(2, 3) = 1.0f;
 
-    ScalableTSDFVolumeCuda volume(8, voxel_length, 3 * voxel_length,
+    ScalableTSDFVolumeCuda volume(8, voxel_length,
+                                  3 * voxel_length, 3.0f,
                                   extrinsics,
                                   10000, 200000);
 

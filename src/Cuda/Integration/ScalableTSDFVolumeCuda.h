@@ -61,6 +61,8 @@ public:
     float voxel_length_;
     float inv_voxel_length_;
     float sdf_trunc_;
+    float max_range_;
+
     TransformCuda transform_volume_to_world_;
     TransformCuda transform_world_to_volume_;
 
@@ -257,11 +259,14 @@ public:
 
     float voxel_length_;
     float sdf_trunc_;
+    float max_range_;
+
     TransformCuda transform_volume_to_world_;
 
 public:
     ScalableTSDFVolumeCuda();
-    ScalableTSDFVolumeCuda(int N, float voxel_length, float sdf_trunc,
+    ScalableTSDFVolumeCuda(int N, float voxel_length,
+                           float sdf_trunc, float max_range = 3.5f,
                            const TransformCuda &transform_volume_to_world
                            = TransformCuda::Identity(),
                            /* 20,000 buckets, 200,000 + 200,000 entries */

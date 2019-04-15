@@ -608,19 +608,15 @@ void ScalableTSDFVolumeCudaDevice::TouchSubvolume(
     TransformCuda &transform_camera_to_world) {
 
     float d = depth.at(p(0), p(1))(0);
-    if (d < 0.1f || d > 3.5f) return;
+    if (d < 0.1f || d > max_range_) return;
 
-    Vector3f
-        Xw_near = transform_camera_to_world *
+    Vector3f Xw_near = transform_camera_to_world *
         camera.InverseProjectPixel(p, fmaxf(d - sdf_trunc_, 0.1f));
-    Vector3i
-        Xsv_near = voxelf_locate_subvolume(world_to_voxelf(Xw_near));
+    Vector3i Xsv_near = voxelf_locate_subvolume(world_to_voxelf(Xw_near));
 
-    Vector3f
-        Xw_far = transform_camera_to_world *
-        camera.InverseProjectPixel(p, fminf(d + sdf_trunc_, 3.5f));
-    Vector3i
-        Xsv_far = voxelf_locate_subvolume(world_to_voxelf(Xw_far));
+    Vector3f Xw_far = transform_camera_to_world *
+        camera.InverseProjectPixel(p, fminf(d + sdf_trunc_, max_range_));
+    Vector3i Xsv_far = voxelf_locate_subvolume(world_to_voxelf(Xw_far));
 
     //    Vector3i Xsv_min = Vector3i(min(Xsv_near(0), Xsv_far(0)),
     //                                min(Xsv_near(1), Xsv_far(1)),
@@ -639,17 +635,13 @@ void ScalableTSDFVolumeCudaDevice::TouchSubvolume(
 
     /** 3D line from Xsv_near to Xsv_far
      * https://en.wikipedia.org/wiki/Digital_differential_analyzer_(graphics_algorithm) **/
-    Vector3i
-        DXsv = Xsv_far - Xsv_near;
-    Vector3i
-        DXsv_abs = Vector3i(abs(DXsv(0)), abs(DXsv(1)), abs(DXsv(2)));
+    Vector3i DXsv = Xsv_far - Xsv_near;
+    Vector3i DXsv_abs = Vector3i(abs(DXsv(0)), abs(DXsv(1)), abs(DXsv(2)));
     int step = DXsv_abs(0) >= DXsv_abs(1) ? DXsv_abs(0) : DXsv_abs(1);
     step = DXsv_abs(2) >= step ? DXsv_abs(2) : step;
-    Vector3f
-        DXsv_normalized = DXsv.template cast<float>() * (1.0f / step);
+    Vector3f DXsv_normalized = DXsv.template cast<float>() * (1.0f / step);
 
-    Vector3f
-        Xsv_curr = Xsv_near.template cast<float>();
+    Vector3f Xsv_curr = Xsv_near.template cast<float>();
     HashEntry<Vector3i> entry;
     for (int k = 0; k <= step; ++k) {
         hash_table_.New(Xsv_curr.template cast<int>());
@@ -667,7 +659,7 @@ void ScalableTSDFVolumeCudaDevice::Integrate(
     TransformCuda &transform_camera_to_world) {
 
     /** Projective data association - additional local to global transform **/
-    Vector3f X = voxelf_local_to_global(Xlocal.template cast<float>(), entry.key);
+    Vector3f X = voxelf_local_to_global(Xlocal.cast<float>(), entry.key);
     Vector3f Xw = voxelf_to_world(X);
     Vector3f Xc = transform_camera_to_world.Inverse() * Xw;
     Vector2f p = camera.ProjectPoint(Xc);
@@ -716,7 +708,7 @@ Vector3f ScalableTSDFVolumeCudaDevice::RayCasting(
 
     /** TODO: throw it into parameters **/
     const float t_min = 0.1f / ray_c(2);
-    const float t_max = 3.0f / ray_c(2);
+    const float t_max = max_range_ / ray_c(2);
 
     const Vector3f camera_origin_v = transform_world_to_volume_ *
         (transform_camera_to_world * Vector3f(0));
@@ -777,7 +769,7 @@ Vector3f ScalableTSDFVolumeCudaDevice::VolumeRendering(
 
     /** TODO: throw it into parameters **/
     const float t_min = 0.1f;
-    const float t_max = 3.0f;
+    const float t_max = max_range_;
 
     const Vector3f camera_origin_v = transform_world_to_volume_ *
         (transform_camera_to_world * Vector3f(0));

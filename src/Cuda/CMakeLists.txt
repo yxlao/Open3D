@@ -43,17 +43,9 @@ set(CUDA_NVCC_FLAGS
 set(OPEN3D_CUDA_MODULE "Open3DCuda" CACHE STRING "CUDA component library")
 cuda_add_library(${OPEN3D_CUDA_MODULE}
         ${CUDA_ALL_HEADER_FILES} ${CUDA_ALL_SOURCE_FILES}
-        ${CUDA_ALL_CUDA_HEADER_FILES} ${CUDA_ALL_CUDA_SOURCE_FILES}
-        $<TARGET_OBJECTS:Camera>
-        $<TARGET_OBJECTS:ColorMap>
-        $<TARGET_OBJECTS:Geometry>
-        $<TARGET_OBJECTS:Integration>
-        $<TARGET_OBJECTS:Odometry>
-        $<TARGET_OBJECTS:Registration>
-        $<TARGET_OBJECTS:Utility>
-        $<TARGET_OBJECTS:IO>
-        $<TARGET_OBJECTS:Visualization>)
-target_link_libraries(${OPEN3D_CUDA_MODULE} ${3RDPARTY_LIBRARIES} -lz) # for zlib
+        ${CUDA_ALL_CUDA_HEADER_FILES} ${CUDA_ALL_CUDA_SOURCE_FILES})
+target_link_libraries(${OPEN3D_CUDA_MODULE} ${3RDPARTY_LIBRARIES}
+        ${CMAKE_PROJECT_NAME} -lz) # for zlib
 target_include_directories(${OPEN3D_CUDA_MODULE} PUBLIC ${3RDPARTY_INCLUDE_DIRS})
 
 # create subgroups
