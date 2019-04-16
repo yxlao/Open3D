@@ -46,6 +46,19 @@ TEST(Octree, ToVoxelGrid) {
     visualization::DrawGeometries({voxel_grid});
 }
 
+TEST(Octree, ToMesh) {
+    std::shared_ptr<geometry::TriangleMesh> mesh =
+            std::make_shared<geometry::TriangleMesh>();
+    std::vector<Eigen::Vector3d> vertices{
+            Eigen::Vector3d(-1, 2, 0), Eigen::Vector3d(1, 2, 0),
+            Eigen::Vector3d(0, 0, 0), Eigen::Vector3d(2, 0, 0)};
+    std::vector<Eigen::Vector3i> triangles{Eigen::Vector3i(0, 2, 1),
+                                           Eigen::Vector3i(1, 2, 3)};
+    mesh->vertices_ = vertices;
+    mesh->triangles_ = triangles;
+    visualization::DrawGeometries({mesh});
+}
+
 // ----------------------------------------------------------------------------
 //
 // ----------------------------------------------------------------------------
