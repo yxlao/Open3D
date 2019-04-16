@@ -18,12 +18,14 @@ bool DrawGeometriesPBR(
     int top /* = 50*/) {
 
     VisualizerPBR visualizer;
+
     if (! visualizer.CreateVisualizerWindow(
         window_name, width, height, left, top)) {
         utility::PrintWarning(
             "[DrawGeometries] Failed creating OpenGL window.\n");
         return false;
     }
+
 
     assert(geometry_ptrs.size() == textures.size()
     && geometry_ptrs.size() == lightings.size());

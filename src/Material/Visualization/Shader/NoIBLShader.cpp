@@ -41,17 +41,17 @@ namespace visualization {
 namespace glsl {
 
 bool NoIBLShader::Compile() {
+    GLenum err = glGetError();
+    std::cout << "Capture error before compile " << err << std::endl;
+
     if (! CompileShaders(NoIBLVertexShader, NULL, NoIBLFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }
 
-    GLenum err = glGetError();
-    std::cout << "Compile " << err << std::endl;
-
-    vertex_position_ = glGetUniformLocation(program_, "vertex_position");
-    vertex_normal_   = glGetUniformLocation(program_, "vertex_normal");
-    vertex_uv_       = glGetUniformLocation(program_, "vertex_uv");
+    vertex_position_ = glGetAttribLocation(program_, "vertex_position");
+    vertex_normal_   = glGetAttribLocation(program_, "vertex_normal");
+    vertex_uv_       = glGetAttribLocation(program_, "vertex_uv");
 
     M_               = glGetUniformLocation(program_, "M");
     V_               = glGetUniformLocation(program_, "V");
@@ -149,6 +149,7 @@ bool NoIBLShader::RenderGeometry(const geometry::Geometry &geometry,
     glUniformMatrix4fv(M_, 1, GL_FALSE, view.GetModelMatrix().data());
     GLenum err = glGetError();
     std::cout << "Uniform " << err << std::endl;
+
 //    glUniform1i(tex_albedo_,    0);
 //    glUniform1i(tex_normal_,    1);
 //    glUniform1i(tex_metallic_,  2);
@@ -173,16 +174,26 @@ bool NoIBLShader::RenderGeometry(const geometry::Geometry &geometry,
 //    glBindTexture(GL_TEXTURE_2D, tex_ao_);
 
     glEnableVertexAttribArray(vertex_position_);
+    err = glGetError();
+    std::cout << "Position enable" << err << std::endl;
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer_);
+    err = glGetError();
+    std::cout << "Position bind" << err << std::endl;
     glVertexAttribPointer(vertex_position_, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    err = glGetError();
+    std::cout << "Position attrib" << err << std::endl;
 
     glEnableVertexAttribArray(vertex_normal_);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_normal_buffer_);
     glVertexAttribPointer(vertex_normal_, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    err = glGetError();
+    std::cout << "Normal " << err << std::endl;
 
     glEnableVertexAttribArray(vertex_uv_);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_uv_buffer_);
     glVertexAttribPointer(vertex_uv_, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+    err = glGetError();
+    std::cout << "uv " << err << std::endl;
 
     glDrawArrays(draw_arrays_mode_, 0, draw_arrays_size_);
 
@@ -260,7 +271,7 @@ bool NoIBLShader::PrepareBinding(
     }
     normals.resize(mesh.vertex_normals_.size());
     for (int i = 0; i < normals.size(); ++i) {
-        points[i] = mesh.vertex_normals_[i].cast<float>();
+        normals[i] = mesh.vertex_normals_[i].cast<float>();
     }
     uvs = mesh.vertex_uvs_;
     triangles = mesh.triangles_;
