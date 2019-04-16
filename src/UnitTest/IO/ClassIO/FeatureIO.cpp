@@ -26,6 +26,26 @@
 
 #include "TestUtility/UnitTest.h"
 
+#include "Open3D/Geometry/TriangleMesh.h"
+#include "Open3D/Geometry/VoxelGrid.h"
+#include "Open3D/Visualization/Utility/DrawGeometry.h"
+
+using namespace Eigen;
+using namespace open3d;
+using namespace std;
+using namespace unit_test;
+
+TEST(Octree, ToVoxelGrid) {
+    std::shared_ptr<geometry::VoxelGrid> voxel_grid =
+            std::make_shared<geometry::VoxelGrid>();
+    voxel_grid->origin_ = Eigen::Vector3d(0, 0, 0);
+    voxel_grid->voxel_size_ = 5;
+    voxel_grid->voxels_ = {Eigen::Vector3i(0, 0, 0), Eigen::Vector3i(0, 1, 0)};
+    voxel_grid->colors_ = {Eigen::Vector3d(0.9, 0, 0),
+                           Eigen::Vector3d(0.9, 0.9, 0)};
+    visualization::DrawGeometries({voxel_grid});
+}
+
 // ----------------------------------------------------------------------------
 //
 // ----------------------------------------------------------------------------
