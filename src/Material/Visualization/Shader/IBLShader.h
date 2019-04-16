@@ -12,14 +12,14 @@ namespace open3d {
 namespace visualization {
 
 namespace glsl {
-class NoIBLShader : public ShaderWrapperPBR {
+/** Lighting should have been processed before being passed here **/
+class IBLShader : public ShaderWrapperPBR {
 public:
-    NoIBLShader() : NoIBLShader("NoIBLShader") {}
-    ~NoIBLShader() override { Release(); }
+    IBLShader() : IBLShader("IBLShader") {}
+    ~IBLShader() override { Release(); }
 
 protected:
-
-    explicit NoIBLShader(const std::string &name)
+    explicit IBLShader(const std::string &name)
         : ShaderWrapperPBR(name) { Compile(); }
 
 protected:
@@ -56,6 +56,11 @@ protected:
 
 protected:
     const int kNumTextures = 5;
+
+    /** programs **/
+    GLuint program_prefilter_irradiance_;
+    GLuint program_preintegrate_brdf_;
+    GLuint program_preconv_lighting_;
 
     /** locations **/
     /* array */

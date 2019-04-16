@@ -1,37 +1,39 @@
 //
-// Created by wei on 4/13/19.
+// Created by wei on 4/15/19.
 //
 
 #pragma once
 
 #include <Open3D/Open3D.h>
 #include "ShaderWrapperPBR.h"
-#include <Material/Physics/TriangleMeshWithTex.h>
 
 namespace open3d {
 namespace visualization {
 
 namespace glsl {
-class NoIBLShader : public ShaderWrapperPBR {
+class BackgroundShader : public ShaderWrapperPBR {
 public:
-    NoIBLShader() : NoIBLShader("NoIBLShader") {}
-    ~NoIBLShader() override { Release(); }
+    BackgroundShader() : BackgroundShader("BackgroundShader") {}
+    ~BackgroundShader() override { Release(); }
 
 protected:
 
-    explicit NoIBLShader(const std::string &name)
+    explicit BackgroundShader(const std::string &name)
         : ShaderWrapperPBR(name) { Compile(); }
 
 protected:
     bool Compile() final;
     void Release() final;
 
+    /** Dummy, load Cube instead **/
     bool BindGeometry(const geometry::Geometry &geometry,
                       const RenderOption &option,
                       const ViewControl &view) final;
+    /** Dummy, texture for rendering is not used **/
     bool BindTextures(const std::vector<geometry::Image> &textures,
                       const RenderOption &option,
-                      const ViewControl &view) final;
+                      const ViewControl &view) final { return true; };
+    /** Assign cubemap stored in the lighting **/
     bool BindLighting(const physics::Lighting &lighting,
                       const RenderOption &option,
                       const ViewControl &view) final;
@@ -49,45 +51,29 @@ protected:
     bool PrepareBinding(const geometry::Geometry &geometry,
                         const RenderOption &option,
                         const ViewControl &view,
-                        std::vector<Eigen::Vector3f> &points,
-                        std::vector<Eigen::Vector3f> &normals,
-                        std::vector<Eigen::Vector2f> &uvs,
-                        std::vector<Eigen::Vector3i> &triangles);
+                        std::vector<Eigen::Vector3f> &points);
 
 protected:
-    const int kNumTextures = 5;
-
     /** locations **/
-    /* array */
+    /* array (cube) */
     GLuint vertex_position_;
-    GLuint vertex_normal_;
-    GLuint vertex_uv_;
 
     /* vertex shader */
-    GLuint M_;
     GLuint V_;
     GLuint P_;
 
     /* fragment shader */
-    std::vector<GLuint> texes_;
-    GLuint camera_position_;
-    GLuint light_positions_;
-    GLuint light_colors_;
+    GLuint tex_cubemap_;
 
     /** buffers **/
     GLuint vertex_position_buffer_;
-    GLuint vertex_normal_buffer_;
-    GLuint vertex_uv_buffer_;
-    GLuint triangle_buffer_;
-    std::vector<GLuint> tex_buffers_;
+    /* GLuint tex_cubemap_buffer_; <- already in lighting */
 
-    /** raw data **/
-    std::vector<Eigen::Vector3f> light_positions_data_;
-    std::vector<Eigen::Vector3f> light_colors_data_;
+    /** lighting **/
+    physics::IBLLighting ibl_;
 };
 
 }
 }
 }
-
 

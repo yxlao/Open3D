@@ -8,9 +8,9 @@
 namespace open3d {
 namespace geometry {
 
-class TriangleMeshPhysics : public TriangleMesh {
+class TriangleMeshWithTex : public TriangleMesh {
 public:
-    std::vector<Eigen::Vector2f> vertex_uvs_;
+    std::vector<Eigen::Vector2d> vertex_uvs_;
 
 public:
     bool HasUVs() const {

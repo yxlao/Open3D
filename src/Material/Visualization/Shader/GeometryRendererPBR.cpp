@@ -10,13 +10,48 @@ namespace glsl {
 bool TriangleMeshRendererPBR::Render(const RenderOption &option,
                                      const ViewControl &view) {
     if (!is_visible_ || geometry_ptr_->IsEmpty()) return true;
-    const auto &mesh = (const geometry::TriangleMeshPhysics &)(*geometry_ptr_);
-    const auto &spot = (const physics::SpotLighting &)(*lighting_ptr_);
-    bool success = true;
-    if (mesh.HasVertexNormals() && mesh.HasUVs()) {
-        success &= pbr_no_ibl_shader_.Render(
-            mesh, textures_, spot, option, view);
+
+    if (geometry_ptr_->GetGeometryType()
+        != geometry::Geometry::GeometryType::TriangleMesh) {
+        utility::PrintWarning("[TriangleMeshRendererPBR] "
+                              "Geometry type is not TriangleMesh\n");
+        return false;
     }
+    const auto &mesh = (const geometry::TriangleMeshWithTex &)(*geometry_ptr_);
+
+    bool success = true;
+
+    /* ibl: a bit preprocessing required */
+    if (lighting_ptr_->GetLightingType()
+        == physics::Lighting::LightingType::IBL) {
+
+        auto &ibl = (physics::IBLLighting &) (*lighting_ptr_);
+
+        /** !!! Ensure pre-processing is only called once **/
+        if (! ibl.is_preprocessed_) {
+            // preprocess
+            success &= hdr_to_cubemap_shader_.Render(
+                mesh, textures_, ibl, option, view);
+            ibl = hdr_to_cubemap_shader_.GetProcessedLighting();
+            ibl.is_preprocessed_ = true;
+        }
+
+        // render
+        success &= background_shader_.Render(
+            mesh, textures_, ibl, option, view);
+    }
+
+    /* no ibl: simple */
+    else if (lighting_ptr_->GetLightingType()
+        == physics::Lighting::LightingType::Spot) {
+
+        const auto &spot = (const physics::SpotLighting &) (*lighting_ptr_);
+        if (mesh.HasVertexNormals() && mesh.HasUVs()) {
+            success &= no_ibl_shader_.Render(
+                mesh, textures_, spot, option, view);
+        }
+    }
+
     return success;
 }
 
@@ -43,7 +78,7 @@ bool TriangleMeshRendererPBR::AddLights(
 }
 
 bool TriangleMeshRendererPBR::UpdateGeometry() {
-    pbr_no_ibl_shader_.InvalidateGeometry();
+    no_ibl_shader_.InvalidateGeometry();
     return true;
 }
 

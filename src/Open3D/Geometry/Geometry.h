@@ -44,8 +44,6 @@ public:
         PointCloudCuda = 8,
         TriangleMeshCuda = 9,
         ImageCuda = 10,
-
-        TriangleMeshPhysics = 11
     };
 
 public:

@@ -34,8 +34,8 @@ file(GLOB_RECURSE VISUALIZATION_ALL_SOURCE_FILES "*.cpp")
 set(OPEN3D_MATERIAL_MODULE "Material" CACHE STRING "Material component library")
 add_library(${OPEN3D_MATERIAL_MODULE}
         ${MAT_ALL_HEADER_FILES} ${MAT_ALL_SOURCE_FILES})
-target_link_libraries(${OPEN3D_MATERIAL_MODULE} ${3RDPARTY_LIBRARIES}
-        ${CMAKE_PROJECT_NAME})
+target_link_libraries(${OPEN3D_MATERIAL_MODULE}
+        ${3RDPARTY_LIBRARIES} ${CMAKE_PROJECT_NAME})
 target_include_directories(${OPEN3D_MATERIAL_MODULE} PUBLIC ${3RDPARTY_INCLUDE_DIRS})
 
 source_group("Source Files\\Shader\\GLSL" FILES ${SHADER_FILES})

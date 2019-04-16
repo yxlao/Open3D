@@ -5,6 +5,7 @@
 #pragma once
 
 #include <Open3D/Open3D.h>
+#include <stb_image/stb_image.h>
 
 namespace open3d {
 namespace physics {
@@ -19,6 +20,9 @@ public:
 
 public:
     virtual ~Lighting() = default;
+    LightingType GetLightingType() const {
+        return type_;
+    }
 
 protected:
     explicit Lighting(LightingType type) : type_(type) {}
@@ -30,7 +34,18 @@ private:
 class IBLLighting : public Lighting {
 public:
     IBLLighting() : Lighting(LightingType::IBL) {}
-    ~IBLLighting() final = default;
+    ~IBLLighting();
+
+    bool ReadDataFromHDR(const std::string &filename);
+
+public:
+    bool is_preprocessed_;
+
+    GLuint tex_hdr_buffer_;
+    GLuint tex_cubemap_buffer_;
+    GLuint tex_preconv_diffuse_buffer_;
+    GLuint tex_prefilter_light_buffer_;
+    GLuint tex_brdf_lut_buffer_;        /* (<H,V>, roughness) */
 };
 
 class SpotLighting : public Lighting {

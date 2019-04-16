@@ -97,8 +97,7 @@ void main()
 
     // reflectance equation
     vec3 Lo = vec3(0.0);
-    for(int i = 0; i < 4; ++i)
-    {
+    for(int i = 0; i < 4; ++i) {
         // calculate per-light radiance
         vec3 L = normalize(light_positions[i] - position);
         vec3 H = normalize(V + L);
@@ -112,7 +111,9 @@ void main()
         vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);
 
         vec3 nominator    = NDF * G * F;
-        float denominator = 4 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.001; // 0.001 to prevent divide by zero.
+
+        // 0.001 to prevent divide by zero.
+        float denominator = 4 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.001;
         vec3 specular = nominator / denominator;
 
         // kS is equal to Fresnel
@@ -130,7 +131,8 @@ void main()
         float NdotL = max(dot(N, L), 0.0);
 
         // add to outgoing radiance Lo
-        Lo += (kD * albedo / PI + specular) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
+        // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
+        Lo += (kD * albedo / PI + specular) * radiance * NdotL;
     }
 
     // ambient lighting (note that the next IBL tutorial will replace

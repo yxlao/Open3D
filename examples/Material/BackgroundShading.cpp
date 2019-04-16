@@ -59,6 +59,9 @@ int main() {
     textures.push_back(*io::CreateImageFromFile(base_path + "/roughness.png"));
     textures.push_back(*io::CreateImageFromFile(base_path + "/ao.png"));
 
+    auto ibl = std::make_shared<physics::IBLLighting>();
+    ibl->ReadDataFromHDR("/media/wei/Data/data/pbr/textures/hdr/newport_loft.hdr");
+
     auto lighting = std::make_shared<physics::SpotLighting>();
 
     lighting->light_positions_ = {Eigen::Vector3f(0, 0, 10), Eigen::Vector3f(10, 0, 0), Eigen::Vector3f(0, 10, 0)};
@@ -66,7 +69,7 @@ int main() {
 
     utility::SetVerbosityLevel(utility::VerbosityLevel::VerboseDebug);
 //    mesh->ComputeTriangleNormals();
-    visualization::DrawGeometriesPBR({mesh}, {textures}, {lighting});
+    visualization::DrawGeometriesPBR({mesh}, {textures}, {ibl});
 
-    io::WriteTriangleMeshToPLY(base_path + "/sphere.ply", *mesh, true);
+//    io::WriteTriangleMeshToPLY(base_path + "/sphere.ply", *mesh, true);
 }

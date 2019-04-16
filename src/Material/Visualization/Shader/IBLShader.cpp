@@ -27,7 +27,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "NoIBLShader.h"
+#include "IBLShader.h"
 
 #include <Open3D/Geometry/TriangleMesh.h>
 #include <Open3D/Visualization/Utility/ColorMap.h>
@@ -40,8 +40,8 @@ namespace visualization {
 
 namespace glsl {
 
-bool NoIBLShader::Compile() {
-    if (! CompileShaders(NoIBLVertexShader, nullptr, NoIBLFragmentShader)) {
+bool IBLShader::Compile() {
+    if (! CompileShaders(IBLVertexShader, nullptr, IBLFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }
@@ -68,12 +68,12 @@ bool NoIBLShader::Compile() {
     return true;
 }
 
-void NoIBLShader::Release() {
+void IBLShader::Release() {
     UnbindGeometry();
     ReleaseProgram();
 }
 
-bool NoIBLShader::BindGeometry(const geometry::Geometry &geometry,
+bool IBLShader::BindGeometry(const geometry::Geometry &geometry,
                                const RenderOption &option,
                                const ViewControl &view) {
     // If there is already geometry, we first unbind it.
@@ -91,7 +91,7 @@ bool NoIBLShader::BindGeometry(const geometry::Geometry &geometry,
     std::vector<Eigen::Vector3i> triangles;
 
     if (!PrepareBinding(geometry, option, view,
-        points, normals, uvs, triangles)) {
+                        points, normals, uvs, triangles)) {
         PrintShaderWarning("Binding failed when preparing data.");
         return false;
     }
@@ -106,7 +106,7 @@ bool NoIBLShader::BindGeometry(const geometry::Geometry &geometry,
     return true;
 }
 
-bool NoIBLShader::BindTextures(const std::vector<geometry::Image> &textures,
+bool IBLShader::BindTextures(const std::vector<geometry::Image> &textures,
                                const RenderOption& option,
                                const ViewControl &view) {
     assert(textures.size() == kNumTextures);
@@ -118,7 +118,7 @@ bool NoIBLShader::BindTextures(const std::vector<geometry::Image> &textures,
     return true;
 }
 
-bool NoIBLShader::BindLighting(const physics::Lighting &lighting,
+bool IBLShader::BindLighting(const physics::Lighting &lighting,
                                const visualization::RenderOption &option,
                                const visualization::ViewControl &view) {
     auto spot_lighting = (const physics::SpotLighting &) lighting;
@@ -127,7 +127,7 @@ bool NoIBLShader::BindLighting(const physics::Lighting &lighting,
     light_colors_data_    = spot_lighting.light_colors_;
 }
 
-bool NoIBLShader::RenderGeometry(const geometry::Geometry &geometry,
+bool IBLShader::RenderGeometry(const geometry::Geometry &geometry,
                                  const RenderOption &option,
                                  const ViewControl &view) {
     if (!PrepareRendering(geometry, option, view)) {
@@ -177,7 +177,7 @@ bool NoIBLShader::RenderGeometry(const geometry::Geometry &geometry,
     return true;
 }
 
-void NoIBLShader::UnbindGeometry() {
+void IBLShader::UnbindGeometry() {
     if (bound_) {
         glDeleteBuffers(1, &vertex_position_buffer_);
         glDeleteBuffers(1, &vertex_normal_buffer_);
@@ -192,7 +192,7 @@ void NoIBLShader::UnbindGeometry() {
     }
 }
 
-bool NoIBLShader::PrepareRendering(
+bool IBLShader::PrepareRendering(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view) {
@@ -219,7 +219,7 @@ bool NoIBLShader::PrepareRendering(
     return true;
 }
 
-bool NoIBLShader::PrepareBinding(
+bool IBLShader::PrepareBinding(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view,

@@ -13,18 +13,17 @@ namespace glsl {
 const char * const BackgroundFragmentShader = 
 "#version 330 core\n"
 "out vec4 FragColor;\n"
-"in vec3 WorldPos;\n"
+"in vec3 position;\n"
 "\n"
-"uniform samplerCube environmentMap;\n"
+"uniform samplerCube tex_cubemap;\n"
 "\n"
-"void main()\n"
-"{		\n"
-"    vec3 envColor = textureLod(environmentMap, WorldPos, 0.0).rgb;\n"
-"    \n"
+"void main() {\n"
+"    vec3 envColor = textureLod(tex_cubemap, position, 0.0).rgb;\n"
+"\n"
 "    // HDR tonemap and gamma correct\n"
 "    envColor = envColor / (envColor + vec3(1.0));\n"
-"    envColor = pow(envColor, vec3(1.0/2.2)); \n"
-"    \n"
+"    envColor = pow(envColor, vec3(1.0/2.2));\n"
+"\n"
 "    FragColor = vec4(envColor, 1.0);\n"
 "}\n"
 ;
@@ -45,19 +44,19 @@ namespace glsl {
 
 const char * const BackgroundVertexShader = 
 "#version 330 core\n"
-"layout (location = 0) in vec3 aPos;\n"
 "\n"
-"uniform mat4 projection;\n"
-"uniform mat4 view;\n"
+"in vec3 vertex_position;\n"
 "\n"
-"out vec3 WorldPos;\n"
+"uniform mat4 P;\n"
+"uniform mat4 V;\n"
 "\n"
-"void main()\n"
-"{\n"
-"    WorldPos = aPos;\n"
+"out vec3 position;\n"
 "\n"
-"	mat4 rotView = mat4(mat3(view));\n"
-"	vec4 clipPos = projection * rotView * vec4(WorldPos, 1.0);\n"
+"void main() {\n"
+"    position = vertex_position;\n"
+"\n"
+"	mat4 rotV = mat4(mat3(V));\n"
+"	vec4 clipPos = P * rotV * vec4(position, 1.0);\n"
 "\n"
 "	gl_Position = clipPos.xyww;\n"
 "}\n"
@@ -77,57 +76,26 @@ namespace visualization {
 
 namespace glsl {
 
-const char * const CubemapVertexShader = 
-"#version 330 core\n"
-"layout (location = 0) in vec3 aPos;\n"
-"\n"
-"out vec3 WorldPos;\n"
-"\n"
-"uniform mat4 projection;\n"
-"uniform mat4 view;\n"
-"\n"
-"void main()\n"
-"{\n"
-"    WorldPos = aPos;  \n"
-"    gl_Position =  projection * view * vec4(WorldPos, 1.0);\n"
-"}\n"
-;
-
-}  // namespace open3d::glsl
-
-}  // namespace open3d::visualization
-
-}  // namespace open3d
-
-// clang-format on
-// clang-format off
-namespace open3d {
-
-namespace visualization {
-
-namespace glsl {
-
-const char * const EquiRectToCubemapFragmentShader = 
+const char * const HDRToCubemapFragmentShader = 
 "#version 330 core\n"
 "out vec4 FragColor;\n"
-"in vec3 WorldPos;\n"
+"in vec3 position;\n"
 "\n"
-"uniform sampler2D equirectangularMap;\n"
+"uniform sampler2D tex_hdr;\n"
 "\n"
 "const vec2 invAtan = vec2(0.1591, 0.3183);\n"
-"vec2 SampleSphericalMap(vec3 v)\n"
-"{\n"
+"\n"
+"vec2 SampleSphericalMap(vec3 v) {\n"
 "    vec2 uv = vec2(atan(v.z, v.x), asin(v.y));\n"
 "    uv *= invAtan;\n"
 "    uv += 0.5;\n"
 "    return uv;\n"
 "}\n"
 "\n"
-"void main()\n"
-"{		\n"
-"    vec2 uv = SampleSphericalMap(normalize(WorldPos));\n"
-"    vec3 color = texture(equirectangularMap, uv).rgb;\n"
-"    \n"
+"void main() {\n"
+"    vec2 uv = SampleSphericalMap(normalize(position));\n"
+"    vec3 color = texture(tex_hdr, uv).rgb;\n"
+"\n"
 "    FragColor = vec4(color, 1.0);\n"
 "}\n"
 ;
@@ -478,8 +446,7 @@ const char * const NoIBLFragmentShader =
 "\n"
 "    // reflectance equation\n"
 "    vec3 Lo = vec3(0.0);\n"
-"    for(int i = 0; i < 4; ++i)\n"
-"    {\n"
+"    for(int i = 0; i < 4; ++i) {\n"
 "        // calculate per-light radiance\n"
 "        vec3 L = normalize(light_positions[i] - position);\n"
 "        vec3 H = normalize(V + L);\n"
@@ -493,7 +460,9 @@ const char * const NoIBLFragmentShader =
 "        vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);\n"
 "\n"
 "        vec3 nominator    = NDF * G * F;\n"
-"        float denominator = 4 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.001; // 0.001 to prevent divide by zero.\n"
+"\n"
+"        // 0.001 to prevent divide by zero.\n"
+"        float denominator = 4 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.001;\n"
 "        vec3 specular = nominator / denominator;\n"
 "\n"
 "        // kS is equal to Fresnel\n"
@@ -511,7 +480,8 @@ const char * const NoIBLFragmentShader =
 "        float NdotL = max(dot(N, L), 0.0);\n"
 "\n"
 "        // add to outgoing radiance Lo\n"
-"        Lo += (kD * albedo / PI + specular) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again\n"
+"        // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again\n"
+"        Lo += (kD * albedo / PI + specular) * radiance * NdotL;\n"
 "    }\n"
 "\n"
 "    // ambient lighting (note that the next IBL tutorial will replace\n"
@@ -897,6 +867,36 @@ const char * const PreIntegrateBRDFVertexShader =
 "{\n"
 "    TexCoords = aTexCoords;\n"
 "	gl_Position = vec4(aPos, 1.0);\n"
+"}\n"
+;
+
+}  // namespace open3d::glsl
+
+}  // namespace open3d::visualization
+
+}  // namespace open3d
+
+// clang-format on
+// clang-format off
+namespace open3d {
+
+namespace visualization {
+
+namespace glsl {
+
+const char * const SimpleVertexShader = 
+"#version 330 core\n"
+"\n"
+"in vec3 vertex_position;\n"
+"\n"
+"out vec3 position;\n"
+"\n"
+"uniform mat4 P;\n"
+"uniform mat4 V;\n"
+"\n"
+"void main() {\n"
+"    position = vertex_position;  \n"
+"    gl_Position =  P * V * vec4(position, 1.0);\n"
 "}\n"
 ;
 

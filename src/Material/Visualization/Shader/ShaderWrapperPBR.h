@@ -19,11 +19,11 @@ public:
 protected:
     explicit ShaderWrapperPBR(const std::string &name) : ShaderWrapper(name) {};
 
+    /** Wrappers for more organized data preparation **/
     template<typename T>
     GLuint BindBuffer(const std::vector<T> &vec,
                       const GLuint &buffer_type,
                       const visualization::RenderOption &option) {
-
         GLuint buffer;
         glGenBuffers(1, &buffer);
         glBindBuffer(buffer_type, buffer);
@@ -31,9 +31,8 @@ protected:
                      vec.data(), GL_STATIC_DRAW);
         return buffer;
     }
-
     GLuint BindTexture(const geometry::Image &texture,
-                const visualization::RenderOption &option);
+                       const visualization::RenderOption &option);
 
 public:
     bool Render(const geometry::Geometry &geometry,
@@ -42,18 +41,20 @@ public:
                 const RenderOption &option,
                 const ViewControl &view);
 
-/* virtual bool BindGeometry */
-
-/* If there is no texture, return true without doing anything */
+    /** Bind is separated in three functions **/
+    /* virtual bool BindGeometry */
     virtual bool BindTextures(const std::vector<geometry::Image> &textures,
                               const RenderOption &option,
                               const ViewControl &view) = 0;
-
     virtual bool BindLighting(const physics::Lighting &lighting,
                               const RenderOption &option,
                               const ViewControl &view) = 0;
 
-/* virtual bool RenderGeometry */
+    /** Render requires only geometry: others are prestored **/
+    /* virtual bool RenderGeometry */
+
+    /** Unbind requires only geometry: others are unbind together **/
+    /* virtual bool UnbindGeometry */
 
 };
 }

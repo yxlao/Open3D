@@ -1,17 +1,17 @@
 #version 330 core
-layout (location = 0) in vec3 aPos;
 
-uniform mat4 projection;
-uniform mat4 view;
+in vec3 vertex_position;
 
-out vec3 WorldPos;
+uniform mat4 P;
+uniform mat4 V;
 
-void main()
-{
-    WorldPos = aPos;
+out vec3 position;
 
-	mat4 rotView = mat4(mat3(view));
-	vec4 clipPos = projection * rotView * vec4(WorldPos, 1.0);
+void main() {
+    position = vertex_position;
+
+	mat4 rotV = mat4(mat3(V));
+	vec4 clipPos = P * rotV * vec4(position, 1.0);
 
 	gl_Position = clipPos.xyww;
 }

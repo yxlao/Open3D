@@ -8,6 +8,9 @@
 
 #include "NoIBLShader.h"
 
+#include "HDRToCubemapShader.h"
+#include "BackgroundShader.h"
+
 namespace open3d {
 namespace visualization {
 namespace glsl {
@@ -39,7 +42,13 @@ public:
     bool UpdateGeometry() override;
 
 protected:
-    NoIBLShader pbr_no_ibl_shader_;
+    /** NoIBL: simple **/
+    NoIBLShader no_ibl_shader_;
+
+    /** IBL **/
+    HDRToCubemapShader hdr_to_cubemap_shader_;
+    BackgroundShader background_shader_;
+
 };
 
 } // glsl
