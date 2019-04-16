@@ -60,15 +60,15 @@ bool NoIBLShader::Compile() {
     err = glGetError();
     std::cout << "GetUniform " << err << std::endl;
 
-//    tex_albedo_      = glGetUniformLocation(program_, "tex_albedo");
-//    tex_normal_      = glGetUniformLocation(program_, "tex_normal");
-//    tex_metallic_    = glGetUniformLocation(program_, "tex_metallic");
-//    tex_roughness_   = glGetUniformLocation(program_, "tex_roughness");
-//    tex_ao_          = glGetUniformLocation(program_, "tex_ao");
-//
-//    light_positions_ = glGetUniformLocation(program_, "light_positions");
-//    light_colors_    = glGetUniformLocation(program_, "light_colors");
-//    camera_position_ = glGetUniformLocation(program_, "camera_position");
+    tex_albedo_      = glGetUniformLocation(program_, "tex_albedo");
+    tex_normal_      = glGetUniformLocation(program_, "tex_normal");
+    tex_metallic_    = glGetUniformLocation(program_, "tex_metallic");
+    tex_roughness_   = glGetUniformLocation(program_, "tex_roughness");
+    tex_ao_          = glGetUniformLocation(program_, "tex_ao");
+
+    light_positions_ = glGetUniformLocation(program_, "light_positions");
+    light_colors_    = glGetUniformLocation(program_, "light_colors");
+    camera_position_ = glGetUniformLocation(program_, "camera_position");
 
     return true;
 }
@@ -122,6 +122,8 @@ bool NoIBLShader::BindTextures(const std::vector<geometry::Image> &textures,
     tex_metallic_id_  = BindTexture(textures[2], option);
     tex_roughness_id_ = BindTexture(textures[3], option);
     tex_ao_id_        = BindTexture(textures[4], option);
+    GLenum err = glGetError();
+    std::cout << "BindTexture " << err << std::endl;
 
     return true;
 }
@@ -144,34 +146,40 @@ bool NoIBLShader::RenderGeometry(const geometry::Geometry &geometry,
     }
 
     glUseProgram(program_);
-    glUniformMatrix4fv(P_, 1, GL_FALSE, view.GetProjectionMatrix().data());
-    glUniformMatrix4fv(V_, 1, GL_FALSE, view.GetViewMatrix().data());
     glUniformMatrix4fv(M_, 1, GL_FALSE, view.GetModelMatrix().data());
+    glUniformMatrix4fv(V_, 1, GL_FALSE, view.GetViewMatrix().data());
+    glUniformMatrix4fv(P_, 1, GL_FALSE, view.GetProjectionMatrix().data());
     GLenum err = glGetError();
     std::cout << "Uniform " << err << std::endl;
 
-//    glUniform1i(tex_albedo_,    0);
-//    glUniform1i(tex_normal_,    1);
-//    glUniform1i(tex_metallic_,  2);
-//    glUniform1i(tex_roughness_, 3);
-//    glUniform1i(tex_ao_,        4);
-//
-//    glUniform3fv(camera_position_, 1, view.GetEye().data());
-//    glUniform3fv(light_positions_, light_positions_data_.size(),
-//                 (const GLfloat*) light_positions_data_.data());
-//    glUniform3fv(light_colors_, light_colors_data_.size(),
-//                 (const GLfloat*) light_colors_data_.data());
+    glUniform1i(tex_albedo_,    0);
+    glUniform1i(tex_normal_,    1);
+    glUniform1i(tex_metallic_,  2);
+    glUniform1i(tex_roughness_, 3);
+    glUniform1i(tex_ao_,        4);
+    err = glGetError();
+    std::cout << "tex " << err << std::endl;
 
-//    glActiveTexture(GL_TEXTURE0);
-//    glBindTexture(GL_TEXTURE_2D, tex_albedo_);
-//    glActiveTexture(GL_TEXTURE1);
-//    glBindTexture(GL_TEXTURE_2D, tex_normal_);
-//    glActiveTexture(GL_TEXTURE2);
-//    glBindTexture(GL_TEXTURE_2D, tex_metallic_);
-//    glActiveTexture(GL_TEXTURE3);
-//    glBindTexture(GL_TEXTURE_2D, tex_roughness_);
-//    glActiveTexture(GL_TEXTURE4);
-//    glBindTexture(GL_TEXTURE_2D, tex_ao_);
+    glUniform3fv(camera_position_, 1, view.GetEye().data());
+    glUniform3fv(light_positions_, light_positions_data_.size(),
+                 (const GLfloat*) light_positions_data_.data());
+    glUniform3fv(light_colors_, light_colors_data_.size(),
+                 (const GLfloat*) light_colors_data_.data());
+    err = glGetError();
+    std::cout << "bind uniform " << err << std::endl;
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, tex_albedo_id_);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, tex_normal_id_);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, tex_metallic_id_);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, tex_roughness_id_);
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_2D, tex_ao_id_);
+    err = glGetError();
+    std::cout << "active and bind tex " << err << std::endl;
 
     glEnableVertexAttribArray(vertex_position_);
     err = glGetError();
@@ -184,22 +192,38 @@ bool NoIBLShader::RenderGeometry(const geometry::Geometry &geometry,
     std::cout << "Position attrib" << err << std::endl;
 
     glEnableVertexAttribArray(vertex_normal_);
+    err = glGetError();
+    std::cout << "Normal enable" << err << std::endl;
     glBindBuffer(GL_ARRAY_BUFFER, vertex_normal_buffer_);
+    err = glGetError();
+    std::cout << "Normal bind" << err << std::endl;
     glVertexAttribPointer(vertex_normal_, 3, GL_FLOAT, GL_FALSE, 0, NULL);
     err = glGetError();
-    std::cout << "Normal " << err << std::endl;
+    std::cout << "Normal attrib" << err << std::endl;
 
     glEnableVertexAttribArray(vertex_uv_);
+    err = glGetError();
+    std::cout << "uv enable" << err << std::endl;
     glBindBuffer(GL_ARRAY_BUFFER, vertex_uv_buffer_);
+    err = glGetError();
+    std::cout << "uv bind" << err << std::endl;
     glVertexAttribPointer(vertex_uv_, 2, GL_FLOAT, GL_FALSE, 0, NULL);
     err = glGetError();
-    std::cout << "uv " << err << std::endl;
+    std::cout << "uv attrib" << err << std::endl;
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_);
 
-    glDrawArrays(draw_arrays_mode_, 0, draw_arrays_size_);
+    glDrawElements(draw_arrays_mode_,
+                   draw_arrays_size_,
+                   GL_UNSIGNED_INT,
+                   nullptr);
+    err = glGetError();
+    std::cout << "Draw " << err << std::endl;
 
     glDisableVertexAttribArray(vertex_position_);
     glDisableVertexAttribArray(vertex_normal_);
     glDisableVertexAttribArray(vertex_uv_);
+    err = glGetError();
+    std::cout << "Disable " << err << std::endl;
 
     return true;
 }
@@ -208,6 +232,7 @@ void NoIBLShader::UnbindGeometry() {
     if (bound_) {
         glDeleteBuffers(1, &vertex_position_buffer_);
         glDeleteBuffers(1, &vertex_normal_buffer_);
+        glDeleteBuffers(1, &vertex_uv_buffer_);
         glDeleteBuffers(1, &triangle_buffer_);
 
         glDeleteTextures(1, &tex_albedo_id_);
@@ -233,6 +258,12 @@ bool NoIBLShader::PrepareRendering(
         glDisable(GL_CULL_FACE);
     } else {
         glEnable(GL_CULL_FACE);
+    }
+    if (option.mesh_show_wireframe_) {
+        glEnable(GL_POLYGON_OFFSET_FILL);
+        glPolygonOffset(1.0, 1.0);
+    } else {
+        glDisable(GL_POLYGON_OFFSET_FILL);
     }
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);

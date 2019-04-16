@@ -9,11 +9,11 @@
 
 using namespace open3d;
 int main() {
-    std::string base_path = "/media/wei/Data/data/pbr/textures/pbr/rusted_iron";
+    std::string base_path = "/media/wei/Data/data/pbr/textures/pbr/gold";
 
     auto mesh = std::make_shared<geometry::TriangleMeshPhysics>();
-    const unsigned int X_SEGMENTS = 16;
-    const unsigned int Y_SEGMENTS = 16;
+    const unsigned int X_SEGMENTS = 64;
+    const unsigned int Y_SEGMENTS = 64;
     const float PI = 3.14159265359;
     for (unsigned int y = 0; y <= Y_SEGMENTS; ++y) {
         for (unsigned int x = 0; x <= X_SEGMENTS; ++x) {
@@ -60,10 +60,12 @@ int main() {
     textures.push_back(*io::CreateImageFromFile(base_path + "/ao.png"));
 
     auto lighting = std::make_shared<physics::SpotLighting>();
-    lighting->light_positions_ = {Eigen::Vector3f(2, 1, 0), Eigen::Vector3f(1, 2, 0)};
-    lighting->light_colors_ = {Eigen::Vector3f(1, 1, 1), Eigen::Vector3f(1, 1, 1)};
+
+    lighting->light_positions_ = {Eigen::Vector3f(0, 0, 10), Eigen::Vector3f(10, 0, 0), Eigen::Vector3f(0, 10, 0)};
+    lighting->light_colors_ = {Eigen::Vector3f(150, 150, 150), Eigen::Vector3f(150, 150, 150), Eigen::Vector3f(150, 150, 150)};
 
     utility::SetVerbosityLevel(utility::VerbosityLevel::VerboseDebug);
+//    mesh->ComputeTriangleNormals();
     visualization::DrawGeometriesPBR({mesh}, {textures}, {lighting});
 
     io::WriteTriangleMeshToPLY(base_path + "/sphere.ply", *mesh, true);

@@ -38,8 +38,26 @@ GLuint ShaderWrapperPBR::BindTexture(
     GLuint texture_id;
     glGenTextures(1, &texture_id);
     glBindTexture(GL_TEXTURE_2D, texture_id);
+
+    GLenum format;
+    switch (texture.num_of_channels_) {
+        case 1: {
+            format = GL_RED; break;
+        }
+        case 3: {
+            format = GL_RGB; break;
+        }
+        case 4: {
+            format = GL_RGBA; break;
+        }
+        default: {
+            format = GL_RGB;
+            utility::PrintDebug("Unknown format, abort!\n");
+        }
+    }
+
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
-                 texture.width_, texture.height_, 0, GL_RGB, GL_UNSIGNED_BYTE,
+                 texture.width_, texture.height_, 0, format, GL_UNSIGNED_BYTE,
                  texture.data_.data());
 
     if (option.interpolation_option_ ==
