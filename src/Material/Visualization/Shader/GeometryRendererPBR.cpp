@@ -38,6 +38,12 @@ bool TriangleMeshRendererPBR::Render(const RenderOption &option,
                 mesh, textures_, ibl, option, view);
             ibl.UpdateDiffuseBuffer(
                 pre_conv_diffuse_shader_.GetGeneratedDiffuseBuffer());
+
+            success &= pre_filter_env_shader_.Render(
+                mesh, textures_, ibl, option, view);
+            ibl.UpdatePreFilterLightBuffer(
+                pre_filter_env_shader_.GetGeneratedPrefilterEnvBuffer());
+
             ibl.is_preprocessed_ = true;
         }
 

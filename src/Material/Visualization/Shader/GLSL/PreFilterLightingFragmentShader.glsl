@@ -1,8 +1,8 @@
 #version 330 core
 out vec4 FragColor;
-in vec3 WorldPos;
+in vec3 position;
 
-uniform samplerCube environmentMap;
+uniform samplerCube tex_cubemap;
 uniform float roughness;
 
 const float PI = 3.14159265359;
@@ -62,7 +62,7 @@ vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness)
 }
 // ----------------------------------------------------------------------------
 void main() {
-    vec3 N = normalize(WorldPos);
+    vec3 N = normalize(position);
 
     // make the simplyfying assumption that V equals R equals the normal 
     vec3 R = N;
@@ -92,7 +92,7 @@ void main() {
 
             float mipLevel = roughness == 0.0 ? 0.0 : 0.5 * log2(saSample / saTexel);
 
-            prefilteredColor += textureLod(environmentMap, L, mipLevel).rgb * NdotL;
+            prefilteredColor += textureLod(tex_cubemap, L, mipLevel).rgb * NdotL;
             totalWeight      += NdotL;
         }
     }

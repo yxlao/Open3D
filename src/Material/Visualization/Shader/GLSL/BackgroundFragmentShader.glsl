@@ -5,7 +5,7 @@ in vec3 position;
 uniform samplerCube tex_cubemap;
 
 void main() {
-    vec3 envColor = textureLod(tex_cubemap, position, 0.0).rgb;
+    vec3 envColor = textureLod(tex_cubemap, position, 1.0).rgb;
 
     // HDR tonemap and gamma correct
     envColor = envColor / (envColor + vec3(1.0));

@@ -55,6 +55,9 @@ public:
     void UpdateDiffuseBuffer(GLuint tex_diffuse_buffer) {
         tex_preconv_diffuse_buffer_ = tex_diffuse_buffer;
     }
+    void UpdatePreFilterLightBuffer(GLuint tex_prefilter_buffer) {
+        tex_prefilter_light_buffer_ = tex_prefilter_buffer;
+    }
 };
 
 class SpotLighting : public Lighting {
