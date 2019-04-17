@@ -28,7 +28,6 @@ bool HDRToCubemapShader::Compile() {
     P_               = glGetUniformLocation(program_, "P");
 
     tex_hdr_         = glGetUniformLocation(program_, "tex_hdr");
-
     return true;
 }
 
@@ -50,9 +49,11 @@ bool HDRToCubemapShader::BindGeometry(const geometry::Geometry &geometry,
 
     // Create buffers and bind the geometry
     std::vector<Eigen::Vector3f> points;
-    PrepareBinding(geometry, option, view, points);
+    if (!PrepareBinding(geometry, option, view, points)) {
+        PrintShaderWarning("Binding failed when preparing data.");
+        return false;
+    }
     vertex_position_buffer_ = BindBuffer(points, GL_ARRAY_BUFFER, option);
-
     bound_ = true;
     return true;
 }
@@ -61,7 +62,12 @@ bool HDRToCubemapShader::BindLighting(const physics::Lighting &lighting,
                                       const visualization::RenderOption &option,
                                       const visualization::ViewControl &view) {
     auto ibl = (const physics::IBLLighting &) lighting;
-    ibl_ = ibl;
+    if (!ibl.ReadDataFromHDR()) {
+        PrintShaderWarning("Binding failed when loading light.");
+        return false;
+    }
+    tex_hdr_buffer_ = ibl.tex_hdr_buffer_;
+
     return true;
 }
 
@@ -80,22 +86,24 @@ bool HDRToCubemapShader::RenderGeometry(const geometry::Geometry &geometry,
 
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24,
+        kCubemapSize, kCubemapSize);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
 
     /** Setup programs and unchanged uniforms **/
     glUseProgram(program_);
-    glUniformMatrix4fv(P_, 1, GL_FALSE, (const GLfloat *) projection_.data());
+    glUniformMatrix4fv(P_, 1, GL_FALSE, projection_.data());
     glUniform1i(tex_hdr_, 0);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, ibl_.tex_hdr_buffer_);
+    glBindTexture(GL_TEXTURE_2D, tex_hdr_buffer_);
 
     /** Iterate over viewpoints and render **/
-    glViewport(0, 0, 512, 512);
+    glViewport(0, 0, kCubemapSize, kCubemapSize);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     for (int i = 0; i < 6; ++i) {
-        glUniformMatrix4fv(V_, 1, GL_FALSE, (const GLfloat *) views_[i].data());
+        glUniformMatrix4fv(V_, 1, GL_FALSE, views_[i].data());
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-            GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, ibl_.tex_cubemap_buffer_, 0);
+            GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, tex_cubemap_buffer_, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glEnableVertexAttribArray(vertex_position_);
@@ -104,14 +112,15 @@ bool HDRToCubemapShader::RenderGeometry(const geometry::Geometry &geometry,
         glDrawArrays(draw_arrays_mode_, 0, draw_arrays_size_);
         glDisableVertexAttribArray(vertex_position_);
     }
-    glViewport(0, 0, view.GetWindowWidth(), view.GetWindowHeight());
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    glBindTexture(GL_TEXTURE_CUBE_MAP, ibl_.tex_cubemap_buffer_);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, tex_cubemap_buffer_);
     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glDeleteBuffers(1, &fbo);
-    glDeleteBuffers(1, &rbo);
+    glDeleteFramebuffers(1, &fbo);
+    glDeleteRenderbuffers(1, &rbo);
+
+    glViewport(0, 0, view.GetWindowWidth(), view.GetWindowHeight());
 
     return true;
 }
@@ -130,11 +139,11 @@ bool HDRToCubemapShader::PrepareRendering(
     const ViewControl &view) {
 
     /** Prepare target texture **/
-    glGenTextures(1, &ibl_.tex_cubemap_buffer_);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, ibl_.tex_cubemap_buffer_);
+    glGenTextures(1, &tex_cubemap_buffer_);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, tex_cubemap_buffer_);
     for (unsigned int i = 0; i < 6; ++i) {
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0,
-            GL_RGB16F, 512, 512, 0, GL_RGB, GL_FLOAT, nullptr);
+            GL_RGB16F, kCubemapSize, kCubemapSize, 0, GL_RGB, GL_FLOAT, nullptr);
     }
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -143,19 +152,6 @@ bool HDRToCubemapShader::PrepareRendering(
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     /** Additional states **/
-    if (option.mesh_show_back_face_) {
-        glDisable(GL_CULL_FACE);
-    } else {
-        glEnable(GL_CULL_FACE);
-    }
-    if (option.mesh_show_wireframe_) {
-        glEnable(GL_POLYGON_OFFSET_FILL);
-        glPolygonOffset(1.0, 1.0);
-    } else {
-        glDisable(GL_POLYGON_OFFSET_FILL);
-    }
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -174,7 +170,7 @@ bool HDRToCubemapShader::PrepareBinding(
     views_ = {
         GLHelper::LookAt(Eigen::Vector3d::Zero(), Eigen::Vector3d(+1, 0, 0), Eigen::Vector3d(0, -1, 0)),
         GLHelper::LookAt(Eigen::Vector3d::Zero(), Eigen::Vector3d(-1, 0, 0), Eigen::Vector3d(0, -1, 0)),
-        GLHelper::LookAt(Eigen::Vector3d::Zero(), Eigen::Vector3d(0, +1, 0), Eigen::Vector3d(0, 0, -1)),
+        GLHelper::LookAt(Eigen::Vector3d::Zero(), Eigen::Vector3d(0, +1, 0), Eigen::Vector3d(0, 0, +1)),
         GLHelper::LookAt(Eigen::Vector3d::Zero(), Eigen::Vector3d(0, -1, 0), Eigen::Vector3d(0, 0, -1)),
         GLHelper::LookAt(Eigen::Vector3d::Zero(), Eigen::Vector3d(0, 0, +1), Eigen::Vector3d(0, -1, 0)),
         GLHelper::LookAt(Eigen::Vector3d::Zero(), Eigen::Vector3d(0, 0, -1), Eigen::Vector3d(0, -1, 0))
@@ -182,14 +178,14 @@ bool HDRToCubemapShader::PrepareBinding(
 
     /** Prepare data **/
     points.resize(physics::kCubeVertices.size() / 3);
-    for (int i = 0; i < points.size(); i += 3) {
-        points[i] = Eigen::Vector3f(physics::kCubeVertices[i + 0],
-                                    physics::kCubeVertices[i + 1],
-                                    physics::kCubeVertices[i + 2]);
+    for (int i = 0; i < points.size(); ++i) {
+        points[i] = Eigen::Vector3f(physics::kCubeVertices[i * 3 + 0],
+                                    physics::kCubeVertices[i * 3 + 1],
+                                    physics::kCubeVertices[i * 3 + 2]);
     }
 
     draw_arrays_mode_ = GL_TRIANGLES;
-    draw_arrays_size_ = GLsizei(36);
+    draw_arrays_size_ = GLsizei(points.size());
     return true;
 }
 

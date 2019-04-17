@@ -60,7 +60,7 @@ int main() {
     textures.push_back(*io::CreateImageFromFile(base_path + "/ao.png"));
 
     auto ibl = std::make_shared<physics::IBLLighting>();
-    ibl->ReadDataFromHDR("/media/wei/Data/data/pbr/textures/hdr/newport_loft.hdr");
+    ibl->filename_ = "/media/wei/Data/data/pbr/textures/hdr/newport_loft.hdr";
 
     auto lighting = std::make_shared<physics::SpotLighting>();
 

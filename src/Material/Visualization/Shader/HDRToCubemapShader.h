@@ -16,8 +16,9 @@ public:
     HDRToCubemapShader() : HDRToCubemapShader("HDRToCubemapShader") {}
     ~HDRToCubemapShader() override { Release(); }
 
-protected:
+    GLuint GetGeneratedCubemapBuffer() const { return tex_cubemap_buffer_; }
 
+protected:
     explicit HDRToCubemapShader(const std::string &name)
         : ShaderWrapperPBR(name) { Compile(); }
 
@@ -44,10 +45,6 @@ protected:
 
     void UnbindGeometry() final;
 
-public:
-    physics::IBLLighting GetProcessedLighting() {
-        return ibl_;
-    }
 
 protected:
     bool PrepareRendering(const geometry::Geometry &geometry,
@@ -72,10 +69,10 @@ protected:
 
     /** buffers **/
     GLuint vertex_position_buffer_;
-    /* GLuint tex_hdr_buffer_; <- already in lighting */
+    GLuint tex_hdr_buffer_;        /* <- already loaded in lighting */
 
-    /** lighting **/
-    physics::IBLLighting ibl_;
+    const int kCubemapSize = 512;
+    GLuint tex_cubemap_buffer_;    /* <- to be generated */
 
     /** cameras (fixed) **/
     GLHelper::GLMatrix4f projection_;

@@ -8,13 +8,13 @@ namespace open3d {
 namespace physics {
 
 IBLLighting::~IBLLighting() {
-    glDeleteTextures(1, &tex_hdr_buffer_);
+
 }
 
-bool IBLLighting::ReadDataFromHDR(const std::string &filename) {
+bool IBLLighting::ReadDataFromHDR() {
     stbi_set_flip_vertically_on_load(true);
     int width, height, channel;
-    float *data = stbi_loadf(filename.c_str(), &width, &height, &channel, 0);
+    float *data = stbi_loadf(filename_.c_str(), &width, &height, &channel, 0);
 
     if (!data) {
         utility::PrintDebug("Unable to load HDR texture.\n");

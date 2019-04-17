@@ -29,14 +29,13 @@ bool TriangleMeshRendererPBR::Render(const RenderOption &option,
 
         /** !!! Ensure pre-processing is only called once **/
         if (! ibl.is_preprocessed_) {
-            // preprocess
             success &= hdr_to_cubemap_shader_.Render(
                 mesh, textures_, ibl, option, view);
-            ibl = hdr_to_cubemap_shader_.GetProcessedLighting();
+            ibl.UpdateCubemapBuffer(
+                hdr_to_cubemap_shader_.GetGeneratedCubemapBuffer());
             ibl.is_preprocessed_ = true;
         }
 
-        // render
         success &= background_shader_.Render(
             mesh, textures_, ibl, option, view);
     }

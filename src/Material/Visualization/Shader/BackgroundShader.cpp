@@ -28,7 +28,6 @@ bool BackgroundShader::Compile() {
     P_               = glGetUniformLocation(program_, "P");
 
     tex_cubemap_     = glGetUniformLocation(program_, "tex_cubemap");
-
     return true;
 }
 
@@ -50,9 +49,11 @@ bool BackgroundShader::BindGeometry(const geometry::Geometry &geometry,
 
     // Create buffers and bind the geometry
     std::vector<Eigen::Vector3f> points;
-    PrepareBinding(geometry, option, view, points);
+    if (!PrepareBinding(geometry, option, view, points)) {
+        PrintShaderWarning("Binding failed when preparing data.");
+        return false;
+    }
     vertex_position_buffer_ = BindBuffer(points, GL_ARRAY_BUFFER, option);
-
     bound_ = true;
     return true;
 }
@@ -76,7 +77,6 @@ bool BackgroundShader::RenderGeometry(const geometry::Geometry &geometry,
     glUseProgram(program_);
     glUniformMatrix4fv(V_, 1, GL_FALSE, view.GetViewMatrix().data());
     glUniformMatrix4fv(P_, 1, GL_FALSE, view.GetProjectionMatrix().data());
-
     glUniform1i(tex_cubemap_, 0);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, ibl_.tex_cubemap_buffer_);
@@ -103,24 +103,6 @@ bool BackgroundShader::PrepareRendering(
     const RenderOption &option,
     const ViewControl &view) {
 
-    /** Additional states **/
-    if (option.mesh_show_back_face_) {
-        glDisable(GL_CULL_FACE);
-    } else {
-        glEnable(GL_CULL_FACE);
-    }
-    if (option.mesh_show_wireframe_) {
-        glEnable(GL_POLYGON_OFFSET_FILL);
-        glPolygonOffset(1.0, 1.0);
-    } else {
-        glDisable(GL_POLYGON_OFFSET_FILL);
-    }
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
-    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-
     return true;
 }
 
@@ -132,14 +114,14 @@ bool BackgroundShader::PrepareBinding(
 
     /** Prepare data **/
     points.resize(physics::kCubeVertices.size() / 3);
-    for (int i = 0; i < points.size(); i += 3) {
-        points[i] = Eigen::Vector3f(physics::kCubeVertices[i + 0],
-                                    physics::kCubeVertices[i + 1],
-                                    physics::kCubeVertices[i + 2]);
+    for (int i = 0; i < points.size(); ++i) {
+        points[i] = Eigen::Vector3f(physics::kCubeVertices[i * 3 + 0],
+                                    physics::kCubeVertices[i * 3 + 1],
+                                    physics::kCubeVertices[i * 3 + 2]);
     }
 
     draw_arrays_mode_ = GL_TRIANGLES;
-    draw_arrays_size_ = GLsizei(36);
+    draw_arrays_size_ = GLsizei(points.size());
     return true;
 }
 

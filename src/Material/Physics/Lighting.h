@@ -36,16 +36,22 @@ public:
     IBLLighting() : Lighting(LightingType::IBL) {}
     ~IBLLighting();
 
-    bool ReadDataFromHDR(const std::string &filename);
+    bool ReadDataFromHDR();
 
 public:
-    bool is_preprocessed_;
+    bool is_preprocessed_ = false;
+
+    std::string filename_;
 
     GLuint tex_hdr_buffer_;
     GLuint tex_cubemap_buffer_;
     GLuint tex_preconv_diffuse_buffer_;
     GLuint tex_prefilter_light_buffer_;
     GLuint tex_brdf_lut_buffer_;        /* (<H,V>, roughness) */
+
+    void UpdateCubemapBuffer(GLuint tex_cubemap_buffer) {
+        tex_cubemap_buffer_ = tex_cubemap_buffer;
+    }
 };
 
 class SpotLighting : public Lighting {
