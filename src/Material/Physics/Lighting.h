@@ -52,6 +52,9 @@ public:
     void UpdateCubemapBuffer(GLuint tex_cubemap_buffer) {
         tex_cubemap_buffer_ = tex_cubemap_buffer;
     }
+    void UpdateDiffuseBuffer(GLuint tex_diffuse_buffer) {
+        tex_preconv_diffuse_buffer_ = tex_diffuse_buffer;
+    }
 };
 
 class SpotLighting : public Lighting {

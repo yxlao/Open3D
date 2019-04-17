@@ -1,21 +1,20 @@
 #version 330 core
 out vec4 FragColor;
-in vec3 WorldPos;
+in vec3 position;
 
-uniform samplerCube environmentMap;
+uniform samplerCube tex_cubemap;
 
 const float PI = 3.14159265359;
 
-void main()
-{		
-    vec3 N = normalize(WorldPos);
+void main() {
+    vec3 N = normalize(position);
 
     vec3 irradiance = vec3(0.0);   
     
     // tangent space calculation from origin point
     vec3 up    = vec3(0.0, 1.0, 0.0);
     vec3 right = cross(up, N);
-    up            = cross(N, right);
+    up         = cross(N, right);
        
     float sampleDelta = 0.025;
     float nrSamples = 0.0f;
@@ -28,7 +27,7 @@ void main()
             // tangent space to world
             vec3 sampleVec = tangentSample.x * right + tangentSample.y * up + tangentSample.z * N; 
 
-            irradiance += texture(environmentMap, sampleVec).rgb * cos(theta) * sin(theta);
+            irradiance += texture(tex_cubemap, sampleVec).rgb * cos(theta) * sin(theta);
             nrSamples++;
         }
     }

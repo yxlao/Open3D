@@ -10,6 +10,7 @@
 
 #include "HDRToCubemapShader.h"
 #include "BackgroundShader.h"
+#include "PreConvDiffuseShader.h"
 
 namespace open3d {
 namespace visualization {
@@ -47,6 +48,8 @@ protected:
 
     /** IBL **/
     HDRToCubemapShader hdr_to_cubemap_shader_;
+    PreConvDiffuseShader pre_conv_diffuse_shader_;
+
     BackgroundShader background_shader_;
 
 };

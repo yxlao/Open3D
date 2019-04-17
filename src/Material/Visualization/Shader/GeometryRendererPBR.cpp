@@ -33,6 +33,11 @@ bool TriangleMeshRendererPBR::Render(const RenderOption &option,
                 mesh, textures_, ibl, option, view);
             ibl.UpdateCubemapBuffer(
                 hdr_to_cubemap_shader_.GetGeneratedCubemapBuffer());
+
+            success &= pre_conv_diffuse_shader_.Render(
+                mesh, textures_, ibl, option, view);
+            ibl.UpdateDiffuseBuffer(
+                pre_conv_diffuse_shader_.GetGeneratedDiffuseBuffer());
             ibl.is_preprocessed_ = true;
         }
 
