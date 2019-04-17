@@ -12,6 +12,8 @@
 #include "BackgroundShader.h"
 #include "PreConvDiffuseShader.h"
 #include "PreFilterEnvShader.h"
+#include "PreIntegrateLUTShader.h"
+#include "IBLShader.h"
 
 namespace open3d {
 namespace visualization {
@@ -51,7 +53,9 @@ protected:
     HDRToCubemapShader hdr_to_cubemap_shader_;
     PreConvDiffuseShader pre_conv_diffuse_shader_;
     PreFilterEnvShader pre_filter_env_shader_;
+    PreIntegrateLUTShader pre_integrate_lut_shader_;
 
+    IBLShader ibl_shader_;
     BackgroundShader background_shader_;
 
 };

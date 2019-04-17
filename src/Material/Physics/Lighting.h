@@ -58,6 +58,9 @@ public:
     void UpdatePreFilterLightBuffer(GLuint tex_prefilter_buffer) {
         tex_prefilter_light_buffer_ = tex_prefilter_buffer;
     }
+    void UpdatePreIntegrateLUTBuffer(GLuint tex_lut_buffer) {
+        tex_brdf_lut_buffer_ = tex_lut_buffer;
+    }
 };
 
 class SpotLighting : public Lighting {

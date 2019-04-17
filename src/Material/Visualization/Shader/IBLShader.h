@@ -55,12 +55,8 @@ protected:
                         std::vector<Eigen::Vector3i> &triangles);
 
 protected:
-    const int kNumTextures = 5;
-
-    /** programs **/
-    GLuint program_prefilter_irradiance_;
-    GLuint program_preintegrate_brdf_;
-    GLuint program_preconv_lighting_;
+    const int kNumObjectTextures = 5;
+    const int kNumEnvTextures = 3;
 
     /** locations **/
     /* array */
@@ -74,21 +70,18 @@ protected:
     GLuint P_;
 
     /* fragment shader */
-    std::vector<GLuint> texes_;
+    std::vector<GLuint> texes_object_; /* 5 textures for object */
+    std::vector<GLuint> texes_env_;    /* 3 textures for env */
     GLuint camera_position_;
-    GLuint light_positions_;
-    GLuint light_colors_;
 
     /** buffers **/
     GLuint vertex_position_buffer_;
     GLuint vertex_normal_buffer_;
     GLuint vertex_uv_buffer_;
     GLuint triangle_buffer_;
-    std::vector<GLuint> tex_buffers_;
 
-    /** raw data **/
-    std::vector<Eigen::Vector3f> light_positions_data_;
-    std::vector<Eigen::Vector3f> light_colors_data_;
+    std::vector<GLuint> texes_object_buffers_;
+    std::vector<GLuint> texes_env_buffers_;
 };
 
 }

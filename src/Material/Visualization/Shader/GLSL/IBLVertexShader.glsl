@@ -1,21 +1,20 @@
 #version 330 core
-layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec2 aTexCoords;
-layout (location = 2) in vec3 aNormal;
+in vec3 vertex_position;
+in vec2 vertex_uv;
+in vec3 vertex_normal;
 
-out vec2 TexCoords;
-out vec3 WorldPos;
-out vec3 Normal;
+out vec2 uv;
+out vec3 position;
+out vec3 normal;
 
-uniform mat4 projection;
-uniform mat4 view;
-uniform mat4 model;
+uniform mat4 P;
+uniform mat4 V;
+uniform mat4 M;
 
-void main()
-{
-    TexCoords = aTexCoords;
-    WorldPos = vec3(model * vec4(aPos, 1.0));
-    Normal = mat3(model) * aNormal;   
+void main() {
+    uv = vertex_uv;
+    position = vec3(M * vec4(vertex_position, 1.0));
+    normal = mat3(M) * vertex_normal;
 
-    gl_Position =  projection * view * vec4(WorldPos, 1.0);
+    gl_Position =  P * V * vec4(position, 1.0);
 }

@@ -9,7 +9,7 @@
 
 using namespace open3d;
 int main() {
-    std::string base_path = "/media/wei/Data/data/pbr/textures/pbr/gold";
+    std::string base_path = "/media/wei/Data/data/pbr/textures/pbr/rusted_iron";
 
     auto mesh = std::make_shared<geometry::TriangleMeshWithTex>();
     const unsigned int X_SEGMENTS = 64;
@@ -60,7 +60,7 @@ int main() {
     textures.push_back(*io::CreateImageFromFile(base_path + "/ao.png"));
 
     auto ibl = std::make_shared<physics::IBLLighting>();
-    ibl->filename_ = "/media/wei/Data/data/pbr/textures/hdr/newport_loft.hdr";
+    ibl->filename_ = "/media/wei/Data/data/pbr/textures/hdr/Tokyo_BigSight_3k.hdr";
 
     auto lighting = std::make_shared<physics::SpotLighting>();
 

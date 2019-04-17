@@ -9,7 +9,7 @@
 
 #include <Material/Visualization/Shader/Shader.h>
 #include <Material/Physics/TriangleMeshWithTex.h>
-#include <Material/Physics/Cube.h>
+#include <Material/Physics/Primitives.h>
 
 namespace open3d {
 namespace visualization {

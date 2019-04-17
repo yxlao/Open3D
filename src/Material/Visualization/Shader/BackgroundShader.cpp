@@ -9,7 +9,7 @@
 
 #include <Material/Visualization/Shader/Shader.h>
 #include <Material/Physics/TriangleMeshWithTex.h>
-#include <Material/Physics/Cube.h>
+#include <Material/Physics/Primitives.h>
 
 namespace open3d {
 namespace visualization {
@@ -79,7 +79,7 @@ bool BackgroundShader::RenderGeometry(const geometry::Geometry &geometry,
     glUniformMatrix4fv(P_, 1, GL_FALSE, view.GetProjectionMatrix().data());
     glUniform1i(tex_cubemap_, 0);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, ibl_.tex_prefilter_light_buffer_);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, ibl_.tex_cubemap_buffer_);
 
     glEnableVertexAttribArray(vertex_position_);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer_);

@@ -41,6 +41,7 @@ namespace visualization {
 namespace glsl {
 
 bool IBLShader::Compile() {
+    std::cout << glGetError() << "\n";
     if (! CompileShaders(IBLVertexShader, nullptr, IBLFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
@@ -53,17 +54,23 @@ bool IBLShader::Compile() {
     M_               = glGetUniformLocation(program_, "M");
     V_               = glGetUniformLocation(program_, "V");
     P_               = glGetUniformLocation(program_, "P");
-
-    light_positions_ = glGetUniformLocation(program_, "light_positions");
-    light_colors_    = glGetUniformLocation(program_, "light_colors");
     camera_position_ = glGetUniformLocation(program_, "camera_position");
 
-    texes_.resize(kNumTextures);
-    texes_[0] = glGetUniformLocation(program_, "tex_albedo");
-    texes_[1] = glGetUniformLocation(program_, "tex_normal");
-    texes_[2] = glGetUniformLocation(program_, "tex_metallic");
-    texes_[3] = glGetUniformLocation(program_, "tex_roughness");
-    texes_[4] = glGetUniformLocation(program_, "tex_ao");
+    std::cout << glGetError() << "\n";
+
+    texes_object_.resize(kNumObjectTextures);
+    texes_object_[0] = glGetUniformLocation(program_, "tex_albedo");
+    texes_object_[1] = glGetUniformLocation(program_, "tex_normal");
+    texes_object_[2] = glGetUniformLocation(program_, "tex_metallic");
+    texes_object_[3] = glGetUniformLocation(program_, "tex_roughness");
+    texes_object_[4] = glGetUniformLocation(program_, "tex_ao");
+
+    texes_env_.resize(kNumEnvTextures);
+    texes_env_[0]    = glGetUniformLocation(program_, "tex_diffuse");
+    texes_env_[1]    = glGetUniformLocation(program_, "tex_specular_prefilter");
+    texes_env_[2]    = glGetUniformLocation(program_, "tex_brdf_lut");
+
+    std::cout << glGetError() << "\n";
 
     return true;
 }
@@ -102,34 +109,46 @@ bool IBLShader::BindGeometry(const geometry::Geometry &geometry,
     vertex_uv_buffer_       = BindBuffer(uvs, GL_ARRAY_BUFFER, option);
     triangle_buffer_        = BindBuffer(triangles, GL_ELEMENT_ARRAY_BUFFER, option);
 
+    std::cout << "BindGeometry: " << glGetError() << "\n";
+
     bound_ = true;
     return true;
 }
 
 bool IBLShader::BindTextures(const std::vector<geometry::Image> &textures,
-                               const RenderOption& option,
-                               const ViewControl &view) {
-    assert(textures.size() == kNumTextures);
-    tex_buffers_.resize(textures.size());
+                             const RenderOption& option,
+                             const ViewControl &view) {
+    assert(textures.size() == kNumObjectTextures);
+    texes_object_buffers_.resize(textures.size());
     for (int i = 0; i < textures.size(); ++i) {
-        tex_buffers_[i] = BindTexture(textures[i], option);
+        texes_object_buffers_[i] = BindTexture(textures[i], option);
+        std::cout << "tex_obejct_buffer: " << texes_object_buffers_[i] << "\n";
     }
+
+    std::cout << "BindTexture: " << glGetError() << "\n";
 
     return true;
 }
 
 bool IBLShader::BindLighting(const physics::Lighting &lighting,
-                               const visualization::RenderOption &option,
-                               const visualization::ViewControl &view) {
-    auto spot_lighting = (const physics::SpotLighting &) lighting;
+                             const visualization::RenderOption &option,
+                             const visualization::ViewControl &view) {
+    auto ibl = (const physics::IBLLighting &) lighting;
 
-    light_positions_data_ = spot_lighting.light_positions_;
-    light_colors_data_    = spot_lighting.light_colors_;
+    texes_env_buffers_.resize(kNumEnvTextures);
+    texes_env_buffers_[0] = ibl.tex_preconv_diffuse_buffer_;
+    texes_env_buffers_[1] = ibl.tex_prefilter_light_buffer_;
+    texes_env_buffers_[2] = ibl.tex_brdf_lut_buffer_;
+
+    for (int i = 0; i < kNumEnvTextures; ++i) {
+        std::cout << "tex_obejct_buffer: " << texes_env_buffers_[i] << "\n";
+    }
+    return true;
 }
 
 bool IBLShader::RenderGeometry(const geometry::Geometry &geometry,
-                                 const RenderOption &option,
-                                 const ViewControl &view) {
+                               const RenderOption &option,
+                               const ViewControl &view) {
     if (!PrepareRendering(geometry, option, view)) {
         PrintShaderWarning("Rendering failed during preparation.");
         return false;
@@ -139,19 +158,33 @@ bool IBLShader::RenderGeometry(const geometry::Geometry &geometry,
     glUniformMatrix4fv(M_, 1, GL_FALSE, view.GetModelMatrix().data());
     glUniformMatrix4fv(V_, 1, GL_FALSE, view.GetViewMatrix().data());
     glUniformMatrix4fv(P_, 1, GL_FALSE, view.GetProjectionMatrix().data());
+    glUniform3fv(camera_position_, 1, (const GLfloat*) view.GetEye().data());
 
-    glUniform3fv(camera_position_, 1,
-                 (const GLfloat*) view.GetEye().data());
-    glUniform3fv(light_positions_, light_positions_data_.size(),
-                 (const GLfloat*) light_positions_data_.data());
-    glUniform3fv(light_colors_, light_colors_data_.size(),
-                 (const GLfloat*) light_colors_data_.data());
+    std::cout << "PreRenderMVP: " << glGetError() << "\n";
 
-    for (int i = 0; i < kNumTextures; ++i) {
-        glUniform1i(texes_[i], i);
-        glActiveTexture(GL_TEXTURE0 + i);
-        glBindTexture(GL_TEXTURE_2D, tex_buffers_[i]);
+    /** Diffuse environment **/
+    glUniform1i(texes_env_[0], 0);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, texes_env_buffers_[0]);
+
+    /** Prefiltered specular **/
+    glUniform1i(texes_env_[1], 1);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, texes_env_buffers_[1]);
+
+    /** Pre-integrated BRDF LUT **/
+    glUniform1i(texes_env_[2], 2);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, texes_env_buffers_[2]);
+
+    /** Object buffers **/
+    for (int i = 0; i < kNumObjectTextures; ++i) {
+        glUniform1i(texes_object_[i], i + kNumEnvTextures);
+        glActiveTexture(GL_TEXTURE0 + i + kNumEnvTextures);
+        glBindTexture(GL_TEXTURE_2D, texes_object_buffers_[i]);
     }
+
+    std::cout << "PreRender: " << glGetError() << "\n";
 
     glEnableVertexAttribArray(vertex_position_);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer_);
@@ -166,14 +199,15 @@ bool IBLShader::RenderGeometry(const geometry::Geometry &geometry,
     glVertexAttribPointer(vertex_uv_, 2, GL_FLOAT, GL_FALSE, 0, NULL);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_);
+    std::cout << "Bind: " << glGetError() << "\n";
 
     glDrawElements(draw_arrays_mode_, draw_arrays_size_, GL_UNSIGNED_INT,
                    nullptr);
-
+    std::cout << "Draw: " << glGetError() << "\n";
     glDisableVertexAttribArray(vertex_position_);
     glDisableVertexAttribArray(vertex_normal_);
     glDisableVertexAttribArray(vertex_uv_);
-
+    std::cout << "Disable: " << glGetError() << "\n";
     return true;
 }
 
@@ -184,8 +218,12 @@ void IBLShader::UnbindGeometry() {
         glDeleteBuffers(1, &vertex_uv_buffer_);
         glDeleteBuffers(1, &triangle_buffer_);
 
-        for (int i = 0; i < kNumTextures; ++i) {
-            glDeleteTextures(1, &tex_buffers_[i]);
+        for (int i = 0; i < kNumObjectTextures; ++i) {
+            glDeleteTextures(1, &texes_object_buffers_[i]);
+        }
+
+        for (int i = 0; i < kNumEnvTextures; ++i) {
+            glDeleteTextures(1, &texes_env_buffers_[i]);
         }
 
         bound_ = false;
@@ -213,7 +251,7 @@ bool IBLShader::PrepareRendering(
         glDisable(GL_POLYGON_OFFSET_FILL);
     }
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
+    glEnable(GL_LEQUAL); /** For the environment **/
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     return true;

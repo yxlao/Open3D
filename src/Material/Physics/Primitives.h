@@ -7,7 +7,7 @@
 namespace open3d {
 namespace physics {
 
-/** In-ward **/
+/** Face inside **/
 const std::vector<float> kCubeVertices = {
     // back face
     -1.0f, -1.0f, -1.0f,
@@ -52,5 +52,20 @@ const std::vector<float> kCubeVertices = {
     -1.0f,  1.0f,  1.0f,
     -1.0f,  1.0f, -1.0f,
 };
+
+const std::vector<float> kQuadVertices = {
+    -1.0f,  1.0f, 0.0f,
+    -1.0f, -1.0f, 0.0f,
+    1.0f,  1.0f, 0.0f,
+    1.0f, -1.0f, 0.0f
+};
+
+const std::vector<float> kQuadUVs = {
+    0.0f, 1.0f,
+    0.0f, 0.0f,
+    1.0f, 1.0f,
+    1.0f, 0.0f,
+};
+
 }
 }
