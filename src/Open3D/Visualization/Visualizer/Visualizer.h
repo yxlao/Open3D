@@ -158,6 +158,10 @@ public:
 
     const std::string &GetWindowName() const { return window_name_; }
 
+    void CopyViewStatusToClipboard();
+
+    void CopyViewStatusFromClipboard();
+
 protected:
     /// Function to initialize OpenGL
     virtual bool InitOpenGL();
@@ -172,10 +176,6 @@ protected:
     /// The function first sets view point, then draw geometry (pointclouds and
     /// meshes individually).
     virtual void Render();
-
-    void CopyViewStatusToClipboard();
-
-    void CopyViewStatusFromClipboard();
 
     // callback functions
     virtual void WindowRefreshCallback(GLFWwindow *window);

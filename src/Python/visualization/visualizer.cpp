@@ -26,6 +26,7 @@
 
 #include "Open3D/Visualization/Visualizer/Visualizer.h"
 #include "Open3D/Geometry/Image.h"
+#include "Open3D/Visualization/Visualizer/GTSelectVisualizer.h"
 #include "Open3D/Visualization/Visualizer/VisualizerWithEditing.h"
 #include "Open3D/Visualization/Visualizer/VisualizerWithKeyCallback.h"
 #include "Python/docstring.h"
@@ -116,7 +117,11 @@ void pybind_visualizer(py::module &m) {
                  &visualization::Visualizer::CaptureDepthImage,
                  "Function to capture and save a depth image", "filename"_a,
                  "do_render"_a = false, "depth_scale"_a = 1000.0)
-            .def("get_window_name", &visualization::Visualizer::GetWindowName);
+            .def("get_window_name", &visualization::Visualizer::GetWindowName)
+            .def("copy_view_status_from_clipboard",
+                 &visualization::Visualizer::CopyViewStatusFromClipboard)
+            .def("copy_view_status_to_clipboard",
+                 &visualization::Visualizer::CopyViewStatusToClipboard);
 
     py::class_<visualization::VisualizerWithKeyCallback,
                PyVisualizer<visualization::VisualizerWithKeyCallback>,
@@ -154,6 +159,20 @@ void pybind_visualizer(py::module &m) {
             .def("get_picked_points",
                  &visualization::VisualizerWithEditing::GetPickedPoints,
                  "Function to get picked points");
+
+    py::class_<visualization::GTSelectVisualizer,
+               PyVisualizerWithEditing<visualization::GTSelectVisualizer>,
+               std::shared_ptr<visualization::GTSelectVisualizer>>
+            visualizer_gt_select(m, "GTSelectVisualizer", visualizer_edit,
+                                 "Visualizer GT selection capabilities.");
+    py::detail::bind_default_constructor<visualization::GTSelectVisualizer>(
+            visualizer_gt_select);
+    visualizer_gt_select.def(py::init<double, bool, const std::string &>())
+            .def("__repr__", [](const visualization::GTSelectVisualizer &vis) {
+                return std::string("GTSelectVisualizer with name ") +
+                       vis.GetWindowName();
+            });
+
     docstring::ClassMethodDocInject(m, "Visualizer", "add_geometry",
                                     map_visualizer_docstrings);
     docstring::ClassMethodDocInject(m, "Visualizer", "remove_geometry",
