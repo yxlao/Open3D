@@ -48,6 +48,7 @@ public:
         coordinate_ = voxel_index;
         if (cloud.HasColors()) {
             color_ += cloud.colors_[index];
+            last_color_ = cloud.colors_[index];
         }
         num_of_points_++;
     }
@@ -58,10 +59,15 @@ public:
         return color_ / double(num_of_points_);
     }
 
+    Eigen::Vector3d GetAbsoluteColor() const {
+        return color_ / double(num_of_points_);
+    }
+
 public:
     int num_of_points_;
     Eigen::Vector3i coordinate_;
     Eigen::Vector3d color_;
+    Eigen::Vector3d last_color_;
 };
 
 }  // namespace
@@ -102,7 +108,7 @@ std::shared_ptr<VoxelGrid> CreateSurfaceVoxelGridFromPointCloud(
     for (auto accpoint : voxelindex_to_accpoint) {
         output->voxels_.push_back(accpoint.second.GetVoxelCoordinate());
         if (has_colors) {
-            output->colors_.push_back(accpoint.second.GetAverageColor());
+            output->colors_.push_back(accpoint.second.GetAbsoluteColor());
         }
     }
     utility::PrintDebug(
