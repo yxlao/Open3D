@@ -2,13 +2,13 @@
 // Created by wei on 4/15/19.
 //
 
-#include "PreFilterEnvShader.h"
+#include "PreFilterEnvSpecularShader.h"
 
 #include <Open3D/Geometry/TriangleMesh.h>
 #include <Open3D/Visualization/Utility/ColorMap.h>
 
 #include <Material/Visualization/Shader/Shader.h>
-#include <Material/Physics/TriangleMeshWithTex.h>
+#include <Material/Physics/TriangleMeshExtended.h>
 #include <Material/Physics/Primitives.h>
 
 namespace open3d {
@@ -16,31 +16,33 @@ namespace visualization {
 
 namespace glsl {
 
-bool PreFilterEnvShader::Compile() {
-    if (! CompileShaders(SimpleVertexShader, nullptr, PreFilterLightingFragmentShader)) {
+bool PreFilterEnvSpecularShader::Compile() {
+    if (!CompileShaders(SimpleVertexShader,
+                        nullptr,
+                        PreFilterLightingFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }
 
     vertex_position_ = glGetAttribLocation(program_, "vertex_position");
 
-    V_               = glGetUniformLocation(program_, "V");
-    P_               = glGetUniformLocation(program_, "P");
+    V_ = glGetUniformLocation(program_, "V");
+    P_ = glGetUniformLocation(program_, "P");
 
-    tex_cubemap_     = glGetUniformLocation(program_, "tex_cubemap");
-    roughness_       = glGetUniformLocation(program_, "roughness");
+    tex_env_ = glGetUniformLocation(program_, "tex_env");
+    roughness_ = glGetUniformLocation(program_, "roughness");
 
     return true;
 }
 
-void PreFilterEnvShader::Release() {
+void PreFilterEnvSpecularShader::Release() {
     UnbindGeometry();
     ReleaseProgram();
 }
 
-bool PreFilterEnvShader::BindGeometry(const geometry::Geometry &geometry,
-                                        const RenderOption &option,
-                                        const ViewControl &view) {
+bool PreFilterEnvSpecularShader::BindGeometry(const geometry::Geometry &geometry,
+                                              const RenderOption &option,
+                                              const ViewControl &view) {
     // If there is already geometry, we first unbind it.
     // We use GL_STATIC_DRAW. When geometry changes, we clear buffers and
     // rebind the geometry. Note that this approach is slow. If the geometry is
@@ -60,18 +62,17 @@ bool PreFilterEnvShader::BindGeometry(const geometry::Geometry &geometry,
     return true;
 }
 
-bool PreFilterEnvShader::BindLighting(const physics::Lighting &lighting,
-                                      const visualization::RenderOption &option,
-                                      const visualization::ViewControl &view) {
-    auto ibl = (const physics::IBLLighting &) lighting;
-    tex_cubemap_buffer_ = ibl.tex_cubemap_buffer_;
+bool PreFilterEnvSpecularShader::BindLighting(const physics::Lighting &lighting,
+                                              const visualization::RenderOption &option,
+                                              const visualization::ViewControl &view) {
+    ibl_ = (const physics::IBLLighting &) lighting;
 
     return true;
 }
 
-bool PreFilterEnvShader::RenderGeometry(const geometry::Geometry &geometry,
-                                          const RenderOption &option,
-                                          const ViewControl &view) {
+bool PreFilterEnvSpecularShader::RenderGeometry(const geometry::Geometry &geometry,
+                                                const RenderOption &option,
+                                                const ViewControl &view) {
     if (!PrepareRendering(geometry, option, view)) {
         PrintShaderWarning("Rendering failed during preparation.");
         return false;
@@ -86,19 +87,22 @@ bool PreFilterEnvShader::RenderGeometry(const geometry::Geometry &geometry,
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24,
                           kMipMapLevels, kMipMapLevels);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER,
+                              GL_DEPTH_ATTACHMENT,
+                              GL_RENDERBUFFER,
+                              rbo);
 
     /** Setup programs and unchanged uniforms **/
     glUseProgram(program_);
     glUniformMatrix4fv(P_, 1, GL_FALSE, projection_.data());
-    glUniform1i(tex_cubemap_, 0);
+    glUniform1i(tex_env_, 0);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, tex_cubemap_buffer_);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, ibl_.tex_env_buffer_);
 
     /** Iterate over viewpoints and render **/
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     for (int lod = 0; lod < kMipMapLevels; ++lod) {
-        unsigned width  = kCubemapSize >> lod;
+        unsigned width = kCubemapSize >> lod;
         unsigned height = kCubemapSize >> lod;
 
         glBindRenderbuffer(GL_RENDERBUFFER, rbo);
@@ -113,7 +117,7 @@ bool PreFilterEnvShader::RenderGeometry(const geometry::Geometry &geometry,
             glUniformMatrix4fv(V_, 1, GL_FALSE, views_[i].data());
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                                    GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-                                   tex_prefilter_env_buffer_, lod);
+                                   tex_env_specular_buffer_, lod);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             glEnableVertexAttribArray(vertex_position_);
@@ -134,7 +138,7 @@ bool PreFilterEnvShader::RenderGeometry(const geometry::Geometry &geometry,
     return true;
 }
 
-void PreFilterEnvShader::UnbindGeometry() {
+void PreFilterEnvSpecularShader::UnbindGeometry() {
     if (bound_) {
         glDeleteBuffers(1, &vertex_position_buffer_);
 
@@ -142,24 +146,10 @@ void PreFilterEnvShader::UnbindGeometry() {
     }
 }
 
-bool PreFilterEnvShader::PrepareRendering(
+bool PreFilterEnvSpecularShader::PrepareRendering(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view) {
-
-    /** Prepare target texture **/
-    glGenTextures(1, &tex_prefilter_env_buffer_);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, tex_prefilter_env_buffer_);
-    for (int i = 0; i < 6; ++i) {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0,
-                     GL_RGB16F, kCubemapSize, kCubemapSize, 0, GL_RGB, GL_FLOAT, nullptr);
-    }
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
     /** Additional states **/
     glEnable(GL_DEPTH_TEST);
@@ -169,7 +159,7 @@ bool PreFilterEnvShader::PrepareRendering(
     return true;
 }
 
-bool PreFilterEnvShader::PrepareBinding(
+bool PreFilterEnvSpecularShader::PrepareBinding(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view,
@@ -178,12 +168,24 @@ bool PreFilterEnvShader::PrepareBinding(
     /** Prepare camera **/
     projection_ = GLHelper::Perspective(90.0f, 1.0f, 0.1f, 10.0f);
     views_ = {
-        GLHelper::LookAt(Eigen::Vector3d::Zero(), Eigen::Vector3d(+1, 0, 0), Eigen::Vector3d(0, -1, 0)),
-        GLHelper::LookAt(Eigen::Vector3d::Zero(), Eigen::Vector3d(-1, 0, 0), Eigen::Vector3d(0, -1, 0)),
-        GLHelper::LookAt(Eigen::Vector3d::Zero(), Eigen::Vector3d(0, +1, 0), Eigen::Vector3d(0, 0, +1)),
-        GLHelper::LookAt(Eigen::Vector3d::Zero(), Eigen::Vector3d(0, -1, 0), Eigen::Vector3d(0, 0, -1)),
-        GLHelper::LookAt(Eigen::Vector3d::Zero(), Eigen::Vector3d(0, 0, +1), Eigen::Vector3d(0, -1, 0)),
-        GLHelper::LookAt(Eigen::Vector3d::Zero(), Eigen::Vector3d(0, 0, -1), Eigen::Vector3d(0, -1, 0))
+        GLHelper::LookAt(Eigen::Vector3d::Zero(),
+                         Eigen::Vector3d(+1, 0, 0),
+                         Eigen::Vector3d(0, -1, 0)),
+        GLHelper::LookAt(Eigen::Vector3d::Zero(),
+                         Eigen::Vector3d(-1, 0, 0),
+                         Eigen::Vector3d(0, -1, 0)),
+        GLHelper::LookAt(Eigen::Vector3d::Zero(),
+                         Eigen::Vector3d(0, +1, 0),
+                         Eigen::Vector3d(0, 0, +1)),
+        GLHelper::LookAt(Eigen::Vector3d::Zero(),
+                         Eigen::Vector3d(0, -1, 0),
+                         Eigen::Vector3d(0, 0, -1)),
+        GLHelper::LookAt(Eigen::Vector3d::Zero(),
+                         Eigen::Vector3d(0, 0, +1),
+                         Eigen::Vector3d(0, -1, 0)),
+        GLHelper::LookAt(Eigen::Vector3d::Zero(),
+                         Eigen::Vector3d(0, 0, -1),
+                         Eigen::Vector3d(0, -1, 0))
     };
 
     /** Prepare data **/
@@ -193,6 +195,29 @@ bool PreFilterEnvShader::PrepareBinding(
                                     physics::kCubeVertices[i * 3 + 1],
                                     physics::kCubeVertices[i * 3 + 2]);
     }
+
+    /** Prepare target texture **/
+    glGenTextures(1, &tex_env_specular_buffer_);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, tex_env_specular_buffer_);
+    for (int i = 0; i < 6; ++i) {
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                     0,
+                     GL_RGB16F,
+                     kCubemapSize,
+                     kCubemapSize,
+                     0,
+                     GL_RGB,
+                     GL_FLOAT,
+                     nullptr);
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP,
+                    GL_TEXTURE_MIN_FILTER,
+                    GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
     draw_arrays_mode_ = GL_TRIANGLES;
     draw_arrays_size_ = GLsizei(points.size());

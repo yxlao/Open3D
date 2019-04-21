@@ -11,15 +11,15 @@ namespace open3d {
 namespace visualization {
 
 namespace glsl {
-class HDRToCubemapShader : public ShaderWrapperPBR {
+class HDRToEnvCubemapShader : public ShaderWrapperPBR {
 public:
-    HDRToCubemapShader() : HDRToCubemapShader("HDRToCubemapShader") {}
-    ~HDRToCubemapShader() override { Release(); }
+    HDRToEnvCubemapShader() : HDRToEnvCubemapShader("HDRToCubemapShader") {}
+    ~HDRToEnvCubemapShader() override { Release(); }
 
-    GLuint GetGeneratedCubemapBuffer() const { return tex_cubemap_buffer_; }
+    GLuint GetGeneratedCubemapBuffer() const { return tex_env_cubemap_buffer_; }
 
 protected:
-    explicit HDRToCubemapShader(const std::string &name)
+    explicit HDRToEnvCubemapShader(const std::string &name)
         : ShaderWrapperPBR(name) { Compile(); }
 
 protected:
@@ -69,14 +69,15 @@ protected:
 
     /** buffers **/
     GLuint vertex_position_buffer_;
-    GLuint tex_hdr_buffer_;        /* <- already loaded in lighting */
 
     const int kCubemapSize = 512;
-    GLuint tex_cubemap_buffer_;    /* <- to be generated */
+    GLuint tex_env_cubemap_buffer_;    /* <- to be generated */
 
     /** cameras (fixed) **/
     GLHelper::GLMatrix4f projection_;
     std::vector<GLHelper::GLMatrix4f> views_;
+
+    physics::IBLLighting ibl_;
 };
 
 }

@@ -3,7 +3,7 @@
 //
 
 #include <Open3D/Open3D.h>
-#include <Material/Physics/TriangleMeshWithTex.h>
+#include <Material/Physics/TriangleMeshExtended.h>
 #include <Material/Physics/Lighting.h>
 #include <Material/Visualization/Utility/DrawGeometryPBR.h>
 
@@ -11,7 +11,7 @@ using namespace open3d;
 int main() {
     std::string base_path = "/media/wei/Data/data/pbr/textures/pbr/gold";
 
-    auto mesh = std::make_shared<geometry::TriangleMeshWithTex>();
+    auto mesh = std::make_shared<geometry::TriangleMeshExtended>();
     const unsigned int X_SEGMENTS = 64;
     const unsigned int Y_SEGMENTS = 64;
     const float PI = 3.14159265359;

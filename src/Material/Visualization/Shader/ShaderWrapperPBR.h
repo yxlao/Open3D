@@ -33,6 +33,9 @@ protected:
     }
     GLuint BindTexture(const geometry::Image &texture,
                        const visualization::RenderOption &option);
+    GLuint AllocTexture(GLuint texture_type, /* CUBE or 2D ? */
+                        bool use_mipmap,
+                        const visualization::RenderOption &option);
 
 public:
     bool Render(const geometry::Geometry &geometry,

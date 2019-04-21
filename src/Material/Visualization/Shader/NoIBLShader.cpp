@@ -33,7 +33,7 @@
 #include <Open3D/Visualization/Utility/ColorMap.h>
 
 #include <Material/Visualization/Shader/Shader.h>
-#include <Material/Physics/TriangleMeshWithTex.h>
+#include <Material/Physics/TriangleMeshExtended.h>
 
 namespace open3d {
 namespace visualization {
@@ -233,7 +233,7 @@ bool NoIBLShader::PrepareBinding(
             "Rendering type is not geometry::TriangleMesh.");
         return false;
     }
-    auto &mesh = (const geometry::TriangleMeshWithTex &) geometry;
+    auto &mesh = (const geometry::TriangleMeshExtended &) geometry;
     if (! mesh.HasTriangles()) {
         PrintShaderWarning("Binding failed with empty triangle mesh.");
         return false;

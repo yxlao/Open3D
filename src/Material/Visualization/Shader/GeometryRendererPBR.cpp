@@ -3,7 +3,6 @@
 //
 
 #include "GeometryRendererPBR.h"
-#include <opencv2/opencv.hpp>
 
 namespace open3d {
 namespace visualization {
@@ -19,7 +18,7 @@ bool TriangleMeshRendererPBR::Render(const RenderOption &option,
                               "Geometry type is not TriangleMesh\n");
         return false;
     }
-    const auto &mesh = (const geometry::TriangleMeshWithTex &)(*geometry_ptr_);
+    const auto &mesh = (const geometry::TriangleMeshExtended &)(*geometry_ptr_);
 
     bool success = true;
 
@@ -31,45 +30,29 @@ bool TriangleMeshRendererPBR::Render(const RenderOption &option,
 
         /** !!! Ensure pre-processing is only called once **/
         if (! ibl.is_preprocessed_) {
-            success &= hdr_to_cubemap_shader_.Render(
+            success &= hdr_to_env_cubemap_shader_.Render(
                 mesh, textures_, ibl, option, view);
-            ibl.UpdateCubemapBuffer(
-                hdr_to_cubemap_shader_.GetGeneratedCubemapBuffer());
+            ibl.UpdateEnvBuffer(
+                hdr_to_env_cubemap_shader_.GetGeneratedCubemapBuffer());
 
-            success &= pre_conv_diffuse_shader_.Render(
+            success &= preconv_env_diffuse_shader_.Render(
                 mesh, textures_, ibl, option, view);
-            ibl.UpdateDiffuseBuffer(
-                pre_conv_diffuse_shader_.GetGeneratedDiffuseBuffer());
+            ibl.UpdateEnvDiffuseBuffer(
+                preconv_env_diffuse_shader_.GetGeneratedDiffuseBuffer());
 
-            success &= pre_filter_env_shader_.Render(
+            success &= prefilter_env_specular_shader_.Render(
                 mesh, textures_, ibl, option, view);
-            ibl.UpdatePreFilterLightBuffer(
-                pre_filter_env_shader_.GetGeneratedPrefilterEnvBuffer());
+            ibl.UpdateEnvSpecularBuffer(
+                prefilter_env_specular_shader_.GetGeneratedPrefilterEnvBuffer());
 
-            success &= pre_integrate_lut_shader_.Render(
+            success &= preintegrate_lut_specular_shader_.Render(
                 mesh, textures_, ibl, option, view);
-            ibl.UpdatePreIntegrateLUTBuffer(
-                pre_integrate_lut_shader_.GetGeneratedLUTBuffer());
+            ibl.UpdateLutSpecularBuffer(
+                preintegrate_lut_specular_shader_.GetGeneratedLUTBuffer());
 
             ibl.is_preprocessed_ = true;
         }
 
-//        cv::Mat img = cv::Mat(512, 512, CV_32FC2);
-//        glGetTexImage(GL_TEXTURE_2D, 0, GL_RG, GL_FLOAT, img.data);
-//
-//        cv::Mat imshow = cv::Mat(512, 512, CV_32FC3);
-//        for (int i = 0; i < 512; ++i) {
-//            for (int j = 0; j < 512; ++j) {
-//                cv::Vec2f rg = img.at<cv::Vec2f>(i, j);
-//                imshow.at<cv::Vec3f>(i, j) = cv::Vec3f(0, rg[1], rg[0]);
-//            }
-//        }
-//        cv::imshow("show", imshow);
-//        cv::waitKey(-1);
-
-//
-//        success &= pre_integrate_lut_shader_.Render(
-//            mesh, textures_, ibl, option, view);
         success &= ibl_shader_.Render(mesh, textures_, ibl, option, view);
         success &= background_shader_.Render(
             mesh, textures_, ibl, option, view);

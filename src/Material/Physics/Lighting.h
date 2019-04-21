@@ -44,22 +44,22 @@ public:
     std::string filename_;
 
     GLuint tex_hdr_buffer_;
-    GLuint tex_cubemap_buffer_;
-    GLuint tex_preconv_diffuse_buffer_;
-    GLuint tex_prefilter_light_buffer_;
-    GLuint tex_brdf_lut_buffer_;        /* (<H,V>, roughness) */
+    GLuint tex_env_buffer_;
+    GLuint tex_env_diffuse_buffer_;
+    GLuint tex_env_specular_buffer_; /* roughness, R = 2<V, N>N - V */
+    GLuint tex_lut_specular_buffer_; /* roughness, <V, N>) */
 
-    void UpdateCubemapBuffer(GLuint tex_cubemap_buffer) {
-        tex_cubemap_buffer_ = tex_cubemap_buffer;
+    void UpdateEnvBuffer(GLuint tex_env_buffer) {
+        tex_env_buffer_ = tex_env_buffer;
     }
-    void UpdateDiffuseBuffer(GLuint tex_diffuse_buffer) {
-        tex_preconv_diffuse_buffer_ = tex_diffuse_buffer;
+    void UpdateEnvDiffuseBuffer(GLuint tex_env_diffuse_buffer) {
+        tex_env_diffuse_buffer_ = tex_env_diffuse_buffer;
     }
-    void UpdatePreFilterLightBuffer(GLuint tex_prefilter_buffer) {
-        tex_prefilter_light_buffer_ = tex_prefilter_buffer;
+    void UpdateEnvSpecularBuffer(GLuint tex_env_specular_buffer) {
+        tex_env_specular_buffer_ = tex_env_specular_buffer;
     }
-    void UpdatePreIntegrateLUTBuffer(GLuint tex_lut_buffer) {
-        tex_brdf_lut_buffer_ = tex_lut_buffer;
+    void UpdateLutSpecularBuffer(GLuint tex_lut_specular_buffer) {
+        tex_lut_specular_buffer_ = tex_lut_specular_buffer;
     }
 };
 

@@ -11,22 +11,22 @@ namespace open3d {
 namespace visualization {
 
 namespace glsl {
-class PreIntegrateLUTShader : public ShaderWrapperPBR {
+class PreConvEnvDiffuseShader : public ShaderWrapperPBR {
 public:
-    PreIntegrateLUTShader() : PreIntegrateLUTShader("PreIntegrateLUTShader") {}
-    ~PreIntegrateLUTShader() override { Release(); }
+    PreConvEnvDiffuseShader() : PreConvEnvDiffuseShader("PreConvDiffuseShader") {}
+    ~PreConvEnvDiffuseShader() override { Release(); }
 
-    GLuint GetGeneratedLUTBuffer() const { return tex_brdf_lut_buffer_; }
+    GLuint GetGeneratedDiffuseBuffer() const { return tex_diffuse_buffer_; }
 
 protected:
-    explicit PreIntegrateLUTShader(const std::string &name)
+    explicit PreConvEnvDiffuseShader(const std::string &name)
         : ShaderWrapperPBR(name) { Compile(); }
 
 protected:
     bool Compile() final;
     void Release() final;
 
-    /** Dummy, load Quad instead **/
+    /** Dummy, load Cube instead **/
     bool BindGeometry(const geometry::Geometry &geometry,
                       const RenderOption &option,
                       const ViewControl &view) final;
@@ -34,7 +34,7 @@ protected:
     bool BindTextures(const std::vector<geometry::Image> &textures,
                       const RenderOption &option,
                       const ViewControl &view) final { return true; };
-    /** Dummy **/
+    /** Assign lighting **/
     bool BindLighting(const physics::Lighting &lighting,
                       const RenderOption &option,
                       const ViewControl &view) final;
@@ -53,21 +53,31 @@ protected:
     bool PrepareBinding(const geometry::Geometry &geometry,
                         const RenderOption &option,
                         const ViewControl &view,
-                        std::vector<Eigen::Vector3f> &points,
-                        std::vector<Eigen::Vector2f> &uvs);
+                        std::vector<Eigen::Vector3f> &points);
 
 protected:
     /** locations **/
     /* array (cube) */
     GLuint vertex_position_;
-    GLuint vertex_uv_;
+
+    /* vertex shader */
+    GLuint V_;
+    GLuint P_;
+
+    /* fragment shader */
+    GLuint tex_env_;
 
     /** buffers **/
     GLuint vertex_position_buffer_;
-    GLuint vertex_uv_buffer_;
 
-    const int kTextureSize = 512;
-    GLuint tex_brdf_lut_buffer_;    /* <- to be generated */
+    const int kCubemapSize = 32;
+    GLuint tex_diffuse_buffer_;    /* <- to be generated */
+
+    /** cameras (fixed) **/
+    GLHelper::GLMatrix4f projection_;
+    std::vector<GLHelper::GLMatrix4f> views_;
+
+    physics::IBLLighting ibl_;
 };
 
 }

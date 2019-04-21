@@ -11,15 +11,16 @@ namespace open3d {
 namespace visualization {
 
 namespace glsl {
-class PreConvDiffuseShader : public ShaderWrapperPBR {
+class PreFilterEnvSpecularShader : public ShaderWrapperPBR {
 public:
-    PreConvDiffuseShader() : PreConvDiffuseShader("PreConvDiffuseShader") {}
-    ~PreConvDiffuseShader() override { Release(); }
+    PreFilterEnvSpecularShader() : PreFilterEnvSpecularShader(
+        "PreFilterEnvShader") {}
+    ~PreFilterEnvSpecularShader() override { Release(); }
 
-    GLuint GetGeneratedDiffuseBuffer() const { return tex_diffuse_buffer_; }
+    GLuint GetGeneratedPrefilterEnvBuffer() const { return tex_env_specular_buffer_; }
 
 protected:
-    explicit PreConvDiffuseShader(const std::string &name)
+    explicit PreFilterEnvSpecularShader(const std::string &name)
         : ShaderWrapperPBR(name) { Compile(); }
 
 protected:
@@ -45,7 +46,6 @@ protected:
 
     void UnbindGeometry() final;
 
-
 protected:
     bool PrepareRendering(const geometry::Geometry &geometry,
                           const RenderOption &option,
@@ -65,18 +65,21 @@ protected:
     GLuint P_;
 
     /* fragment shader */
-    GLuint tex_cubemap_;
+    GLuint tex_env_;
+    GLuint roughness_;
 
     /** buffers **/
     GLuint vertex_position_buffer_;
-    GLuint tex_cubemap_buffer_;    /* <- already updated in lighting */
 
-    const int kCubemapSize = 32;
-    GLuint tex_diffuse_buffer_;    /* <- to be generated */
+    const unsigned int kCubemapSize = 128;
+    const int kMipMapLevels = 5;
+    GLuint tex_env_specular_buffer_;    /* <- to be generated */
 
     /** cameras (fixed) **/
     GLHelper::GLMatrix4f projection_;
     std::vector<GLHelper::GLMatrix4f> views_;
+
+    physics::IBLLighting ibl_;
 };
 
 }

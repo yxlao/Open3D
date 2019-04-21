@@ -2,13 +2,13 @@
 // Created by wei on 4/15/19.
 //
 
-#include "PreIntegrateLUTShader.h"
+#include "PreIntegrateLUTSpecularShader.h"
 
 #include <Open3D/Geometry/TriangleMesh.h>
 #include <Open3D/Visualization/Utility/ColorMap.h>
 
 #include <Material/Visualization/Shader/Shader.h>
-#include <Material/Physics/TriangleMeshWithTex.h>
+#include <Material/Physics/TriangleMeshExtended.h>
 #include <Material/Physics/Primitives.h>
 
 namespace open3d {
@@ -16,7 +16,7 @@ namespace visualization {
 
 namespace glsl {
 
-bool PreIntegrateLUTShader::Compile() {
+bool PreIntegrateLUTSpecularShader::Compile() {
     if (! CompileShaders(PreIntegrateLUTVertexShader, nullptr, PreIntegrateLUTFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
@@ -28,12 +28,12 @@ bool PreIntegrateLUTShader::Compile() {
     return true;
 }
 
-void PreIntegrateLUTShader::Release() {
+void PreIntegrateLUTSpecularShader::Release() {
     UnbindGeometry();
     ReleaseProgram();
 }
 
-bool PreIntegrateLUTShader::BindGeometry(const geometry::Geometry &geometry,
+bool PreIntegrateLUTSpecularShader::BindGeometry(const geometry::Geometry &geometry,
                                          const RenderOption &option,
                                          const ViewControl &view) {
     // If there is already geometry, we first unbind it.
@@ -57,13 +57,13 @@ bool PreIntegrateLUTShader::BindGeometry(const geometry::Geometry &geometry,
     return true;
 }
 
-bool PreIntegrateLUTShader::BindLighting(const physics::Lighting &lighting,
+bool PreIntegrateLUTSpecularShader::BindLighting(const physics::Lighting &lighting,
                                          const visualization::RenderOption &option,
                                          const visualization::ViewControl &view) {
     return true;
 }
 
-bool PreIntegrateLUTShader::RenderGeometry(const geometry::Geometry &geometry,
+bool PreIntegrateLUTSpecularShader::RenderGeometry(const geometry::Geometry &geometry,
                                            const RenderOption &option,
                                            const ViewControl &view) {
     if (!PrepareRendering(geometry, option, view)) {
@@ -88,7 +88,7 @@ bool PreIntegrateLUTShader::RenderGeometry(const geometry::Geometry &geometry,
     glViewport(0, 0, kTextureSize, kTextureSize);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                           GL_TEXTURE_2D, tex_brdf_lut_buffer_, 0);
+                           GL_TEXTURE_2D, tex_lut_specular_buffer_, 0);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -115,7 +115,7 @@ bool PreIntegrateLUTShader::RenderGeometry(const geometry::Geometry &geometry,
     return true;
 }
 
-void PreIntegrateLUTShader::UnbindGeometry() {
+void PreIntegrateLUTSpecularShader::UnbindGeometry() {
     if (bound_) {
         glDeleteBuffers(1, &vertex_position_buffer_);
         glDeleteBuffers(1, &vertex_uv_buffer_);
@@ -124,7 +124,7 @@ void PreIntegrateLUTShader::UnbindGeometry() {
     }
 }
 
-bool PreIntegrateLUTShader::PrepareRendering(
+bool PreIntegrateLUTSpecularShader::PrepareRendering(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view) {
@@ -137,7 +137,7 @@ bool PreIntegrateLUTShader::PrepareRendering(
     return true;
 }
 
-bool PreIntegrateLUTShader::PrepareBinding(
+bool PreIntegrateLUTSpecularShader::PrepareBinding(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view,
@@ -156,8 +156,8 @@ bool PreIntegrateLUTShader::PrepareBinding(
     }
 
     /** Prepare target texture **/
-    glGenTextures(1, &tex_brdf_lut_buffer_);
-    glBindTexture(GL_TEXTURE_2D, tex_brdf_lut_buffer_);
+    glGenTextures(1, &tex_lut_specular_buffer_);
+    glBindTexture(GL_TEXTURE_2D, tex_lut_specular_buffer_);
     glTexImage2D(GL_TEXTURE_2D, 0,
                  GL_RGB16F, kTextureSize, kTextureSize, 0, GL_RG, GL_FLOAT, nullptr);
 

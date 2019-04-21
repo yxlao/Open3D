@@ -6,7 +6,7 @@
 
 #include <Open3D/Open3D.h>
 #include "ShaderWrapperPBR.h"
-#include <Material/Physics/TriangleMeshWithTex.h>
+#include <Material/Physics/TriangleMeshExtended.h>
 
 namespace open3d {
 namespace visualization {

@@ -13,9 +13,9 @@ uniform sampler2D tex_roughness;
 uniform sampler2D tex_ao;
 
 // IBL
-uniform samplerCube tex_diffuse;
-uniform samplerCube tex_specular_prefilter;
-uniform sampler2D   tex_brdf_lut;
+uniform samplerCube tex_env_diffuse;
+uniform samplerCube tex_env_specular;
+uniform sampler2D   tex_lut_specular;
 
 uniform vec3 camera_position;
 
@@ -115,13 +115,13 @@ void main()
     vec3 kD = 1.0 - kS;
     kD *= 1.0 - metallic;
 
-    vec3 irradiance = texture(tex_diffuse, N).rgb;
+    vec3 irradiance = texture(tex_env_diffuse, N).rgb;
     vec3 diffuse    = irradiance * albedo;
 
     // sample both the pre-filter map and the BRDF lut and combine them together as per the Split-Sum approximation to get the IBL specular part.
     const float MAX_REFLECTION_LOD = 4.0;
-    vec3 prefilteredColor = textureLod(tex_specular_prefilter, R, roughness * MAX_REFLECTION_LOD).rgb;
-    vec2 brdf  = texture(tex_brdf_lut, vec2(max(dot(N, v), 0.0), roughness)).rg;
+    vec3 prefilteredColor = textureLod(tex_env_specular, R, roughness * MAX_REFLECTION_LOD).rgb;
+    vec2 brdf  = texture(tex_lut_specular, vec2(max(dot(N, v), 0.0), roughness)).rg;
     vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
 
     vec3 ambient = (kD * diffuse + specular) * ao;

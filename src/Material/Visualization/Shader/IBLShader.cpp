@@ -33,7 +33,7 @@
 #include <Open3D/Visualization/Utility/ColorMap.h>
 
 #include <Material/Visualization/Shader/Shader.h>
-#include <Material/Physics/TriangleMeshWithTex.h>
+#include <Material/Physics/TriangleMeshExtended.h>
 
 namespace open3d {
 namespace visualization {
@@ -42,18 +42,18 @@ namespace glsl {
 
 bool IBLShader::Compile() {
     std::cout << glGetError() << "\n";
-    if (! CompileShaders(IBLVertexShader, nullptr, IBLFragmentShader)) {
+    if (!CompileShaders(IBLVertexShader, nullptr, IBLFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }
 
     vertex_position_ = glGetAttribLocation(program_, "vertex_position");
-    vertex_normal_   = glGetAttribLocation(program_, "vertex_normal");
-    vertex_uv_       = glGetAttribLocation(program_, "vertex_uv");
+    vertex_normal_ = glGetAttribLocation(program_, "vertex_normal");
+    vertex_uv_ = glGetAttribLocation(program_, "vertex_uv");
 
-    M_               = glGetUniformLocation(program_, "M");
-    V_               = glGetUniformLocation(program_, "V");
-    P_               = glGetUniformLocation(program_, "P");
+    M_ = glGetUniformLocation(program_, "M");
+    V_ = glGetUniformLocation(program_, "V");
+    P_ = glGetUniformLocation(program_, "P");
     camera_position_ = glGetUniformLocation(program_, "camera_position");
 
     std::cout << glGetError() << "\n";
@@ -66,9 +66,9 @@ bool IBLShader::Compile() {
     texes_object_[4] = glGetUniformLocation(program_, "tex_ao");
 
     texes_env_.resize(kNumEnvTextures);
-    texes_env_[0]    = glGetUniformLocation(program_, "tex_diffuse");
-    texes_env_[1]    = glGetUniformLocation(program_, "tex_specular_prefilter");
-    texes_env_[2]    = glGetUniformLocation(program_, "tex_brdf_lut");
+    texes_env_[0] = glGetUniformLocation(program_, "tex_env_diffuse");
+    texes_env_[1] = glGetUniformLocation(program_, "tex_env_specular");
+    texes_env_[2] = glGetUniformLocation(program_, "tex_lut_specular");
 
     std::cout << glGetError() << "\n";
 
@@ -81,8 +81,8 @@ void IBLShader::Release() {
 }
 
 bool IBLShader::BindGeometry(const geometry::Geometry &geometry,
-                               const RenderOption &option,
-                               const ViewControl &view) {
+                             const RenderOption &option,
+                             const ViewControl &view) {
     // If there is already geometry, we first unbind it.
     // We use GL_STATIC_DRAW. When geometry changes, we clear buffers and
     // rebind the geometry. Note that this approach is slow. If the geometry is
@@ -105,9 +105,9 @@ bool IBLShader::BindGeometry(const geometry::Geometry &geometry,
 
     // Create buffers and bind the geometry
     vertex_position_buffer_ = BindBuffer(points, GL_ARRAY_BUFFER, option);
-    vertex_normal_buffer_   = BindBuffer(normals, GL_ARRAY_BUFFER, option);
-    vertex_uv_buffer_       = BindBuffer(uvs, GL_ARRAY_BUFFER, option);
-    triangle_buffer_        = BindBuffer(triangles, GL_ELEMENT_ARRAY_BUFFER, option);
+    vertex_normal_buffer_ = BindBuffer(normals, GL_ARRAY_BUFFER, option);
+    vertex_uv_buffer_ = BindBuffer(uvs, GL_ARRAY_BUFFER, option);
+    triangle_buffer_ = BindBuffer(triangles, GL_ELEMENT_ARRAY_BUFFER, option);
 
     std::cout << "BindGeometry: " << glGetError() << "\n";
 
@@ -116,7 +116,7 @@ bool IBLShader::BindGeometry(const geometry::Geometry &geometry,
 }
 
 bool IBLShader::BindTextures(const std::vector<geometry::Image> &textures,
-                             const RenderOption& option,
+                             const RenderOption &option,
                              const ViewControl &view) {
     assert(textures.size() == kNumObjectTextures);
     texes_object_buffers_.resize(textures.size());
@@ -136,9 +136,9 @@ bool IBLShader::BindLighting(const physics::Lighting &lighting,
     auto ibl = (const physics::IBLLighting &) lighting;
 
     texes_env_buffers_.resize(kNumEnvTextures);
-    texes_env_buffers_[0] = ibl.tex_preconv_diffuse_buffer_;
-    texes_env_buffers_[1] = ibl.tex_prefilter_light_buffer_;
-    texes_env_buffers_[2] = ibl.tex_brdf_lut_buffer_;
+    texes_env_buffers_[0] = ibl.tex_env_diffuse_buffer_;
+    texes_env_buffers_[1] = ibl.tex_env_specular_buffer_;
+    texes_env_buffers_[2] = ibl.tex_lut_specular_buffer_;
 
     for (int i = 0; i < kNumEnvTextures; ++i) {
         std::cout << "tex_obejct_buffer: " << texes_env_buffers_[i] << "\n";
@@ -158,7 +158,7 @@ bool IBLShader::RenderGeometry(const geometry::Geometry &geometry,
     glUniformMatrix4fv(M_, 1, GL_FALSE, view.GetModelMatrix().data());
     glUniformMatrix4fv(V_, 1, GL_FALSE, view.GetViewMatrix().data());
     glUniformMatrix4fv(P_, 1, GL_FALSE, view.GetProjectionMatrix().data());
-    glUniform3fv(camera_position_, 1, (const GLfloat*) view.GetEye().data());
+    glUniform3fv(camera_position_, 1, (const GLfloat *) view.GetEye().data());
 
     std::cout << "PreRenderMVP: " << glGetError() << "\n";
 
@@ -251,7 +251,7 @@ bool IBLShader::PrepareRendering(
         glDisable(GL_POLYGON_OFFSET_FILL);
     }
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_LEQUAL); /** For the environment **/
+    glDepthFunc(GL_LEQUAL); /** For the environment **/
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     return true;
@@ -271,8 +271,8 @@ bool IBLShader::PrepareBinding(
             "Rendering type is not geometry::TriangleMesh.");
         return false;
     }
-    auto &mesh = (const geometry::TriangleMeshWithTex &) geometry;
-    if (! mesh.HasTriangles()) {
+    auto &mesh = (const geometry::TriangleMeshExtended &) geometry;
+    if (!mesh.HasTriangles()) {
         PrintShaderWarning("Binding failed with empty triangle mesh.");
         return false;
     }

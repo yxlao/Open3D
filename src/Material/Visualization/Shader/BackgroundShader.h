@@ -63,7 +63,7 @@ protected:
     GLuint P_;
 
     /* fragment shader */
-    GLuint tex_cubemap_;
+    GLuint tex_env_;
 
     /** buffers **/
     GLuint vertex_position_buffer_;

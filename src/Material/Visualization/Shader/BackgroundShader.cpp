@@ -8,7 +8,7 @@
 #include <Open3D/Visualization/Utility/ColorMap.h>
 
 #include <Material/Visualization/Shader/Shader.h>
-#include <Material/Physics/TriangleMeshWithTex.h>
+#include <Material/Physics/TriangleMeshExtended.h>
 #include <Material/Physics/Primitives.h>
 
 namespace open3d {
@@ -17,17 +17,19 @@ namespace visualization {
 namespace glsl {
 
 bool BackgroundShader::Compile() {
-    if (! CompileShaders(BackgroundVertexShader, nullptr, BackgroundFragmentShader)) {
+    if (!CompileShaders(BackgroundVertexShader,
+                        nullptr,
+                        BackgroundFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }
 
     vertex_position_ = glGetAttribLocation(program_, "vertex_position");
 
-    V_               = glGetUniformLocation(program_, "V");
-    P_               = glGetUniformLocation(program_, "P");
+    V_ = glGetUniformLocation(program_, "V");
+    P_ = glGetUniformLocation(program_, "P");
 
-    tex_cubemap_     = glGetUniformLocation(program_, "tex_cubemap");
+    tex_env_ = glGetUniformLocation(program_, "tex_env");
     return true;
 }
 
@@ -37,8 +39,8 @@ void BackgroundShader::Release() {
 }
 
 bool BackgroundShader::BindGeometry(const geometry::Geometry &geometry,
-                                      const RenderOption &option,
-                                      const ViewControl &view) {
+                                    const RenderOption &option,
+                                    const ViewControl &view) {
     // If there is already geometry, we first unbind it.
     // We use GL_STATIC_DRAW. When geometry changes, we clear buffers and
     // rebind the geometry. Note that this approach is slow. If the geometry is
@@ -59,16 +61,16 @@ bool BackgroundShader::BindGeometry(const geometry::Geometry &geometry,
 }
 
 bool BackgroundShader::BindLighting(const physics::Lighting &lighting,
-                                      const visualization::RenderOption &option,
-                                      const visualization::ViewControl &view) {
+                                    const visualization::RenderOption &option,
+                                    const visualization::ViewControl &view) {
     auto ibl = (const physics::IBLLighting &) lighting;
     ibl_ = ibl;
     return true;
 }
 
 bool BackgroundShader::RenderGeometry(const geometry::Geometry &geometry,
-                                        const RenderOption &option,
-                                        const ViewControl &view) {
+                                      const RenderOption &option,
+                                      const ViewControl &view) {
     if (!PrepareRendering(geometry, option, view)) {
         PrintShaderWarning("Rendering failed during preparation.");
         return false;
@@ -77,13 +79,13 @@ bool BackgroundShader::RenderGeometry(const geometry::Geometry &geometry,
     glUseProgram(program_);
     glUniformMatrix4fv(V_, 1, GL_FALSE, view.GetViewMatrix().data());
     glUniformMatrix4fv(P_, 1, GL_FALSE, view.GetProjectionMatrix().data());
-    glUniform1i(tex_cubemap_, 0);
+    glUniform1i(tex_env_, 0);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, ibl_.tex_cubemap_buffer_);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, ibl_.tex_env_buffer_);
 
     glEnableVertexAttribArray(vertex_position_);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer_);
-    glVertexAttribPointer(vertex_position_, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    glVertexAttribPointer(vertex_position_, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
     glDrawArrays(draw_arrays_mode_, 0, draw_arrays_size_);
     glDisableVertexAttribArray(vertex_position_);
 
