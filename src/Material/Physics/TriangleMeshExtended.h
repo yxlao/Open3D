@@ -13,29 +13,20 @@ public:
     /** texture coordinate **/
     std::vector<Eigen::Vector2d> vertex_uvs_;
 
-    /** color and normal: pre-stored **/
-    std::vector<float> roughness_;
-    std::vector<float> metallic_;
-    std::vector<float> ao_;
+    /** @color and @normal: already-stored.
+     *  @material holds: roughness, metallic, ao. **/
+    std::vector<Eigen::Vector3d> vertex_materials_;
 
 public:
     bool HasUVs() const {
-        return vertex_uvs_.size() != 0
+        return !vertex_uvs_.empty()
             && vertex_uvs_.size() == vertices_.size();
     }
 
-    bool HasRoughness() const {
-        return !roughness_.empty() && roughness_.size() == vertices_.size();
+    bool HasMaterials() const {
+        return !vertex_materials_.empty()
+            && vertex_materials_.size() == vertices_.size();
     }
-
-    bool HasMetallic() const {
-        return !metallic_.empty() && metallic_.size() == vertices_.size();
-    }
-
-    bool HasAo() const {
-        return !ao_.empty() && ao_.size() == vertices_.size();
-    }
-
 };
 }
 }

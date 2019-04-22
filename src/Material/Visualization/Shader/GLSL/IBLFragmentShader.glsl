@@ -67,9 +67,9 @@ float GeometrySchlickGGX(float NdotV, float roughness)
     return nom / denom;
 }
 // ----------------------------------------------------------------------------
-float GeometrySmith(vec3 N, vec3 v, vec3 L, float roughness)
+float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 {
-    float NdotV = max(dot(N, v), 0.0);
+    float NdotV = max(dot(N, V), 0.0);
     float NdotL = max(dot(N, L), 0.0);
     float ggx2 = GeometrySchlickGGX(NdotV, roughness);
     float ggx1 = GeometrySchlickGGX(NdotL, roughness);
@@ -97,8 +97,8 @@ void main()
 
     // input lighting data
     vec3 N = getnormalFromMap();
-    vec3 v = normalize(camera_position - position);
-    vec3 R = reflect(-v, N);
+    vec3 V = normalize(camera_position - position);
+    vec3 R = reflect(-V, N);
 
     // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0
     // of 0.04 and if it's a metal, use the albedo color as F0 (metallic workflow)
@@ -109,7 +109,7 @@ void main()
     vec3 Lo = vec3(0.0);
 
     // ambient lighting (we now use IBL as the ambient term)
-    vec3 F = fresnelSchlickRoughness(max(dot(N, v), 0.0), F0, roughness);
+    vec3 F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
 
     vec3 kS = F;
     vec3 kD = 1.0 - kS;
@@ -121,7 +121,7 @@ void main()
     // sample both the pre-filter map and the BRDF lut and combine them together as per the Split-Sum approximation to get the IBL specular part.
     const float MAX_REFLECTION_LOD = 4.0;
     vec3 prefilteredColor = textureLod(tex_env_specular, R, roughness * MAX_REFLECTION_LOD).rgb;
-    vec2 brdf  = texture(tex_lut_specular, vec2(max(dot(N, v), 0.0), roughness)).rg;
+    vec2 brdf  = texture(tex_lut_specular, vec2(max(dot(N, V), 0.0), roughness)).rg;
     vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
 
     vec3 ambient = (kD * diffuse + specular) * ao;
