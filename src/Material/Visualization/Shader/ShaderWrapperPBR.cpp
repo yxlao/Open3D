@@ -3,6 +3,7 @@
 //
 
 #include "ShaderWrapperPBR.h"
+#include "Primitives.h"
 
 namespace open3d {
 namespace visualization {
@@ -32,9 +33,10 @@ bool ShaderWrapperPBR::Render(const geometry::Geometry &geometry,
     return RenderGeometry(geometry, option, view);
 }
 
-GLuint ShaderWrapperPBR::BindTexture(
+GLuint ShaderWrapperPBR::BindTexture2D(
     const geometry::Image &texture,
     const visualization::RenderOption &option) {
+
     GLuint texture_id;
     glGenTextures(1, &texture_id);
     glBindTexture(GL_TEXTURE_2D, texture_id);
@@ -42,13 +44,16 @@ GLuint ShaderWrapperPBR::BindTexture(
     GLenum format;
     switch (texture.num_of_channels_) {
         case 1: {
-            format = GL_RED; break;
+            format = GL_RED;
+            break;
         }
         case 3: {
-            format = GL_RGB; break;
+            format = GL_RGB;
+            break;
         }
         case 4: {
-            format = GL_RGBA; break;
+            format = GL_RGBA;
+            break;
         }
         default: {
             format = GL_RGB;
@@ -66,12 +71,104 @@ GLuint ShaderWrapperPBR::BindTexture(
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,
+                    GL_TEXTURE_MIN_FILTER,
+                    GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     return texture_id;
 }
 
+GLuint ShaderWrapperPBR::CreateTexture2D(GLuint width, GLuint height,
+                                         bool use_mipmap,
+                                         const visualization::RenderOption &option) {
+    GLuint texture_id;
+    glGenTextures(1, &texture_id);
+    glBindTexture(GL_TEXTURE_2D, texture_id);
+    glTexImage2D(GL_TEXTURE_2D, 0,
+                 GL_RGB16F, width, height, 0, GL_RG, GL_FLOAT, nullptr);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    if (use_mipmap) {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                        GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
+                        GL_LINEAR);
+    } else {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    }
+
+    return texture_id;
+}
+
+GLuint ShaderWrapperPBR::CreateTextureCubemap(
+    GLuint size, bool use_mipmap,
+    const visualization::RenderOption &option) {
+
+    GLuint texture_id;
+    glGenTextures(1, &texture_id);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, texture_id);
+    for (int i = 0; i < 6; ++i) {
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                     0, GL_RGB16F, size, size, 0,
+                     GL_RGB, GL_FLOAT, nullptr);
+    }
+
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    if (use_mipmap) {
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER,
+            GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER,
+            GL_LINEAR);
+    } else {
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    }
+
+    return texture_id;
+}
+
+void ShaderWrapperPBR::LoadCube(std::vector<Eigen::Vector3f> &vertices,
+                                std::vector<Eigen::Vector3i> &triangles) {
+    vertices = physics::kCubeVertices;
+    triangles = physics::kCubeTriangles;
+}
+
+void ShaderWrapperPBR::LoadQuad(std::vector<Eigen::Vector3f> &vertices,
+                                std::vector<Eigen::Vector2f> &uvs) {
+    vertices = physics::kQuadVertices;
+    uvs = physics::kQuadUVs;
+}
+
+void ShaderWrapperPBR::LoadViews(
+    std::vector<GLHelper::GLMatrix4f> &views) {
+    views = {
+        GLHelper::LookAt(Eigen::Vector3d::Zero(),
+                         Eigen::Vector3d(+1, 0, 0),
+                         Eigen::Vector3d(0, -1, 0)),
+        GLHelper::LookAt(Eigen::Vector3d::Zero(),
+                         Eigen::Vector3d(-1, 0, 0),
+                         Eigen::Vector3d(0, -1, 0)),
+        GLHelper::LookAt(Eigen::Vector3d::Zero(),
+                         Eigen::Vector3d(0, +1, 0),
+                         Eigen::Vector3d(0, 0, +1)),
+        GLHelper::LookAt(Eigen::Vector3d::Zero(),
+                         Eigen::Vector3d(0, -1, 0),
+                         Eigen::Vector3d(0, 0, -1)),
+        GLHelper::LookAt(Eigen::Vector3d::Zero(),
+                         Eigen::Vector3d(0, 0, +1),
+                         Eigen::Vector3d(0, -1, 0)),
+        GLHelper::LookAt(Eigen::Vector3d::Zero(),
+                         Eigen::Vector3d(0, 0, -1),
+                         Eigen::Vector3d(0, -1, 0))
+    };
+}
 }
 }
 }

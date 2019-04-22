@@ -112,7 +112,7 @@ bool NoIBLShader::BindTextures(const std::vector<geometry::Image> &textures,
     assert(textures.size() == kNumTextures);
     tex_buffers_.resize(textures.size());
     for (int i = 0; i < textures.size(); ++i) {
-        tex_buffers_[i] = BindTexture(textures[i], option);
+        tex_buffers_[i] = BindTexture2D(textures[i], option);
     }
 
     return true;

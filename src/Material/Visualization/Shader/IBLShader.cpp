@@ -121,7 +121,7 @@ bool IBLShader::BindTextures(const std::vector<geometry::Image> &textures,
     assert(textures.size() == kNumObjectTextures);
     texes_object_buffers_.resize(textures.size());
     for (int i = 0; i < textures.size(); ++i) {
-        texes_object_buffers_[i] = BindTexture(textures[i], option);
+        texes_object_buffers_[i] = BindTexture2D(textures[i], option);
         std::cout << "tex_obejct_buffer: " << texes_object_buffers_[i] << "\n";
     }
 

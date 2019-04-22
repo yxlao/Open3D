@@ -31,11 +31,20 @@ protected:
                      vec.data(), GL_STATIC_DRAW);
         return buffer;
     }
-    GLuint BindTexture(const geometry::Image &texture,
-                       const visualization::RenderOption &option);
-    GLuint AllocTexture(GLuint texture_type, /* CUBE or 2D ? */
-                        bool use_mipmap,
-                        const visualization::RenderOption &option);
+    GLuint BindTexture2D(const geometry::Image &texture,
+                         const visualization::RenderOption &option);
+    GLuint CreateTexture2D(GLuint width, GLuint height, bool use_mipmap,
+                           const visualization::RenderOption &option);
+
+    GLuint CreateTextureCubemap(GLuint size, bool use_mipmap,
+                                const visualization::RenderOption &option);
+
+public:
+    void LoadCube(std::vector<Eigen::Vector3f> &vertices,
+                  std::vector<Eigen::Vector3i> &triangles);
+    void LoadQuad(std::vector<Eigen::Vector3f> &vertices,
+                  std::vector<Eigen::Vector2f> &uvs);
+    void LoadViews(std::vector<GLHelper::GLMatrix4f> &views);
 
 public:
     bool Render(const geometry::Geometry &geometry,
@@ -58,7 +67,6 @@ public:
 
     /** Unbind requires only geometry: others are unbind together **/
     /* virtual bool UnbindGeometry */
-
 };
 }
 }

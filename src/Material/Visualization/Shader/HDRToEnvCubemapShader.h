@@ -53,7 +53,8 @@ protected:
     bool PrepareBinding(const geometry::Geometry &geometry,
                         const RenderOption &option,
                         const ViewControl &view,
-                        std::vector<Eigen::Vector3f> &points);
+                        std::vector<Eigen::Vector3f> &points,
+                        std::vector<Eigen::Vector3i> &triangles);
 
 protected:
     /** locations **/
@@ -69,6 +70,7 @@ protected:
 
     /** buffers **/
     GLuint vertex_position_buffer_;
+    GLuint triangle_buffer_;
 
     const int kCubemapSize = 512;
     GLuint tex_env_cubemap_buffer_;    /* <- to be generated */

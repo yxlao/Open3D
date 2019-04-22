@@ -47,27 +47,23 @@ protected:
 protected:
     bool PrepareRendering(const geometry::Geometry &geometry,
                           const RenderOption &option,
-                          const ViewControl &view);
+                          const ViewControl &view) { return true; }
     bool PrepareBinding(const geometry::Geometry &geometry,
                         const RenderOption &option,
                         const ViewControl &view,
-                        std::vector<Eigen::Vector3f> &points);
+                        std::vector<Eigen::Vector3f> &points,
+                        std::vector<Eigen::Vector3i> &triangles);
 
 protected:
     /** locations **/
-    /* array (cube) */
-    GLuint vertex_position_;
-
-    /* vertex shader */
-    GLuint V_;
+    GLuint vertex_position_; /* array (cube) */
+    GLuint V_;               /* vertex shader */
     GLuint P_;
-
-    /* fragment shader */
-    GLuint tex_env_;
+    GLuint tex_env_;         /* fragment shader */
 
     /** buffers **/
     GLuint vertex_position_buffer_;
-    /* GLuint tex_cubemap_buffer_; <- already in lighting */
+    GLuint triangle_buffer_;
 
     /** lighting **/
     physics::IBLLighting ibl_;

@@ -9,7 +9,7 @@
 
 #include <Material/Visualization/Shader/Shader.h>
 #include <Material/Physics/TriangleMeshExtended.h>
-#include <Material/Physics/Primitives.h>
+#include <Material/Visualization/Shader/Primitives.h>
 
 namespace open3d {
 namespace visualization {
@@ -28,8 +28,8 @@ bool BackgroundShader::Compile() {
 
     V_ = glGetUniformLocation(program_, "V");
     P_ = glGetUniformLocation(program_, "P");
-
     tex_env_ = glGetUniformLocation(program_, "tex_env");
+
     return true;
 }
 
@@ -51,11 +51,14 @@ bool BackgroundShader::BindGeometry(const geometry::Geometry &geometry,
 
     // Create buffers and bind the geometry
     std::vector<Eigen::Vector3f> points;
-    if (!PrepareBinding(geometry, option, view, points)) {
+    std::vector<Eigen::Vector3i> triangles;
+    if (!PrepareBinding(geometry, option, view, points, triangles)) {
         PrintShaderWarning("Binding failed when preparing data.");
         return false;
     }
+
     vertex_position_buffer_ = BindBuffer(points, GL_ARRAY_BUFFER, option);
+    triangle_buffer_ = BindBuffer(triangles, GL_ELEMENT_ARRAY_BUFFER, option);
     bound_ = true;
     return true;
 }
@@ -77,16 +80,24 @@ bool BackgroundShader::RenderGeometry(const geometry::Geometry &geometry,
     }
 
     glUseProgram(program_);
+
+    /** 1. Set uniforms **/
     glUniformMatrix4fv(V_, 1, GL_FALSE, view.GetViewMatrix().data());
     glUniformMatrix4fv(P_, 1, GL_FALSE, view.GetProjectionMatrix().data());
+
+    /** 2. Set textures **/
     glUniform1i(tex_env_, 0);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, ibl_.tex_env_buffer_);
 
+    /** 3. Set up buffers **/
     glEnableVertexAttribArray(vertex_position_);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer_);
     glVertexAttribPointer(vertex_position_, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-    glDrawArrays(draw_arrays_mode_, 0, draw_arrays_size_);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_);
+
+    glDrawElements(draw_arrays_mode_, draw_arrays_size_, GL_UNSIGNED_INT, nullptr);
     glDisableVertexAttribArray(vertex_position_);
 
     return true;
@@ -95,35 +106,24 @@ bool BackgroundShader::RenderGeometry(const geometry::Geometry &geometry,
 void BackgroundShader::UnbindGeometry() {
     if (bound_) {
         glDeleteBuffers(1, &vertex_position_buffer_);
+        glDeleteBuffers(1, &triangle_buffer_);
 
         bound_ = false;
     }
-}
-
-bool BackgroundShader::PrepareRendering(
-    const geometry::Geometry &geometry,
-    const RenderOption &option,
-    const ViewControl &view) {
-
-    return true;
 }
 
 bool BackgroundShader::PrepareBinding(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view,
-    std::vector<Eigen::Vector3f> &points) {
+    std::vector<Eigen::Vector3f> &points,
+    std::vector<Eigen::Vector3i> &triangles) {
 
     /** Prepare data **/
-    points.resize(physics::kCubeVertices.size() / 3);
-    for (int i = 0; i < points.size(); ++i) {
-        points[i] = Eigen::Vector3f(physics::kCubeVertices[i * 3 + 0],
-                                    physics::kCubeVertices[i * 3 + 1],
-                                    physics::kCubeVertices[i * 3 + 2]);
-    }
+    LoadCube(points, triangles);
 
     draw_arrays_mode_ = GL_TRIANGLES;
-    draw_arrays_size_ = GLsizei(points.size());
+    draw_arrays_size_ = GLsizei(triangles.size() * 3);
     return true;
 }
 

@@ -9,7 +9,7 @@
 
 #include <Material/Visualization/Shader/Shader.h>
 #include <Material/Physics/TriangleMeshExtended.h>
-#include <Material/Physics/Primitives.h>
+#include <Material/Visualization/Shader/Primitives.h>
 
 namespace open3d {
 namespace visualization {
@@ -17,13 +17,15 @@ namespace visualization {
 namespace glsl {
 
 bool PreIntegrateLUTSpecularShader::Compile() {
-    if (! CompileShaders(PreIntegrateLUTVertexShader, nullptr, PreIntegrateLUTFragmentShader)) {
+    if (!CompileShaders(PreIntegrateLUTVertexShader,
+                        nullptr,
+                        PreIntegrateLUTFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }
 
     vertex_position_ = glGetAttribLocation(program_, "vertex_position");
-    vertex_uv_       = glGetAttribLocation(program_, "vertex_uv");
+    vertex_uv_ = glGetAttribLocation(program_, "vertex_uv");
 
     return true;
 }
@@ -34,8 +36,8 @@ void PreIntegrateLUTSpecularShader::Release() {
 }
 
 bool PreIntegrateLUTSpecularShader::BindGeometry(const geometry::Geometry &geometry,
-                                         const RenderOption &option,
-                                         const ViewControl &view) {
+                                                 const RenderOption &option,
+                                                 const ViewControl &view) {
     // If there is already geometry, we first unbind it.
     // We use GL_STATIC_DRAW. When geometry changes, we clear buffers and
     // rebind the geometry. Note that this approach is slow. If the geometry is
@@ -52,44 +54,42 @@ bool PreIntegrateLUTSpecularShader::BindGeometry(const geometry::Geometry &geome
         return false;
     }
     vertex_position_buffer_ = BindBuffer(points, GL_ARRAY_BUFFER, option);
-    vertex_uv_buffer_       = BindBuffer(uvs, GL_ARRAY_BUFFER, option);
+    vertex_uv_buffer_ = BindBuffer(uvs, GL_ARRAY_BUFFER, option);
     bound_ = true;
     return true;
 }
 
 bool PreIntegrateLUTSpecularShader::BindLighting(const physics::Lighting &lighting,
-                                         const visualization::RenderOption &option,
-                                         const visualization::ViewControl &view) {
+                                                 const visualization::RenderOption &option,
+                                                 const visualization::ViewControl &view) {
     return true;
 }
 
 bool PreIntegrateLUTSpecularShader::RenderGeometry(const geometry::Geometry &geometry,
-                                           const RenderOption &option,
-                                           const ViewControl &view) {
+                                                   const RenderOption &option,
+                                                   const ViewControl &view) {
     if (!PrepareRendering(geometry, option, view)) {
         PrintShaderWarning("Rendering failed during preparation.");
         return false;
     }
 
-    /** Setup framebuffers **/
+    /** 0. Setup framebuffers **/
     GLuint fbo, rbo;
     glGenFramebuffers(1, &fbo);
     glGenRenderbuffers(1, &rbo);
-
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24,
                           kTextureSize, kTextureSize);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                              GL_RENDERBUFFER, rbo);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                           GL_TEXTURE_2D, tex_lut_specular_buffer_, 0);
+    glViewport(0, 0, kTextureSize, kTextureSize);
+
 
     /** Setup programs and unchanged uniforms **/
     glUseProgram(program_);
-
-    glViewport(0, 0, kTextureSize, kTextureSize);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                           GL_TEXTURE_2D, tex_lut_specular_buffer_, 0);
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glEnableVertexAttribArray(vertex_position_);
@@ -145,26 +145,11 @@ bool PreIntegrateLUTSpecularShader::PrepareBinding(
     std::vector<Eigen::Vector2f> &uvs) {
 
     /** Prepare data **/
-    points.resize(physics::kQuadVertices.size() / 3);
-    uvs.resize(physics::kQuadUVs.size() / 2);
-    for (int i = 0; i < points.size(); ++i) {
-        points[i] = Eigen::Vector3f(physics::kQuadVertices[i * 3 + 0],
-                                    physics::kQuadVertices[i * 3 + 1],
-                                    physics::kQuadVertices[i * 3 + 2]);
-        uvs[i] = Eigen::Vector2f(physics::kQuadUVs[i * 2 + 0],
-                                 physics::kQuadUVs[i * 2 + 1]);
-    }
+    LoadQuad(points, uvs);
 
     /** Prepare target texture **/
-    glGenTextures(1, &tex_lut_specular_buffer_);
-    glBindTexture(GL_TEXTURE_2D, tex_lut_specular_buffer_);
-    glTexImage2D(GL_TEXTURE_2D, 0,
-                 GL_RGB16F, kTextureSize, kTextureSize, 0, GL_RG, GL_FLOAT, nullptr);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    tex_lut_specular_buffer_ = CreateTexture2D(
+        kTextureSize, kTextureSize, false, option);
 
     draw_arrays_mode_ = GL_TRIANGLE_STRIP;
     draw_arrays_size_ = GLsizei(points.size());
