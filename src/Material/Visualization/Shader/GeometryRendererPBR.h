@@ -14,6 +14,7 @@
 #include "PreFilterEnvSpecularShader.h"
 #include "PreIntegrateLUTSpecularShader.h"
 #include "IBLShader.h"
+#include "IBLNoTexShader.h"
 
 namespace open3d {
 namespace visualization {
@@ -56,6 +57,7 @@ protected:
     PreIntegrateLUTSpecularShader preintegrate_lut_specular_shader_;
 
     IBLShader ibl_shader_;
+    IBLNoTexShader ibl_no_tex_shader_;
     BackgroundShader background_shader_;
 
 };

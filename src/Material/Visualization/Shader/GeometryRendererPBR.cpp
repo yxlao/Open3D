@@ -53,7 +53,14 @@ bool TriangleMeshRendererPBR::Render(const RenderOption &option,
             ibl.is_preprocessed_ = true;
         }
 
-        success &= ibl_shader_.Render(mesh, textures_, ibl, option, view);
+        if (mesh.HasUVs()) {
+            success &= ibl_shader_.Render(mesh, textures_, ibl, option, view);
+        } else if (mesh.HasMaterials()) {
+            success &= ibl_no_tex_shader_.Render(mesh, textures_, ibl, option, view);
+        } else {
+            success = false;
+        }
+
         success &= background_shader_.Render(
             mesh, textures_, ibl, option, view);
     }
