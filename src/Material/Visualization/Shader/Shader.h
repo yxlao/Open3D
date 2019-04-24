@@ -21,7 +21,7 @@ const char * const BackgroundFragmentShader =
 "    vec3 envColor = textureLod(tex_env, position, 0.0).rgb;\n"
 "\n"
 "    // HDR tonemap and gamma correct\n"
-"    envColor = envColor / (envColor + vec3(1.0));\n"
+"    // envColor = envColor / (envColor + vec3(1.0));\n"
 "    envColor = pow(envColor, vec3(1.0/2.2));\n"
 "\n"
 "    FragColor = vec4(envColor, 1.0);\n"

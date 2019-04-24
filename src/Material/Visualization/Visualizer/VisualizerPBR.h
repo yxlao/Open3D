@@ -10,7 +10,7 @@
 namespace open3d {
 namespace visualization {
 
-class VisualizerPBR : public Visualizer {
+class VisualizerPBR : public VisualizerWithKeyCallback {
 public:
     /** Dummy **/
     virtual bool AddGeometry(

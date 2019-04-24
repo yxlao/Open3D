@@ -104,6 +104,32 @@ GLuint ShaderWrapperPBR::CreateTexture2D(GLuint width, GLuint height,
     return texture_id;
 }
 
+GLuint ShaderWrapperPBR::BindTextureCubemap(
+    const std::vector<geometry::Image> &textures,
+    const visualization::RenderOption &option) {
+
+    assert(textures.size() == 6);
+
+    GLuint texture_id;
+    glGenTextures(1, &texture_id);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, texture_id);
+    for (int i = 0; i < 6; ++i) {
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                     0, GL_RGB16F, textures[i].width_, textures[i].height_, 0,
+                     GL_RGB, GL_FLOAT, textures[i].data_.data());
+    }
+
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER,
+                    GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER,
+                    GL_LINEAR);
+    return texture_id;
+}
+
 GLuint ShaderWrapperPBR::CreateTextureCubemap(
     GLuint size, bool use_mipmap,
     const visualization::RenderOption &option) {
@@ -123,9 +149,9 @@ GLuint ShaderWrapperPBR::CreateTextureCubemap(
 
     if (use_mipmap) {
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER,
-            GL_LINEAR_MIPMAP_LINEAR);
+                        GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER,
-            GL_LINEAR);
+                        GL_LINEAR);
     } else {
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

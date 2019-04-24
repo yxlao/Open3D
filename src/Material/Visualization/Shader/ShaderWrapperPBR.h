@@ -36,6 +36,8 @@ protected:
     GLuint CreateTexture2D(GLuint width, GLuint height, bool use_mipmap,
                            const visualization::RenderOption &option);
 
+    GLuint BindTextureCubemap(const std::vector<geometry::Image> &textures,
+                              const visualization::RenderOption &option);
     GLuint CreateTextureCubemap(GLuint size, bool use_mipmap,
                                 const visualization::RenderOption &option);
 

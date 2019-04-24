@@ -88,6 +88,7 @@ int Run(DatasetConfig &config) {
     auto mesh = mesher.mesh().Download();
 
     WriteTriangleMeshToPLY(config.GetReconstructedSceneFile(), *mesh);
+    WriteTSDFVolumeToBIN(config.GetReconstructedVolumeFile(), tsdf_volume);
     timer.Stop();
     PrintInfo("IntegrateScene takes %.3f s\n", timer.GetDuration() * 1e-3);
 

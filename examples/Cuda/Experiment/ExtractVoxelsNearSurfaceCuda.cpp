@@ -23,7 +23,7 @@ void ReadAndComputeGradient(int fragment_id, DatasetConfig &config) {
 
     cuda::TransformCuda trans = cuda::TransformCuda::Identity();
     cuda::ScalableTSDFVolumeCuda tsdf_volume(
-        8, voxel_length * 4, (float) config.tsdf_truncation_ * 4, trans);
+        8, voxel_length * 4, 3.5f, (float) config.tsdf_truncation_ * 4, trans);
 
     Timer timer;
     timer.Start();
