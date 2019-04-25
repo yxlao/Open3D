@@ -67,7 +67,7 @@ bool ReadTriangleMeshFromSTL(const std::string &filename,
     mesh.triangles_.resize(num_of_triangles);
     mesh.triangle_normals_.resize(num_of_triangles);
 
-    utility::ResetConsoleProgress(num_of_triangles, "Reading STL: ");
+    // utility::ResetConsoleProgress(num_of_triangles, "Reading STL: ");
     for (int i = 0; i < num_of_triangles; i++) {
         char buffer[50];
         float *float_buffer;
@@ -90,7 +90,7 @@ bool ReadTriangleMeshFromSTL(const std::string &filename,
             utility::PrintWarning("Read STL failed: not enough triangles.\n");
             return false;
         }
-        utility::AdvanceConsoleProgress();
+        // utility::AdvanceConsoleProgress();
     }
     return true;
 }

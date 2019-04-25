@@ -59,9 +59,7 @@ public:
         return color_ / double(num_of_points_);
     }
 
-    Eigen::Vector3d GetAbsoluteColor() const {
-        return color_ / double(num_of_points_);
-    }
+    Eigen::Vector3d GetAbsoluteColor() const { return last_color_; }
 
 public:
     int num_of_points_;
