@@ -480,6 +480,60 @@ namespace visualization {
 
 namespace glsl {
 
+const char * const IndexFragmentShader = 
+"#version 330 core\n"
+"\n"
+"out int FragColor;\n"
+"flat in int index;\n"
+"\n"
+"void main() {\n"
+"    FragColor = index;\n"
+"}\n"
+;
+
+}  // namespace open3d::glsl
+
+}  // namespace open3d::visualization
+
+}  // namespace open3d
+
+// clang-format on
+// clang-format off
+namespace open3d {
+
+namespace visualization {
+
+namespace glsl {
+
+const char * const IndexVertexShader = 
+"#version 330 core\n"
+"\n"
+"in vec3 vertex_position;\n"
+"flat out int index;\n"
+"\n"
+"uniform mat4 V;\n"
+"uniform mat4 P;\n"
+"\n"
+"void main() {\n"
+"    gl_Position =  P * V * vec4(vertex_position, 1.0);\n"
+"    index = gl_VertexID;\n"
+"}\n"
+;
+
+}  // namespace open3d::glsl
+
+}  // namespace open3d::visualization
+
+}  // namespace open3d
+
+// clang-format on
+// clang-format off
+namespace open3d {
+
+namespace visualization {
+
+namespace glsl {
+
 const char * const NoIBLFragmentShader = 
 "#version 330 core\n"
 "out vec4 FragColor;\n"

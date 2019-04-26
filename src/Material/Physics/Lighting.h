@@ -6,6 +6,7 @@
 
 #include <Open3D/Open3D.h>
 #include <stb_image/stb_image.h>
+#include "HDRImage.h"
 
 namespace open3d {
 namespace physics {
@@ -36,18 +37,21 @@ public:
     IBLLighting() : Lighting(LightingType::IBL) {}
     ~IBLLighting();
 
-    bool ReadDataFromHDR();
+    bool ReadEnvFromHDR(const std::string& filename);
+
+protected:
+    geometry::HDRImage hdr_;
 
 public:
     bool is_preprocessed_ = false;
-
-    std::string filename_;
 
     GLuint tex_hdr_buffer_;
     GLuint tex_env_buffer_;
     GLuint tex_env_diffuse_buffer_;
     GLuint tex_env_specular_buffer_; /* roughness, R = 2<V, N>N - V */
     GLuint tex_lut_specular_buffer_; /* roughness, <V, N>) */
+
+    bool BindHDRTexture2D();
 
     void UpdateEnvBuffer(GLuint tex_env_buffer) {
         tex_env_buffer_ = tex_env_buffer;

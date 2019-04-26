@@ -22,7 +22,7 @@ bool TriangleMeshRendererPBR::Render(const RenderOption &option,
 
     bool success = true;
 
-    /* ibl: a bit preprocessing required */
+    /** ibl: a bit pre-processing required **/
     if (lighting_ptr_->GetLightingType()
         == physics::Lighting::LightingType::IBL) {
 
@@ -57,6 +57,7 @@ bool TriangleMeshRendererPBR::Render(const RenderOption &option,
             success &= ibl_shader_.Render(mesh, textures_, ibl, option, view);
         } else if (mesh.HasMaterials()) {
             success &= ibl_no_tex_shader_.Render(mesh, textures_, ibl, option, view);
+            success &= index_shader_.Render(mesh, textures_, ibl, option, view);
         } else {
             success = false;
         }

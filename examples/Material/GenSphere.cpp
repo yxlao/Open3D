@@ -97,7 +97,7 @@ Eigen::Vector3d GetPositionOnSphere(float u, float v) {
 int main() {
     auto mesh = std::make_shared<geometry::TriangleMeshExtended>();
 
-    std::string base_path = "/media/wei/Data/data/pbr/materials/rusted_iron";
+    std::string base_path = "/media/wei/Data/data/pbr/materials/gold";
     std::vector<cv::Mat> textures;
     textures.push_back(cv::imread(base_path + "/albedo.png",
                                   cv::IMREAD_UNCHANGED));
@@ -114,8 +114,8 @@ int main() {
     }
 
     /** This should be higher to store more texture information **/
-    const unsigned int X_SEGMENTS = 512;
-    const unsigned int Y_SEGMENTS = 512;
+    const unsigned int X_SEGMENTS = 16;
+    const unsigned int Y_SEGMENTS = 16;
 
     const float du = 1.0f / 1000000;
     for (unsigned int vi = 0; vi <= Y_SEGMENTS; ++vi) {
@@ -182,13 +182,13 @@ int main() {
     }
 
     auto ibl = std::make_shared<physics::IBLLighting>();
-    ibl->filename_ = "/media/wei/Data/data/pbr/env/Tokyo_BigSight_3k.hdr";
+    ibl->ReadEnvFromHDR("/media/wei/Data/data/pbr/env/Tokyo_BigSight_3k.hdr");
 
     std::vector<geometry::Image> textures_dummy;
     utility::SetVerbosityLevel(utility::VerbosityLevel::VerboseDebug);
     visualization::DrawGeometriesPBR({mesh}, {textures_dummy}, {ibl});
 
     io::WriteTriangleMeshExtendedToPLY(
-        "/media/wei/Data/data/pbr/model/rusted_iron.ply", *mesh, false);
+        "/media/wei/Data/data/pbr/model/sphere_gold_low.ply", *mesh, false);
     return 0;
 }

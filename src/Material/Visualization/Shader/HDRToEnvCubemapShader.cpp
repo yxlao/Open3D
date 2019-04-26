@@ -66,7 +66,7 @@ bool HDRToEnvCubemapShader::BindLighting(const physics::Lighting &lighting,
                                          const visualization::RenderOption &option,
                                          const visualization::ViewControl &view) {
     auto ibl = (const physics::IBLLighting &) lighting;
-    if (!ibl.ReadDataFromHDR()) {
+    if (!ibl.BindHDRTexture2D()) {
         PrintShaderWarning("Binding failed when loading light.");
         return false;
     }

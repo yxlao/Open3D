@@ -68,7 +68,7 @@ int Run(DatasetConfig &config) {
     std::vector<geometry::Image> textures; /** dummy **/
 
     auto ibl = std::make_shared<physics::IBLLighting>();
-    ibl->filename_ = "/media/wei/Data/data/pbr/env/White.hdr";
+    ibl->ReadEnvFromHDR("/media/wei/Data/data/pbr/env/White.hdr");
 
     bool is_success = config.GetFragmentFiles();
     if (!is_success) {

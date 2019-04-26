@@ -29,14 +29,14 @@ int main() {
     mesh_extended->vertex_materials_.resize(mesh->vertices_.size());
 
     for (auto &mat : mesh_extended->vertex_materials_) {
-        mat = Eigen::Vector3d(0.7, 0, 1);
+        mat = Eigen::Vector3d(0, 1, 1);
 //        mat = Eigen::Vector3d(dist_roughness(rd), dist_metallic(rd), dist_ao(rd));
     }
 
     std::vector<geometry::Image> textures; /** dummy **/
 
     auto ibl = std::make_shared<physics::IBLLighting>();
-    ibl->filename_ = "/media/wei/Data/data/pbr/env/White.hdr";
+    ibl->ReadEnvFromHDR("/media/wei/Data/data/pbr/env/Alexs_Apt_2k.hdr");
 
     utility::SetVerbosityLevel(utility::VerbosityLevel::VerboseDebug);
     visualization::DrawGeometriesPBR({mesh_extended}, {textures}, {ibl});

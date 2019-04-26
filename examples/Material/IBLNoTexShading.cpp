@@ -12,12 +12,12 @@ using namespace open3d;
 int main() {
     auto mesh = std::make_shared<geometry::TriangleMeshExtended>();
     io::ReadTriangleMeshExtendedFromPLY(
-        "/media/wei/Data/data/pbr/model/sphere_gold.ply", *mesh);
+        "/media/wei/Data/data/pbr/model/sphere_wall.ply", *mesh);
 
     std::vector<geometry::Image> textures; /** dummy **/
 
     auto ibl = std::make_shared<physics::IBLLighting>();
-    ibl->filename_ = "/media/wei/Data/data/pbr/env/Alexs_Apt_2k.hdr";
+    ibl->ReadEnvFromHDR("/media/wei/Data/data/pbr/env/Mans_Outside_2k.hdr");
 
     utility::SetVerbosityLevel(utility::VerbosityLevel::VerboseDebug);
     visualization::DrawGeometriesPBR({mesh}, {textures}, {ibl});

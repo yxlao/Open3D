@@ -15,6 +15,7 @@
 #include "PreIntegrateLUTSpecularShader.h"
 #include "IBLShader.h"
 #include "IBLNoTexShader.h"
+#include "IndexShader.h"
 
 namespace open3d {
 namespace visualization {
@@ -59,7 +60,7 @@ protected:
     IBLShader ibl_shader_;
     IBLNoTexShader ibl_no_tex_shader_;
     BackgroundShader background_shader_;
-
+    IndexShader index_shader_;
 };
 
 } // glsl

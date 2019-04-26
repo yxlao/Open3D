@@ -6,11 +6,15 @@
 
 namespace open3d {
 namespace geometry {
-bool HDRImage::ReadFromHDR(const std::string &filename, bool flip) {
 
+bool HDRImage::ReadFromHDR(const std::string &filename, bool flip) {
     stbi_set_flip_vertically_on_load(flip);
     int width, height, channel;
     float *data = stbi_loadf(filename.c_str(), &width, &height, &channel, 0);
+    if (! data) {
+        utility::PrintError("Unable to load hdr image, abort.\n");
+        return false;
+    }
 
     if (! image_) {
         image_ = std::make_shared<Image>();
@@ -19,6 +23,7 @@ bool HDRImage::ReadFromHDR(const std::string &filename, bool flip) {
     image_->data_.assign((unsigned char *) (&data[0]),
                          (unsigned char *) (&data[width * height * channel]));
     stbi_image_free(data);
+
     return true;
 }
 

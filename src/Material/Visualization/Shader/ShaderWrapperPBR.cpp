@@ -104,6 +104,27 @@ GLuint ShaderWrapperPBR::CreateTexture2D(GLuint width, GLuint height,
     return texture_id;
 }
 
+std::shared_ptr<geometry::Image> ShaderWrapperPBR::ReadTexture2D(
+    GLuint width, GLuint height, int channels, int bytes_per_channel,
+    GLenum format, GLenum type) {
+    auto im = std::make_shared<geometry::Image>();
+    im->PrepareImage(width, height, channels, bytes_per_channel);
+
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_LUMINANCE_INTEGER_EXT, GL_UNSIGNED_INT,
+                  im->data_.data());
+
+    auto im_flipped = std::make_shared<geometry::Image>();
+    im_flipped->PrepareImage(width, height, channels, bytes_per_channel);
+    int bytes_per_line = im->BytesPerLine();
+    for (int i = 0; i < height; i++) {
+        memcpy(im_flipped->data_.data() + bytes_per_line * i,
+               im->data_.data() + bytes_per_line * (height - i - 1),
+               bytes_per_line);
+    }
+
+    return im_flipped;
+}
+
 GLuint ShaderWrapperPBR::BindTextureCubemap(
     const std::vector<geometry::Image> &textures,
     const visualization::RenderOption &option) {

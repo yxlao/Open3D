@@ -36,6 +36,11 @@ protected:
     GLuint CreateTexture2D(GLuint width, GLuint height, bool use_mipmap,
                            const visualization::RenderOption &option);
 
+    /** A little bit redundant **/
+    std::shared_ptr<geometry::Image> ReadTexture2D(
+        GLuint width, GLuint height, int channels, int bytes_per_channel,
+        GLenum format, GLenum type);
+
     GLuint BindTextureCubemap(const std::vector<geometry::Image> &textures,
                               const visualization::RenderOption &option);
     GLuint CreateTextureCubemap(GLuint size, bool use_mipmap,
