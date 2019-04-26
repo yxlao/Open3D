@@ -25,10 +25,12 @@ void RenderSceneInFragment(
     DatasetConfig &config) {
 
     PoseGraph global_pose_graph;
-    ReadPoseGraph(config.GetPoseGraphFileForRefinedScene(true), global_pose_graph);
+    ReadPoseGraph(config.GetPoseGraphFileForRefinedScene(true),
+                  global_pose_graph);
 
     PoseGraph local_pose_graph;
-    ReadPoseGraph(config.GetPoseGraphFileForFragment(fragment_id, true), local_pose_graph);
+    ReadPoseGraph(config.GetPoseGraphFileForFragment(fragment_id, true),
+                  local_pose_graph);
 
     cuda::PinholeCameraIntrinsicCuda intrinsics(config.intrinsic_);
     const int begin = fragment_id * config.n_frames_per_fragment_;
@@ -48,6 +50,9 @@ void RenderSceneInFragment(
         visualizer.GetViewControl().ConvertFromPinholeCameraParameters(params);
         visualizer.UpdateRender();
         visualizer.PollEvents();
+
+        auto rendered_fbos = visualizer.geometry_renderer_fbo_outputs_[0];
+        auto index_map = rendered_fbos[0];
     }
 }
 

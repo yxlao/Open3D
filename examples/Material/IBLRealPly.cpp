@@ -22,6 +22,8 @@ int main() {
     mesh_extended->vertex_normals_ = mesh->vertex_normals_;
     mesh_extended->triangles_ = mesh->triangles_;
 
+    std::vector<int> valid_indices(mesh_extended->vertices_.size() * 300);
+
     std::random_device rd;
     std::uniform_real_distribution<double> dist_roughness(0.8, 1.0);
     std::uniform_real_distribution<double> dist_metallic(0.0, 0.2);
@@ -33,7 +35,7 @@ int main() {
 //        mat = Eigen::Vector3d(dist_roughness(rd), dist_metallic(rd), dist_ao(rd));
     }
 
-    std::vector<geometry::Image> textures; /** dummy **/
+    std::vector<geometry::Image> textures(3); /** dummy **/
 
     auto ibl = std::make_shared<physics::IBLLighting>();
     ibl->ReadEnvFromHDR("/media/wei/Data/data/pbr/env/Alexs_Apt_2k.hdr");

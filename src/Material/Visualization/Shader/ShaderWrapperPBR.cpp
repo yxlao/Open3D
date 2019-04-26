@@ -110,8 +110,7 @@ std::shared_ptr<geometry::Image> ShaderWrapperPBR::ReadTexture2D(
     auto im = std::make_shared<geometry::Image>();
     im->PrepareImage(width, height, channels, bytes_per_channel);
 
-    glGetTexImage(GL_TEXTURE_2D, 0, GL_LUMINANCE_INTEGER_EXT, GL_UNSIGNED_INT,
-                  im->data_.data());
+    glGetTexImage(GL_TEXTURE_2D, 0, format, type, im->data_.data());
 
     auto im_flipped = std::make_shared<geometry::Image>();
     im_flipped->PrepareImage(width, height, channels, bytes_per_channel);

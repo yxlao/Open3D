@@ -143,18 +143,18 @@ bool IndexShader::RenderGeometry(const geometry::Geometry &geometry,
 
     /** Read the texture **/
     glBindTexture(GL_TEXTURE_2D, tex_index_buffer_);
-    auto index_map = ReadTexture2D(
+    index_map_ = ReadTexture2D(
         view.GetWindowWidth(), view.GetWindowHeight(), 1, 4,
         GL_LUMINANCE_INTEGER_EXT, GL_UNSIGNED_INT);
 
-    /* Output indices for sanity check
-    for (int u = 0; u < index_map->width_; ++u) {
-        for (int v = 0; v < index_map->height_; ++v) {
-            int* idx = geometry::PointerAt<int>(*index_map, u, v);
+    /* Output indices for sanity check */
+    for (int u = 0; u < index_map_->width_; ++u) {
+        for (int v = 0; v < index_map_->height_; ++v) {
+            int* idx = geometry::PointerAt<int>(*index_map_, u, v);
             if (*idx != 0) std::cout << "(" << u << ", " << v << ") " << *idx << "\n";
         }
     }
-    */
+
     return true;
 }
 

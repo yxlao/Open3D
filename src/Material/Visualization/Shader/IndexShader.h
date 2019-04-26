@@ -66,6 +66,9 @@ protected:
     GLuint triangle_buffer_;
 
     GLuint tex_index_buffer_;
+
+public:
+    std::shared_ptr<geometry::Image> index_map_;
 };
 
 }

@@ -32,6 +32,10 @@ public:
 protected:
     std::vector<geometry::Image> textures_;
     std::shared_ptr<physics::Lighting> lighting_ptr_;
+
+public:
+    std::vector<std::shared_ptr<geometry::Image>> fbo_output_;
+
 };
 
 class TriangleMeshRendererPBR : public GeometryRendererPBR {
@@ -60,7 +64,7 @@ protected:
     IBLShader ibl_shader_;
     IBLNoTexShader ibl_no_tex_shader_;
     BackgroundShader background_shader_;
-    IndexShader index_shader_;
+    IndexShader differential_shader_;
 };
 
 } // glsl

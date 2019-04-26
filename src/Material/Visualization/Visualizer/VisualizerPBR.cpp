@@ -18,8 +18,7 @@ bool VisualizerPBR::AddGeometryPBR(
         auto renderer_ptr = std::make_shared<glsl::TriangleMeshRendererPBR>();
         if (!(renderer_ptr->AddGeometry(geometry_ptr)
             && renderer_ptr->AddTextures(textures)
-            && renderer_ptr->AddLights(lighting))
-            ) {
+            && renderer_ptr->AddLights(lighting))) {
             utility::PrintDebug("Failed to add geometry\n");
             return false;
         }
@@ -27,8 +26,6 @@ bool VisualizerPBR::AddGeometryPBR(
     }
 
     geometry_ptrs_.push_back(geometry_ptr);
-    textures_.push_back(textures);
-    lightings_.push_back(lighting);
 
     view_control_ptr_->FitInGeometry(*geometry_ptr);
     ResetViewPoint();
@@ -51,8 +48,14 @@ void VisualizerPBR::Render() {
     glClearDepth(1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    geometry_renderer_fbo_outputs_.clear();
     for (const auto &renderer_ptr : geometry_renderer_ptrs_) {
         renderer_ptr->Render(*render_option_ptr_, *view_control_ptr_);
+
+        auto renderer_pbr_ptr =
+            (const std::shared_ptr<glsl::GeometryRendererPBR> &) renderer_ptr;
+        geometry_renderer_fbo_outputs_.emplace_back(
+            renderer_pbr_ptr->fbo_output_);
     }
     for (const auto &renderer_ptr : utility_renderer_ptrs_) {
         renderer_ptr->Render(*render_option_ptr_, *view_control_ptr_);

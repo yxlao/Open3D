@@ -1,6 +1,6 @@
 #version 330 core
 
-out int FragColor;
+layout(location = 0) out int FragColor;
 flat in int index;
 
 void main() {

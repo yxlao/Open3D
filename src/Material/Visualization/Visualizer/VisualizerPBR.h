@@ -24,9 +24,8 @@ public:
 
     virtual void Render() override;
 
-protected:
-    std::vector<std::vector<geometry::Image>> textures_;
-    std::vector<std::shared_ptr<physics::Lighting>> lightings_;
+    std::vector<std::vector<std::shared_ptr<geometry::Image>>>
+        geometry_renderer_fbo_outputs_;
 };
 
 }

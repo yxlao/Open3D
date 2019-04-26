@@ -483,7 +483,7 @@ namespace glsl {
 const char * const IndexFragmentShader = 
 "#version 330 core\n"
 "\n"
-"out int FragColor;\n"
+"layout(location = 0) out int FragColor;\n"
 "flat in int index;\n"
 "\n"
 "void main() {\n"

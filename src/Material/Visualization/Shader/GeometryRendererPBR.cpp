@@ -57,7 +57,9 @@ bool TriangleMeshRendererPBR::Render(const RenderOption &option,
             success &= ibl_shader_.Render(mesh, textures_, ibl, option, view);
         } else if (mesh.HasMaterials()) {
             success &= ibl_no_tex_shader_.Render(mesh, textures_, ibl, option, view);
-            success &= index_shader_.Render(mesh, textures_, ibl, option, view);
+            success &= differential_shader_.Render(mesh, textures_, ibl, option, view);
+            fbo_output_.resize(1);
+            fbo_output_[0] = differential_shader_.index_map_;
         } else {
             success = false;
         }
