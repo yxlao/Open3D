@@ -1,10 +1,10 @@
 #include "GTSelectVisualizer.h"
 
-#include "Open3D/Visualization/Utility/PointCloudPicker.h"
-#include "Open3D/Visualization/Visualizer/ViewControlWithEditing.h"
-#include "Open3D/Utility/Console.h"
 #include "Open3D/Geometry/PointCloud.h"
 #include "Open3D/Geometry/TriangleMesh.h"
+#include "Open3D/Utility/Console.h"
+#include "Open3D/Visualization/Utility/PointCloudPicker.h"
+#include "Open3D/Visualization/Visualizer/ViewControlWithEditing.h"
 
 #include <numeric>
 #include <vector>
@@ -46,7 +46,7 @@ void GTSelectVisualizer::MouseButtonCallback(GLFWwindow *window,
             utility::PrintInfo("No point has been picked.\n");
         } else {
             const auto &point =
-                    ((const geometry::PointCloud &)(*geometry_ptrs_[0]))
+                    ((const geometry::PointCloud &)(**geometry_ptrs_.begin()))
                             .points_[index];
             utility::PrintInfo(
                     "Picked point #%d (%.2f, %.2f, %.2f) to add in "
