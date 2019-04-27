@@ -59,12 +59,6 @@ protected:
     const int kNumEnvTextures = 2;
 
     /** locations **/
-    /* array */
-    GLuint vertex_position_;
-    GLuint vertex_normal_;
-    GLuint vertex_color_;
-    GLuint vertex_material_;
-
     /* vertex shader */
     GLuint M_;
     GLuint V_;

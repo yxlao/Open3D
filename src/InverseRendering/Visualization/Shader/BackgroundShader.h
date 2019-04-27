@@ -56,7 +56,6 @@ protected:
 
 protected:
     /** locations **/
-    GLuint vertex_position_; /* array (cube) */
     GLuint V_;               /* vertex shader */
     GLuint P_;
     GLuint tex_env_;         /* fragment shader */

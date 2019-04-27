@@ -54,9 +54,6 @@ protected:
 
 protected:
     /** locations **/
-    /* array */
-    GLuint vertex_position_;
-
     /* vertex shader */
     GLuint V_;
     GLuint P_;

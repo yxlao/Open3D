@@ -1,6 +1,6 @@
 #version 330 core
 
-in vec3 vertex_position;
+layout (location = 0) in vec3 vertex_position;
 flat out int index;
 
 uniform mat4 V;

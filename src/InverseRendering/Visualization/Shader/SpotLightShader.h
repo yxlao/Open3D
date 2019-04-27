@@ -12,14 +12,14 @@ namespace open3d {
 namespace visualization {
 
 namespace glsl {
-class NoIBLShader : public ShaderWrapperPBR {
+class SpotLightShader : public ShaderWrapperPBR {
 public:
-    NoIBLShader() : NoIBLShader("NoIBLShader") {}
-    ~NoIBLShader() override { Release(); }
+    SpotLightShader() : SpotLightShader("NoIBLShader") {}
+    ~SpotLightShader() override { Release(); }
 
 protected:
 
-    explicit NoIBLShader(const std::string &name)
+    explicit SpotLightShader(const std::string &name)
         : ShaderWrapperPBR(name) { Compile(); }
 
 protected:
@@ -58,11 +58,6 @@ protected:
     const int kNumTextures = 5;
 
     /** locations **/
-    /* array */
-    GLuint vertex_position_;
-    GLuint vertex_normal_;
-    GLuint vertex_uv_;
-
     /* vertex shader */
     GLuint M_;
     GLuint V_;

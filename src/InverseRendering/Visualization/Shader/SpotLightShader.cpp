@@ -27,7 +27,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "NoIBLShader.h"
+#include "SpotLightShader.h"
 
 #include <Open3D/Geometry/TriangleMesh.h>
 #include <Open3D/Visualization/Utility/ColorMap.h>
@@ -40,15 +40,11 @@ namespace visualization {
 
 namespace glsl {
 
-bool NoIBLShader::Compile() {
-    if (! CompileShaders(NoIBLVertexShader, nullptr, NoIBLFragmentShader)) {
+bool SpotLightShader::Compile() {
+    if (! CompileShaders(SpotLightVertexShader, nullptr, SpotLightFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }
-
-    vertex_position_ = glGetAttribLocation(program_, "vertex_position");
-    vertex_normal_   = glGetAttribLocation(program_, "vertex_normal");
-    vertex_uv_       = glGetAttribLocation(program_, "vertex_uv");
 
     M_               = glGetUniformLocation(program_, "M");
     V_               = glGetUniformLocation(program_, "V");
@@ -68,12 +64,12 @@ bool NoIBLShader::Compile() {
     return true;
 }
 
-void NoIBLShader::Release() {
+void SpotLightShader::Release() {
     UnbindGeometry();
     ReleaseProgram();
 }
 
-bool NoIBLShader::BindGeometry(const geometry::Geometry &geometry,
+bool SpotLightShader::BindGeometry(const geometry::Geometry &geometry,
                                const RenderOption &option,
                                const ViewControl &view) {
     // If there is already geometry, we first unbind it.
@@ -106,7 +102,7 @@ bool NoIBLShader::BindGeometry(const geometry::Geometry &geometry,
     return true;
 }
 
-bool NoIBLShader::BindTextures(const std::vector<geometry::Image> &textures,
+bool SpotLightShader::BindTextures(const std::vector<geometry::Image> &textures,
                                const RenderOption& option,
                                const ViewControl &view) {
     assert(textures.size() == kNumTextures);
@@ -118,7 +114,7 @@ bool NoIBLShader::BindTextures(const std::vector<geometry::Image> &textures,
     return true;
 }
 
-bool NoIBLShader::BindLighting(const geometry::Lighting &lighting,
+bool SpotLightShader::BindLighting(const geometry::Lighting &lighting,
                                const visualization::RenderOption &option,
                                const visualization::ViewControl &view) {
     auto spot_lighting = (const geometry::SpotLighting &) lighting;
@@ -127,7 +123,7 @@ bool NoIBLShader::BindLighting(const geometry::Lighting &lighting,
     light_colors_data_    = spot_lighting.light_colors_;
 }
 
-bool NoIBLShader::RenderGeometry(const geometry::Geometry &geometry,
+bool SpotLightShader::RenderGeometry(const geometry::Geometry &geometry,
                                  const RenderOption &option,
                                  const ViewControl &view) {
     if (!PrepareRendering(geometry, option, view)) {
@@ -153,31 +149,31 @@ bool NoIBLShader::RenderGeometry(const geometry::Geometry &geometry,
         glBindTexture(GL_TEXTURE_2D, tex_buffers_[i]);
     }
 
-    glEnableVertexAttribArray(vertex_position_);
+    glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer_);
-    glVertexAttribPointer(vertex_position_, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
-    glEnableVertexAttribArray(vertex_normal_);
+    glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_normal_buffer_);
-    glVertexAttribPointer(vertex_normal_, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
-    glEnableVertexAttribArray(vertex_uv_);
+    glEnableVertexAttribArray(2);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_uv_buffer_);
-    glVertexAttribPointer(vertex_uv_, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, NULL);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_);
 
     glDrawElements(draw_arrays_mode_, draw_arrays_size_, GL_UNSIGNED_INT,
                    nullptr);
 
-    glDisableVertexAttribArray(vertex_position_);
-    glDisableVertexAttribArray(vertex_normal_);
-    glDisableVertexAttribArray(vertex_uv_);
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
 
     return true;
 }
 
-void NoIBLShader::UnbindGeometry() {
+void SpotLightShader::UnbindGeometry() {
     if (bound_) {
         glDeleteBuffers(1, &vertex_position_buffer_);
         glDeleteBuffers(1, &vertex_normal_buffer_);
@@ -192,7 +188,7 @@ void NoIBLShader::UnbindGeometry() {
     }
 }
 
-bool NoIBLShader::PrepareRendering(
+bool SpotLightShader::PrepareRendering(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view) {
@@ -219,7 +215,7 @@ bool NoIBLShader::PrepareRendering(
     return true;
 }
 
-bool NoIBLShader::PrepareBinding(
+bool SpotLightShader::PrepareBinding(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view,

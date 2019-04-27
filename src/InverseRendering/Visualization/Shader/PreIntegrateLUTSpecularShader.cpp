@@ -24,9 +24,6 @@ bool PreIntegrateLUTSpecularShader::Compile() {
         return false;
     }
 
-    vertex_position_ = glGetAttribLocation(program_, "vertex_position");
-    vertex_uv_ = glGetAttribLocation(program_, "vertex_uv");
-
     return true;
 }
 
@@ -92,18 +89,18 @@ bool PreIntegrateLUTSpecularShader::RenderGeometry(const geometry::Geometry &geo
     glUseProgram(program_);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glEnableVertexAttribArray(vertex_position_);
+    glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer_);
-    glVertexAttribPointer(vertex_position_, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
-    glEnableVertexAttribArray(vertex_uv_);
+    glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_uv_buffer_);
-    glVertexAttribPointer(vertex_uv_, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, NULL);
 
     glDrawArrays(draw_arrays_mode_, 0, draw_arrays_size_);
 
-    glDisableVertexAttribArray(vertex_position_);
-    glDisableVertexAttribArray(vertex_uv_);
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 

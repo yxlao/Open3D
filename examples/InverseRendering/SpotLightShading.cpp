@@ -9,7 +9,7 @@
 
 using namespace open3d;
 int main() {
-    std::string base_path = "/media/wei/Data/data/pbr/textures/pbr/gold";
+    std::string base_path = "/media/wei/Data/data/pbr/materials/grass";
 
     auto mesh = std::make_shared<geometry::TriangleMeshExtended>();
     const unsigned int X_SEGMENTS = 64;

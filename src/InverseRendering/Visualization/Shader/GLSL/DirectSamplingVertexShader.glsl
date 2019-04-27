@@ -1,9 +1,9 @@
 #version 330 core
 
-in vec3 vertex_position;
-in vec3 vertex_normal;
-in vec3 vertex_albedo;
-in vec3 vertex_material;
+layout (location = 0) in vec3 vertex_position;
+layout (location = 1) in vec3 vertex_normal;
+layout (location = 2) in vec3 vertex_albedo;
+layout (location = 3) in vec3 vertex_material;
 
 out vec3 position;
 out vec3 normal;

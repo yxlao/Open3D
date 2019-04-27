@@ -24,8 +24,6 @@ bool BackgroundShader::Compile() {
         return false;
     }
 
-    vertex_position_ = glGetAttribLocation(program_, "vertex_position");
-
     V_ = glGetUniformLocation(program_, "V");
     P_ = glGetUniformLocation(program_, "P");
     tex_env_ = glGetUniformLocation(program_, "tex_env");
@@ -91,14 +89,17 @@ bool BackgroundShader::RenderGeometry(const geometry::Geometry &geometry,
     glBindTexture(GL_TEXTURE_CUBE_MAP, ibl_.tex_env_buffer_);
 
     /** 3. Set up buffers **/
-    glEnableVertexAttribArray(vertex_position_);
+    glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer_);
-    glVertexAttribPointer(vertex_position_, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_);
 
-    glDrawElements(draw_arrays_mode_, draw_arrays_size_, GL_UNSIGNED_INT, nullptr);
-    glDisableVertexAttribArray(vertex_position_);
+    glDrawElements(draw_arrays_mode_,
+                   draw_arrays_size_,
+                   GL_UNSIGNED_INT,
+                   nullptr);
+    glDisableVertexAttribArray(0);
 
     return true;
 }

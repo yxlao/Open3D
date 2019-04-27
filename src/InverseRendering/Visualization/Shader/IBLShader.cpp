@@ -47,10 +47,6 @@ bool IBLShader::Compile() {
         return false;
     }
 
-    vertex_position_ = glGetAttribLocation(program_, "vertex_position");
-    vertex_normal_ = glGetAttribLocation(program_, "vertex_normal");
-    vertex_uv_ = glGetAttribLocation(program_, "vertex_uv");
-
     M_ = glGetUniformLocation(program_, "M");
     V_ = glGetUniformLocation(program_, "V");
     P_ = glGetUniformLocation(program_, "P");
@@ -160,7 +156,7 @@ bool IBLShader::RenderGeometry(const geometry::Geometry &geometry,
     glUniformMatrix4fv(P_, 1, GL_FALSE, view.GetProjectionMatrix().data());
     glUniform3fv(camera_position_, 1, (const GLfloat *) view.GetEye().data());
 
-    std::cout << "PreRenderMVP: " << glGetError() << "\n";
+    std::cout << "PreRenderMVssP: " << glGetError() << "\n";
 
     /** Diffuse environment **/
     glUniform1i(texes_env_[0], 0);
@@ -186,17 +182,17 @@ bool IBLShader::RenderGeometry(const geometry::Geometry &geometry,
 
     std::cout << "PreRender: " << glGetError() << "\n";
 
-    glEnableVertexAttribArray(vertex_position_);
+    glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer_);
-    glVertexAttribPointer(vertex_position_, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
-    glEnableVertexAttribArray(vertex_normal_);
+    glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_normal_buffer_);
-    glVertexAttribPointer(vertex_normal_, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
-    glEnableVertexAttribArray(vertex_uv_);
+    glEnableVertexAttribArray(2);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_uv_buffer_);
-    glVertexAttribPointer(vertex_uv_, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, NULL);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_);
     std::cout << "Bind: " << glGetError() << "\n";
@@ -204,9 +200,9 @@ bool IBLShader::RenderGeometry(const geometry::Geometry &geometry,
     glDrawElements(draw_arrays_mode_, draw_arrays_size_, GL_UNSIGNED_INT,
                    nullptr);
     std::cout << "Draw: " << glGetError() << "\n";
-    glDisableVertexAttribArray(vertex_position_);
-    glDisableVertexAttribArray(vertex_normal_);
-    glDisableVertexAttribArray(vertex_uv_);
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
     std::cout << "Disable: " << glGetError() << "\n";
     return true;
 }

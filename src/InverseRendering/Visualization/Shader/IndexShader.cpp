@@ -47,7 +47,6 @@ bool IndexShader::Compile() {
         return false;
     }
 
-    vertex_position_ = glGetAttribLocation(program_, "vertex_position");
     V_ = glGetUniformLocation(program_, "V");
     P_ = glGetUniformLocation(program_, "P");
 
@@ -115,9 +114,9 @@ bool IndexShader::RenderGeometry(const geometry::Geometry &geometry,
     glUniformMatrix4fv(V_, 1, GL_FALSE, view.GetViewMatrix().data());
     glUniformMatrix4fv(P_, 1, GL_FALSE, view.GetProjectionMatrix().data());
 
-    glEnableVertexAttribArray(vertex_position_);
+    glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer_);
-    glVertexAttribPointer(vertex_position_, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_);
 
@@ -136,7 +135,7 @@ bool IndexShader::RenderGeometry(const geometry::Geometry &geometry,
     /** Reuse depth buffer to occlude points, only clear color buffer **/
     glClear(GL_COLOR_BUFFER_BIT);
     glDrawArrays(GL_POINTS, 0, draw_arrays_size_);
-    glDisableVertexAttribArray(vertex_position_);
+    glDisableVertexAttribArray(0);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindFramebuffer(GL_RENDERBUFFER, 0);
@@ -223,16 +222,6 @@ bool IndexShader::PrepareBinding(
         view.GetWindowWidth(), view.GetWindowHeight(),
         GL_LUMINANCE32UI_EXT, GL_LUMINANCE_INTEGER_EXT, GL_UNSIGNED_INT,
         false, option);
-//    glGenTextures(1, &tex_index_buffer_);
-//    glBindTexture(GL_TEXTURE_2D, tex_index_buffer_);
-//    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE32UI_EXT,
-//                 view.GetWindowWidth(), view.GetWindowHeight(),
-//                 0, GL_LUMINANCE_INTEGER_EXT, GL_UNSIGNED_INT, nullptr);
-//
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     draw_arrays_mode_ = GL_TRIANGLES;
     draw_arrays_size_ = GLsizei(triangles.size() * 3);

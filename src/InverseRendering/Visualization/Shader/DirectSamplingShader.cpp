@@ -42,15 +42,12 @@ namespace glsl {
 
 bool DirectSamplingShader::Compile() {
     std::cout << glGetError() << "\n";
-    if (!CompileShaders(DirectSamplingVertexShader, nullptr, DirectSamplingFragmentShader)) {
+    if (!CompileShaders(DirectSamplingVertexShader,
+                        nullptr,
+                        DirectSamplingFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }
-
-    vertex_position_ = glGetAttribLocation(program_, "vertex_position");
-    vertex_normal_ = glGetAttribLocation(program_, "vertex_normal");
-    vertex_color_ = glGetAttribLocation(program_, "vertex_albedo");
-    vertex_material_ = glGetAttribLocation(program_, "vertex_material");
 
     M_ = glGetUniformLocation(program_, "M");
     V_ = glGetUniformLocation(program_, "V");
@@ -74,8 +71,8 @@ void DirectSamplingShader::Release() {
 }
 
 bool DirectSamplingShader::BindGeometry(const geometry::Geometry &geometry,
-                             const RenderOption &option,
-                             const ViewControl &view) {
+                                        const RenderOption &option,
+                                        const ViewControl &view) {
     // If there is already geometry, we first unbind it.
     // We use GL_STATIC_DRAW. When geometry changes, we clear buffers and
     // rebind the geometry. Note that this approach is slow. If the geometry is
@@ -112,8 +109,8 @@ bool DirectSamplingShader::BindGeometry(const geometry::Geometry &geometry,
 }
 
 bool DirectSamplingShader::BindLighting(const geometry::Lighting &lighting,
-                             const visualization::RenderOption &option,
-                             const visualization::ViewControl &view) {
+                                        const visualization::RenderOption &option,
+                                        const visualization::ViewControl &view) {
     auto ibl = (const geometry::IBLLighting &) lighting;
 
     texes_env_buffers_.resize(kNumEnvTextures);
@@ -127,8 +124,8 @@ bool DirectSamplingShader::BindLighting(const geometry::Lighting &lighting,
 }
 
 bool DirectSamplingShader::RenderGeometry(const geometry::Geometry &geometry,
-                               const RenderOption &option,
-                               const ViewControl &view) {
+                                          const RenderOption &option,
+                                          const ViewControl &view) {
     if (!PrepareRendering(geometry, option, view)) {
         PrintShaderWarning("Rendering failed during preparation.");
         return false;
@@ -154,21 +151,21 @@ bool DirectSamplingShader::RenderGeometry(const geometry::Geometry &geometry,
 
     std::cout << "PreRender: " << glGetError() << "\n";
 
-    glEnableVertexAttribArray(vertex_position_);
+    glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer_);
-    glVertexAttribPointer(vertex_position_, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
-    glEnableVertexAttribArray(vertex_normal_);
+    glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_normal_buffer_);
-    glVertexAttribPointer(vertex_normal_, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
-    glEnableVertexAttribArray(vertex_color_);
+    glEnableVertexAttribArray(2);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_color_buffer_);
-    glVertexAttribPointer(vertex_color_, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
-    glEnableVertexAttribArray(vertex_material_);
+    glEnableVertexAttribArray(3);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_material_buffer_);
-    glVertexAttribPointer(vertex_material_, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_);
     std::cout << "Bind: " << glGetError() << "\n";
@@ -176,10 +173,10 @@ bool DirectSamplingShader::RenderGeometry(const geometry::Geometry &geometry,
     glDrawElements(draw_arrays_mode_, draw_arrays_size_, GL_UNSIGNED_INT,
                    nullptr);
     std::cout << "Draw: " << glGetError() << "\n";
-    glDisableVertexAttribArray(vertex_position_);
-    glDisableVertexAttribArray(vertex_normal_);
-    glDisableVertexAttribArray(vertex_color_);
-    glDisableVertexAttribArray(vertex_material_);
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
+    glDisableVertexAttribArray(3);
 
     std::cout << "Disable: " << glGetError() << "\n";
     return true;

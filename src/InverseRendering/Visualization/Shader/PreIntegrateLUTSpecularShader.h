@@ -57,11 +57,6 @@ protected:
                         std::vector<Eigen::Vector2f> &uvs);
 
 protected:
-    /** locations **/
-    /* array (cube) */
-    GLuint vertex_position_;
-    GLuint vertex_uv_;
-
     /** buffers **/
     GLuint vertex_position_buffer_;
     GLuint vertex_uv_buffer_;

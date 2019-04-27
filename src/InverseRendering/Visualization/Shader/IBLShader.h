@@ -58,12 +58,6 @@ protected:
     const int kNumObjectTextures = 5;
     const int kNumEnvTextures = 3;
 
-    /** locations **/
-    /* array */
-    GLuint vertex_position_;
-    GLuint vertex_normal_;
-    GLuint vertex_uv_;
-
     /* vertex shader */
     GLuint M_;
     GLuint V_;

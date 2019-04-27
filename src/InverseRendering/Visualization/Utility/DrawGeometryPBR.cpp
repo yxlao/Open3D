@@ -26,7 +26,6 @@ bool DrawGeometriesPBR(
         return false;
     }
 
-
     assert(geometry_ptrs.size() == textures.size()
     && geometry_ptrs.size() == lightings.size());
 

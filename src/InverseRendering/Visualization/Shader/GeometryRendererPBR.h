@@ -6,7 +6,7 @@
 
 #include <Open3D/Open3D.h>
 
-#include "NoIBLShader.h"
+#include "SpotLightShader.h"
 
 #include "HDRToEnvCubemapShader.h"
 #include "BackgroundShader.h"
@@ -54,7 +54,7 @@ public:
 
 protected:
     /** NoIBL: simple **/
-    NoIBLShader no_ibl_shader_;
+    SpotLightShader no_ibl_shader_;
 
     /** IBL **/
     HDRToEnvCubemapShader hdr_to_env_cubemap_shader_;
