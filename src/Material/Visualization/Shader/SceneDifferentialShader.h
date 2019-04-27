@@ -13,13 +13,13 @@ namespace visualization {
 
 namespace glsl {
 /** Lighting should have been processed before being passed here **/
-class IBLNoTexShader : public ShaderWrapperPBR {
+class SceneDifferentialShader : public ShaderWrapperPBR {
 public:
-    IBLNoTexShader() : IBLNoTexShader("IBLNoTexShader") {}
-    ~IBLNoTexShader() override { Release(); }
+    SceneDifferentialShader() : SceneDifferentialShader("IBLNoTexShader") {}
+    ~SceneDifferentialShader() override { Release(); }
 
 protected:
-    explicit IBLNoTexShader(const std::string &name)
+    explicit SceneDifferentialShader(const std::string &name)
         : ShaderWrapperPBR(name) { Compile(); }
 
 protected:
@@ -78,11 +78,12 @@ protected:
     GLuint vertex_position_buffer_;
     GLuint vertex_normal_buffer_;
     GLuint vertex_color_buffer_;
-    GLuint vertex_tangent_buffer_;
     GLuint vertex_material_buffer_;
     GLuint triangle_buffer_;
 
     std::vector<GLuint> texes_env_buffers_;
+
+    std::vector<GLuint> fbo_buffers_;
 };
 
 }

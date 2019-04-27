@@ -33,8 +33,10 @@ protected:
     }
     GLuint BindTexture2D(const geometry::Image &texture,
                          const visualization::RenderOption &option);
-    GLuint CreateTexture2D(GLuint width, GLuint height, bool use_mipmap,
-                           const visualization::RenderOption &option);
+    GLuint CreateTexture2D(
+        GLuint width, GLuint height,
+        GLenum internal_format, GLenum format, GLenum type,
+        bool use_mipmap, const visualization::RenderOption &option);
 
     /** A little bit redundant **/
     std::shared_ptr<geometry::Image> ReadTexture2D(

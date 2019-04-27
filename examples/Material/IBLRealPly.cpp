@@ -22,8 +22,6 @@ int main() {
     mesh_extended->vertex_normals_ = mesh->vertex_normals_;
     mesh_extended->triangles_ = mesh->triangles_;
 
-    std::vector<int> valid_indices(mesh_extended->vertices_.size() * 300);
-
     std::random_device rd;
     std::uniform_real_distribution<double> dist_roughness(0.8, 1.0);
     std::uniform_real_distribution<double> dist_metallic(0.0, 0.2);
@@ -31,7 +29,7 @@ int main() {
     mesh_extended->vertex_materials_.resize(mesh->vertices_.size());
 
     for (auto &mat : mesh_extended->vertex_materials_) {
-        mat = Eigen::Vector3d(0, 1, 1);
+        mat = Eigen::Vector3d(1, 0, 1);
 //        mat = Eigen::Vector3d(dist_roughness(rd), dist_metallic(rd), dist_ao(rd));
     }
 

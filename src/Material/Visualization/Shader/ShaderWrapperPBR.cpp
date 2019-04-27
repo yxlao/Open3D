@@ -79,14 +79,15 @@ GLuint ShaderWrapperPBR::BindTexture2D(
     return texture_id;
 }
 
-GLuint ShaderWrapperPBR::CreateTexture2D(GLuint width, GLuint height,
-                                         bool use_mipmap,
-                                         const visualization::RenderOption &option) {
+GLuint ShaderWrapperPBR::CreateTexture2D(
+    GLuint width, GLuint height,
+    GLenum internal_format, GLenum format, GLenum type,
+    bool use_mipmap, const visualization::RenderOption &option) {
     GLuint texture_id;
     glGenTextures(1, &texture_id);
     glBindTexture(GL_TEXTURE_2D, texture_id);
     glTexImage2D(GL_TEXTURE_2D, 0,
-                 GL_RGB16F, width, height, 0, GL_RG, GL_FLOAT, nullptr);
+                 internal_format, width, height, 0, format, type, nullptr);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);

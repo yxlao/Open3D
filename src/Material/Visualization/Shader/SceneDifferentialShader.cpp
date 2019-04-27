@@ -27,7 +27,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "IBLNoTexShader.h"
+#include "SceneDifferentialShader.h"
 
 #include <Open3D/Geometry/TriangleMesh.h>
 #include <Open3D/Visualization/Utility/ColorMap.h>
@@ -40,9 +40,9 @@ namespace visualization {
 
 namespace glsl {
 
-bool IBLNoTexShader::Compile() {
+bool SceneDifferentialShader::Compile() {
     std::cout << glGetError() << "\n";
-    if (!CompileShaders(IBLNoTexVertexShader, nullptr, IBLNoTexFragmentShader)) {
+    if (!CompileShaders(SceneDifferentialVertexShader, nullptr, SceneDifferentialFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }
@@ -69,12 +69,12 @@ bool IBLNoTexShader::Compile() {
     return true;
 }
 
-void IBLNoTexShader::Release() {
+void SceneDifferentialShader::Release() {
     UnbindGeometry();
     ReleaseProgram();
 }
 
-bool IBLNoTexShader::BindGeometry(const geometry::Geometry &geometry,
+bool SceneDifferentialShader::BindGeometry(const geometry::Geometry &geometry,
                              const RenderOption &option,
                              const ViewControl &view) {
     // If there is already geometry, we first unbind it.
@@ -112,7 +112,7 @@ bool IBLNoTexShader::BindGeometry(const geometry::Geometry &geometry,
     return true;
 }
 
-bool IBLNoTexShader::BindLighting(const physics::Lighting &lighting,
+bool SceneDifferentialShader::BindLighting(const physics::Lighting &lighting,
                              const visualization::RenderOption &option,
                              const visualization::ViewControl &view) {
     auto ibl = (const physics::IBLLighting &) lighting;
@@ -128,7 +128,7 @@ bool IBLNoTexShader::BindLighting(const physics::Lighting &lighting,
     return true;
 }
 
-bool IBLNoTexShader::RenderGeometry(const geometry::Geometry &geometry,
+bool SceneDifferentialShader::RenderGeometry(const geometry::Geometry &geometry,
                                const RenderOption &option,
                                const ViewControl &view) {
     if (!PrepareRendering(geometry, option, view)) {
@@ -136,11 +136,12 @@ bool IBLNoTexShader::RenderGeometry(const geometry::Geometry &geometry,
         return false;
     }
 
+
     glUseProgram(program_);
     glUniformMatrix4fv(M_, 1, GL_FALSE, view.GetModelMatrix().data());
     glUniformMatrix4fv(V_, 1, GL_FALSE, view.GetViewMatrix().data());
     glUniformMatrix4fv(P_, 1, GL_FALSE, view.GetProjectionMatrix().data());
-    glUniform3fv(camera_position_, 1, (const GLfloat *) view.GetEye().data());
+    glUniform3fv(camera_position_, 1, view.GetEye().data());
 
     std::cout << "PreRenderMVP: " << glGetError() << "\n";
 
@@ -192,7 +193,7 @@ bool IBLNoTexShader::RenderGeometry(const geometry::Geometry &geometry,
     return true;
 }
 
-void IBLNoTexShader::UnbindGeometry() {
+void SceneDifferentialShader::UnbindGeometry() {
     if (bound_) {
         glDeleteBuffers(1, &vertex_position_buffer_);
         glDeleteBuffers(1, &vertex_normal_buffer_);
@@ -208,7 +209,7 @@ void IBLNoTexShader::UnbindGeometry() {
     }
 }
 
-bool IBLNoTexShader::PrepareRendering(
+bool SceneDifferentialShader::PrepareRendering(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view) {
@@ -235,7 +236,7 @@ bool IBLNoTexShader::PrepareRendering(
     return true;
 }
 
-bool IBLNoTexShader::PrepareBinding(
+bool SceneDifferentialShader::PrepareBinding(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view,

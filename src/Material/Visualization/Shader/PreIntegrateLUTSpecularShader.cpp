@@ -149,7 +149,8 @@ bool PreIntegrateLUTSpecularShader::PrepareBinding(
 
     /** Prepare target texture **/
     tex_lut_specular_buffer_ = CreateTexture2D(
-        kTextureSize, kTextureSize, false, option);
+        kTextureSize, kTextureSize,
+        GL_RGB16F, GL_RG, GL_FLOAT, false, option);
 
     draw_arrays_mode_ = GL_TRIANGLE_STRIP;
     draw_arrays_size_ = GLsizei(points.size());
