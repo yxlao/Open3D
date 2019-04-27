@@ -14,4 +14,4 @@ if (BUILD_PYTHON_MODULE)
 endif ()
 
 # Experiment
-add_subdirectory(Material)
+add_subdirectory(InverseRendering)

@@ -4,7 +4,7 @@ add_subdirectory(Tools)
 # > Enable this by default in this branch
 if (BUILD_CUDA_MODULE)
     add_subdirectory(Cuda)
-    add_subdirectory(Material)
+    add_subdirectory(InverseRendering)
 endif()
 
 # > Disable this before we fix everything
