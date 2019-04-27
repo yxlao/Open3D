@@ -5,7 +5,7 @@
 #pragma once
 
 #include <Open3D/Open3D.h>
-#include "ShaderWrapperPBR.h"
+#include "InverseRendering/Visualization/Shader/ShaderWrapperPBR.h"
 #include <InverseRendering/Geometry/TriangleMeshExtended.h>
 
 namespace open3d {
@@ -13,13 +13,13 @@ namespace visualization {
 
 namespace glsl {
 /** Lighting should have been processed before being passed here **/
-class SceneDifferentialShader : public ShaderWrapperPBR {
+class DirectSamplingShader : public ShaderWrapperPBR {
 public:
-    SceneDifferentialShader() : SceneDifferentialShader("IBLNoTexShader") {}
-    ~SceneDifferentialShader() override { Release(); }
+    DirectSamplingShader() : DirectSamplingShader("DifferentialShader") {}
+    ~DirectSamplingShader() override { Release(); }
 
 protected:
-    explicit SceneDifferentialShader(const std::string &name)
+    explicit DirectSamplingShader(const std::string &name)
         : ShaderWrapperPBR(name) { Compile(); }
 
 protected:
@@ -56,7 +56,7 @@ protected:
                         std::vector<Eigen::Vector3i> &triangles);
 
 protected:
-    const int kNumEnvTextures = 3;
+    const int kNumEnvTextures = 2;
 
     /** locations **/
     /* vertex shader */
@@ -76,8 +76,6 @@ protected:
     GLuint triangle_buffer_;
 
     std::vector<GLuint> texes_env_buffers_;
-
-    std::vector<GLuint> fbo_buffers_;
 };
 
 }

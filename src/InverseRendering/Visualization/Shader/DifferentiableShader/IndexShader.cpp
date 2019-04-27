@@ -27,7 +27,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "DirectSamplingShader.h"
+#include "IndexShader.h"
 
 #include <Open3D/Geometry/TriangleMesh.h>
 #include <Open3D/Visualization/Utility/ColorMap.h>
@@ -40,39 +40,29 @@ namespace visualization {
 
 namespace glsl {
 
-bool DirectSamplingShader::Compile() {
+bool IndexShader::Compile() {
     std::cout << glGetError() << "\n";
-    if (!CompileShaders(DirectSamplingVertexShader,
-                        nullptr,
-                        DirectSamplingFragmentShader)) {
+    if (!CompileShaders(IndexVertexShader, nullptr, IndexFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }
 
-    M_ = glGetUniformLocation(program_, "M");
     V_ = glGetUniformLocation(program_, "V");
     P_ = glGetUniformLocation(program_, "P");
-    camera_position_ = glGetUniformLocation(program_, "camera_position");
 
-    std::cout << glGetError() << "\n";
-
-    texes_env_.resize(kNumEnvTextures);
-    texes_env_[0] = glGetUniformLocation(program_, "tex_env");
-    texes_env_[1] = glGetUniformLocation(program_, "tex_env_diffuse");
-
-    std::cout << glGetError() << "\n";
+    CheckGLState("IndexShader - Compile");
 
     return true;
 }
 
-void DirectSamplingShader::Release() {
+void IndexShader::Release() {
     UnbindGeometry();
     ReleaseProgram();
 }
 
-bool DirectSamplingShader::BindGeometry(const geometry::Geometry &geometry,
-                                        const RenderOption &option,
-                                        const ViewControl &view) {
+bool IndexShader::BindGeometry(const geometry::Geometry &geometry,
+                               const RenderOption &option,
+                               const ViewControl &view) {
     // If there is already geometry, we first unbind it.
     // We use GL_STATIC_DRAW. When geometry changes, we clear buffers and
     // rebind the geometry. Note that this approach is slow. If the geometry is
@@ -83,122 +73,105 @@ bool DirectSamplingShader::BindGeometry(const geometry::Geometry &geometry,
 
     // Prepare data to be passed to GPU
     std::vector<Eigen::Vector3f> points;
-    std::vector<Eigen::Vector3f> normals;
-    std::vector<Eigen::Vector3f> colors;
-    std::vector<Eigen::Vector3f> materials;
     std::vector<Eigen::Vector3i> triangles;
 
-    if (!PrepareBinding(geometry, option, view,
-                        points, normals, colors, materials, triangles)) {
+    if (!PrepareBinding(geometry, option, view, points, triangles)) {
         PrintShaderWarning("Binding failed when preparing data.");
         return false;
     }
 
     // Create buffers and bind the geometry
     vertex_position_buffer_ = BindBuffer(points, GL_ARRAY_BUFFER, option);
-    vertex_normal_buffer_ = BindBuffer(normals, GL_ARRAY_BUFFER, option);
-    vertex_color_buffer_ = BindBuffer(colors, GL_ARRAY_BUFFER, option);
-    vertex_material_buffer_ = BindBuffer(materials, GL_ARRAY_BUFFER, option);
-
     triangle_buffer_ = BindBuffer(triangles, GL_ELEMENT_ARRAY_BUFFER, option);
 
-    std::cout << "BindGeometry: " << glGetError() << "\n";
+    CheckGLState("IndexShader - BindGeometry");
 
     bound_ = true;
     return true;
 }
 
-bool DirectSamplingShader::BindLighting(const geometry::Lighting &lighting,
-                                        const visualization::RenderOption &option,
-                                        const visualization::ViewControl &view) {
-    auto ibl = (const geometry::IBLLighting &) lighting;
-
-    texes_env_buffers_.resize(kNumEnvTextures);
-    texes_env_buffers_[0] = ibl.tex_env_buffer_;
-    texes_env_buffers_[1] = ibl.tex_env_diffuse_buffer_;
-
-    for (int i = 0; i < kNumEnvTextures; ++i) {
-        std::cout << "tex_obejct_buffer: " << texes_env_buffers_[i] << "\n";
-    }
-    return true;
-}
-
-bool DirectSamplingShader::RenderGeometry(const geometry::Geometry &geometry,
-                                          const RenderOption &option,
-                                          const ViewControl &view) {
+bool IndexShader::RenderGeometry(const geometry::Geometry &geometry,
+                                 const RenderOption &option,
+                                 const ViewControl &view) {
     if (!PrepareRendering(geometry, option, view)) {
         PrintShaderWarning("Rendering failed during preparation.");
         return false;
     }
 
+
+    GLuint fbo, rbo;
+    glGenFramebuffers(1, &fbo);
+    glGenRenderbuffers(1, &rbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24,
+                          view.GetWindowWidth(), view.GetWindowHeight());
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                              GL_RENDERBUFFER, rbo);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                           GL_TEXTURE_2D, tex_index_buffer_, 0);
+
     glUseProgram(program_);
-    glUniformMatrix4fv(M_, 1, GL_FALSE, view.GetModelMatrix().data());
     glUniformMatrix4fv(V_, 1, GL_FALSE, view.GetViewMatrix().data());
     glUniformMatrix4fv(P_, 1, GL_FALSE, view.GetProjectionMatrix().data());
-    glUniform3fv(camera_position_, 1, (const GLfloat *) view.GetEye().data());
-
-    std::cout << "PreRenderMVP: " << glGetError() << "\n";
-
-    /** Diffuse environment **/
-    glUniform1i(texes_env_[0], 0);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, texes_env_buffers_[0]);
-
-    /** Prefiltered specular **/
-    glUniform1i(texes_env_[1], 1);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, texes_env_buffers_[1]);
-
-    std::cout << "PreRender: " << glGetError() << "\n";
 
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer_);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-    glEnableVertexAttribArray(1);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_normal_buffer_);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-    glEnableVertexAttribArray(2);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_color_buffer_);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-    glEnableVertexAttribArray(3);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_material_buffer_);
-    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_);
-    std::cout << "Bind: " << glGetError() << "\n";
 
+    glClearColor(0, 0, 0, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glDrawElements(draw_arrays_mode_, draw_arrays_size_, GL_UNSIGNED_INT,
                    nullptr);
-    std::cout << "Draw: " << glGetError() << "\n";
-    glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
-    glDisableVertexAttribArray(2);
-    glDisableVertexAttribArray(3);
+    CheckGLState("IndexShader - Rendering Pass #1");
+    /* Directly render it on previous layer for error check
+    glClear(GL_COLOR_BUFFER_BIT);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDrawArrays(GL_POINTS, 0, draw_arrays_size_);
+    glDisableVertexAttribArray(vertex_position_);
+     */
 
-    std::cout << "Disable: " << glGetError() << "\n";
+    /** Reuse depth buffer to occlude points, only clear color buffer **/
+    glClear(GL_COLOR_BUFFER_BIT);
+    glDrawArrays(GL_POINTS, 0, draw_arrays_size_);
+    CheckGLState("IndexShader - Rendering Pass #2");
+
+    glDisableVertexAttribArray(0);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+    /** Read the texture **/
+    glBindTexture(GL_TEXTURE_2D, tex_index_buffer_);
+    index_map_ = ReadTexture2D(
+        view.GetWindowWidth(), view.GetWindowHeight(), 1, 4,
+        GL_LUMINANCE_INTEGER_EXT, GL_UNSIGNED_INT);
+
+    /* Output indices for sanity check */
+//    for (int u = 0; u < index_map_->width_; ++u) {
+//        for (int v = 0; v < index_map_->height_; ++v) {
+//            int* idx = geometry::PointerAt<int>(*index_map_, u, v);
+//            if (*idx != 0) std::cout << "(" << u << ", " << v << ") " << *idx << "\n";
+//        }
+//    }
+
+    CheckGLState("IndexShader - Render");
     return true;
 }
 
-void DirectSamplingShader::UnbindGeometry() {
+void IndexShader::UnbindGeometry() {
     if (bound_) {
         glDeleteBuffers(1, &vertex_position_buffer_);
-        glDeleteBuffers(1, &vertex_normal_buffer_);
-        glDeleteBuffers(1, &vertex_color_buffer_);
-        glDeleteBuffers(1, &vertex_material_buffer_);
         glDeleteBuffers(1, &triangle_buffer_);
 
-        for (int i = 0; i < kNumEnvTextures; ++i) {
-            glDeleteTextures(1, &texes_env_buffers_[i]);
-        }
-
+        glDeleteBuffers(1, &tex_index_buffer_);
         bound_ = false;
     }
 }
 
-bool DirectSamplingShader::PrepareRendering(
+bool IndexShader::PrepareRendering(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view) {
@@ -225,14 +198,11 @@ bool DirectSamplingShader::PrepareRendering(
     return true;
 }
 
-bool DirectSamplingShader::PrepareBinding(
+bool IndexShader::PrepareBinding(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view,
     std::vector<Eigen::Vector3f> &points,
-    std::vector<Eigen::Vector3f> &normals,
-    std::vector<Eigen::Vector3f> &colors,
-    std::vector<Eigen::Vector3f> &materials,
     std::vector<Eigen::Vector3i> &triangles) {
     if (geometry.GetGeometryType() !=
         geometry::Geometry::GeometryType::TriangleMesh) {
@@ -245,29 +215,18 @@ bool DirectSamplingShader::PrepareBinding(
         PrintShaderWarning("Binding failed with empty triangle mesh.");
         return false;
     }
-    if (!mesh.HasVertexNormals()) {
-        PrintShaderWarning("Binding failed because mesh has no normals.");
-        return false;
-    }
 
     points.resize(mesh.vertices_.size());
     for (int i = 0; i < points.size(); ++i) {
         points[i] = mesh.vertices_[i].cast<float>();
     }
-    normals.resize(mesh.vertex_normals_.size());
-    for (int i = 0; i < normals.size(); ++i) {
-        normals[i] = mesh.vertex_normals_[i].cast<float>();
-    }
-    colors.resize(mesh.vertex_colors_.size());
-    for (int i = 0; i < colors.size(); ++i) {
-        colors[i] = mesh.vertex_colors_[i].cast<float>();
-    }
-    materials.resize(mesh.vertex_materials_.size());
-    for (int i = 0; i < colors.size(); ++i) {
-        materials[i] = mesh.vertex_materials_[i].cast<float>();
-    }
     triangles = mesh.triangles_;
 
+    tex_index_buffer_ = CreateTexture2D(
+        view.GetWindowWidth(), view.GetWindowHeight(),
+        GL_LUMINANCE32UI_EXT, GL_LUMINANCE_INTEGER_EXT, GL_UNSIGNED_INT,
+        false, option);
+    CheckGLState("IndexShader - PrepareBinding");
     draw_arrays_mode_ = GL_TRIANGLES;
     draw_arrays_size_ = GLsizei(triangles.size() * 3);
     return true;

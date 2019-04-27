@@ -1,37 +1,39 @@
 //
-// Created by wei on 4/13/19.
+// Created by wei on 4/15/19.
 //
 
 #pragma once
 
 #include <Open3D/Open3D.h>
-#include "ShaderWrapperPBR.h"
-#include <InverseRendering/Geometry/TriangleMeshExtended.h>
+#include "InverseRendering/Visualization/Shader/ShaderWrapperPBR.h"
 
 namespace open3d {
 namespace visualization {
 
 namespace glsl {
-/** Lighting should have been processed before being passed here **/
-class IBLShader : public ShaderWrapperPBR {
+class BackgroundShader : public ShaderWrapperPBR {
 public:
-    IBLShader() : IBLShader("IBLShader") {}
-    ~IBLShader() override { Release(); }
+    BackgroundShader() : BackgroundShader("BackgroundShader") {}
+    ~BackgroundShader() override { Release(); }
 
 protected:
-    explicit IBLShader(const std::string &name)
+
+    explicit BackgroundShader(const std::string &name)
         : ShaderWrapperPBR(name) { Compile(); }
 
 protected:
     bool Compile() final;
     void Release() final;
 
+    /** Dummy, load Cube instead **/
     bool BindGeometry(const geometry::Geometry &geometry,
                       const RenderOption &option,
                       const ViewControl &view) final;
+    /** Dummy, texture for rendering is not used **/
     bool BindTextures(const std::vector<geometry::Image> &textures,
                       const RenderOption &option,
-                      const ViewControl &view) final;
+                      const ViewControl &view) final { return true; };
+    /** Assign cubemap stored in the lighting **/
     bool BindLighting(const geometry::Lighting &lighting,
                       const RenderOption &option,
                       const ViewControl &view) final;
@@ -45,41 +47,28 @@ protected:
 protected:
     bool PrepareRendering(const geometry::Geometry &geometry,
                           const RenderOption &option,
-                          const ViewControl &view);
+                          const ViewControl &view) { return true; }
     bool PrepareBinding(const geometry::Geometry &geometry,
                         const RenderOption &option,
                         const ViewControl &view,
                         std::vector<Eigen::Vector3f> &points,
-                        std::vector<Eigen::Vector3f> &normals,
-                        std::vector<Eigen::Vector2f> &uvs,
                         std::vector<Eigen::Vector3i> &triangles);
 
 protected:
-    const int kNumObjectTextures = 5;
-    const int kNumEnvTextures = 3;
-
-    /* vertex shader */
-    GLuint M_;
-    GLuint V_;
+    /** locations **/
+    GLuint V_;               /* vertex shader */
     GLuint P_;
-
-    /* fragment shader */
-    std::vector<GLuint> texes_object_; /* 5 textures for object */
-    std::vector<GLuint> texes_env_;    /* 3 textures for env */
-    GLuint camera_position_;
+    GLuint tex_env_;         /* fragment shader */
 
     /** buffers **/
     GLuint vertex_position_buffer_;
-    GLuint vertex_normal_buffer_;
-    GLuint vertex_uv_buffer_;
     GLuint triangle_buffer_;
 
-    std::vector<GLuint> texes_object_buffers_;
-    std::vector<GLuint> texes_env_buffers_;
+    /** lighting **/
+    geometry::IBLLighting ibl_;
 };
 
 }
 }
 }
-
 

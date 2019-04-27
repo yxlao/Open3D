@@ -1,11 +1,11 @@
 //
-// Created by wei on 4/24/19.
+// Created by wei on 4/13/19.
 //
 
 #pragma once
 
 #include <Open3D/Open3D.h>
-#include "ShaderWrapperPBR.h"
+#include "InverseRendering/Visualization/Shader/ShaderWrapperPBR.h"
 #include <InverseRendering/Geometry/TriangleMeshExtended.h>
 
 namespace open3d {
@@ -13,13 +13,13 @@ namespace visualization {
 
 namespace glsl {
 /** Lighting should have been processed before being passed here **/
-class IndexShader : public ShaderWrapperPBR {
+class IBLShader : public ShaderWrapperPBR {
 public:
-    IndexShader() : IndexShader("IndexShader") {}
-    ~IndexShader() override { Release(); }
+    IBLShader() : IBLShader("IBLShader") {}
+    ~IBLShader() override { Release(); }
 
 protected:
-    explicit IndexShader(const std::string &name)
+    explicit IBLShader(const std::string &name)
         : ShaderWrapperPBR(name) { Compile(); }
 
 protected:
@@ -31,10 +31,10 @@ protected:
                       const ViewControl &view) final;
     bool BindTextures(const std::vector<geometry::Image> &textures,
                       const RenderOption &option,
-                      const ViewControl &view) final { return true; }
+                      const ViewControl &view) final;
     bool BindLighting(const geometry::Lighting &lighting,
                       const RenderOption &option,
-                      const ViewControl &view) final { return true; };
+                      const ViewControl &view) final;
 
     bool RenderGeometry(const geometry::Geometry &geometry,
                         const RenderOption &option,
@@ -50,25 +50,36 @@ protected:
                         const RenderOption &option,
                         const ViewControl &view,
                         std::vector<Eigen::Vector3f> &points,
+                        std::vector<Eigen::Vector3f> &normals,
+                        std::vector<Eigen::Vector2f> &uvs,
                         std::vector<Eigen::Vector3i> &triangles);
 
 protected:
-    /** locations **/
+    const int kNumObjectTextures = 5;
+    const int kNumEnvTextures = 3;
+
     /* vertex shader */
+    GLuint M_;
     GLuint V_;
     GLuint P_;
 
+    /* fragment shader */
+    std::vector<GLuint> texes_object_; /* 5 textures for object */
+    std::vector<GLuint> texes_env_;    /* 3 textures for env */
+    GLuint camera_position_;
+
     /** buffers **/
     GLuint vertex_position_buffer_;
+    GLuint vertex_normal_buffer_;
+    GLuint vertex_uv_buffer_;
     GLuint triangle_buffer_;
 
-    GLuint tex_index_buffer_;
-
-public:
-    std::shared_ptr<geometry::Image> index_map_;
+    std::vector<GLuint> texes_object_buffers_;
+    std::vector<GLuint> texes_env_buffers_;
 };
 
 }
 }
 }
+
 

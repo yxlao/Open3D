@@ -27,7 +27,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "SceneDifferentialShader.h"
+#include "DirectSamplingShader.h"
 
 #include <Open3D/Geometry/TriangleMesh.h>
 #include <Open3D/Visualization/Utility/ColorMap.h>
@@ -40,9 +40,11 @@ namespace visualization {
 
 namespace glsl {
 
-bool SceneDifferentialShader::Compile() {
+bool DirectSamplingShader::Compile() {
     std::cout << glGetError() << "\n";
-    if (!CompileShaders(SceneDifferentialVertexShader, nullptr, SceneDifferentialFragmentShader)) {
+    if (!CompileShaders(DirectSamplingVertexShader,
+                        nullptr,
+                        DirectSamplingFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }
@@ -52,26 +54,23 @@ bool SceneDifferentialShader::Compile() {
     P_ = glGetUniformLocation(program_, "P");
     camera_position_ = glGetUniformLocation(program_, "camera_position");
 
-    std::cout << glGetError() << "\n";
-
     texes_env_.resize(kNumEnvTextures);
-    texes_env_[0] = glGetUniformLocation(program_, "tex_env_diffuse");
-    texes_env_[1] = glGetUniformLocation(program_, "tex_env_specular");
-    texes_env_[2] = glGetUniformLocation(program_, "tex_lut_specular");
+    texes_env_[0] = glGetUniformLocation(program_, "tex_env");
+    texes_env_[1] = glGetUniformLocation(program_, "tex_env_diffuse");
 
-    std::cout << glGetError() << "\n";
+    CheckGLState("DirectSamplingShader - Compile");
 
     return true;
 }
 
-void SceneDifferentialShader::Release() {
+void DirectSamplingShader::Release() {
     UnbindGeometry();
     ReleaseProgram();
 }
 
-bool SceneDifferentialShader::BindGeometry(const geometry::Geometry &geometry,
-                             const RenderOption &option,
-                             const ViewControl &view) {
+bool DirectSamplingShader::BindGeometry(const geometry::Geometry &geometry,
+                                        const RenderOption &option,
+                                        const ViewControl &view) {
     // If there is already geometry, we first unbind it.
     // We use GL_STATIC_DRAW. When geometry changes, we clear buffers and
     // rebind the geometry. Note that this approach is slow. If the geometry is
@@ -101,21 +100,20 @@ bool SceneDifferentialShader::BindGeometry(const geometry::Geometry &geometry,
 
     triangle_buffer_ = BindBuffer(triangles, GL_ELEMENT_ARRAY_BUFFER, option);
 
-    std::cout << "BindGeometry: " << glGetError() << "\n";
-
     bound_ = true;
+
+    CheckGLState("DirectSamplingShader - BindGeometry");
     return true;
 }
 
-bool SceneDifferentialShader::BindLighting(const geometry::Lighting &lighting,
-                             const visualization::RenderOption &option,
-                             const visualization::ViewControl &view) {
+bool DirectSamplingShader::BindLighting(const geometry::Lighting &lighting,
+                                        const visualization::RenderOption &option,
+                                        const visualization::ViewControl &view) {
     auto ibl = (const geometry::IBLLighting &) lighting;
 
     texes_env_buffers_.resize(kNumEnvTextures);
-    texes_env_buffers_[0] = ibl.tex_env_diffuse_buffer_;
-    texes_env_buffers_[1] = ibl.tex_env_specular_buffer_;
-    texes_env_buffers_[2] = ibl.tex_lut_specular_buffer_;
+    texes_env_buffers_[0] = ibl.tex_env_buffer_;
+    texes_env_buffers_[1] = ibl.tex_env_diffuse_buffer_;
 
     for (int i = 0; i < kNumEnvTextures; ++i) {
         std::cout << "tex_obejct_buffer: " << texes_env_buffers_[i] << "\n";
@@ -123,22 +121,19 @@ bool SceneDifferentialShader::BindLighting(const geometry::Lighting &lighting,
     return true;
 }
 
-bool SceneDifferentialShader::RenderGeometry(const geometry::Geometry &geometry,
-                               const RenderOption &option,
-                               const ViewControl &view) {
+bool DirectSamplingShader::RenderGeometry(const geometry::Geometry &geometry,
+                                          const RenderOption &option,
+                                          const ViewControl &view) {
     if (!PrepareRendering(geometry, option, view)) {
         PrintShaderWarning("Rendering failed during preparation.");
         return false;
     }
 
-
     glUseProgram(program_);
     glUniformMatrix4fv(M_, 1, GL_FALSE, view.GetModelMatrix().data());
     glUniformMatrix4fv(V_, 1, GL_FALSE, view.GetViewMatrix().data());
     glUniformMatrix4fv(P_, 1, GL_FALSE, view.GetProjectionMatrix().data());
-    glUniform3fv(camera_position_, 1, view.GetEye().data());
-
-    std::cout << "PreRenderMVP: " << glGetError() << "\n";
+    glUniform3fv(camera_position_, 1, (const GLfloat *) view.GetEye().data());
 
     /** Diffuse environment **/
     glUniform1i(texes_env_[0], 0);
@@ -149,13 +144,6 @@ bool SceneDifferentialShader::RenderGeometry(const geometry::Geometry &geometry,
     glUniform1i(texes_env_[1], 1);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_CUBE_MAP, texes_env_buffers_[1]);
-
-    /** Pre-integrated BRDF LUT **/
-    glUniform1i(texes_env_[2], 2);
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, texes_env_buffers_[2]);
-
-    std::cout << "PreRender: " << glGetError() << "\n";
 
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer_);
@@ -174,21 +162,19 @@ bool SceneDifferentialShader::RenderGeometry(const geometry::Geometry &geometry,
     glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_);
-    std::cout << "Bind: " << glGetError() << "\n";
 
     glDrawElements(draw_arrays_mode_, draw_arrays_size_, GL_UNSIGNED_INT,
                    nullptr);
-    std::cout << "Draw: " << glGetError() << "\n";
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
     glDisableVertexAttribArray(2);
     glDisableVertexAttribArray(3);
 
-    std::cout << "Disable: " << glGetError() << "\n";
+    CheckGLState("DirectSamplingShader - Render");
     return true;
 }
 
-void SceneDifferentialShader::UnbindGeometry() {
+void DirectSamplingShader::UnbindGeometry() {
     if (bound_) {
         glDeleteBuffers(1, &vertex_position_buffer_);
         glDeleteBuffers(1, &vertex_normal_buffer_);
@@ -204,7 +190,7 @@ void SceneDifferentialShader::UnbindGeometry() {
     }
 }
 
-bool SceneDifferentialShader::PrepareRendering(
+bool DirectSamplingShader::PrepareRendering(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view) {
@@ -231,7 +217,7 @@ bool SceneDifferentialShader::PrepareRendering(
     return true;
 }
 
-bool SceneDifferentialShader::PrepareBinding(
+bool DirectSamplingShader::PrepareBinding(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view,

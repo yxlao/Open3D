@@ -5,22 +5,21 @@
 #pragma once
 
 #include <Open3D/Open3D.h>
-#include "ShaderWrapperPBR.h"
+#include "InverseRendering/Visualization/Shader/ShaderWrapperPBR.h"
 
 namespace open3d {
 namespace visualization {
 
 namespace glsl {
-class PreFilterEnvSpecularShader : public ShaderWrapperPBR {
+class PreConvEnvDiffuseShader : public ShaderWrapperPBR {
 public:
-    PreFilterEnvSpecularShader() : PreFilterEnvSpecularShader(
-        "PreFilterEnvShader") {}
-    ~PreFilterEnvSpecularShader() override { Release(); }
+    PreConvEnvDiffuseShader() : PreConvEnvDiffuseShader("PreConvDiffuseShader") {}
+    ~PreConvEnvDiffuseShader() override { Release(); }
 
-    GLuint GetGeneratedPrefilterEnvBuffer() const { return tex_env_specular_buffer_; }
+    GLuint GetGeneratedDiffuseBuffer() const { return tex_diffuse_buffer_; }
 
 protected:
-    explicit PreFilterEnvSpecularShader(const std::string &name)
+    explicit PreConvEnvDiffuseShader(const std::string &name)
         : ShaderWrapperPBR(name) { Compile(); }
 
 protected:
@@ -46,6 +45,7 @@ protected:
 
     void UnbindGeometry() final;
 
+
 protected:
     bool PrepareRendering(const geometry::Geometry &geometry,
                           const RenderOption &option,
@@ -64,15 +64,13 @@ protected:
 
     /* fragment shader */
     GLuint tex_env_;
-    GLuint roughness_;
 
     /** buffers **/
     GLuint vertex_position_buffer_;
     GLuint triangle_buffer_;
 
-    const unsigned int kCubemapSize = 128;
-    const int kMipMapLevels = 5;
-    GLuint tex_env_specular_buffer_;    /* <- to be generated */
+    const int kCubemapSize = 32;
+    GLuint tex_diffuse_buffer_;    /* <- to be generated */
 
     /** cameras (fixed) **/
     GLHelper::GLMatrix4f projection_;

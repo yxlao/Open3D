@@ -129,5 +129,5 @@ void main() {
     dNy /= (2 * delta);
     dNz /= (2 * delta);
 
-//    FragColor = vec4(dNz, 1.0);
+    FragColor = vec4(dNz, 1.0);
 }

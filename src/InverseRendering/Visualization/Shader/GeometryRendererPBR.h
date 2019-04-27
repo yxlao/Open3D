@@ -6,17 +6,17 @@
 
 #include <Open3D/Open3D.h>
 
-#include "SpotLightShader.h"
+#include "InverseRendering/Visualization/Shader/PBRShader/SpotLightShader.h"
 
-#include "HDRToEnvCubemapShader.h"
-#include "BackgroundShader.h"
-#include "PreConvEnvDiffuseShader.h"
-#include "PreFilterEnvSpecularShader.h"
-#include "PreIntegrateLUTSpecularShader.h"
-#include "IBLShader.h"
-#include "SceneDifferentialShader.h"
-#include "IndexShader.h"
-#include "DirectSamplingShader.h"
+#include "InverseRendering/Visualization/Shader/LightingShader/HDRToEnvCubemapShader.h"
+#include "InverseRendering/Visualization/Shader/LightingShader/BackgroundShader.h"
+#include "InverseRendering/Visualization/Shader/LightingShader/PreConvEnvDiffuseShader.h"
+#include "InverseRendering/Visualization/Shader/LightingShader/PreFilterEnvSpecularShader.h"
+#include "InverseRendering/Visualization/Shader/LightingShader/PreIntegrateLUTSpecularShader.h"
+#include "InverseRendering/Visualization/Shader/PBRShader/IBLShader.h"
+#include "InverseRendering/Visualization/Shader/DifferentiableShader/SceneDifferentialShader.h"
+#include "InverseRendering/Visualization/Shader/DifferentiableShader/IndexShader.h"
+#include "InverseRendering/Visualization/Shader/PBRShader/DirectSamplingShader.h"
 
 namespace open3d {
 namespace visualization {

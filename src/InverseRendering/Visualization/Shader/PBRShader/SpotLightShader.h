@@ -5,7 +5,7 @@
 #pragma once
 
 #include <Open3D/Open3D.h>
-#include "ShaderWrapperPBR.h"
+#include "InverseRendering/Visualization/Shader/ShaderWrapperPBR.h"
 #include <InverseRendering/Geometry/TriangleMeshExtended.h>
 
 namespace open3d {

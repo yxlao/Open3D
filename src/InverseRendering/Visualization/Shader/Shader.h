@@ -1035,7 +1035,7 @@ const char * const SceneDifferentialFragmentShader =
 "    dNy /= (2 * delta);\n"
 "    dNz /= (2 * delta);\n"
 "\n"
-"//    FragColor = vec4(dNz, 1.0);\n"
+"    FragColor = vec4(dNz, 1.0);\n"
 "}\n"
 ;
 

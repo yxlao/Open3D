@@ -5,28 +5,29 @@
 #pragma once
 
 #include <Open3D/Open3D.h>
-#include "ShaderWrapperPBR.h"
+#include "InverseRendering/Visualization/Shader/ShaderWrapperPBR.h"
 
 namespace open3d {
 namespace visualization {
 
 namespace glsl {
-class PreIntegrateLUTSpecularShader : public ShaderWrapperPBR {
+class PreFilterEnvSpecularShader : public ShaderWrapperPBR {
 public:
-    PreIntegrateLUTSpecularShader() : PreIntegrateLUTSpecularShader("PreIntegrateLUTShader") {}
-    ~PreIntegrateLUTSpecularShader() override { Release(); }
+    PreFilterEnvSpecularShader() : PreFilterEnvSpecularShader(
+        "PreFilterEnvShader") {}
+    ~PreFilterEnvSpecularShader() override { Release(); }
 
-    GLuint GetGeneratedLUTBuffer() const { return tex_lut_specular_buffer_; }
+    GLuint GetGeneratedPrefilterEnvBuffer() const { return tex_env_specular_buffer_; }
 
 protected:
-    explicit PreIntegrateLUTSpecularShader(const std::string &name)
+    explicit PreFilterEnvSpecularShader(const std::string &name)
         : ShaderWrapperPBR(name) { Compile(); }
 
 protected:
     bool Compile() final;
     void Release() final;
 
-    /** Dummy, load Quad instead **/
+    /** Dummy, load Cube instead **/
     bool BindGeometry(const geometry::Geometry &geometry,
                       const RenderOption &option,
                       const ViewControl &view) final;
@@ -34,7 +35,7 @@ protected:
     bool BindTextures(const std::vector<geometry::Image> &textures,
                       const RenderOption &option,
                       const ViewControl &view) final { return true; };
-    /** Dummy **/
+    /** Assign lighting **/
     bool BindLighting(const geometry::Lighting &lighting,
                       const RenderOption &option,
                       const ViewControl &view) final;
@@ -45,7 +46,6 @@ protected:
 
     void UnbindGeometry() final;
 
-
 protected:
     bool PrepareRendering(const geometry::Geometry &geometry,
                           const RenderOption &option,
@@ -54,15 +54,31 @@ protected:
                         const RenderOption &option,
                         const ViewControl &view,
                         std::vector<Eigen::Vector3f> &points,
-                        std::vector<Eigen::Vector2f> &uvs);
+                        std::vector<Eigen::Vector3i> &triangles);
 
 protected:
+    /** locations **/
+    /* vertex shader */
+    GLuint V_;
+    GLuint P_;
+
+    /* fragment shader */
+    GLuint tex_env_;
+    GLuint roughness_;
+
     /** buffers **/
     GLuint vertex_position_buffer_;
-    GLuint vertex_uv_buffer_;
+    GLuint triangle_buffer_;
 
-    const int kTextureSize = 512;
-    GLuint tex_lut_specular_buffer_;    /* <- to be generated */
+    const unsigned int kCubemapSize = 128;
+    const int kMipMapLevels = 5;
+    GLuint tex_env_specular_buffer_;    /* <- to be generated */
+
+    /** cameras (fixed) **/
+    GLHelper::GLMatrix4f projection_;
+    std::vector<GLHelper::GLMatrix4f> views_;
+
+    geometry::IBLLighting ibl_;
 };
 
 }

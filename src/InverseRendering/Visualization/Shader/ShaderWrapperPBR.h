@@ -79,6 +79,14 @@ public:
                   std::vector<Eigen::Vector2f> &uvs);
     void LoadViews(std::vector<GLHelper::GLMatrix4f> &views);
 
+public:
+    bool CheckGLState(const std::string &msg) {
+        GLenum ret = glGetError();
+        if (ret != GL_NO_ERROR) {
+            utility::PrintWarning(
+                "[OpenGL error]: %d at %s\n", ret, msg.c_str());
+        }
+    }
 };
 }
 }

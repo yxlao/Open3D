@@ -1,50 +1,46 @@
 //
-// Created by wei on 4/15/19.
+// Created by wei on 4/24/19.
 //
 
 #pragma once
 
 #include <Open3D/Open3D.h>
-#include "ShaderWrapperPBR.h"
+#include "InverseRendering/Visualization/Shader/ShaderWrapperPBR.h"
+#include <InverseRendering/Geometry/TriangleMeshExtended.h>
 
 namespace open3d {
 namespace visualization {
 
 namespace glsl {
-class PreConvEnvDiffuseShader : public ShaderWrapperPBR {
+/** Lighting should have been processed before being passed here **/
+class IndexShader : public ShaderWrapperPBR {
 public:
-    PreConvEnvDiffuseShader() : PreConvEnvDiffuseShader("PreConvDiffuseShader") {}
-    ~PreConvEnvDiffuseShader() override { Release(); }
-
-    GLuint GetGeneratedDiffuseBuffer() const { return tex_diffuse_buffer_; }
+    IndexShader() : IndexShader("IndexShader") {}
+    ~IndexShader() override { Release(); }
 
 protected:
-    explicit PreConvEnvDiffuseShader(const std::string &name)
+    explicit IndexShader(const std::string &name)
         : ShaderWrapperPBR(name) { Compile(); }
 
 protected:
     bool Compile() final;
     void Release() final;
 
-    /** Dummy, load Cube instead **/
     bool BindGeometry(const geometry::Geometry &geometry,
                       const RenderOption &option,
                       const ViewControl &view) final;
-    /** Dummy, texture for rendering is not used **/
     bool BindTextures(const std::vector<geometry::Image> &textures,
                       const RenderOption &option,
-                      const ViewControl &view) final { return true; };
-    /** Assign lighting **/
+                      const ViewControl &view) final { return true; }
     bool BindLighting(const geometry::Lighting &lighting,
                       const RenderOption &option,
-                      const ViewControl &view) final;
+                      const ViewControl &view) final { return true; };
 
     bool RenderGeometry(const geometry::Geometry &geometry,
                         const RenderOption &option,
                         const ViewControl &view) final;
 
     void UnbindGeometry() final;
-
 
 protected:
     bool PrepareRendering(const geometry::Geometry &geometry,
@@ -62,21 +58,14 @@ protected:
     GLuint V_;
     GLuint P_;
 
-    /* fragment shader */
-    GLuint tex_env_;
-
     /** buffers **/
     GLuint vertex_position_buffer_;
     GLuint triangle_buffer_;
 
-    const int kCubemapSize = 32;
-    GLuint tex_diffuse_buffer_;    /* <- to be generated */
+    GLuint tex_index_buffer_;
 
-    /** cameras (fixed) **/
-    GLHelper::GLMatrix4f projection_;
-    std::vector<GLHelper::GLMatrix4f> views_;
-
-    geometry::IBLLighting ibl_;
+public:
+    std::shared_ptr<geometry::Image> index_map_;
 };
 
 }
