@@ -296,16 +296,12 @@ void OptimizeImageCoorRigid(
 
 std::tuple<std::vector<std::shared_ptr<Image>>,
            std::vector<std::shared_ptr<Image>>,
-           std::vector<std::shared_ptr<Image>>,
-           std::vector<std::shared_ptr<Image>>,
            std::vector<std::shared_ptr<Image>>>
 CreateGradientImages(
         const std::vector<std::shared_ptr<RGBDImage>>& images_rgbd) {
     std::vector<std::shared_ptr<Image>> images_gray;
     std::vector<std::shared_ptr<Image>> images_dx;
     std::vector<std::shared_ptr<Image>> images_dy;
-    std::vector<std::shared_ptr<Image>> images_color;
-    std::vector<std::shared_ptr<Image>> images_depth;
     for (auto i = 0; i < images_rgbd.size(); i++) {
         auto gray_image = CreateFloatImageFromImage(images_rgbd[i]->color_);
         auto gray_image_filtered =
@@ -315,78 +311,19 @@ CreateGradientImages(
                 FilterImage(*gray_image_filtered, Image::FilterType::Sobel3Dx));
         images_dy.push_back(
                 FilterImage(*gray_image_filtered, Image::FilterType::Sobel3Dy));
-        auto color = std::make_shared<Image>(images_rgbd[i]->color_);
-        auto depth = std::make_shared<Image>(images_rgbd[i]->depth_);
-        images_color.push_back(color);
-        images_depth.push_back(depth);
     }
-    return std::move(std::make_tuple(images_gray, images_dx, images_dy,
-                                     images_color, images_depth));
-}
-
-std::tuple<std::vector<std::shared_ptr<Image>>,
-           std::vector<std::shared_ptr<Image>>,
-           std::vector<std::shared_ptr<Image>>,
-           std::vector<std::shared_ptr<Image>>,
-           std::vector<std::shared_ptr<Image>>>
-CreateGradientImagesAlignGrad(
-        const std::vector<std::shared_ptr<RGBDImage>>& images_rgbd) {
-    std::vector<std::shared_ptr<Image>> images_gray;
-    std::vector<std::shared_ptr<Image>> images_dx;
-    std::vector<std::shared_ptr<Image>> images_dy;
-    std::vector<std::shared_ptr<Image>> images_color;
-    std::vector<std::shared_ptr<Image>> images_depth;
-    for (auto i = 0; i < images_rgbd.size(); i++) {
-        auto im_gray = CreateFloatImageFromImage(images_rgbd[i]->color_);
-        auto im_gray_filtered =
-                FilterImage(*im_gray, Image::FilterType::Gaussian3);
-        auto im_gray_dx =
-                FilterImage(*im_gray_filtered, Image::FilterType::Sobel3Dx);
-        auto im_gray_dy =
-                FilterImage(*im_gray_filtered, Image::FilterType::Sobel3Dy);
-
-        // im_mag = sqrt(im_gray_dx ** 2 + im_gray_dy ** 2)
-        auto im_mag = std::make_shared<Image>();
-        im_mag->PrepareImage(im_gray->width_, im_gray->height_,
-                             im_gray->num_of_channels_,
-                             im_gray->bytes_per_channel_);
-        for (size_t v = 0; v < im_gray->height_; v++) {
-            for (size_t u = 0; u < im_gray->width_; u++) {
-                float dx = *PointerAt<float>(*im_gray_dx, u, v);
-                float dy = *PointerAt<float>(*im_gray_dy, u, v);
-                float mag = sqrt(dx * dx + dy * dy);
-                *PointerAt<unsigned char>(*im_mag, u, v) = mag;
-            }
-        }
-        auto im_mag_filtered =
-                FilterImage(*im_gray, Image::FilterType::Gaussian3);
-        auto im_mag_dx =
-                FilterImage(*im_mag_filtered, Image::FilterType::Sobel3Dx);
-        auto im_mag_dy =
-                FilterImage(*im_mag_filtered, Image::FilterType::Sobel3Dy);
-
-        auto im_color = std::make_shared<Image>(images_rgbd[i]->color_);
-        auto im_depth = std::make_shared<Image>(images_rgbd[i]->depth_);
-
-        images_gray.push_back(im_mag_filtered);
-        images_dx.push_back(im_mag_dx);
-        images_dy.push_back(im_mag_dy);
-        images_color.push_back(im_color);
-        images_depth.push_back(im_depth);
-    }
-    return std::move(std::make_tuple(images_gray, images_dx, images_dy,
-                                     images_color, images_depth));
+    return std::move(std::make_tuple(images_gray, images_dx, images_dy));
 }
 
 std::vector<std::shared_ptr<Image>> CreateDepthBoundaryMasks(
-        const std::vector<std::shared_ptr<Image>>& images_depth,
+        const std::vector<std::shared_ptr<RGBDImage>>& images_rgbd,
         const ColorMapOptimizationOption& option) {
-    auto n_images = images_depth.size();
+    auto n_images = images_rgbd.size();
     std::vector<std::shared_ptr<Image>> masks;
     for (auto i = 0; i < n_images; i++) {
         PrintDebug("[MakeDepthMasks] Image %d/%d\n", i, n_images);
         masks.push_back(CreateDepthBoundaryMask(
-                *images_depth[i],
+                images_rgbd[i]->depth_,
                 option.depth_threshold_for_discontinuity_check_,
                 option.half_dilation_kernel_size_for_discontinuity_map_));
     }
@@ -460,15 +397,16 @@ std::vector<std::shared_ptr<Image>> ColorMapOptimization(
         PinholeCameraTrajectory& camera,
         const ColorMapOptimizationOption& option
         /* = ColorMapOptimizationOption()*/) {
+    PrintDebug("[ColorMapOptimization] :: ComputeVertexNormals\n");
     mesh.ComputeVertexNormals();
-    PrintDebug("[ColorMapOptimization]\n");
-    std::vector<std::shared_ptr<Image>> images_gray, images_dx, images_dy,
-            images_color, images_depth;
-    std::tie(images_gray, images_dx, images_dy, images_color, images_depth) =
+
+    PrintDebug("[ColorMapOptimization] :: CreateGradientImages\n");
+    std::vector<std::shared_ptr<Image>> images_gray, images_dx, images_dy;
+    std::tie(images_gray, images_dx, images_dy) =
             CreateGradientImages(images_rgbd);
 
     PrintDebug("[ColorMapOptimization] :: MakingMasks\n");
-    auto images_mask = CreateDepthBoundaryMasks(images_depth, option);
+    auto images_mask = CreateDepthBoundaryMasks(images_rgbd, option);
 
     // Save a mesh colored by visibility count for debugging
     // {
@@ -477,7 +415,7 @@ std::vector<std::shared_ptr<Image>> ColorMapOptimization(
     //     std::vector<std::vector<int>> visiblity_image_to_vertex;
     //     std::tie(visiblity_vertex_to_image, visiblity_image_to_vertex) =
     //             CreateVertexAndImageVisibility(
-    //                     mesh, images_depth, images_mask, camera,
+    //                     mesh, images_rgbd, images_mask, camera,
     //                     option.maximum_allowable_depth_,
     //                     option.depth_threshold_for_visiblity_check_, 1000,
     //                     0);
@@ -536,7 +474,7 @@ std::vector<std::shared_ptr<Image>> ColorMapOptimization(
     std::vector<std::vector<int>> visiblity_image_to_vertex;
     std::tie(visiblity_vertex_to_image, visiblity_image_to_vertex) =
             CreateVertexAndImageVisibility(
-                    mesh, images_depth, images_mask, camera,
+                    mesh, images_rgbd, images_mask, camera,
                     option.maximum_allowable_depth_,
                     option.depth_threshold_for_visiblity_check_,
                     option.max_visible_cameras_, option.min_visible_cameras_);
@@ -550,7 +488,7 @@ std::vector<std::shared_ptr<Image>> ColorMapOptimization(
                 mesh, images_gray, images_dx, images_dy, warping_uv_,
                 warping_uv_init_, camera, visiblity_vertex_to_image,
                 visiblity_image_to_vertex, proxy_intensity, option);
-        SetGeometryColorAverage(mesh, images_color, warping_uv_, camera,
+        SetGeometryColorAverage(mesh, images_rgbd, warping_uv_, camera,
                                 visiblity_vertex_to_image,
                                 option.image_boundary_margin_);
     } else {
@@ -559,7 +497,7 @@ std::vector<std::shared_ptr<Image>> ColorMapOptimization(
                                visiblity_vertex_to_image,
                                visiblity_image_to_vertex, proxy_intensity,
                                option);
-        SetGeometryColorAverage(mesh, images_color, camera,
+        SetGeometryColorAverage(mesh, images_rgbd, camera,
                                 visiblity_vertex_to_image,
                                 option.image_boundary_margin_);
     }

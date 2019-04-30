@@ -84,7 +84,7 @@ std::vector<size_t> argmax_k(const std::vector<T>& v, size_t k) {
 std::tuple<std::vector<std::vector<int>>, std::vector<std::vector<int>>>
 CreateVertexAndImageVisibility(
         const TriangleMesh& mesh,
-        const std::vector<std::shared_ptr<Image>>& images_depth,
+        const std::vector<std::shared_ptr<RGBDImage>>& images_rgbd,
         const std::vector<std::shared_ptr<Image>>& images_mask,
         const PinholeCameraTrajectory& camera,
         double maximum_allowable_depth,
@@ -111,11 +111,13 @@ CreateVertexAndImageVisibility(
             float u, v, d;
             std::tie(u, v, d) = Project3DPointAndGetUVDepth(X, camera, c);
             int u_d = int(round(u)), v_d = int(round(v));
-            if (d < 0.0 || !images_depth[c]->TestImageBoundary(u_d, v_d)) {
+            if (d < 0.0 ||
+                !images_rgbd[c]->depth_.TestImageBoundary(u_d, v_d)) {
                 reject_image_boundary++;
                 continue;
             }
-            float d_sensor = *PointerAt<float>(*images_depth[c], u_d, v_d);
+            float d_sensor =
+                    *PointerAt<float>(images_rgbd[c]->depth_, u_d, v_d);
             if (d_sensor > maximum_allowable_depth) {
                 if (reject_allowable_depth < 10) {
                     std::cout << "d_sensor " << d_sensor
@@ -331,7 +333,7 @@ void SetProxyIntensityForVertex(
 
 void SetGeometryColorAverage(
         TriangleMesh& mesh,
-        const std::vector<std::shared_ptr<Image>>& images_color,
+        const std::vector<std::shared_ptr<RGBDImage>>& images_rgbd,
         const PinholeCameraTrajectory& camera,
         const std::vector<std::vector<int>>& visiblity_vertex_to_image,
         int image_boundary_margin /*= 10*/) {
@@ -350,13 +352,13 @@ void SetGeometryColorAverage(
             unsigned char r_temp, g_temp, b_temp;
             bool valid = false;
             std::tie(valid, r_temp) = QueryImageIntensity<unsigned char>(
-                    *images_color[j], mesh.vertices_[i], camera, j, 0,
+                    images_rgbd[j]->color_, mesh.vertices_[i], camera, j, 0,
                     image_boundary_margin);
             std::tie(valid, g_temp) = QueryImageIntensity<unsigned char>(
-                    *images_color[j], mesh.vertices_[i], camera, j, 1,
+                    images_rgbd[j]->color_, mesh.vertices_[i], camera, j, 1,
                     image_boundary_margin);
             std::tie(valid, b_temp) = QueryImageIntensity<unsigned char>(
-                    *images_color[j], mesh.vertices_[i], camera, j, 2,
+                    images_rgbd[j]->color_, mesh.vertices_[i], camera, j, 2,
                     image_boundary_margin);
             float r = (float)r_temp / 255.0f;
             float g = (float)g_temp / 255.0f;
@@ -388,7 +390,7 @@ double get_median(std::vector<double> scores) {
 
 void SetGeometryColorAverage(
         TriangleMesh& mesh,
-        const std::vector<std::shared_ptr<Image>>& images_color,
+        const std::vector<std::shared_ptr<RGBDImage>>& images_rgbd,
         const std::vector<ImageWarpingField>& warping_fields,
         const PinholeCameraTrajectory& camera,
         const std::vector<std::vector<int>>& visiblity_vertex_to_image,
@@ -411,14 +413,14 @@ void SetGeometryColorAverage(
             unsigned char r_temp, g_temp, b_temp;
             bool valid = false;
             std::tie(valid, r_temp) = QueryImageIntensity<unsigned char>(
-                    *images_color[j], warping_fields[j], mesh.vertices_[i],
-                    camera, j, 0, image_boundary_margin);
+                    images_rgbd[j]->color_, warping_fields[j],
+                    mesh.vertices_[i], camera, j, 0, image_boundary_margin);
             std::tie(valid, g_temp) = QueryImageIntensity<unsigned char>(
-                    *images_color[j], warping_fields[j], mesh.vertices_[i],
-                    camera, j, 1, image_boundary_margin);
+                    images_rgbd[j]->color_, warping_fields[j],
+                    mesh.vertices_[i], camera, j, 1, image_boundary_margin);
             std::tie(valid, b_temp) = QueryImageIntensity<unsigned char>(
-                    *images_color[j], warping_fields[j], mesh.vertices_[i],
-                    camera, j, 2, image_boundary_margin);
+                    images_rgbd[j]->color_, warping_fields[j],
+                    mesh.vertices_[i], camera, j, 2, image_boundary_margin);
             float r = (float)r_temp / 255.0f;
             float g = (float)g_temp / 255.0f;
             float b = (float)b_temp / 255.0f;
