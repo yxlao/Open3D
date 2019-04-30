@@ -483,7 +483,7 @@ namespace visualization {
 
 namespace glsl {
 
-const char * const IBLFragmentShader = 
+const char * const IBLTexMapFragmentShader = 
 "#version 330 core\n"
 "\n"
 "out vec4 FragColor;\n"
@@ -638,7 +638,45 @@ namespace visualization {
 
 namespace glsl {
 
-const char * const IBLNoTexFragmentShader = 
+const char * const IBLTexMapVertexShader = 
+"#version 330 core\n"
+"\n"
+"layout(location = 0) in vec3 vertex_position;\n"
+"layout(location = 1) in vec3 vertex_normal;\n"
+"layout(location = 2) in vec2 vertex_uv;\n"
+"\n"
+"out vec2 uv;\n"
+"out vec3 position;\n"
+"out vec3 normal;\n"
+"\n"
+"uniform mat4 P;\n"
+"uniform mat4 V;\n"
+"uniform mat4 M;\n"
+"\n"
+"void main() {\n"
+"    uv = vertex_uv;\n"
+"    position = vec3(M * vec4(vertex_position, 1.0));\n"
+"    normal = mat3(M) * vertex_normal;\n"
+"\n"
+"    gl_Position =  P * V * vec4(position, 1.0);\n"
+"}\n"
+;
+
+}  // namespace open3d::glsl
+
+}  // namespace open3d::visualization
+
+}  // namespace open3d
+
+// clang-format on
+// clang-format off
+namespace open3d {
+
+namespace visualization {
+
+namespace glsl {
+
+const char * const IBLVertexMapFragmentShader = 
 "#version 330 core\n"
 "\n"
 "layout(location = 0) out vec3 FragColor;\n"
@@ -780,7 +818,7 @@ namespace visualization {
 
 namespace glsl {
 
-const char * const IBLNoTexVertexShader = 
+const char * const IBLVertexMapVertexShader = 
 "#version 330 core\n"
 "\n"
 "layout (location = 0) in vec3 vertex_position;\n"
@@ -809,44 +847,6 @@ const char * const IBLNoTexVertexShader =
 "    roughness = vertex_material.r;\n"
 "    metallic = vertex_material.g;\n"
 "    ao = vertex_material.b;\n"
-"\n"
-"    gl_Position =  P * V * vec4(position, 1.0);\n"
-"}\n"
-;
-
-}  // namespace open3d::glsl
-
-}  // namespace open3d::visualization
-
-}  // namespace open3d
-
-// clang-format on
-// clang-format off
-namespace open3d {
-
-namespace visualization {
-
-namespace glsl {
-
-const char * const IBLVertexShader = 
-"#version 330 core\n"
-"\n"
-"layout(location = 0) in vec3 vertex_position;\n"
-"layout(location = 1) in vec3 vertex_normal;\n"
-"layout(location = 2) in vec2 vertex_uv;\n"
-"\n"
-"out vec2 uv;\n"
-"out vec3 position;\n"
-"out vec3 normal;\n"
-"\n"
-"uniform mat4 P;\n"
-"uniform mat4 V;\n"
-"uniform mat4 M;\n"
-"\n"
-"void main() {\n"
-"    uv = vertex_uv;\n"
-"    position = vec3(M * vec4(vertex_position, 1.0));\n"
-"    normal = mat3(M) * vertex_normal;\n"
 "\n"
 "    gl_Position =  P * V * vec4(position, 1.0);\n"
 "}\n"

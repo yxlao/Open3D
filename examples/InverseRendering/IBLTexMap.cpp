@@ -10,6 +10,7 @@
 #include <InverseRendering/Geometry/ImageExt.h>
 
 using namespace open3d;
+
 int main() {
     auto mesh = std::make_shared<geometry::TriangleMeshExtended>();
     io::ReadTriangleMeshExtendedFromPLY("/media/wei/Data/data/pbr/model/sphere_uv.ply", *mesh);
@@ -27,5 +28,4 @@ int main() {
 
     utility::SetVerbosityLevel(utility::VerbosityLevel::VerboseDebug);
     visualization::DrawGeometriesPBR({mesh}, {textures}, {ibl});
-
 }

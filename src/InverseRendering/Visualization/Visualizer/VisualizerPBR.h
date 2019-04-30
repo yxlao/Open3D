@@ -23,9 +23,6 @@ public:
         const std::shared_ptr<geometry::Lighting> &lighting);
 
     virtual void Render() override;
-
-    std::vector<std::vector<std::shared_ptr<geometry::Image>>>
-        geometry_renderer_fbo_outputs_;
 };
 
 }

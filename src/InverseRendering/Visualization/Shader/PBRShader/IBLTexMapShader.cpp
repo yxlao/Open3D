@@ -27,7 +27,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "IBLShader.h"
+#include "IBLTexMapShader.h"
 
 #include <Open3D/Geometry/TriangleMesh.h>
 #include <Open3D/Visualization/Utility/ColorMap.h>
@@ -40,8 +40,10 @@ namespace visualization {
 
 namespace glsl {
 
-bool IBLShader::Compile() {
-    if (!CompileShaders(IBLVertexShader, nullptr, IBLFragmentShader)) {
+bool IBLTexMapShader::Compile() {
+    if (!CompileShaders(IBLTexMapVertexShader,
+                        nullptr,
+                        IBLTexMapFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }
@@ -68,14 +70,14 @@ bool IBLShader::Compile() {
     return true;
 }
 
-void IBLShader::Release() {
+void IBLTexMapShader::Release() {
     UnbindGeometry();
     ReleaseProgram();
 }
 
-bool IBLShader::BindGeometry(const geometry::Geometry &geometry,
-                             const RenderOption &option,
-                             const ViewControl &view) {
+bool IBLTexMapShader::BindGeometry(const geometry::Geometry &geometry,
+                                   const RenderOption &option,
+                                   const ViewControl &view) {
     // If there is already geometry, we first unbind it.
     // We use GL_STATIC_DRAW. When geometry changes, we clear buffers and
     // rebind the geometry. Note that this approach is slow. If the geometry is
@@ -108,9 +110,9 @@ bool IBLShader::BindGeometry(const geometry::Geometry &geometry,
     return true;
 }
 
-bool IBLShader::BindTextures(const std::vector<geometry::Image> &textures,
-                             const RenderOption &option,
-                             const ViewControl &view) {
+bool IBLTexMapShader::BindTextures(const std::vector<geometry::Image> &textures,
+                                   const RenderOption &option,
+                                   const ViewControl &view) {
     assert(textures.size() == kNumObjectTextures);
     texes_object_buffers_.resize(textures.size());
     for (int i = 0; i < textures.size(); ++i) {
@@ -122,9 +124,9 @@ bool IBLShader::BindTextures(const std::vector<geometry::Image> &textures,
     return true;
 }
 
-bool IBLShader::BindLighting(const geometry::Lighting &lighting,
-                             const visualization::RenderOption &option,
-                             const visualization::ViewControl &view) {
+bool IBLTexMapShader::BindLighting(const geometry::Lighting &lighting,
+                                   const visualization::RenderOption &option,
+                                   const visualization::ViewControl &view) {
     auto ibl = (const geometry::IBLLighting &) lighting;
 
     texes_env_buffers_.resize(kNumEnvTextures);
@@ -138,9 +140,9 @@ bool IBLShader::BindLighting(const geometry::Lighting &lighting,
     return true;
 }
 
-bool IBLShader::RenderGeometry(const geometry::Geometry &geometry,
-                               const RenderOption &option,
-                               const ViewControl &view) {
+bool IBLTexMapShader::RenderGeometry(const geometry::Geometry &geometry,
+                                     const RenderOption &option,
+                                     const ViewControl &view) {
     if (!PrepareRendering(geometry, option, view)) {
         PrintShaderWarning("Rendering failed during preparation.");
         return false;
@@ -198,7 +200,7 @@ bool IBLShader::RenderGeometry(const geometry::Geometry &geometry,
     return true;
 }
 
-void IBLShader::UnbindGeometry() {
+void IBLTexMapShader::UnbindGeometry() {
     if (bound_) {
         glDeleteBuffers(1, &vertex_position_buffer_);
         glDeleteBuffers(1, &vertex_normal_buffer_);
@@ -217,7 +219,7 @@ void IBLShader::UnbindGeometry() {
     }
 }
 
-bool IBLShader::PrepareRendering(
+bool IBLTexMapShader::PrepareRendering(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view) {
@@ -244,7 +246,7 @@ bool IBLShader::PrepareRendering(
     return true;
 }
 
-bool IBLShader::PrepareBinding(
+bool IBLTexMapShader::PrepareBinding(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view,

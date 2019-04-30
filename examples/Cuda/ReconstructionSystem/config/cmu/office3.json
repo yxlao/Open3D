@@ -7,7 +7,7 @@
   "max_depth": 3.0,
   "voxel_size": 0.05,
   "max_depth_diff": 0.07,
-  "depth_factor": 1090.0,
+  "depth_factor": 1000.0,
   "preference_loop_closure_odometry": 0.1,
   "preference_loop_closure_registration": 20.0,
   "tsdf_cubic_size": 3.0

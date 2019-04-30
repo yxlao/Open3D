@@ -42,7 +42,9 @@ namespace glsl {
 
 bool DifferentialShader::Compile() {
     std::cout << glGetError() << "\n";
-    if (!CompileShaders(IBLNoTexVertexShader, nullptr, DifferentialFragmentShader)) {
+    if (!CompileShaders(IBLVertexMapVertexShader,
+                        nullptr,
+                        DifferentialFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }
@@ -70,8 +72,8 @@ void DifferentialShader::Release() {
 }
 
 bool DifferentialShader::BindGeometry(const geometry::Geometry &geometry,
-                             const RenderOption &option,
-                             const ViewControl &view) {
+                                      const RenderOption &option,
+                                      const ViewControl &view) {
     // If there is already geometry, we first unbind it.
     // We use GL_STATIC_DRAW. When geometry changes, we clear buffers and
     // rebind the geometry. Note that this approach is slow. If the geometry is
@@ -134,8 +136,8 @@ bool DifferentialShader::BindLighting(const geometry::Lighting &lighting,
 }
 
 bool DifferentialShader::RenderGeometry(const geometry::Geometry &geometry,
-                               const RenderOption &option,
-                               const ViewControl &view) {
+                                        const RenderOption &option,
+                                        const ViewControl &view) {
     if (!PrepareRendering(geometry, option, view)) {
         PrintShaderWarning("Rendering failed during preparation.");
         return false;
@@ -143,7 +145,7 @@ bool DifferentialShader::RenderGeometry(const geometry::Geometry &geometry,
 
     CheckGLState("SceneDifferentialShader - Before Render");
 
-    if (! is_debug_) {
+    if (!is_debug_) {
         glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
         glBindRenderbuffer(GL_RENDERBUFFER, rbo_);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
@@ -160,7 +162,7 @@ bool DifferentialShader::RenderGeometry(const geometry::Geometry &geometry,
     glUniformMatrix4fv(P_, 1, GL_FALSE, view.GetProjectionMatrix().data());
     glUniform3fv(camera_position_, 1, view.GetEye().data());
     glUniform2fv(viewport_, 1, Eigen::Vector2f(
-        view.GetWindowWidth(),view.GetWindowHeight()).data());
+        view.GetWindowWidth(), view.GetWindowHeight()).data());
 
     /** Diffuse environment **/
     glUniform1i(texes_env_[0], 0);
@@ -199,7 +201,7 @@ bool DifferentialShader::RenderGeometry(const geometry::Geometry &geometry,
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_);
 
-    if (! is_debug_) {
+    if (!is_debug_) {
         std::vector<GLenum> draw_buffers;
         for (int i = 0; i < kNumOutputTextures; ++i) {
             draw_buffers.emplace_back(GL_COLOR_ATTACHMENT0 + i);
@@ -207,13 +209,16 @@ bool DifferentialShader::RenderGeometry(const geometry::Geometry &geometry,
         glDrawBuffers(draw_buffers.size(), draw_buffers.data());
     }
 
-    glDrawElements(draw_arrays_mode_, draw_arrays_size_, GL_UNSIGNED_INT, nullptr);
+    glDrawElements(draw_arrays_mode_,
+                   draw_arrays_size_,
+                   GL_UNSIGNED_INT,
+                   nullptr);
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
     glDisableVertexAttribArray(2);
     glDisableVertexAttribArray(3);
 
-    if (! is_debug_) {
+    if (!is_debug_) {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
@@ -237,16 +242,12 @@ void DifferentialShader::UnbindGeometry() {
         glDeleteBuffers(1, &vertex_material_buffer_);
         glDeleteBuffers(1, &triangle_buffer_);
 
-        if (! is_debug_) {
-//            for (int i = 0; i < kNumEnvTextures; ++i) {
-//                glDeleteTextures(1, &tex_env_buffers_[i]);
-//            }
-//            for (int i = 0; i < kNumOutputTextures; ++i) {
-//                glDeleteTextures(1, &tex_fbo_buffers_[i]);
-//            }
-
-//            glDeleteFramebuffers(1, &fbo_);
-//            glDeleteRenderbuffers(1, &rbo_);
+        if (!is_debug_) {
+            for (int i = 0; i < kNumOutputTextures; ++i) {
+                glDeleteTextures(1, &tex_fbo_buffers_[i]);
+            }
+            glDeleteFramebuffers(1, &fbo_);
+            glDeleteRenderbuffers(1, &rbo_);
         }
 
         bound_ = false;
@@ -326,7 +327,7 @@ bool DifferentialShader::PrepareBinding(
     draw_arrays_mode_ = GL_TRIANGLES;
     draw_arrays_size_ = GLsizei(triangles.size() * 3);
 
-    if (! is_debug_) {
+    if (!is_debug_) {
         tex_fbo_buffers_.resize(kNumOutputTextures);
         fbo_outputs_.resize(kNumOutputTextures);
         for (int i = 0; i < kNumOutputTextures; ++i) {

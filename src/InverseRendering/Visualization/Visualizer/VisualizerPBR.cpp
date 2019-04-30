@@ -50,24 +50,12 @@ void VisualizerPBR::Render() {
     glClearDepth(1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    geometry_renderer_fbo_outputs_.clear();
     for (const auto &renderer_ptr : geometry_renderer_ptrs_) {
         renderer_ptr->Render(*render_option_ptr_, *view_control_ptr_);
-
-        auto renderer_pbr_ptr =
-            (const std::shared_ptr<glsl::GeometryRendererPBR> &) renderer_ptr;
-        geometry_renderer_fbo_outputs_.emplace_back(
-            renderer_pbr_ptr->fbo_outputs_);
     }
     for (const auto &renderer_ptr : utility_renderer_ptrs_) {
         renderer_ptr->Render(*render_option_ptr_, *view_control_ptr_);
     }
-
-//    for (int i = 0; i < geometry_renderer_fbo_outputs_[0].size(); ++i) {
-//        utility::PrintInfo("Writing %d\n", i);
-//        io::WriteImageToHDR(std::to_string(i) + ".hdr",
-//            *geometry_renderer_fbo_outputs_[0][i]);
-//    }
 
     glfwSwapBuffers(window_);
 }

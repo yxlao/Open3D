@@ -11,6 +11,7 @@
 #include <random>
 
 using namespace open3d;
+
 int main() {
     auto mesh = std::make_shared<geometry::TriangleMesh>();
     io::ReadTriangleMeshFromPLY(
@@ -33,7 +34,7 @@ int main() {
 //        mat = Eigen::Vector3d(dist_roughness(rd), dist_metallic(rd), dist_ao(rd));
     }
 
-    std::vector<geometry::Image> textures(3); /** dummy **/
+    std::vector<geometry::Image> textures; /** dummy **/
 
     auto ibl = std::make_shared<geometry::IBLLighting>();
     ibl->ReadEnvFromHDR("/media/wei/Data/data/pbr/env/Alexs_Apt_2k.hdr");

@@ -17,15 +17,17 @@ namespace visualization {
 namespace glsl {
 
 bool PreConvEnvDiffuseShader::Compile() {
-    if (! CompileShaders(SimpleVertexShader, nullptr, PreConvDiffuseFragmentShader)) {
+    if (!CompileShaders(SimpleVertexShader,
+                        nullptr,
+                        PreConvDiffuseFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }
 
-    V_               = glGetUniformLocation(program_, "V");
-    P_               = glGetUniformLocation(program_, "P");
+    V_ = glGetUniformLocation(program_, "V");
+    P_ = glGetUniformLocation(program_, "P");
 
-    tex_env_     = glGetUniformLocation(program_, "tex_env");
+    tex_env_ = glGetUniformLocation(program_, "tex_env");
     return true;
 }
 
@@ -35,8 +37,8 @@ void PreConvEnvDiffuseShader::Release() {
 }
 
 bool PreConvEnvDiffuseShader::BindGeometry(const geometry::Geometry &geometry,
-                                      const RenderOption &option,
-                                      const ViewControl &view) {
+                                           const RenderOption &option,
+                                           const ViewControl &view) {
     // If there is already geometry, we first unbind it.
     // We use GL_STATIC_DRAW. When geometry changes, we clear buffers and
     // rebind the geometry. Note that this approach is slow. If the geometry is
@@ -59,16 +61,16 @@ bool PreConvEnvDiffuseShader::BindGeometry(const geometry::Geometry &geometry,
 }
 
 bool PreConvEnvDiffuseShader::BindLighting(const geometry::Lighting &lighting,
-                                      const visualization::RenderOption &option,
-                                      const visualization::ViewControl &view) {
+                                           const visualization::RenderOption &option,
+                                           const visualization::ViewControl &view) {
     ibl_ = (const geometry::IBLLighting &) lighting;
 
     return true;
 }
 
 bool PreConvEnvDiffuseShader::RenderGeometry(const geometry::Geometry &geometry,
-                                        const RenderOption &option,
-                                        const ViewControl &view) {
+                                             const RenderOption &option,
+                                             const ViewControl &view) {
     if (!PrepareRendering(geometry, option, view)) {
         PrintShaderWarning("Rendering failed during preparation.");
         return false;
@@ -108,7 +110,10 @@ bool PreConvEnvDiffuseShader::RenderGeometry(const geometry::Geometry &geometry,
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_);
-        glDrawElements(draw_arrays_mode_, draw_arrays_size_, GL_UNSIGNED_INT, nullptr);
+        glDrawElements(draw_arrays_mode_,
+                       draw_arrays_size_,
+                       GL_UNSIGNED_INT,
+                       nullptr);
         glDisableVertexAttribArray(0);
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);

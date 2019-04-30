@@ -27,44 +27,15 @@ bool TriangleMeshRendererPBR::Render(const RenderOption &option,
         == geometry::Lighting::LightingType::IBL) {
 
         auto &ibl = (geometry::IBLLighting &) (*lighting_ptr_);
-
-        /** !!! Ensure pre-processing is only called once **/
         if (! ibl.is_preprocessed_) {
-            success &= hdr_to_env_cubemap_shader_.Render(
-                mesh, textures_, ibl, option, view);
-            ibl.UpdateEnvBuffer(
-                hdr_to_env_cubemap_shader_.GetGeneratedCubemapBuffer());
-
-            success &= preconv_env_diffuse_shader_.Render(
-                mesh, textures_, ibl, option, view);
-            ibl.UpdateEnvDiffuseBuffer(
-                preconv_env_diffuse_shader_.GetGeneratedDiffuseBuffer());
-
-            success &= prefilter_env_specular_shader_.Render(
-                mesh, textures_, ibl, option, view);
-            ibl.UpdateEnvSpecularBuffer(
-                prefilter_env_specular_shader_.GetGeneratedPrefilterEnvBuffer());
-
-            success &= preintegrate_lut_specular_shader_.Render(
-                mesh, textures_, ibl, option, view);
-            ibl.UpdateLutSpecularBuffer(
-                preintegrate_lut_specular_shader_.GetGeneratedLUTBuffer());
-
-            ibl.is_preprocessed_ = true;
+            success &= PreprocessLights(ibl, option, view);
         }
 
         if (mesh.HasUVs()) {
             success &= ibl_shader_.Render(mesh, textures_, ibl, option, view);
         } else if (mesh.HasMaterials()) {
-            success &= differential_shader_.Render(mesh, textures_, ibl, option, view);
-            success &= index_shader_.Render(mesh, textures_, ibl, option, view);
-            fbo_outputs_.clear();
-            fbo_outputs_.insert(fbo_outputs_.begin(),
-                                differential_shader_.fbo_outputs_.begin(),
-                                differential_shader_.fbo_outputs_.end());
-            fbo_outputs_.emplace_back(index_shader_.index_map_);
-
-            success &= ibl_no_tex_shader_.Render(mesh, textures_, ibl, option, view);
+            success &= ibl_no_tex_shader_.Render(
+                mesh, textures_, ibl, option, view);
         } else {
             success = false;
         }
@@ -109,11 +80,63 @@ bool TriangleMeshRendererPBR::AddLights(
     return true;
 }
 
+bool TriangleMeshRendererPBR::PreprocessLights(
+    geometry::IBLLighting &ibl,
+    const RenderOption &option,
+    const ViewControl &view) {
+
+    bool success = true;
+
+    auto dummy = std::make_shared<geometry::TriangleMesh>();
+    success &= hdr_to_env_cubemap_shader_.Render(
+        *dummy, textures_, ibl, option, view);
+    ibl.UpdateEnvBuffer(
+        hdr_to_env_cubemap_shader_.GetGeneratedCubemapBuffer());
+
+    success &= preconv_env_diffuse_shader_.Render(
+        *dummy, textures_, ibl, option, view);
+    ibl.UpdateEnvDiffuseBuffer(
+        preconv_env_diffuse_shader_.GetGeneratedDiffuseBuffer());
+
+    success &= prefilter_env_specular_shader_.Render(
+        *dummy, textures_, ibl, option, view);
+    ibl.UpdateEnvSpecularBuffer(
+        prefilter_env_specular_shader_.GetGeneratedPrefilterEnvBuffer());
+
+    success &= preintegrate_lut_specular_shader_.Render(
+        *dummy, textures_, ibl, option, view);
+    ibl.UpdateLutSpecularBuffer(
+        preintegrate_lut_specular_shader_.GetGeneratedLUTBuffer());
+
+    ibl.is_preprocessed_ = true;
+
+    return success;
+}
+
+bool TriangleMeshRendererPBR::UnbindLights() {
+    if (lighting_ptr_ != nullptr
+        && lighting_ptr_->GetLightingType()
+            == geometry::Lighting::LightingType::IBL) {
+        auto &ibl = (geometry::IBLLighting &) (*lighting_ptr_);
+
+        if (ibl.is_preprocessed_) {
+            glDeleteBuffers(1, &ibl.tex_hdr_buffer_);
+            glDeleteBuffers(1, &ibl.tex_env_buffer_);
+            glDeleteBuffers(1, &ibl.tex_env_diffuse_buffer_);
+            glDeleteBuffers(1, &ibl.tex_env_specular_buffer_);
+            glDeleteBuffers(1, &ibl.tex_lut_specular_buffer_);
+
+            ibl.is_preprocessed_ = false;
+        };
+    }
+}
+
 bool TriangleMeshRendererPBR::UpdateGeometry() {
-    differential_shader_.InvalidateGeometry();
-    index_shader_.InvalidateGeometry();
     ibl_no_tex_shader_.InvalidateGeometry();
     spot_light_shader_.InvalidateGeometry();
+
+    UnbindLights();
+
     return true;
 }
 

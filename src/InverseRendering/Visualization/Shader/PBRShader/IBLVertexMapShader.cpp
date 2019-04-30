@@ -27,7 +27,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "IBLNoTexShader.h"
+#include "IBLVertexMapShader.h"
 
 #include <Open3D/Geometry/TriangleMesh.h>
 #include <Open3D/Visualization/Utility/ColorMap.h>
@@ -40,9 +40,11 @@ namespace visualization {
 
 namespace glsl {
 
-bool IBLNoTexShader::Compile() {
+bool IBLVertexMapShader::Compile() {
     std::cout << glGetError() << "\n";
-    if (!CompileShaders(IBLNoTexVertexShader, nullptr, IBLNoTexFragmentShader)) {
+    if (!CompileShaders(IBLVertexMapVertexShader,
+                        nullptr,
+                        IBLVertexMapFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }
@@ -62,14 +64,14 @@ bool IBLNoTexShader::Compile() {
     return true;
 }
 
-void IBLNoTexShader::Release() {
+void IBLVertexMapShader::Release() {
     UnbindGeometry();
     ReleaseProgram();
 }
 
-bool IBLNoTexShader::BindGeometry(const geometry::Geometry &geometry,
-                             const RenderOption &option,
-                             const ViewControl &view) {
+bool IBLVertexMapShader::BindGeometry(const geometry::Geometry &geometry,
+                                      const RenderOption &option,
+                                      const ViewControl &view) {
     // If there is already geometry, we first unbind it.
     // We use GL_STATIC_DRAW. When geometry changes, we clear buffers and
     // rebind the geometry. Note that this approach is slow. If the geometry is
@@ -105,9 +107,9 @@ bool IBLNoTexShader::BindGeometry(const geometry::Geometry &geometry,
     return true;
 }
 
-bool IBLNoTexShader::BindLighting(const geometry::Lighting &lighting,
-                             const visualization::RenderOption &option,
-                             const visualization::ViewControl &view) {
+bool IBLVertexMapShader::BindLighting(const geometry::Lighting &lighting,
+                                      const visualization::RenderOption &option,
+                                      const visualization::ViewControl &view) {
     auto ibl = (const geometry::IBLLighting &) lighting;
 
     tex_env_buffers_.resize(kNumEnvTextures);
@@ -121,9 +123,9 @@ bool IBLNoTexShader::BindLighting(const geometry::Lighting &lighting,
     return true;
 }
 
-bool IBLNoTexShader::RenderGeometry(const geometry::Geometry &geometry,
-                               const RenderOption &option,
-                               const ViewControl &view) {
+bool IBLVertexMapShader::RenderGeometry(const geometry::Geometry &geometry,
+                                        const RenderOption &option,
+                                        const ViewControl &view) {
     if (!PrepareRendering(geometry, option, view)) {
         PrintShaderWarning("Rendering failed during preparation.");
         return false;
@@ -169,7 +171,10 @@ bool IBLNoTexShader::RenderGeometry(const geometry::Geometry &geometry,
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_);
 
-    glDrawElements(draw_arrays_mode_, draw_arrays_size_, GL_UNSIGNED_INT, nullptr);
+    glDrawElements(draw_arrays_mode_,
+                   draw_arrays_size_,
+                   GL_UNSIGNED_INT,
+                   nullptr);
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
     glDisableVertexAttribArray(2);
@@ -183,22 +188,18 @@ bool IBLNoTexShader::RenderGeometry(const geometry::Geometry &geometry,
     return true;
 }
 
-void IBLNoTexShader::UnbindGeometry() {
+void IBLVertexMapShader::UnbindGeometry() {
     if (bound_) {
         glDeleteBuffers(1, &vertex_position_buffer_);
         glDeleteBuffers(1, &vertex_normal_buffer_);
         glDeleteBuffers(1, &vertex_color_buffer_);
         glDeleteBuffers(1, &vertex_material_buffer_);
         glDeleteBuffers(1, &triangle_buffer_);
-
-//        for (int i = 0; i < kNumEnvTextures; ++i) {
-//            glDeleteTextures(1, &tex_env_buffers_[i]);
-//        }
         bound_ = false;
     }
 }
 
-bool IBLNoTexShader::PrepareRendering(
+bool IBLVertexMapShader::PrepareRendering(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view) {
@@ -225,7 +226,7 @@ bool IBLNoTexShader::PrepareRendering(
     return true;
 }
 
-bool IBLNoTexShader::PrepareBinding(
+bool IBLVertexMapShader::PrepareBinding(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view,

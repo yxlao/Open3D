@@ -8,9 +8,6 @@
 using namespace open3d;
 
 int main(int argc, char **argv) {
-//    auto sphere = io::CreateMeshFromFile("/home/wei/Work/projects/material_recon/data/sphere.ply");
-//    sphere->ComputeTriangleNormals();
-//    visualization::DrawGeometries({sphere});
     MerlBRDF brdf;
     brdf.ReadFromBinary("/media/wei/Data/data/merl/pink-fabric.binary");
 

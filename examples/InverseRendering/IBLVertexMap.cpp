@@ -16,8 +16,6 @@ int main() {
         "/media/wei/Data/data/pbr/model/sphere_plastic.ply", *mesh);
 
     std::vector<geometry::Image> textures; /** dummy **/
-    textures.emplace_back(*io::ReadImageFromHDR("0.hdr"));
-
     auto ibl = std::make_shared<geometry::IBLLighting>();
     ibl->ReadEnvFromHDR("/media/wei/Data/data/pbr/env/Alexs_Apt_2k.hdr");
 

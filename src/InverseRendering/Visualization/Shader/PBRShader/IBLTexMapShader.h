@@ -13,13 +13,13 @@ namespace visualization {
 
 namespace glsl {
 /** Lighting should have been processed before being passed here **/
-class IBLNoTexShader : public ShaderWrapperPBR {
+class IBLTexMapShader : public ShaderWrapperPBR {
 public:
-    IBLNoTexShader() : IBLNoTexShader("IBLNoTexShader") {}
-    ~IBLNoTexShader() override { Release(); }
+    IBLTexMapShader() : IBLTexMapShader("IBLShader") {}
+    ~IBLTexMapShader() override { Release(); }
 
 protected:
-    explicit IBLNoTexShader(const std::string &name)
+    explicit IBLTexMapShader(const std::string &name)
         : ShaderWrapperPBR(name) { Compile(); }
 
 protected:
@@ -31,7 +31,7 @@ protected:
                       const ViewControl &view) final;
     bool BindTextures(const std::vector<geometry::Image> &textures,
                       const RenderOption &option,
-                      const ViewControl &view) final {return true;};
+                      const ViewControl &view) final;
     bool BindLighting(const geometry::Lighting &lighting,
                       const RenderOption &option,
                       const ViewControl &view) final;
@@ -51,31 +51,31 @@ protected:
                         const ViewControl &view,
                         std::vector<Eigen::Vector3f> &points,
                         std::vector<Eigen::Vector3f> &normals,
-                        std::vector<Eigen::Vector3f> &colors,
-                        std::vector<Eigen::Vector3f> &materials,
+                        std::vector<Eigen::Vector2f> &uvs,
                         std::vector<Eigen::Vector3i> &triangles);
 
 protected:
-    /** locations **/
+    const int kNumObjectTextures = 5;
+    const int kNumEnvTextures = 3;
+
     /* vertex shader */
     GLuint M_;
     GLuint V_;
     GLuint P_;
 
     /* fragment shader */
-    const int kNumEnvTextures = 3;
+    std::vector<GLuint> texes_object_; /* 5 textures for object */
     std::vector<GLuint> texes_env_;    /* 3 textures for env */
     GLuint camera_position_;
 
     /** buffers **/
     GLuint vertex_position_buffer_;
     GLuint vertex_normal_buffer_;
-    GLuint vertex_color_buffer_;
-    GLuint vertex_material_buffer_;
+    GLuint vertex_uv_buffer_;
     GLuint triangle_buffer_;
 
-    /** Input **/
-    std::vector<GLuint> tex_env_buffers_;
+    std::vector<GLuint> texes_object_buffers_;
+    std::vector<GLuint> texes_env_buffers_;
 };
 
 }
