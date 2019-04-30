@@ -7,6 +7,7 @@
 #include <InverseRendering/Geometry/TriangleMeshExtended.h>
 #include <InverseRendering/Geometry/Lighting.h>
 #include <InverseRendering/Visualization/Utility/DrawGeometryPBR.h>
+#include <InverseRendering/Geometry/ImageExt.h>
 
 using namespace open3d;
 int main() {
@@ -15,9 +16,10 @@ int main() {
         "/media/wei/Data/data/pbr/model/sphere_plastic.ply", *mesh);
 
     std::vector<geometry::Image> textures; /** dummy **/
+    textures.emplace_back(*io::ReadImageFromHDR("0.hdr"));
 
     auto ibl = std::make_shared<geometry::IBLLighting>();
-    ibl->ReadEnvFromHDR("/media/wei/Data/data/pbr/env/Mans_Outside_2k.hdr");
+    ibl->ReadEnvFromHDR("/media/wei/Data/data/pbr/env/Alexs_Apt_2k.hdr");
 
     utility::SetVerbosityLevel(utility::VerbosityLevel::VerboseDebug);
     visualization::DrawGeometriesPBR({mesh}, {textures}, {ibl});

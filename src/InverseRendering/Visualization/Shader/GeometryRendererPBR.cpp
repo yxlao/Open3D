@@ -56,10 +56,15 @@ bool TriangleMeshRendererPBR::Render(const RenderOption &option,
         if (mesh.HasUVs()) {
             success &= ibl_shader_.Render(mesh, textures_, ibl, option, view);
         } else if (mesh.HasMaterials()) {
-            success &= ibl_no_tex_shader_.Render(mesh, textures_, ibl, option, view);
+            success &= differential_shader_.Render(mesh, textures_, ibl, option, view);
             success &= index_shader_.Render(mesh, textures_, ibl, option, view);
-            fbo_output_.resize(1);
-            fbo_output_[0] = index_shader_.index_map_;
+            fbo_outputs_.clear();
+            fbo_outputs_.insert(fbo_outputs_.begin(),
+                                differential_shader_.fbo_outputs_.begin(),
+                                differential_shader_.fbo_outputs_.end());
+            fbo_outputs_.emplace_back(index_shader_.index_map_);
+
+            success &= ibl_no_tex_shader_.Render(mesh, textures_, ibl, option, view);
         } else {
             success = false;
         }
@@ -74,7 +79,7 @@ bool TriangleMeshRendererPBR::Render(const RenderOption &option,
 
         const auto &spot = (const geometry::SpotLighting &) (*lighting_ptr_);
         if (mesh.HasVertexNormals() && mesh.HasUVs()) {
-            success &= no_ibl_shader_.Render(
+            success &= spot_light_shader_.Render(
                 mesh, textures_, spot, option, view);
         }
     }
@@ -105,7 +110,10 @@ bool TriangleMeshRendererPBR::AddLights(
 }
 
 bool TriangleMeshRendererPBR::UpdateGeometry() {
-    no_ibl_shader_.InvalidateGeometry();
+    differential_shader_.InvalidateGeometry();
+    index_shader_.InvalidateGeometry();
+    ibl_no_tex_shader_.InvalidateGeometry();
+    spot_light_shader_.InvalidateGeometry();
     return true;
 }
 

@@ -7,6 +7,7 @@
 #include <InverseRendering/Geometry/TriangleMeshExtended.h>
 #include <InverseRendering/Geometry/Lighting.h>
 #include <InverseRendering/Visualization/Utility/DrawGeometryPBR.h>
+#include <InverseRendering/Geometry/ImageExt.h>
 
 using namespace open3d;
 int main() {

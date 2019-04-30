@@ -7,9 +7,7 @@
 namespace open3d {
 namespace geometry {
 
-IBLLighting::~IBLLighting() {
-    std::cerr << "Dealloc!\n";
-}
+IBLLighting::~IBLLighting() {}
 
 bool IBLLighting::ReadEnvFromHDR(const std::string &filename){
     if (! hdr_.ReadFromHDR(filename, true)) {

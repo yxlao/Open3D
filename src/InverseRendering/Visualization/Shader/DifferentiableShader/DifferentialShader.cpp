@@ -27,7 +27,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "SceneDifferentialShader.h"
+#include "DifferentialShader.h"
 
 #include <Open3D/Geometry/TriangleMesh.h>
 #include <Open3D/Visualization/Utility/ColorMap.h>
@@ -40,9 +40,9 @@ namespace visualization {
 
 namespace glsl {
 
-bool SceneDifferentialShader::Compile() {
+bool DifferentialShader::Compile() {
     std::cout << glGetError() << "\n";
-    if (!CompileShaders(SceneDifferentialVertexShader, nullptr, SceneDifferentialFragmentShader)) {
+    if (!CompileShaders(IBLNoTexVertexShader, nullptr, DifferentialFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }
@@ -51,23 +51,25 @@ bool SceneDifferentialShader::Compile() {
     V_ = glGetUniformLocation(program_, "V");
     P_ = glGetUniformLocation(program_, "P");
     camera_position_ = glGetUniformLocation(program_, "camera_position");
+    viewport_ = glGetUniformLocation(program_, "viewport");
 
     texes_env_.resize(kNumEnvTextures);
     texes_env_[0] = glGetUniformLocation(program_, "tex_env_diffuse");
     texes_env_[1] = glGetUniformLocation(program_, "tex_env_specular");
     texes_env_[2] = glGetUniformLocation(program_, "tex_lut_specular");
+    tex_target_image_ = glGetUniformLocation(program_, "tex_target_image");
 
     CheckGLState("SceneDifferentialShader - Compile");
 
     return true;
 }
 
-void SceneDifferentialShader::Release() {
+void DifferentialShader::Release() {
     UnbindGeometry();
     ReleaseProgram();
 }
 
-bool SceneDifferentialShader::BindGeometry(const geometry::Geometry &geometry,
+bool DifferentialShader::BindGeometry(const geometry::Geometry &geometry,
                              const RenderOption &option,
                              const ViewControl &view) {
     // If there is already geometry, we first unbind it.
@@ -105,23 +107,33 @@ bool SceneDifferentialShader::BindGeometry(const geometry::Geometry &geometry,
     return true;
 }
 
-bool SceneDifferentialShader::BindLighting(const geometry::Lighting &lighting,
-                             const visualization::RenderOption &option,
-                             const visualization::ViewControl &view) {
+bool DifferentialShader::BindTextures(const std::vector<open3d::geometry::Image> &textures,
+                                      const RenderOption &option,
+                                      const ViewControl &view) {
+    assert(textures.size() == 1);
+    tex_target_img_buffer_ = BindTexture2D(textures[0], option);
+
+    CheckGLState("DifferentialShader - BindTexture");
+    return true;
+}
+
+bool DifferentialShader::BindLighting(const geometry::Lighting &lighting,
+                                      const RenderOption &option,
+                                      const ViewControl &view) {
     auto ibl = (const geometry::IBLLighting &) lighting;
 
-    texes_env_buffers_.resize(kNumEnvTextures);
-    texes_env_buffers_[0] = ibl.tex_env_diffuse_buffer_;
-    texes_env_buffers_[1] = ibl.tex_env_specular_buffer_;
-    texes_env_buffers_[2] = ibl.tex_lut_specular_buffer_;
+    tex_env_buffers_.resize(kNumEnvTextures);
+    tex_env_buffers_[0] = ibl.tex_env_diffuse_buffer_;
+    tex_env_buffers_[1] = ibl.tex_env_specular_buffer_;
+    tex_env_buffers_[2] = ibl.tex_lut_specular_buffer_;
 
     for (int i = 0; i < kNumEnvTextures; ++i) {
-        std::cout << "tex_obejct_buffer: " << texes_env_buffers_[i] << "\n";
+        std::cout << "tex_obejct_buffer: " << tex_env_buffers_[i] << "\n";
     }
     return true;
 }
 
-bool SceneDifferentialShader::RenderGeometry(const geometry::Geometry &geometry,
+bool DifferentialShader::RenderGeometry(const geometry::Geometry &geometry,
                                const RenderOption &option,
                                const ViewControl &view) {
     if (!PrepareRendering(geometry, option, view)) {
@@ -129,27 +141,45 @@ bool SceneDifferentialShader::RenderGeometry(const geometry::Geometry &geometry,
         return false;
     }
 
+    CheckGLState("SceneDifferentialShader - Before Render");
+
+    if (! is_debug_) {
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
+        glBindRenderbuffer(GL_RENDERBUFFER, rbo_);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                                  GL_RENDERBUFFER, rbo_);
+        for (int i = 0; i < kNumOutputTextures; ++i) {
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i,
+                                   GL_TEXTURE_2D, tex_fbo_buffers_[i], 0);
+        }
+    }
+
     glUseProgram(program_);
     glUniformMatrix4fv(M_, 1, GL_FALSE, view.GetModelMatrix().data());
     glUniformMatrix4fv(V_, 1, GL_FALSE, view.GetViewMatrix().data());
     glUniformMatrix4fv(P_, 1, GL_FALSE, view.GetProjectionMatrix().data());
     glUniform3fv(camera_position_, 1, view.GetEye().data());
+    glUniform2fv(viewport_, 1, Eigen::Vector2f(
+        view.GetWindowWidth(),view.GetWindowHeight()).data());
 
     /** Diffuse environment **/
     glUniform1i(texes_env_[0], 0);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, texes_env_buffers_[0]);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, tex_env_buffers_[0]);
 
     /** Prefiltered specular **/
     glUniform1i(texes_env_[1], 1);
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, texes_env_buffers_[1]);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, tex_env_buffers_[1]);
 
     /** Pre-integrated BRDF LUT **/
     glUniform1i(texes_env_[2], 2);
     glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, texes_env_buffers_[2]);
+    glBindTexture(GL_TEXTURE_2D, tex_env_buffers_[2]);
 
+    glUniform1i(tex_target_image_, 3);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, tex_target_img_buffer_);
 
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer_);
@@ -169,18 +199,37 @@ bool SceneDifferentialShader::RenderGeometry(const geometry::Geometry &geometry,
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_);
 
-    glDrawElements(draw_arrays_mode_, draw_arrays_size_, GL_UNSIGNED_INT,
-                   nullptr);
+    if (! is_debug_) {
+        std::vector<GLenum> draw_buffers;
+        for (int i = 0; i < kNumOutputTextures; ++i) {
+            draw_buffers.emplace_back(GL_COLOR_ATTACHMENT0 + i);
+        }
+        glDrawBuffers(draw_buffers.size(), draw_buffers.data());
+    }
+
+    glDrawElements(draw_arrays_mode_, draw_arrays_size_, GL_UNSIGNED_INT, nullptr);
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
     glDisableVertexAttribArray(2);
     glDisableVertexAttribArray(3);
 
+    if (! is_debug_) {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+        for (int i = 0; i < tex_fbo_buffers_.size(); ++i) {
+            glBindTexture(GL_TEXTURE_2D, tex_fbo_buffers_[i]);
+            fbo_outputs_[i] = ReadTexture2D(
+                view.GetWindowWidth(), view.GetWindowHeight(), 3, 4,
+                GL_RGB, GL_FLOAT);
+        }
+    }
+
     CheckGLState("SceneDifferentialShader - Render");
     return true;
 }
 
-void SceneDifferentialShader::UnbindGeometry() {
+void DifferentialShader::UnbindGeometry() {
     if (bound_) {
         glDeleteBuffers(1, &vertex_position_buffer_);
         glDeleteBuffers(1, &vertex_normal_buffer_);
@@ -188,15 +237,23 @@ void SceneDifferentialShader::UnbindGeometry() {
         glDeleteBuffers(1, &vertex_material_buffer_);
         glDeleteBuffers(1, &triangle_buffer_);
 
-        for (int i = 0; i < kNumEnvTextures; ++i) {
-            glDeleteTextures(1, &texes_env_buffers_[i]);
+        if (! is_debug_) {
+//            for (int i = 0; i < kNumEnvTextures; ++i) {
+//                glDeleteTextures(1, &tex_env_buffers_[i]);
+//            }
+//            for (int i = 0; i < kNumOutputTextures; ++i) {
+//                glDeleteTextures(1, &tex_fbo_buffers_[i]);
+//            }
+
+//            glDeleteFramebuffers(1, &fbo_);
+//            glDeleteRenderbuffers(1, &rbo_);
         }
 
         bound_ = false;
     }
 }
 
-bool SceneDifferentialShader::PrepareRendering(
+bool DifferentialShader::PrepareRendering(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view) {
@@ -223,7 +280,7 @@ bool SceneDifferentialShader::PrepareRendering(
     return true;
 }
 
-bool SceneDifferentialShader::PrepareBinding(
+bool DifferentialShader::PrepareBinding(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view,
@@ -268,6 +325,24 @@ bool SceneDifferentialShader::PrepareBinding(
 
     draw_arrays_mode_ = GL_TRIANGLES;
     draw_arrays_size_ = GLsizei(triangles.size() * 3);
+
+    if (! is_debug_) {
+        tex_fbo_buffers_.resize(kNumOutputTextures);
+        fbo_outputs_.resize(kNumOutputTextures);
+        for (int i = 0; i < kNumOutputTextures; ++i) {
+            tex_fbo_buffers_[i] = CreateTexture2D(
+                view.GetWindowWidth(), view.GetWindowHeight(),
+                GL_RGB16F, GL_RGB, GL_FLOAT, false, option);
+        }
+
+        glGenFramebuffers(1, &fbo_);
+        glGenRenderbuffers(1, &rbo_);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
+        glBindRenderbuffer(GL_RENDERBUFFER, rbo_);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24,
+                              view.GetWindowWidth(), view.GetWindowHeight());
+    }
     return true;
 }
 

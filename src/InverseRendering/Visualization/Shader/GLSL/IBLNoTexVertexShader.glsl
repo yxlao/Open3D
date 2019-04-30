@@ -18,8 +18,8 @@ uniform mat4 V;
 uniform mat4 M;
 
 void main() {
-    position = vec3(M * vec4(vertex_position, 1.0));
-    normal = mat3(M) * vertex_normal;
+    position = vec3(vec4(vertex_position, 1.0));
+    normal = vertex_normal;
 
     albedo = vertex_albedo;
 

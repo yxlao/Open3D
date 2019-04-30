@@ -5,6 +5,7 @@
 #pragma once
 
 #include <Open3D/Open3D.h>
+#include <InverseRendering/Visualization/Shader/PBRShader/IBLNoTexShader.h>
 
 #include "InverseRendering/Visualization/Shader/PBRShader/SpotLightShader.h"
 
@@ -14,7 +15,7 @@
 #include "InverseRendering/Visualization/Shader/LightingShader/PreFilterEnvSpecularShader.h"
 #include "InverseRendering/Visualization/Shader/LightingShader/PreIntegrateLUTSpecularShader.h"
 #include "InverseRendering/Visualization/Shader/PBRShader/IBLShader.h"
-#include "InverseRendering/Visualization/Shader/DifferentiableShader/SceneDifferentialShader.h"
+#include "InverseRendering/Visualization/Shader/DifferentiableShader/DifferentialShader.h"
 #include "InverseRendering/Visualization/Shader/DifferentiableShader/IndexShader.h"
 #include "InverseRendering/Visualization/Shader/PBRShader/DirectSamplingShader.h"
 
@@ -35,7 +36,7 @@ protected:
     std::shared_ptr<geometry::Lighting> lighting_ptr_;
 
 public:
-    std::vector<std::shared_ptr<geometry::Image>> fbo_output_;
+    std::vector<std::shared_ptr<geometry::Image>> fbo_outputs_;
 
 };
 
@@ -54,7 +55,7 @@ public:
 
 protected:
     /** NoIBL: simple **/
-    SpotLightShader no_ibl_shader_;
+    SpotLightShader spot_light_shader_;
 
     /** IBL **/
     HDRToEnvCubemapShader hdr_to_env_cubemap_shader_;
@@ -63,7 +64,9 @@ protected:
     PreIntegrateLUTSpecularShader preintegrate_lut_specular_shader_;
 
     IBLShader ibl_shader_;
-    SceneDifferentialShader ibl_no_tex_shader_;
+    IBLNoTexShader ibl_no_tex_shader_;
+
+    DifferentialShader differential_shader_;
 
     BackgroundShader background_shader_;
     IndexShader index_shader_;

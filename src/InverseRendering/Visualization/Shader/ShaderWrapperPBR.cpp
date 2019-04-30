@@ -47,21 +47,29 @@ GLuint ShaderWrapperPBR::BindTexture2D(
         case 3: { format = GL_RGB; break; }
         case 4: { format = GL_RGBA; break; }
         default: {
-            utility::PrintDebug("Unknown format, abort!\n");
+            utility::PrintWarning("Unknown format, abort!\n");
+            return -1;
+        }
+    }
+
+    GLenum type;
+    switch (texture.bytes_per_channel_) {
+        case 1: { type = GL_UNSIGNED_BYTE; break; }
+        case 2: { type = GL_UNSIGNED_SHORT; break;}
+        case 4: { type = GL_FLOAT; break; }
+        default: {
+            utility::PrintWarning("Unknown format, abort!\n");
             return -1;
         }
     }
 
     glTexImage2D(GL_TEXTURE_2D, 0, format,
-                 texture.width_, texture.height_, 0, format,
-                 texture.bytes_per_channel_ == 2 ?
-                 GL_UNSIGNED_SHORT : GL_UNSIGNED_BYTE,
+                 texture.width_, texture.height_, 0, format, type,
                  texture.data_.data());
-    glGenerateMipmap(GL_TEXTURE_2D);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     return texture_id;
@@ -99,16 +107,16 @@ std::shared_ptr<geometry::Image> ShaderWrapperPBR::ReadTexture2D(
 
     glGetTexImage(GL_TEXTURE_2D, 0, format, type, im->data_.data());
 
-    auto im_flipped = std::make_shared<geometry::Image>();
-    im_flipped->PrepareImage(width, height, channels, bytes_per_channel);
-    int bytes_per_line = im->BytesPerLine();
-    for (int i = 0; i < height; i++) {
-        memcpy(im_flipped->data_.data() + bytes_per_line * i,
-               im->data_.data() + bytes_per_line * (height - i - 1),
-               bytes_per_line);
-    }
+//    auto im_flipped = std::make_shared<geometry::Image>();
+//    im_flipped->PrepareImage(width, height, channels, bytes_per_channel);
+//    int bytes_per_line = im->BytesPerLine();
+//    for (int i = 0; i < height; i++) {
+//        memcpy(im_flipped->data_.data() + bytes_per_line * i,
+//               im->data_.data() + bytes_per_line * (height - i - 1),
+//               bytes_per_line);
+//    }
 
-    return im_flipped;
+    return im;
 }
 
 GLuint ShaderWrapperPBR::BindTextureCubemap(

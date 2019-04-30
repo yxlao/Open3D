@@ -2,8 +2,10 @@
 // Created by wei on 4/15/19.
 //
 
-#include <InverseRendering/Visualization/Shader/GeometryRendererPBR.h>
 #include "VisualizerPBR.h"
+
+#include <InverseRendering/Visualization/Shader/GeometryRendererPBR.h>
+#include <InverseRendering/Geometry/ImageExt.h>
 
 namespace open3d {
 namespace visualization {
@@ -55,11 +57,17 @@ void VisualizerPBR::Render() {
         auto renderer_pbr_ptr =
             (const std::shared_ptr<glsl::GeometryRendererPBR> &) renderer_ptr;
         geometry_renderer_fbo_outputs_.emplace_back(
-            renderer_pbr_ptr->fbo_output_);
+            renderer_pbr_ptr->fbo_outputs_);
     }
     for (const auto &renderer_ptr : utility_renderer_ptrs_) {
         renderer_ptr->Render(*render_option_ptr_, *view_control_ptr_);
     }
+
+//    for (int i = 0; i < geometry_renderer_fbo_outputs_[0].size(); ++i) {
+//        utility::PrintInfo("Writing %d\n", i);
+//        io::WriteImageToHDR(std::to_string(i) + ".hdr",
+//            *geometry_renderer_fbo_outputs_[0][i]);
+//    }
 
     glfwSwapBuffers(window_);
 }

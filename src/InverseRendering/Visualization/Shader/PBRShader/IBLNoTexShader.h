@@ -13,13 +13,13 @@ namespace visualization {
 
 namespace glsl {
 /** Lighting should have been processed before being passed here **/
-class SceneDifferentialShader : public ShaderWrapperPBR {
+class IBLNoTexShader : public ShaderWrapperPBR {
 public:
-    SceneDifferentialShader() : SceneDifferentialShader("IBLNoTexShader") {}
-    ~SceneDifferentialShader() override { Release(); }
+    IBLNoTexShader() : IBLNoTexShader("IBLNoTexShader") {}
+    ~IBLNoTexShader() override { Release(); }
 
 protected:
-    explicit SceneDifferentialShader(const std::string &name)
+    explicit IBLNoTexShader(const std::string &name)
         : ShaderWrapperPBR(name) { Compile(); }
 
 protected:
@@ -56,8 +56,6 @@ protected:
                         std::vector<Eigen::Vector3i> &triangles);
 
 protected:
-    const int kNumEnvTextures = 3;
-
     /** locations **/
     /* vertex shader */
     GLuint M_;
@@ -65,6 +63,7 @@ protected:
     GLuint P_;
 
     /* fragment shader */
+    const int kNumEnvTextures = 3;
     std::vector<GLuint> texes_env_;    /* 3 textures for env */
     GLuint camera_position_;
 
@@ -75,9 +74,8 @@ protected:
     GLuint vertex_material_buffer_;
     GLuint triangle_buffer_;
 
-    std::vector<GLuint> texes_env_buffers_;
-
-    std::vector<GLuint> fbo_buffers_;
+    /** Input **/
+    std::vector<GLuint> tex_env_buffers_;
 };
 
 }
