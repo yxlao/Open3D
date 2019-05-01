@@ -1,13 +1,12 @@
 #version 330 core
 
 layout(location = 0) out vec3 FragColor;
-layout(location = 1) out vec3 dRoughness;
-layout(location = 2) out vec3 dAlbedo;
-layout(location = 3) out vec3 dColor;
 
-layout(location = 4) out vec3 InAlbedo;
-layout(location = 5) out vec3 InTarget;
-layout(location = 6) out vec3 OutDiffuse;
+layout(location = 1) out vec3 residual;
+
+layout(location = 2) out vec3 grad_albedo;
+layout(location = 3) out vec3 grad_material;
+
 
 //layout(location = 3) out vec3 dNx;
 //layout(location = 4) out vec3 dNy;
@@ -71,8 +70,13 @@ vec3 Specular(float NoV, vec3 R, vec3 F, float roughness) {
     return prefiltered_color * (F * env_brdf.x + env_brdf.y);
 }
 
-vec3 Color(vec3 V, vec3 albedo, float roughness, vec3 N) {
+vec3 Color(vec3 V, vec3 albedo, vec3 material, vec3 N) {
     vec3 albedo_degamma = pow(albedo + 0.001, vec3(2.2));
+
+    float roughness = material.r;
+    float metallic = material.g;
+    float ao = material.b;
+
     vec3 R = reflect(-V, N);
     float NoV = max(dot(N, V), 0.0);
 
@@ -102,32 +106,43 @@ void main() {
     vec3 V = normalize(camera_position - position);
     vec3 N = normal;
 
-    // Output rendering
-    vec3 color = Color(V, albedo, roughness, N);
+    // Re-pack
+    vec3 material = vec3(roughness, metallic, ao);
+
+    // Renderering
+    vec3 color = Color(V, albedo, material, N);
     FragColor = color;
 
-    vec3 albedo_degamma = pow(albedo, vec3(2.2));
-    OutDiffuse = albedo_degamma;
+    /** residual **/
+    vec2 uv = gl_FragCoord.xy / viewport;
+    residual = color - texture(tex_target_image, uv).rgb;
 
-
-    // roughness difference
+    /** output 1: gradient color **/
     const float delta = 0.001f;
-    float delta_p = min(1 - roughness, delta);
-    float delta_m = min(roughness, delta);
-    dRoughness = Color(V, albedo, roughness + delta_p, N)
-               - Color(V, albedo, roughness - delta_m, N);
-    dRoughness /= (delta_p + delta_m);
-
-    // albedo difference, channels spearated
     vec3 delta_p_rgb = min(1 - albedo, delta);
     vec3 delta_m_rgb = min(albedo, delta);
-    vec3 dR = Color(V, albedo + vec3(delta_p_rgb.r, 0, 0), roughness, N)
-            - Color(V, albedo - vec3(delta_m_rgb.r, 0, 0), roughness, N);
-    vec3 dG = Color(V, albedo + vec3(0, delta_p_rgb.g, 0), roughness, N)
-            - Color(V, albedo - vec3(0, delta_m_rgb.g, 0), roughness, N);
-    vec3 dB = Color(V, albedo + vec3(0, 0, delta_p_rgb.b), roughness, N)
-            - Color(V, albedo - vec3(0, 0, delta_m_rgb.b), roughness, N);
-    dAlbedo = vec3(dR.r, dG.g, dB.b) / (delta_p_rgb + delta_m_rgb);
+    vec3 dR = Color(V, albedo + vec3(delta_p_rgb.r, 0, 0), material, N)
+            - Color(V, albedo - vec3(delta_m_rgb.r, 0, 0), material, N);
+    vec3 dG = Color(V, albedo + vec3(0, delta_p_rgb.g, 0), material, N)
+            - Color(V, albedo - vec3(0, delta_m_rgb.g, 0), material, N);
+    vec3 dB = Color(V, albedo + vec3(0, 0, delta_p_rgb.b), material, N)
+            - Color(V, albedo - vec3(0, 0, delta_m_rgb.b), material, N);
+    vec3 d_albedo = vec3(dR.r, dG.g, dB.b) / (delta_p_rgb + delta_m_rgb);
+    grad_albedo = d_albedo * residual;
+
+    /** output 2: gradeint material **/
+    vec3 delta_p_mat = min(1 - material, delta);
+    vec3 delta_m_mat = min(material, delta);
+    vec3 d_roughness = Color(V, albedo, material + vec3(delta_p_mat.r, 0, 0), N);
+                     - Color(V, albedo, material - vec3(delta_m_mat.r, 0, 0), N);
+    vec3 d_metallic  = Color(V, albedo, material + vec3(0, delta_p_mat.g, 0), N);
+                     - Color(V, albedo, material - vec3(0, delta_m_mat.g, 0), N);
+    vec3 d_ao        = Color(V, albedo, material + vec3(0, 0, delta_p_mat.b), N);
+                     - Color(V, albedo, material - vec3(0, 0, delta_m_mat.b), N);
+    grad_material = vec3(dot(d_roughness, residual),
+                         dot(d_metallic, residual),
+                         dot(d_ao, residual))
+                     / (delta_p_mat + delta_m_mat);
 
     // so3 difference
     // [ 1   -dz   dy]
@@ -145,10 +160,4 @@ void main() {
 //    dNx /= (2 * delta);
 //    dNy /= (2 * delta);
 //    dNz /= (2 * delta);
-
-    vec2 uv = gl_FragCoord.xy / viewport;
-    dColor = color - texture(tex_target_image, uv).rgb;
-
-    InAlbedo = albedo;
-    InTarget = texture(tex_target_image, uv).rgb;
 }

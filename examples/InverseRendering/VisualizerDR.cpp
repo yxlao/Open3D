@@ -8,6 +8,7 @@
 #include <InverseRendering/IO/ClassIO/TriangleMeshExtendedIO.h>
 #include <Open3D/Utility/Console.h>
 #include <InverseRendering/Geometry/ImageExt.h>
+#include <InverseRendering/Visualization/Utility/DrawGeometryPBR.h>
 
 using namespace open3d;
 
@@ -21,7 +22,7 @@ int main(int argc, char **argv) {
         material(0) = 1.0;
     }
     std::vector<geometry::Image> textures;
-    textures.emplace_back(*io::ReadImageFromHDR("/media/wei/Data/data/pbr/image/plastic_alex_apt.hdr"));
+    textures.emplace_back(*io::CreateImageFromFile("/media/wei/Data/data/pbr/image/gold_alex_apt.png"));
 
     auto ibl = std::make_shared<geometry::IBLLighting>();
     ibl->ReadEnvFromHDR("/media/wei/Data/data/pbr/env/Alexs_Apt_2k.hdr");
@@ -40,6 +41,8 @@ int main(int argc, char **argv) {
         visualizer.UpdateRender();
         visualizer.PollEvents();
     }
+
+    visualization::DrawGeometriesPBR({mesh}, {textures}, {ibl});
 
 //    float lambda = 0.01;
 //    for (int i = 0; i < 1000; ++i) {

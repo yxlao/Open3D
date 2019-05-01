@@ -263,13 +263,6 @@ void DifferentialShader::RebindGeometry(const geometry::Geometry &geometry,
         std::vector<Eigen::Vector3f> colors(mesh.vertex_colors_.size());
         for (int i = 0; i < colors.size(); ++i) {
             colors[i] = mesh.vertex_colors_[i].cast<float>();
-            if (std::isnan(colors[i](0)) || std::isnan(colors[i](1)) || std::isnan(colors[i](2))) {
-                std::cout << i << " " << colors[i].transpose() << "\n";
-            }
-//            if (i == 131455) {
-//                std::cout << mesh.vertex_colors_[i].transpose() << "->" << colors[i].transpose() << "\n";
-//            }
-
         }
         vertex_color_buffer_ = BindBuffer(colors, GL_ARRAY_BUFFER, option);
     }
