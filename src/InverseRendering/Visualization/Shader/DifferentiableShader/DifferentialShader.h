@@ -39,7 +39,10 @@ protected:
     bool RenderGeometry(const geometry::Geometry &geometry,
                         const RenderOption &option,
                         const ViewControl &view) final;
-
+public:
+    void RebindGeometry(const geometry::Geometry &geometry,
+                        const RenderOption &option,
+                        bool color, bool material, bool normal);
     void UnbindGeometry() final;
 
 protected:
@@ -81,7 +84,7 @@ protected:
     GLuint tex_target_img_buffer_;
 
     /** Output **/
-    const int kNumOutputTextures = 8;
+    const int kNumOutputTextures = 7;
     GLuint fbo_, rbo_;
     std::vector<GLuint> tex_fbo_buffers_;
 

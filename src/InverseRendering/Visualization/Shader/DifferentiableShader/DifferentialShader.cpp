@@ -254,6 +254,43 @@ void DifferentialShader::UnbindGeometry() {
     }
 }
 
+void DifferentialShader::RebindGeometry(const geometry::Geometry &geometry,
+                                        const RenderOption &option,
+                                        bool color, bool material, bool normal) {
+    auto &mesh = (const geometry::TriangleMeshExtended &) geometry;
+
+    if (color) {
+        std::vector<Eigen::Vector3f> colors(mesh.vertex_colors_.size());
+        for (int i = 0; i < colors.size(); ++i) {
+            colors[i] = mesh.vertex_colors_[i].cast<float>();
+            if (std::isnan(colors[i](0)) || std::isnan(colors[i](1)) || std::isnan(colors[i](2))) {
+                std::cout << i << " " << colors[i].transpose() << "\n";
+            }
+//            if (i == 131455) {
+//                std::cout << mesh.vertex_colors_[i].transpose() << "->" << colors[i].transpose() << "\n";
+//            }
+
+        }
+        vertex_color_buffer_ = BindBuffer(colors, GL_ARRAY_BUFFER, option);
+    }
+
+    if (material) {
+        std::vector<Eigen::Vector3f> materials(mesh.vertex_materials_.size());
+        for (int i = 0; i < mesh.vertex_materials_.size(); ++i) {
+            materials[i] = mesh.vertex_materials_[i].cast<float>();
+        }
+        vertex_material_buffer_ = BindBuffer(materials, GL_ARRAY_BUFFER, option);
+    }
+
+    if (normal) {
+        std::vector<Eigen::Vector3f> normals(mesh.vertex_normals_.size());
+        for (int i = 0; i < mesh.vertex_normals_.size(); ++i) {
+            normals[i] = mesh.vertex_normals_[i].cast<float>();
+        }
+        vertex_normal_buffer_ = BindBuffer(normals, GL_ARRAY_BUFFER, option);
+    }
+}
+
 bool DifferentialShader::PrepareRendering(
     const geometry::Geometry &geometry,
     const RenderOption &option,

@@ -22,8 +22,8 @@ protected:
     /** Wrappers for more organized data preparation **/
     template<typename T>
     GLuint BindBuffer(const std::vector<T> &vec,
-                      const GLuint &buffer_type,
-                      const visualization::RenderOption &option) {
+                      const GLuint &buffer_type ,
+                      const RenderOption &option) {
         GLuint buffer;
         glGenBuffers(1, &buffer);
         glBindBuffer(buffer_type, buffer);

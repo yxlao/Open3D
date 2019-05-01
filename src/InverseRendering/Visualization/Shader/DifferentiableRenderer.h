@@ -16,28 +16,28 @@ public:
     ~DifferentiableRenderer () override = default;
 
 public:
+    /** Dummy **/
+    bool AddGeometry(std::shared_ptr<const geometry::Geometry> geometry_ptr)
+    override {};
+
+    /** In use **/
     bool Render(const RenderOption &option, const ViewControl &view) override;
-
-    bool AddMutableGeometry(std::shared_ptr<geometry::Geometry> geometry_ptr);
-
-    bool AddGeometry(std::shared_ptr<const geometry::Geometry> geometry_ptr) override;
-    bool AddTextures(const std::vector<geometry::Image> &textures) override;
-    bool AddLights(const std::shared_ptr<geometry::Lighting> &lighting_ptr) override;
-
+    bool AddMutableGeometry(std::shared_ptr<geometry::Geometry> &geometry_ptr);
     bool UpdateGeometry() override;
+
+    bool SGD(float lambda = 0.1f);
+    bool RebindGeometry(const RenderOption &option,
+                        bool rebind_color,
+                        bool rebind_material,
+                        bool rebind_normal);
 
 protected:
     /** Preprocess illumination **/
-    HDRToEnvCubemapShader hdr_to_env_cubemap_shader_;
-    PreConvEnvDiffuseShader preconv_env_diffuse_shader_;
-    PreFilterEnvSpecularShader prefilter_env_specular_shader_;
-    PreIntegrateLUTSpecularShader preintegrate_lut_specular_shader_;
-
-    BackgroundShader background_shader_;
-
-    IBLVertexMapShader ibl_no_tex_shader_;
+    IBLVertexMapShader ibx_vertex_map_shader_;
     DifferentialShader differential_shader_;
     IndexShader index_shader_;
+
+    BackgroundShader background_shader_;
 
 private:
     std::shared_ptr<geometry::Geometry> mutable_geometry_ptr_;

@@ -145,7 +145,7 @@ bool IndexShader::RenderGeometry(const geometry::Geometry &geometry,
 
     /** Read the texture **/
     glBindTexture(GL_TEXTURE_2D, tex_index_buffer_);
-    index_map_ = ReadTexture2D(
+    fbo_outputs_[0] = ReadTexture2D(
         view.GetWindowWidth(), view.GetWindowHeight(), 1, 4,
         GL_LUMINANCE_INTEGER_EXT, GL_UNSIGNED_INT);
 
@@ -226,6 +226,8 @@ bool IndexShader::PrepareBinding(
         view.GetWindowWidth(), view.GetWindowHeight(),
         GL_LUMINANCE32UI_EXT, GL_LUMINANCE_INTEGER_EXT, GL_UNSIGNED_INT,
         false, option);
+    fbo_outputs_.resize(1);
+
     CheckGLState("IndexShader - PrepareBinding");
     draw_arrays_mode_ = GL_TRIANGLES;
     draw_arrays_size_ = GLsizei(triangles.size() * 3);

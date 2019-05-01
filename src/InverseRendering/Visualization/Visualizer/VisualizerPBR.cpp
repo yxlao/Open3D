@@ -5,6 +5,7 @@
 #include "VisualizerPBR.h"
 
 #include <InverseRendering/Visualization/Shader/GeometryRendererPBR.h>
+#include <InverseRendering/Visualization/Shader/DifferentiableRenderer.h>
 #include <InverseRendering/Geometry/ImageExt.h>
 
 namespace open3d {
@@ -58,6 +59,34 @@ void VisualizerPBR::Render() {
     }
 
     glfwSwapBuffers(window_);
+}
+
+
+/******************************************************/
+bool VisualizerDR::AddGeometryPBR(
+    std::shared_ptr<geometry::Geometry> geometry_ptr,
+    const std::vector<geometry::Image> &textures,
+    const std::shared_ptr<geometry::Lighting> &lighting) {
+
+    if (geometry_ptr->GetGeometryType() ==
+        geometry::Geometry::GeometryType::TriangleMesh) {
+        auto renderer_ptr = std::make_shared<glsl::DifferentiableRenderer>();
+        if (!(renderer_ptr->AddMutableGeometry(geometry_ptr)
+            && renderer_ptr->AddTextures(textures)
+            && renderer_ptr->AddLights(lighting))) {
+            utility::PrintDebug("Failed to add geometry\n");
+            return false;
+        }
+        geometry_renderer_ptrs_.push_back(renderer_ptr);
+    }
+
+    geometry_ptrs_.push_back(geometry_ptr);
+
+    view_control_ptr_->FitInGeometry(*geometry_ptr);
+    ResetViewPoint();
+    utility::PrintDebug("Add geometry and update bounding box to %s\n",
+                        view_control_ptr_->GetBoundingBox().GetPrintInfo().c_str());
+    return UpdateGeometry();
 }
 }
 }

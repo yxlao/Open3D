@@ -25,6 +25,13 @@ public:
     virtual void Render() override;
 };
 
+class VisualizerDR : public VisualizerPBR {
+public:
+    virtual bool AddGeometryPBR(
+        std::shared_ptr<geometry::Geometry> geometry_ptr,
+        const std::vector<geometry::Image> &textures,
+        const std::shared_ptr<geometry::Lighting> &lighting);
+};
 }
 }
 

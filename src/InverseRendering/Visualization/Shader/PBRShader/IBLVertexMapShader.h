@@ -42,6 +42,11 @@ protected:
 
     void UnbindGeometry() final;
 
+public:
+    void RebindGeometry(const geometry::Geometry &geometry,
+                        const RenderOption &option,
+                        bool color, bool material, bool normal);
+
 protected:
     bool PrepareRendering(const geometry::Geometry &geometry,
                           const RenderOption &option,

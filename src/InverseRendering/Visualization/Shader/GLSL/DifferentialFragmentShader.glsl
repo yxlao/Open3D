@@ -3,11 +3,16 @@
 layout(location = 0) out vec3 FragColor;
 layout(location = 1) out vec3 dRoughness;
 layout(location = 2) out vec3 dAlbedo;
-layout(location = 3) out vec3 dNx;
-layout(location = 4) out vec3 dNy;
-layout(location = 5) out vec3 dNz;
-layout(location = 6) out vec3 dColor;
-layout(location = 7) out vec3 out_normal; // for reference
+layout(location = 3) out vec3 dColor;
+
+layout(location = 4) out vec3 InAlbedo;
+layout(location = 5) out vec3 InTarget;
+layout(location = 6) out vec3 OutDiffuse;
+
+//layout(location = 3) out vec3 dNx;
+//layout(location = 4) out vec3 dNy;
+//layout(location = 5) out vec3 dNz;
+
 
 in vec3 position;
 in vec3 normal;
@@ -67,7 +72,7 @@ vec3 Specular(float NoV, vec3 R, vec3 F, float roughness) {
 }
 
 vec3 Color(vec3 V, vec3 albedo, float roughness, vec3 N) {
-    vec3 albedo_degamma = pow(albedo, vec3(2.2));
+    vec3 albedo_degamma = pow(albedo + 0.001, vec3(2.2));
     vec3 R = reflect(-V, N);
     float NoV = max(dot(N, V), 0.0);
 
@@ -97,11 +102,13 @@ void main() {
     vec3 V = normalize(camera_position - position);
     vec3 N = normal;
 
-    out_normal = normal;
-
     // Output rendering
     vec3 color = Color(V, albedo, roughness, N);
     FragColor = color;
+
+    vec3 albedo_degamma = pow(albedo, vec3(2.2));
+    OutDiffuse = albedo_degamma;
+
 
     // roughness difference
     const float delta = 0.001f;
@@ -126,19 +133,22 @@ void main() {
     // [ 1   -dz   dy]
     // [ dz   1   -dx]
     // [-dy   dx   1 ]
-    vec3 dex = delta * vec3(0, -N.z, N.y);
-    vec3 dey = delta * vec3(N.z, 0, -N.x);
-    vec3 dez = delta * vec3(-N.y, N.x, 0);
-    dNx = Color(V, albedo, roughness, N + dex)
-        - Color(V, albedo, roughness, N - dex);
-    dNy = Color(V, albedo, roughness, N + dey)
-        - Color(V, albedo, roughness, N - dey);
-    dNz = Color(V, albedo, roughness, N + dez)
-        - Color(V, albedo, roughness, N - dez);
-    dNx /= (2 * delta);
-    dNy /= (2 * delta);
-    dNz /= (2 * delta);
+//    vec3 dex = delta * vec3(0, -N.z, N.y);
+//    vec3 dey = delta * vec3(N.z, 0, -N.x);
+//    vec3 dez = delta * vec3(-N.y, N.x, 0);
+//    dNx = Color(V, albedo, roughness, N + dex)
+//        - Color(V, albedo, roughness, N - dex);
+//    dNy = Color(V, albedo, roughness, N + dey)
+//        - Color(V, albedo, roughness, N - dey);
+//    dNz = Color(V, albedo, roughness, N + dez)
+//        - Color(V, albedo, roughness, N - dez);
+//    dNx /= (2 * delta);
+//    dNy /= (2 * delta);
+//    dNz /= (2 * delta);
 
     vec2 uv = gl_FragCoord.xy / viewport;
     dColor = color - texture(tex_target_image, uv).rgb;
+
+    InAlbedo = albedo;
+    InTarget = texture(tex_target_image, uv).rgb;
 }
