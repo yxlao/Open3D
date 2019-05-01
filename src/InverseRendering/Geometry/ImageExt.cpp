@@ -33,6 +33,20 @@ std::shared_ptr<Image> ConvertImageFromFloatImage(const Image &image) {
 
     return uimage;
 }
+
+std::shared_ptr<Image> FlipImageExt(const Image &input) {
+    auto output = std::make_shared<Image>();
+    output->PrepareImage(input.width_, input.height_,
+        input.num_of_channels_, input.bytes_per_channel_);
+
+    const int stride = input.width_ * input.num_of_channels_ * input.bytes_per_channel_;
+    for (int y = 0; y < input.height_; y++) {
+        auto input_ptr = input.data_.data() + y * stride;
+        auto output_ptr = output->data_.data() + (input.height_ - 1 - y) * stride;
+        memcpy(output_ptr, input_ptr, stride);
+    }
+    return output;
+}
 }
 
 namespace io {

@@ -10,6 +10,7 @@ namespace open3d {
 namespace geometry {
 
 std::shared_ptr<Image> ConvertImageFromFloatImage(const Image &image);
+std::shared_ptr<Image> FlipImageExt(const Image &image);
 }
 
 namespace io {

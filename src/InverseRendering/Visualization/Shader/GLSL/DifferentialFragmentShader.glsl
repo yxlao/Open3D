@@ -6,7 +6,7 @@ layout(location = 1) out vec3 residual;
 
 layout(location = 2) out vec3 grad_albedo;
 layout(location = 3) out vec3 grad_material;
-
+layout(location = 4) out vec3 grad_normal;
 
 //layout(location = 3) out vec3 dNx;
 //layout(location = 4) out vec3 dNy;
@@ -71,11 +71,11 @@ vec3 Specular(float NoV, vec3 R, vec3 F, float roughness) {
 }
 
 vec3 Color(vec3 V, vec3 albedo, vec3 material, vec3 N) {
-    vec3 albedo_degamma = pow(albedo + 0.001, vec3(2.2));
+    vec3 albedo_degamma = pow(albedo, vec3(2.2));
 
-    float roughness = material.r;
-    float metallic = material.g;
-    float ao = material.b;
+    float r = material.r;
+    float m = material.g;
+    float a = material.b;
 
     vec3 R = reflect(-V, N);
     float NoV = max(dot(N, V), 0.0);
@@ -84,17 +84,17 @@ vec3 Color(vec3 V, vec3 albedo, vec3 material, vec3 N) {
     vec3 diffuse = Diffuse(albedo_degamma, N);
 
     // Diffuse/Specular Ratio; Fresnel
-    vec3 F0 = mix(vec3(0.04), albedo_degamma, metallic);
-    vec3 F = FresnelSchlickRoughness(NoV, F0, roughness);
+    vec3 F0 = mix(vec3(0.04), albedo_degamma, m);
+    vec3 F = FresnelSchlickRoughness(NoV, F0, r);
     vec3 kS = F;
     vec3 kD = 1.0 - kS;
-    kD *= 1.0 - metallic;
+    kD *= 1.0 - m;
 
     // Specular
-    vec3 specular = Specular(NoV, R, F, roughness);
+    vec3 specular = Specular(NoV, R, F, r);
 
     // Result
-    vec3 color = (kD * diffuse + specular) * ao;
+    vec3 color = (kD * diffuse + specular) * a;
     color = pow(color, vec3(1.0/2.2));
 
     return color;
@@ -118,7 +118,7 @@ void main() {
     residual = color - texture(tex_target_image, uv).rgb;
 
     /** output 1: gradient color **/
-    const float delta = 0.001f;
+    const float delta = 0.01f;
     vec3 delta_p_rgb = min(1 - albedo, delta);
     vec3 delta_m_rgb = min(albedo, delta);
     vec3 dR = Color(V, albedo + vec3(delta_p_rgb.r, 0, 0), material, N)
@@ -127,37 +127,37 @@ void main() {
             - Color(V, albedo - vec3(0, delta_m_rgb.g, 0), material, N);
     vec3 dB = Color(V, albedo + vec3(0, 0, delta_p_rgb.b), material, N)
             - Color(V, albedo - vec3(0, 0, delta_m_rgb.b), material, N);
-    vec3 d_albedo = vec3(dR.r, dG.g, dB.b) / (delta_p_rgb + delta_m_rgb);
-    grad_albedo = d_albedo * residual;
+    grad_albedo = vec3(dot(dR, residual),
+                       dot(dG, residual),
+                       dot(dB, residual)) / (delta_p_rgb + delta_m_rgb);
 
     /** output 2: gradeint material **/
     vec3 delta_p_mat = min(1 - material, delta);
     vec3 delta_m_mat = min(material, delta);
-    vec3 d_roughness = Color(V, albedo, material + vec3(delta_p_mat.r, 0, 0), N);
-                     - Color(V, albedo, material - vec3(delta_m_mat.r, 0, 0), N);
-    vec3 d_metallic  = Color(V, albedo, material + vec3(0, delta_p_mat.g, 0), N);
+    vec3 d_roughness = Color(V, albedo, material + vec3(delta, 0, 0), N)
+                     - Color(V, albedo, material - vec3(delta, 0, 0), N);
+    vec3 d_metallic  = Color(V, albedo, material + vec3(0, delta_p_mat.g, 0), N)
                      - Color(V, albedo, material - vec3(0, delta_m_mat.g, 0), N);
-    vec3 d_ao        = Color(V, albedo, material + vec3(0, 0, delta_p_mat.b), N);
+    vec3 d_ao        = Color(V, albedo, material + vec3(0, 0, delta_p_mat.b), N)
                      - Color(V, albedo, material - vec3(0, 0, delta_m_mat.b), N);
     grad_material = vec3(dot(d_roughness, residual),
                          dot(d_metallic, residual),
-                         dot(d_ao, residual))
-                     / (delta_p_mat + delta_m_mat);
+                         0) / (delta_p_mat + delta_m_mat);
 
     // so3 difference
     // [ 1   -dz   dy]
     // [ dz   1   -dx]
     // [-dy   dx   1 ]
-//    vec3 dex = delta * vec3(0, -N.z, N.y);
-//    vec3 dey = delta * vec3(N.z, 0, -N.x);
-//    vec3 dez = delta * vec3(-N.y, N.x, 0);
-//    dNx = Color(V, albedo, roughness, N + dex)
-//        - Color(V, albedo, roughness, N - dex);
-//    dNy = Color(V, albedo, roughness, N + dey)
-//        - Color(V, albedo, roughness, N - dey);
-//    dNz = Color(V, albedo, roughness, N + dez)
-//        - Color(V, albedo, roughness, N - dez);
-//    dNx /= (2 * delta);
-//    dNy /= (2 * delta);
-//    dNz /= (2 * delta);
+    vec3 dex = delta * vec3(0, -N.z, N.y);
+    vec3 dey = delta * vec3(N.z, 0, -N.x);
+    vec3 dez = delta * vec3(-N.y, N.x, 0);
+    vec3 dNx = Color(V, albedo, material, N + dex)
+             - Color(V, albedo, material, N - dex);
+    vec3 dNy = Color(V, albedo, material, N + dey)
+             - Color(V, albedo, material, N - dey);
+    vec3 dNz = Color(V, albedo, material, N + dez)
+             - Color(V, albedo, material, N - dez);
+    grad_normal = vec3(dot(dNx, residual),
+                       dot(dNy, residual),
+                       dot(dNz, residual)) / (2 * delta);
 }

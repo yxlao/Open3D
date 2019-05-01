@@ -31,6 +31,10 @@ public:
         std::shared_ptr<geometry::Geometry> geometry_ptr,
         const std::vector<geometry::Image> &textures,
         const std::shared_ptr<geometry::Lighting> &lighting);
+
+    bool CaptureBuffer(const std::string &filename);
+    bool CallSGD(float lambda,
+                 bool update_albedo, bool update_material, bool update_normal);
 };
 }
 }

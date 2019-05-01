@@ -2,6 +2,8 @@
 // Created by wei on 4/12/19.
 //
 
+#include <Eigen/Dense>
+#include <InverseRendering/Geometry/ImageExt.h>
 #include "DifferentiableRenderer.h"
 
 namespace open3d {
@@ -48,8 +50,7 @@ bool DifferentiableRenderer::Render(const RenderOption &option,
 
     /** Visualize background **/
     success &= background_shader_.Render(mesh, textures_, ibl, option, view);
-    success &= SGD(0.1f);
-    RebindGeometry(option, true, true, false);
+
     return success;
 }
 
@@ -68,32 +69,87 @@ inline void Clamp(Eigen::Vector3d &in, double min_val, double max_val) {
     in(2) = std::max(std::min(in(2), max_val), min_val);
 }
 
-bool DifferentiableRenderer::SGD(float lambda) {
-    std::cout << "SGD\n";
+inline Eigen::Matrix3d Rotation(const Eigen::Vector3d &in) {
+    return (Eigen::AngleAxisd(in(2), Eigen::Vector3d::UnitZ()) *
+            Eigen::AngleAxisd(in(1), Eigen::Vector3d::UnitY()) *
+            Eigen::AngleAxisd(in(0), Eigen::Vector3d::UnitX()))
+            .matrix();
+}
+
+bool DifferentiableRenderer::CaptureBuffer(const std::string &filename) {
+    auto output_render_map = differential_shader_.fbo_outputs_[0];
+    auto output_image = std::make_shared<geometry::Image>();
+    output_image->PrepareImage(output_render_map->width_,
+                               output_render_map->height_,
+                               3, 1);
+    for (int v = 0; v < output_render_map->height_; ++v) {
+        for (int u = 0; u < output_render_map->width_; ++u) {
+            auto colorf = GetVector3d(*output_render_map, u, v);
+            auto coloru_ptr = geometry::PointerAt<uint8_t>(
+                *output_image, u, output_render_map->height_ - 1 - v, 0);
+//            std::cout << colorf.transpose() << "\n";
+            coloru_ptr[0] = uint8_t(std::min(colorf(0) * 255, 255.0));
+            coloru_ptr[1] = uint8_t(std::min(colorf(1) * 255, 255.0));
+            coloru_ptr[2] = uint8_t(std::min(colorf(2) * 255, 255.0));
+        }
+    }
+    io::WriteImageToHDR(filename + ".hdr", *output_render_map);
+    io::WriteImage(filename, *output_image);
+}
+
+bool DifferentiableRenderer::SGD(
+    float lambda,
+    bool update_albedo, bool update_material, bool update_normal) {
+
     auto index_map = index_shader_.fbo_outputs_[0];
 
     auto out_render_map = differential_shader_.fbo_outputs_[0];
     auto residual_map = differential_shader_.fbo_outputs_[1];
     auto grad_albedo_map = differential_shader_.fbo_outputs_[2];
     auto grad_material_map = differential_shader_.fbo_outputs_[3];
+    auto grad_normal_map = differential_shader_.fbo_outputs_[4];
 
     auto &mesh = (geometry::TriangleMeshExtended &) *mutable_geometry_ptr_;
+
+    float total_residual = 0;
+    int count = 0;
     for (int v = 0; v < index_map->height_; ++v) {
         for (int u = 0; u < index_map->width_; ++u) {
             int *idx = geometry::PointerAt<int>(*index_map, u, v);
             if (*idx > 0) {
-                auto &color = mesh.vertex_colors_[*idx];
-                auto grad_albedo = GetVector3d(*grad_albedo_map, u, v);
-                color -= lambda * grad_albedo;
-                Clamp(color, 0, 1);
+                auto residual = GetVector3d(*residual_map, u, v);
 
-                auto &material = mesh.vertex_materials_[*idx];
-                auto grad_material = GetVector3d(*grad_material_map, u, v);
-                material -= lambda * grad_material;
-                Clamp(material, 0, 1);
+                if (update_albedo) {
+                    auto &color = mesh.vertex_colors_[*idx];
+                    auto grad_albedo = GetVector3d(*grad_albedo_map, u, v);
+                    color -= lambda * grad_albedo;
+                    Clamp(color, 0, 1);
+                }
+
+                if (update_material) {
+                    auto &material = mesh.vertex_materials_[*idx];
+                    auto grad_material = GetVector3d(*grad_material_map, u, v);
+                    material -= lambda * grad_material;
+                    Clamp(material, 0, 1);
+                }
+
+                if (update_normal) {
+                    auto &normal = mesh.vertex_normals_[*idx];
+                    auto grad_normal = GetVector3d(*grad_normal_map, u, v);
+                    normal = Rotation(-grad_normal) * normal;
+                }
+
+//                std::cout << residual.transpose() << "\n";
+                total_residual += residual.dot(residual);
+                count ++;
             }
         }
     }
+    utility::PrintInfo("SGD on image %d, lambda = %f -> loss = %f\n",
+                       differential_shader_.target_img_id_, lambda,
+                       total_residual / count);
+    RebindGeometry(RenderOption(),
+        update_albedo, update_material, update_normal);
 }
 
 bool DifferentiableRenderer::AddMutableGeometry(

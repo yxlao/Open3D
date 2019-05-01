@@ -112,9 +112,10 @@ bool DifferentialShader::BindGeometry(const geometry::Geometry &geometry,
 bool DifferentialShader::BindTextures(const std::vector<open3d::geometry::Image> &textures,
                                       const RenderOption &option,
                                       const ViewControl &view) {
-    assert(textures.size() == 1);
-    tex_target_img_buffer_ = BindTexture2D(textures[0], option);
-
+    for (auto &texture : textures) {
+        auto texture_id = BindTexture2D(textures[0], option);
+        tex_target_img_buffers_.emplace_back(texture_id);
+    }
     CheckGLState("DifferentialShader - BindTexture");
     return true;
 }
@@ -181,7 +182,7 @@ bool DifferentialShader::RenderGeometry(const geometry::Geometry &geometry,
 
     glUniform1i(tex_target_image_, 3);
     glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, tex_target_img_buffer_);
+    glBindTexture(GL_TEXTURE_2D, tex_target_img_buffers_[target_img_id_]);
 
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer_);
@@ -241,6 +242,10 @@ void DifferentialShader::UnbindGeometry() {
         glDeleteBuffers(1, &vertex_color_buffer_);
         glDeleteBuffers(1, &vertex_material_buffer_);
         glDeleteBuffers(1, &triangle_buffer_);
+
+        for (int i = 0; i < tex_target_img_buffers_.size(); ++i) {
+            glDeleteTextures(1, &tex_target_img_buffers_[i]);
+        }
 
         if (!is_debug_) {
             for (int i = 0; i < kNumOutputTextures; ++i) {

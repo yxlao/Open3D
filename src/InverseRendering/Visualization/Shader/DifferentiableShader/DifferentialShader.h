@@ -81,7 +81,8 @@ protected:
 
     /** Input **/
     std::vector<GLuint> tex_env_buffers_;
-    GLuint tex_target_img_buffer_;
+    std::vector<GLuint> tex_target_img_buffers_;
+
 
     /** Output **/
     const int kNumOutputTextures = 7;
@@ -90,6 +91,7 @@ protected:
 
 public:
     bool is_debug_ = false;
+    int target_img_id_ = 0;
     std::vector<std::shared_ptr<geometry::Image>> fbo_outputs_;
 };
 
