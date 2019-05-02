@@ -13,7 +13,7 @@ namespace glsl {
 
 class DifferentiableRenderer : public GeometryRendererPBR {
 public:
-    ~DifferentiableRenderer () override = default;
+    ~DifferentiableRenderer() override = default;
 
 public:
     /** Dummy **/
@@ -26,8 +26,12 @@ public:
     bool UpdateGeometry() override;
 
     bool CaptureBuffer(const std::string &filename);
+
     bool SGD(float lambda,
-             bool update_color, bool update_material, bool update_normal);
+             bool update_color,
+             bool update_material,
+             bool update_normal);
+    bool RebindTexture(const geometry::Image &image);
     bool RebindGeometry(const RenderOption &option,
                         bool rebind_color,
                         bool rebind_material,

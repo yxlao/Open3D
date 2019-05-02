@@ -45,8 +45,7 @@ bool DifferentiableRenderer::Render(const RenderOption &option,
     success &= index_shader_.Render(mesh, textures_, ibl, option, view);
 
     /** Visualize object changes **/
-    success &=
-        ibx_vertex_map_shader_.Render(mesh, textures_, ibl, option, view);
+    success &= ibx_vertex_map_shader_.Render(mesh, textures_, ibl, option, view);
 
     /** Visualize background **/
     success &= background_shader_.Render(mesh, textures_, ibl, option, view);
@@ -54,6 +53,7 @@ bool DifferentiableRenderer::Render(const RenderOption &option,
     return success;
 }
 
+namespace {
 inline Eigen::Vector3d GetVector3d(geometry::Image &im, int u, int v) {
     auto *ptr = geometry::PointerAt<float>(im, u, v, 0);
     return Eigen::Vector3d(ptr[0], ptr[1], ptr[2]);
@@ -71,9 +71,10 @@ inline void Clamp(Eigen::Vector3d &in, double min_val, double max_val) {
 
 inline Eigen::Matrix3d Rotation(const Eigen::Vector3d &in) {
     return (Eigen::AngleAxisd(in(2), Eigen::Vector3d::UnitZ()) *
-            Eigen::AngleAxisd(in(1), Eigen::Vector3d::UnitY()) *
-            Eigen::AngleAxisd(in(0), Eigen::Vector3d::UnitX()))
-            .matrix();
+        Eigen::AngleAxisd(in(1), Eigen::Vector3d::UnitY()) *
+        Eigen::AngleAxisd(in(0), Eigen::Vector3d::UnitX()))
+        .matrix();
+}
 }
 
 bool DifferentiableRenderer::CaptureBuffer(const std::string &filename) {
@@ -87,7 +88,6 @@ bool DifferentiableRenderer::CaptureBuffer(const std::string &filename) {
             auto colorf = GetVector3d(*output_render_map, u, v);
             auto coloru_ptr = geometry::PointerAt<uint8_t>(
                 *output_image, u, output_render_map->height_ - 1 - v, 0);
-//            std::cout << colorf.transpose() << "\n";
             coloru_ptr[0] = uint8_t(std::min(colorf(0) * 255, 255.0));
             coloru_ptr[1] = uint8_t(std::min(colorf(1) * 255, 255.0));
             coloru_ptr[2] = uint8_t(std::min(colorf(2) * 255, 255.0));
@@ -139,7 +139,6 @@ bool DifferentiableRenderer::SGD(
                     normal = Rotation(-grad_normal) * normal;
                 }
 
-//                std::cout << residual.transpose() << "\n";
                 total_residual += residual.dot(residual);
                 count ++;
             }
@@ -168,6 +167,10 @@ bool DifferentiableRenderer::UpdateGeometry() {
     index_shader_.InvalidateGeometry();
     background_shader_.InvalidateGeometry();
     return true;
+}
+
+bool DifferentiableRenderer::RebindTexture(const geometry::Image &image) {
+    differential_shader_.RebindTexture(image);
 }
 
 bool DifferentiableRenderer::RebindGeometry(

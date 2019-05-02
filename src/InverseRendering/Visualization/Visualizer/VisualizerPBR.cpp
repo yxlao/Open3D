@@ -94,6 +94,13 @@ bool VisualizerDR::CaptureBuffer(const std::string &filename) {
     renderer.CaptureBuffer(filename);
 }
 
+bool VisualizerDR::SetTargetImage(const geometry::Image &target,
+                                  const camera::PinholeCameraParameters &view) {
+    auto &renderer = (glsl::DifferentiableRenderer &) *geometry_renderer_ptrs_[0];
+    renderer.RebindTexture(target);
+    view_control_ptr_->ConvertFromPinholeCameraParameters(view);
+}
+
 bool VisualizerDR::CallSGD(float lambda,
                            bool update_albedo, bool update_material, bool update_normal) {
     auto &renderer = (glsl::DifferentiableRenderer &) *geometry_renderer_ptrs_[0];

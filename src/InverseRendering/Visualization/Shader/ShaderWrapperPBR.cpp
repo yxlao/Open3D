@@ -41,6 +41,16 @@ GLuint ShaderWrapperPBR::BindTexture2D(
     glGenTextures(1, &texture_id);
     glBindTexture(GL_TEXTURE_2D, texture_id);
 
+    bool success = BindTexture2D(texture_id, texture, option);
+
+    return texture_id;
+}
+
+bool ShaderWrapperPBR::BindTexture2D(GLuint &texture_id,
+                                     const geometry::Image &texture,
+                                     const visualization::RenderOption &option) {
+    glBindTexture(GL_TEXTURE_2D, texture_id);
+
     GLenum format;
     switch (texture.num_of_channels_) {
         case 1: { format = GL_RED; break; }
@@ -48,7 +58,7 @@ GLuint ShaderWrapperPBR::BindTexture2D(
         case 4: { format = GL_RGBA; break; }
         default: {
             utility::PrintWarning("Unknown format, abort!\n");
-            return -1;
+            return false;
         }
     }
 
@@ -59,7 +69,7 @@ GLuint ShaderWrapperPBR::BindTexture2D(
         case 4: { type = GL_FLOAT; break; }
         default: {
             utility::PrintWarning("Unknown format, abort!\n");
-            return -1;
+            return false;
         }
     }
 
@@ -72,7 +82,7 @@ GLuint ShaderWrapperPBR::BindTexture2D(
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    return texture_id;
+    return true;
 }
 
 GLuint ShaderWrapperPBR::CreateTexture2D(

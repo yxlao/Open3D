@@ -34,6 +34,10 @@ protected:
 
     GLuint BindTexture2D(const geometry::Image &texture,
                          const visualization::RenderOption &option);
+    bool BindTexture2D(GLuint &texture_id,
+                       const geometry::Image &texture,
+                       const visualization::RenderOption &option);
+
     GLuint CreateTexture2D(
         GLuint width, GLuint height,
         GLenum internal_format, GLenum format, GLenum type,

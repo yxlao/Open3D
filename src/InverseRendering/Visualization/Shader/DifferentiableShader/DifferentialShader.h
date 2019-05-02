@@ -40,6 +40,7 @@ protected:
                         const RenderOption &option,
                         const ViewControl &view) final;
 public:
+    void RebindTexture(const geometry::Image &image);
     void RebindGeometry(const geometry::Geometry &geometry,
                         const RenderOption &option,
                         bool color, bool material, bool normal);
@@ -81,8 +82,7 @@ protected:
 
     /** Input **/
     std::vector<GLuint> tex_env_buffers_;
-    std::vector<GLuint> tex_target_img_buffers_;
-
+    GLuint tex_target_img_buffer_;
 
     /** Output **/
     const int kNumOutputTextures = 7;

@@ -33,6 +33,9 @@ public:
         const std::shared_ptr<geometry::Lighting> &lighting);
 
     bool CaptureBuffer(const std::string &filename);
+
+    bool SetTargetImage(const geometry::Image &target,
+                        const camera::PinholeCameraParameters &view);
     bool CallSGD(float lambda,
                  bool update_albedo, bool update_material, bool update_normal);
 };
