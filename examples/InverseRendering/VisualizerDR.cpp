@@ -15,9 +15,9 @@ using namespace open3d;
 int main(int argc, char **argv) {
     auto mesh = std::make_shared<geometry::TriangleMeshExtended>();
     io::ReadTriangleMeshExtendedFromPLY("/media/wei/Data/data/pbr/model/sphere_plastic.ply", *mesh);
-    for (auto &color : mesh->vertex_colors_) {
-        color = Eigen::Vector3d(1, 1, 0.0);
-    }
+//    for (auto &color : mesh->vertex_colors_) {
+//        color = Eigen::Vector3d(1, 1, 0.0);
+//    }
 //    for (auto &material : mesh->vertex_materials_) {
 //        material(1) = 0.0;
 //    }
@@ -47,13 +47,13 @@ int main(int argc, char **argv) {
 
     visualizer.AddGeometryPBR(mesh, textures, ibl);
     float lambda = 0.1;
-    for (int i = 0; i < 200; ++i) {
+    for (int i = 0; i < 1; ++i) {
         visualizer.SetTargetImage(*target, cam_params);
 
         visualizer.UpdateRender();
         visualizer.PollEvents();
 
-        visualizer.CallSGD(lambda, true, false, false);
+        visualizer.CallSGD(lambda, false, false, true);
         if (i % 50 == 49) lambda *= 0.5f;
     }
 

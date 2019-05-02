@@ -41,16 +41,16 @@ int main(int argc, char **argv) {
 
     std::vector<geometry::Image> textures;
     textures.emplace_back(*geometry::FlipImageExt(
-        *io::CreateImageFromFile(config.color_files_[0])));
+        *io::CreateImageFromFile(config.color_files_[100])));
 
     auto ibl = std::make_shared<geometry::IBLLighting>();
     ibl->ReadEnvFromHDR("/media/wei/Data/data/pbr/env/White.hdr");
     visualization::DrawGeometriesPBR({mesh_extended}, {textures}, {ibl});
 
-    auto mesh_extended_after = std::make_shared<geometry::TriangleMeshExtended>();
-    io::ReadTriangleMeshExtendedFromPLY("fragment_extended.ply", *mesh_extended_after);
-    visualization::DrawGeometriesPBR({mesh_extended_after}, {textures}, {ibl});
-    return 0;
+//    auto mesh_extended_after = std::make_shared<geometry::TriangleMeshExtended>();
+//    io::ReadTriangleMeshExtendedFromPLY("fragment_extended.ply", *mesh_extended_after);
+//    visualization::DrawGeometriesPBR({mesh_extended_after}, {textures}, {ibl});
+//    return 0;
 
     visualization::VisualizerDR visualizer;
     if (!visualizer.CreateVisualizerWindow("DR", 640, 480, 0, 0)) {
@@ -69,8 +69,8 @@ int main(int argc, char **argv) {
     registration::PoseGraph local_pose_graph;
     ReadPoseGraph(config.GetPoseGraphFileForFragment(1, true), local_pose_graph);
 
-    const int iter = 10;
-    float lambda = 0.005;
+    const int iter = 50;
+    float lambda = 0.0001;
 
     for (int i = 0; i < iter; ++i) {
         float loss = 0;
@@ -82,7 +82,14 @@ int main(int argc, char **argv) {
             visualizer.UpdateRender();
             visualizer.PollEvents();
 
-            loss += visualizer.CallSGD(lambda, false, true, false);
+//            std::string kBasePath = "/media/wei/Data/results/";
+//            std::string filename = kBasePath + "iter-" + std::to_string(i) + "-img-" + std::to_string(j);
+//            io::WriteImage(filename + "-origin.png", *target);
+//            visualizer.CaptureBuffer(filename + "-render.png", 0);
+//            visualizer.CaptureBuffer(filename + "-residual.png", 1);
+//            visualizer.CaptureBuffer(filename + "-target.png", 5);
+
+            loss += visualizer.CallSGD(lambda, false, false, true);
         }
         utility::PrintInfo("Iter %d: lambda = %f -> loss = %f\n",
                            i, lambda, loss);

@@ -32,12 +32,18 @@ int main(int argc, char **argv) {
     auto mesh = std::make_shared<geometry::TriangleMeshExtended>();
     io::ReadTriangleMeshExtendedFromPLY(
         "/media/wei/Data/data/pbr/model/sphere_plastic.ply", *mesh);
-    for (auto &color : mesh->vertex_colors_) {
-        color = Eigen::Vector3d(1, 1, 0);
-    }
+//    for (auto &color : mesh->vertex_colors_) {
+//        color = Eigen::Vector3d(1, 0, 0);
+//    }
+//
+//    for (auto &material : mesh->vertex_materials_) {
+//        material(0) = 1.0;
+//        material(1) = 0.0;
+//    }
 
-    for (auto &material : mesh->vertex_materials_) {
-        material(0) = 1.0;
+    for (auto &normal : mesh->vertex_normals_) {
+        normal = normal + Eigen::Vector3d(0.1, -0.1, 0.2);
+        normal.normalize();
     }
 
     /** Place holder **/
@@ -62,7 +68,7 @@ int main(int argc, char **argv) {
     camera::PinholeCameraParameters cam_params;
 
     std::string kBasePath = "/media/wei/Data/results/";
-    float lambda = 0.1;
+    float lambda = 0.001;
     for (int i = 0; i < 100; ++i) {
         float loss = 0;
         for (int j = 0; j < image_names.size(); ++j) {
@@ -79,14 +85,14 @@ int main(int argc, char **argv) {
 //            visualizer.CaptureBuffer(filename + "-residual.png", 1);
 //            visualizer.CaptureBuffer(filename + "-target.png", 5);
 
-            loss += visualizer.CallSGD(lambda, true, true, false);
+            loss += visualizer.CallSGD(lambda, false, false, true);
         }
 
         utility::PrintInfo("Iter %d: lambda = %f -> loss = %f\n",
                            i, lambda, loss);
 
-        if (i % 50 == 49) {
-            lambda *= 0.1f;
+        if (i % 20 == 19) {
+            lambda *= 0.5f;
             io::WriteTriangleMeshExtendedToPLY(
                 "mesh-iter-" + std::to_string(i) + ".ply", *mesh);
         }

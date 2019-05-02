@@ -13,8 +13,8 @@ using namespace open3d;
 int main() {
     auto mesh = std::make_shared<geometry::TriangleMeshExtended>();
     io::ReadTriangleMeshExtendedFromPLY(
-        "mesh-iter-99.ply", *mesh);
-//        "/media/wei/Data/data/pbr/model/sphere_plastic.ply", *mesh);
+//        "mesh-iter-99.ply", *mesh);
+        "/media/wei/Data/data/pbr/model/sphere_gold.ply", *mesh);
 
     std::vector<geometry::Image> textures; /** dummy **/
     auto ibl = std::make_shared<geometry::IBLLighting>();

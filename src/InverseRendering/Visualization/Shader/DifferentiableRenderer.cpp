@@ -45,7 +45,8 @@ bool DifferentiableRenderer::Render(const RenderOption &option,
     success &= index_shader_.Render(mesh, textures_, ibl, option, view);
 
     /** Visualize object changes **/
-    success &= ibx_vertex_map_shader_.Render(mesh, textures_, ibl, option, view);
+    success &=
+        ibx_vertex_map_shader_.Render(mesh, textures_, ibl, option, view);
 
     /** Visualize background **/
     success &= background_shader_.Render(mesh, textures_, ibl, option, view);
@@ -74,6 +75,17 @@ inline Eigen::Matrix3d Rotation(const Eigen::Vector3d &in) {
         Eigen::AngleAxisd(in(1), Eigen::Vector3d::UnitY()) *
         Eigen::AngleAxisd(in(0), Eigen::Vector3d::UnitX()))
         .matrix();
+}
+
+Eigen::Vector2d NormalToAngle(Eigen::Vector3d normal) { // inclination (theta), azimuth (phi)
+    return Eigen::Vector2d(std::acos(normal(2)),
+                           std::atan2(normal(1), normal(0)));
+}
+
+Eigen::Vector3d AngleToNormal(Eigen::Vector2d angle) { // inclination, azimuth
+    return Eigen::Vector3d(sin(angle(0)) * cos(angle(1)),
+                           sin(angle(0)) * sin(angle(1)),
+                           cos(angle(0)));
 }
 }
 
@@ -128,16 +140,16 @@ float DifferentiableRenderer::SGD(
                     auto &color = mesh.vertex_colors_[*idx];
 
                     if (HasNan(residual) || HasNan(rendered)) {
-                        std::cout << "residual: " << residual.transpose() << "\n"
-                                  << "rendered: " << rendered.transpose() << "\n"
+                        std::cout << "residual: " << residual.transpose()
+                                  << "\n"
+                                  << "rendered: " << rendered.transpose()
+                                  << "\n"
                                   << "albedo: " << rendered.transpose() << "\n"
                                   << "color: " << color.transpose() << "\n";
                     }
 
                     auto grad_albedo = GetVector3d(*grad_albedo_map, u, v);
                     color -= lambda * grad_albedo;
-
-
                     Clamp(color, 0, 1);
                 }
 
@@ -151,18 +163,21 @@ float DifferentiableRenderer::SGD(
                 if (update_normal) {
                     auto &normal = mesh.vertex_normals_[*idx];
                     auto grad_normal = GetVector3d(*grad_normal_map, u, v);
-                    normal = Rotation(-grad_normal) * normal;
+
+                    auto angle = NormalToAngle(normal);
+                    angle -= lambda * Eigen::Vector2d(grad_normal(0), grad_normal(1));
+                    normal = AngleToNormal(angle);
                 }
 
 //                std::cout << residual.transpose() << "\n";
                 total_residual += residual.dot(residual);
-                count ++;
+                count++;
             }
         }
     }
 
     RebindGeometry(RenderOption(),
-        update_albedo, update_material, update_normal);
+                   update_albedo, update_material, update_normal);
 
     return total_residual / count;
 }

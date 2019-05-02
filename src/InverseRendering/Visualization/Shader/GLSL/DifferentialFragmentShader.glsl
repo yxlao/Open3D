@@ -102,6 +102,17 @@ vec3 Color(vec3 V, vec3 albedo, vec3 material, vec3 N) {
     return color;
 }
 
+// https://en.wikipedia.org/wiki/Spherical_coordinate_system
+vec2 NormalToAngle(vec3 normal) { // inclination (theta), azimuth (phi)
+    return vec2(acos(normal.z), atan(normal.y, normal.x));
+}
+
+vec3 AngleToNormal(vec2 angle) { // inclination, azimuth
+    return vec3(sin(angle.x) * cos(angle.y),
+                sin(angle.x) * sin(angle.y),
+                cos(angle.x));
+}
+
 // ----------------------------------------------------------------------------
 void main() {
     // Viewpoints
@@ -122,7 +133,7 @@ void main() {
     tmp = texture(tex_target_image, uv).rgb;
 
     /** output 1: gradient color **/
-    const float delta = 0.01f;
+    const float delta = 0.001f;
     vec3 delta_p_rgb = min(1 - albedo, delta);
     vec3 delta_m_rgb = min(albedo, delta);
     vec3 dR = Color(V, albedo + vec3(delta_p_rgb.r, 0, 0), material, N)
@@ -150,16 +161,25 @@ void main() {
     // [ 1   -dz   dy]
     // [ dz   1   -dx]
     // [-dy   dx   1 ]
-    vec3 dex = delta * vec3(0, -N.z, N.y);
-    vec3 dey = delta * vec3(N.z, 0, -N.x);
-    vec3 dez = delta * vec3(-N.y, N.x, 0);
-    vec3 dNx = Color(V, albedo, material, N + dex)
-             - Color(V, albedo, material, N - dex);
-    vec3 dNy = Color(V, albedo, material, N + dey)
-             - Color(V, albedo, material, N - dey);
-    vec3 dNz = Color(V, albedo, material, N + dez)
-             - Color(V, albedo, material, N - dez);
-    grad_normal = vec3(dot(dNx, residual),
-                       dot(dNy, residual),
-                       dot(dNz, residual)) / (2 * delta);
+//    vec3 dex = delta * vec3(0, -N.z, N.y);
+//    vec3 dey = delta * vec3(N.z, 0, -N.x);
+//    vec3 dez = delta * vec3(-N.y, N.x, 0);
+//    vec3 dNx = Color(V, albedo, material, normalize(N + dex))
+//             - Color(V, albedo, material, normalize(N - dex));
+//    vec3 dNy = Color(V, albedo, material, normalize(N + dey))
+//             - Color(V, albedo, material, normalize(N - dey));
+//    vec3 dNz = Color(V, albedo, material, normalize(N + dez))
+//             - Color(V, albedo, material, normalize(N - dez));
+//    grad_normal = vec3(dot(dNx, residual),
+//                       dot(dNy, residual),
+//                       dot(dNz, residual)) / (2 * delta);
+
+    vec2 angle = NormalToAngle(N);
+    vec3 dTheta = Color(V, albedo, material, AngleToNormal(angle + vec2(delta, 0)))
+                - Color(V, albedo, material, AngleToNormal(angle - vec2(delta, 0)));
+    vec3 dPhi = Color(V, albedo, material, AngleToNormal(angle + vec2(0, delta)))
+              - Color(V, albedo, material, AngleToNormal(angle - vec2(0, delta)));
+    grad_normal = vec3(dot(dTheta, residual),
+                       dot(dPhi, residual) / sin(angle.x),
+                       0) / (2 * delta);
 }
