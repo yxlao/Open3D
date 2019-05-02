@@ -77,23 +77,24 @@ inline Eigen::Matrix3d Rotation(const Eigen::Vector3d &in) {
 }
 }
 
-bool DifferentiableRenderer::CaptureBuffer(const std::string &filename) {
-    auto output_render_map = differential_shader_.fbo_outputs_[0];
+bool DifferentiableRenderer::CaptureBuffer(const std::string &filename,
+                                           int index) {
+    auto buffer_map = differential_shader_.fbo_outputs_[index];
     auto output_image = std::make_shared<geometry::Image>();
-    output_image->PrepareImage(output_render_map->width_,
-                               output_render_map->height_,
+    output_image->PrepareImage(buffer_map->width_,
+                               buffer_map->height_,
                                3, 1);
-    for (int v = 0; v < output_render_map->height_; ++v) {
-        for (int u = 0; u < output_render_map->width_; ++u) {
-            auto colorf = GetVector3d(*output_render_map, u, v);
+    for (int v = 0; v < buffer_map->height_; ++v) {
+        for (int u = 0; u < buffer_map->width_; ++u) {
+            auto colorf = GetVector3d(*buffer_map, u, v);
             auto coloru_ptr = geometry::PointerAt<uint8_t>(
-                *output_image, u, output_render_map->height_ - 1 - v, 0);
+                *output_image, u, buffer_map->height_ - 1 - v, 0);
             coloru_ptr[0] = uint8_t(std::min(colorf(0) * 255, 255.0));
             coloru_ptr[1] = uint8_t(std::min(colorf(1) * 255, 255.0));
             coloru_ptr[2] = uint8_t(std::min(colorf(2) * 255, 255.0));
         }
     }
-    io::WriteImageToHDR(filename + ".hdr", *output_render_map);
+    io::WriteImageToHDR(filename + ".hdr", *buffer_map);
     io::WriteImage(filename, *output_image);
 }
 

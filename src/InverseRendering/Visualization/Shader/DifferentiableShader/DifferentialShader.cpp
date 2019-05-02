@@ -204,11 +204,13 @@ bool DifferentialShader::RenderGeometry(const geometry::Geometry &geometry,
 
     if (!is_debug_) {
         std::vector<GLenum> draw_buffers;
-        for (int i = 0; i < kNumOutputTextures; ++i) {
+        for (int i = 0; i < tex_fbo_buffers_.size(); ++i) {
             draw_buffers.emplace_back(GL_COLOR_ATTACHMENT0 + i);
         }
         glDrawBuffers(draw_buffers.size(), draw_buffers.data());
     }
+    glClearColor(0, 0, 0, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glDrawElements(draw_arrays_mode_,
                    draw_arrays_size_,

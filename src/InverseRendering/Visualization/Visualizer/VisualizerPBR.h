@@ -32,7 +32,7 @@ public:
         const std::vector<geometry::Image> &textures,
         const std::shared_ptr<geometry::Lighting> &lighting);
 
-    bool CaptureBuffer(const std::string &filename);
+    bool CaptureBuffer(const std::string &filename, int index);
 
     bool SetTargetImage(const geometry::Image &target,
                         const camera::PinholeCameraParameters &view);

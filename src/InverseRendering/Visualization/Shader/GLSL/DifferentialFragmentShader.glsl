@@ -111,7 +111,6 @@ void main() {
     // Re-pack
     vec3 material = vec3(roughness, metallic, ao);
 
-    tmp = albedo;
 
     // Renderering
     vec3 color = Color(V, albedo, material, N);
@@ -120,6 +119,7 @@ void main() {
     /** residual **/
     vec2 uv = gl_FragCoord.xy / viewport;
     residual = color - texture(tex_target_image, uv).rgb;
+    tmp = texture(tex_target_image, uv).rgb;
 
     /** output 1: gradient color **/
     const float delta = 0.01f;

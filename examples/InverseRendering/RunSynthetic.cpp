@@ -60,24 +60,32 @@ int main(int argc, char **argv) {
     visualizer.AddGeometryPBR(mesh, textures, ibl);
 
     camera::PinholeCameraParameters cam_params;
+
+    std::string kBasePath = "/media/wei/Data/results/";
     float lambda = 0.1;
-    for (int i = 0; i < 300; ++i) {
+    for (int i = 0; i < 100; ++i) {
         float loss = 0;
         for (int j = 0; j < image_names.size(); ++j) {
             auto target = geometry::FlipImageExt(*io::CreateImageFromFile(image_names[j]));
             io::ReadIJsonConvertibleFromJSON(cam_names[j], cam_params);
-
             visualizer.SetTargetImage(*target, cam_params);
 
             visualizer.UpdateRender();
             visualizer.PollEvents();
 
-            loss += visualizer.CallSGD(lambda, true, false, false);
+//            std::string filename = kBasePath + "iter-" + std::to_string(i) + "-img-" + std::to_string(j);
+//            io::WriteImage(filename + "-origin.png", *target);
+//            visualizer.CaptureBuffer(filename + "-render.png", 0);
+//            visualizer.CaptureBuffer(filename + "-residual.png", 1);
+//            visualizer.CaptureBuffer(filename + "-target.png", 5);
+
+            loss += visualizer.CallSGD(lambda, true, true, false);
         }
+
         utility::PrintInfo("Iter %d: lambda = %f -> loss = %f\n",
                            i, lambda, loss);
 
-        if (i % 10 == 9) {
+        if (i % 50 == 49) {
             lambda *= 0.1f;
             io::WriteTriangleMeshExtendedToPLY(
                 "mesh-iter-" + std::to_string(i) + ".ply", *mesh);

@@ -25,7 +25,7 @@ public:
     bool AddMutableGeometry(std::shared_ptr<geometry::Geometry> &geometry_ptr);
     bool UpdateGeometry() override;
 
-    bool CaptureBuffer(const std::string &filename);
+    bool CaptureBuffer(const std::string &filename, int index);
 
     float SGD(float lambda,
              bool update_color,

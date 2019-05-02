@@ -89,9 +89,9 @@ bool VisualizerDR::AddGeometryPBR(
     return UpdateGeometry();
 }
 
-bool VisualizerDR::CaptureBuffer(const std::string &filename) {
+bool VisualizerDR::CaptureBuffer(const std::string &filename, int index) {
     auto &renderer = (glsl::DifferentiableRenderer &) *geometry_renderer_ptrs_[0];
-    renderer.CaptureBuffer(filename);
+    renderer.CaptureBuffer(filename, index);
 }
 
 bool VisualizerDR::SetTargetImage(const geometry::Image &target,
