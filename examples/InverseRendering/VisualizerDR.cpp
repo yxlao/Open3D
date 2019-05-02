@@ -14,27 +14,28 @@ using namespace open3d;
 
 int main(int argc, char **argv) {
     auto mesh = std::make_shared<geometry::TriangleMeshExtended>();
-    io::ReadTriangleMeshExtendedFromPLY("/media/wei/Data/data/pbr/model/sphere_gold.ply", *mesh);
-//    for (auto &color : mesh->vertex_colors_) {
-//        color = Eigen::Vector3d(1, 1, 0.0);
-//    }
-    for (auto &material : mesh->vertex_materials_) {
-        material(1) = 0.0;
+    io::ReadTriangleMeshExtendedFromPLY("/media/wei/Data/data/pbr/model/sphere_plastic.ply", *mesh);
+    for (auto &color : mesh->vertex_colors_) {
+        color = Eigen::Vector3d(1, 1, 0.0);
     }
+//    for (auto &material : mesh->vertex_materials_) {
+//        material(1) = 0.0;
+//    }
 
     std::vector<geometry::Image> textures;
     textures.emplace_back(*geometry::FlipImageExt(*io::CreateImageFromFile(
-        "/media/wei/Data/data/pbr/image/gold_alex_apt_buf.png")));
+        "/media/wei/Data/data/pbr/image/plastic_alex/40.png")));
 
-    auto target = geometry::FlipImageExt(*io::CreateImageFromFile("/media/wei/Data/data/pbr/image/gold_01.png"));
+    auto target = geometry::FlipImageExt(*io::CreateImageFromFile(
+        "/media/wei/Data/data/pbr/image/plastic_alex/40.png"));
     camera::PinholeCameraParameters cam_params;
-    io::ReadIJsonConvertibleFromJSON("/media/wei/Data/data/pbr/image/gold_01.json", cam_params);
+    io::ReadIJsonConvertibleFromJSON("/media/wei/Data/data/pbr/image/plastic_alex/40.json", cam_params);
 
     auto ibl = std::make_shared<geometry::IBLLighting>();
     ibl->ReadEnvFromHDR(
         "/media/wei/Data/data/pbr/env/Alexs_Apt_2k.hdr");
 
-    visualization::DrawGeometriesPBR({mesh}, {textures}, {ibl});
+//    visualization::DrawGeometriesPBR({mesh}, {textures}, {ibl});
 
     visualization::VisualizerDR visualizer;
     if (!visualizer.CreateVisualizerWindow("DR", 640, 480, 0, 0)) {
@@ -45,16 +46,14 @@ int main(int argc, char **argv) {
     visualizer.UpdateWindowTitle();
 
     visualizer.AddGeometryPBR(mesh, textures, ibl);
-    float lambda = 1;
+    float lambda = 0.1;
     for (int i = 0; i < 200; ++i) {
         visualizer.SetTargetImage(*target, cam_params);
 
         visualizer.UpdateRender();
         visualizer.PollEvents();
-        visualizer.GetViewControl().ConvertFromPinholeCameraParameters(cam_params);
 
-//        visualizer.CaptureBuffer("/media/wei/Data/data/pbr/image/gold_alex_apt_buf.png");
-        visualizer.CallSGD(lambda, false, true, false);
+        visualizer.CallSGD(lambda, true, false, false);
         if (i % 50 == 49) lambda *= 0.5f;
     }
 

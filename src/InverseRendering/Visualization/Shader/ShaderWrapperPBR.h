@@ -32,6 +32,17 @@ protected:
         return buffer;
     }
 
+    template<typename T>
+    GLuint BindBuffer(GLuint buffer,
+                      const std::vector<T> &vec,
+                      const GLuint &buffer_type ,
+                      const RenderOption &option) {
+        glBindBuffer(buffer_type, buffer);
+        glBufferData(buffer_type, vec.size() * sizeof(T),
+                     vec.data(), GL_STATIC_DRAW);
+        return buffer;
+    }
+
     GLuint BindTexture2D(const geometry::Image &texture,
                          const visualization::RenderOption &option);
     bool BindTexture2D(GLuint &texture_id,

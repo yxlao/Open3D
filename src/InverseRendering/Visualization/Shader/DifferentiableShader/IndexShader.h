@@ -64,6 +64,9 @@ protected:
 
     GLuint tex_index_buffer_;
 
+    GLuint fbo_;
+    GLuint rbo_;
+
 public:
     std::vector<std::shared_ptr<geometry::Image>> fbo_outputs_;
 };

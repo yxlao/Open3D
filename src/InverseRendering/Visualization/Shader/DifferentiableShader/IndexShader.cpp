@@ -98,16 +98,10 @@ bool IndexShader::RenderGeometry(const geometry::Geometry &geometry,
         return false;
     }
 
-
-    GLuint fbo, rbo;
-    glGenFramebuffers(1, &fbo);
-    glGenRenderbuffers(1, &rbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24,
-                          view.GetWindowWidth(), view.GetWindowHeight());
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo_);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-                              GL_RENDERBUFFER, rbo);
+                              GL_RENDERBUFFER, rbo_);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                            GL_TEXTURE_2D, tex_index_buffer_, 0);
 
@@ -136,7 +130,7 @@ bool IndexShader::RenderGeometry(const geometry::Geometry &geometry,
     /** Reuse depth buffer to occlude points, only clear color buffer **/
 //    glClear(GL_COLOR_BUFFER_BIT);
 //    glDrawArrays(GL_POINTS, 0, draw_arrays_size_);
-//    CheckGLState("IndexShader - Rendering Pass #2");
+    CheckGLState("IndexShader - Rendering Pass #2");
 
     glDisableVertexAttribArray(0);
 
@@ -227,6 +221,14 @@ bool IndexShader::PrepareBinding(
         GL_LUMINANCE32UI_EXT, GL_LUMINANCE_INTEGER_EXT, GL_UNSIGNED_INT,
         false, option);
     fbo_outputs_.resize(1);
+
+    glGenFramebuffers(1, &fbo_);
+    glGenRenderbuffers(1, &rbo_);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo_);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24,
+                          view.GetWindowWidth(), view.GetWindowHeight());
 
     CheckGLState("IndexShader - PrepareBinding");
     draw_arrays_mode_ = GL_TRIANGLES;

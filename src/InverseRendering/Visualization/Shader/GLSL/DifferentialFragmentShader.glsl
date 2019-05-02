@@ -8,6 +8,8 @@ layout(location = 2) out vec3 grad_albedo;
 layout(location = 3) out vec3 grad_material;
 layout(location = 4) out vec3 grad_normal;
 
+layout(location = 5) out vec3 tmp;
+
 //layout(location = 3) out vec3 dNx;
 //layout(location = 4) out vec3 dNy;
 //layout(location = 5) out vec3 dNz;
@@ -71,7 +73,7 @@ vec3 Specular(float NoV, vec3 R, vec3 F, float roughness) {
 }
 
 vec3 Color(vec3 V, vec3 albedo, vec3 material, vec3 N) {
-    vec3 albedo_degamma = pow(albedo, vec3(2.2));
+    vec3 albedo_degamma = pow(clamp(albedo, 0.0001, 0.9999), vec3(2.2));
 
     float r = material.r;
     float m = material.g;
@@ -109,6 +111,8 @@ void main() {
     // Re-pack
     vec3 material = vec3(roughness, metallic, ao);
 
+    tmp = albedo;
+
     // Renderering
     vec3 color = Color(V, albedo, material, N);
     FragColor = color;
@@ -127,9 +131,7 @@ void main() {
             - Color(V, albedo - vec3(0, delta_m_rgb.g, 0), material, N);
     vec3 dB = Color(V, albedo + vec3(0, 0, delta_p_rgb.b), material, N)
             - Color(V, albedo - vec3(0, 0, delta_m_rgb.b), material, N);
-    grad_albedo = vec3(dot(dR, residual),
-                       dot(dG, residual),
-                       dot(dB, residual)) / (delta_p_rgb + delta_m_rgb);
+    grad_albedo = vec3(dR.r, dG.g, dB.b) * residual / (delta_p_rgb + delta_m_rgb);
 
     /** output 2: gradeint material **/
     vec3 delta_p_mat = min(1 - material, delta);

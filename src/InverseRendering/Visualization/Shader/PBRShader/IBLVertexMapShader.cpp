@@ -209,7 +209,7 @@ void IBLVertexMapShader::RebindGeometry(const geometry::Geometry &geometry,
         for (int i = 0; i < colors.size(); ++i) {
             colors[i] = mesh.vertex_colors_[i].cast<float>();
         }
-        vertex_color_buffer_ = BindBuffer(colors, GL_ARRAY_BUFFER, option);
+        BindBuffer(vertex_color_buffer_, colors, GL_ARRAY_BUFFER, option);
     }
 
     if (material) {
@@ -217,7 +217,7 @@ void IBLVertexMapShader::RebindGeometry(const geometry::Geometry &geometry,
         for (int i = 0; i < mesh.vertex_materials_.size(); ++i) {
             materials[i] = mesh.vertex_materials_[i].cast<float>();
         }
-        vertex_material_buffer_ = BindBuffer(materials, GL_ARRAY_BUFFER, option);
+        BindBuffer(vertex_material_buffer_, materials, GL_ARRAY_BUFFER, option);
     }
 
     if (normal) {
@@ -225,7 +225,7 @@ void IBLVertexMapShader::RebindGeometry(const geometry::Geometry &geometry,
         for (int i = 0; i < mesh.vertex_normals_.size(); ++i) {
             normals[i] = mesh.vertex_normals_[i].cast<float>();
         }
-        vertex_normal_buffer_ = BindBuffer(normals, GL_ARRAY_BUFFER, option);
+        BindBuffer(vertex_normal_buffer_, normals, GL_ARRAY_BUFFER, option);
     }
 }
 

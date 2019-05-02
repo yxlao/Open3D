@@ -27,7 +27,7 @@ public:
 
     bool CaptureBuffer(const std::string &filename);
 
-    bool SGD(float lambda,
+    float SGD(float lambda,
              bool update_color,
              bool update_material,
              bool update_normal);

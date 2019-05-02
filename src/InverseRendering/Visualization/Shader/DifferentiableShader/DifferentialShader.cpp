@@ -243,7 +243,6 @@ void DifferentialShader::UnbindGeometry() {
         glDeleteBuffers(1, &vertex_material_buffer_);
         glDeleteBuffers(1, &triangle_buffer_);
 
-
         glDeleteTextures(1, &tex_target_img_buffer_);
 
         if (!is_debug_) {
@@ -272,7 +271,7 @@ void DifferentialShader::RebindGeometry(const geometry::Geometry &geometry,
         for (int i = 0; i < colors.size(); ++i) {
             colors[i] = mesh.vertex_colors_[i].cast<float>();
         }
-        vertex_color_buffer_ = BindBuffer(colors, GL_ARRAY_BUFFER, option);
+        BindBuffer(vertex_color_buffer_, colors, GL_ARRAY_BUFFER, option);
     }
 
     if (material) {
@@ -280,7 +279,7 @@ void DifferentialShader::RebindGeometry(const geometry::Geometry &geometry,
         for (int i = 0; i < mesh.vertex_materials_.size(); ++i) {
             materials[i] = mesh.vertex_materials_[i].cast<float>();
         }
-        vertex_material_buffer_ = BindBuffer(materials, GL_ARRAY_BUFFER, option);
+        BindBuffer(vertex_material_buffer_, materials, GL_ARRAY_BUFFER, option);
     }
 
     if (normal) {
@@ -288,10 +287,9 @@ void DifferentialShader::RebindGeometry(const geometry::Geometry &geometry,
         for (int i = 0; i < mesh.vertex_normals_.size(); ++i) {
             normals[i] = mesh.vertex_normals_[i].cast<float>();
         }
-        vertex_normal_buffer_ = BindBuffer(normals, GL_ARRAY_BUFFER, option);
+        BindBuffer(vertex_normal_buffer_, normals, GL_ARRAY_BUFFER, option);
     }
 }
-
 bool DifferentialShader::PrepareRendering(
     const geometry::Geometry &geometry,
     const RenderOption &option,

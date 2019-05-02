@@ -97,7 +97,7 @@ bool DifferentiableRenderer::CaptureBuffer(const std::string &filename) {
     io::WriteImage(filename, *output_image);
 }
 
-bool DifferentiableRenderer::SGD(
+float DifferentiableRenderer::SGD(
     float lambda,
     bool update_albedo, bool update_material, bool update_normal) {
 
@@ -109,6 +109,8 @@ bool DifferentiableRenderer::SGD(
     auto grad_material_map = differential_shader_.fbo_outputs_[3];
     auto grad_normal_map = differential_shader_.fbo_outputs_[4];
 
+    auto tmp_map = differential_shader_.fbo_outputs_[5];
+
     auto &mesh = (geometry::TriangleMeshExtended &) *mutable_geometry_ptr_;
 
     float total_residual = 0;
@@ -118,11 +120,23 @@ bool DifferentiableRenderer::SGD(
             int *idx = geometry::PointerAt<int>(*index_map, u, v);
             if (*idx > 0) {
                 auto residual = GetVector3d(*residual_map, u, v);
+                auto rendered = GetVector3d(*out_render_map, u, v);
+                auto temp = GetVector3d(*tmp_map, u, v);
 
                 if (update_albedo) {
                     auto &color = mesh.vertex_colors_[*idx];
+
+                    if (HasNan(residual) || HasNan(rendered)) {
+                        std::cout << "residual: " << residual.transpose() << "\n"
+                                  << "rendered: " << rendered.transpose() << "\n"
+                                  << "albedo: " << rendered.transpose() << "\n"
+                                  << "color: " << color.transpose() << "\n";
+                    }
+
                     auto grad_albedo = GetVector3d(*grad_albedo_map, u, v);
                     color -= lambda * grad_albedo;
+
+
                     Clamp(color, 0, 1);
                 }
 
@@ -139,16 +153,17 @@ bool DifferentiableRenderer::SGD(
                     normal = Rotation(-grad_normal) * normal;
                 }
 
+//                std::cout << residual.transpose() << "\n";
                 total_residual += residual.dot(residual);
                 count ++;
             }
         }
     }
-    utility::PrintInfo("SGD on image %d, lambda = %f -> loss = %f\n",
-                       differential_shader_.target_img_id_, lambda,
-                       total_residual / count);
+
     RebindGeometry(RenderOption(),
         update_albedo, update_material, update_normal);
+
+    return total_residual / count;
 }
 
 bool DifferentiableRenderer::AddMutableGeometry(

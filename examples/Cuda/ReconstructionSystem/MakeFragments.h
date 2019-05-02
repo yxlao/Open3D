@@ -225,18 +225,20 @@ void IntegrateForFragment(int fragment_id, DatasetConfig &config) {
     mesher.MarchingCubes(tsdf_volume);
     auto mesh = mesher.mesh().Download();
 
-    PointCloud pcl;
-    pcl.points_ = mesh->vertices_;
-    pcl.normals_ = mesh->vertex_normals_;
-    pcl.colors_ = mesh->vertex_colors_;
+    WriteTriangleMeshToPLY(config.GetPlyFileForFragment(fragment_id), *mesh);
+
+//    PointCloud pcl;
+//    pcl.points_ = mesh->vertices_;
+//    pcl.normals_ = mesh->vertex_normals_;
+//    pcl.colors_ = mesh->vertex_colors_;
 
     /** Write original fragments **/
-    WritePointCloudToPLY(config.GetPlyFileForFragment(fragment_id), pcl);
+//    WritePointCloudToPLY(config.GetPlyFileForFragment(fragment_id), pcl);
 
     /** Write downsampled thumbnail fragments **/
-    auto pcl_downsampled = VoxelDownSample(pcl, config.voxel_size_);
-    WritePointCloudToPLY(config.GetThumbnailPlyFileForFragment(fragment_id),
-                         *pcl_downsampled);
+//    auto pcl_downsampled = VoxelDownSample(pcl, config.voxel_size_);
+//    WritePointCloudToPLY(config.GetThumbnailPlyFileForFragment(fragment_id),
+//                         *pcl_downsampled);
 }
 
 static int Run(DatasetConfig &config) {
