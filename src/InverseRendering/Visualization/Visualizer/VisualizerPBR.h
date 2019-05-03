@@ -36,6 +36,7 @@ public:
 
     bool SetTargetImage(const geometry::Image &target,
                         const camera::PinholeCameraParameters &view);
+    bool UpdateLighting();
     float CallSGD(float lambda,
                   bool update_albedo, bool update_material, bool update_normal);
 };

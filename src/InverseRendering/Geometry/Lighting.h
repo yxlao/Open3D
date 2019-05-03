@@ -38,7 +38,6 @@ public:
 
     bool ReadEnvFromHDR(const std::string& filename);
 
-protected:
     std::shared_ptr<geometry::Image> hdr_;
 
 public:

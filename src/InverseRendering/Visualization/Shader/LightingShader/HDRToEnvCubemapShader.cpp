@@ -64,11 +64,7 @@ bool HDRToEnvCubemapShader::BindLighting(const geometry::Lighting &lighting,
                                          const visualization::RenderOption &option,
                                          const visualization::ViewControl &view) {
     auto ibl = (const geometry::IBLLighting &) lighting;
-    if (!ibl.BindHDRTexture2D()) {
-        PrintShaderWarning("Binding failed when loading light.");
-        return false;
-    }
-    ibl_ = ibl;
+    tex_hdr_buffer_ = ibl.tex_hdr_buffer_;
 
     return true;
 }
@@ -100,7 +96,7 @@ bool HDRToEnvCubemapShader::RenderGeometry(const geometry::Geometry &geometry,
     /** 2. Setup constant textures **/
     glUniform1i(tex_hdr_, 0);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, ibl_.tex_hdr_buffer_);
+    glBindTexture(GL_TEXTURE_2D, tex_hdr_buffer_);
 
     /** 3. Setup varying viewpoints and rendering target **/
     for (int i = 0; i < 6; ++i) {

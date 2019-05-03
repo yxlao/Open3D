@@ -63,8 +63,8 @@ bool PreConvEnvDiffuseShader::BindGeometry(const geometry::Geometry &geometry,
 bool PreConvEnvDiffuseShader::BindLighting(const geometry::Lighting &lighting,
                                            const visualization::RenderOption &option,
                                            const visualization::ViewControl &view) {
-    ibl_ = (const geometry::IBLLighting &) lighting;
-
+    auto &ibl = (const geometry::IBLLighting &) lighting;
+    tex_env_buffer_ = ibl.tex_env_buffer_;
     return true;
 }
 
@@ -95,7 +95,7 @@ bool PreConvEnvDiffuseShader::RenderGeometry(const geometry::Geometry &geometry,
     /** 2. Setup constant textures **/
     glUniform1i(tex_env_, 0);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, ibl_.tex_env_buffer_);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, tex_env_buffer_);
 
     /** 3. Setup varying uniforms and rendering target **/
     for (int i = 0; i < 6; ++i) {

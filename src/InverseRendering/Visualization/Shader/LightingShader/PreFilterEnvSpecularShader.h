@@ -78,7 +78,7 @@ protected:
     GLHelper::GLMatrix4f projection_;
     std::vector<GLHelper::GLMatrix4f> views_;
 
-    geometry::IBLLighting ibl_;
+    GLuint tex_env_buffer_;
 };
 
 }

@@ -101,6 +101,11 @@ bool VisualizerDR::SetTargetImage(const geometry::Image &target,
     view_control_ptr_->ConvertFromPinholeCameraParameters(view);
 }
 
+bool VisualizerDR::UpdateLighting() {
+    auto &renderer = (glsl::DifferentiableRenderer &) *geometry_renderer_ptrs_[0];
+    renderer.UpdateEnvLighting();
+}
+
 float VisualizerDR::CallSGD(float lambda,
                            bool update_albedo, bool update_material, bool update_normal) {
     auto &renderer = (glsl::DifferentiableRenderer &) *geometry_renderer_ptrs_[0];

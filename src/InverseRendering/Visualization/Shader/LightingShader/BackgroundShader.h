@@ -64,8 +64,7 @@ protected:
     GLuint vertex_position_buffer_;
     GLuint triangle_buffer_;
 
-    /** lighting **/
-    geometry::IBLLighting ibl_;
+    GLuint tex_env_buffer_;
 };
 
 }

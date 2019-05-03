@@ -26,6 +26,7 @@ bool IBLLighting::BindHDRTexture2D() {
         is_hdr_buffer_generated_ = true;
     }
 
+    utility::PrintInfo("Rebinding HDR Texture\n");
     glBindTexture(GL_TEXTURE_2D, tex_hdr_buffer_);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F,
         hdr_->width_, hdr_->height_, 0, GL_RGB, GL_FLOAT, hdr_->data_.data());

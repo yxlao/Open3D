@@ -65,7 +65,7 @@ bool BackgroundShader::BindLighting(const geometry::Lighting &lighting,
                                     const visualization::RenderOption &option,
                                     const visualization::ViewControl &view) {
     auto ibl = (const geometry::IBLLighting &) lighting;
-    ibl_ = ibl;
+    tex_env_buffer_ = ibl.tex_env_buffer_;
     return true;
 }
 
@@ -86,7 +86,7 @@ bool BackgroundShader::RenderGeometry(const geometry::Geometry &geometry,
     /** 2. Set textures **/
     glUniform1i(tex_env_, 0);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, ibl_.tex_env_buffer_);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, tex_env_buffer_);
 
     /** 3. Set up buffers **/
     glEnableVertexAttribArray(0);

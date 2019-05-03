@@ -71,6 +71,16 @@ int main(int argc, char **argv) {
     float lambda = 0.001;
     for (int i = 0; i < 100; ++i) {
         float loss = 0;
+
+        for (int k = 0; k < 10000; ++k) {
+            auto ptr = geometry::PointerAt<float>(*ibl->hdr_,
+                                                  rand() % ibl->hdr_->width_,
+                                                  rand() % ibl->hdr_->height_,
+                                                  0);
+            ptr[0] = ptr[1] = ptr[2] = 0;
+        }
+
+        visualizer.UpdateLighting();
         for (int j = 0; j < image_names.size(); ++j) {
             auto target = geometry::FlipImageExt(*io::CreateImageFromFile(image_names[j]));
             io::ReadIJsonConvertibleFromJSON(cam_names[j], cam_params);
@@ -84,8 +94,7 @@ int main(int argc, char **argv) {
 //            visualizer.CaptureBuffer(filename + "-render.png", 0);
 //            visualizer.CaptureBuffer(filename + "-residual.png", 1);
 //            visualizer.CaptureBuffer(filename + "-target.png", 5);
-
-            loss += visualizer.CallSGD(lambda, false, false, true);
+            loss += visualizer.CallSGD(lambda, false, false, false);
         }
 
         utility::PrintInfo("Iter %d: lambda = %f -> loss = %f\n",

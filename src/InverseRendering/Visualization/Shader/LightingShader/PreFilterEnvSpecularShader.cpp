@@ -65,7 +65,8 @@ bool PreFilterEnvSpecularShader::BindGeometry(const geometry::Geometry &geometry
 bool PreFilterEnvSpecularShader::BindLighting(const geometry::Lighting &lighting,
                                               const visualization::RenderOption &option,
                                               const visualization::ViewControl &view) {
-    ibl_ = (const geometry::IBLLighting &) lighting;
+    auto &ibl = (const geometry::IBLLighting &) lighting;
+    tex_env_buffer_ = ibl.tex_env_buffer_;
 
     return true;
 }
@@ -92,7 +93,7 @@ bool PreFilterEnvSpecularShader::RenderGeometry(const geometry::Geometry &geomet
     /** 2. Setup constant textures **/
     glUniform1i(tex_env_, 0);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, ibl_.tex_env_buffer_);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, tex_env_buffer_);
 
     for (int lod = 0; lod < kMipMapLevels; ++lod) {
         unsigned width  = kCubemapSize >> lod;

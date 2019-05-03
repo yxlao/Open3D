@@ -31,11 +31,13 @@ public:
              bool update_color,
              bool update_material,
              bool update_normal);
+
     bool RebindTexture(const geometry::Image &image);
     bool RebindGeometry(const RenderOption &option,
                         bool rebind_color,
                         bool rebind_material,
                         bool rebind_normal);
+    bool UpdateEnvLighting();
 
 protected:
     /** Preprocess illumination **/

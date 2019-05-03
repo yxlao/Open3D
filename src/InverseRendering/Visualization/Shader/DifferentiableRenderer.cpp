@@ -33,10 +33,15 @@ bool DifferentiableRenderer::Render(const RenderOption &option,
                               "Lighting type is not IBL\n");
         return false;
     }
-    auto &ibl = (geometry::IBLLighting &) (*lighting_ptr_);
 
     bool success = true;
+    auto &ibl = (geometry::IBLLighting &) (*lighting_ptr_);
+
     if (!ibl.is_preprocessed_) {
+        if (!ibl.BindHDRTexture2D()) {
+            utility::PrintError("Binding failed when loading light.");
+            return false;
+        }
         success &= PreprocessLights(ibl, option, view);
     }
 
@@ -216,6 +221,13 @@ bool DifferentiableRenderer::RebindGeometry(
         *mutable_geometry_ptr_,
         option, rebind_color, rebind_material, rebind_normal);
 }
+
+bool DifferentiableRenderer::UpdateEnvLighting() {
+    auto &ibl = (geometry::IBLLighting &) (*lighting_ptr_);
+//    ibl.hdr_ = hdr;
+    ibl.is_preprocessed_ = false;
+}
+
 }
 }
 }
