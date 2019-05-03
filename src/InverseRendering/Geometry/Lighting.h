@@ -6,7 +6,6 @@
 
 #include <Open3D/Open3D.h>
 #include <stb_image/stb_image.h>
-#include "HDRImage.h"
 
 namespace open3d {
 namespace geometry {
@@ -40,11 +39,12 @@ public:
     bool ReadEnvFromHDR(const std::string& filename);
 
 protected:
-    geometry::HDRImage hdr_;
+    std::shared_ptr<geometry::Image> hdr_;
 
 public:
     bool is_preprocessed_ = false;
 
+    bool is_hdr_buffer_generated_ = false;
     GLuint tex_hdr_buffer_;
     GLuint tex_env_buffer_;
     GLuint tex_env_diffuse_buffer_;
@@ -65,6 +65,9 @@ public:
     void UpdateLutSpecularBuffer(GLuint tex_lut_specular_buffer) {
         tex_lut_specular_buffer_ = tex_lut_specular_buffer;
     }
+
+    void ShiftValue(const Eigen::Vector3d &direction,
+                    const Eigen::Vector3f &psi);
 };
 
 class SpotLighting : public Lighting {
