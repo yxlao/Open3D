@@ -25,13 +25,13 @@ LoadDataset(const std::string &path) {
 }
 
 int main(int argc, char **argv) {
-    auto result = LoadDataset("/media/wei/Data/data/pbr/image/plastic_alex");
+    auto result = LoadDataset("/media/wei/Data/data/pbr/image/gold_alex");
     auto image_names = result.first;
     auto cam_names = result.second;
 
     auto mesh = std::make_shared<geometry::TriangleMeshExtended>();
     io::ReadTriangleMeshExtendedFromPLY(
-        "/media/wei/Data/data/pbr/model/sphere_plastic.ply", *mesh);
+        "/media/wei/Data/data/pbr/model/sphere_gold.ply", *mesh);
 //    for (auto &color : mesh->vertex_colors_) {
 //        color = Eigen::Vector3d(1, 0, 0);
 //    }
@@ -68,19 +68,14 @@ int main(int argc, char **argv) {
     camera::PinholeCameraParameters cam_params;
 
     std::string kBasePath = "/media/wei/Data/results/";
+
+    std::random_device rd;
+    std::uniform_real_distribution<float> dist(-1, 1);
+    std::uniform_real_distribution<float> dist0(0, 1);
+
     float lambda = 0.001;
-    for (int i = 0; i < 100; ++i) {
-        float loss = 0;
-
-        for (int k = 0; k < 10000; ++k) {
-            auto ptr = geometry::PointerAt<float>(*ibl->hdr_,
-                                                  rand() % ibl->hdr_->width_,
-                                                  rand() % ibl->hdr_->height_,
-                                                  0);
-            ptr[0] = ptr[1] = ptr[2] = 0;
-        }
-
-        visualizer.UpdateLighting();
+    float loss = 0;
+    for (int i = 0; i < 1; ++i) {
         for (int j = 0; j < image_names.size(); ++j) {
             auto target = geometry::FlipImageExt(*io::CreateImageFromFile(image_names[j]));
             io::ReadIJsonConvertibleFromJSON(cam_names[j], cam_params);
@@ -94,7 +89,7 @@ int main(int argc, char **argv) {
 //            visualizer.CaptureBuffer(filename + "-render.png", 0);
 //            visualizer.CaptureBuffer(filename + "-residual.png", 1);
 //            visualizer.CaptureBuffer(filename + "-target.png", 5);
-            loss += visualizer.CallSGD(lambda, false, false, false);
+            loss += visualizer.CallSGD(lambda, true, false, false);
         }
 
         utility::PrintInfo("Iter %d: lambda = %f -> loss = %f\n",
@@ -105,6 +100,51 @@ int main(int argc, char **argv) {
             io::WriteTriangleMeshExtendedToPLY(
                 "mesh-iter-" + std::to_string(i) + ".ply", *mesh);
         }
+    }
+
+    float curr_loss = 0;
+    float delta_c = 0.001f, delta_m;
+    auto wc = Eigen::Vector3d(dist0(rd), dist0(rd), dist0(rd)).normalized();
+    Eigen::Vector3d wm;
+    for (int i = 0; i < 100; ++i) {
+        if (dist0(rd) > 0.0005) {
+            wm = ibl->SampleAround(wc, 0.02);
+        } else {
+            wm = Eigen::Vector3d(dist0(rd), dist0(rd), dist0(rd)).normalized();
+        }
+        std::cout << "wm = " << wm.transpose() << "\n";
+
+        auto prev_value = ibl->GetValueAt(wm);
+        ibl->SetValueAt(wm, prev_value + Eigen::Vector3f(dist(rd), dist(rd), dist(rd)));
+
+        visualizer.UpdateLighting();
+        curr_loss = 0;
+        for (int j = 0; j < image_names.size(); ++j) {
+            auto target = geometry::FlipImageExt(*io::CreateImageFromFile(image_names[j]));
+            io::ReadIJsonConvertibleFromJSON(cam_names[j], cam_params);
+            visualizer.SetTargetImage(*target, cam_params);
+
+            visualizer.UpdateRender();
+            visualizer.PollEvents();
+            curr_loss += visualizer.CallSGD(lambda, false, false, false);
+        }
+        utility::PrintInfo("Iter %d: lambda = %f -> loss = %f\n",
+                           i, lambda, curr_loss);
+
+        delta_m = curr_loss - loss;
+        if (delta_m > 0) {
+            // backtrace
+            ibl->SetValueAt(wm, prev_value);
+        } else {
+            utility::PrintInfo("Accept wm\n");
+        }
+
+        if ((delta_c < 0 && delta_m > delta_c) || dist0(rd) < std::abs(delta_m / delta_c)) {
+            utility::PrintInfo("Update wc to wm\n");
+            delta_c = delta_m;
+            wc = wm;
+        }
+
     }
 
     visualization::DrawGeometriesPBR({mesh}, {textures}, {ibl});

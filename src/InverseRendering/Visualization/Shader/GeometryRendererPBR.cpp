@@ -27,12 +27,17 @@ bool TriangleMeshRendererPBR::Render(const RenderOption &option,
         == geometry::Lighting::LightingType::IBL) {
 
         auto &ibl = (geometry::IBLLighting &) (*lighting_ptr_);
-        if (! ibl.is_preprocessed_) {
+        if (!ibl.is_preprocessed_) {
+            if (!ibl.BindHDRTexture2D()) {
+                utility::PrintError("Binding failed when loading light.");
+                return false;
+            }
             success &= PreprocessLights(ibl, option, view);
         }
 
         if (mesh.HasUVs()) {
-            success &= ibx_tex_map_shader_.Render(mesh, textures_, ibl, option, view);
+            success &= ibx_tex_map_shader_.Render(
+                mesh, textures_, ibl, option, view);
         } else if (mesh.HasMaterials()) {
             success &= ibl_vertex_map_shader_.Render(
                 mesh, textures_, ibl, option, view);

@@ -38,7 +38,12 @@ public:
 
     bool ReadEnvFromHDR(const std::string& filename);
 
-    std::shared_ptr<geometry::Image> hdr_;
+    Eigen::Vector3d SampleAround(const Eigen::Vector3d &position,
+                                 double sigma);
+    Eigen::Vector3f GetValueAt(const Eigen::Vector3d &position);
+    void SetValueAt(const Eigen::Vector3d &position, const Eigen::Vector3f &value);
+
+    std::shared_ptr<geometry::Image> hdr_; /** log - lat map **/
 
 public:
     bool is_preprocessed_ = false;
