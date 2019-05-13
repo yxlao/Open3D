@@ -89,6 +89,8 @@ std::shared_ptr<OctreeLeafNode> OctreeColorLeafNode::Clone() const {
     return cloned_node;
 }
 
+Eigen::Vector3d OctreeColorLeafNode::GetRenderColor() const { return color_; };
+
 bool OctreeColorLeafNode::operator==(const OctreeLeafNode& that) const {
     try {
         const OctreeColorLeafNode& that_color_node =

@@ -99,16 +99,24 @@ class OctreeLeafNode : public OctreeNode {
 public:
     virtual bool operator==(const OctreeLeafNode& other) const = 0;
     virtual std::shared_ptr<OctreeLeafNode> Clone() const = 0;
+    // Classes that inherit OctreeLeafNode shall determain their render color
+    virtual Eigen::Vector3d GetRenderColor() const {
+        return Eigen::Vector3d(0, 0, 0);
+    };
 };
 
 class OctreeColorLeafNode : public OctreeLeafNode {
 public:
     bool operator==(const OctreeLeafNode& other) const override;
     std::shared_ptr<OctreeLeafNode> Clone() const override;
+    Eigen::Vector3d GetRenderColor() const override;
+
+public:
     static std::function<std::shared_ptr<OctreeLeafNode>()> GetInitFunction();
     static std::function<void(std::shared_ptr<OctreeLeafNode>)>
     GetUpdateFunction(const Eigen::Vector3d& color);
 
+public:
     // TODO: flexible data, with lambda function for handling node
     Eigen::Vector3d color_ = Eigen::Vector3d(0, 0, 0);
 };
