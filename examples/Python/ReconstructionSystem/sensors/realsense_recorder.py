@@ -1,5 +1,7 @@
 # pyrealsense2 is required.
 # Please see instructions in https://github.com/IntelRealSense/librealsense/tree/master/wrappers/python
+import sys
+sys.path.append('/usr/local/lib')
 import pyrealsense2 as rs
 import numpy as np
 import cv2
