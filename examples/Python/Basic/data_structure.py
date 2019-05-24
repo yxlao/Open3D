@@ -63,6 +63,7 @@ if __name__ == "__main__":
 
     octree = o3d.geometry.Octree(6)
     octree.convert_from_point_cloud(pcd)
-    o3d.draw_geometries([octree])
+    # o3d.draw_geometries([octree])
 
-    vg = octree
+    voxel_grid = octree.to_voxel_grid()
+    o3d.draw_geometries([voxel_grid])

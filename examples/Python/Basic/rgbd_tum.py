@@ -18,7 +18,7 @@ if __name__ == "__main__":
     print(rgbd_image)
     plt.subplot(1, 2, 1)
     plt.title('TUM grayscale image')
-    plt.imshow(rgbd_image.color)
+    plt.imshow(color_raw)
     plt.subplot(1, 2, 2)
     plt.title('TUM depth image')
     plt.imshow(rgbd_image.depth)
