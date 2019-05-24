@@ -56,11 +56,13 @@ def bunny_mesh():
 
 
 def mesh_generator():
-    yield o3d.geometry.create_mesh_box()
-    yield o3d.geometry.create_mesh_sphere()
-    yield o3d.io.read_triangle_mesh('../../TestData/knot.ply')
-    yield bunny_mesh()
-    yield armadillo_mesh()
+    # yield o3d.geometry.create_mesh_box()
+    # yield o3d.geometry.create_mesh_sphere()
+    # yield o3d.io.read_triangle_mesh('../../TestData/knot.ply')
+    mesh_simple = o3d.geometry.simplify_vertex_clustering(bunny_mesh(),
+                                                          0.008)
+    yield mesh_simple
+    # yield armadillo_mesh()
 
 
 if __name__ == "__main__":
