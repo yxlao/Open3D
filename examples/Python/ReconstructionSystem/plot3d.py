@@ -17,6 +17,11 @@ def cameracenter_from_translation(R, t):
     return C.squeeze()
 
 
+def cameracenter_from_T(T):
+    R, t = T[:3, :3], T[:3, 3]
+    return cameracenter_from_translation(R, t)
+
+
 def axis_equal(ax=None):
     if ax is None:
         ax = plt.gca()
@@ -104,12 +109,12 @@ def plot_camera(ax=None,
         ax.text(*C0, txt)
 
 
-def plot_cameras(Ts):
+def plot_cameras(Ts, size=25):
     plt.figure()
     ax3d()
     for idx, T in enumerate(Ts):
         R, t = T[:3, :3], T[:3, 3]
-        plot_camera(R=R, t=t, size=1, txt=f"{idx:02d}", linewidth=1.0)
+        plot_camera(R=R, t=t, size=size, txt=f"{idx:02d}", linewidth=1.0)
     axis_equal()
     axis_label()
     plt.show()
