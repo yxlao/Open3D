@@ -106,17 +106,13 @@ bool DifferentialShader::BindGeometry(const geometry::Geometry &geometry,
     CheckGLState("SceneDifferentialShader - BindGeometry");
 
     bound_ = true;
-    return true;
-}
 
-bool DifferentialShader::BindTextures(const std::vector<open3d::geometry::Image> &textures,
-                                      const RenderOption &option,
-                                      const ViewControl &view) {
-    /** Input one target image size for allocation **/
-    assert(textures.size() == 1);
-    tex_target_img_buffer_ = BindTexture2D(textures[0], option);
+    /** WARNING! this should be fixed if we want to deal with this **/
+//    assert(textures.size() == 1);
+//    tex_target_img_buffer_ = BindTexture2D(textures[0], option);
 
     CheckGLState("DifferentialShader - BindTexture");
+
     return true;
 }
 

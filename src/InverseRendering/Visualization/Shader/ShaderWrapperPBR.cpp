@@ -11,7 +11,6 @@ namespace visualization {
 namespace glsl {
 
 bool ShaderWrapperPBR::Render(const geometry::Geometry &geometry,
-                              const std::vector<geometry::Image> &textures,
                               const geometry::Lighting &lighting,
                               const RenderOption &option,
                               const ViewControl &view) {
@@ -20,7 +19,6 @@ bool ShaderWrapperPBR::Render(const geometry::Geometry &geometry,
     }
     if (!bound_) {
         BindGeometry(geometry, option, view);
-        BindTextures(textures, option, view);
         BindLighting(lighting, option, view);
     }
     if (!compiled_ || !bound_) {

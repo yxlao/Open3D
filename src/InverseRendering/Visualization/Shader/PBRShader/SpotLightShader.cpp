@@ -41,17 +41,17 @@ namespace visualization {
 namespace glsl {
 
 bool SpotLightShader::Compile() {
-    if (! CompileShaders(SpotLightVertexShader, nullptr, SpotLightFragmentShader)) {
+    if (!CompileShaders(SpotLightVertexShader, nullptr, SpotLightFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }
 
-    M_               = glGetUniformLocation(program_, "M");
-    V_               = glGetUniformLocation(program_, "V");
-    P_               = glGetUniformLocation(program_, "P");
+    M_ = glGetUniformLocation(program_, "M");
+    V_ = glGetUniformLocation(program_, "V");
+    P_ = glGetUniformLocation(program_, "P");
 
     light_positions_ = glGetUniformLocation(program_, "light_positions");
-    light_colors_    = glGetUniformLocation(program_, "light_colors");
+    light_colors_ = glGetUniformLocation(program_, "light_colors");
     camera_position_ = glGetUniformLocation(program_, "camera_position");
 
     texes_.resize(kNumTextures);
@@ -70,8 +70,8 @@ void SpotLightShader::Release() {
 }
 
 bool SpotLightShader::BindGeometry(const geometry::Geometry &geometry,
-                               const RenderOption &option,
-                               const ViewControl &view) {
+                                   const RenderOption &option,
+                                   const ViewControl &view) {
     // If there is already geometry, we first unbind it.
     // We use GL_STATIC_DRAW. When geometry changes, we clear buffers and
     // rebind the geometry. Note that this approach is slow. If the geometry is
@@ -87,47 +87,42 @@ bool SpotLightShader::BindGeometry(const geometry::Geometry &geometry,
     std::vector<Eigen::Vector3i> triangles;
 
     if (!PrepareBinding(geometry, option, view,
-        points, normals, uvs, triangles)) {
+                        points, normals, uvs, triangles)) {
         PrintShaderWarning("Binding failed when preparing data.");
         return false;
     }
 
     // Create buffers and bind the geometry
     vertex_position_buffer_ = BindBuffer(points, GL_ARRAY_BUFFER, option);
-    vertex_normal_buffer_   = BindBuffer(normals, GL_ARRAY_BUFFER, option);
-    vertex_uv_buffer_       = BindBuffer(uvs, GL_ARRAY_BUFFER, option);
-    triangle_buffer_        = BindBuffer(triangles, GL_ELEMENT_ARRAY_BUFFER, option);
+    vertex_normal_buffer_ = BindBuffer(normals, GL_ARRAY_BUFFER, option);
+    vertex_uv_buffer_ = BindBuffer(uvs, GL_ARRAY_BUFFER, option);
+    triangle_buffer_ = BindBuffer(triangles, GL_ELEMENT_ARRAY_BUFFER, option);
+
+    auto &mesh = (const geometry::ExtendedTriangleMesh &) geometry;
+    assert(mesh.image_textures_.size() == kNumTextures);
+    tex_buffers_.resize(mesh.image_textures_.size());
+    for (int i = 0; i < mesh.image_textures_.size(); ++i) {
+        tex_buffers_[i] = BindTexture2D(mesh.image_textures_[i], option);
+    }
 
     bound_ = true;
     return true;
 }
 
-bool SpotLightShader::BindTextures(const std::vector<geometry::Image> &textures,
-                               const RenderOption& option,
-                               const ViewControl &view) {
-    assert(textures.size() == kNumTextures);
-    tex_buffers_.resize(textures.size());
-    for (int i = 0; i < textures.size(); ++i) {
-        tex_buffers_[i] = BindTexture2D(textures[i], option);
-    }
-
-    return true;
-}
-
 bool SpotLightShader::BindLighting(const geometry::Lighting &lighting,
-                               const visualization::RenderOption &option,
-                               const visualization::ViewControl &view) {
+                                   const visualization::RenderOption &option,
+                                   const visualization::ViewControl &view) {
     auto spot_lighting = (const geometry::SpotLighting &) lighting;
 
     light_positions_data_ = spot_lighting.light_positions_;
-    light_colors_data_    = spot_lighting.light_colors_;
+    light_colors_data_ = spot_lighting.light_colors_;
 
     return true;
 }
 
 bool SpotLightShader::RenderGeometry(const geometry::Geometry &geometry,
-                                 const RenderOption &option,
-                                 const ViewControl &view) {
+                                     const RenderOption &option,
+                                     const ViewControl &view) {
     if (!PrepareRendering(geometry, option, view)) {
         PrintShaderWarning("Rendering failed during preparation.");
         return false;
@@ -139,11 +134,11 @@ bool SpotLightShader::RenderGeometry(const geometry::Geometry &geometry,
     glUniformMatrix4fv(P_, 1, GL_FALSE, view.GetProjectionMatrix().data());
 
     glUniform3fv(camera_position_, 1,
-                 (const GLfloat*) view.GetEye().data());
+                 (const GLfloat *) view.GetEye().data());
     glUniform3fv(light_positions_, light_positions_data_.size(),
-                 (const GLfloat*) light_positions_data_.data());
+                 (const GLfloat *) light_positions_data_.data());
     glUniform3fv(light_colors_, light_colors_data_.size(),
-                 (const GLfloat*) light_colors_data_.data());
+                 (const GLfloat *) light_colors_data_.data());
 
     for (int i = 0; i < kNumTextures; ++i) {
         glUniform1i(texes_[i], i);
@@ -232,7 +227,7 @@ bool SpotLightShader::PrepareBinding(
         return false;
     }
     auto &mesh = (const geometry::ExtendedTriangleMesh &) geometry;
-    if (! mesh.HasTriangles()) {
+    if (!mesh.HasTriangles()) {
         PrintShaderWarning("Binding failed with empty triangle mesh.");
         return false;
     }

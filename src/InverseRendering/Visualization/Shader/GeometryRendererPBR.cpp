@@ -37,16 +37,16 @@ bool TriangleMeshRendererPBR::Render(const RenderOption &option,
 
         if (mesh.HasUVs()) {
             success &= ibx_tex_map_shader_.Render(
-                mesh, textures_, ibl, option, view);
-        } else if (mesh.HasMaterials()) {
+                mesh, ibl, option, view);
+        } else if (mesh.HasVertexTextures()) {
             success &= ibl_vertex_map_shader_.Render(
-                mesh, textures_, ibl, option, view);
+                mesh, ibl, option, view);
         } else {
             success = false;
         }
 
         success &= background_shader_.Render(
-            mesh, textures_, ibl, option, view);
+            mesh, ibl, option, view);
     }
 
     /* no ibl: simple */
@@ -56,7 +56,7 @@ bool TriangleMeshRendererPBR::Render(const RenderOption &option,
         const auto &spot = (const geometry::SpotLighting &) (*lighting_ptr_);
         if (mesh.HasVertexNormals() && mesh.HasUVs()) {
             success &= spot_light_shader_.Render(
-                mesh, textures_, spot, option, view);
+                mesh, spot, option, view);
         }
     }
 

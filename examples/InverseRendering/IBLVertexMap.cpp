@@ -17,11 +17,10 @@ int main() {
         "/Users/dongw1/Work/Data/resources/textures/pbr/gold/sphere.ply", *mesh);
 //        "/media/wei/Data/data/pbr/model/sphere_gold.ply", *mesh);
 
-    std::vector<geometry::Image> textures; /** dummy **/
     auto ibl = std::make_shared<geometry::IBLLighting>();
     ibl->ReadEnvFromHDR("/Users/dongw1/Work/Data/resources/textures/hdr/newport_loft.hdr");
 //    ibl->ReadEnvFromHDR("/media/wei/Data/data/pbr/env/Alexs_Apt_2k.hdr");
     
     utility::SetVerbosityLevel(utility::VerbosityLevel::VerboseDebug);
-    visualization::DrawGeometriesPBR({mesh}, {textures}, {ibl});
+    visualization::DrawGeometriesPBR({mesh}, {ibl});
 }

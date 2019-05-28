@@ -22,7 +22,7 @@ bool DifferentiableRenderer::Render(const RenderOption &option,
     }
     auto &mesh =
         (const geometry::ExtendedTriangleMesh &) (*mutable_geometry_ptr_);
-    if (!mesh.HasMaterials()) {
+    if (!mesh.HasVertexTextures()) {
         utility::PrintWarning("[DifferentiableRenderer] "
                               "Mesh does not include material\n");
         return false;
@@ -46,15 +46,15 @@ bool DifferentiableRenderer::Render(const RenderOption &option,
     }
 
     /** Major differential rendering steps **/
-    success &= differential_shader_.Render(mesh, textures_, ibl, option, view);
-    success &= index_shader_.Render(mesh, textures_, ibl, option, view);
+    success &= differential_shader_.Render(mesh, ibl, option, view);
+    success &= index_shader_.Render(mesh, ibl, option, view);
 
     /** Visualize object changes **/
     success &=
-        ibx_vertex_map_shader_.Render(mesh, textures_, ibl, option, view);
+        ibx_vertex_map_shader_.Render(mesh, ibl, option, view);
 
     /** Visualize background **/
-    success &= background_shader_.Render(mesh, textures_, ibl, option, view);
+    success &= background_shader_.Render(mesh, ibl, option, view);
 
     return success;
 }

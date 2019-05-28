@@ -29,10 +29,6 @@ protected:
     bool BindGeometry(const geometry::Geometry &geometry,
                       const RenderOption &option,
                       const ViewControl &view) final;
-    /** Dummy, texture for rendering is not used **/
-    bool BindTextures(const std::vector<geometry::Image> &textures,
-                      const RenderOption &option,
-                      const ViewControl &view) final { return true; };
     /** Assign cubemap stored in the lighting **/
     bool BindLighting(const geometry::Lighting &lighting,
                       const RenderOption &option,

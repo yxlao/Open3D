@@ -38,11 +38,6 @@ public:
         return UpdateGeometry();
     }
 
-    virtual bool AddTextures(const std::vector<geometry::Image> &textures) {
-        textures_ = textures;
-        return true;
-    }
-
     virtual bool AddLights(const std::shared_ptr<geometry::Lighting> &lighting) {
         lighting_ptr_ = lighting;
         return true;
@@ -74,22 +69,22 @@ public:
 
         auto dummy = std::make_shared<geometry::TriangleMesh>();
         success &= hdr_to_env_cubemap_shader_.Render(
-            *dummy, textures_, ibl, option, view);
+            *dummy, ibl, option, view);
         ibl.UpdateEnvBuffer(
             hdr_to_env_cubemap_shader_.GetGeneratedCubemapBuffer());
 
         success &= preconv_env_diffuse_shader_.Render(
-            *dummy, textures_, ibl, option, view);
+            *dummy, ibl, option, view);
         ibl.UpdateEnvDiffuseBuffer(
             preconv_env_diffuse_shader_.GetGeneratedDiffuseBuffer());
 
         success &= prefilter_env_specular_shader_.Render(
-            *dummy, textures_, ibl, option, view);
+            *dummy, ibl, option, view);
         ibl.UpdateEnvSpecularBuffer(
             prefilter_env_specular_shader_.GetGeneratedPrefilterEnvBuffer());
 
         success &= preintegrate_lut_specular_shader_.Render(
-            *dummy, textures_, ibl, option, view);
+            *dummy, ibl, option, view);
         ibl.UpdateLutSpecularBuffer(
             preintegrate_lut_specular_shader_.GetGeneratedLUTBuffer());
 
@@ -99,7 +94,6 @@ public:
     }
 
 protected:
-    std::vector<geometry::Image> textures_;
     std::shared_ptr<geometry::Lighting> lighting_ptr_ = nullptr;
 
     /** IBL preprocessors **/

@@ -66,16 +66,11 @@ protected:
 
 public:
     bool Render(const geometry::Geometry &geometry,
-                const std::vector<geometry::Image> &textures,
                 const geometry::Lighting &lighting,
                 const RenderOption &option,
                 const ViewControl &view);
 
     /** Bind is separated in three functions **/
-    /* virtual bool BindGeometry */
-    virtual bool BindTextures(const std::vector<geometry::Image> &textures,
-                              const RenderOption &option,
-                              const ViewControl &view) = 0;
     virtual bool BindLighting(const geometry::Lighting &lighting,
                               const RenderOption &option,
                               const ViewControl &view) = 0;

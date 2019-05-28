@@ -15,17 +15,19 @@ int main() {
     auto mesh = std::make_shared<geometry::ExtendedTriangleMesh>();
     io::ReadExtendedTriangleMeshFromPLY("/Users/dongw1/Work/Data/resources/textures/pbr/gold/sphere.ply", *mesh);
 
+
     std::string base_path = "/Users/dongw1/Work/Data/resources/textures/pbr/gold";
-    std::vector<geometry::Image> textures;
-    textures.push_back(*io::CreateImageFromFile(base_path + "/albedo.png"));
-    textures.push_back(*io::CreateImageFromFile(base_path + "/normal.png"));
-    textures.push_back(*io::CreateImageFromFile(base_path + "/metallic.png"));
-    textures.push_back(*io::CreateImageFromFile(base_path + "/roughness.png"));
-    textures.push_back(*io::CreateImageFromFile(base_path + "/ao.png"));
+
+    std::vector<std::string> filenames = {base_path + "/albedo.png",
+                                          base_path + "/normal.png",
+                                          base_path + "/metallic.png",
+                                          base_path + "/roughness.png",
+                                          base_path + "/ao.png"};
+    mesh->LoadImageTextures(filenames);
 
     auto ibl = std::make_shared<geometry::IBLLighting>();
     ibl->ReadEnvFromHDR("/Users/dongw1/Work/Data/resources/textures/hdr/newport_loft.hdr");
 
     utility::SetVerbosityLevel(utility::VerbosityLevel::VerboseDebug);
-    visualization::DrawGeometriesPBR({mesh}, {textures}, {ibl});
+    visualization::DrawGeometriesPBR({mesh}, {ibl});
 }

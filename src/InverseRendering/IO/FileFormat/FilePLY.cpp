@@ -295,7 +295,7 @@ bool WriteExtendedTriangleMeshToPLY(const std::string &filename,
         ply_add_property(ply_file, "u", PLY_DOUBLE, PLY_DOUBLE, PLY_DOUBLE);
         ply_add_property(ply_file, "v", PLY_DOUBLE, PLY_DOUBLE, PLY_DOUBLE);
     }
-    if (mesh.HasMaterials()) {
+    if (mesh.HasVertexTextures()) {
         ply_add_property(ply_file, "roughness", PLY_DOUBLE, PLY_DOUBLE, PLY_DOUBLE);
         ply_add_property(ply_file, "metallic", PLY_DOUBLE, PLY_DOUBLE, PLY_DOUBLE);
         ply_add_property(ply_file, "ao", PLY_DOUBLE, PLY_DOUBLE, PLY_DOUBLE);
@@ -335,7 +335,7 @@ bool WriteExtendedTriangleMeshToPLY(const std::string &filename,
             ply_write(ply_file, uv(0));
             ply_write(ply_file, uv(1));
         }
-        if (mesh.HasMaterials()) {
+        if (mesh.HasVertexTextures()) {
             const auto &material = mesh.vertex_textures_[i];
             ply_write(ply_file, material(0));
             ply_write(ply_file, material(1));

@@ -105,22 +105,18 @@ bool IBLTexMapShader::BindGeometry(const geometry::Geometry &geometry,
     triangle_buffer_ = BindBuffer(triangles, GL_ELEMENT_ARRAY_BUFFER, option);
 
     bound_ = true;
-
     CheckGLState("IBLShader - BindGeometry");
-    return true;
-}
 
-bool IBLTexMapShader::BindTextures(const std::vector<geometry::Image> &textures,
-                                   const RenderOption &option,
-                                   const ViewControl &view) {
-    assert(textures.size() == kNumObjectTextures);
-    texes_object_buffers_.resize(textures.size());
-    for (int i = 0; i < textures.size(); ++i) {
-        texes_object_buffers_[i] = BindTexture2D(textures[i], option);
+    auto mesh = (const geometry::ExtendedTriangleMesh &) geometry;
+    assert(mesh.image_textures_.size() == kNumObjectTextures);
+    texes_object_buffers_.resize(mesh.image_textures_.size());
+    for (int i = 0; i < mesh.image_textures_.size(); ++i) {
+        texes_object_buffers_[i] = BindTexture2D(mesh.image_textures_[i], option);
         std::cout << "tex_obejct_buffer: " << texes_object_buffers_[i] << "\n";
     }
 
     CheckGLState("IBLShader - BindTexture");
+
     return true;
 }
 
