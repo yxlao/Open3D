@@ -26,10 +26,10 @@
 
 #pragma once
 
-#include <tuple>
-#include <vector>
 #include <Eigen/Core>
 #include <Eigen/StdVector>
+#include <tuple>
+#include <vector>
 
 namespace Eigen {
 
@@ -38,7 +38,7 @@ typedef Eigen::Matrix<double, 6, 6> Matrix6d;
 typedef Eigen::Matrix<double, 6, 1> Vector6d;
 
 /// Use Eigen::DontAlign for matrices inside classes which are exposed in the
-/// Open3D headers https://github.com/IntelVCL/Open3D/issues/653
+/// Open3D headers https://github.com/intel-isl/Open3D/issues/653
 typedef Eigen::Matrix<double, 6, 6, Eigen::DontAlign> Matrix6d_u;
 typedef Eigen::Matrix<double, 4, 4, Eigen::DontAlign> Matrix4d_u;
 
@@ -112,6 +112,10 @@ std::tuple<MatType, VecType, double> ComputeJTJandJTr(
                      std::vector<double> &)> f,
         int iteration_num,
         bool verbose = true);
+
+Eigen::Matrix3d RotationMatrixX(double radians);
+Eigen::Matrix3d RotationMatrixY(double radians);
+Eigen::Matrix3d RotationMatrixZ(double radians);
 
 }  // namespace utility
 }  // namespace open3d

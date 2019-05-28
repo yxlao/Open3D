@@ -24,17 +24,15 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Visualizer.h"
-
-#include <Open3D/Visualization/Visualizer/ViewParameters.h>
-#include <Open3D/Visualization/Visualizer/ViewTrajectory.h>
-#include <Open3D/Camera/PinholeCameraTrajectory.h>
-#include <Open3D/Geometry/TriangleMesh.h>
-#include <Open3D/IO/ClassIO/ImageIO.h>
-#include <Open3D/IO/ClassIO/PointCloudIO.h>
-#include <Open3D/IO/ClassIO/IJsonConvertibleIO.h>
-
-#include <Open3D/Visualization/Utility/GLHelper.h>
+#include "Open3D/Camera/PinholeCameraTrajectory.h"
+#include "Open3D/Geometry/TriangleMesh.h"
+#include "Open3D/IO/ClassIO/IJsonConvertibleIO.h"
+#include "Open3D/IO/ClassIO/ImageIO.h"
+#include "Open3D/IO/ClassIO/PointCloudIO.h"
+#include "Open3D/Visualization/Utility/GLHelper.h"
+#include "Open3D/Visualization/Visualizer/ViewParameters.h"
+#include "Open3D/Visualization/Visualizer/ViewTrajectory.h"
+#include "Open3D/Visualization/Visualizer/Visualizer.h"
 
 namespace open3d {
 namespace visualization {
@@ -93,7 +91,7 @@ void Visualizer::ResetViewPoint(bool reset_bounding_box /* = false*/) {
     if (reset_bounding_box) {
         view_control_ptr_->ResetBoundingBox();
         for (const auto &geometry_ptr : geometry_ptrs_) {
-            view_control_ptr_->FitInGeometry(*geometry_ptr);
+            view_control_ptr_->FitInGeometry(*(geometry_ptr));
         }
         if (coordinate_frame_mesh_ptr_ && coordinate_frame_mesh_renderer_ptr_) {
             const auto &boundingbox = view_control_ptr_->GetBoundingBox();

@@ -28,3 +28,7 @@ static/
 .idea/
 cmake-build-debug/
 cmake-build-release/
+docs/python_api/
+_vimrc_local.vim
+examples/TestData/Armadillo.ply
+examples/TestData/Bunny.ply

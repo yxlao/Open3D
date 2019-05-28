@@ -26,16 +26,15 @@
 
 #pragma once
 
-#include <Open3D/Geometry/Geometry.h>
-
-#include <Open3D/Visualization/Shader/SimpleShader.h>
-#include <Open3D/Visualization/Shader/SimpleBlackShader.h>
-#include <Open3D/Visualization/Shader/PhongShader.h>
-#include <Open3D/Visualization/Shader/NormalShader.h>
-#include <Open3D/Visualization/Shader/ImageShader.h>
-#include <Open3D/Visualization/Shader/Simple2DShader.h>
-#include <Open3D/Visualization/Shader/ImageMaskShader.h>
-#include <Open3D/Visualization/Shader/PickingShader.h>
+#include "Open3D/Geometry/Geometry.h"
+#include "Open3D/Visualization/Shader/ImageMaskShader.h"
+#include "Open3D/Visualization/Shader/ImageShader.h"
+#include "Open3D/Visualization/Shader/NormalShader.h"
+#include "Open3D/Visualization/Shader/PhongShader.h"
+#include "Open3D/Visualization/Shader/PickingShader.h"
+#include "Open3D/Visualization/Shader/Simple2DShader.h"
+#include "Open3D/Visualization/Shader/SimpleBlackShader.h"
+#include "Open3D/Visualization/Shader/SimpleShader.h"
 
 namespace open3d {
 namespace visualization {
@@ -64,6 +63,9 @@ public:
     virtual bool UpdateGeometry() = 0;
 
     bool HasGeometry() const { return bool(geometry_ptr_); }
+    std::shared_ptr<const geometry::Geometry> GetGeometry() const {
+        return geometry_ptr_;
+    }
 
     bool IsVisible() const { return is_visible_; }
     void SetVisible(bool visible) { is_visible_ = visible; };
@@ -146,7 +148,23 @@ public:
     bool UpdateGeometry() override;
 
 protected:
-    SimpleShaderForVoxelGrid simple_voxelgrid_shader_;
+    SimpleShaderForVoxelGridLine simple_shader_for_voxel_grid_line_;
+    SimpleShaderForVoxelGridFace simple_shader_for_voxel_grid_face_;
+};
+
+class OctreeRenderer : public GeometryRenderer {
+public:
+    ~OctreeRenderer() override {}
+
+public:
+    bool Render(const RenderOption &option, const ViewControl &view) override;
+    bool AddGeometry(
+            std::shared_ptr<const geometry::Geometry> geometry_ptr) override;
+    bool UpdateGeometry() override;
+
+protected:
+    SimpleShaderForOctreeLine simple_shader_for_octree_line_;
+    SimpleShaderForOctreeFace simple_shader_for_octree_face_;
 };
 
 class ImageRenderer : public GeometryRenderer {

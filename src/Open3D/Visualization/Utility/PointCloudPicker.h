@@ -26,10 +26,11 @@
 
 #pragma once
 
-#include <vector>
-#include <memory>
 #include <Eigen/Core>
-#include <Open3D/Geometry/Geometry3D.h>
+#include <memory>
+#include <vector>
+
+#include "Open3D/Geometry/Geometry3D.h"
 
 namespace open3d {
 
@@ -50,7 +51,11 @@ public:
     bool IsEmpty() const override;
     Eigen::Vector3d GetMinBound() const final;
     Eigen::Vector3d GetMaxBound() const final;
-    void Transform(const Eigen::Matrix4d& transformation) override;
+    PointCloudPicker& Transform(const Eigen::Matrix4d& transformation) override;
+    PointCloudPicker& Translate(const Eigen::Vector3d& translation) override;
+    PointCloudPicker& Scale(const double scale) override;
+    PointCloudPicker& Rotate(const Eigen::Vector3d& rotation,
+                             RotationType type = RotationType::XYZ) override;
     bool SetPointCloud(std::shared_ptr<const geometry::Geometry> ptr);
 
 public:

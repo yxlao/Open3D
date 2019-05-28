@@ -26,11 +26,10 @@
 
 #pragma once
 
-#include <vector>
-#include <tuple>
-
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <tuple>
+#include <vector>
 
 namespace open3d {
 
@@ -70,7 +69,7 @@ public:
     bool decrease_mu_;
     // Maximum correspondence distance (also see comment of USE_ABSOLUTE_SCALE)
     double maximum_correspondence_distance_;
-    // Maximum number of iteration
+    // Maximum number of iterations
     int iteration_number_;
     // Similarity measure used for tuples of feature points.
     double tuple_scale_;

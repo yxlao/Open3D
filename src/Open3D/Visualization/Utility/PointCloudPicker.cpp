@@ -24,10 +24,10 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "PointCloudPicker.h"
+#include "Open3D/Visualization/Utility/PointCloudPicker.h"
 
-#include <Open3D/Geometry/PointCloud.h>
-#include <Open3D/Utility/Console.h>
+#include "Open3D/Geometry/PointCloud.h"
+#include "Open3D/Utility/Console.h"
 
 namespace open3d {
 namespace visualization {
@@ -40,7 +40,7 @@ bool PointCloudPicker::IsEmpty() const {
 
 Eigen::Vector3d PointCloudPicker::GetMinBound() const {
     if (pointcloud_ptr_) {
-        return ((const geometry::PointCloud &)(*pointcloud_ptr_)).GetMinBound();
+        return ((const geometry::PointCloud&)(*pointcloud_ptr_)).GetMinBound();
     } else {
         return Eigen::Vector3d(0.0, 0.0, 0.0);
     }
@@ -48,14 +48,33 @@ Eigen::Vector3d PointCloudPicker::GetMinBound() const {
 
 Eigen::Vector3d PointCloudPicker::GetMaxBound() const {
     if (pointcloud_ptr_) {
-        return ((const geometry::PointCloud &)(*pointcloud_ptr_)).GetMaxBound();
+        return ((const geometry::PointCloud&)(*pointcloud_ptr_)).GetMaxBound();
     } else {
         return Eigen::Vector3d(0.0, 0.0, 0.0);
     }
 }
 
-void PointCloudPicker::Transform(const Eigen::Matrix4d & /*transformation*/) {
+PointCloudPicker& PointCloudPicker::Transform(
+        const Eigen::Matrix4d& /*transformation*/) {
     // Do nothing
+    return *this;
+}
+
+PointCloudPicker& PointCloudPicker::Translate(
+        const Eigen::Vector3d& translation) {
+    // Do nothing
+    return *this;
+}
+
+PointCloudPicker& PointCloudPicker::Scale(const double scale) {
+    // Do nothing
+    return *this;
+}
+
+PointCloudPicker& PointCloudPicker::Rotate(const Eigen::Vector3d& rotation,
+                                           RotationType type) {
+    // Do nothing
+    return *this;
 }
 
 bool PointCloudPicker::SetPointCloud(

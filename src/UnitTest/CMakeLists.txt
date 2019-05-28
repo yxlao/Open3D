@@ -1,9 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
 
-# Locate GTest
-find_package(GTest REQUIRED)
-include_directories(${GTEST_INCLUDE_DIRS})
-
 include_directories(".")
 
 if (BUILD_CUDA_MODULE)

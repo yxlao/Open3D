@@ -26,28 +26,35 @@
 
 #pragma once
 
-#include <vector>
-#include <memory>
 #include <Eigen/Core>
-#include <Open3D/Geometry/Geometry3D.h>
+#include <memory>
+#include <vector>
+
+#include "Open3D/Geometry/Geometry3D.h"
 
 namespace open3d {
 namespace geometry {
 
 class PointCloud;
 class TriangleMesh;
+class Octree;
 
 class VoxelGrid : public Geometry3D {
 public:
-    VoxelGrid() : Geometry3D(Geometry::GeometryType::VoxelGrid){};
-    ~VoxelGrid() override{};
+    VoxelGrid() : Geometry3D(Geometry::GeometryType::VoxelGrid) {}
+    VoxelGrid(const VoxelGrid &src_voxel_grid);
+    ~VoxelGrid() override {}
 
 public:
     void Clear() override;
     bool IsEmpty() const override;
     Eigen::Vector3d GetMinBound() const override;
     Eigen::Vector3d GetMaxBound() const override;
-    void Transform(const Eigen::Matrix4d &transformation) override;
+    VoxelGrid &Transform(const Eigen::Matrix4d &transformation) override;
+    VoxelGrid &Translate(const Eigen::Vector3d &translation) override;
+    VoxelGrid &Scale(const double scale) override;
+    VoxelGrid &Rotate(const Eigen::Vector3d &rotation,
+                      RotationType type = RotationType::XYZ) override;
 
 public:
     VoxelGrid &operator+=(const VoxelGrid &voxelgrid);
@@ -55,10 +62,14 @@ public:
 
 public:
     bool HasVoxels() const { return voxels_.size() > 0; }
-
     bool HasColors() const {
         return voxels_.size() > 0 && colors_.size() == voxels_.size();
     }
+    Eigen::Vector3i GetVoxel(const Eigen::Vector3d &point) const;
+
+    void FromOctree(const Octree &octree);
+
+    std::shared_ptr<geometry::Octree> ToOctree(const size_t &max_depth) const;
 
 public:
     double voxel_size_;

@@ -27,11 +27,11 @@
 #pragma once
 
 #include <Python/open3d_pybind.h>
-#include <Open3D/Geometry/Geometry.h>
-#include <Open3D/Geometry/Geometry2D.h>
-#include <Open3D/Geometry/Geometry3D.h>
-#include <Open3D/Geometry/TriangleMesh.h>
 
+#include "Open3D/Geometry/Geometry.h"
+#include "Open3D/Geometry/Geometry2D.h"
+#include "Open3D/Geometry/Geometry3D.h"
+#include "Open3D/Geometry/TriangleMesh.h"
 #include "Python/geometry/geometry.h"
 
 using namespace open3d;
@@ -56,8 +56,8 @@ public:
     Eigen::Vector3d GetMaxBound() const override {
         PYBIND11_OVERLOAD_PURE(Eigen::Vector3d, Geometry3DBase, );
     }
-    void Transform(const Eigen::Matrix4d &transformation) override {
-        PYBIND11_OVERLOAD_PURE(void, Geometry3DBase, transformation);
+    Geometry3DBase& Transform(const Eigen::Matrix4d& transformation) override {
+        PYBIND11_OVERLOAD_PURE(Geometry3DBase&, Geometry3DBase, transformation);
     }
 };
 

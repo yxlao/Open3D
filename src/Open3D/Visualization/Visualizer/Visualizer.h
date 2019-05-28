@@ -26,18 +26,18 @@
 
 #pragma once
 
-#include <string>
-#include <memory>
-
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <Open3D/Geometry/Geometry.h>
+#include <memory>
+#include <string>
+#include <unordered_set>
 
-#include <Open3D/Visualization/Utility/ColorMap.h>
-#include <Open3D/Visualization/Utility/BoundingBox.h>
-#include <Open3D/Visualization/Visualizer/ViewControl.h>
-#include <Open3D/Visualization/Visualizer/RenderOption.h>
-#include <Open3D/Visualization/Shader/GeometryRenderer.h>
+#include "Open3D/Geometry/Geometry.h"
+#include "Open3D/Visualization/Shader/GeometryRenderer.h"
+#include "Open3D/Visualization/Utility/BoundingBox.h"
+#include "Open3D/Visualization/Utility/ColorMap.h"
+#include "Open3D/Visualization/Visualizer/RenderOption.h"
+#include "Open3D/Visualization/Visualizer/ViewControl.h"
 
 namespace open3d {
 
@@ -115,6 +115,15 @@ public:
     /// notify the Visualizer that the geometry has been changed and the
     /// Visualizer should be updated accordingly.
     virtual bool AddGeometry(
+            std::shared_ptr<const geometry::Geometry> geometry_ptr);
+
+    /// Function to remove geometry from the scene
+    /// 1. After calling this function, the Visualizer releases the pointer of
+    /// the geometry object.
+    /// 2. This function MUST be called after CreateVisualizerWindow().
+    /// 3. This function returns FALSE if the geometry to be removed is not
+    /// added by AddGeometry
+    virtual bool RemoveGeometry(
             std::shared_ptr<const geometry::Geometry> geometry_ptr);
 
     /// Function to update geometry
@@ -206,10 +215,11 @@ protected:
     std::unique_ptr<RenderOption> render_option_ptr_;
 
     // geometry to be rendered
-    std::vector<std::shared_ptr<const geometry::Geometry>> geometry_ptrs_;
+    std::unordered_set<std::shared_ptr<const geometry::Geometry>>
+            geometry_ptrs_;
 
     // geometry renderers
-    std::vector<std::shared_ptr<glsl::GeometryRenderer>>
+    std::unordered_set<std::shared_ptr<glsl::GeometryRenderer>>
             geometry_renderer_ptrs_;
 
     // utilities owned by the Visualizer

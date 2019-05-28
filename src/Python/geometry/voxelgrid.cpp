@@ -24,18 +24,21 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Python/geometry/geometry_trampoline.h"
+#include "Open3D/Geometry/VoxelGrid.h"
+#include "Open3D/Geometry/Octree.h"
+#include "Open3D/Geometry/PointCloud.h"
+#include "Python/docstring.h"
 #include "Python/geometry/geometry.h"
-
-#include <Open3D/Geometry/PointCloud.h>
-#include <Open3D/Geometry/VoxelGrid.h>
+#include "Python/geometry/geometry_trampoline.h"
 
 using namespace open3d;
 
 void pybind_voxelgrid(py::module &m) {
     py::class_<geometry::VoxelGrid, PyGeometry3D<geometry::VoxelGrid>,
                std::shared_ptr<geometry::VoxelGrid>, geometry::Geometry3D>
-            voxelgrid(m, "VoxelGrid");
+            voxelgrid(m, "VoxelGrid",
+                      "VoxelGrid is a collection of voxels which are aligned "
+                      "in grid.");
     py::detail::bind_default_constructor<geometry::VoxelGrid>(voxelgrid);
     py::detail::bind_copy_functions<geometry::VoxelGrid>(voxelgrid);
     voxelgrid
@@ -47,12 +50,40 @@ void pybind_voxelgrid(py::module &m) {
                  })
             .def(py::self + py::self)
             .def(py::self += py::self)
-            .def("has_voxels", &geometry::VoxelGrid::HasVoxels)
-            .def("has_colors", &geometry::VoxelGrid::HasColors)
-            .def_readwrite("voxels", &geometry::VoxelGrid::voxels_)
-            .def_readwrite("colors", &geometry::VoxelGrid::colors_)
-            .def_readwrite("origin", &geometry::VoxelGrid::origin_)
+            .def("has_voxels", &geometry::VoxelGrid::HasVoxels,
+                 "Returns ``True`` if the voxel grid contains voxels.")
+            .def("has_colors", &geometry::VoxelGrid::HasColors,
+                 "Returns ``True`` if the voxel grid contains voxel colors.")
+            .def("get_voxel", &geometry::VoxelGrid::GetVoxel, "point"_a,
+                 "Returns voxel index given query point.")
+            .def("to_octree", &geometry::VoxelGrid::ToOctree, "max_depth"_a,
+                 "Convert to Octree.")
+            .def("from_octree", &geometry::VoxelGrid::FromOctree,
+                 "octree"_a
+                 "Convert from Octree.")
+            .def_readwrite("voxels", &geometry::VoxelGrid::voxels_,
+                           "``int`` array of shape ``(num_voxels, 3)``: "
+                           "Voxel coordinates. use ``numpy.asarray()`` to "
+                           "access data.")
+            .def_readwrite(
+                    "colors", &geometry::VoxelGrid::colors_,
+                    "``float64`` array of shape ``(num_voxels, 3)``, "
+                    "range ``[0, 1]`` , use ``numpy.asarray()`` to access "
+                    "data: RGB colors of voxels.")
+            .def_readwrite("origin", &geometry::VoxelGrid::origin_,
+                           "``float64`` vector of length 3: Coorindate of the "
+                           "origin point.")
             .def_readwrite("voxel_size", &geometry::VoxelGrid::voxel_size_);
+    docstring::ClassMethodDocInject(m, "VoxelGrid", "has_colors");
+    docstring::ClassMethodDocInject(m, "VoxelGrid", "has_voxels");
+    docstring::ClassMethodDocInject(m, "VoxelGrid", "get_voxel",
+                                    {{"point", "The query point."}});
+    docstring::ClassMethodDocInject(
+            m, "VoxelGrid", "to_octree",
+            {{"max_depth", "int: Maximum depth of the octree."}});
+    docstring::ClassMethodDocInject(
+            m, "VoxelGrid", "from_octree",
+            {{"octree", "geometry.Octree: The source octree."}});
 }
 
 void pybind_voxelgrid_methods(py::module &m) {
@@ -60,4 +91,8 @@ void pybind_voxelgrid_methods(py::module &m) {
           &geometry::CreateSurfaceVoxelGridFromPointCloud,
           "Function to make voxels from scanned point cloud", "point_cloud"_a,
           "voxel_size"_a);
+    docstring::FunctionDocInject(
+            m, "create_surface_voxel_grid_from_point_cloud",
+            {{"point_cloud", "The input point cloud."},
+             {"voxel_size", "Voxel size of of the VoxelGrid construction."}});
 }

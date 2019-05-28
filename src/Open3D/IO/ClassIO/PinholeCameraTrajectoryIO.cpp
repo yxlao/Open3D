@@ -24,12 +24,13 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "PinholeCameraTrajectoryIO.h"
+#include "Open3D/IO/ClassIO/PinholeCameraTrajectoryIO.h"
 
 #include <unordered_map>
-#include <Open3D/Utility/Console.h>
-#include <Open3D/Utility/FileSystem.h>
-#include <Open3D/IO/ClassIO/IJsonConvertibleIO.h>
+
+#include "Open3D/IO/ClassIO/IJsonConvertibleIO.h"
+#include "Open3D/Utility/Console.h"
+#include "Open3D/Utility/FileSystem.h"
 
 namespace open3d {
 
@@ -55,6 +56,7 @@ static const std::unordered_map<
         file_extension_to_trajectory_read_function{
                 {"log", ReadPinholeCameraTrajectoryFromLOG},
                 {"json", ReadPinholeCameraTrajectoryFromJSON},
+                {"txt", ReadPinholeCameraTrajectoryFromTUM},
         };
 
 static const std::unordered_map<
@@ -64,6 +66,7 @@ static const std::unordered_map<
         file_extension_to_trajectory_write_function{
                 {"log", WritePinholeCameraTrajectoryToLOG},
                 {"json", WritePinholeCameraTrajectoryToJSON},
+                {"txt", WritePinholeCameraTrajectoryToTUM},
         };
 
 }  // unnamed namespace

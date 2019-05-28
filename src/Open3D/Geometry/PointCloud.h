@@ -26,12 +26,13 @@
 
 #pragma once
 
+#include <Eigen/Core>
+#include <memory>
 #include <tuple>
 #include <vector>
-#include <memory>
-#include <Eigen/Core>
-#include <Open3D/Geometry/Geometry3D.h>
-#include <Open3D/Geometry/KDTreeSearchParam.h>
+
+#include "Open3D/Geometry/Geometry3D.h"
+#include "Open3D/Geometry/KDTreeSearchParam.h"
 
 namespace open3d {
 
@@ -43,18 +44,23 @@ namespace geometry {
 
 class Image;
 class RGBDImage;
+class TriangleMesh;
 
 class PointCloud : public Geometry3D {
 public:
-    PointCloud() : Geometry3D(Geometry::GeometryType::PointCloud){};
-    ~PointCloud() override{};
+    PointCloud() : Geometry3D(Geometry::GeometryType::PointCloud) {}
+    ~PointCloud() override {}
 
 public:
     void Clear() override;
     bool IsEmpty() const override;
     Eigen::Vector3d GetMinBound() const override;
     Eigen::Vector3d GetMaxBound() const override;
-    void Transform(const Eigen::Matrix4d &transformation) override;
+    PointCloud &Transform(const Eigen::Matrix4d &transformation) override;
+    PointCloud &Translate(const Eigen::Vector3d &translation) override;
+    PointCloud &Scale(const double scale) override;
+    PointCloud &Rotate(const Eigen::Vector3d &rotation,
+                       RotationType type = RotationType::XYZ) override;
 
 public:
     PointCloud &operator+=(const PointCloud &cloud);
@@ -77,6 +83,7 @@ public:
         }
     }
 
+    /// Assigns each point in the PointCloud the same color \param color.
     void PaintUniformColor(const Eigen::Vector3d &color) {
         colors_.resize(points_.size());
         for (size_t i = 0; i < points_.size(); i++) {
@@ -156,10 +163,10 @@ RemoveRadiusOutliers(const PointCloud &input,
                      double search_radius);
 
 /// Function to remove points that are further away from their
-/// \param nb_neighbour neighbours in average.
+/// \param nb_neighbor neighbors in average.
 std::tuple<std::shared_ptr<PointCloud>, std::vector<size_t>>
 RemoveStatisticalOutliers(const PointCloud &input,
-                          size_t nb_neighbours,
+                          size_t nb_neighbors,
                           double std_ratio);
 
 /// Function to compute the normals of a point cloud
@@ -209,6 +216,10 @@ std::vector<double> ComputePointCloudMahalanobisDistance(
 /// Function to compute the distance from a point to its nearest neighbor in the
 /// \param input point cloud
 std::vector<double> ComputePointCloudNearestNeighborDistance(
+        const PointCloud &input);
+
+/// Function that computes the convex hull of the point cloud using qhull
+std::shared_ptr<TriangleMesh> ComputePointCloudConvexHull(
         const PointCloud &input);
 
 }  // namespace geometry

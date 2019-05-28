@@ -24,11 +24,13 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "PointCloud.h"
+#include "Open3D/Geometry/PointCloud.h"
 
 #include <Eigen/Dense>
-#include <Open3D/Utility/Console.h>
-#include <Open3D/Geometry/KDTreeFlann.h>
+
+#include "Open3D/Geometry/KDTreeFlann.h"
+#include "Open3D/Geometry/Qhull.h"
+#include "Open3D/Utility/Console.h"
 
 namespace open3d {
 namespace geometry {
@@ -85,7 +87,7 @@ Eigen::Vector3d PointCloud::GetMaxBound() const {
     return Eigen::Vector3d((*itr_x)(0), (*itr_y)(1), (*itr_z)(2));
 }
 
-void PointCloud::Transform(const Eigen::Matrix4d &transformation) {
+PointCloud &PointCloud::Transform(const Eigen::Matrix4d &transformation) {
     for (auto &point : points_) {
         Eigen::Vector4d new_point =
                 transformation *
@@ -98,6 +100,33 @@ void PointCloud::Transform(const Eigen::Matrix4d &transformation) {
                 Eigen::Vector4d(normal(0), normal(1), normal(2), 0.0);
         normal = new_normal.block<3, 1>(0, 0);
     }
+    return *this;
+}
+
+PointCloud &PointCloud::Translate(const Eigen::Vector3d &translation) {
+    for (auto &point : points_) {
+        point += translation;
+    }
+    return *this;
+}
+
+PointCloud &PointCloud::Scale(const double scale) {
+    for (auto &point : points_) {
+        point *= scale;
+    }
+    return *this;
+}
+
+PointCloud &PointCloud::Rotate(const Eigen::Vector3d &rotation,
+                               RotationType type) {
+    const Eigen::Matrix3d R = GetRotationMatrix(rotation, type);
+    for (auto &point : points_) {
+        point = R * point;
+    }
+    for (auto &normal : normals_) {
+        normal = R * normal;
+    }
+    return *this;
 }
 
 PointCloud &PointCloud::operator+=(const PointCloud &cloud) {
@@ -228,6 +257,11 @@ std::vector<double> ComputePointCloudNearestNeighborDistance(
         }
     }
     return nn_dis;
+}
+
+std::shared_ptr<TriangleMesh> ComputePointCloudConvexHull(
+        const PointCloud &input) {
+    return ComputeConvexHull(input.points_);
 }
 
 }  // namespace geometry

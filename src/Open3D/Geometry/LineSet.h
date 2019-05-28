@@ -26,15 +26,17 @@
 
 #pragma once
 
-#include <vector>
-#include <memory>
 #include <Eigen/Core>
-#include <Open3D/Geometry/Geometry3D.h>
+#include <memory>
+#include <vector>
+
+#include "Open3D/Geometry/Geometry3D.h"
 
 namespace open3d {
 namespace geometry {
 
 class PointCloud;
+class TriangleMesh;
 
 class LineSet : public Geometry3D {
 public:
@@ -46,7 +48,11 @@ public:
     bool IsEmpty() const override;
     Eigen::Vector3d GetMinBound() const override;
     Eigen::Vector3d GetMaxBound() const override;
-    void Transform(const Eigen::Matrix4d &transformation) override;
+    LineSet &Transform(const Eigen::Matrix4d &transformation) override;
+    LineSet &Translate(const Eigen::Vector3d &translation) override;
+    LineSet &Scale(const double scale) override;
+    LineSet &Rotate(const Eigen::Vector3d &rotation,
+                    RotationType type = RotationType::XYZ) override;
 
 public:
     LineSet &operator+=(const LineSet &lineset);
@@ -62,8 +68,17 @@ public:
     }
 
     std::pair<Eigen::Vector3d, Eigen::Vector3d> GetLineCoordinate(
-            size_t i) const {
-        return std::make_pair(points_[lines_[i][0]], points_[lines_[i][1]]);
+            size_t line_index) const {
+        return std::make_pair(points_[lines_[line_index][0]],
+                              points_[lines_[line_index][1]]);
+    }
+
+    /// Assigns each line in the LineSet the same color \param color.
+    void PaintUniformColor(const Eigen::Vector3d &color) {
+        colors_.resize(lines_.size());
+        for (size_t i = 0; i < lines_.size(); i++) {
+            colors_[i] = color;
+        }
     }
 
 public:
@@ -72,12 +87,18 @@ public:
     std::vector<Eigen::Vector3d> colors_;
 };
 
-/// Factory function to create a lineset from two pointclouds and a
-/// correspondence set (LineSetFactory.cpp)
+/// Factory function to create a LineSet from two PointClouds
+/// (\param cloud0, \param cloud1) and a correspondence set
+/// \param correspondences.
 std::shared_ptr<LineSet> CreateLineSetFromPointCloudCorrespondences(
         const PointCloud &cloud0,
         const PointCloud &cloud1,
         const std::vector<std::pair<int, int>> &correspondences);
+
+/// Factory function to create a LineSet from edges of a triangle mesh
+/// \param mesh.
+std::shared_ptr<LineSet> CreateLineSetFromTriangleMesh(
+        const TriangleMesh &mesh);
 
 }  // namespace geometry
 }  // namespace open3d

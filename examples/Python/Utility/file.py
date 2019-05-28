@@ -2,7 +2,7 @@
 # The MIT License (MIT)
 # See license file or visit www.open3d.org for details
 
-# examples/Python/Tutorial/Utility/file.py
+# examples/Python/Utility/file.py
 
 from os import listdir, makedirs
 from os.path import exists, isfile, join, splitext
@@ -20,8 +20,11 @@ def get_file_list(path, extension=None):
     if extension is None:
         file_list = [path + f for f in listdir(path) if isfile(join(path, f))]
     else:
-        file_list = [path + f for f in listdir(path)
-                if isfile(join(path, f)) and splitext(f)[1] == extension]
+        file_list = [
+            path + f
+            for f in listdir(path)
+            if isfile(join(path, f)) and splitext(f)[1] == extension
+        ]
     file_list = sorted_alphanum(file_list)
     return file_list
 

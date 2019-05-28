@@ -26,13 +26,13 @@
 
 #pragma once
 
-#include <vector>
-#include <tuple>
 #include <Eigen/Core>
+#include <tuple>
+#include <vector>
 
-#include <Open3D/Registration/CorrespondenceChecker.h>
-#include <Open3D/Registration/TransformationEstimation.h>
-#include <Open3D/Utility/Eigen.h>
+#include "Open3D/Registration/CorrespondenceChecker.h"
+#include "Open3D/Registration/TransformationEstimation.h"
+#include "Open3D/Utility/Eigen.h"
 
 namespace open3d {
 
@@ -81,7 +81,7 @@ public:
     int max_validation_;
 };
 
-/// Class that contains the registration result
+/// Class that contains the registration results
 class RegistrationResult {
 public:
     RegistrationResult(
@@ -141,7 +141,7 @@ RegistrationResult RegistrationRANSACBasedOnFeatureMatching(
         const RANSACConvergenceCriteria &criteria =
                 RANSACConvergenceCriteria());
 
-/// Function for computing information matrix from RegistrationResult
+/// Function for computing information matrix from transformation matrix
 Eigen::Matrix6d GetInformationMatrixFromPointClouds(
         const geometry::PointCloud &source,
         const geometry::PointCloud &target,
