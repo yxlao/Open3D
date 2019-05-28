@@ -41,9 +41,7 @@ public:
         HalfEdgeTriangleMesh = 6,
         Image = 7,
 
-        PointCloudCuda = 8,
-        TriangleMeshCuda = 9,
-        ImageCuda = 10,
+        TexturedTriangleMesh = 8,
     };
 
 public:

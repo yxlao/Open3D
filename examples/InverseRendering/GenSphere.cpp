@@ -185,5 +185,7 @@ int main() {
     utility::SetVerbosityLevel(utility::VerbosityLevel::VerboseDebug);
     visualization::DrawGeometriesPBR({mesh}, {textures_dummy}, {ibl});
 
+    io::WriteTriangleMeshExtendedToPLY("/Users/dongw1/Work/Data/resources/textures/pbr/gold/sphere.ply", *mesh);
+
     return 0;
 }
