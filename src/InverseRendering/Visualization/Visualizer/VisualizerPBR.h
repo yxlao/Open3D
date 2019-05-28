@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <Open3D/Open3D.h>
 #include <InverseRendering/Geometry/Lighting.h>
+#include <Open3D/Open3D.h>
 
 namespace open3d {
 namespace visualization {
@@ -14,13 +14,15 @@ class VisualizerPBR : public VisualizerWithKeyCallback {
 public:
     /** Dummy **/
     virtual bool AddGeometry(
-        std::shared_ptr<const geometry::Geometry> geometry_ptr) override {};
+            std::shared_ptr<const geometry::Geometry> geometry_ptr) override {
+        return true;
+    };
 
     /** In use **/
     virtual bool AddGeometryPBR(
-        std::shared_ptr<const geometry::Geometry> geometry_ptr,
-        const std::vector<geometry::Image> &textures,
-        const std::shared_ptr<geometry::Lighting> &lighting);
+            std::shared_ptr<const geometry::Geometry> geometry_ptr,
+            const std::vector<geometry::Image> &textures,
+            const std::shared_ptr<geometry::Lighting> &lighting);
 
     virtual void Render() override;
 };
@@ -28,9 +30,9 @@ public:
 class VisualizerDR : public VisualizerPBR {
 public:
     virtual bool AddGeometryPBR(
-        std::shared_ptr<geometry::Geometry> geometry_ptr,
-        const std::vector<geometry::Image> &textures,
-        const std::shared_ptr<geometry::Lighting> &lighting);
+            std::shared_ptr<geometry::Geometry> geometry_ptr,
+            const std::vector<geometry::Image> &textures,
+            const std::shared_ptr<geometry::Lighting> &lighting);
 
     bool CaptureBuffer(const std::string &filename, int index);
 
@@ -38,9 +40,9 @@ public:
                         const camera::PinholeCameraParameters &view);
     bool UpdateLighting();
     float CallSGD(float lambda,
-                  bool update_albedo, bool update_material, bool update_normal);
+                  bool update_albedo,
+                  bool update_material,
+                  bool update_normal);
 };
-}
-}
-
-
+}  // namespace visualization
+}  // namespace open3d

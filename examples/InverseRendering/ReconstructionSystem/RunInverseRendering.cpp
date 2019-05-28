@@ -1,17 +1,18 @@
+
 //
 // Created by wei on 2/4/19.
 //
 
-#include <InverseRendering/Geometry/TriangleMeshExtended.h>
 #include <InverseRendering/Geometry/ImageExt.h>
 #include <InverseRendering/Geometry/Lighting.h>
+#include <InverseRendering/Geometry/TriangleMeshExtended.h>
+#include <InverseRendering/Visualization/Utility/DrawGeometryPBR.h>
 #include <InverseRendering/Visualization/Visualizer/VisualizerPBR.h>
 #include <Open3D/Registration/PoseGraph.h>
-#include <InverseRendering/Visualization/Utility/DrawGeometryPBR.h>
 #include "DatasetConfig.h"
 
-#include <Eigen/Eigen>
 #include <InverseRendering/IO/ClassIO/TriangleMeshExtendedIO.h>
+#include <Eigen/Eigen>
 
 using namespace open3d;
 using namespace open3d::io;
@@ -20,8 +21,9 @@ using namespace open3d::utility;
 int main(int argc, char **argv) {
     DatasetConfig config;
 
-    std::string config_path = argc > 1 ? argv[1] :
-        kDefaultDatasetConfigDir + "/stanford/lounge.json";
+    std::string config_path =
+            argc > 1 ? argv[1]
+                     : kDefaultDatasetConfigDir + "/stanford/lounge.json";
 
     bool is_success = ReadIJsonConvertible(config_path, config);
     if (!is_success) return 1;
@@ -41,16 +43,18 @@ int main(int argc, char **argv) {
 
     std::vector<geometry::Image> textures;
     textures.emplace_back(*geometry::FlipImageExt(
-        *io::CreateImageFromFile(config.color_files_[100])));
+            *io::CreateImageFromFile(config.color_files_[100])));
 
     auto ibl = std::make_shared<geometry::IBLLighting>();
     ibl->ReadEnvFromHDR("/media/wei/Data/data/pbr/env/White.hdr");
     visualization::DrawGeometriesPBR({mesh_extended}, {textures}, {ibl});
 
-//    auto mesh_extended_after = std::make_shared<geometry::TriangleMeshExtended>();
-//    io::ReadTriangleMeshExtendedFromPLY("fragment_extended.ply", *mesh_extended_after);
-//    visualization::DrawGeometriesPBR({mesh_extended_after}, {textures}, {ibl});
-//    return 0;
+    //    auto mesh_extended_after =
+    //    std::make_shared<geometry::TriangleMeshExtended>();
+    //    io::ReadTriangleMeshExtendedFromPLY("fragment_extended.ply",
+    //    *mesh_extended_after);
+    //    visualization::DrawGeometriesPBR({mesh_extended_after}, {textures},
+    //    {ibl}); return 0;
 
     visualization::VisualizerDR visualizer;
     if (!visualizer.CreateVisualizerWindow("DR", 640, 480, 0, 0)) {
@@ -64,10 +68,11 @@ int main(int argc, char **argv) {
 
     camera::PinholeCameraParameters cam_params;
     cam_params.intrinsic_ = camera::PinholeCameraIntrinsic(
-        camera::PinholeCameraIntrinsicParameters::PrimeSenseDefault);
+            camera::PinholeCameraIntrinsicParameters::PrimeSenseDefault);
 
     registration::PoseGraph local_pose_graph;
-    ReadPoseGraph(config.GetPoseGraphFileForFragment(1, true), local_pose_graph);
+    ReadPoseGraph(config.GetPoseGraphFileForFragment(1, true),
+                  local_pose_graph);
 
     const int iter = 50;
     float lambda = 0.0001;
@@ -75,30 +80,34 @@ int main(int argc, char **argv) {
     for (int i = 0; i < iter; ++i) {
         float loss = 0;
         for (int j = 100; j < 200; ++j) {
-            auto target = geometry::FlipImageExt(*io::CreateImageFromFile(config.color_files_[j]));
-            cam_params.extrinsic_ = local_pose_graph.nodes_[j - 100].pose_.inverse();
+            auto target = geometry::FlipImageExt(
+                    *io::CreateImageFromFile(config.color_files_[j]));
+            cam_params.extrinsic_ =
+                    local_pose_graph.nodes_[j - 100].pose_.inverse();
             visualizer.SetTargetImage(*target, cam_params);
 
             visualizer.UpdateRender();
             visualizer.PollEvents();
 
-//            std::string kBasePath = "/media/wei/Data/results/";
-//            std::string filename = kBasePath + "iter-" + std::to_string(i) + "-img-" + std::to_string(j);
-//            io::WriteImage(filename + "-origin.png", *target);
-//            visualizer.CaptureBuffer(filename + "-render.png", 0);
-//            visualizer.CaptureBuffer(filename + "-residual.png", 1);
-//            visualizer.CaptureBuffer(filename + "-target.png", 5);
+            //            std::string kBasePath = "/media/wei/Data/results/";
+            //            std::string filename = kBasePath + "iter-" +
+            //            std::to_string(i) + "-img-" + std::to_string(j);
+            //            io::WriteImage(filename + "-origin.png", *target);
+            //            visualizer.CaptureBuffer(filename + "-render.png", 0);
+            //            visualizer.CaptureBuffer(filename + "-residual.png",
+            //            1); visualizer.CaptureBuffer(filename + "-target.png",
+            //            5);
 
             loss += visualizer.CallSGD(lambda, false, false, true);
         }
-        utility::PrintInfo("Iter %d: lambda = %f -> loss = %f\n",
-                           i, lambda, loss);
+        utility::PrintInfo("Iter %d: lambda = %f -> loss = %f\n", i, lambda,
+                           loss);
 
-//        if (i % 10 == 9) {
-//            lambda *= 0.1f;
-//            io::WriteTriangleMeshExtendedToPLY(
-//                "mesh-iter-" + std::to_string(i) + ".ply", *mesh);
-//        }
+        //        if (i % 10 == 9) {
+        //            lambda *= 0.1f;
+        //            io::WriteTriangleMeshExtendedToPLY(
+        //                "mesh-iter-" + std::to_string(i) + ".ply", *mesh);
+        //        }
     }
 
     visualization::DrawGeometriesPBR({mesh_extended}, {textures}, {ibl});

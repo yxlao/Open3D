@@ -64,6 +64,7 @@ public:
                 ibl.is_preprocessed_ = false;
             }
         }
+	return true;
     }
 
     virtual bool PreprocessLights(geometry::IBLLighting &ibl,

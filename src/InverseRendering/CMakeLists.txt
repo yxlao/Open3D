@@ -1,7 +1,5 @@
 file(GLOB_RECURSE MAT_ALL_HEADER_FILES "*.h")
 file(GLOB_RECURSE MAT_ALL_SOURCE_FILES "*.cpp")
-file(GLOB_RECURSE MAT_ALL_CUDA_HEADER_FILES "*.cuh")
-file(GLOB_RECURSE MAT_ALL_CUDA_SOURCE_FILES "*.cu")
 
 # some black magic to automatically create a header file from shader files
 file(GLOB SHADER_FILES "Visualization/Shader/GLSL/*.glsl")
@@ -10,8 +8,7 @@ add_custom_command(
         OUTPUT ${PROJECT_SOURCE_DIR}/src/InverseRendering/Visualization/Shader/Shader.h
         COMMAND EncodeShader Shader.h
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/src/InverseRendering/Visualization/Shader/
-        DEPENDS ${SHADER_FILES} EncodeShader
-)
+        DEPENDS ${SHADER_FILES} EncodeShader)
 
 foreach(file ${SHADER_FILES})
     add_custom_command(
@@ -19,8 +16,7 @@ foreach(file ${SHADER_FILES})
             COMMAND EncodeShader Shader.h ${file}
             WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/src/InverseRendering/Visualization/Shader/
             DEPENDS ${SHADER_FILES} EncodeShader
-            APPEND
-    )
+            APPEND)
 endforeach(file)
 
 add_custom_target(PBRShaderFileTarget ALL

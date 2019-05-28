@@ -5,6 +5,7 @@
 #include "Lighting.h"
 #include "ImageExt.h"
 #include <Eigen/Eigen>
+#include <random>
 
 namespace open3d {
 namespace geometry {

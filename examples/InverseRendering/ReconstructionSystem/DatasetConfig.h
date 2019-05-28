@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include <json/json.h>
 #include <Open3D/Open3D.h>
+#include <json/json.h>
+#include <fstream>
 #include <iomanip>
 #include <sstream>
-#include <fstream>
 
 namespace open3d {
 struct Match {
@@ -20,8 +20,8 @@ struct Match {
 };
 
 static const std::string kDefaultDatasetConfigDir =
-    "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda"
-    "/ReconstructionSystem/config";
+        "/home/wei/Work/projects/dense_mapping/Open3D/examples/Cuda"
+        "/ReconstructionSystem/config";
 
 class DatasetConfig : public utility::IJsonConvertible {
 public:
@@ -52,11 +52,11 @@ public:
     std::vector<std::string> thumbnail_fragment_files_;
 
     bool GetColorAndDepthFilesForTUM() {
-        std::string association_file_name = path_dataset_ +
-            "/depth_rgb_association.txt";
+        std::string association_file_name =
+                path_dataset_ + "/depth_rgb_association.txt";
         if (!utility::filesystem::FileExists(association_file_name)) {
             utility::PrintError("Data association file not found for %s\n",
-                       path_dataset_.c_str());
+                                path_dataset_.c_str());
             return false;
         }
 
@@ -71,22 +71,21 @@ public:
     }
 
     bool GetColorFiles() {
-        const std::vector<std::string> color_folders = {
-            "/color", "/rgb", "/image"
-        };
+        const std::vector<std::string> color_folders = {"/color", "/rgb",
+                                                        "/image"};
 
         for (auto &color_folder : color_folders) {
             std::string color_directory = path_dataset_ + color_folder;
             if (utility::filesystem::DirectoryExists(color_directory)) {
                 utility::filesystem::ListFilesInDirectory(color_directory,
-                    color_files_);
+                                                          color_files_);
                 std::sort(color_files_.begin(), color_files_.end());
                 return true;
             }
         }
 
         utility::PrintError("No color image folder found in directory %s\n",
-                   path_dataset_.c_str());
+                            path_dataset_.c_str());
         return false;
     }
 
@@ -94,11 +93,11 @@ public:
         std::string depth_directory = path_dataset_ + "/depth";
         if (!utility::filesystem::DirectoryExists(depth_directory)) {
             utility::PrintError("No depth image folder found in directory %s\n",
-                       depth_directory.c_str());
+                                depth_directory.c_str());
             return false;
         }
         utility::filesystem::ListFilesInDirectory(depth_directory,
-            depth_files_);
+                                                  depth_files_);
 
         /* alphabetical order */
         std::sort(depth_files_.begin(), depth_files_.end());
@@ -109,12 +108,12 @@ public:
         std::string fragment_directory = path_dataset_ + "/fragments_cuda";
         if (!utility::filesystem::DirectoryExists(fragment_directory)) {
             utility::PrintError("No fragment folder found in directory %s\n",
-                       fragment_directory.c_str());
+                                fragment_directory.c_str());
             return false;
         }
 
         utility::filesystem::ListFilesInDirectoryWithExtension(
-            fragment_directory, "ply", fragment_files_);
+                fragment_directory, "ply", fragment_files_);
 
         /* alphabetical order */
         std::sort(fragment_files_.begin(), fragment_files_.end());
@@ -123,16 +122,17 @@ public:
 
     bool GetThumbnailFragmentFiles() {
         std::string fragment_directory =
-            path_dataset_ + "/fragments_cuda/thumbnails";
+                path_dataset_ + "/fragments_cuda/thumbnails";
         if (!utility::filesystem::DirectoryExists(fragment_directory)) {
-            utility::PrintError("No fragment thumbnail folder found in "
-                               "directory %s\n",
-                       fragment_directory.c_str());
+            utility::PrintError(
+                    "No fragment thumbnail folder found in "
+                    "directory %s\n",
+                    fragment_directory.c_str());
             return false;
         }
 
         utility::filesystem::ListFilesInDirectoryWithExtension(
-            fragment_directory, "ply", thumbnail_fragment_files_);
+                fragment_directory, "ply", thumbnail_fragment_files_);
 
         /* alphabetical order */
         std::sort(thumbnail_fragment_files_.begin(),
@@ -164,9 +164,7 @@ public:
         return ss.str();
     }
 
-    std::string GetPoseGraphFileForFragment(
-        int fragment_id, bool optimized) {
-
+    std::string GetPoseGraphFileForFragment(int fragment_id, bool optimized) {
         std::stringstream ss;
         ss << path_dataset_ << "/fragments_cuda/fragment_";
         if (optimized) {
@@ -214,13 +212,14 @@ public:
         return ss.str();
     }
 
-    bool ConvertToJsonValue(Json::Value &value) const override {}
+    bool ConvertToJsonValue(Json::Value &value) const override { return true; }
 
     bool ConvertFromJsonValue(const Json::Value &value) override {
         if (!value.isObject()) {
-            utility::PrintWarning("DatasetConfig read JSON failed: unsupported "
-                              "json "
-                         "format.\n");
+            utility::PrintWarning(
+                    "DatasetConfig read JSON failed: unsupported "
+                    "json "
+                    "format.\n");
             return false;
         }
 
@@ -229,10 +228,10 @@ public:
         use_data_association_ = value.get("is_tum", false).asBool();
         with_opencv_ = value.get("with_opencv", true).asBool();
 
-        n_frames_per_fragment_ = value.get(
-            "n_frames_per_fragment", 100).asInt();
-        n_keyframes_per_n_frame_ = value.get(
-            "n_keyframes_per_n_frame", 10).asInt();
+        n_frames_per_fragment_ =
+                value.get("n_frames_per_fragment", 100).asInt();
+        n_keyframes_per_n_frame_ =
+                value.get("n_keyframes_per_n_frame", 10).asInt();
 
         min_depth_ = value.get("min_depth", 0.3).asDouble();
         max_depth_ = value.get("max_depth", 3.0).asDouble();
@@ -240,22 +239,24 @@ public:
         voxel_size_ = value.get("voxel_size", 0.05).asDouble();
 
         max_depth_diff_ = value.get("max_depth_diff", 0.07).asDouble();
-        preference_loop_closure_odometry_ = value.get(
-            "preference_loop_closure_odometry", 0.1).asDouble();
-        preference_loop_closure_registration_ = value.get(
-            "preference_loop_closure_registration", 5.0).asDouble();
+        preference_loop_closure_odometry_ =
+                value.get("preference_loop_closure_odometry", 0.1).asDouble();
+        preference_loop_closure_registration_ =
+                value.get("preference_loop_closure_registration", 5.0)
+                        .asDouble();
         tsdf_cubic_size_ = value.get("tsdf_cubic_size", 3.0).asDouble();
         tsdf_truncation_ = value.get("tsdf_truncation", 0.04).asDouble();
 
         if (path_intrinsic_.empty()) {
             intrinsic_ = camera::PinholeCameraIntrinsic(
-                camera::PinholeCameraIntrinsicParameters::PrimeSenseDefault);
+                    camera::PinholeCameraIntrinsicParameters::
+                            PrimeSenseDefault);
         } else {
-            bool is_success = io::ReadIJsonConvertible(path_intrinsic_,
-                intrinsic_);
+            bool is_success =
+                    io::ReadIJsonConvertible(path_intrinsic_, intrinsic_);
             if (!is_success) {
                 utility::PrintError("Unable to read camera intrinsics: %s!\n",
-                           path_intrinsic_.c_str());
+                                    path_intrinsic_.c_str());
             }
         }
 
@@ -272,4 +273,4 @@ public:
         return true;
     }
 };
-}
+}  // namespace open3d

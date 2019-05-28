@@ -2,21 +2,20 @@
 // Created by wei on 4/26/19.
 //
 
-#include <fstream>
 #include "DataAssociation.h"
+#include <fstream>
 
 namespace open3d {
 namespace geometry {
 
-bool DataAssociation::Associate(
-    int frame_idx, const geometry::Image &index_map) {
-
+bool DataAssociation::Associate(int frame_idx,
+                                const geometry::Image &index_map) {
     for (int u = 0; u < index_map.width_; ++u) {
         for (int v = 0; v < index_map.height_; ++v) {
-            int* idx = geometry::PointerAt<int>(index_map, u, v);
+            int *idx = geometry::PointerAt<int>(index_map, u, v);
             if (*idx != 0) {
                 associated_pixels_[*idx].emplace_back(
-                    std::make_pair(frame_idx, v * index_map.width_ + u));
+                        std::make_pair(frame_idx, v * index_map.width_ + u));
             }
         }
     }
@@ -24,7 +23,7 @@ bool DataAssociation::Associate(
 }
 
 bool DataAssociation::ReadDataAssociationFromBin(const std::string &filename) {
-
+    return false;
 }
 
 bool DataAssociation::WriteDataAssociationToBin(const std::string &filename) {
@@ -45,12 +44,13 @@ bool DataAssociation::WriteDataAssociationToBin(const std::string &filename) {
 
         int num_associations = vec.size();
         if (fwrite(&num_associations, sizeof(int), 1, fid) < 1) {
-            utility::PrintError("Write BIN failed: unable to write num assocs\n");
+            utility::PrintError(
+                    "Write BIN failed: unable to write num assocs\n");
             return false;
         }
 
-        if (fwrite(vec.data(), sizeof(std::pair<int, int>), num_associations, fid)
-            < num_associations) {
+        if (fwrite(vec.data(), sizeof(std::pair<int, int>), num_associations,
+                   fid) < num_associations) {
             utility::PrintError("Write BIN failed: unable to write assocs\n");
             return false;
         }
@@ -59,5 +59,5 @@ bool DataAssociation::WriteDataAssociationToBin(const std::string &filename) {
     return true;
 }
 
-}
-}
+}  // namespace geometry
+}  // namespace open3d

@@ -2,6 +2,7 @@
 // Created by wei on 4/28/19.
 //
 
+#include <random>
 #include <Open3D/Open3D.h>
 #include <InverseRendering/Visualization/Visualizer/VisualizerPBR.h>
 #include <InverseRendering/Geometry/TriangleMeshExtended.h>

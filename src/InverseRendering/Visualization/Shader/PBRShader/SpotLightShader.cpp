@@ -121,6 +121,8 @@ bool SpotLightShader::BindLighting(const geometry::Lighting &lighting,
 
     light_positions_data_ = spot_lighting.light_positions_;
     light_colors_data_    = spot_lighting.light_colors_;
+
+    return true;
 }
 
 bool SpotLightShader::RenderGeometry(const geometry::Geometry &geometry,

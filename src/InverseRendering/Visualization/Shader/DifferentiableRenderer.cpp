@@ -113,6 +113,8 @@ bool DifferentiableRenderer::CaptureBuffer(const std::string &filename,
     }
     io::WriteImageToHDR(filename + ".hdr", *buffer_map);
     io::WriteImage(filename, *output_image);
+
+    return true;
 }
 
 float DifferentiableRenderer::SGD(
@@ -207,6 +209,7 @@ bool DifferentiableRenderer::UpdateGeometry() {
 
 bool DifferentiableRenderer::RebindTexture(const geometry::Image &image) {
     differential_shader_.RebindTexture(image);
+    return true;
 }
 
 bool DifferentiableRenderer::RebindGeometry(
@@ -220,12 +223,14 @@ bool DifferentiableRenderer::RebindGeometry(
     differential_shader_.RebindGeometry(
         *mutable_geometry_ptr_,
         option, rebind_color, rebind_material, rebind_normal);
+    return true;
 }
 
 bool DifferentiableRenderer::UpdateEnvLighting() {
     auto &ibl = (geometry::IBLLighting &) (*lighting_ptr_);
 //    ibl.hdr_ = hdr;
     ibl.is_preprocessed_ = false;
+    return true;
 }
 
 }

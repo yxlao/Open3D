@@ -100,7 +100,9 @@ public:
         if (ret != GL_NO_ERROR) {
             utility::PrintWarning(
                 "[OpenGL error]: %d at %s\n", ret, msg.c_str());
+	    return false;
         }
+	return true;
     }
 };
 }

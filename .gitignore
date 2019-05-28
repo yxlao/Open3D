@@ -32,3 +32,5 @@ docs/python_api/
 _vimrc_local.vim
 examples/TestData/Armadillo.ply
 examples/TestData/Bunny.ply
+.ccls-cache/
+compile_commands.json

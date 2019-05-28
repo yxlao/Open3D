@@ -18,7 +18,7 @@ public:
 public:
     /** Dummy **/
     bool AddGeometry(std::shared_ptr<const geometry::Geometry> geometry_ptr)
-    override {};
+      override { return true; };
 
     /** In use **/
     bool Render(const RenderOption &option, const ViewControl &view) override;
