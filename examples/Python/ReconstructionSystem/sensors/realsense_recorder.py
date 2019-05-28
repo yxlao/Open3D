@@ -176,7 +176,7 @@ if __name__ == "__main__":
             # Render images
             depth_colormap = cv2.applyColorMap(
                 cv2.convertScaleAbs(depth_image, alpha=0.09), cv2.COLORMAP_JET)
-            images = np.hstack((bg_removed, depth_colormap))
+            images = np.hstack((color_image, depth_colormap))
             cv2.namedWindow('Recorder Realsense', cv2.WINDOW_AUTOSIZE)
             cv2.imshow('Recorder Realsense', images)
             key = cv2.waitKey(1)
