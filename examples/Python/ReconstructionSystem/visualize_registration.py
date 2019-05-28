@@ -8,11 +8,9 @@
 # The MIT License (MIT)
 # See license file or visit www.open3d.org for details
 
-
 from pathlib import Path
 import open3d as o3d
 import numpy as np
-
 
 
 def preprocess_point_cloud(pcd, voxel_size):
@@ -43,8 +41,8 @@ if __name__ == "__main__":
     source_path = fragments_dir / "fragment_000.ply"
     target_path = fragments_dir / "fragment_001.ply"
 
-    voxel_size = 0.02
-    threshold = 10
+    voxel_size = 0.01
+    threshold = 2
     o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Debug)
     source_raw = o3d.io.read_point_cloud(str(source_path))
     target_raw = o3d.io.read_point_cloud(str(target_path))
@@ -59,17 +57,17 @@ if __name__ == "__main__":
     vis.create_window()
     vis.add_geometry(source)
     vis.add_geometry(target)
-    icp_iteration = 50
+    render_option = vis.get_render_option()
+    render_option.light_on = False
+    icp_iteration = 30
     save_image = False
 
     for i in range(icp_iteration):
         result_icp = o3d.registration.registration_colored_icp(
             source, target, threshold, np.identity(4),
-            o3d.registration.ICPConvergenceCriteria(
-                relative_fitness=1e-6,
-                relative_rmse=1e-6,
-                max_iteration=1)
-        )
+            o3d.registration.ICPConvergenceCriteria(relative_fitness=1e-6,
+                                                    relative_rmse=1e-6,
+                                                    max_iteration=1))
         # time.sleep(10)
         source.transform(result_icp.transformation)
         vis.update_geometry()
