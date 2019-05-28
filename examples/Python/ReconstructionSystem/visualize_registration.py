@@ -4,8 +4,6 @@
 
 # examples/Python/Advanced/non_blocking_visualization.py
 
-
-
 # Open3D: www.open3d.org
 # The MIT License (MIT)
 # See license file or visit www.open3d.org for details
@@ -74,7 +72,6 @@ def multiscale_icp(source,
     vis.create_window()
     vis.add_geometry(source_copy)
     vis.add_geometry(target_copy)
-
 
     for i, scale in enumerate(range(len(max_iter))):  # multi-scale approach
         iter = max_iter[scale]
@@ -237,8 +234,10 @@ if __name__ == "__main__":
     o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Debug)
     source_raw = o3d.io.read_point_cloud(str(source_path))
     target_raw = o3d.io.read_point_cloud(str(target_path))
-    source, source_fpfh = preprocess_point_cloud(source_raw, voxel_size=voxel_size)
-    target, target_fpfh = preprocess_point_cloud(target_raw, voxel_size=voxel_size)
+    source, source_fpfh = preprocess_point_cloud(source_raw,
+                                                 voxel_size=voxel_size)
+    target, target_fpfh = preprocess_point_cloud(target_raw,
+                                                 voxel_size=voxel_size)
     # source = o3d.geometry.voxel_down_sample(source_raw, voxel_size=0.02)
     # target = o3d.geometry.voxel_down_sample(target_raw, voxel_size=0.02)
 
