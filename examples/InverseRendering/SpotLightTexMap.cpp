@@ -12,16 +12,16 @@
 using namespace open3d;
 
 int main() {
-    auto mesh = std::make_shared<geometry::ExtendedTriangleMesh>();
-    io::ReadExtendedTriangleMeshFromPLY("/media/wei/Data/data/pbr/model/sphere_uv.ply", *mesh);
+    std::string base_path = "/Users/dongw1/Work/Data/resources/textures/pbr/gold";
 
-    std::string base_path = "/media/wei/Data/data/pbr/materials/plastic";
-    std::vector<geometry::Image> textures;
-    textures.push_back(*io::CreateImageFromFile(base_path + "/albedo.png"));
-    textures.push_back(*io::CreateImageFromFile(base_path + "/normal.png"));
-    textures.push_back(*io::CreateImageFromFile(base_path + "/metallic.png"));
-    textures.push_back(*io::CreateImageFromFile(base_path + "/roughness.png"));
-    textures.push_back(*io::CreateImageFromFile(base_path + "/ao.png"));
+    auto mesh = std::make_shared<geometry::ExtendedTriangleMesh>();
+    io::ReadExtendedTriangleMeshFromPLY(base_path + "/sphere.ply", *mesh);
+    std::vector<std::string> filenames = {base_path + "/albedo.png",
+                                          base_path + "/normal.png",
+                                          base_path + "/metallic.png",
+                                          base_path + "/roughness.png",
+                                          base_path + "/ao.png"};
+    mesh->LoadImageTextures(filenames);
 
     auto lighting = std::make_shared<geometry::SpotLighting>();
     lighting->light_positions_ = {
@@ -36,5 +36,5 @@ int main() {
     };
 
     utility::SetVerbosityLevel(utility::VerbosityLevel::VerboseDebug);
-    visualization::DrawGeometriesPBR({mesh}, {textures}, {lighting});
+    visualization::DrawGeometriesPBR({mesh}, {lighting});
 }

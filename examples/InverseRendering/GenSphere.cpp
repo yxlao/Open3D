@@ -95,7 +95,7 @@ int main() {
     auto mesh = std::make_shared<geometry::ExtendedTriangleMesh>();
 
     std::string base_path =
-            "/Users/dongw1/Work/Data/resources/textures/pbr/gold";
+            "/Users/dongw1/Work/Data/resources/textures/pbr/rusted_iron";
     std::vector<cv::Mat> textures;
     textures.push_back(
             cv::imread(base_path + "/albedo.png", cv::IMREAD_UNCHANGED));
@@ -149,6 +149,9 @@ int main() {
 
             mesh->vertex_textures_.emplace_back(
                     Eigen::Vector3d(roughness, metallic, ao));
+
+            mesh->vertex_uvs_.emplace_back(
+                Eigen::Vector2d(u, v));
         }
     }
 
@@ -181,11 +184,10 @@ int main() {
     ibl->ReadEnvFromHDR(
             "/Users/dongw1/Work/Data/resources/textures/hdr/newport_loft.hdr");
 
-    std::vector<geometry::Image> textures_dummy;
     utility::SetVerbosityLevel(utility::VerbosityLevel::VerboseDebug);
-    visualization::DrawGeometriesPBR({mesh}, {textures_dummy}, {ibl});
+    visualization::DrawGeometriesPBR({mesh}, {ibl});
 
-    io::WriteExtendedTriangleMeshToPLY("/Users/dongw1/Work/Data/resources/textures/pbr/gold/sphere.ply", *mesh);
+    io::WriteExtendedTriangleMeshToPLY(base_path + "/sphere.ply", *mesh);
 
     return 0;
 }

@@ -25,11 +25,11 @@ public:
         for (auto &filename : filenames) {
             auto image_ptr = io::CreateImageFromFile(filename);
             if (!image_ptr) {
-                utility::PrintError(
-                    "Invalid input texture image %s abort\n.",
-                    filename.c_str());
+                utility::PrintError("Invalid input texture image %s abort\n.",
+                                    filename.c_str());
                 return false;
             }
+            images.emplace_back(image_ptr);
         }
         LoadImageTextures(images);
         return true;

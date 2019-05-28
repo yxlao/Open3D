@@ -12,11 +12,11 @@
 using namespace open3d;
 
 int main() {
+    std::string base_path = "/Users/dongw1/Work/Data/resources/textures/pbr/rusted_iron";
+
     auto mesh = std::make_shared<geometry::ExtendedTriangleMesh>();
-    io::ReadExtendedTriangleMeshFromPLY("/Users/dongw1/Work/Data/resources/textures/pbr/gold/sphere.ply", *mesh);
-
-
-    std::string base_path = "/Users/dongw1/Work/Data/resources/textures/pbr/gold";
+    io::ReadExtendedTriangleMeshFromPLY(base_path + "/sphere.ply", *mesh);
+    utility::PrintInfo("%d %d\n", mesh->HasVertexNormals(), mesh->HasUVs());
 
     std::vector<std::string> filenames = {base_path + "/albedo.png",
                                           base_path + "/normal.png",

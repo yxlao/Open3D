@@ -35,7 +35,7 @@ bool TriangleMeshRendererPBR::Render(const RenderOption &option,
             success &= PreprocessLights(ibl, option, view);
         }
 
-        if (mesh.HasUVs()) {
+        if (mesh.HasUVs() && mesh.HasImageTextures()) {
             success &= ibx_tex_map_shader_.Render(
                 mesh, ibl, option, view);
         } else if (mesh.HasVertexTextures()) {
@@ -54,6 +54,7 @@ bool TriangleMeshRendererPBR::Render(const RenderOption &option,
         == geometry::Lighting::LightingType::Spot) {
 
         const auto &spot = (const geometry::SpotLighting &) (*lighting_ptr_);
+        utility::PrintInfo("%d %d\n", mesh.HasVertexNormals(), mesh.HasUVs());
         if (mesh.HasVertexNormals() && mesh.HasUVs()) {
             success &= spot_light_shader_.Render(
                 mesh, spot, option, view);
