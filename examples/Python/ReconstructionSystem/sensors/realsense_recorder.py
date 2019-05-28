@@ -1,5 +1,7 @@
 # pyrealsense2 is required.
 # Please see instructions in https://github.com/IntelRealSense/librealsense/tree/master/wrappers/python
+import sys
+sys.path.append('/usr/local/lib')
 import pyrealsense2 as rs
 import numpy as np
 import cv2
@@ -30,12 +32,9 @@ def make_clean_folder(path_folder):
     if not exists(path_folder):
         makedirs(path_folder)
     else:
-        user_input = input("%s not empty. Overwrite? (y/n) : " % path_folder)
-        if user_input.lower() == 'y':
-            shutil.rmtree(path_folder)
-            makedirs(path_folder)
-        else:
-            exit()
+        print("%s not empty, overwrite." % path_folder)
+        shutil.rmtree(path_folder)
+        makedirs(path_folder)
 
 
 def save_intrinsic_as_json(filename, frame):
