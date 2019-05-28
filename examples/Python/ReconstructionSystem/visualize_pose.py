@@ -93,6 +93,7 @@ if __name__ == "__main__":
 
         # Visualize
         o3d.draw_geometries([pcd, camera_centers_ls, camera_frames])
+        # o3d.draw_geometries([pcd])
 
     scene_mesh_path = scene_dir / "integrated.ply"
     scene_mesh = o3d.io.read_triangle_mesh(str(scene_mesh_path))
@@ -111,3 +112,4 @@ if __name__ == "__main__":
     camera_frames = get_camera_frames(registered_Ts, size=0.02)
     camera_centers_ls = get_camera_centers_lineset(registered_Ts)
     o3d.draw_geometries([scene_mesh, camera_frames, camera_centers_ls])
+    # o3d.draw_geometries([scene_mesh])
