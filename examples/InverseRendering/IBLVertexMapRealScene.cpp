@@ -4,8 +4,8 @@
 
 
 #include <Open3D/Open3D.h>
-#include <InverseRendering/IO/ClassIO/TriangleMeshExtendedIO.h>
-#include <InverseRendering/Geometry/TriangleMeshExtended.h>
+#include <InverseRendering/IO/ClassIO/ExtendedTriangleMeshIO.h>
+#include <InverseRendering/Geometry/ExtendedTriangleMesh.h>
 #include <InverseRendering/Geometry/Lighting.h>
 #include <InverseRendering/Visualization/Utility/DrawGeometryPBR.h>
 #include <random>
@@ -17,7 +17,7 @@ int main() {
     io::ReadTriangleMeshFromPLY(
         "/media/wei/Data/data/stanford/lounge/scene_cuda/integrated.ply", *mesh);
 
-    auto mesh_extended = std::make_shared<geometry::TriangleMeshExtended>();
+    auto mesh_extended = std::make_shared<geometry::ExtendedTriangleMesh>();
     mesh_extended->vertices_ = mesh->vertices_;
     mesh_extended->vertex_colors_ = mesh->vertex_colors_;
     mesh_extended->vertex_normals_ = mesh->vertex_normals_;
@@ -27,9 +27,9 @@ int main() {
     std::uniform_real_distribution<double> dist_roughness(0.8, 1.0);
     std::uniform_real_distribution<double> dist_metallic(0.0, 0.2);
     std::uniform_real_distribution<double> dist_ao(0.8, 1.0);
-    mesh_extended->vertex_materials_.resize(mesh->vertices_.size());
+    mesh_extended->vertex_textures_.resize(mesh->vertices_.size());
 
-    for (auto &mat : mesh_extended->vertex_materials_) {
+    for (auto &mat : mesh_extended->vertex_textures_) {
         mat = Eigen::Vector3d(0, 1, 1);
 //        mat = Eigen::Vector3d(dist_roughness(rd), dist_metallic(rd), dist_ao(rd));
     }

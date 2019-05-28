@@ -4,8 +4,8 @@
 
 #include <Open3D/Open3D.h>
 #include <InverseRendering/Visualization/Visualizer/VisualizerPBR.h>
-#include <InverseRendering/Geometry/TriangleMeshExtended.h>
-#include <InverseRendering/IO/ClassIO/TriangleMeshExtendedIO.h>
+#include <InverseRendering/Geometry/ExtendedTriangleMesh.h>
+#include <InverseRendering/IO/ClassIO/ExtendedTriangleMeshIO.h>
 #include <Open3D/Utility/Console.h>
 #include <InverseRendering/Geometry/ImageExt.h>
 #include <InverseRendering/Visualization/Utility/DrawGeometryPBR.h>
@@ -13,12 +13,12 @@
 using namespace open3d;
 
 int main(int argc, char **argv) {
-    auto mesh = std::make_shared<geometry::TriangleMeshExtended>();
-    io::ReadTriangleMeshExtendedFromPLY("/media/wei/Data/data/pbr/model/sphere_plastic.ply", *mesh);
+    auto mesh = std::make_shared<geometry::ExtendedTriangleMesh>();
+    io::ReadExtendedTriangleMeshFromPLY("/media/wei/Data/data/pbr/model/sphere_plastic.ply", *mesh);
 //    for (auto &color : mesh->vertex_colors_) {
 //        color = Eigen::Vector3d(1, 1, 0.0);
 //    }
-//    for (auto &material : mesh->vertex_materials_) {
+//    for (auto &material : mesh->vertex_textures_) {
 //        material(1) = 0.0;
 //    }
 

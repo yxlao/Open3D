@@ -5,8 +5,8 @@
 #include <random>
 #include <Open3D/Open3D.h>
 #include <InverseRendering/Visualization/Visualizer/VisualizerPBR.h>
-#include <InverseRendering/Geometry/TriangleMeshExtended.h>
-#include <InverseRendering/IO/ClassIO/TriangleMeshExtendedIO.h>
+#include <InverseRendering/Geometry/ExtendedTriangleMesh.h>
+#include <InverseRendering/IO/ClassIO/ExtendedTriangleMeshIO.h>
 #include <Open3D/Utility/Console.h>
 #include <InverseRendering/Geometry/ImageExt.h>
 #include <InverseRendering/Visualization/Utility/DrawGeometryPBR.h>
@@ -30,14 +30,14 @@ int main(int argc, char **argv) {
     auto image_names = result.first;
     auto cam_names = result.second;
 
-    auto mesh = std::make_shared<geometry::TriangleMeshExtended>();
-    io::ReadTriangleMeshExtendedFromPLY(
+    auto mesh = std::make_shared<geometry::ExtendedTriangleMesh>();
+    io::ReadExtendedTriangleMeshFromPLY(
         "/media/wei/Data/data/pbr/model/sphere_gold.ply", *mesh);
 //    for (auto &color : mesh->vertex_colors_) {
 //        color = Eigen::Vector3d(1, 0, 0);
 //    }
 //
-//    for (auto &material : mesh->vertex_materials_) {
+//    for (auto &material : mesh->vertex_textures_) {
 //        material(0) = 1.0;
 //        material(1) = 0.0;
 //    }
@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
 
         if (i % 20 == 19) {
             lambda *= 0.5f;
-            io::WriteTriangleMeshExtendedToPLY(
+            io::WriteExtendedTriangleMeshToPLY(
                 "mesh-iter-" + std::to_string(i) + ".ply", *mesh);
         }
     }

@@ -15,13 +15,13 @@ bool DifferentiableRenderer::Render(const RenderOption &option,
     if (!is_visible_ || mutable_geometry_ptr_->IsEmpty()) return true;
 
     if (mutable_geometry_ptr_->GetGeometryType()
-        != geometry::Geometry::GeometryType::TriangleMesh) {
+        != geometry::Geometry::GeometryType::ExtendedTriangleMesh) {
         utility::PrintWarning("[DifferentiableRenderer] "
-                              "Geometry type is not TriangleMesh\n");
+                              "Geometry type is not ExtendedTriangleMesh\n");
         return false;
     }
     auto &mesh =
-        (const geometry::TriangleMeshExtended &) (*mutable_geometry_ptr_);
+        (const geometry::ExtendedTriangleMesh &) (*mutable_geometry_ptr_);
     if (!mesh.HasMaterials()) {
         utility::PrintWarning("[DifferentiableRenderer] "
                               "Mesh does not include material\n");
@@ -131,7 +131,7 @@ float DifferentiableRenderer::SGD(
 
     auto tmp_map = differential_shader_.fbo_outputs_[5];
 
-    auto &mesh = (geometry::TriangleMeshExtended &) *mutable_geometry_ptr_;
+    auto &mesh = (geometry::ExtendedTriangleMesh &) *mutable_geometry_ptr_;
 
     float total_residual = 0;
     int count = 0;
@@ -161,7 +161,7 @@ float DifferentiableRenderer::SGD(
                 }
 
                 if (update_material) {
-                    auto &material = mesh.vertex_materials_[*idx];
+                    auto &material = mesh.vertex_textures_[*idx];
                     auto grad_material = GetVector3d(*grad_material_map, u, v);
                     material -= lambda * grad_material;
                     Clamp(material, 0, 1);
@@ -192,7 +192,7 @@ float DifferentiableRenderer::SGD(
 bool DifferentiableRenderer::AddMutableGeometry(
     std::shared_ptr<open3d::geometry::Geometry> &geometry_ptr) {
     if (geometry_ptr->GetGeometryType() !=
-        geometry::Geometry::GeometryType::TriangleMesh) {
+        geometry::Geometry::GeometryType::ExtendedTriangleMesh) {
         return false;
     }
     mutable_geometry_ptr_ = geometry_ptr;

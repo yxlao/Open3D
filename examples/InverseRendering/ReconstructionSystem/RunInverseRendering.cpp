@@ -5,13 +5,13 @@
 
 #include <InverseRendering/Geometry/ImageExt.h>
 #include <InverseRendering/Geometry/Lighting.h>
-#include <InverseRendering/Geometry/TriangleMeshExtended.h>
+#include <InverseRendering/Geometry/ExtendedTriangleMesh.h>
 #include <InverseRendering/Visualization/Utility/DrawGeometryPBR.h>
 #include <InverseRendering/Visualization/Visualizer/VisualizerPBR.h>
 #include <Open3D/Registration/PoseGraph.h>
 #include "DatasetConfig.h"
 
-#include <InverseRendering/IO/ClassIO/TriangleMeshExtendedIO.h>
+#include <InverseRendering/IO/ClassIO/ExtendedTriangleMeshIO.h>
 #include <Eigen/Eigen>
 
 using namespace open3d;
@@ -31,13 +31,13 @@ int main(int argc, char **argv) {
     auto mesh = std::make_shared<geometry::TriangleMesh>();
     io::ReadTriangleMeshFromPLY(config.GetPlyFileForFragment(1), *mesh);
 
-    auto mesh_extended = std::make_shared<geometry::TriangleMeshExtended>();
+    auto mesh_extended = std::make_shared<geometry::ExtendedTriangleMesh>();
     mesh_extended->vertices_ = mesh->vertices_;
     mesh_extended->vertex_colors_ = mesh->vertex_colors_;
     mesh_extended->vertex_normals_ = mesh->vertex_normals_;
     mesh_extended->triangles_ = mesh->triangles_;
-    mesh_extended->vertex_materials_.resize(mesh->vertices_.size());
-    for (auto &mat : mesh_extended->vertex_materials_) {
+    mesh_extended->vertex_textures_.resize(mesh->vertices_.size());
+    for (auto &mat : mesh_extended->vertex_textures_) {
         mat = Eigen::Vector3d(1, 0, 1);
     }
 
@@ -111,5 +111,5 @@ int main(int argc, char **argv) {
     }
 
     visualization::DrawGeometriesPBR({mesh_extended}, {textures}, {ibl});
-    io::WriteTriangleMeshExtendedToPLY("fragment_extended.ply", *mesh_extended);
+    io::WriteExtendedTriangleMeshToPLY("fragment_extended.ply", *mesh_extended);
 }

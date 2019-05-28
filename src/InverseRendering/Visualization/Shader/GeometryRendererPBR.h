@@ -31,7 +31,7 @@ public:
     bool AddGeometry(std::shared_ptr<const geometry::Geometry> geometry_ptr)
     override {
         if (geometry_ptr->GetGeometryType() !=
-            geometry::Geometry::GeometryType::TriangleMesh) {
+            geometry::Geometry::GeometryType::ExtendedTriangleMesh) {
             return false;
         }
         geometry_ptr_ = geometry_ptr;

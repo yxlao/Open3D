@@ -3,8 +3,8 @@
 //
 
 #include <InverseRendering/Geometry/Lighting.h>
-#include <InverseRendering/Geometry/TriangleMeshExtended.h>
-#include <InverseRendering/IO/ClassIO/TriangleMeshExtendedIO.h>
+#include <InverseRendering/Geometry/ExtendedTriangleMesh.h>
+#include <InverseRendering/IO/ClassIO/ExtendedTriangleMeshIO.h>
 #include <InverseRendering/Visualization/Utility/DrawGeometryPBR.h>
 #include <Open3D/Open3D.h>
 
@@ -92,7 +92,7 @@ Eigen::Vector3d GetPositionOnSphere(float u, float v) {
 }
 
 int main() {
-    auto mesh = std::make_shared<geometry::TriangleMeshExtended>();
+    auto mesh = std::make_shared<geometry::ExtendedTriangleMesh>();
 
     std::string base_path =
             "/Users/dongw1/Work/Data/resources/textures/pbr/gold";
@@ -147,7 +147,7 @@ int main() {
             auto roughness = InterpolateScalar(textures[3], u, v);
             auto ao = InterpolateScalar(textures[4], u, v);
 
-            mesh->vertex_materials_.emplace_back(
+            mesh->vertex_textures_.emplace_back(
                     Eigen::Vector3d(roughness, metallic, ao));
         }
     }
@@ -185,7 +185,7 @@ int main() {
     utility::SetVerbosityLevel(utility::VerbosityLevel::VerboseDebug);
     visualization::DrawGeometriesPBR({mesh}, {textures_dummy}, {ibl});
 
-    io::WriteTriangleMeshExtendedToPLY("/Users/dongw1/Work/Data/resources/textures/pbr/gold/sphere.ply", *mesh);
+    io::WriteExtendedTriangleMeshToPLY("/Users/dongw1/Work/Data/resources/textures/pbr/gold/sphere.ply", *mesh);
 
     return 0;
 }

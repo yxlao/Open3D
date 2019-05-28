@@ -33,7 +33,7 @@
 #include <Open3D/Visualization/Utility/ColorMap.h>
 
 #include <InverseRendering/Visualization/Shader/Shader.h>
-#include <InverseRendering/Geometry/TriangleMeshExtended.h>
+#include <InverseRendering/Geometry/ExtendedTriangleMesh.h>
 
 namespace open3d {
 namespace visualization {
@@ -202,7 +202,7 @@ void IBLVertexMapShader::UnbindGeometry() {
 void IBLVertexMapShader::RebindGeometry(const geometry::Geometry &geometry,
                                         const RenderOption &option,
                                         bool color, bool material, bool normal) {
-    auto &mesh = (const geometry::TriangleMeshExtended &) geometry;
+    auto &mesh = (const geometry::ExtendedTriangleMesh &) geometry;
 
     if (color) {
         std::vector<Eigen::Vector3f> colors(mesh.vertex_colors_.size());
@@ -213,9 +213,9 @@ void IBLVertexMapShader::RebindGeometry(const geometry::Geometry &geometry,
     }
 
     if (material) {
-        std::vector<Eigen::Vector3f> materials(mesh.vertex_materials_.size());
-        for (int i = 0; i < mesh.vertex_materials_.size(); ++i) {
-            materials[i] = mesh.vertex_materials_[i].cast<float>();
+        std::vector<Eigen::Vector3f> materials(mesh.vertex_textures_.size());
+        for (int i = 0; i < mesh.vertex_textures_.size(); ++i) {
+            materials[i] = mesh.vertex_textures_[i].cast<float>();
         }
         BindBuffer(vertex_material_buffer_, materials, GL_ARRAY_BUFFER, option);
     }
@@ -234,8 +234,8 @@ bool IBLVertexMapShader::PrepareRendering(
     const RenderOption &option,
     const ViewControl &view) {
     if (geometry.GetGeometryType() !=
-        geometry::Geometry::GeometryType::TriangleMesh) {
-        PrintShaderWarning("Rendering type is not geometry::TriangleMesh.");
+        geometry::Geometry::GeometryType::ExtendedTriangleMesh) {
+        PrintShaderWarning("Rendering type is not geometry::ExtendedTriangleMesh.");
         return false;
     }
     if (option.mesh_show_back_face_) {
@@ -266,12 +266,12 @@ bool IBLVertexMapShader::PrepareBinding(
     std::vector<Eigen::Vector3f> &materials,
     std::vector<Eigen::Vector3i> &triangles) {
     if (geometry.GetGeometryType() !=
-        geometry::Geometry::GeometryType::TriangleMesh) {
+        geometry::Geometry::GeometryType::ExtendedTriangleMesh) {
         PrintShaderWarning(
-            "Rendering type is not geometry::TriangleMesh.");
+            "Rendering type is not geometry::ExtendedTriangleMesh.");
         return false;
     }
-    auto &mesh = (const geometry::TriangleMeshExtended &) geometry;
+    auto &mesh = (const geometry::ExtendedTriangleMesh &) geometry;
     if (!mesh.HasTriangles()) {
         PrintShaderWarning("Binding failed with empty triangle mesh.");
         return false;
@@ -293,9 +293,9 @@ bool IBLVertexMapShader::PrepareBinding(
     for (int i = 0; i < colors.size(); ++i) {
         colors[i] = mesh.vertex_colors_[i].cast<float>();
     }
-    materials.resize(mesh.vertex_materials_.size());
+    materials.resize(mesh.vertex_textures_.size());
     for (int i = 0; i < colors.size(); ++i) {
-        materials[i] = mesh.vertex_materials_[i].cast<float>();
+        materials[i] = mesh.vertex_textures_[i].cast<float>();
     }
     triangles = mesh.triangles_;
 

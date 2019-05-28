@@ -3,8 +3,8 @@
 //
 
 #include <Open3D/Open3D.h>
-#include <InverseRendering/IO/ClassIO/TriangleMeshExtendedIO.h>
-#include <InverseRendering/Geometry/TriangleMeshExtended.h>
+#include <InverseRendering/IO/ClassIO/ExtendedTriangleMeshIO.h>
+#include <InverseRendering/Geometry/ExtendedTriangleMesh.h>
 #include <InverseRendering/Geometry/Lighting.h>
 #include <InverseRendering/Visualization/Utility/DrawGeometryPBR.h>
 #include <InverseRendering/Geometry/ImageExt.h>
@@ -12,8 +12,8 @@
 using namespace open3d;
 
 int main() {
-    auto mesh = std::make_shared<geometry::TriangleMeshExtended>();
-    io::ReadTriangleMeshExtendedFromPLY("/Users/dongw1/Work/Data/resources/textures/pbr/gold/sphere.ply", *mesh);
+    auto mesh = std::make_shared<geometry::ExtendedTriangleMesh>();
+    io::ReadExtendedTriangleMeshFromPLY("/Users/dongw1/Work/Data/resources/textures/pbr/gold/sphere.ply", *mesh);
 
     std::string base_path = "/Users/dongw1/Work/Data/resources/textures/pbr/gold";
     std::vector<geometry::Image> textures;

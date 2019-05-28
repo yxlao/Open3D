@@ -30,8 +30,8 @@
 
 #include <rply/rply.h>
 #include <Open3D/Utility/Console.h>
-#include <InverseRendering/Geometry/TriangleMeshExtended.h>
-#include <InverseRendering/IO/ClassIO/TriangleMeshExtendedIO.h>
+#include <InverseRendering/Geometry/ExtendedTriangleMesh.h>
+#include <InverseRendering/IO/ClassIO/ExtendedTriangleMeshIO.h>
 
 namespace open3d {
 
@@ -41,7 +41,7 @@ using namespace io;
 namespace ply_trianglemesh_extended_reader {
 
 struct PLYReaderState {
-    geometry::TriangleMeshExtended *mesh_ptr;
+    geometry::ExtendedTriangleMesh *mesh_ptr;
     long vertex_index;
     long vertex_num;
     long normal_index;
@@ -139,7 +139,7 @@ int ReadMaterialCallback(p_ply_argument argument) {
     }
 
     double value = ply_get_argument_value(argument);
-    state_ptr->mesh_ptr->vertex_materials_[state_ptr->material_index](index) =
+    state_ptr->mesh_ptr->vertex_textures_[state_ptr->material_index](index) =
         value;
     if (index == 2) {  // reading 'ao'
         state_ptr->material_index++;
@@ -174,8 +174,8 @@ int ReadFaceCallBack(p_ply_argument argument) {
 
 namespace io {
 
-bool ReadTriangleMeshExtendedFromPLY(const std::string &filename,
-                                     geometry::TriangleMeshExtended &mesh) {
+bool ReadExtendedTriangleMeshFromPLY(const std::string &filename,
+                                     geometry::ExtendedTriangleMesh &mesh) {
     using namespace ply_trianglemesh_extended_reader;
 
     p_ply ply_file = ply_open(filename.c_str(), NULL, 0, NULL);
@@ -241,7 +241,7 @@ bool ReadTriangleMeshExtendedFromPLY(const std::string &filename,
     mesh.vertex_normals_.resize(state.normal_num);
     mesh.vertex_colors_.resize(state.color_num);
     mesh.vertex_uvs_.resize(state.uv_num);
-    mesh.vertex_materials_.resize(state.material_num);
+    mesh.vertex_textures_.resize(state.material_num);
     mesh.triangles_.resize(state.triangle_num);
 
     utility::ResetConsoleProgress(state.vertex_num + state.triangle_num,
@@ -258,8 +258,8 @@ bool ReadTriangleMeshExtendedFromPLY(const std::string &filename,
     return true;
 }
 
-bool WriteTriangleMeshExtendedToPLY(const std::string &filename,
-                                    const geometry::TriangleMeshExtended &mesh,
+bool WriteExtendedTriangleMeshToPLY(const std::string &filename,
+                                    const geometry::ExtendedTriangleMesh &mesh,
                                     bool write_ascii /* = false*/,
                                     bool compressed /* = false*/) {
     if (mesh.IsEmpty()) {
@@ -336,7 +336,7 @@ bool WriteTriangleMeshExtendedToPLY(const std::string &filename,
             ply_write(ply_file, uv(1));
         }
         if (mesh.HasMaterials()) {
-            const auto &material = mesh.vertex_materials_[i];
+            const auto &material = mesh.vertex_textures_[i];
             ply_write(ply_file, material(0));
             ply_write(ply_file, material(1));
             ply_write(ply_file, material(2));

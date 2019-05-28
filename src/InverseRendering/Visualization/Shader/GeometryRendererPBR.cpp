@@ -13,12 +13,12 @@ bool TriangleMeshRendererPBR::Render(const RenderOption &option,
     if (!is_visible_ || geometry_ptr_->IsEmpty()) return true;
 
     if (geometry_ptr_->GetGeometryType()
-        != geometry::Geometry::GeometryType::TriangleMesh) {
+        != geometry::Geometry::GeometryType::ExtendedTriangleMesh) {
         utility::PrintWarning("[TriangleMeshRendererPBR] "
-                              "Geometry type is not TriangleMesh\n");
+                              "Geometry type is not ExtendedTriangleMesh\n");
         return false;
     }
-    const auto &mesh = (const geometry::TriangleMeshExtended &)(*geometry_ptr_);
+    const auto &mesh = (const geometry::ExtendedTriangleMesh &)(*geometry_ptr_);
 
     bool success = true;
 

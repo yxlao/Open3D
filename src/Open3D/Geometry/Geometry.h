@@ -41,7 +41,8 @@ public:
         HalfEdgeTriangleMesh = 6,
         Image = 7,
 
-        TexturedTriangleMesh = 8,
+        ExtendedTriangleMesh = 8,
+        Lighting = 9
     };
 
 public:

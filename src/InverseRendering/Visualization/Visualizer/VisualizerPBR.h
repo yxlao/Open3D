@@ -12,17 +12,16 @@ namespace visualization {
 
 class VisualizerPBR : public VisualizerWithKeyCallback {
 public:
-    /** Dummy **/
     virtual bool AddGeometry(
-            std::shared_ptr<const geometry::Geometry> geometry_ptr) override {
-        return true;
-    };
+        std::shared_ptr<const geometry::Geometry> geometry_ptr) override {};
+//    virtual void BuildLighting(
+//        std::shared_ptr<geometry::Lighting> &lighting);
 
     /** In use **/
     virtual bool AddGeometryPBR(
-            std::shared_ptr<const geometry::Geometry> geometry_ptr,
-            const std::vector<geometry::Image> &textures,
-            const std::shared_ptr<geometry::Lighting> &lighting);
+        std::shared_ptr<const geometry::Geometry> geometry_ptr,
+        const std::vector<geometry::Image> &textures,
+        const std::shared_ptr<geometry::Lighting> &lighting);
 
     virtual void Render() override;
 };

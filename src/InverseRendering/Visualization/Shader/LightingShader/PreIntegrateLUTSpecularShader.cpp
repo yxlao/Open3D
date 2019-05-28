@@ -8,7 +8,7 @@
 #include <Open3D/Visualization/Utility/ColorMap.h>
 
 #include <InverseRendering/Visualization/Shader/Shader.h>
-#include <InverseRendering/Geometry/TriangleMeshExtended.h>
+#include <InverseRendering/Geometry/ExtendedTriangleMesh.h>
 #include <InverseRendering/Visualization/Shader/Primitives.h>
 
 namespace open3d {

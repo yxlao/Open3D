@@ -6,7 +6,7 @@
 
 #include <Open3D/Open3D.h>
 #include "InverseRendering/Visualization/Shader/ShaderWrapperPBR.h"
-#include <InverseRendering/Geometry/TriangleMeshExtended.h>
+#include <InverseRendering/Geometry/ExtendedTriangleMesh.h>
 
 namespace open3d {
 namespace visualization {
