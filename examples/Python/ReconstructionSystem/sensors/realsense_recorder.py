@@ -11,6 +11,7 @@ from os.path import exists, join
 import shutil
 import json
 from enum import IntEnum
+import time
 
 try:
     # Python 2 compatible
@@ -137,6 +138,8 @@ if __name__ == "__main__":
     frame_count = 0
     try:
         while True:
+            time.sleep(0.2)
+
             # Get frameset of color and depth
             frames = pipeline.wait_for_frames()
 
