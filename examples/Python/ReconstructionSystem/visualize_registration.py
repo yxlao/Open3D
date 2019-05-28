@@ -234,18 +234,8 @@ if __name__ == "__main__":
     o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Debug)
     source_raw = o3d.io.read_point_cloud(str(source_path))
     target_raw = o3d.io.read_point_cloud(str(target_path))
-    source, source_fpfh = preprocess_point_cloud(source_raw,
-                                                 voxel_size=voxel_size)
-    target, target_fpfh = preprocess_point_cloud(target_raw,
-                                                 voxel_size=voxel_size)
-    # source = o3d.geometry.voxel_down_sample(source_raw, voxel_size=0.02)
-    # target = o3d.geometry.voxel_down_sample(target_raw, voxel_size=0.02)
-
-    result = o3d.registration.registration_fast_based_on_feature_matching(
-        source, target, source_fpfh, target_fpfh,
-        o3d.registration.FastGlobalRegistrationOption(
-            maximum_correspondence_distance=threshold))
-    init_trans = result.transformation
+    source, _ = preprocess_point_cloud(source_raw, voxel_size=voxel_size)
+    target, _ = preprocess_point_cloud(target_raw, voxel_size=voxel_size)
 
     flip_transform = [[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]]
     source.transform(flip_transform)
@@ -255,17 +245,17 @@ if __name__ == "__main__":
     vis.create_window()
     vis.add_geometry(source)
     vis.add_geometry(target)
-    icp_iteration = 1000
+    icp_iteration = 50
     save_image = False
 
     for i in range(icp_iteration):
-        # result_icp = o3d.registration.registration_icp(
-        #     source, target, threshold, np.identity(4),
-        #     o3d.registration.TransformationEstimationPointToPoint(),
-        #     o3d.registration.ICPConvergenceCriteria(max_iteration=1))
         result_icp = o3d.registration.registration_colored_icp(
             source, target, threshold, np.identity(4),
-            o3d.registration.ICPConvergenceCriteria())
+            o3d.registration.ICPConvergenceCriteria(
+                relative_fitness=1e-6,
+                relative_rmse=1e-6,
+                max_iteration=1)
+        )
         # time.sleep(10)
         source.transform(result_icp.transformation)
         vis.update_geometry()
