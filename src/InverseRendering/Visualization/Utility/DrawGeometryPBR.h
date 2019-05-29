@@ -10,7 +10,7 @@ namespace open3d {
 namespace visualization {
 bool DrawGeometriesPBR(
     const std::vector<std::shared_ptr<const geometry::Geometry>> &geometry_ptrs,
-    const std::shared_ptr<geometry::Lighting> &lighting,
+    const std::shared_ptr<const geometry::Lighting> &lighting,
     const std::string &window_name = "Open3D",
     int width = 640,
     int height = 480,

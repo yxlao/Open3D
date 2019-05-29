@@ -12,7 +12,7 @@ namespace visualization {
 
 class RenderOptionWithLighting : public RenderOption {
 public:
-    std::shared_ptr<geometry::Lighting> lighting_ptr_;
+    geometry::Lighting::LightingType type_;
 
     /** Reserved for IBL lighting **/
     bool is_tex_preprocessed_;
@@ -21,6 +21,9 @@ public:
     GLuint tex_env_diffuse_buffer_;
     GLuint tex_env_specular_buffer_;
     GLuint tex_lut_specular_buffer_;
+
+    std::vector<Eigen::Vector3f> spot_light_positions_;
+    std::vector<Eigen::Vector3f> spot_light_colors_;
 };
 }
 }

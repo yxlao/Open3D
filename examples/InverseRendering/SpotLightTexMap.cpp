@@ -36,5 +36,5 @@ int main() {
     };
 
     utility::SetVerbosityLevel(utility::VerbosityLevel::VerboseDebug);
-    visualization::DrawGeometriesPBR({mesh}, {lighting});
+    visualization::DrawGeometriesPBR({mesh}, lighting);
 }

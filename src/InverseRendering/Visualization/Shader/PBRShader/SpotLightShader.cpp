@@ -119,10 +119,8 @@ bool SpotLightShader::RenderGeometry(const geometry::Geometry &geometry,
     }
 
     auto &lighting_option = (const RenderOptionWithLighting &) option;
-    auto spot_lighting = (const geometry::SpotLighting &)
-        lighting_option.lighting_ptr_;
-    light_positions_data_ = spot_lighting.light_positions_;
-    light_colors_data_ = spot_lighting.light_colors_;
+    light_positions_data_ = lighting_option.spot_light_positions_;
+    light_colors_data_ = lighting_option.spot_light_colors_;
 
     glUseProgram(program_);
     glUniformMatrix4fv(M_, 1, GL_FALSE, view.GetModelMatrix().data());

@@ -7,6 +7,7 @@
 #include <Open3D/Open3D.h>
 #include <InverseRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
 #include <InverseRendering/Geometry/Lighting.h>
+#include <Open3D/Geometry/Geometry.h>
 
 #include "LightingShader/HDRToEnvCubemapShader.h"
 #include "LightingShader/BackgroundShader.h"
@@ -25,12 +26,26 @@ public:
 public:
     bool AddGeometry(
         std::shared_ptr<const geometry::Geometry> geometry_ptr)
-    override { return true; }
-    bool UpdateGeometry() { return true; }
-    bool Render(const RenderOption &option, const ViewControl &view)
-    override { return true; }
+    override {
+        /** Change nothing **/
+        if (geometry_ptr->GetGeometryType() !=
+            geometry::Geometry::GeometryType::Lighting) {
+            utility::PrintError(
+                "Fail to bind geometry to LightingPreprocessRenderer.\n");
+            return false;
+        }
 
-    bool UnbindTextures() {
+        /** Clear memory anyway:
+         * - IBL: re-generate textures,
+         * - non-IBL: we dont need buffers **/
+        geometry_ptr_ = geometry_ptr;
+        return UpdateGeometry();
+    }
+
+    /** Handle the textures all in the renderer:
+     *  separating textures in the shaders will be hard to manage.
+     **/
+    bool UpdateGeometry() override {
         if (is_tex_allocated_) {
             glDeleteBuffers(1, &tex_hdr_buffer_);
             glDeleteBuffers(1, &tex_env_buffer_);
@@ -39,48 +54,62 @@ public:
             glDeleteBuffers(1, &tex_lut_specular_buffer_);
             is_tex_allocated_ = false;
         }
+        return true;
     }
 
-    /** Here we use non-constant option **/
-    bool RenderToOption(RenderOption &option, const ViewControl &view) {
+    /** Render Nothing (TODO: or only the skybox)? **/
+    bool Render(const RenderOption &option, const ViewControl &view)
+    override { return true; }
+
+    /** Call this function ONLY AFTER @AddGeometry(lighting)
+     * Here we use non-constant option, in contrast to default @Render
+     **/
+    bool RenderToOption(RenderOptionWithLighting &option,
+                        const ViewControl &view) {
         bool success = true;
-        auto dummy = std::make_shared<geometry::TriangleMesh>();
 
-        UnbindTextures();
+        auto lighting_ptr = (std::shared_ptr<geometry::Lighting> &)
+            geometry_ptr_;
 
-        auto &option_lighting = (RenderOptionWithLighting &) option;
-        if (option_lighting.lighting_ptr_->GetLightingType()
+        if (lighting_ptr->GetLightingType()
             != geometry::Lighting::LightingType::IBL) {
-            utility::PrintWarning("Invalid lighting, IBL expected.\n");
-            return false;
+            utility::PrintDebug("Pass non-IBL lighting.\n");
+            option.type_ = geometry::Lighting::LightingType::Spot;
+
+            auto &spot_lighting_ptr =
+                (std::shared_ptr<geometry::SpotLighting> &) lighting_ptr;
+            option.spot_light_positions_ = spot_lighting_ptr->light_positions_;
+            option.spot_light_colors_ = spot_lighting_ptr->light_colors_;
+            return true;
         }
 
+        option.type_ = geometry::Lighting::LightingType::IBL;
         auto &ibl = (std::shared_ptr<geometry::IBLLighting> &)
-            option_lighting.lighting_ptr_;
+            lighting_ptr;
         BindHDRTexture2D(ibl);
-        option_lighting.tex_hdr_buffer_ = tex_hdr_buffer_;
+        option.tex_hdr_buffer_ = tex_hdr_buffer_;
 
         success &= hdr_to_env_cubemap_shader_.Render(
-            *dummy, option, view);
-        option_lighting.tex_env_buffer_
+            *geometry_ptr_, option, view);
+        option.tex_env_buffer_
             = tex_env_buffer_
             = hdr_to_env_cubemap_shader_.GetGeneratedCubemapBuffer();
 
         success &= preconv_env_diffuse_shader_.Render(
-            *dummy, option, view);
-        option_lighting.tex_env_diffuse_buffer_
+            *geometry_ptr_, option, view);
+        option.tex_env_diffuse_buffer_
             = tex_env_diffuse_buffer_
             = preconv_env_diffuse_shader_.GetGeneratedDiffuseBuffer();
 
         success &= prefilter_env_specular_shader_.Render(
-            *dummy, option, view);
-        option_lighting.tex_env_specular_buffer_
+            *geometry_ptr_, option, view);
+        option.tex_env_specular_buffer_
             = tex_env_specular_buffer_
             = prefilter_env_specular_shader_.GetGeneratedPrefilterEnvBuffer();
 
         success &= preintegrate_lut_specular_shader_.Render(
-            *dummy, option, view);
-        option_lighting.tex_lut_specular_buffer_
+            *geometry_ptr_, option, view);
+        option.tex_lut_specular_buffer_
             = tex_lut_specular_buffer_
             = preintegrate_lut_specular_shader_.GetGeneratedLUTBuffer();
 
@@ -109,8 +138,6 @@ public:
     }
 
 public:
-    std::shared_ptr<geometry::Lighting> lighting_ptr_ = nullptr;
-
     bool is_tex_allocated_ = false;
     GLuint tex_hdr_buffer_;
     GLuint tex_env_buffer_;

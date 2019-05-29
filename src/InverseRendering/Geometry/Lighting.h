@@ -10,7 +10,7 @@
 namespace open3d {
 namespace geometry {
 
-class Lighting {
+class Lighting : public Geometry2D {
 public:
     enum class LightingType {
         Spot = 0,
@@ -23,9 +23,15 @@ public:
     LightingType GetLightingType() const {
         return type_;
     }
+    void Clear() override {};
+    bool IsEmpty() const override {return false;};
+    Eigen::Vector2d GetMinBound() const override {return Eigen::Vector2d(); };
+    Eigen::Vector2d GetMaxBound() const override {return Eigen::Vector2d(); };
 
 protected:
-    explicit Lighting(LightingType type) : type_(type) {}
+    explicit Lighting(LightingType type)
+        : Geometry2D(Geometry::GeometryType::Lighting),
+          type_(type) {}
 
 private:
     LightingType type_;

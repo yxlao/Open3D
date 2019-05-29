@@ -29,16 +29,14 @@ bool ExtendedTriangleMeshRenderer::Render(const RenderOption &option,
                               "Geometry type is not ExtendedTriangleMesh\n");
         return false;
     }
-    const auto &mesh = (const geometry::ExtendedTriangleMesh &) (*geometry_ptr_);
+    const auto
+        &mesh = (const geometry::ExtendedTriangleMesh &) (*geometry_ptr_);
 
     bool success = true;
 
     /** ibl: a bit pre-processing required **/
     auto &option_lighting = (const RenderOptionWithLighting &) option;
-    auto &lighting_ptr = option_lighting.lighting_ptr_;
-
-    if (lighting_ptr->GetLightingType()
-        == geometry::Lighting::LightingType::IBL) {
+    if (option_lighting.type_ == geometry::Lighting::LightingType::IBL) {
 
         if (mesh.HasUVs() && mesh.HasImageTextures()) {
             success &= ibx_tex_map_shader_.Render(
@@ -55,8 +53,7 @@ bool ExtendedTriangleMeshRenderer::Render(const RenderOption &option,
     }
 
         /* no ibl: simple */
-    else if (lighting_ptr->GetLightingType()
-        == geometry::Lighting::LightingType::Spot) {
+    else if (option_lighting.type_ == geometry::Lighting::LightingType::Spot) {
         if (mesh.HasVertexNormals()
             && mesh.HasUVs() && mesh.HasImageTextures()) {
             success &= spot_light_shader_.Render(

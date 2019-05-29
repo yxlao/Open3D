@@ -26,7 +26,8 @@ int main() {
     mesh->LoadImageTextures(filenames);
 
     auto ibl = std::make_shared<geometry::IBLLighting>();
-    ibl->ReadEnvFromHDR("/Users/dongw1/Work/Data/resources/textures/hdr/newport_loft.hdr");
+    ibl->ReadEnvFromHDR(
+        "/Users/dongw1/Work/Data/resources/textures/hdr/newport_loft.hdr");
 
     utility::SetVerbosityLevel(utility::VerbosityLevel::VerboseDebug);
     visualization::DrawGeometriesPBR({mesh}, ibl);

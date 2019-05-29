@@ -27,32 +27,31 @@ public:
 
     /** Call this function
      * - AFTER @CreateVisualizerWindow (where @InitRenderOption is called)
-     * - BEFORE @Run (or whatever customized rendering task) **/
-    bool BuildLighting(const std::shared_ptr<geometry::Lighting> &lighting) {
-        auto &render_option_ptr_with_lighting =
-            (std::unique_ptr<RenderOptionWithLighting> &)
-                render_option_ptr_;
-        render_option_ptr_with_lighting->lighting_ptr_ = lighting;
+     * - BEFORE @Run (or whatever customized rendering task)
+     *   Currently we only support one lighting.
+     *   It would remove the previous bound lighting.
+     * **/
+    bool UpdateLighting(
+        const std::shared_ptr<const geometry::Lighting> &lighting) {
 
-        if (lighting->GetLightingType()
-            != geometry::Lighting::LightingType::IBL) {
-            return true;
-        }
-
+        /** Single instance of the lighting preprocessor **/
         if (light_preprocessing_renderer_ptr_ == nullptr) {
             light_preprocessing_renderer_ptr_ =
                 std::make_shared<glsl::LightingPreprocessRenderer>();
         }
 
+        auto &render_option_with_lighting_ptr =
+            (std::unique_ptr<RenderOptionWithLighting> &) render_option_ptr_;
+        light_preprocessing_renderer_ptr_->AddGeometry(lighting);
         bool success = light_preprocessing_renderer_ptr_->RenderToOption(
-            *render_option_ptr_, *view_control_ptr_);
+            *render_option_with_lighting_ptr, *view_control_ptr_);
+
         return true;
     }
 
     /** This renderer:
      * 1. Preprocess input HDR lighting image,
-     * 2. Maintain textures,
-     *    (a buffer that should be propagate to option instantly)
+     * 2. Maintain textures, (updated to RenderOption instantly)
      * 3. Destroy context on leave. **/
     std::shared_ptr<glsl::LightingPreprocessRenderer>
         light_preprocessing_renderer_ptr_ = nullptr;
