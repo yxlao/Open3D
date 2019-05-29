@@ -2,14 +2,25 @@
 // Created by wei on 4/12/19.
 //
 
+#include <InverseRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
 #include "GeometryRendererPBR.h"
 
 namespace open3d {
 namespace visualization {
 
 namespace glsl {
-bool TriangleMeshRendererPBR::Render(const RenderOption &option,
-                                     const ViewControl &view) {
+bool ExtendedTriangleMeshRenderer::AddGeometry(
+    std::shared_ptr<const geometry::Geometry> geometry_ptr) {
+    if (geometry_ptr->GetGeometryType() !=
+        geometry::Geometry::GeometryType::ExtendedTriangleMesh) {
+        return false;
+    }
+    geometry_ptr_ = geometry_ptr;
+    return UpdateGeometry();
+}
+
+bool ExtendedTriangleMeshRenderer::Render(const RenderOption &option,
+                                          const ViewControl &view) {
     if (!is_visible_ || geometry_ptr_->IsEmpty()) return true;
 
     if (geometry_ptr_->GetGeometryType()
@@ -18,57 +29,47 @@ bool TriangleMeshRendererPBR::Render(const RenderOption &option,
                               "Geometry type is not ExtendedTriangleMesh\n");
         return false;
     }
-    const auto &mesh = (const geometry::ExtendedTriangleMesh &)(*geometry_ptr_);
+    const auto &mesh = (const geometry::ExtendedTriangleMesh &) (*geometry_ptr_);
 
     bool success = true;
 
     /** ibl: a bit pre-processing required **/
-    if (lighting_ptr_->GetLightingType()
-        == geometry::Lighting::LightingType::IBL) {
+    auto &option_lighting = (const RenderOptionWithLighting &) option;
+    auto &lighting_ptr = option_lighting.lighting_ptr_;
 
-        auto &ibl = (geometry::IBLLighting &) (*lighting_ptr_);
-        if (!ibl.is_preprocessed_) {
-            if (!ibl.BindHDRTexture2D()) {
-                utility::PrintError("Binding failed when loading light.");
-                return false;
-            }
-            success &= PreprocessLights(ibl, option, view);
-        }
+    if (lighting_ptr->GetLightingType()
+        == geometry::Lighting::LightingType::IBL) {
 
         if (mesh.HasUVs() && mesh.HasImageTextures()) {
             success &= ibx_tex_map_shader_.Render(
-                mesh, ibl, option, view);
+                mesh, option, view);
         } else if (mesh.HasVertexTextures()) {
             success &= ibl_vertex_map_shader_.Render(
-                mesh, ibl, option, view);
+                mesh, option, view);
         } else {
             success = false;
         }
 
         success &= background_shader_.Render(
-            mesh, ibl, option, view);
+            mesh, option, view);
     }
 
-    /* no ibl: simple */
-    else if (lighting_ptr_->GetLightingType()
+        /* no ibl: simple */
+    else if (lighting_ptr->GetLightingType()
         == geometry::Lighting::LightingType::Spot) {
-
-        const auto &spot = (const geometry::SpotLighting &) (*lighting_ptr_);
-        utility::PrintInfo("%d %d\n", mesh.HasVertexNormals(), mesh.HasUVs());
-        if (mesh.HasVertexNormals() && mesh.HasUVs()) {
+        if (mesh.HasVertexNormals()
+            && mesh.HasUVs() && mesh.HasImageTextures()) {
             success &= spot_light_shader_.Render(
-                mesh, spot, option, view);
+                mesh, option, view);
         }
     }
 
     return success;
 }
 
-bool TriangleMeshRendererPBR::UpdateGeometry() {
+bool ExtendedTriangleMeshRenderer::UpdateGeometry() {
     ibl_vertex_map_shader_.InvalidateGeometry();
     spot_light_shader_.InvalidateGeometry();
-
-    UnbindLights();
 
     return true;
 }

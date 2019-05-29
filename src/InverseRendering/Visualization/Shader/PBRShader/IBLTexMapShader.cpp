@@ -34,6 +34,7 @@
 
 #include <InverseRendering/Visualization/Shader/Shader.h>
 #include <InverseRendering/Geometry/ExtendedTriangleMesh.h>
+#include <InverseRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
 
 namespace open3d {
 namespace visualization {
@@ -120,22 +121,6 @@ bool IBLTexMapShader::BindGeometry(const geometry::Geometry &geometry,
     return true;
 }
 
-bool IBLTexMapShader::BindLighting(const geometry::Lighting &lighting,
-                                   const visualization::RenderOption &option,
-                                   const visualization::ViewControl &view) {
-    auto ibl = (const geometry::IBLLighting &) lighting;
-
-    texes_env_buffers_.resize(kNumEnvTextures);
-    texes_env_buffers_[0] = ibl.tex_env_diffuse_buffer_;
-    texes_env_buffers_[1] = ibl.tex_env_specular_buffer_;
-    texes_env_buffers_[2] = ibl.tex_lut_specular_buffer_;
-
-    for (int i = 0; i < kNumEnvTextures; ++i) {
-        std::cout << "tex_obejct_buffer: " << texes_env_buffers_[i] << "\n";
-    }
-    return true;
-}
-
 bool IBLTexMapShader::RenderGeometry(const geometry::Geometry &geometry,
                                      const RenderOption &option,
                                      const ViewControl &view) {
@@ -143,6 +128,12 @@ bool IBLTexMapShader::RenderGeometry(const geometry::Geometry &geometry,
         PrintShaderWarning("Rendering failed during preparation.");
         return false;
     }
+
+    auto &lighting_option = (const RenderOptionWithLighting &) option;
+    texes_env_buffers_.resize(kNumEnvTextures);
+    texes_env_buffers_[0] = lighting_option.tex_env_diffuse_buffer_;
+    texes_env_buffers_[1] = lighting_option.tex_env_specular_buffer_;
+    texes_env_buffers_[2] = lighting_option.tex_lut_specular_buffer_;
 
     glUseProgram(program_);
     glUniformMatrix4fv(M_, 1, GL_FALSE, view.GetModelMatrix().data());

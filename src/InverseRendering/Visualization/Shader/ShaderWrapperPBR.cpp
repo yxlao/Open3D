@@ -10,27 +10,6 @@ namespace visualization {
 
 namespace glsl {
 
-bool ShaderWrapperPBR::Render(const geometry::Geometry &geometry,
-                              const geometry::Lighting &lighting,
-                              const RenderOption &option,
-                              const ViewControl &view) {
-    if (!compiled_) {
-        Compile();
-    }
-    if (!bound_) {
-        BindGeometry(geometry, option, view);
-        BindLighting(lighting, option, view);
-    }
-    if (!compiled_ || !bound_) {
-        PrintShaderWarning("Something is wrong in compiling or binding.");
-        return false;
-    }
-
-    /** In fact, geometry is only used for sanity check.
-     *  We should have bound everything before calling RenderGeometry **/
-    return RenderGeometry(geometry, option, view);
-}
-
 GLuint ShaderWrapperPBR::BindTexture2D(
     const geometry::Image &texture,
     const visualization::RenderOption &option) {

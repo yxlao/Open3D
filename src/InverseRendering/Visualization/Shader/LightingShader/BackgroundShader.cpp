@@ -10,6 +10,7 @@
 #include <InverseRendering/Geometry/ExtendedTriangleMesh.h>
 #include <InverseRendering/Visualization/Shader/Shader.h>
 #include <InverseRendering/Visualization/Shader/Primitives.h>
+#include <InverseRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
 
 namespace open3d {
 namespace visualization {
@@ -61,14 +62,6 @@ bool BackgroundShader::BindGeometry(const geometry::Geometry &geometry,
     return true;
 }
 
-bool BackgroundShader::BindLighting(const geometry::Lighting &lighting,
-                                    const visualization::RenderOption &option,
-                                    const visualization::ViewControl &view) {
-    auto ibl = (const geometry::IBLLighting &) lighting;
-    tex_env_buffer_ = ibl.tex_env_buffer_;
-    return true;
-}
-
 bool BackgroundShader::RenderGeometry(const geometry::Geometry &geometry,
                                       const RenderOption &option,
                                       const ViewControl &view) {
@@ -76,6 +69,9 @@ bool BackgroundShader::RenderGeometry(const geometry::Geometry &geometry,
         PrintShaderWarning("Rendering failed during preparation.");
         return false;
     }
+
+    auto &lighting_option = (const RenderOptionWithLighting &) option;
+    tex_env_buffer_ = lighting_option.tex_env_buffer_;
 
     glUseProgram(program_);
 

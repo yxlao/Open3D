@@ -36,42 +36,20 @@ public:
     IBLLighting() : Lighting(LightingType::IBL) {}
     ~IBLLighting();
 
-    bool ReadEnvFromHDR(const std::string& filename);
-
+    bool ReadEnvFromHDR(const std::string &filename);
     Eigen::Vector3d SampleAround(const Eigen::Vector3d &position,
                                  double sigma);
     Eigen::Vector3f GetValueAt(const Eigen::Vector3d &position);
     void SetValueAt(const Eigen::Vector3d &position, const Eigen::Vector3f &value);
+    void ShiftValue(const Eigen::Vector3d &direction,
+                    const Eigen::Vector3f &psi);
 
     std::shared_ptr<geometry::Image> hdr_; /** log - lat map **/
 
 public:
-    bool is_preprocessed_ = false;
-
-    bool is_hdr_buffer_generated_ = false;
-    GLuint tex_hdr_buffer_;
-    GLuint tex_env_buffer_;
-    GLuint tex_env_diffuse_buffer_;
-    GLuint tex_env_specular_buffer_; /* roughness, R = 2<V, N>N - V */
-    GLuint tex_lut_specular_buffer_; /* roughness, <V, N>) */
 
     bool BindHDRTexture2D();
 
-    void UpdateEnvBuffer(GLuint tex_env_buffer) {
-        tex_env_buffer_ = tex_env_buffer;
-    }
-    void UpdateEnvDiffuseBuffer(GLuint tex_env_diffuse_buffer) {
-        tex_env_diffuse_buffer_ = tex_env_diffuse_buffer;
-    }
-    void UpdateEnvSpecularBuffer(GLuint tex_env_specular_buffer) {
-        tex_env_specular_buffer_ = tex_env_specular_buffer;
-    }
-    void UpdateLutSpecularBuffer(GLuint tex_lut_specular_buffer) {
-        tex_lut_specular_buffer_ = tex_lut_specular_buffer;
-    }
-
-    void ShiftValue(const Eigen::Vector3d &direction,
-                    const Eigen::Vector3f &psi);
 };
 
 class SpotLighting : public Lighting {

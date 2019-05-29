@@ -29,10 +29,6 @@ protected:
     bool BindGeometry(const geometry::Geometry &geometry,
                       const RenderOption &option,
                       const ViewControl &view) final;
-    bool BindLighting(const geometry::Lighting &lighting,
-                      const RenderOption &option,
-                      const ViewControl &view) final { return true; };
-
     bool RenderGeometry(const geometry::Geometry &geometry,
                         const RenderOption &option,
                         const ViewControl &view) final;

@@ -34,6 +34,7 @@
 
 #include <InverseRendering/Visualization/Shader/Shader.h>
 #include <InverseRendering/Geometry/ExtendedTriangleMesh.h>
+#include <InverseRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
 
 namespace open3d {
 namespace visualization {
@@ -109,17 +110,6 @@ bool SpotLightShader::BindGeometry(const geometry::Geometry &geometry,
     return true;
 }
 
-bool SpotLightShader::BindLighting(const geometry::Lighting &lighting,
-                                   const visualization::RenderOption &option,
-                                   const visualization::ViewControl &view) {
-    auto spot_lighting = (const geometry::SpotLighting &) lighting;
-
-    light_positions_data_ = spot_lighting.light_positions_;
-    light_colors_data_ = spot_lighting.light_colors_;
-
-    return true;
-}
-
 bool SpotLightShader::RenderGeometry(const geometry::Geometry &geometry,
                                      const RenderOption &option,
                                      const ViewControl &view) {
@@ -127,6 +117,12 @@ bool SpotLightShader::RenderGeometry(const geometry::Geometry &geometry,
         PrintShaderWarning("Rendering failed during preparation.");
         return false;
     }
+
+    auto &lighting_option = (const RenderOptionWithLighting &) option;
+    auto spot_lighting = (const geometry::SpotLighting &)
+        lighting_option.lighting_ptr_;
+    light_positions_data_ = spot_lighting.light_positions_;
+    light_colors_data_ = spot_lighting.light_colors_;
 
     glUseProgram(program_);
     glUniformMatrix4fv(M_, 1, GL_FALSE, view.GetModelMatrix().data());

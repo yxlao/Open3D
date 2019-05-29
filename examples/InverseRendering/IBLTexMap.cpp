@@ -29,5 +29,5 @@ int main() {
     ibl->ReadEnvFromHDR("/Users/dongw1/Work/Data/resources/textures/hdr/newport_loft.hdr");
 
     utility::SetVerbosityLevel(utility::VerbosityLevel::VerboseDebug);
-    visualization::DrawGeometriesPBR({mesh}, {ibl});
+    visualization::DrawGeometriesPBR({mesh}, ibl);
 }

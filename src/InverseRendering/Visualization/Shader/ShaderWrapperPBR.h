@@ -65,24 +65,7 @@ protected:
                                 const visualization::RenderOption &option);
 
 public:
-    bool Render(const geometry::Geometry &geometry,
-                const geometry::Lighting &lighting,
-                const RenderOption &option,
-                const ViewControl &view);
-
-    /** Bind is separated in three functions **/
-    virtual bool BindLighting(const geometry::Lighting &lighting,
-                              const RenderOption &option,
-                              const ViewControl &view) = 0;
-
-    /** Render requires only geometry: others are prestored **/
-    /* virtual bool RenderGeometry */
-
-    /** Unbind requires only geometry: others are unbind together **/
-    /* virtual bool UnbindGeometry */
-
     /** Utility: primitives **/
-public:
     void LoadCube(std::vector<Eigen::Vector3f> &vertices,
                   std::vector<Eigen::Vector3i> &triangles);
     void LoadQuad(std::vector<Eigen::Vector3f> &vertices,

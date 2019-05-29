@@ -29,11 +29,6 @@ protected:
     bool BindGeometry(const geometry::Geometry &geometry,
                       const RenderOption &option,
                       const ViewControl &view) final;
-    /** Assign cubemap stored in the lighting **/
-    bool BindLighting(const geometry::Lighting &lighting,
-                      const RenderOption &option,
-                      const ViewControl &view) final;
-
     bool RenderGeometry(const geometry::Geometry &geometry,
                         const RenderOption &option,
                         const ViewControl &view) final;

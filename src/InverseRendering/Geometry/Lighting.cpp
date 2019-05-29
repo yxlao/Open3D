@@ -22,32 +22,6 @@ bool IBLLighting::ReadEnvFromHDR(const std::string &filename) {
     return true;
 }
 
-bool IBLLighting::BindHDRTexture2D() {
-    if (!is_hdr_buffer_generated_) {
-        glGenTextures(1, &tex_hdr_buffer_);
-        is_hdr_buffer_generated_ = true;
-    }
-
-    utility::PrintInfo("Rebinding HDR Texture\n");
-    glBindTexture(GL_TEXTURE_2D, tex_hdr_buffer_);
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,
-                 GL_RGB16F,
-                 hdr_->width_,
-                 hdr_->height_,
-                 0,
-                 GL_RGB,
-                 GL_FLOAT,
-                 hdr_->data_.data());
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    return true;
-}
-
 namespace {
 Eigen::Vector2d SphereToLogLat(const Eigen::Vector3d &position) {
     auto n = position.normalized();

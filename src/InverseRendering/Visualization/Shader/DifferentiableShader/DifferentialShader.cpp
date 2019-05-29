@@ -34,6 +34,7 @@
 
 #include <InverseRendering/Visualization/Shader/Shader.h>
 #include <InverseRendering/Geometry/ExtendedTriangleMesh.h>
+#include <InverseRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
 
 namespace open3d {
 namespace visualization {
@@ -116,22 +117,6 @@ bool DifferentialShader::BindGeometry(const geometry::Geometry &geometry,
     return true;
 }
 
-bool DifferentialShader::BindLighting(const geometry::Lighting &lighting,
-                                      const RenderOption &option,
-                                      const ViewControl &view) {
-    auto ibl = (const geometry::IBLLighting &) lighting;
-
-    tex_env_buffers_.resize(kNumEnvTextures);
-    tex_env_buffers_[0] = ibl.tex_env_diffuse_buffer_;
-    tex_env_buffers_[1] = ibl.tex_env_specular_buffer_;
-    tex_env_buffers_[2] = ibl.tex_lut_specular_buffer_;
-
-    for (int i = 0; i < kNumEnvTextures; ++i) {
-        std::cout << "tex_obejct_buffer: " << tex_env_buffers_[i] << "\n";
-    }
-    return true;
-}
-
 bool DifferentialShader::RenderGeometry(const geometry::Geometry &geometry,
                                         const RenderOption &option,
                                         const ViewControl &view) {
@@ -141,6 +126,12 @@ bool DifferentialShader::RenderGeometry(const geometry::Geometry &geometry,
     }
 
     CheckGLState("SceneDifferentialShader - Before Render");
+
+    auto &lighting_option = (const RenderOptionWithLighting &) option;
+    tex_env_buffers_.resize(kNumEnvTextures);
+    tex_env_buffers_[0] = lighting_option.tex_env_diffuse_buffer_;
+    tex_env_buffers_[1] = lighting_option.tex_env_specular_buffer_;
+    tex_env_buffers_[2] = lighting_option.tex_lut_specular_buffer_;
 
     if (!is_debug_) {
         glBindFramebuffer(GL_FRAMEBUFFER, fbo_);

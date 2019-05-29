@@ -9,7 +9,7 @@ namespace visualization {
 
 bool DrawGeometriesPBR(
     const std::vector<std::shared_ptr<const geometry::Geometry>> &geometry_ptrs,
-    const std::vector<std::shared_ptr<geometry::Lighting>> &lightings,
+    const std::shared_ptr<geometry::Lighting> &lighting,
     const std::string &window_name /* = "Open3D"*/,
     int width /* = 640*/,
     int height /* = 480*/,
@@ -25,9 +25,11 @@ bool DrawGeometriesPBR(
         return false;
     }
 
+    visualizer.BuildLighting(lighting);
+
     for (int i = 0; i < geometry_ptrs.size(); ++i) {
-        if (! visualizer.AddGeometryPBR(
-            geometry_ptrs[i], lightings[i])) {
+        if (! visualizer.AddGeometry(
+            geometry_ptrs[i])) {
             utility::PrintWarning(
                 "[DrawGeometriesPBR] Failed adding geometry.\n");
             utility::PrintWarning(

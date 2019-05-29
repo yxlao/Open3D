@@ -56,12 +56,6 @@ bool PreIntegrateLUTSpecularShader::BindGeometry(const geometry::Geometry &geome
     return true;
 }
 
-bool PreIntegrateLUTSpecularShader::BindLighting(const geometry::Lighting &lighting,
-                                                 const visualization::RenderOption &option,
-                                                 const visualization::ViewControl &view) {
-    return true;
-}
-
 bool PreIntegrateLUTSpecularShader::RenderGeometry(const geometry::Geometry &geometry,
                                                    const RenderOption &option,
                                                    const ViewControl &view) {

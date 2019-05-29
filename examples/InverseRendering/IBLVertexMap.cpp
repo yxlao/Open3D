@@ -22,5 +22,5 @@ int main() {
 //    ibl->ReadEnvFromHDR("/media/wei/Data/data/pbr/env/Alexs_Apt_2k.hdr");
     
     utility::SetVerbosityLevel(utility::VerbosityLevel::VerboseDebug);
-    visualization::DrawGeometriesPBR({mesh}, {ibl});
+    visualization::DrawGeometriesPBR({mesh}, ibl);
 }

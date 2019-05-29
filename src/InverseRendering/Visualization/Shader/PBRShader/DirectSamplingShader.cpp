@@ -34,6 +34,7 @@
 
 #include <InverseRendering/Visualization/Shader/Shader.h>
 #include <InverseRendering/Geometry/ExtendedTriangleMesh.h>
+#include <InverseRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
 
 namespace open3d {
 namespace visualization {
@@ -106,21 +107,6 @@ bool DirectSamplingShader::BindGeometry(const geometry::Geometry &geometry,
     return true;
 }
 
-bool DirectSamplingShader::BindLighting(const geometry::Lighting &lighting,
-                                        const visualization::RenderOption &option,
-                                        const visualization::ViewControl &view) {
-    auto ibl = (const geometry::IBLLighting &) lighting;
-
-    texes_env_buffers_.resize(kNumEnvTextures);
-    texes_env_buffers_[0] = ibl.tex_env_buffer_;
-    texes_env_buffers_[1] = ibl.tex_env_diffuse_buffer_;
-
-    for (int i = 0; i < kNumEnvTextures; ++i) {
-        std::cout << "tex_obejct_buffer: " << texes_env_buffers_[i] << "\n";
-    }
-    return true;
-}
-
 bool DirectSamplingShader::RenderGeometry(const geometry::Geometry &geometry,
                                           const RenderOption &option,
                                           const ViewControl &view) {
@@ -128,6 +114,11 @@ bool DirectSamplingShader::RenderGeometry(const geometry::Geometry &geometry,
         PrintShaderWarning("Rendering failed during preparation.");
         return false;
     }
+
+    auto &lighting_option = (const RenderOptionWithLighting &) option;
+    texes_env_buffers_.resize(kNumEnvTextures);
+    texes_env_buffers_[0] = lighting_option.tex_env_buffer_;
+    texes_env_buffers_[1] = lighting_option.tex_env_diffuse_buffer_;
 
     glUseProgram(program_);
     glUniformMatrix4fv(M_, 1, GL_FALSE, view.GetModelMatrix().data());
