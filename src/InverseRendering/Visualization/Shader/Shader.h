@@ -1524,3 +1524,70 @@ const char * const SpotLightVertexShader =
 }  // namespace open3d
 
 // clang-format on
+// clang-format off
+namespace open3d {
+
+namespace visualization {
+
+namespace glsl {
+
+const char * const UVTexMapFragmentShader = 
+"#version 330 core\n"
+"\n"
+"out vec4 FragColor;\n"
+"\n"
+"in vec2 uv;\n"
+"in vec3 position;\n"
+"\n"
+"// material parameters\n"
+"uniform sampler2D tex_albedo;\n"
+"\n"
+"const float PI = 3.14159265359;\n"
+"\n"
+"void main() {\n"
+"    vec3 albedo = texture(tex_albedo, uv).rgb;\n"
+"    FragColor = vec4(albedo, 1.0);\n"
+"}\n"
+;
+
+}  // namespace open3d::glsl
+
+}  // namespace open3d::visualization
+
+}  // namespace open3d
+
+// clang-format on
+// clang-format off
+namespace open3d {
+
+namespace visualization {
+
+namespace glsl {
+
+const char * const UVTexMapVertexShader = 
+"#version 330 core\n"
+"\n"
+"layout(location = 0) in vec3 vertex_position;\n"
+"layout(location = 1) in vec2 vertex_uv;\n"
+"\n"
+"out vec2 uv;\n"
+"out vec3 position;\n"
+"\n"
+"uniform mat4 P;\n"
+"uniform mat4 V;\n"
+"uniform mat4 M;\n"
+"\n"
+"void main() {\n"
+"    uv = vertex_uv;\n"
+"    position = vec3(M * vec4(vertex_position, 1.0));\n"
+"    gl_Position =  P * V * vec4(position, 1.0);\n"
+"}\n"
+;
+
+}  // namespace open3d::glsl
+
+}  // namespace open3d::visualization
+
+}  // namespace open3d
+
+// clang-format on

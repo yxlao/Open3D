@@ -36,14 +36,13 @@ bool GeometryRendererPBR::Render(const RenderOption &option,
 
     /** ibl: a bit pre-processing required **/
     auto &option_lighting = (const RenderOptionWithLighting &) option;
-    if (option_lighting.type_ == geometry::Lighting::LightingType::IBL) {
 
+    if (option_lighting.type_ == geometry::Lighting::LightingType::IBL) {
         if (mesh.HasUVs() && mesh.HasImageTextures()) {
-            success &= ibx_tex_map_shader_.Render(
-                mesh, option, view);
+            success &= uv_tex_map_shader_.Render(mesh, option, view);
+//            success &= ibx_tex_map_shader_.Render(mesh, option, view);
         } else if (mesh.HasVertexTextures()) {
-            success &= ibl_vertex_map_shader_.Render(
-                mesh, option, view);
+            success &= ibl_vertex_map_shader_.Render(mesh, option, view);
         } else {
             success = false;
         }

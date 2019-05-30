@@ -6,6 +6,7 @@
 
 #include <Open3D/Open3D.h>
 
+#include "UVShader/UVTexMapShader.h"
 #include "PBRShader/IBLTexMapShader.h"
 #include "PBRShader/IBLVertexMapShader.h"
 #include "PBRShader/SpotLightShader.h"
@@ -32,6 +33,7 @@ protected:
     SpotLightShader spot_light_shader_;
 
     /** IBL: w/ and w/o texture maps **/
+    UVTexMapShader uv_tex_map_shader_;
     IBLTexMapShader ibx_tex_map_shader_;
     IBLVertexMapShader ibl_vertex_map_shader_;
 
