@@ -21,7 +21,7 @@ public:
     ~ExtendedTriangleMesh() override {}
 
     /** We need to have uv coordinates **/
-    bool LoadImageTextures(std::vector<std::string> &filenames) {
+    bool LoadImageTextures(const std::vector<std::string> &filenames) {
         std::vector<std::shared_ptr<geometry::Image>> images;
         for (auto &filename : filenames) {
             auto image_ptr = io::CreateImageFromFile(filename);
@@ -36,7 +36,7 @@ public:
         return true;
     }
 
-    void LoadImageTextures(std::vector<std::shared_ptr<geometry::Image>> &images) {
+    void LoadImageTextures(const std::vector<std::shared_ptr<geometry::Image>> &images) {
         for (auto &image : images) {
             // TODO: check if we need to flip here.
             image_textures_.emplace_back(*FlipImageExt(*image));

@@ -197,10 +197,6 @@ else ()
     message(SEND_ERROR "TINYFILEDIALOGS dependency not met.")
   endif ()
 
-# stb_image
-add_subdirectory(stb_image)
-set(STB_IMAGE_LIBRARIES stb_image)
-
 # rply
 Directories("${CMAKE_CURRENT_SOURCE_DIR}/rply"   rply_INCLUDE_DIRS)
 
@@ -327,6 +323,15 @@ list(APPEND 3RDPARTY_LIBRARY_DIRS
     ${PNG_LIBRARY_DIRS})
 
 # set 3RDPARTY_LIBRARIES
+
+# stb_image
+add_subdirectory(stb_image)
+set(STB_IMAGE_LIBRARIES stb_image)
+
+# tiny_obj_loader
+add_subdirectory(tinyobjloader)
+set(TINY_OBJ_LOADER_LIBRARIES tiny_obj_loader)
+
 list(APPEND 3RDPARTY_LIBRARIES
      ${GLEW_LIBRARIES}
      ${GLFW_LIBRARIES}
@@ -336,7 +341,8 @@ list(APPEND 3RDPARTY_LIBRARIES
      ${tinyfiledialogs_LIBRARIES}
      ${qhull_LIBRARIES}
      ${googletest_LIBRARIES}
-     ${STB_IMAGE_LIBRARIES})
+     ${STB_IMAGE_LIBRARIES}
+     ${TINY_OBJ_LOADER_LIBRARIES})
 
 # set PRE_BUILT_3RDPARTY_LIBRARIES. When building Open3D as shared library,
 # the user app that links Open3D also need to link PRE_BUILT_3RDPARTY_LIBRARIES,

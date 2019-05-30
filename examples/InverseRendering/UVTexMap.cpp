@@ -12,18 +12,11 @@
 using namespace open3d;
 
 int main() {
-    std::string base_path = "/Users/dongw1/Work/Data/resources/textures/pbr/rusted_iron";
+    std::string base_path = "/Users/dongw1/Work/Data/resources/objects/cyborg";
 
     auto mesh = std::make_shared<geometry::ExtendedTriangleMesh>();
-    io::ReadExtendedTriangleMeshFromPLY(base_path + "/sphere.ply", *mesh);
+    io::ReadExtendedTriangleMeshFromOBJ(base_path + "/cyborg.obj", *mesh);
     utility::PrintInfo("%d %d\n", mesh->HasVertexNormals(), mesh->HasUVs());
-
-    std::vector<std::string> filenames = {base_path + "/awesomeface.png",
-                                          base_path + "/normal.png",
-                                          base_path + "/metallic.png",
-                                          base_path + "/roughness.png",
-                                          base_path + "/ao.png"};
-    mesh->LoadImageTextures(filenames);
 
     auto ibl = std::make_shared<geometry::IBLLighting>();
     ibl->ReadEnvFromHDR(
