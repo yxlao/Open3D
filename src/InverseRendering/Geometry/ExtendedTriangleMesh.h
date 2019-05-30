@@ -5,6 +5,7 @@
 #pragma once
 
 #include <Open3D/Open3D.h>
+#include "ImageExt.h"
 namespace open3d {
 namespace geometry {
 
@@ -38,7 +39,7 @@ public:
     void LoadImageTextures(std::vector<std::shared_ptr<geometry::Image>> &images) {
         for (auto &image : images) {
             // TODO: check if we need to flip here.
-            image_textures_.emplace_back(*image);
+            image_textures_.emplace_back(*FlipImageExt(*image));
         }
     }
 

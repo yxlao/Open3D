@@ -9,7 +9,7 @@ namespace open3d {
 namespace visualization {
 
 namespace glsl {
-bool ExtendedTriangleMeshRenderer::AddGeometry(
+bool GeometryRendererPBR::AddGeometry(
     std::shared_ptr<const geometry::Geometry> geometry_ptr) {
     if (geometry_ptr->GetGeometryType() !=
         geometry::Geometry::GeometryType::ExtendedTriangleMesh) {
@@ -19,8 +19,8 @@ bool ExtendedTriangleMeshRenderer::AddGeometry(
     return UpdateGeometry();
 }
 
-bool ExtendedTriangleMeshRenderer::Render(const RenderOption &option,
-                                          const ViewControl &view) {
+bool GeometryRendererPBR::Render(const RenderOption &option,
+                                 const ViewControl &view) {
     if (!is_visible_ || geometry_ptr_->IsEmpty()) return true;
 
     if (geometry_ptr_->GetGeometryType()
@@ -50,10 +50,8 @@ bool ExtendedTriangleMeshRenderer::Render(const RenderOption &option,
 
         success &= background_shader_.Render(
             mesh, option, view);
-    }
-
-        /* no ibl: simple */
-    else if (option_lighting.type_ == geometry::Lighting::LightingType::Spot) {
+    } else if (option_lighting.type_
+        == geometry::Lighting::LightingType::Spot) {
         if (mesh.HasVertexNormals()
             && mesh.HasUVs() && mesh.HasImageTextures()) {
             success &= spot_light_shader_.Render(
@@ -64,7 +62,7 @@ bool ExtendedTriangleMeshRenderer::Render(const RenderOption &option,
     return success;
 }
 
-bool ExtendedTriangleMeshRenderer::UpdateGeometry() {
+bool GeometryRendererPBR::UpdateGeometry() {
     ibl_vertex_map_shader_.InvalidateGeometry();
     spot_light_shader_.InvalidateGeometry();
 

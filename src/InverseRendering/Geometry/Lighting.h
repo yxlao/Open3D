@@ -43,6 +43,7 @@ public:
     ~IBLLighting();
 
     bool ReadEnvFromHDR(const std::string &filename);
+
     Eigen::Vector3d SampleAround(const Eigen::Vector3d &position,
                                  double sigma);
     Eigen::Vector3f GetValueAt(const Eigen::Vector3d &position);
@@ -50,12 +51,8 @@ public:
     void ShiftValue(const Eigen::Vector3d &direction,
                     const Eigen::Vector3f &psi);
 
-    std::shared_ptr<geometry::Image> hdr_; /** log - lat map **/
-
 public:
-
-    bool BindHDRTexture2D();
-
+    std::shared_ptr<geometry::Image> hdr_; /** log - lat map **/
 };
 
 class SpotLighting : public Lighting {

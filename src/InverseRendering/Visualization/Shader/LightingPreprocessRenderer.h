@@ -72,7 +72,7 @@ public:
             geometry_ptr_;
 
         if (lighting_ptr->GetLightingType()
-            != geometry::Lighting::LightingType::IBL) {
+            == geometry::Lighting::LightingType::Spot) {
             utility::PrintDebug("Pass non-IBL lighting.\n");
             option.type_ = geometry::Lighting::LightingType::Spot;
 
@@ -84,8 +84,7 @@ public:
         }
 
         option.type_ = geometry::Lighting::LightingType::IBL;
-        auto &ibl = (std::shared_ptr<geometry::IBLLighting> &)
-            lighting_ptr;
+        auto &ibl = (std::shared_ptr<geometry::IBLLighting> &) lighting_ptr;
         BindHDRTexture2D(ibl);
         option.tex_hdr_buffer_ = tex_hdr_buffer_;
 

@@ -14,7 +14,7 @@ int main() {
     auto mesh = std::make_shared<geometry::ExtendedTriangleMesh>();
     io::ReadExtendedTriangleMeshFromPLY(
 //        "mesh-iter-99.ply", *mesh);
-        "/Users/dongw1/Work/Data/resources/textures/pbr/gold/sphere.ply", *mesh);
+        "/Users/dongw1/Work/Data/resources/textures/pbr/rusted_iron/sphere.ply", *mesh);
 //        "/media/wei/Data/data/pbr/model/sphere_gold.ply", *mesh);
 
     auto ibl = std::make_shared<geometry::IBLLighting>();

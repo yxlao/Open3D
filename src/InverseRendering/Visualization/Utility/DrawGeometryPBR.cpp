@@ -25,11 +25,8 @@ bool DrawGeometriesPBR(
         return false;
     }
 
-    visualizer.UpdateLighting(lighting);
-
-    for (int i = 0; i < geometry_ptrs.size(); ++i) {
-        if (! visualizer.AddGeometry(
-            geometry_ptrs[i])) {
+    for (auto &geometry_ptr : geometry_ptrs) {
+        if (! visualizer.AddGeometry(geometry_ptr)) {
             utility::PrintWarning(
                 "[DrawGeometriesPBR] Failed adding geometry.\n");
             utility::PrintWarning(
@@ -38,6 +35,8 @@ bool DrawGeometriesPBR(
             return false;
         }
     }
+
+    visualizer.UpdateLighting(lighting);
 
     visualizer.Run();
     visualizer.DestroyVisualizerWindow();

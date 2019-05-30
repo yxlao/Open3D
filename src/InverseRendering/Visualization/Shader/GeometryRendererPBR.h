@@ -17,13 +17,12 @@ namespace open3d {
 namespace visualization {
 namespace glsl {
 
-class ExtendedTriangleMeshRenderer : public GeometryRenderer {
+class GeometryRendererPBR : public GeometryRenderer {
 public:
-    ~ExtendedTriangleMeshRenderer() override = default;
+    ~GeometryRendererPBR() override = default;
 
 public:
-    bool AddGeometry(
-        std::shared_ptr<const geometry::Geometry> geometry_ptr)
+    bool AddGeometry(std::shared_ptr<const geometry::Geometry> geometry_ptr)
     override;
     bool Render(const RenderOption &option, const ViewControl &view) override;
     bool UpdateGeometry() override;
@@ -43,4 +42,3 @@ protected:
 } // glsl
 } // visualization
 } // open3d
-
