@@ -104,7 +104,7 @@ var JVisualizerView = widgets.DOMWidgetView.extend({
             );
         }
 
-        // InverseRendering
+        // AdvancedRendering
         let sprite = new THREE.TextureLoader().load(disc_path);
         let material = new THREE.PointsMaterial({
             size: 10,

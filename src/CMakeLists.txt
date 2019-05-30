@@ -2,7 +2,7 @@ add_subdirectory(Open3D)
 add_subdirectory(Tools)
 
 # > Enable this by default in this branch
-add_subdirectory(InverseRendering)
+add_subdirectory(AdvancedRendering)
 
 # > Disable this before we fix everything
 if (BUILD_UNIT_TESTS)

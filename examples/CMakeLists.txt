@@ -9,4 +9,4 @@ if (BUILD_PYTHON_MODULE)
 endif ()
 
 # Experiment
-add_subdirectory(InverseRendering)
+add_subdirectory(AdvancedRendering)
