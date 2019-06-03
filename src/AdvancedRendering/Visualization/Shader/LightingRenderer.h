@@ -19,9 +19,9 @@ namespace open3d {
 namespace visualization {
 namespace glsl {
 
-class LightingPreprocessRenderer : public GeometryRenderer {
+class LightingRenderer : public GeometryRenderer {
 public:
-    ~LightingPreprocessRenderer() override = default;
+    ~LightingRenderer() override = default;
 
 public:
     bool AddGeometry(

@@ -5,14 +5,14 @@
 #pragma once
 
 #include <Open3D/Open3D.h>
-#include "AdvancedRendering/Visualization/Shader/ShaderWrapperPBR.h"
+#include "AdvancedRendering/Visualization/Utility/BindWrapper.h"
 #include <AdvancedRendering/Geometry/ExtendedTriangleMesh.h>
 
 namespace open3d {
 namespace visualization {
 
 namespace glsl {
-class SpotLightShader : public ShaderWrapperPBR {
+class SpotLightShader : public ShaderWrapper {
 public:
     SpotLightShader() : SpotLightShader("NoIBLShader") {}
     ~SpotLightShader() override { Release(); }
@@ -20,7 +20,7 @@ public:
 protected:
 
     explicit SpotLightShader(const std::string &name)
-        : ShaderWrapperPBR(name) { Compile(); }
+        : ShaderWrapper(name) { Compile(); }
 
 protected:
     bool Compile() final;

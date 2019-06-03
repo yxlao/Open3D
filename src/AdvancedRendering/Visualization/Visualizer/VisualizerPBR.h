@@ -6,7 +6,7 @@
 
 #include <Open3D/Open3D.h>
 #include <AdvancedRendering/Geometry/Lighting.h>
-#include <AdvancedRendering/Visualization/Shader/LightingPreprocessRenderer.h>
+#include <AdvancedRendering/Visualization/Shader/LightingRenderer.h>
 #include "RenderOptionWithLighting.h"
 
 namespace open3d {
@@ -40,7 +40,7 @@ public:
         /** Single instance of the lighting preprocessor **/
         if (light_preprocessing_renderer_ptr_ == nullptr) {
             light_preprocessing_renderer_ptr_ =
-                std::make_shared<glsl::LightingPreprocessRenderer>();
+                std::make_shared<glsl::LightingRenderer>();
         }
 
         auto &render_option_with_lighting_ptr =
@@ -57,7 +57,7 @@ public:
      * 1. Preprocess input HDR lighting image,
      * 2. Maintain textures, (updated to RenderOption instantly),
      * 3. Destroy context on leave. **/
-    std::shared_ptr<glsl::LightingPreprocessRenderer>
+    std::shared_ptr<glsl::LightingRenderer>
         light_preprocessing_renderer_ptr_ = nullptr;
 };
 

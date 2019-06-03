@@ -5,13 +5,13 @@
 #pragma once
 
 #include <Open3D/Open3D.h>
-#include "AdvancedRendering/Visualization/Shader/ShaderWrapperPBR.h"
+#include "AdvancedRendering/Visualization/Utility/BindWrapper.h"
 
 namespace open3d {
 namespace visualization {
 
 namespace glsl {
-class HDRToEnvCubemapShader : public ShaderWrapperPBR {
+class HDRToEnvCubemapShader : public ShaderWrapper {
 public:
     HDRToEnvCubemapShader() : HDRToEnvCubemapShader("HDRToCubemapShader") {}
     ~HDRToEnvCubemapShader() override { Release(); }
@@ -20,7 +20,7 @@ public:
 
 protected:
     explicit HDRToEnvCubemapShader(const std::string &name)
-        : ShaderWrapperPBR(name) { Compile(); }
+        : ShaderWrapper(name) { Compile(); }
 
 protected:
     bool Compile() final;

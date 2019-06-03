@@ -2,15 +2,15 @@
 // Created by wei on 4/13/19.
 //
 
-#include "ShaderWrapperPBR.h"
-#include "Primitives.h"
+#include "BindWrapper.h"
+#include "AdvancedRendering/Visualization/Shader/Primitives.h"
 
 namespace open3d {
 namespace visualization {
 
 namespace glsl {
 
-GLuint ShaderWrapperPBR::BindTexture2D(
+GLuint BindTexture2D(
     const geometry::Image &texture,
     const visualization::RenderOption &option) {
 
@@ -23,7 +23,7 @@ GLuint ShaderWrapperPBR::BindTexture2D(
     return texture_id;
 }
 
-bool ShaderWrapperPBR::BindTexture2D(GLuint &texture_id,
+bool BindTexture2D(GLuint &texture_id,
                                      const geometry::Image &texture,
                                      const visualization::RenderOption &option) {
     glBindTexture(GL_TEXTURE_2D, texture_id);
@@ -62,7 +62,7 @@ bool ShaderWrapperPBR::BindTexture2D(GLuint &texture_id,
     return true;
 }
 
-GLuint ShaderWrapperPBR::CreateTexture2D(
+GLuint CreateTexture2D(
     GLuint width, GLuint height,
     GLenum internal_format, GLenum format, GLenum type,
     bool use_mipmap, const visualization::RenderOption &option) {
@@ -86,7 +86,7 @@ GLuint ShaderWrapperPBR::CreateTexture2D(
     return texture_id;
 }
 
-std::shared_ptr<geometry::Image> ShaderWrapperPBR::ReadTexture2D(
+std::shared_ptr<geometry::Image> ReadTexture2D(
     GLuint width, GLuint height, int channels, int bytes_per_channel,
     GLenum format, GLenum type) {
     auto im = std::make_shared<geometry::Image>();
@@ -106,7 +106,7 @@ std::shared_ptr<geometry::Image> ShaderWrapperPBR::ReadTexture2D(
     return im;
 }
 
-GLuint ShaderWrapperPBR::BindTextureCubemap(
+GLuint BindTextureCubemap(
     const std::vector<geometry::Image> &textures,
     const visualization::RenderOption &option) {
 
@@ -131,7 +131,7 @@ GLuint ShaderWrapperPBR::BindTextureCubemap(
     return texture_id;
 }
 
-GLuint ShaderWrapperPBR::CreateTextureCubemap(
+GLuint CreateTextureCubemap(
     GLuint size, bool use_mipmap,
     const visualization::RenderOption &option) {
 
@@ -159,19 +159,19 @@ GLuint ShaderWrapperPBR::CreateTextureCubemap(
     return texture_id;
 }
 
-void ShaderWrapperPBR::LoadCube(std::vector<Eigen::Vector3f> &vertices,
+void LoadCube(std::vector<Eigen::Vector3f> &vertices,
                                 std::vector<Eigen::Vector3i> &triangles) {
     vertices = geometry::kCubeVertices;
     triangles = geometry::kCubeTriangles;
 }
 
-void ShaderWrapperPBR::LoadQuad(std::vector<Eigen::Vector3f> &vertices,
+void LoadQuad(std::vector<Eigen::Vector3f> &vertices,
                                 std::vector<Eigen::Vector2f> &uvs) {
     vertices = geometry::kQuadVertices;
     uvs = geometry::kQuadUVs;
 }
 
-void ShaderWrapperPBR::LoadViews(
+void LoadViews(
     std::vector<GLHelper::GLMatrix4f> &views) {
     views = {
         GLHelper::LookAt(Eigen::Vector3d::Zero(),
@@ -193,6 +193,16 @@ void ShaderWrapperPBR::LoadViews(
                          Eigen::Vector3d(0, 0, -1),
                          Eigen::Vector3d(0, -1, 0))
     };
+}
+
+bool CheckGLState(const std::string &msg) {
+    GLenum ret = glGetError();
+    if (ret != GL_NO_ERROR) {
+        utility::PrintWarning(
+            "[OpenGL error]: %d at %s\n", ret, msg.c_str());
+        return false;
+    }
+    return true;
 }
 }
 }

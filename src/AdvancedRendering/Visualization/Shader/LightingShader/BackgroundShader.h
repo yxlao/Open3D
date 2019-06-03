@@ -5,13 +5,13 @@
 #pragma once
 
 #include <Open3D/Open3D.h>
-#include "AdvancedRendering/Visualization/Shader/ShaderWrapperPBR.h"
+#include "AdvancedRendering/Visualization/Utility/BindWrapper.h"
 
 namespace open3d {
 namespace visualization {
 
 namespace glsl {
-class BackgroundShader : public ShaderWrapperPBR {
+class BackgroundShader : public ShaderWrapper {
 public:
     BackgroundShader() : BackgroundShader("BackgroundShader") {}
     ~BackgroundShader() override { Release(); }
@@ -19,7 +19,7 @@ public:
 protected:
 
     explicit BackgroundShader(const std::string &name)
-        : ShaderWrapperPBR(name) { Compile(); }
+        : ShaderWrapper(name) { Compile(); }
 
 protected:
     bool Compile() final;

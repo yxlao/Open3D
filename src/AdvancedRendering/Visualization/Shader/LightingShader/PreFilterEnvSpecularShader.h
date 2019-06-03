@@ -5,13 +5,13 @@
 #pragma once
 
 #include <Open3D/Open3D.h>
-#include "AdvancedRendering/Visualization/Shader/ShaderWrapperPBR.h"
+#include "AdvancedRendering/Visualization/Utility/BindWrapper.h"
 
 namespace open3d {
 namespace visualization {
 
 namespace glsl {
-class PreFilterEnvSpecularShader : public ShaderWrapperPBR {
+class PreFilterEnvSpecularShader : public ShaderWrapper {
 public:
     PreFilterEnvSpecularShader() : PreFilterEnvSpecularShader(
         "PreFilterEnvShader") {}
@@ -21,7 +21,7 @@ public:
 
 protected:
     explicit PreFilterEnvSpecularShader(const std::string &name)
-        : ShaderWrapperPBR(name) { Compile(); }
+        : ShaderWrapper(name) { Compile(); }
 
 protected:
     bool Compile() final;

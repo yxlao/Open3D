@@ -5,7 +5,7 @@
 #pragma once
 
 #include <Open3D/Open3D.h>
-#include "AdvancedRendering/Visualization/Shader/ShaderWrapperPBR.h"
+#include "AdvancedRendering/Visualization/Utility/BindWrapper.h"
 #include <AdvancedRendering/Geometry/ExtendedTriangleMesh.h>
 
 namespace open3d {
@@ -13,14 +13,14 @@ namespace visualization {
 
 namespace glsl {
 /** Lighting should have been processed before being passed here **/
-class DifferentialShader : public ShaderWrapperPBR {
+class DifferentialShader : public ShaderWrapper {
 public:
     DifferentialShader() : DifferentialShader("DifferentialShader") {}
     ~DifferentialShader() override { Release(); }
 
 protected:
     explicit DifferentialShader(const std::string &name)
-        : ShaderWrapperPBR(name) { Compile(); }
+        : ShaderWrapper(name) { Compile(); }
 
 protected:
     bool Compile() final;

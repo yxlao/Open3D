@@ -5,13 +5,13 @@
 #pragma once
 
 #include <Open3D/Open3D.h>
-#include "AdvancedRendering/Visualization/Shader/ShaderWrapperPBR.h"
+#include "AdvancedRendering/Visualization/Utility/BindWrapper.h"
 
 namespace open3d {
 namespace visualization {
 
 namespace glsl {
-class PreIntegrateLUTSpecularShader : public ShaderWrapperPBR {
+class PreIntegrateLUTSpecularShader : public ShaderWrapper {
 public:
     PreIntegrateLUTSpecularShader() : PreIntegrateLUTSpecularShader("PreIntegrateLUTShader") {}
     ~PreIntegrateLUTSpecularShader() override { Release(); }
@@ -20,7 +20,7 @@ public:
 
 protected:
     explicit PreIntegrateLUTSpecularShader(const std::string &name)
-        : ShaderWrapperPBR(name) { Compile(); }
+        : ShaderWrapper(name) { Compile(); }
 
 protected:
     bool Compile() final;

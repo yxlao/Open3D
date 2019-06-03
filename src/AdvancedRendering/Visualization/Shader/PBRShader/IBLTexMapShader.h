@@ -5,7 +5,7 @@
 #pragma once
 
 #include <Open3D/Open3D.h>
-#include "AdvancedRendering/Visualization/Shader/ShaderWrapperPBR.h"
+#include "AdvancedRendering/Visualization/Utility/BindWrapper.h"
 #include <AdvancedRendering/Geometry/ExtendedTriangleMesh.h>
 
 namespace open3d {
@@ -13,14 +13,14 @@ namespace visualization {
 
 namespace glsl {
 /** Lighting should have been processed before being passed here **/
-class IBLTexMapShader : public ShaderWrapperPBR {
+class IBLTexMapShader : public ShaderWrapper {
 public:
     IBLTexMapShader() : IBLTexMapShader("IBLShader") {}
     ~IBLTexMapShader() override { Release(); }
 
 protected:
     explicit IBLTexMapShader(const std::string &name)
-        : ShaderWrapperPBR(name) { Compile(); }
+        : ShaderWrapper(name) { Compile(); }
 
 protected:
     bool Compile() final;
