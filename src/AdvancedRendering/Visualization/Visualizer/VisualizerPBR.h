@@ -12,6 +12,7 @@
 namespace open3d {
 namespace visualization {
 
+/** Visualizer for Physically based rendering **/
 class VisualizerPBR : public VisualizerWithKeyCallback {
 public:
     /** Handle geometry (including textures) **/
@@ -27,7 +28,9 @@ public:
 
     /** Call this function
      * - AFTER @CreateVisualizerWindow (where @InitRenderOption is called)
+     *   to ensure OpenGL context has been created.
      * - BEFORE @Run (or whatever customized rendering task)
+     *   to ensure Lighting is ready for rendering.
      *   Currently we only support one lighting.
      *   It would remove the previous bound lighting.
      * **/
@@ -49,6 +52,7 @@ public:
         return true;
     }
 
+public:
     /** This specific renderer:
      * 1. Preprocess input HDR lighting image,
      * 2. Maintain textures, (updated to RenderOption instantly),

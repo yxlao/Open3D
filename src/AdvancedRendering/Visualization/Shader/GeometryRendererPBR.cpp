@@ -47,8 +47,8 @@ bool GeometryRendererPBR::Render(const RenderOption &option,
             success = false;
         }
 
-        success &= background_shader_.Render(
-            mesh, option, view);
+//        success &= background_shader_.Render(
+//            mesh, option, view);
     } else if (option_lighting.type_
         == geometry::Lighting::LightingType::Spot) {
         if (mesh.HasVertexNormals()

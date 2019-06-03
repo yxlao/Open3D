@@ -18,13 +18,8 @@ int main() {
     io::ReadExtendedTriangleMeshFromOBJ(base_path + "/cyborg.obj", *mesh);
     utility::PrintInfo("%d %d\n", mesh->HasVertexNormals(), mesh->HasUVs());
 
-    auto ibl = std::make_shared<geometry::IBLLighting>();
-    ibl->ReadEnvFromHDR(
-        "/Users/dongw1/Work/Data/resources/textures/hdr/newport_loft.hdr");
+    std::
 
     utility::SetVerbosityLevel(utility::VerbosityLevel::VerboseDebug);
-    visualization::DrawGeometriesPBR({mesh}, ibl);
-
-    auto target = io::CreateImageFromFile(base_path + "/capture.png");
-    visualization::DrawGeometriesUV({mesh}, target);
+    visualization::DrawGeometriesUV({mesh}, ibl);
 }

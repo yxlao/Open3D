@@ -1,13 +1,15 @@
-////
-//// Created by Wei Dong on 2019-05-29.
-////
+//////
+////// Created by Wei Dong on 2019-05-29.
+//////
 //
 //#pragma once
 //
-//#include <VisualizerPBR.h>
+//#include "VisualizerPBR.h"
 //
 //namespace open3d {
 //namespace visualization {
+//
+// /** Visualizer for Differentiable rendering **/
 //class VisualizerDR : public VisualizerPBR {
 //public:
 //    virtual bool AddGeometry(
@@ -15,8 +17,9 @@
 //
 //    bool CaptureBuffer(const std::string &filename, int index);
 //
-//    bool SetTargetImage(const geometry::Image &target,
-//                        const camera::PinholeCameraParameters &view);
+//    bool SetTargetImage(
+//        const geometry::Image &target,
+//        const camera::PinholeCameraParameters &view);
 //    bool UpdateLighting();
 //    float CallSGD(float lambda,
 //                  bool update_albedo,

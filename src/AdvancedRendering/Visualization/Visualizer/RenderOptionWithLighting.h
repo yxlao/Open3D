@@ -15,7 +15,7 @@ public:
     geometry::Lighting::LightingType type_;
 
     /** Reserved for IBL lighting **/
-    bool is_tex_preprocessed_;
+    bool is_tex_preprocessed_ = false;
     GLuint tex_hdr_buffer_;
     GLuint tex_env_buffer_;
     GLuint tex_env_diffuse_buffer_;
@@ -24,6 +24,12 @@ public:
 
     std::vector<Eigen::Vector3f> spot_light_positions_;
     std::vector<Eigen::Vector3f> spot_light_colors_;
+};
+
+class RenderOptionWithTargetImage : public RenderOption {
+public:
+    bool is_tex_allocated_ = false;
+    GLuint tex_image_buffer_;
 };
 }
 }
