@@ -59,7 +59,9 @@ public:
 
     /** Render Nothing (TODO: or only the skybox)? **/
     bool Render(const RenderOption &option, const ViewControl &view)
-    override { return true; }
+    override {
+        return background_shader_.Render(*geometry_ptr_, option, view);
+    }
 
     /** Call this function ONLY AFTER @AddGeometry(lighting)
      * Here we use non-constant option, in contrast to default @Render
@@ -149,6 +151,8 @@ public:
     PreConvEnvDiffuseShader preconv_env_diffuse_shader_;
     PreFilterEnvSpecularShader prefilter_env_specular_shader_;
     PreIntegrateLUTSpecularShader preintegrate_lut_specular_shader_;
+
+    BackgroundShader background_shader_;
 };
 
 }

@@ -8,6 +8,7 @@
 #include <AdvancedRendering/Geometry/Lighting.h>
 #include <AdvancedRendering/Geometry/ImageExt.h>
 #include <AdvancedRendering/Visualization/Shader/LightingRenderer.h>
+#include <AdvancedRendering/Visualization/Utility/BindWrapper.h>
 
 #include "RenderOptionWithLighting.h"
 
@@ -43,47 +44,13 @@ public:
         auto &render_option_with_target =
             (std::shared_ptr<RenderOptionWithTargetImage> &) render_option_ptr_;
         if (!render_option_with_target->is_tex_allocated_) {
-            glGenTextures(1, &render_option_with_target->tex_image_buffer_);
+            render_option_with_target->tex_image_buffer_
+                = glsl::BindTexture2D(*tex_image, *render_option_with_target);
             render_option_with_target->is_tex_allocated_ = true;
+        } else {
+            glsl::BindTexture2D(render_option_with_target->tex_image_buffer_,
+                *tex_image, *render_option_with_target);
         }
-
-        auto texture_id = render_option_with_target->tex_image_buffer_;
-        glBindTexture(GL_TEXTURE_2D, texture_id);
-
-        GLenum format;
-        switch (tex_image->num_of_channels_) {
-            case 1: { format = GL_RED; break; }
-            case 3: { format = GL_RGB; break; }
-            case 4: { format = GL_RGBA; break; }
-            default: {
-                utility::PrintWarning("Unknown format, abort!\n");
-                return false;
-            }
-        }
-
-        GLenum type;
-        switch (tex_image->bytes_per_channel_) {
-            case 1: { type = GL_UNSIGNED_BYTE; break; }
-            case 2: { type = GL_UNSIGNED_SHORT; break;}
-            case 4: { type = GL_FLOAT; break; }
-            default: {
-                utility::PrintWarning("Unknown format, abort!\n");
-                return false;
-            }
-        }
-
-        std::cout << glGetError() << " Before binding: " << texture_id << "\n";
-
-        glTexImage2D(GL_TEXTURE_2D, 0, format,
-                     tex_image->width_, tex_image->height_,
-                     0, format, type,
-                     tex_image->data_.data());
-        std::cout << glGetError() << " After binding: " << texture_id << "\n";
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         return true;
     }

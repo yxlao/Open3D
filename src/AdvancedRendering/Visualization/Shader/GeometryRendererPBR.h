@@ -38,7 +38,7 @@ protected:
     IBLVertexMapShader ibl_vertex_map_shader_;
 
     /** IBL: display skybox **/
-    BackgroundShader background_shader_;
+//    BackgroundShader background_shader_;
 };
 
 } // glsl

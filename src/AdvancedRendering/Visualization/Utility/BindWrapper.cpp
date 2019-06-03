@@ -24,15 +24,24 @@ GLuint BindTexture2D(
 }
 
 bool BindTexture2D(GLuint &texture_id,
-                                     const geometry::Image &texture,
-                                     const visualization::RenderOption &option) {
+                   const geometry::Image &texture,
+                   const visualization::RenderOption &option) {
     glBindTexture(GL_TEXTURE_2D, texture_id);
 
     GLenum format;
     switch (texture.num_of_channels_) {
-        case 1: { format = GL_RED; break; }
-        case 3: { format = GL_RGB; break; }
-        case 4: { format = GL_RGBA; break; }
+        case 1: {
+            format = GL_RED;
+            break;
+        }
+        case 3: {
+            format = GL_RGB;
+            break;
+        }
+        case 4: {
+            format = GL_RGBA;
+            break;
+        }
         default: {
             utility::PrintWarning("Unknown format, abort!\n");
             return false;
@@ -41,9 +50,18 @@ bool BindTexture2D(GLuint &texture_id,
 
     GLenum type;
     switch (texture.bytes_per_channel_) {
-        case 1: { type = GL_UNSIGNED_BYTE; break; }
-        case 2: { type = GL_UNSIGNED_SHORT; break;}
-        case 4: { type = GL_FLOAT; break; }
+        case 1: {
+            type = GL_UNSIGNED_BYTE;
+            break;
+        }
+        case 2: {
+            type = GL_UNSIGNED_SHORT;
+            break;
+        }
+        case 4: {
+            type = GL_FLOAT;
+            break;
+        }
         default: {
             utility::PrintWarning("Unknown format, abort!\n");
             return false;
@@ -76,7 +94,9 @@ GLuint CreateTexture2D(
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     if (use_mipmap) {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D,
+                        GL_TEXTURE_MIN_FILTER,
+                        GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     } else {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -125,7 +145,9 @@ GLuint BindTextureCubemap(
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP,
+                    GL_TEXTURE_MIN_FILTER,
+                    GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     return texture_id;
@@ -149,7 +171,9 @@ GLuint CreateTextureCubemap(
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
     if (use_mipmap) {
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP,
+                        GL_TEXTURE_MIN_FILTER,
+                        GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     } else {
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -160,13 +184,13 @@ GLuint CreateTextureCubemap(
 }
 
 void LoadCube(std::vector<Eigen::Vector3f> &vertices,
-                                std::vector<Eigen::Vector3i> &triangles) {
+              std::vector<Eigen::Vector3i> &triangles) {
     vertices = geometry::kCubeVertices;
     triangles = geometry::kCubeTriangles;
 }
 
 void LoadQuad(std::vector<Eigen::Vector3f> &vertices,
-                                std::vector<Eigen::Vector2f> &uvs) {
+              std::vector<Eigen::Vector2f> &uvs) {
     vertices = geometry::kQuadVertices;
     uvs = geometry::kQuadUVs;
 }
