@@ -44,6 +44,7 @@ protected:
                         const ViewControl &view,
                         std::vector<Eigen::Vector3f> &points,
                         std::vector<Eigen::Vector2f> &uvs,
+                        std::vector<Eigen::Vector3f> &normals,
                         std::vector<Eigen::Vector3i> &triangles);
 
 protected:
@@ -53,11 +54,15 @@ protected:
     GLuint P_;
 
     /* fragment shader */
-    GLuint tex_ref_buffer_; /* 1 target texture every time */
+    GLuint tex_ref_symbol_; /* 1 target texture every time */
+    GLuint tex_depth_symbol_;
+    GLuint margin_symbol_;
+    GLuint cos_thr_symbol_;
 
     /** buffers **/
     GLuint vertex_position_buffer_;
     GLuint vertex_uv_buffer_;
+    GLuint vertex_normal_buffer_;
     GLuint triangle_buffer_;
 };
 

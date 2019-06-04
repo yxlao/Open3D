@@ -44,7 +44,7 @@ bool GeometryRendererUV::Render(const RenderOption &option,
             const int kNumOutputTex = 2;
             uv_option.tex_output_buffer_.resize(kNumOutputTex);
 
-            /* color */
+            /* color (forward, only for debugging) */
             uv_option.tex_output_buffer_[0] = CreateTexture2D(
                 view.GetWindowWidth(), view.GetWindowHeight(),
                 GL_RGB16F, GL_RGB, GL_FLOAT,
@@ -61,10 +61,11 @@ bool GeometryRendererUV::Render(const RenderOption &option,
 
         uv_forward_shader_.Render(mesh, uv_option, view);
 
-        uv_option.SetVisualizeBuffer(1);
-        simple_texture_shader_.Render(mesh, uv_option, view);
+//        uv_option.SetVisualizeBuffer(1);
+//        simple_texture_shader_.Render(mesh, uv_option, view);
 
-//        uv_backward_shader_.Render(mesh, uv_option, view);
+        uv_option.SetDepthBuffer(1);
+        uv_backward_shader_.Render(mesh, uv_option, view);
     }
 
     return true;

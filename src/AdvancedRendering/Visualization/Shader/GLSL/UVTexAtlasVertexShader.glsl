@@ -2,19 +2,24 @@
 
 layout(location = 0) in vec3 vertex_position;
 layout(location = 1) in vec2 vertex_uv;
+layout(location = 2) in vec3 vertex_normal;
 
-out vec2 uv;
-out vec2 frag_coord;
+out vec2 atlas_uv;     /* for writing atlas value */
+out vec4 ref_position; /* for depth test */
+
+out vec3 position;
+out vec3 normal;
 
 uniform mat4 P;
 uniform mat4 V;
 uniform mat4 M;
 
 void main() {
-    uv = vertex_uv;
-    vec4 position = P * V * M * vec4(vertex_position, 1.0);
-    frag_coord = 0.5 + 0.5 * position.xy / position.w;
+    atlas_uv = vertex_uv;
+    gl_Position =  vec4(2 * atlas_uv - 1, 0, 1);
 
-    gl_Position =  vec4(2 * uv - 1, 0, 1);
-    //    P * V * vec4(position, 1.0);
+    ref_position = P * V * M * vec4(vertex_position, 1.0);
+
+    normal = (V * M * vec4(vertex_normal, 0)).xyz;
+    position = (V * M * vec4(vertex_position, 1.0)).xyz;
 }

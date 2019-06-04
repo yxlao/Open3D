@@ -47,9 +47,16 @@ public:
 
     /** Manually select one in tex_output_buffer_ **/
     GLuint tex_visualize_buffer_;
+    GLuint tex_depth_buffer_;
+
     void SetVisualizeBuffer(int i) {
         assert(i < tex_output_buffer_.size());
         tex_visualize_buffer_ = tex_output_buffer_[i];
+    }
+
+    void SetDepthBuffer(int i) {
+        assert(i < tex_output_buffer_.size());
+        tex_depth_buffer_ = tex_output_buffer_[i];
     }
 };
 }
