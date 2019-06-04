@@ -33,16 +33,25 @@ public:
      *   :to ensure OpenGL context has been created.
      * - BEFORE @Run (or whatever customized rendering task)
      *   :to ensure target image is ready.
-     * Currently we only support one lighting.
-     *   It would remove the previous bound lighting.
+     * Currently we only support one target image.
+     *   It would remove the previous bound image.
      * **/
-    bool UpdateTargetImage(
-        const std::shared_ptr<geometry::Image> &image) {
+    bool SetupMode(
+        bool forward, const std::shared_ptr<geometry::Image> &image) {
+        auto &render_option_with_target =
+            (std::shared_ptr<RenderOptionWithTargetImage> &) render_option_ptr_;
+
+        if (forward) {
+            render_option_with_target->forward_ = true;
+            return true;
+        }
+
+        /** backward **/
+        assert(image != nullptr);
+        render_option_with_target->forward_ = false;
         auto tex_image = geometry::FlipImageExt(*image);
 
         /** Single instance of the texture buffer **/
-        auto &render_option_with_target =
-            (std::shared_ptr<RenderOptionWithTargetImage> &) render_option_ptr_;
         if (!render_option_with_target->is_tex_allocated_) {
             render_option_with_target->tex_image_buffer_
                 = glsl::BindTexture2D(*tex_image, *render_option_with_target);

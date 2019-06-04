@@ -14,7 +14,9 @@ namespace visualization {
 bool VisualizerPBR::AddGeometry(
     std::shared_ptr<const geometry::Geometry> geometry_ptr) {
     if (geometry_ptr->GetGeometryType() ==
-        geometry::Geometry::GeometryType::ExtendedTriangleMesh) {
+        geometry::Geometry::GeometryType::ExtendedTriangleMesh
+        || geometry_ptr->GetGeometryType() ==
+            geometry::Geometry::GeometryType::TexturedTriangleMesh) {
         auto renderer_ptr =
             std::make_shared<glsl::GeometryRendererPBR>();
         if (!renderer_ptr->AddGeometry(geometry_ptr)) {
@@ -42,11 +44,10 @@ void VisualizerPBR::Render() {
     glEnable(GL_MULTISAMPLE);
     glDisable(GL_BLEND);
     auto &background_color = render_option_ptr_->background_color_;
-    glClearColor((GLclampf)background_color(0), (GLclampf)background_color(1),
-                 (GLclampf)background_color(2), 1.0f);
+    glClearColor((GLclampf) background_color(0), (GLclampf) background_color(1),
+                 (GLclampf) background_color(2), 1.0f);
     glClearDepth(1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 
     for (const auto &renderer_ptr : geometry_renderer_ptrs_) {
         renderer_ptr->Render(*render_option_ptr_, *view_control_ptr_);

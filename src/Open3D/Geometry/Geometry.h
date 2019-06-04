@@ -42,7 +42,8 @@ public:
         Image = 7,
 
         ExtendedTriangleMesh = 8,
-        Lighting = 9
+        TexturedTriangleMesh = 9,
+        Lighting = 10
     };
 
 public:

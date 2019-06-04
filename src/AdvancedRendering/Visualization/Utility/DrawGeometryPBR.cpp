@@ -46,7 +46,8 @@ bool DrawGeometriesPBR(
 
 bool DrawGeometriesUV(
     const std::vector<std::shared_ptr<const geometry::Geometry>> &geometry_ptrs,
-    const std::shared_ptr<geometry::Image> &target,
+    const bool forward /* = true */,
+    const std::shared_ptr<geometry::Image> &target /* = nullptr */,
     const std::string &window_name /* = "Open3D"*/,
     int width /* = 640*/,
     int height /* = 480*/,
@@ -73,7 +74,7 @@ bool DrawGeometriesUV(
         }
     }
 
-    visualizer.UpdateTargetImage(target);
+    visualizer.SetupMode(forward, target);
 
     visualizer.Run();
     visualizer.DestroyVisualizerWindow();

@@ -20,5 +20,5 @@ int main() {
     io::ReadTexturedTriangleMeshFromOBJ(base_path + "/cyborg.obj", *mesh);
 
     auto target = io::CreateImageFromFile(base_path + "/capture.png");
-    visualization::DrawGeometriesUV({mesh}, false, target);
+    visualization::DrawGeometriesUV({mesh}, true);
 }

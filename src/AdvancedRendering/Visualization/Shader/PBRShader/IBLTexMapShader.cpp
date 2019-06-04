@@ -30,11 +30,11 @@
 #include "IBLTexMapShader.h"
 
 #include <Open3D/Geometry/TriangleMesh.h>
-#include <Open3D/Visualization/Utility/ColorMap.h>
 
+#include <AdvancedRendering/Geometry/TexturedTriangleMesh.h>
 #include <AdvancedRendering/Visualization/Shader/Shader.h>
-#include <AdvancedRendering/Geometry/ExtendedTriangleMesh.h>
 #include <AdvancedRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
+
 
 namespace open3d {
 namespace visualization {
@@ -57,8 +57,8 @@ bool IBLTexMapShader::Compile() {
     texes_object_.resize(kNumObjectTextures);
     texes_object_[0] = glGetUniformLocation(program_, "tex_albedo");
     texes_object_[1] = glGetUniformLocation(program_, "tex_normal");
-    texes_object_[2] = glGetUniformLocation(program_, "tex_metallic");
-    texes_object_[3] = glGetUniformLocation(program_, "tex_roughness");
+    texes_object_[2] = glGetUniformLocation(program_, "tex_roughness");
+    texes_object_[3] = glGetUniformLocation(program_, "tex_metallic");
     texes_object_[4] = glGetUniformLocation(program_, "tex_ao");
 
     texes_env_.resize(kNumEnvTextures);
@@ -108,7 +108,7 @@ bool IBLTexMapShader::BindGeometry(const geometry::Geometry &geometry,
     bound_ = true;
     CheckGLState("IBLShader - BindGeometry");
 
-    auto mesh = (const geometry::ExtendedTriangleMesh &) geometry;
+    auto mesh = (const geometry::TexturedTriangleMesh &) geometry;
     assert(mesh.image_textures_.size() == kNumObjectTextures);
     texes_object_buffers_.resize(mesh.image_textures_.size());
     for (int i = 0; i < mesh.image_textures_.size(); ++i) {
@@ -211,8 +211,8 @@ bool IBLTexMapShader::PrepareRendering(
     const RenderOption &option,
     const ViewControl &view) {
     if (geometry.GetGeometryType() !=
-        geometry::Geometry::GeometryType::ExtendedTriangleMesh) {
-        PrintShaderWarning("Rendering type is not geometry::ExtendedTriangleMesh.");
+        geometry::Geometry::GeometryType::TexturedTriangleMesh) {
+        PrintShaderWarning("Rendering type is not geometry::TexturedTriangleMesh.");
         return false;
     }
     if (option.mesh_show_back_face_) {
@@ -242,12 +242,12 @@ bool IBLTexMapShader::PrepareBinding(
     std::vector<Eigen::Vector2f> &uvs,
     std::vector<Eigen::Vector3i> &triangles) {
     if (geometry.GetGeometryType() !=
-        geometry::Geometry::GeometryType::ExtendedTriangleMesh) {
+        geometry::Geometry::GeometryType::TexturedTriangleMesh) {
         PrintShaderWarning(
-            "Rendering type is not geometry::ExtendedTriangleMesh.");
+            "Rendering type is not geometry::TexturedTriangleMesh.");
         return false;
     }
-    auto &mesh = (const geometry::ExtendedTriangleMesh &) geometry;
+    auto &mesh = (const geometry::TexturedTriangleMesh &) geometry;
     if (!mesh.HasTriangles()) {
         PrintShaderWarning("Binding failed with empty triangle mesh.");
         return false;

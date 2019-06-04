@@ -3,13 +3,14 @@
 //
 
 #include <tinyobjloader/tiny_obj_loader.h>
-#include "../ClassIO/ExtendedTriangleMeshIO.h"
+#include <AdvancedRendering/Geometry/TexturedTriangleMesh.h>
+#include "../ClassIO/TexturedTriangleMeshIO.h"
 
 namespace open3d {
 namespace io {
 
-bool ReadExtendedTriangleMeshFromOBJ(const std::string &filename,
-                                     geometry::ExtendedTriangleMesh &mesh) {
+bool ReadTexturedTriangleMeshFromOBJ(const std::string &filename,
+                                     geometry::TexturedTriangleMesh &mesh) {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
@@ -87,9 +88,51 @@ bool ReadExtendedTriangleMeshFromOBJ(const std::string &filename,
         index_offset += fv;
     }
 
-    mesh.LoadImageTextures({base_dir + "/" + materials[0].diffuse_texname});
+    if (materials.empty()) {
+        utility::PrintWarning("Material not loaded!\n");
+        return true;
+    }
 
+    std::vector<std::string> tex_names;
+    if (!materials[0].diffuse_texname.empty()) {
+        tex_names.emplace_back(materials[0].diffuse_texname);
+    }
+
+    std::vector<std::string> pbr_tex_names;
+    if (!materials[0].normal_texname.empty()) {
+        pbr_tex_names.emplace_back(materials[0].normal_texname);
+    }
+    if (!materials[0].roughness_texname.empty()) {
+        pbr_tex_names.emplace_back(materials[0].roughness_texname);
+    }
+    if (!materials[0].metallic_texname.empty()) {
+        pbr_tex_names.emplace_back(materials[0].metallic_texname);
+    }
+    if (!materials[0].ambient_texname.empty()) {
+        pbr_tex_names.emplace_back(materials[0].ambient_texname);
+    }
+    if (pbr_tex_names.size() == 4) {
+        tex_names.insert(tex_names.end(),
+                         pbr_tex_names.begin(), pbr_tex_names.end());
+    }
+
+    for (auto &tex_name : tex_names) {
+        tex_name = base_dir + "/" + tex_name;
+        std::cout << tex_name << "\n";
+    }
+
+    mesh.LoadImageTextures(tex_names);
     return true;
+}
+
+bool WriteTexturedTriangleMeshToOBJ(
+    const std::string &filename,
+    /* size = 1: diffuse;
+     * size = 5: diffuse, normal, roughness, metallic, ambient */
+    const std::vector<std::string> &textures,
+    const geometry::TexturedTriangleMesh &mesh) {
+    /** Unsupported now **/
+    return false;
 }
 } // namespace io
 } // namespace open3d

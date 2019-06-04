@@ -57,10 +57,14 @@ public:
         return true;
     }
 
-    /** Render Nothing (TODO: or only the skybox)? **/
     bool Render(const RenderOption &option, const ViewControl &view)
     override {
-        return background_shader_.Render(*geometry_ptr_, option, view);
+        auto pbr_option = (const RenderOptionWithLighting &) option;
+        if (pbr_option.type_ == geometry::Lighting::LightingType::IBL) {
+            return background_shader_.Render(*geometry_ptr_, option, view);
+        } else {
+            return true;
+        }
     }
 
     /** Call this function ONLY AFTER @AddGeometry(lighting)

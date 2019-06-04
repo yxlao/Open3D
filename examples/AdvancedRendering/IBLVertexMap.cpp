@@ -13,13 +13,11 @@ using namespace open3d;
 int main() {
     auto mesh = std::make_shared<geometry::ExtendedTriangleMesh>();
     io::ReadExtendedTriangleMeshFromPLY(
-//        "mesh-iter-99.ply", *mesh);
-        "/Users/dongw1/Work/Data/resources/textures/pbr/rusted_iron/sphere.ply", *mesh);
-//        "/media/wei/Data/data/pbr/model/sphere_gold.ply", *mesh);
+        "/Users/dongw1/Work/Data/planet/planet_gold.ply", *mesh);
 
     auto ibl = std::make_shared<geometry::IBLLighting>();
-    ibl->ReadEnvFromHDR("/Users/dongw1/Work/Data/resources/textures/hdr/newport_loft.hdr");
-//    ibl->ReadEnvFromHDR("/media/wei/Data/data/pbr/env/Alexs_Apt_2k.hdr");
+    ibl->ReadEnvFromHDR(
+        "/Users/dongw1/Work/Data/resources/textures/hdr/newport_loft.hdr");
     
     utility::SetVerbosityLevel(utility::VerbosityLevel::VerboseDebug);
     visualization::DrawGeometriesPBR({mesh}, ibl);

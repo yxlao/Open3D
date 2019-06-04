@@ -94,23 +94,20 @@ Eigen::Vector3d GetPositionOnSphere(float u, float v) {
 int main() {
     auto mesh = std::make_shared<geometry::ExtendedTriangleMesh>();
 
-    std::string base_path =
-            "/Users/dongw1/Work/Data/resources/textures/pbr/rusted_iron";
+    std::string base_path = "/Users/dongw1/Work/Data/planet";
+    std::string material = "gold";
+    std::string prefix = base_path + "/" + material + "/";
     std::vector<cv::Mat> textures;
     textures.push_back(
-            cv::imread(base_path + "/albedo.png", cv::IMREAD_UNCHANGED));
+        cv::imread(prefix + "albedo.png", cv::IMREAD_UNCHANGED));
     textures.push_back(
-            cv::imread(base_path + "/normal.png", cv::IMREAD_UNCHANGED));
+        cv::imread(prefix + "/normal.png", cv::IMREAD_UNCHANGED));
     textures.push_back(
-            cv::imread(base_path + "/metallic.png", cv::IMREAD_UNCHANGED));
+        cv::imread(prefix + "/metallic.png", cv::IMREAD_UNCHANGED));
     textures.push_back(
-            cv::imread(base_path + "/roughness.png", cv::IMREAD_UNCHANGED));
-    textures.push_back(cv::imread(base_path + "/ao.png", cv::IMREAD_UNCHANGED));
-
-    for (int i = 0; i < 5; ++i) {
-        std::cout << textures[i].depth() << " " << textures[i].channels()
-                  << "\n";
-    }
+        cv::imread(prefix + "/roughness.png", cv::IMREAD_UNCHANGED));
+    textures.push_back(
+        cv::imread(prefix + "/ao.png", cv::IMREAD_UNCHANGED));
 
     /** This should be higher to store more texture information **/
     const unsigned int X_SEGMENTS = 16;

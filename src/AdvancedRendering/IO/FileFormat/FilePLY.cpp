@@ -291,7 +291,7 @@ bool WriteExtendedTriangleMeshToPLY(const std::string &filename,
         ply_add_property(ply_file, "green", PLY_UCHAR, PLY_UCHAR, PLY_UCHAR);
         ply_add_property(ply_file, "blue", PLY_UCHAR, PLY_UCHAR, PLY_UCHAR);
     }
-    if (mesh.HasUVs()) {
+    if (mesh.HasVertexUVs()) {
         ply_add_property(ply_file, "u", PLY_DOUBLE, PLY_DOUBLE, PLY_DOUBLE);
         ply_add_property(ply_file, "v", PLY_DOUBLE, PLY_DOUBLE, PLY_DOUBLE);
     }
@@ -330,7 +330,7 @@ bool WriteExtendedTriangleMeshToPLY(const std::string &filename,
             ply_write(ply_file, color(1) * 255.0);
             ply_write(ply_file, color(2) * 255.0);
         }
-        if (mesh.HasUVs()) {
+        if (mesh.HasVertexUVs()) {
             const auto &uv = mesh.vertex_uvs_[i];
             ply_write(ply_file, uv(0));
             ply_write(ply_file, uv(1));

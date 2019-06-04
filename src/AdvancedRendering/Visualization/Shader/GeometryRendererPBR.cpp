@@ -3,6 +3,7 @@
 //
 
 #include <AdvancedRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
+#include <AdvancedRendering/Geometry/TexturedTriangleMesh.h>
 #include "GeometryRendererPBR.h"
 
 namespace open3d {
@@ -12,7 +13,9 @@ namespace glsl {
 bool GeometryRendererPBR::AddGeometry(
     std::shared_ptr<const geometry::Geometry> geometry_ptr) {
     if (geometry_ptr->GetGeometryType() !=
-        geometry::Geometry::GeometryType::ExtendedTriangleMesh) {
+        geometry::Geometry::GeometryType::ExtendedTriangleMesh
+        && geometry_ptr->GetGeometryType() !=
+            geometry::Geometry::GeometryType::TexturedTriangleMesh) {
         return false;
     }
     geometry_ptr_ = geometry_ptr;
@@ -22,43 +25,39 @@ bool GeometryRendererPBR::AddGeometry(
 bool GeometryRendererPBR::Render(const RenderOption &option,
                                  const ViewControl &view) {
     if (!is_visible_ || geometry_ptr_->IsEmpty()) return true;
-
-    if (geometry_ptr_->GetGeometryType()
-        != geometry::Geometry::GeometryType::ExtendedTriangleMesh) {
-        utility::PrintWarning("[TriangleMeshRendererPBR] "
-                              "Geometry type is not ExtendedTriangleMesh\n");
-        return false;
-    }
-    const auto
-        &mesh = (const geometry::ExtendedTriangleMesh &) (*geometry_ptr_);
-
-    bool success = true;
-
-    /** ibl: a bit pre-processing required **/
     auto &option_lighting = (const RenderOptionWithLighting &) option;
 
-    if (option_lighting.type_ == geometry::Lighting::LightingType::IBL) {
-        if (mesh.HasUVs() && mesh.HasImageTextures()) {
-            success &= uv_tex_map_shader_.Render(mesh, option, view);
-//            success &= ibx_tex_map_shader_.Render(mesh, option, view);
-        } else if (mesh.HasVertexTextures()) {
-            success &= ibl_vertex_map_shader_.Render(mesh, option, view);
-        } else {
-            success = false;
-        }
+    /** Vertex material mapping **/
+    if (geometry_ptr_->GetGeometryType()
+        == geometry::Geometry::GeometryType::ExtendedTriangleMesh) {
+        auto &mesh = (geometry::ExtendedTriangleMesh &) *geometry_ptr_;
 
-//        success &= background_shader_.Render(
-//            mesh, option, view);
-    } else if (option_lighting.type_
-        == geometry::Lighting::LightingType::Spot) {
-        if (mesh.HasVertexNormals()
-            && mesh.HasUVs() && mesh.HasImageTextures()) {
-            success &= spot_light_shader_.Render(
-                mesh, option, view);
+        if (option_lighting.type_ == geometry::Lighting::LightingType::IBL) {
+            return mesh.HasVertexTextures() ?
+                   ibl_vertex_map_shader_.Render(mesh, option, view) : false;
         }
     }
 
-    return success;
+        /** Texture material mapping **/
+    else if (geometry_ptr_->GetGeometryType()
+        == geometry::Geometry::GeometryType::TexturedTriangleMesh) {
+        auto &mesh = (geometry::TexturedTriangleMesh &) *geometry_ptr_;
+
+        if (option_lighting.type_ == geometry::Lighting::LightingType::IBL) {
+            return (mesh.HasUVs() && mesh.HasImageTextures(kNumTextures)) ?
+                   ibx_tex_map_shader_.Render(mesh, option, view) : false;
+        } else if (option_lighting.type_
+            == geometry::Lighting::LightingType::Spot) {
+            return (mesh.HasUVs() && mesh.HasImageTextures(kNumTextures)) ?
+                   spot_light_shader_.Render(mesh, option, view) : false;
+        }
+    } else {
+        utility::PrintWarning("[TriangleMeshRendererPBR] "
+                              "Geometry type is not supported\n");
+        return false;
+    }
+
+    return false;
 }
 
 bool GeometryRendererPBR::UpdateGeometry() {

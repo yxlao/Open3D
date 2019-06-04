@@ -33,7 +33,7 @@
 #include <Open3D/Visualization/Utility/ColorMap.h>
 
 #include <AdvancedRendering/Visualization/Shader/Shader.h>
-#include <AdvancedRendering/Geometry/ExtendedTriangleMesh.h>
+#include <AdvancedRendering/Geometry/TexturedTriangleMesh.h>
 #include <AdvancedRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
 
 namespace open3d {
@@ -170,9 +170,9 @@ bool UVTexAtlasShader::PrepareRendering(
     const RenderOption &option,
     const ViewControl &view) {
     if (geometry.GetGeometryType() !=
-        geometry::Geometry::GeometryType::ExtendedTriangleMesh) {
+        geometry::Geometry::GeometryType::TexturedTriangleMesh) {
         PrintShaderWarning(
-            "Rendering type is not geometry::ExtendedTriangleMesh.");
+            "Rendering type is not geometry::TexturedTriangleMesh.");
         return false;
     }
     if (option.mesh_show_back_face_) {
@@ -182,11 +182,12 @@ bool UVTexAtlasShader::PrepareRendering(
     }
     glEnable(GL_POLYGON_OFFSET_FILL);
     glPolygonOffset(1.0, 1.0);
-//    if (option.mesh_show_wireframe_) {
-
-//    } else {
-//        glDisable(GL_POLYGON_OFFSET_FILL);
-//    }
+    if (option.mesh_show_wireframe_) {
+        glEnable(GL_POLYGON_OFFSET_FILL);
+        glPolygonOffset(1.0, 1.0);
+    } else {
+        glDisable(GL_POLYGON_OFFSET_FILL);
+    }
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL); /** For the environment **/
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -202,12 +203,12 @@ bool UVTexAtlasShader::PrepareBinding(
     std::vector<Eigen::Vector2f> &uvs,
     std::vector<Eigen::Vector3i> &triangles) {
     if (geometry.GetGeometryType() !=
-        geometry::Geometry::GeometryType::ExtendedTriangleMesh) {
+        geometry::Geometry::GeometryType::TexturedTriangleMesh) {
         PrintShaderWarning(
-            "Rendering type is not geometry::ExtendedTriangleMesh.");
+            "Rendering type is not geometry::TexturedTriangleMesh.");
         return false;
     }
-    auto &mesh = (const geometry::ExtendedTriangleMesh &) geometry;
+    auto &mesh = (const geometry::TexturedTriangleMesh &) geometry;
     if (!mesh.HasTriangles()) {
         PrintShaderWarning("Binding failed with empty triangle mesh.");
         return false;

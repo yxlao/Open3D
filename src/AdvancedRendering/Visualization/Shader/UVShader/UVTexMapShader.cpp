@@ -33,7 +33,7 @@
 #include <Open3D/Visualization/Utility/ColorMap.h>
 
 #include <AdvancedRendering/Visualization/Shader/Shader.h>
-#include <AdvancedRendering/Geometry/ExtendedTriangleMesh.h>
+#include <AdvancedRendering/Geometry/TexturedTriangleMesh.h>
 #include <AdvancedRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
 
 namespace open3d {
@@ -96,7 +96,7 @@ bool UVTexMapShader::BindGeometry(const geometry::Geometry &geometry,
     bound_ = true;
     CheckGLState("UVTexMapShader - BindGeometry");
 
-    auto mesh = (const geometry::ExtendedTriangleMesh &) geometry;
+    auto mesh = (const geometry::TexturedTriangleMesh &) geometry;
     assert(mesh.image_textures_.size() >= kNumObjectTextures);
     texes_object_buffers_.resize(kNumObjectTextures);
     for (int i = 0; i < kNumObjectTextures; ++i) {
@@ -167,9 +167,9 @@ bool UVTexMapShader::PrepareRendering(
     const RenderOption &option,
     const ViewControl &view) {
     if (geometry.GetGeometryType() !=
-        geometry::Geometry::GeometryType::ExtendedTriangleMesh) {
+        geometry::Geometry::GeometryType::TexturedTriangleMesh) {
         PrintShaderWarning(
-            "Rendering type is not geometry::ExtendedTriangleMesh.");
+            "Rendering type is not geometry::TexturedTriangleMesh.");
         return false;
     }
     if (option.mesh_show_back_face_) {
@@ -198,12 +198,12 @@ bool UVTexMapShader::PrepareBinding(
     std::vector<Eigen::Vector2f> &uvs,
     std::vector<Eigen::Vector3i> &triangles) {
     if (geometry.GetGeometryType() !=
-        geometry::Geometry::GeometryType::ExtendedTriangleMesh) {
+        geometry::Geometry::GeometryType::TexturedTriangleMesh) {
         PrintShaderWarning(
-            "Rendering type is not geometry::ExtendedTriangleMesh.");
+            "Rendering type is not geometry::TexturedTriangleMesh.");
         return false;
     }
-    auto &mesh = (const geometry::ExtendedTriangleMesh &) geometry;
+    auto &mesh = (const geometry::TexturedTriangleMesh &) geometry;
     if (!mesh.HasTriangles()) {
         PrintShaderWarning("Binding failed with empty triangle mesh.");
         return false;

@@ -3,6 +3,7 @@
 //
 
 #include <AdvancedRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
+#include <AdvancedRendering/Geometry/TexturedTriangleMesh.h>
 #include "GeometryRendererUV.h"
 
 namespace open3d {
@@ -12,7 +13,7 @@ namespace glsl {
 bool GeometryRendererUV::AddGeometry(
     std::shared_ptr<const geometry::Geometry> geometry_ptr) {
     if (geometry_ptr->GetGeometryType() !=
-        geometry::Geometry::GeometryType::ExtendedTriangleMesh) {
+        geometry::Geometry::GeometryType::TexturedTriangleMesh) {
         return false;
     }
     geometry_ptr_ = geometry_ptr;
@@ -20,24 +21,22 @@ bool GeometryRendererUV::AddGeometry(
 }
 
 bool GeometryRendererUV::Render(const RenderOption &option,
-                                 const ViewControl &view) {
+                                const ViewControl &view) {
     if (!is_visible_ || geometry_ptr_->IsEmpty()) return true;
 
     if (geometry_ptr_->GetGeometryType()
-        != geometry::Geometry::GeometryType::ExtendedTriangleMesh) {
+        != geometry::Geometry::GeometryType::TexturedTriangleMesh) {
         utility::PrintWarning("[TriangleMeshRendererPBR] "
-                              "Geometry type is not ExtendedTriangleMesh\n");
+                              "Geometry type is not TexturedTriangleMesh\n");
         return false;
     }
     const auto
-        &mesh = (const geometry::ExtendedTriangleMesh &) (*geometry_ptr_);
+        &mesh = (const geometry::TexturedTriangleMesh &) (*geometry_ptr_);
 
-    bool success = true;
-
-    success &= uv_tex_atlas_shader_.Render(mesh, option, view);
-    /** ibl: a bit pre-processing required **/
-
-    return success;
+    auto uv_option = (const RenderOptionWithTargetImage &) option;
+    return uv_option.forward_ ?
+           uv_tex_map_shader_.Render(mesh, option, view) :
+           uv_tex_atlas_shader_.Render(mesh, option, view);
 }
 
 bool GeometryRendererUV::UpdateGeometry() {

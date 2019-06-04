@@ -29,6 +29,8 @@ public:
     bool UpdateGeometry() override;
 
 protected:
+    const int kNumTextures = 5;
+
     /** NoIBL: simple **/
     SpotLightShader spot_light_shader_;
 
@@ -36,9 +38,6 @@ protected:
     UVTexMapShader uv_tex_map_shader_;
     IBLTexMapShader ibx_tex_map_shader_;
     IBLVertexMapShader ibl_vertex_map_shader_;
-
-    /** IBL: display skybox **/
-//    BackgroundShader background_shader_;
 };
 
 } // glsl

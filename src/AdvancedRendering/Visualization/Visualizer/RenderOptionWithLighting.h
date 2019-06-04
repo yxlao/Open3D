@@ -33,6 +33,8 @@ public:
     /** States for differentiable rendering: we need an input image **/
     bool is_tex_allocated_ = false;
     GLuint tex_image_buffer_;
+
+    bool forward_ = true;
 };
 }
 }

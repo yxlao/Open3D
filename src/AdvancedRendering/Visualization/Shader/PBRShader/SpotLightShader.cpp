@@ -33,7 +33,7 @@
 #include <Open3D/Visualization/Utility/ColorMap.h>
 
 #include <AdvancedRendering/Visualization/Shader/Shader.h>
-#include <AdvancedRendering/Geometry/ExtendedTriangleMesh.h>
+#include <AdvancedRendering/Geometry/TexturedTriangleMesh.h>
 #include <AdvancedRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
 
 namespace open3d {
@@ -58,8 +58,8 @@ bool SpotLightShader::Compile() {
     texes_.resize(kNumTextures);
     texes_[0] = glGetUniformLocation(program_, "tex_albedo");
     texes_[1] = glGetUniformLocation(program_, "tex_normal");
-    texes_[2] = glGetUniformLocation(program_, "tex_metallic");
-    texes_[3] = glGetUniformLocation(program_, "tex_roughness");
+    texes_[2] = glGetUniformLocation(program_, "tex_roughness");
+    texes_[3] = glGetUniformLocation(program_, "tex_metallic");
     texes_[4] = glGetUniformLocation(program_, "tex_ao");
 
     return true;
@@ -99,7 +99,7 @@ bool SpotLightShader::BindGeometry(const geometry::Geometry &geometry,
     vertex_uv_buffer_ = BindBuffer(uvs, GL_ARRAY_BUFFER, option);
     triangle_buffer_ = BindBuffer(triangles, GL_ELEMENT_ARRAY_BUFFER, option);
 
-    auto &mesh = (const geometry::ExtendedTriangleMesh &) geometry;
+    auto &mesh = (const geometry::TexturedTriangleMesh &) geometry;
     assert(mesh.image_textures_.size() == kNumTextures);
     tex_buffers_.resize(mesh.image_textures_.size());
     for (int i = 0; i < mesh.image_textures_.size(); ++i) {
@@ -184,8 +184,8 @@ bool SpotLightShader::PrepareRendering(
     const RenderOption &option,
     const ViewControl &view) {
     if (geometry.GetGeometryType() !=
-        geometry::Geometry::GeometryType::ExtendedTriangleMesh) {
-        PrintShaderWarning("Rendering type is not geometry::ExtendedTriangleMesh.");
+        geometry::Geometry::GeometryType::TexturedTriangleMesh) {
+        PrintShaderWarning("Rendering type is not geometry::TexturedTriangleMesh.");
         return false;
     }
     if (option.mesh_show_back_face_) {
@@ -215,12 +215,12 @@ bool SpotLightShader::PrepareBinding(
     std::vector<Eigen::Vector2f> &uvs,
     std::vector<Eigen::Vector3i> &triangles) {
     if (geometry.GetGeometryType() !=
-        geometry::Geometry::GeometryType::ExtendedTriangleMesh) {
+        geometry::Geometry::GeometryType::TexturedTriangleMesh) {
         PrintShaderWarning(
-            "Rendering type is not geometry::ExtendedTriangleMesh.");
+            "Rendering type is not geometry::TexturedTriangleMesh.");
         return false;
     }
-    auto &mesh = (const geometry::ExtendedTriangleMesh &) geometry;
+    auto &mesh = (const geometry::TexturedTriangleMesh &) geometry;
     if (!mesh.HasTriangles()) {
         PrintShaderWarning("Binding failed with empty triangle mesh.");
         return false;

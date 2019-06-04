@@ -14,7 +14,7 @@ namespace visualization {
 bool VisualizerUV::AddGeometry(
     std::shared_ptr<const geometry::Geometry> geometry_ptr) {
     if (geometry_ptr->GetGeometryType() ==
-        geometry::Geometry::GeometryType::ExtendedTriangleMesh) {
+        geometry::Geometry::GeometryType::TexturedTriangleMesh) {
         auto renderer_ptr = std::make_shared<glsl::GeometryRendererUV>();
         if (!renderer_ptr->AddGeometry(geometry_ptr)) {
             utility::PrintDebug("Failed to add geometry\n");
