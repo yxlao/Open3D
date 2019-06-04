@@ -26,21 +26,22 @@ bool GeometryRendererUV::Render(const RenderOption &option,
 
     if (geometry_ptr_->GetGeometryType()
         != geometry::Geometry::GeometryType::TexturedTriangleMesh) {
-        utility::PrintWarning("[TriangleMeshRendererPBR] "
+        utility::PrintWarning("[GeometryRendererUV] "
                               "Geometry type is not TexturedTriangleMesh\n");
         return false;
     }
-    const auto
-        &mesh = (const geometry::TexturedTriangleMesh &) (*geometry_ptr_);
 
+    const auto &mesh = (const geometry::TexturedTriangleMesh &)
+        (*geometry_ptr_);
     auto uv_option = (const RenderOptionWithTargetImage &) option;
     return uv_option.forward_ ?
-           uv_tex_map_shader_.Render(mesh, option, view) :
-           uv_tex_atlas_shader_.Render(mesh, option, view);
+           uv_forward_shader_.Render(mesh, option, view) :
+           uv_backward_shader_.Render(mesh, option, view);
 }
 
 bool GeometryRendererUV::UpdateGeometry() {
-//    uv_tex_atlas_shader_.InvalidateGeometry();
+    uv_forward_shader_.InvalidateGeometry();
+    uv_backward_shader_.InvalidateGeometry();
 
     return true;
 }

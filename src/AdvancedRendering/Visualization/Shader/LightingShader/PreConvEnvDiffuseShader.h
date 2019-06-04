@@ -5,7 +5,7 @@
 #pragma once
 
 #include <Open3D/Open3D.h>
-#include "AdvancedRendering/Visualization/Utility/BindWrapper.h"
+#include "AdvancedRendering/Visualization/Utility/BufferHelper.h"
 
 namespace open3d {
 namespace visualization {
@@ -13,7 +13,8 @@ namespace visualization {
 namespace glsl {
 class PreConvEnvDiffuseShader : public ShaderWrapper {
 public:
-    PreConvEnvDiffuseShader() : PreConvEnvDiffuseShader("PreConvDiffuseShader") {}
+    PreConvEnvDiffuseShader() : PreConvEnvDiffuseShader(
+        "PreConvDiffuseShader") {}
     ~PreConvEnvDiffuseShader() override { Release(); }
 
     GLuint GetGeneratedDiffuseBuffer() const { return tex_diffuse_buffer_; }
@@ -26,7 +27,6 @@ protected:
     bool Compile() final;
     void Release() final;
 
-    /** Dummy, load Cube instead **/
     bool BindGeometry(const geometry::Geometry &geometry,
                       const RenderOption &option,
                       const ViewControl &view) final;
@@ -54,7 +54,7 @@ protected:
     GLuint P_;
 
     /* fragment shader */
-    GLuint tex_env_;
+    GLuint tex_env_symbol_;
 
     /** buffers **/
     GLuint vertex_position_buffer_;
@@ -66,8 +66,6 @@ protected:
     /** cameras (fixed) **/
     GLHelper::GLMatrix4f projection_;
     std::vector<GLHelper::GLMatrix4f> views_;
-
-    GLuint tex_env_buffer_;
 };
 
 }

@@ -15,44 +15,23 @@ namespace visualization {
 /** Visualizer for Physically based rendering **/
 class VisualizerPBR : public VisualizerWithKeyCallback {
 public:
-    /** Handle geometry (including textures) **/
     virtual bool AddGeometry(
         std::shared_ptr<const geometry::Geometry> geometry_ptr) override;
+    virtual void Render() override;
 
     /** Handling lighting (shared over the visualizer) **/
-    virtual bool InitRenderOption() override {
-        render_option_ptr_ = std::unique_ptr<RenderOptionWithLighting>(
-            new RenderOptionWithLighting);
-        return true;
-    }
-
-    virtual void Render() override;
+    virtual bool InitRenderOption() override;
 
     /** Call this function
      * - AFTER @CreateVisualizerWindow (where @InitRenderOption is called)
-     *   to ensure OpenGL context has been created.
+     *   :to ensure OpenGL context has been created.
      * - BEFORE @Run (or whatever customized rendering task)
-     *   to ensure Lighting is ready for rendering.
+     *   :to ensure Lighting is ready for rendering.
      *   Currently we only support one lighting.
      *   It would remove the previous bound lighting.
      * **/
     bool UpdateLighting(
-        const std::shared_ptr<const geometry::Lighting> &lighting) {
-
-        /** Single instance of the lighting preprocessor **/
-        if (light_renderer_ptr_ == nullptr) {
-            light_renderer_ptr_ =
-                std::make_shared<glsl::LightingRenderer>();
-        }
-
-        auto &render_option_with_lighting_ptr =
-            (std::unique_ptr<RenderOptionWithLighting> &) render_option_ptr_;
-        light_renderer_ptr_->AddGeometry(lighting);
-        bool success = light_renderer_ptr_->RenderToOption(
-            *render_option_with_lighting_ptr, *view_control_ptr_);
-
-        return true;
-    }
+        const std::shared_ptr<const geometry::Lighting> &lighting);
 
 public:
     /** This specific renderer:

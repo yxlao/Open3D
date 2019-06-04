@@ -9,7 +9,7 @@
 
 #include <AdvancedRendering/Visualization/Shader/Shader.h>
 #include <AdvancedRendering/Geometry/ExtendedTriangleMesh.h>
-#include <AdvancedRendering/Visualization/Shader/Primitives.h>
+#include <AdvancedRendering/Visualization/Utility/Primitives.h>
 
 namespace open3d {
 namespace visualization {
@@ -32,9 +32,10 @@ void PreIntegrateLUTSpecularShader::Release() {
     ReleaseProgram();
 }
 
-bool PreIntegrateLUTSpecularShader::BindGeometry(const geometry::Geometry &geometry,
-                                                 const RenderOption &option,
-                                                 const ViewControl &view) {
+bool PreIntegrateLUTSpecularShader::BindGeometry(
+    const geometry::Geometry &geometry,
+    const RenderOption &option,
+    const ViewControl &view) {
     // If there is already geometry, we first unbind it.
     // We use GL_STATIC_DRAW. When geometry changes, we clear buffers and
     // rebind the geometry. Note that this approach is slow. If the geometry is
@@ -56,9 +57,10 @@ bool PreIntegrateLUTSpecularShader::BindGeometry(const geometry::Geometry &geome
     return true;
 }
 
-bool PreIntegrateLUTSpecularShader::RenderGeometry(const geometry::Geometry &geometry,
-                                                   const RenderOption &option,
-                                                   const ViewControl &view) {
+bool PreIntegrateLUTSpecularShader::RenderGeometry(
+    const geometry::Geometry &geometry,
+    const RenderOption &option,
+    const ViewControl &view) {
     if (!PrepareRendering(geometry, option, view)) {
         PrintShaderWarning("Rendering failed during preparation.");
         return false;

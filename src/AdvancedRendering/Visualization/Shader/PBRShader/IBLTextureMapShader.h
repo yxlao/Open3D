@@ -5,7 +5,7 @@
 #pragma once
 
 #include <Open3D/Open3D.h>
-#include "AdvancedRendering/Visualization/Utility/BindWrapper.h"
+#include "AdvancedRendering/Visualization/Utility/BufferHelper.h"
 #include <AdvancedRendering/Geometry/ExtendedTriangleMesh.h>
 
 namespace open3d {
@@ -13,13 +13,13 @@ namespace visualization {
 
 namespace glsl {
 /** Lighting should have been processed before being passed here **/
-class IBLTexMapShader : public ShaderWrapper {
+class IBLTextureMapShader : public ShaderWrapper {
 public:
-    IBLTexMapShader() : IBLTexMapShader("IBLShader") {}
-    ~IBLTexMapShader() override { Release(); }
+    IBLTextureMapShader() : IBLTextureMapShader("IBLTextureMapShader") {}
+    ~IBLTextureMapShader() override { Release(); }
 
 protected:
-    explicit IBLTexMapShader(const std::string &name)
+    explicit IBLTextureMapShader(const std::string &name)
         : ShaderWrapper(name) { Compile(); }
 
 protected:
@@ -57,8 +57,8 @@ protected:
     GLuint P_;
 
     /* fragment shader */
-    std::vector<GLuint> texes_object_; /* 5 textures for object */
-    std::vector<GLuint> texes_env_;    /* 3 textures for env */
+    std::vector<GLuint> tex_object_symbols_; /* 5 textures for object */
+    std::vector<GLuint> tex_env_symbols_;    /* 3 textures for env */
     GLuint camera_position_;
 
     /** buffers **/
@@ -67,8 +67,7 @@ protected:
     GLuint vertex_uv_buffer_;
     GLuint triangle_buffer_;
 
-    std::vector<GLuint> texes_object_buffers_;
-    std::vector<GLuint> texes_env_buffers_;
+    std::vector<GLuint> tex_object_buffers_;
 };
 
 }

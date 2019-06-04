@@ -27,7 +27,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "UVTexMapShader.h"
+#include "SpotTextureMapShader.h"
 
 #include <Open3D/Geometry/TriangleMesh.h>
 #include <Open3D/Visualization/Utility/ColorMap.h>
@@ -41,10 +41,8 @@ namespace visualization {
 
 namespace glsl {
 
-bool UVTexMapShader::Compile() {
-    if (!CompileShaders(UVTexMapVertexShader,
-                        nullptr,
-                        UVTexMapFragmentShader)) {
+bool SpotTextureMapShader::Compile() {
+    if (!CompileShaders(SpotLightVertexShader, nullptr, SpotLightFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }
@@ -53,22 +51,29 @@ bool UVTexMapShader::Compile() {
     V_ = glGetUniformLocation(program_, "V");
     P_ = glGetUniformLocation(program_, "P");
 
-    texes_object_.resize(kNumObjectTextures);
-    texes_object_[0] = glGetUniformLocation(program_, "tex_albedo");
+    light_positions_ = glGetUniformLocation(program_, "light_positions");
+    light_colors_ = glGetUniformLocation(program_, "light_colors");
+    camera_position_ = glGetUniformLocation(program_, "camera_position");
 
-    CheckGLState("UVTexMapShader - Render");
+    tex_symbols_.resize(kNumTextures);
+    tex_symbols_[0] = glGetUniformLocation(program_, "tex_albedo");
+    tex_symbols_[1] = glGetUniformLocation(program_, "tex_normal");
+    tex_symbols_[2] = glGetUniformLocation(program_, "tex_roughness");
+    tex_symbols_[3] = glGetUniformLocation(program_, "tex_metallic");
+    tex_symbols_[4] = glGetUniformLocation(program_, "tex_ao");
 
+    CheckGLState(GetShaderName() + ".Compile()");
     return true;
 }
 
-void UVTexMapShader::Release() {
+void SpotTextureMapShader::Release() {
     UnbindGeometry();
     ReleaseProgram();
 }
 
-bool UVTexMapShader::BindGeometry(const geometry::Geometry &geometry,
-                                  const RenderOption &option,
-                                  const ViewControl &view) {
+bool SpotTextureMapShader::BindGeometry(const geometry::Geometry &geometry,
+                                   const RenderOption &option,
+                                   const ViewControl &view) {
     // If there is already geometry, we first unbind it.
     // We use GL_STATIC_DRAW. When geometry changes, we clear buffers and
     // rebind the geometry. Note that this approach is slow. If the geometry is
@@ -79,54 +84,64 @@ bool UVTexMapShader::BindGeometry(const geometry::Geometry &geometry,
 
     // Prepare data to be passed to GPU
     std::vector<Eigen::Vector3f> points;
+    std::vector<Eigen::Vector3f> normals;
     std::vector<Eigen::Vector2f> uvs;
     std::vector<Eigen::Vector3i> triangles;
 
     if (!PrepareBinding(geometry, option, view,
-                        points, uvs, triangles)) {
+                        points, normals, uvs, triangles)) {
         PrintShaderWarning("Binding failed when preparing data.");
         return false;
     }
 
     // Create buffers and bind the geometry
     vertex_position_buffer_ = BindBuffer(points, GL_ARRAY_BUFFER, option);
+    vertex_normal_buffer_ = BindBuffer(normals, GL_ARRAY_BUFFER, option);
     vertex_uv_buffer_ = BindBuffer(uvs, GL_ARRAY_BUFFER, option);
     triangle_buffer_ = BindBuffer(triangles, GL_ELEMENT_ARRAY_BUFFER, option);
 
-    bound_ = true;
-    CheckGLState("UVTexMapShader - BindGeometry");
+    CheckGLState(GetShaderName() + ".BindGeometry()");
 
-    auto mesh = (const geometry::TexturedTriangleMesh &) geometry;
-    assert(mesh.image_textures_.size() >= kNumObjectTextures);
-    texes_object_buffers_.resize(kNumObjectTextures);
-    for (int i = 0; i < kNumObjectTextures; ++i) {
-        texes_object_buffers_[i] = BindTexture2D(mesh.image_textures_[i], option);
-        std::cout << "tex_obejct_buffer: " << texes_object_buffers_[i] << "\n";
+    auto &mesh = (const geometry::TexturedTriangleMesh &) geometry;
+    assert(mesh.image_textures_.size() >= kNumTextures);
+    tex_buffers_.resize(mesh.image_textures_.size());
+    for (int i = 0; i < mesh.image_textures_.size(); ++i) {
+        tex_buffers_[i] = BindTexture2D(mesh.image_textures_[i], option);
     }
+    CheckGLState(GetShaderName() + ".BindTexture()");
 
-    CheckGLState("IBLShader - BindTexture");
-
+    bound_ = true;
     return true;
 }
 
-bool UVTexMapShader::RenderGeometry(const geometry::Geometry &geometry,
-                                    const RenderOption &option,
-                                    const ViewControl &view) {
+bool SpotTextureMapShader::RenderGeometry(const geometry::Geometry &geometry,
+                                     const RenderOption &option,
+                                     const ViewControl &view) {
     if (!PrepareRendering(geometry, option, view)) {
         PrintShaderWarning("Rendering failed during preparation.");
         return false;
     }
+
+    auto &lighting_option = (const RenderOptionWithLighting &) option;
+    light_positions_data_ = lighting_option.spot_light_positions_;
+    light_colors_data_ = lighting_option.spot_light_colors_;
 
     glUseProgram(program_);
     glUniformMatrix4fv(M_, 1, GL_FALSE, view.GetModelMatrix().data());
     glUniformMatrix4fv(V_, 1, GL_FALSE, view.GetViewMatrix().data());
     glUniformMatrix4fv(P_, 1, GL_FALSE, view.GetProjectionMatrix().data());
 
-    /** Object buffers **/
-    for (int i = 0; i < kNumObjectTextures; ++i) {
-        glUniform1i(texes_object_[i], i);
+    glUniform3fv(camera_position_, 1,
+                 (const GLfloat *) view.GetEye().data());
+    glUniform3fv(light_positions_, light_positions_data_.size(),
+                 (const GLfloat *) light_positions_data_.data());
+    glUniform3fv(light_colors_, light_colors_data_.size(),
+                 (const GLfloat *) light_colors_data_.data());
+
+    for (int i = 0; i < kNumTextures; ++i) {
+        glUniform1i(tex_symbols_[i], i);
         glActiveTexture(GL_TEXTURE0 + i);
-        glBindTexture(GL_TEXTURE_2D, texes_object_buffers_[i]);
+        glBindTexture(GL_TEXTURE_2D, tex_buffers_[i]);
     }
 
     glEnableVertexAttribArray(0);
@@ -134,35 +149,43 @@ bool UVTexMapShader::RenderGeometry(const geometry::Geometry &geometry,
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
     glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_normal_buffer_);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+    glEnableVertexAttribArray(2);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_uv_buffer_);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, NULL);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_);
 
     glDrawElements(draw_arrays_mode_, draw_arrays_size_, GL_UNSIGNED_INT,
                    nullptr);
+
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
 
-    CheckGLState("IBLShader - Render");
+    CheckGLState(GetShaderName() + ".Render()");
+
     return true;
 }
 
-void UVTexMapShader::UnbindGeometry() {
+void SpotTextureMapShader::UnbindGeometry() {
     if (bound_) {
         glDeleteBuffers(1, &vertex_position_buffer_);
+        glDeleteBuffers(1, &vertex_normal_buffer_);
         glDeleteBuffers(1, &vertex_uv_buffer_);
         glDeleteBuffers(1, &triangle_buffer_);
 
-        for (int i = 0; i < kNumObjectTextures; ++i) {
-            glDeleteTextures(1, &texes_object_buffers_[i]);
+        for (int i = 0; i < kNumTextures; ++i) {
+            glDeleteTextures(1, &tex_buffers_[i]);
         }
 
         bound_ = false;
     }
 }
 
-bool UVTexMapShader::PrepareRendering(
+bool SpotTextureMapShader::PrepareRendering(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view) {
@@ -184,17 +207,18 @@ bool UVTexMapShader::PrepareRendering(
         glDisable(GL_POLYGON_OFFSET_FILL);
     }
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL); /** For the environment **/
+    glDepthFunc(GL_LESS);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     return true;
 }
 
-bool UVTexMapShader::PrepareBinding(
+bool SpotTextureMapShader::PrepareBinding(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view,
     std::vector<Eigen::Vector3f> &points,
+    std::vector<Eigen::Vector3f> &normals,
     std::vector<Eigen::Vector2f> &uvs,
     std::vector<Eigen::Vector3i> &triangles) {
     if (geometry.GetGeometryType() !=
@@ -216,6 +240,10 @@ bool UVTexMapShader::PrepareBinding(
     points.resize(mesh.vertices_.size());
     for (int i = 0; i < points.size(); ++i) {
         points[i] = mesh.vertices_[i].cast<float>();
+    }
+    normals.resize(mesh.vertex_normals_.size());
+    for (int i = 0; i < normals.size(); ++i) {
+        normals[i] = mesh.vertex_normals_[i].cast<float>();
     }
     uvs.resize(mesh.vertex_uvs_.size());
     for (int i = 0; i < uvs.size(); ++i) {

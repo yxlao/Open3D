@@ -55,12 +55,12 @@ bool IBLVertexMapShader::Compile() {
     P_ = glGetUniformLocation(program_, "P");
     camera_position_ = glGetUniformLocation(program_, "camera_position");
 
-    texes_env_.resize(kNumEnvTextures);
-    texes_env_[0] = glGetUniformLocation(program_, "tex_env_diffuse");
-    texes_env_[1] = glGetUniformLocation(program_, "tex_env_specular");
-    texes_env_[2] = glGetUniformLocation(program_, "tex_lut_specular");
+    tex_env_symbols_.resize(kNumEnvTextures);
+    tex_env_symbols_[0] = glGetUniformLocation(program_, "tex_env_diffuse");
+    tex_env_symbols_[1] = glGetUniformLocation(program_, "tex_env_specular");
+    tex_env_symbols_[2] = glGetUniformLocation(program_, "tex_lut_specular");
 
-    CheckGLState("SceneDifferentialShader - Compile");
+    CheckGLState(GetShaderName() + ".Compile");
 
     return true;
 }
@@ -102,7 +102,7 @@ bool IBLVertexMapShader::BindGeometry(const geometry::Geometry &geometry,
 
     triangle_buffer_ = BindBuffer(triangles, GL_ELEMENT_ARRAY_BUFFER, option);
 
-    CheckGLState("SceneDifferentialShader - BindGeometry");
+    CheckGLState(GetShaderName() + ".BindGeometry");
 
     bound_ = true;
     return true;
@@ -115,13 +115,14 @@ bool IBLVertexMapShader::RenderGeometry(const geometry::Geometry &geometry,
         PrintShaderWarning("Rendering failed during preparation.");
         return false;
     }
-    CheckGLState("IBLNoTexShader - Before Render");
 
     auto &lighting_option = (const RenderOptionWithLighting &) option;
-    tex_env_buffers_.resize(kNumEnvTextures);
-    tex_env_buffers_[0] = lighting_option.tex_env_diffuse_buffer_;
-    tex_env_buffers_[1] = lighting_option.tex_env_specular_buffer_;
-    tex_env_buffers_[2] = lighting_option.tex_lut_specular_buffer_;
+
+    std::vector<GLuint> tex_env_buffers;
+    tex_env_buffers.resize(kNumEnvTextures);
+    tex_env_buffers[0] = lighting_option.tex_env_diffuse_buffer_;
+    tex_env_buffers[1] = lighting_option.tex_env_specular_buffer_;
+    tex_env_buffers[2] = lighting_option.tex_lut_specular_buffer_;
 
     glUseProgram(program_);
     glUniformMatrix4fv(M_, 1, GL_FALSE, view.GetModelMatrix().data());
@@ -130,19 +131,19 @@ bool IBLVertexMapShader::RenderGeometry(const geometry::Geometry &geometry,
     glUniform3fv(camera_position_, 1, view.GetEye().data());
 
     /** Diffuse environment **/
-    glUniform1i(texes_env_[0], 0);
+    glUniform1i(tex_env_symbols_[0], 0);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, tex_env_buffers_[0]);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, tex_env_buffers[0]);
 
     /** Prefiltered specular **/
-    glUniform1i(texes_env_[1], 1);
+    glUniform1i(tex_env_symbols_[1], 1);
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, tex_env_buffers_[1]);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, tex_env_buffers[1]);
 
     /** Pre-integrated BRDF LUT **/
-    glUniform1i(texes_env_[2], 2);
+    glUniform1i(tex_env_symbols_[2], 2);
     glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, tex_env_buffers_[2]);
+    glBindTexture(GL_TEXTURE_2D, tex_env_buffers[2]);
 
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer_);
@@ -174,7 +175,7 @@ bool IBLVertexMapShader::RenderGeometry(const geometry::Geometry &geometry,
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
-    CheckGLState("IBLNoTexShader - Render");
+    CheckGLState(GetShaderName() + ".Render");
 
     return true;
 }
@@ -192,7 +193,9 @@ void IBLVertexMapShader::UnbindGeometry() {
 
 void IBLVertexMapShader::RebindGeometry(const geometry::Geometry &geometry,
                                         const RenderOption &option,
-                                        bool color, bool material, bool normal) {
+                                        bool color,
+                                        bool material,
+                                        bool normal) {
     auto &mesh = (const geometry::ExtendedTriangleMesh &) geometry;
 
     if (color) {
@@ -226,7 +229,8 @@ bool IBLVertexMapShader::PrepareRendering(
     const ViewControl &view) {
     if (geometry.GetGeometryType() !=
         geometry::Geometry::GeometryType::ExtendedTriangleMesh) {
-        PrintShaderWarning("Rendering type is not geometry::ExtendedTriangleMesh.");
+        PrintShaderWarning(
+            "Rendering type is not geometry::ExtendedTriangleMesh.");
         return false;
     }
     if (option.mesh_show_back_face_) {

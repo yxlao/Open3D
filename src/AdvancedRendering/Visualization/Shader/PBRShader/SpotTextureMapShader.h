@@ -5,21 +5,21 @@
 #pragma once
 
 #include <Open3D/Open3D.h>
-#include "AdvancedRendering/Visualization/Utility/BindWrapper.h"
+#include "AdvancedRendering/Visualization/Utility/BufferHelper.h"
 #include <AdvancedRendering/Geometry/ExtendedTriangleMesh.h>
 
 namespace open3d {
 namespace visualization {
 
 namespace glsl {
-/** Lighting should have been processed before being passed here **/
-class UVTexMapShader : public ShaderWrapper {
+class SpotTextureMapShader : public ShaderWrapper {
 public:
-    UVTexMapShader() : UVTexMapShader("UVTexMapShader") {}
-    ~UVTexMapShader() override { Release(); }
+    SpotTextureMapShader() : SpotTextureMapShader("SpotTextureMapShader") {}
+    ~SpotTextureMapShader() override { Release(); }
 
 protected:
-    explicit UVTexMapShader(const std::string &name)
+
+    explicit SpotTextureMapShader(const std::string &name)
         : ShaderWrapper(name) { Compile(); }
 
 protected:
@@ -43,27 +43,35 @@ protected:
                         const RenderOption &option,
                         const ViewControl &view,
                         std::vector<Eigen::Vector3f> &points,
+                        std::vector<Eigen::Vector3f> &normals,
                         std::vector<Eigen::Vector2f> &uvs,
                         std::vector<Eigen::Vector3i> &triangles);
 
 protected:
-    const int kNumObjectTextures = 1;
+    const int kNumTextures = 5;
 
+    /** locations **/
     /* vertex shader */
     GLuint M_;
     GLuint V_;
     GLuint P_;
 
     /* fragment shader */
-    std::vector<GLuint> texes_object_; /* 1 texture for object */
+    std::vector<GLuint> tex_symbols_;
     GLuint camera_position_;
+    GLuint light_positions_;
+    GLuint light_colors_;
 
     /** buffers **/
     GLuint vertex_position_buffer_;
+    GLuint vertex_normal_buffer_;
     GLuint vertex_uv_buffer_;
     GLuint triangle_buffer_;
+    std::vector<GLuint> tex_buffers_;
 
-    std::vector<GLuint> texes_object_buffers_;
+    /** raw data **/
+    std::vector<Eigen::Vector3f> light_positions_data_;
+    std::vector<Eigen::Vector3f> light_colors_data_;
 };
 
 }

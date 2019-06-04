@@ -5,7 +5,7 @@
 #pragma once
 
 #include <Open3D/Open3D.h>
-#include "AdvancedRendering/Visualization/Utility/BindWrapper.h"
+#include "AdvancedRendering/Visualization/Utility/BufferHelper.h"
 
 namespace open3d {
 namespace visualization {
@@ -14,10 +14,11 @@ namespace glsl {
 class PreFilterEnvSpecularShader : public ShaderWrapper {
 public:
     PreFilterEnvSpecularShader() : PreFilterEnvSpecularShader(
-        "PreFilterEnvShader") {}
+        "PreFilterEnvSpecularShader") {}
     ~PreFilterEnvSpecularShader() override { Release(); }
 
-    GLuint GetGeneratedPrefilterEnvBuffer() const { return tex_env_specular_buffer_; }
+    GLuint GetGeneratedPrefilterEnvBuffer() const {
+        return tex_env_specular_buffer_; }
 
 protected:
     explicit PreFilterEnvSpecularShader(const std::string &name)
@@ -54,7 +55,7 @@ protected:
     GLuint P_;
 
     /* fragment shader */
-    GLuint tex_env_;
+    GLuint tex_env_symbol_;
     GLuint roughness_;
 
     /** buffers **/
@@ -68,8 +69,6 @@ protected:
     /** cameras (fixed) **/
     GLHelper::GLMatrix4f projection_;
     std::vector<GLHelper::GLMatrix4f> views_;
-
-    GLuint tex_env_buffer_;
 };
 
 }

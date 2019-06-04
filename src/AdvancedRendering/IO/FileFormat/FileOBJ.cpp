@@ -111,6 +111,8 @@ bool ReadTexturedTriangleMeshFromOBJ(const std::string &filename,
     if (!materials[0].ambient_texname.empty()) {
         pbr_tex_names.emplace_back(materials[0].ambient_texname);
     }
+
+    /** Fall back to diffuse only, if there are not enough pbr textures**/
     if (pbr_tex_names.size() == 4) {
         tex_names.insert(tex_names.end(),
                          pbr_tex_names.begin(), pbr_tex_names.end());
@@ -118,7 +120,6 @@ bool ReadTexturedTriangleMeshFromOBJ(const std::string &filename,
 
     for (auto &tex_name : tex_names) {
         tex_name = base_dir + "/" + tex_name;
-        std::cout << tex_name << "\n";
     }
 
     mesh.LoadImageTextures(tex_names);

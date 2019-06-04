@@ -6,11 +6,11 @@
 
 #include <Open3D/Open3D.h>
 
-#include "UVShader/UVTexMapShader.h"
-#include "PBRShader/IBLTexMapShader.h"
+#include "AdvancedRendering/Visualization/Shader/UVShader/UVForwardShader.h"
+#include "AdvancedRendering/Visualization/Shader/PBRShader/IBLTextureMapShader.h"
 #include "PBRShader/IBLVertexMapShader.h"
-#include "PBRShader/SpotLightShader.h"
-#include "PBRShader/DirectSamplingShader.h"
+#include "AdvancedRendering/Visualization/Shader/PBRShader/SpotTextureMapShader.h"
+#include "AdvancedRendering/Visualization/Shader/PBRShader/IBLVertexMapMCShader.h"
 
 #include "LightingShader/BackgroundShader.h"
 
@@ -32,11 +32,10 @@ protected:
     const int kNumTextures = 5;
 
     /** NoIBL: simple **/
-    SpotLightShader spot_light_shader_;
+    SpotTextureMapShader spot_light_shader_;
 
     /** IBL: w/ and w/o texture maps **/
-    UVTexMapShader uv_tex_map_shader_;
-    IBLTexMapShader ibx_tex_map_shader_;
+    IBLTextureMapShader ibx_texure_map_shader_;
     IBLVertexMapShader ibl_vertex_map_shader_;
 };
 

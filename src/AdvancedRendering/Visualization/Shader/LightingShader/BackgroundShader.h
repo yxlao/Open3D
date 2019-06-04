@@ -5,7 +5,7 @@
 #pragma once
 
 #include <Open3D/Open3D.h>
-#include "AdvancedRendering/Visualization/Utility/BindWrapper.h"
+#include "AdvancedRendering/Visualization/Utility/BufferHelper.h"
 
 namespace open3d {
 namespace visualization {
@@ -49,13 +49,11 @@ protected:
     /** locations **/
     GLuint V_;               /* vertex shader */
     GLuint P_;
-    GLuint tex_env_;         /* fragment shader */
+    GLuint tex_env_symbol_;         /* fragment shader */
 
     /** buffers **/
     GLuint vertex_position_buffer_;
     GLuint triangle_buffer_;
-
-    GLuint tex_env_buffer_;
 };
 
 }

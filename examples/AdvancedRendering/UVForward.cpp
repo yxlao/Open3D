@@ -3,13 +3,11 @@
 //
 
 #include <Open3D/Open3D.h>
-#include <AdvancedRendering/IO/ClassIO/ExtendedTriangleMeshIO.h>
-#include <AdvancedRendering/Geometry/ExtendedTriangleMesh.h>
-#include <AdvancedRendering/Geometry/Lighting.h>
-#include <AdvancedRendering/Visualization/Utility/DrawGeometryPBR.h>
-#include <AdvancedRendering/Geometry/ImageExt.h>
+
 #include <AdvancedRendering/Geometry/TexturedTriangleMesh.h>
 #include <AdvancedRendering/IO/ClassIO/TexturedTriangleMeshIO.h>
+
+#include <AdvancedRendering/Visualization/Utility/DrawGeometryUV.h>
 
 using namespace open3d;
 
@@ -20,5 +18,5 @@ int main() {
     io::ReadTexturedTriangleMeshFromOBJ(base_path + "/cyborg.obj", *mesh);
 
     auto target = io::CreateImageFromFile(base_path + "/capture.png");
-    visualization::DrawGeometriesUV({mesh}, false, target);
+    visualization::DrawGeometriesUV({mesh}, true);
 }

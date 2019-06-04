@@ -9,7 +9,7 @@
 
 #include <AdvancedRendering/Visualization/Shader/Shader.h>
 #include <AdvancedRendering/Geometry/ExtendedTriangleMesh.h>
-#include <AdvancedRendering/Visualization/Shader/Primitives.h>
+#include <AdvancedRendering/Visualization/Utility/Primitives.h>
 #include <AdvancedRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
 
 namespace open3d {
@@ -28,7 +28,7 @@ bool PreFilterEnvSpecularShader::Compile() {
     V_ = glGetUniformLocation(program_, "V");
     P_ = glGetUniformLocation(program_, "P");
 
-    tex_env_ = glGetUniformLocation(program_, "tex_env");
+    tex_env_symbol_ = glGetUniformLocation(program_, "tex_env");
     roughness_ = glGetUniformLocation(program_, "roughness");
 
     return true;
@@ -72,7 +72,7 @@ bool PreFilterEnvSpecularShader::RenderGeometry(const geometry::Geometry &geomet
     }
 
     auto &lighting_option = (const RenderOptionWithLighting &) option;
-    tex_env_buffer_ = lighting_option.tex_env_buffer_;
+    GLuint tex_env_buffer = lighting_option.tex_env_buffer_;
 
     /** 0. Setup framebuffers **/
     GLuint fbo, rbo;
@@ -86,9 +86,9 @@ bool PreFilterEnvSpecularShader::RenderGeometry(const geometry::Geometry &geomet
     glUniformMatrix4fv(P_, 1, GL_FALSE, projection_.data());
 
     /** 2. Setup constant textures **/
-    glUniform1i(tex_env_, 0);
+    glUniform1i(tex_env_symbol_, 0);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, tex_env_buffer_);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, tex_env_buffer);
 
     for (int lod = 0; lod < kMipMapLevels; ++lod) {
         unsigned width  = kCubemapSize >> lod;

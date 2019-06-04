@@ -5,7 +5,7 @@
 #pragma once
 
 #include <Open3D/Open3D.h>
-#include "AdvancedRendering/Visualization/Utility/BindWrapper.h"
+#include "AdvancedRendering/Visualization/Utility/BufferHelper.h"
 
 namespace open3d {
 namespace visualization {
@@ -13,7 +13,8 @@ namespace visualization {
 namespace glsl {
 class PreIntegrateLUTSpecularShader : public ShaderWrapper {
 public:
-    PreIntegrateLUTSpecularShader() : PreIntegrateLUTSpecularShader("PreIntegrateLUTShader") {}
+    PreIntegrateLUTSpecularShader() : PreIntegrateLUTSpecularShader(
+        "PreIntegrateLUTShader") {}
     ~PreIntegrateLUTSpecularShader() override { Release(); }
 
     GLuint GetGeneratedLUTBuffer() const { return tex_lut_specular_buffer_; }

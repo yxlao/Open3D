@@ -6,8 +6,8 @@
 
 #include <Open3D/Open3D.h>
 
-#include "UVShader/UVTexMapShader.h"
-#include "UVShader/UVTexAtlasShader.h"
+#include "AdvancedRendering/Visualization/Shader/UVShader/UVForwardShader.h"
+#include "AdvancedRendering/Visualization/Shader/UVShader/UVBackwardShader.h"
 
 namespace open3d {
 namespace visualization {
@@ -24,8 +24,8 @@ public:
     bool UpdateGeometry() override;
 
 protected:
-    UVTexMapShader uv_tex_map_shader_;
-    UVTexAtlasShader uv_tex_atlas_shader_;
+    UVForwardShader uv_forward_shader_;
+    UVBackwardShader uv_backward_shader_;
 };
 
 } // glsl

@@ -32,27 +32,32 @@ bool GeometryRendererPBR::Render(const RenderOption &option,
         == geometry::Geometry::GeometryType::ExtendedTriangleMesh) {
         auto &mesh = (geometry::ExtendedTriangleMesh &) *geometry_ptr_;
 
-        if (option_lighting.type_ == geometry::Lighting::LightingType::IBL) {
+        if (option_lighting.type_
+            == geometry::Lighting::LightingType::IBL) {
             return mesh.HasVertexTextures() ?
-                   ibl_vertex_map_shader_.Render(mesh, option, view) : false;
-        }
+                   ibl_vertex_map_shader_.Render(mesh, option, view) :
+                   false;
+        } // spotlight not yet supported
     }
 
-        /** Texture material mapping **/
+    /** Texture material mapping **/
     else if (geometry_ptr_->GetGeometryType()
         == geometry::Geometry::GeometryType::TexturedTriangleMesh) {
         auto &mesh = (geometry::TexturedTriangleMesh &) *geometry_ptr_;
 
-        if (option_lighting.type_ == geometry::Lighting::LightingType::IBL) {
+        if (option_lighting.type_
+            == geometry::Lighting::LightingType::IBL) {
             return (mesh.HasUVs() && mesh.HasImageTextures(kNumTextures)) ?
-                   ibx_tex_map_shader_.Render(mesh, option, view) : false;
+                   ibx_texure_map_shader_.Render(mesh, option, view) :
+                   false;
         } else if (option_lighting.type_
             == geometry::Lighting::LightingType::Spot) {
             return (mesh.HasUVs() && mesh.HasImageTextures(kNumTextures)) ?
-                   spot_light_shader_.Render(mesh, option, view) : false;
+                   spot_light_shader_.Render(mesh, option, view) :
+                   false;
         }
     } else {
-        utility::PrintWarning("[TriangleMeshRendererPBR] "
+        utility::PrintWarning("[GeometryRendererPBR] "
                               "Geometry type is not supported\n");
         return false;
     }

@@ -27,7 +27,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "DirectSamplingShader.h"
+#include "IBLVertexMapMCShader.h"
 
 #include <Open3D/Geometry/TriangleMesh.h>
 #include <Open3D/Visualization/Utility/ColorMap.h>
@@ -41,7 +41,7 @@ namespace visualization {
 
 namespace glsl {
 
-bool DirectSamplingShader::Compile() {
+bool IBLVertexMapMCShader::Compile() {
     std::cout << glGetError() << "\n";
     if (!CompileShaders(DirectSamplingVertexShader,
                         nullptr,
@@ -55,21 +55,21 @@ bool DirectSamplingShader::Compile() {
     P_ = glGetUniformLocation(program_, "P");
     camera_position_ = glGetUniformLocation(program_, "camera_position");
 
-    texes_env_.resize(kNumEnvTextures);
-    texes_env_[0] = glGetUniformLocation(program_, "tex_env");
-    texes_env_[1] = glGetUniformLocation(program_, "tex_env_diffuse");
+    tex_env_symbols_.resize(kNumEnvTextures);
+    tex_env_symbols_[0] = glGetUniformLocation(program_, "tex_env");
+    tex_env_symbols_[1] = glGetUniformLocation(program_, "tex_env_diffuse");
 
-    CheckGLState("DirectSamplingShader - Compile");
+    CheckGLState(GetShaderName() + ".Compile");
 
     return true;
 }
 
-void DirectSamplingShader::Release() {
+void IBLVertexMapMCShader::Release() {
     UnbindGeometry();
     ReleaseProgram();
 }
 
-bool DirectSamplingShader::BindGeometry(const geometry::Geometry &geometry,
+bool IBLVertexMapMCShader::BindGeometry(const geometry::Geometry &geometry,
                                         const RenderOption &option,
                                         const ViewControl &view) {
     // If there is already geometry, we first unbind it.
@@ -103,11 +103,11 @@ bool DirectSamplingShader::BindGeometry(const geometry::Geometry &geometry,
 
     bound_ = true;
 
-    CheckGLState("DirectSamplingShader - BindGeometry");
+    CheckGLState(GetShaderName() + ".BindGeometry");
     return true;
 }
 
-bool DirectSamplingShader::RenderGeometry(const geometry::Geometry &geometry,
+bool IBLVertexMapMCShader::RenderGeometry(const geometry::Geometry &geometry,
                                           const RenderOption &option,
                                           const ViewControl &view) {
     if (!PrepareRendering(geometry, option, view)) {
@@ -116,9 +116,11 @@ bool DirectSamplingShader::RenderGeometry(const geometry::Geometry &geometry,
     }
 
     auto &lighting_option = (const RenderOptionWithLighting &) option;
-    texes_env_buffers_.resize(kNumEnvTextures);
-    texes_env_buffers_[0] = lighting_option.tex_env_buffer_;
-    texes_env_buffers_[1] = lighting_option.tex_env_diffuse_buffer_;
+
+    std::vector<GLuint> tex_env_buffers;
+    tex_env_buffers.resize(kNumEnvTextures);
+    tex_env_buffers[0] = lighting_option.tex_env_buffer_;
+    tex_env_buffers[1] = lighting_option.tex_env_diffuse_buffer_;
 
     glUseProgram(program_);
     glUniformMatrix4fv(M_, 1, GL_FALSE, view.GetModelMatrix().data());
@@ -127,14 +129,14 @@ bool DirectSamplingShader::RenderGeometry(const geometry::Geometry &geometry,
     glUniform3fv(camera_position_, 1, (const GLfloat *) view.GetEye().data());
 
     /** Diffuse environment **/
-    glUniform1i(texes_env_[0], 0);
+    glUniform1i(tex_env_symbols_[0], 0);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, texes_env_buffers_[0]);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, tex_env_buffers[0]);
 
     /** Prefiltered specular **/
-    glUniform1i(texes_env_[1], 1);
+    glUniform1i(tex_env_symbols_[1], 1);
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, texes_env_buffers_[1]);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, tex_env_buffers[1]);
 
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer_);
@@ -161,11 +163,11 @@ bool DirectSamplingShader::RenderGeometry(const geometry::Geometry &geometry,
     glDisableVertexAttribArray(2);
     glDisableVertexAttribArray(3);
 
-    CheckGLState("DirectSamplingShader - Render");
+    CheckGLState(GetShaderName() + ".Render");
     return true;
 }
 
-void DirectSamplingShader::UnbindGeometry() {
+void IBLVertexMapMCShader::UnbindGeometry() {
     if (bound_) {
         glDeleteBuffers(1, &vertex_position_buffer_);
         glDeleteBuffers(1, &vertex_normal_buffer_);
@@ -173,15 +175,11 @@ void DirectSamplingShader::UnbindGeometry() {
         glDeleteBuffers(1, &vertex_material_buffer_);
         glDeleteBuffers(1, &triangle_buffer_);
 
-        for (int i = 0; i < kNumEnvTextures; ++i) {
-            glDeleteTextures(1, &texes_env_buffers_[i]);
-        }
-
         bound_ = false;
     }
 }
 
-bool DirectSamplingShader::PrepareRendering(
+bool IBLVertexMapMCShader::PrepareRendering(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view) {
@@ -208,7 +206,7 @@ bool DirectSamplingShader::PrepareRendering(
     return true;
 }
 
-bool DirectSamplingShader::PrepareBinding(
+bool IBLVertexMapMCShader::PrepareBinding(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view,

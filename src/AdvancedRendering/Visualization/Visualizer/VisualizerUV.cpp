@@ -32,5 +32,47 @@ bool VisualizerUV::AddGeometry(
     return UpdateGeometry();
 }
 
+bool VisualizerUV::InitRenderOption() {
+    render_option_ptr_ = std::unique_ptr<RenderOptionWithTargetImage>(
+        new RenderOptionWithTargetImage);
+    return true;
+}
+
+/** Call this function
+ * - AFTER @CreateVisualizerWindow
+ *   :to ensure OpenGL context has been created.
+ * - BEFORE @Run (or whatever customized rendering task)
+ *   :to ensure target image is ready.
+ * Currently we only support one target image.
+ *   It would remove the previous bound image.
+ * **/
+bool VisualizerUV::SetupMode(
+    bool forward, const std::shared_ptr<geometry::Image> &image) {
+    auto &render_option_with_target =
+        (std::shared_ptr<RenderOptionWithTargetImage> &) render_option_ptr_;
+
+    if (forward) {
+        render_option_with_target->forward_ = true;
+        return true;
+    } else {
+        render_option_with_target->forward_ = false;
+        assert(image != nullptr);
+        auto tex_image = geometry::FlipImageExt(*image);
+
+        /** Single instance of the texture buffer **/
+        if (!render_option_with_target->is_tex_allocated_) {
+            render_option_with_target->tex_image_buffer_
+                = glsl::BindTexture2D(*tex_image, *render_option_with_target);
+            render_option_with_target->is_tex_allocated_ = true;
+        } else {
+            glsl::BindTexture2D(render_option_with_target->tex_image_buffer_,
+                                *tex_image, *render_option_with_target);
+        }
+        return true;
+    }
+
+    return false;
+}
+
 }  // namespace visualization
 }  // namespace open3d

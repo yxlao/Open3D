@@ -44,7 +44,8 @@ void VisualizerPBR::Render() {
     glEnable(GL_MULTISAMPLE);
     glDisable(GL_BLEND);
     auto &background_color = render_option_ptr_->background_color_;
-    glClearColor((GLclampf) background_color(0), (GLclampf) background_color(1),
+    glClearColor((GLclampf) background_color(0),
+                 (GLclampf) background_color(1),
                  (GLclampf) background_color(2), 1.0f);
     glClearDepth(1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -58,6 +59,27 @@ void VisualizerPBR::Render() {
     light_renderer_ptr_->Render(*render_option_ptr_, *view_control_ptr_);
 
     glfwSwapBuffers(window_);
+}
+
+bool VisualizerPBR::InitRenderOption() {
+    render_option_ptr_ = std::unique_ptr<RenderOptionWithLighting>(
+        new RenderOptionWithLighting);
+    return true;
+}
+
+bool VisualizerPBR::UpdateLighting(
+    const std::shared_ptr<const geometry::Lighting> &lighting) {
+
+    if (light_renderer_ptr_ == nullptr) {
+        light_renderer_ptr_ = std::make_shared<glsl::LightingRenderer>();
+    }
+
+    auto &render_option_with_lighting_ptr =
+        (std::unique_ptr<RenderOptionWithLighting> &) render_option_ptr_;
+    light_renderer_ptr_->AddGeometry(lighting);
+
+    return light_renderer_ptr_->RenderToOption(
+        *render_option_with_lighting_ptr, *view_control_ptr_);
 }
 }  // namespace visualization
 }  // namespace open3d

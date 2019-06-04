@@ -2,8 +2,8 @@
 // Created by wei on 4/13/19.
 //
 
-#include "BindWrapper.h"
-#include "AdvancedRendering/Visualization/Shader/Primitives.h"
+#include "BufferHelper.h"
+#include "Primitives.h"
 
 namespace open3d {
 namespace visualization {

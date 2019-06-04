@@ -27,7 +27,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "UVTexAtlasShader.h"
+#include "UVForwardShader.h"
 
 #include <Open3D/Geometry/TriangleMesh.h>
 #include <Open3D/Visualization/Utility/ColorMap.h>
@@ -41,10 +41,10 @@ namespace visualization {
 
 namespace glsl {
 
-bool UVTexAtlasShader::Compile() {
-    if (!CompileShaders(UVTexAtlasVertexShader,
+bool UVForwardShader::Compile() {
+    if (!CompileShaders(UVTexMapVertexShader,
                         nullptr,
-                        UVTexAtlasFragmentShader)) {
+                        UVTexMapFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }
@@ -53,19 +53,20 @@ bool UVTexAtlasShader::Compile() {
     V_ = glGetUniformLocation(program_, "V");
     P_ = glGetUniformLocation(program_, "P");
 
-    tex_target_ = glGetUniformLocation(program_, "tex_image");
+    texes_object_symbols_.resize(kNumObjectTextures);
+    texes_object_symbols_[0] = glGetUniformLocation(program_, "tex_albedo");
 
-    CheckGLState("UVTexAtlasShader - Render");
+    CheckGLState(GetShaderName() + ".Compile()");
 
     return true;
 }
 
-void UVTexAtlasShader::Release() {
+void UVForwardShader::Release() {
     UnbindGeometry();
     ReleaseProgram();
 }
 
-bool UVTexAtlasShader::BindGeometry(const geometry::Geometry &geometry,
+bool UVForwardShader::BindGeometry(const geometry::Geometry &geometry,
                                   const RenderOption &option,
                                   const ViewControl &view) {
     // If there is already geometry, we first unbind it.
@@ -74,7 +75,6 @@ bool UVTexAtlasShader::BindGeometry(const geometry::Geometry &geometry,
     // changing per frame, consider implementing a new ShaderWrapper using
     // GL_STREAM_DRAW, and replace UnbindGeometry() with Buffer Object
     // Streaming mechanisms.
-    CheckGLState("UVTexAtlasShader - BindGeometry -2");
     UnbindGeometry();
 
     // Prepare data to be passed to GPU
@@ -82,32 +82,34 @@ bool UVTexAtlasShader::BindGeometry(const geometry::Geometry &geometry,
     std::vector<Eigen::Vector2f> uvs;
     std::vector<Eigen::Vector3i> triangles;
 
-    CheckGLState("UVTexAtlasShader - BindGeometry -1");
-
     if (!PrepareBinding(geometry, option, view,
                         points, uvs, triangles)) {
         PrintShaderWarning("Binding failed when preparing data.");
         return false;
     }
-    CheckGLState("UVTexAtlasShader - BindGeometry 0");
+
     // Create buffers and bind the geometry
     vertex_position_buffer_ = BindBuffer(points, GL_ARRAY_BUFFER, option);
     vertex_uv_buffer_ = BindBuffer(uvs, GL_ARRAY_BUFFER, option);
     triangle_buffer_ = BindBuffer(triangles, GL_ELEMENT_ARRAY_BUFFER, option);
 
+    CheckGLState(GetShaderName() + ".BindGeometry()");
+
+    auto mesh = (const geometry::TexturedTriangleMesh &) geometry;
+    assert(mesh.image_textures_.size() >= kNumObjectTextures);
+    texes_object_buffers_.resize(kNumObjectTextures);
+    for (int i = 0; i < kNumObjectTextures; ++i) {
+        texes_object_buffers_[i] = BindTexture2D(
+            mesh.image_textures_[i], option);
+    }
+
+    CheckGLState(GetShaderName() + ".BindTexture()");
+
     bound_ = true;
-    CheckGLState("UVTexAtlasShader - BindGeometry");
-
-    tex_target_buffer_ = ((
-        const RenderOptionWithTargetImage &) option).tex_image_buffer_;
-    std::cout << "tex_target_buffer_ = " << tex_target_buffer_ << "n";
-
-    CheckGLState("IBLShader - BindTexture");
-
     return true;
 }
 
-bool UVTexAtlasShader::RenderGeometry(const geometry::Geometry &geometry,
+bool UVForwardShader::RenderGeometry(const geometry::Geometry &geometry,
                                     const RenderOption &option,
                                     const ViewControl &view) {
     if (!PrepareRendering(geometry, option, view)) {
@@ -115,57 +117,52 @@ bool UVTexAtlasShader::RenderGeometry(const geometry::Geometry &geometry,
         return false;
     }
 
-    CheckGLState("IBLShader - Render 0");
-
     glUseProgram(program_);
     glUniformMatrix4fv(M_, 1, GL_FALSE, view.GetModelMatrix().data());
     glUniformMatrix4fv(V_, 1, GL_FALSE, view.GetViewMatrix().data());
     glUniformMatrix4fv(P_, 1, GL_FALSE, view.GetProjectionMatrix().data());
-    CheckGLState("IBLShader - Render 1");
-
 
     /** Object buffers **/
-    glUniform1i(tex_target_, 0);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, tex_target_buffer_);
-    CheckGLState("IBLShader - Render 2");
+    for (int i = 0; i < kNumObjectTextures; ++i) {
+        glUniform1i(texes_object_symbols_[i], i);
+        glActiveTexture(GL_TEXTURE0 + i);
+        glBindTexture(GL_TEXTURE_2D, texes_object_buffers_[i]);
+    }
 
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer_);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-    CheckGLState("IBLShader - Render 3");
-
 
     glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_uv_buffer_);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, NULL);
-    CheckGLState("IBLShader - Render 4");
-
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_);
-    CheckGLState("IBLShader - Render 5");
-
 
     glDrawElements(draw_arrays_mode_, draw_arrays_size_, GL_UNSIGNED_INT,
                    nullptr);
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
-    CheckGLState("IBLShader - Render 6");
 
+    CheckGLState(GetShaderName() + ".Render()");
     return true;
 }
 
-void UVTexAtlasShader::UnbindGeometry() {
+void UVForwardShader::UnbindGeometry() {
     if (bound_) {
         glDeleteBuffers(1, &vertex_position_buffer_);
         glDeleteBuffers(1, &vertex_uv_buffer_);
         glDeleteBuffers(1, &triangle_buffer_);
 
+        for (int i = 0; i < kNumObjectTextures; ++i) {
+            glDeleteTextures(1, &texes_object_buffers_[i]);
+        }
+
         bound_ = false;
     }
 }
 
-bool UVTexAtlasShader::PrepareRendering(
+bool UVForwardShader::PrepareRendering(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view) {
@@ -180,8 +177,6 @@ bool UVTexAtlasShader::PrepareRendering(
     } else {
         glEnable(GL_CULL_FACE);
     }
-    glEnable(GL_POLYGON_OFFSET_FILL);
-    glPolygonOffset(1.0, 1.0);
     if (option.mesh_show_wireframe_) {
         glEnable(GL_POLYGON_OFFSET_FILL);
         glPolygonOffset(1.0, 1.0);
@@ -189,13 +184,13 @@ bool UVTexAtlasShader::PrepareRendering(
         glDisable(GL_POLYGON_OFFSET_FILL);
     }
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL); /** For the environment **/
+    glDepthFunc(GL_LEQUAL);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     return true;
 }
 
-bool UVTexAtlasShader::PrepareBinding(
+bool UVForwardShader::PrepareBinding(
     const geometry::Geometry &geometry,
     const RenderOption &option,
     const ViewControl &view,
@@ -213,6 +208,11 @@ bool UVTexAtlasShader::PrepareBinding(
         PrintShaderWarning("Binding failed with empty triangle mesh.");
         return false;
     }
+    if (!mesh.HasVertexNormals()) {
+        PrintShaderWarning("Binding failed because mesh has no normals.");
+        return false;
+    }
+
     points.resize(mesh.vertices_.size());
     for (int i = 0; i < points.size(); ++i) {
         points[i] = mesh.vertices_[i].cast<float>();

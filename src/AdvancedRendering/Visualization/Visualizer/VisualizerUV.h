@@ -8,7 +8,7 @@
 #include <AdvancedRendering/Geometry/Lighting.h>
 #include <AdvancedRendering/Geometry/ImageExt.h>
 #include <AdvancedRendering/Visualization/Shader/LightingRenderer.h>
-#include <AdvancedRendering/Visualization/Utility/BindWrapper.h>
+#include <AdvancedRendering/Visualization/Utility/BufferHelper.h>
 
 #include "RenderOptionWithLighting.h"
 
@@ -18,15 +18,12 @@ namespace visualization {
 /** Visualizer for rendering with uv mapping **/
 class VisualizerUV : public VisualizerWithKeyCallback {
 public:
-    /** This geometry object is supposed to include textures **/
+    /** This geometry object is supposed to include >= 1 texture(s) **/
     virtual bool AddGeometry(
         std::shared_ptr<const geometry::Geometry> geometry_ptr) override;
 
-    virtual bool InitRenderOption() override {
-        render_option_ptr_ = std::unique_ptr<RenderOptionWithTargetImage>(
-            new RenderOptionWithTargetImage);
-        return true;
-    }
+    /** Handle forward / backward options **/
+    virtual bool InitRenderOption() override;
 
     /** Call this function
      * - AFTER @CreateVisualizerWindow
@@ -36,33 +33,7 @@ public:
      * Currently we only support one target image.
      *   It would remove the previous bound image.
      * **/
-    bool SetupMode(
-        bool forward, const std::shared_ptr<geometry::Image> &image) {
-        auto &render_option_with_target =
-            (std::shared_ptr<RenderOptionWithTargetImage> &) render_option_ptr_;
-
-        if (forward) {
-            render_option_with_target->forward_ = true;
-            return true;
-        }
-
-        /** backward **/
-        assert(image != nullptr);
-        render_option_with_target->forward_ = false;
-        auto tex_image = geometry::FlipImageExt(*image);
-
-        /** Single instance of the texture buffer **/
-        if (!render_option_with_target->is_tex_allocated_) {
-            render_option_with_target->tex_image_buffer_
-                = glsl::BindTexture2D(*tex_image, *render_option_with_target);
-            render_option_with_target->is_tex_allocated_ = true;
-        } else {
-            glsl::BindTexture2D(render_option_with_target->tex_image_buffer_,
-                *tex_image, *render_option_with_target);
-        }
-
-        return true;
-    }
+    bool SetupMode(bool forward, const std::shared_ptr<geometry::Image> &image);
 };
 }  // namespace visualization
 }  // namespace open3d

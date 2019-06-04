@@ -5,7 +5,7 @@
 #pragma once
 
 #include <Open3D/Open3D.h>
-#include "AdvancedRendering/Visualization/Utility/BindWrapper.h"
+#include "AdvancedRendering/Visualization/Utility/BufferHelper.h"
 
 namespace open3d {
 namespace visualization {
@@ -13,7 +13,7 @@ namespace visualization {
 namespace glsl {
 class HDRToEnvCubemapShader : public ShaderWrapper {
 public:
-    HDRToEnvCubemapShader() : HDRToEnvCubemapShader("HDRToCubemapShader") {}
+    HDRToEnvCubemapShader() : HDRToEnvCubemapShader("HDRToEnvCubemapShader") {}
     ~HDRToEnvCubemapShader() override { Release(); }
 
     GLuint GetGeneratedCubemapBuffer() const { return tex_env_cubemap_buffer_; }
@@ -55,7 +55,7 @@ protected:
     GLuint P_;
 
     /* fragment shader */
-    GLuint tex_hdr_;
+    GLuint tex_hdr_symbol_;
 
     /** buffers **/
     GLuint vertex_position_buffer_;
@@ -67,8 +67,6 @@ protected:
     /** cameras (fixed) **/
     GLHelper::GLMatrix4f projection_;
     std::vector<GLHelper::GLMatrix4f> views_;
-
-    GLuint tex_hdr_buffer_;
 };
 
 }

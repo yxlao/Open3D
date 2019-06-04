@@ -9,7 +9,7 @@
 
 #include <AdvancedRendering/Visualization/Shader/Shader.h>
 #include <AdvancedRendering/Geometry/ExtendedTriangleMesh.h>
-#include <AdvancedRendering/Visualization/Shader/Primitives.h>
+#include <AdvancedRendering/Visualization/Utility/Primitives.h>
 #include <AdvancedRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
 
 namespace open3d {
@@ -28,7 +28,7 @@ bool PreConvEnvDiffuseShader::Compile() {
     V_ = glGetUniformLocation(program_, "V");
     P_ = glGetUniformLocation(program_, "P");
 
-    tex_env_ = glGetUniformLocation(program_, "tex_env");
+    tex_env_symbol_ = glGetUniformLocation(program_, "tex_env");
     return true;
 }
 
@@ -70,7 +70,7 @@ bool PreConvEnvDiffuseShader::RenderGeometry(const geometry::Geometry &geometry,
     }
 
     auto &lighting_option = (const RenderOptionWithLighting &) option;
-    tex_env_buffer_ = lighting_option.tex_env_buffer_;
+    GLuint tex_env_buffer = lighting_option.tex_env_buffer_;
 
     /** 0. Setup framebuffers **/
     GLuint fbo, rbo;
@@ -89,9 +89,9 @@ bool PreConvEnvDiffuseShader::RenderGeometry(const geometry::Geometry &geometry,
     glUniformMatrix4fv(P_, 1, GL_FALSE, projection_.data());
 
     /** 2. Setup constant textures **/
-    glUniform1i(tex_env_, 0);
+    glUniform1i(tex_env_symbol_, 0);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, tex_env_buffer_);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, tex_env_buffer);
 
     /** 3. Setup varying uniforms and rendering target **/
     for (int i = 0; i < 6; ++i) {

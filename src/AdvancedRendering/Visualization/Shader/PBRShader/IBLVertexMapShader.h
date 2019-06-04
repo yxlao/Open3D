@@ -5,7 +5,7 @@
 #pragma once
 
 #include <Open3D/Open3D.h>
-#include "AdvancedRendering/Visualization/Utility/BindWrapper.h"
+#include "AdvancedRendering/Visualization/Utility/BufferHelper.h"
 #include <AdvancedRendering/Geometry/ExtendedTriangleMesh.h>
 
 namespace open3d {
@@ -15,7 +15,7 @@ namespace glsl {
 /** Lighting should have been processed before being passed here **/
 class IBLVertexMapShader : public ShaderWrapper {
 public:
-    IBLVertexMapShader() : IBLVertexMapShader("IBLNoTexShader") {}
+    IBLVertexMapShader() : IBLVertexMapShader("IBLVertexMapShader") {}
     ~IBLVertexMapShader() override { Release(); }
 
 protected:
@@ -63,7 +63,7 @@ protected:
 
     /* fragment shader */
     const int kNumEnvTextures = 3;
-    std::vector<GLuint> texes_env_;    /* 3 textures for env */
+    std::vector<GLuint> tex_env_symbols_;    /* 3 textures for env */
     GLuint camera_position_;
 
     /** buffers **/
@@ -72,9 +72,6 @@ protected:
     GLuint vertex_color_buffer_;
     GLuint vertex_material_buffer_;
     GLuint triangle_buffer_;
-
-    /** Input **/
-    std::vector<GLuint> tex_env_buffers_;
 };
 
 }

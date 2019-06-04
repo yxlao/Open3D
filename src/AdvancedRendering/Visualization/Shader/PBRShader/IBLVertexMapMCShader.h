@@ -5,21 +5,21 @@
 #pragma once
 
 #include <Open3D/Open3D.h>
-#include "AdvancedRendering/Visualization/Utility/BindWrapper.h"
+#include "AdvancedRendering/Visualization/Utility/BufferHelper.h"
 #include <AdvancedRendering/Geometry/ExtendedTriangleMesh.h>
 
 namespace open3d {
 namespace visualization {
 
 namespace glsl {
-class SpotLightShader : public ShaderWrapper {
+/** Lighting should have been processed before being passed here **/
+class IBLVertexMapMCShader : public ShaderWrapper {
 public:
-    SpotLightShader() : SpotLightShader("NoIBLShader") {}
-    ~SpotLightShader() override { Release(); }
+    IBLVertexMapMCShader() : IBLVertexMapMCShader("IBLVertexMapMCShader") {}
+    ~IBLVertexMapMCShader() override { Release(); }
 
 protected:
-
-    explicit SpotLightShader(const std::string &name)
+    explicit IBLVertexMapMCShader(const std::string &name)
         : ShaderWrapper(name) { Compile(); }
 
 protected:
@@ -29,6 +29,7 @@ protected:
     bool BindGeometry(const geometry::Geometry &geometry,
                       const RenderOption &option,
                       const ViewControl &view) final;
+
     bool RenderGeometry(const geometry::Geometry &geometry,
                         const RenderOption &option,
                         const ViewControl &view) final;
@@ -44,11 +45,12 @@ protected:
                         const ViewControl &view,
                         std::vector<Eigen::Vector3f> &points,
                         std::vector<Eigen::Vector3f> &normals,
-                        std::vector<Eigen::Vector2f> &uvs,
+                        std::vector<Eigen::Vector3f> &colors,
+                        std::vector<Eigen::Vector3f> &materials,
                         std::vector<Eigen::Vector3i> &triangles);
 
 protected:
-    const int kNumTextures = 5;
+    const int kNumEnvTextures = 2;
 
     /** locations **/
     /* vertex shader */
@@ -57,21 +59,15 @@ protected:
     GLuint P_;
 
     /* fragment shader */
-    std::vector<GLuint> texes_;
+    std::vector<GLuint> tex_env_symbols_;    /* 3 textures for env */
     GLuint camera_position_;
-    GLuint light_positions_;
-    GLuint light_colors_;
 
     /** buffers **/
     GLuint vertex_position_buffer_;
     GLuint vertex_normal_buffer_;
-    GLuint vertex_uv_buffer_;
+    GLuint vertex_color_buffer_;
+    GLuint vertex_material_buffer_;
     GLuint triangle_buffer_;
-    std::vector<GLuint> tex_buffers_;
-
-    /** raw data **/
-    std::vector<Eigen::Vector3f> light_positions_data_;
-    std::vector<Eigen::Vector3f> light_colors_data_;
 };
 
 }
