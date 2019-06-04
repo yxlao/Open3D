@@ -2,7 +2,7 @@
 // Created by wei on 4/12/19.
 //
 
-#include <AdvancedRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
+#include <AdvancedRendering/Visualization/Visualizer/RenderOptionAdvanced>
 #include <AdvancedRendering/Geometry/TexturedTriangleMesh.h>
 #include "GeometryRendererUV.h"
 
@@ -33,7 +33,7 @@ bool GeometryRendererUV::Render(const RenderOption &option,
 
     const auto &mesh = (const geometry::TexturedTriangleMesh &)
         (*geometry_ptr_);
-    auto uv_option = (const RenderOptionWithTargetImage &) option;
+    auto uv_option = (const RenderOptionAdvanced &) option;
     return uv_option.forward_ ?
            uv_forward_shader_.Render(mesh, option, view) :
            uv_backward_shader_.Render(mesh, option, view);

@@ -34,7 +34,7 @@
 
 #include <AdvancedRendering/Visualization/Shader/Shader.h>
 #include <AdvancedRendering/Geometry/TexturedTriangleMesh.h>
-#include <AdvancedRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
+#include <AdvancedRendering/Visualization/Visualizer/RenderOptionAdvanced>
 
 namespace open3d {
 namespace visualization {

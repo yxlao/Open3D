@@ -53,7 +53,7 @@ protected:
     GLuint P_;
 
     /* fragment shader */
-    GLuint tex_target_symbol_; /* 1 target texture every time */
+    GLuint tex_ref_buffer_; /* 1 target texture every time */
 
     /** buffers **/
     GLuint vertex_position_buffer_;

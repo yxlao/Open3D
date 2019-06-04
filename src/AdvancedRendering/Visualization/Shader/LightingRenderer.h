@@ -5,7 +5,7 @@
 #pragma once
 
 #include <Open3D/Open3D.h>
-#include <AdvancedRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
+#include <AdvancedRendering/Visualization/Visualizer/RenderOptionAdvanced>
 #include <AdvancedRendering/Geometry/Lighting.h>
 #include <Open3D/Geometry/Geometry.h>
 
@@ -37,7 +37,7 @@ public:
     /** Call this function ONLY AFTER @AddGeometry(lighting)
      * Here we use non-constant option, in contrast to default @Render
      **/
-    bool RenderToOption(RenderOptionWithLighting &option,
+    bool RenderToOption(RenderOptionAdvanced &option,
                         const ViewControl &view);
 
 public:

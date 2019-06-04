@@ -34,7 +34,7 @@
 
 #include <AdvancedRendering/Visualization/Shader/Shader.h>
 #include <AdvancedRendering/Geometry/TexturedTriangleMesh.h>
-#include <AdvancedRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
+#include <AdvancedRendering/Visualization/Visualizer/RenderOptionAdvanced>
 
 namespace open3d {
 namespace visualization {
@@ -122,7 +122,7 @@ bool SpotTextureMapShader::RenderGeometry(const geometry::Geometry &geometry,
         return false;
     }
 
-    auto &lighting_option = (const RenderOptionWithLighting &) option;
+    auto &lighting_option = (const RenderOptionAdvanced &) option;
     light_positions_data_ = lighting_option.spot_light_positions_;
     light_colors_data_ = lighting_option.spot_light_colors_;
 

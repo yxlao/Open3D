@@ -10,12 +10,13 @@
 namespace open3d {
 namespace visualization {
 
-class RenderOptionWithLighting : public RenderOption {
+class RenderOptionAdvanced : public RenderOption {
 public:
+    /**************************************/
     geometry::Lighting::LightingType type_;
 
     /** States for image based lighting **/
-    bool is_tex_preprocessed_ = false;
+    bool is_env_tex_allocated_ = false;
     GLuint tex_hdr_buffer_;
     GLuint tex_env_buffer_;
     GLuint tex_env_diffuse_buffer_;
@@ -25,16 +26,17 @@ public:
     /** States for spot lighting **/
     std::vector<Eigen::Vector3f> spot_light_positions_;
     std::vector<Eigen::Vector3f> spot_light_colors_;
-};
 
-class RenderOptionWithTargetImage : public RenderOption {
-public:
-
-    /** States for differentiable rendering: we need an input image **/
-    bool is_tex_allocated_ = false;
-    GLuint tex_image_buffer_;
-
+    /**************************************/
+    /** States for differentiable rendering: we need a reference **/
+    bool is_ref_tex_allocated_ = false;
+    GLuint tex_ref_buffer_;
     bool forward_ = true;
+
+    /**************************************/
+    /** States for rendering to buffer **/
+    bool is_fbo_allocated = false;
+    std::vector<GLuint> tex_output_buffer_;
 };
 }
 }

@@ -33,8 +33,8 @@ bool VisualizerUV::AddGeometry(
 }
 
 bool VisualizerUV::InitRenderOption() {
-    render_option_ptr_ = std::unique_ptr<RenderOptionWithTargetImage>(
-        new RenderOptionWithTargetImage);
+    render_option_ptr_ = std::unique_ptr<RenderOptionAdvanced>(
+        new RenderOptionAdvanced);
     return true;
 }
 
@@ -49,7 +49,7 @@ bool VisualizerUV::InitRenderOption() {
 bool VisualizerUV::SetupMode(
     bool forward, const std::shared_ptr<geometry::Image> &image) {
     auto &render_option_with_target =
-        (std::shared_ptr<RenderOptionWithTargetImage> &) render_option_ptr_;
+        (std::shared_ptr<RenderOptionAdvanced> &) render_option_ptr_;
 
     if (forward) {
         render_option_with_target->forward_ = true;
@@ -60,12 +60,12 @@ bool VisualizerUV::SetupMode(
         auto tex_image = geometry::FlipImageExt(*image);
 
         /** Single instance of the texture buffer **/
-        if (!render_option_with_target->is_tex_allocated_) {
-            render_option_with_target->tex_image_buffer_
+        if (!render_option_with_target->is_ref_tex_allocated_) {
+            render_option_with_target->tex_ref_buffer_
                 = glsl::BindTexture2D(*tex_image, *render_option_with_target);
-            render_option_with_target->is_tex_allocated_ = true;
+            render_option_with_target->is_ref_tex_allocated_ = true;
         } else {
-            glsl::BindTexture2D(render_option_with_target->tex_image_buffer_,
+            glsl::BindTexture2D(render_option_with_target->tex_ref_buffer_,
                                 *tex_image, *render_option_with_target);
         }
         return true;

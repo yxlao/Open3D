@@ -132,7 +132,6 @@ bool WriteTexturedTriangleMeshToOBJ(
      * size = 5: diffuse, normal, roughness, metallic, ambient */
     const std::vector<std::string> &textures,
     const geometry::TexturedTriangleMesh &mesh) {
-    /** Unsupported now **/
     return false;
 }
 } // namespace io

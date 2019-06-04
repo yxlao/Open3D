@@ -34,7 +34,7 @@
 
 #include <AdvancedRendering/Visualization/Shader/Shader.h>
 #include <AdvancedRendering/Geometry/ExtendedTriangleMesh.h>
-#include <AdvancedRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
+#include <AdvancedRendering/Visualization/Visualizer/RenderOptionAdvanced>
 
 namespace open3d {
 namespace visualization {
@@ -127,7 +127,7 @@ bool DifferentialShader::RenderGeometry(const geometry::Geometry &geometry,
 
     CheckGLState("SceneDifferentialShader - Before Render");
 
-    auto &lighting_option = (const RenderOptionWithLighting &) option;
+    auto &lighting_option = (const RenderOptionAdvanced &) option;
     tex_env_buffers_.resize(kNumEnvTextures);
     tex_env_buffers_[0] = lighting_option.tex_env_diffuse_buffer_;
     tex_env_buffers_[1] = lighting_option.tex_env_specular_buffer_;

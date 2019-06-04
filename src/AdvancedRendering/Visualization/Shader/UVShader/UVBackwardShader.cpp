@@ -34,7 +34,7 @@
 
 #include <AdvancedRendering/Visualization/Shader/Shader.h>
 #include <AdvancedRendering/Geometry/TexturedTriangleMesh.h>
-#include <AdvancedRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
+#include <AdvancedRendering/Visualization/Visualizer/RenderOptionAdvanced>
 
 namespace open3d {
 namespace visualization {
@@ -53,7 +53,7 @@ bool UVBackwardShader::Compile() {
     V_ = glGetUniformLocation(program_, "V");
     P_ = glGetUniformLocation(program_, "P");
 
-    tex_target_symbol_ = glGetUniformLocation(program_, "tex_image");
+    tex_ref_buffer_ = glGetUniformLocation(program_, "tex_image");
 
     CheckGLState(GetShaderName() + ".Compile");
 
@@ -105,8 +105,8 @@ bool UVBackwardShader::RenderGeometry(const geometry::Geometry &geometry,
         return false;
     }
 
-    auto tex_target_buffer = ((const RenderOptionWithTargetImage &) option)
-        .tex_image_buffer_;
+    GLuint tex_ref_buffer = ((const RenderOptionAdvanced &) option)
+        .tex_ref_buffer_;
 
     glUseProgram(program_);
     glUniformMatrix4fv(M_, 1, GL_FALSE, view.GetModelMatrix().data());
@@ -114,9 +114,9 @@ bool UVBackwardShader::RenderGeometry(const geometry::Geometry &geometry,
     glUniformMatrix4fv(P_, 1, GL_FALSE, view.GetProjectionMatrix().data());
 
     /** Object buffers **/
-    glUniform1i(tex_target_symbol_, 0);
+    glUniform1i(tex_ref_buffer_, 0);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, tex_target_buffer);
+    glBindTexture(GL_TEXTURE_2D, tex_ref_buffer);
 
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer_);

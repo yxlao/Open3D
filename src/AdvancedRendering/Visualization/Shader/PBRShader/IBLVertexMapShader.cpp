@@ -34,7 +34,7 @@
 
 #include <AdvancedRendering/Visualization/Shader/Shader.h>
 #include <AdvancedRendering/Geometry/ExtendedTriangleMesh.h>
-#include <AdvancedRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
+#include <AdvancedRendering/Visualization/Visualizer/RenderOptionAdvanced>
 
 namespace open3d {
 namespace visualization {
@@ -116,7 +116,7 @@ bool IBLVertexMapShader::RenderGeometry(const geometry::Geometry &geometry,
         return false;
     }
 
-    auto &lighting_option = (const RenderOptionWithLighting &) option;
+    auto &lighting_option = (const RenderOptionAdvanced &) option;
 
     std::vector<GLuint> tex_env_buffers;
     tex_env_buffers.resize(kNumEnvTextures);

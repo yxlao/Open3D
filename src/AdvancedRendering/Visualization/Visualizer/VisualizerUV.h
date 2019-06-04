@@ -10,7 +10,7 @@
 #include <AdvancedRendering/Visualization/Shader/LightingRenderer.h>
 #include <AdvancedRendering/Visualization/Utility/BufferHelper.h>
 
-#include "RenderOptionWithLighting.h"
+#include "RenderOptionAdvanced"
 
 namespace open3d {
 namespace visualization {
