@@ -5,6 +5,7 @@
 #pragma once
 
 #include <Open3D/Open3D.h>
+#include <AdvancedRendering/Visualization/Shader/UVShader/SimpleTextureShader.h>
 
 #include "AdvancedRendering/Visualization/Shader/UVShader/UVForwardShader.h"
 #include "AdvancedRendering/Visualization/Shader/UVShader/UVBackwardShader.h"
@@ -26,6 +27,7 @@ public:
 protected:
     UVForwardShader uv_forward_shader_;
     UVBackwardShader uv_backward_shader_;
+    SimpleTextureShader simple_texture_shader_;
 };
 
 } // glsl

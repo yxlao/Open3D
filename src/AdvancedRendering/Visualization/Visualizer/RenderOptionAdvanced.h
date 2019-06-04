@@ -27,16 +27,30 @@ public:
     std::vector<Eigen::Vector3f> spot_light_positions_;
     std::vector<Eigen::Vector3f> spot_light_colors_;
 
+public:
     /**************************************/
     /** States for differentiable rendering: we need a reference **/
     bool is_ref_tex_allocated_ = false;
     GLuint tex_ref_buffer_;
     bool forward_ = true;
 
+public:
     /**************************************/
     /** States for rendering to buffer **/
-    bool is_fbo_allocated = false;
+    bool is_fbo_allocated_ = false;
+    bool is_fbo_texture_allocated_ = false;
+    bool render_to_fbo_ = false;
+    int output_textures = 0;
+    GLuint fbo_;
+    GLuint rbo_;
     std::vector<GLuint> tex_output_buffer_;
+
+    /** Manually select one in tex_output_buffer_ **/
+    GLuint tex_visualize_buffer_;
+    void SetVisualizeBuffer(int i) {
+        assert(i < tex_output_buffer_.size());
+        tex_visualize_buffer_ = tex_output_buffer_[i];
+    }
 };
 }
 }

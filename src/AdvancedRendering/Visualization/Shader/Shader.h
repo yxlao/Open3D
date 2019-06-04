@@ -1295,6 +1295,59 @@ namespace visualization {
 
 namespace glsl {
 
+const char * const SimpleTextureFragmentShader = 
+"#version 330 core\n"
+"\n"
+"layout(location = 0) out vec4 color;\n"
+"uniform sampler2D texture_vis;\n"
+"\n"
+"in vec2 uv;\n"
+"\n"
+"void main(){\n"
+"    color = texture(texture_vis, uv);\n"
+"}\n"
+;
+
+}  // namespace open3d::glsl
+
+}  // namespace open3d::visualization
+
+}  // namespace open3d
+
+// clang-format on
+// clang-format off
+namespace open3d {
+
+namespace visualization {
+
+namespace glsl {
+
+const char * const SimpleTextureVertexShader = 
+"#version 330 core\n"
+"\n"
+"layout(location = 0) in vec3 position;\n"
+"out vec2 uv;\n"
+"\n"
+"void main(){\n"
+"    gl_Position =  vec4(position, 1);\n"
+"    uv = 0.5 * (position.xy + vec2(1, 1));\n"
+"}\n"
+;
+
+}  // namespace open3d::glsl
+
+}  // namespace open3d::visualization
+
+}  // namespace open3d
+
+// clang-format on
+// clang-format off
+namespace open3d {
+
+namespace visualization {
+
+namespace glsl {
+
 const char * const SimpleVertexShader = 
 "#version 330 core\n"
 "\n"
@@ -1602,7 +1655,7 @@ namespace glsl {
 const char * const UVTexMapFragmentShader = 
 "#version 330 core\n"
 "\n"
-"out vec4 FragColor;\n"
+"layout(location = 0) out vec3 FragColor;\n"
 "\n"
 "in vec2 uv;\n"
 "in vec3 position;\n"
@@ -1612,7 +1665,7 @@ const char * const UVTexMapFragmentShader =
 "\n"
 "void main() {\n"
 "    vec3 albedo = texture(tex_albedo, uv).rgb;\n"
-"    FragColor = vec4(albedo, 1.0);\n"
+"    FragColor = vec3(albedo);\n"
 "}\n"
 ;
 

@@ -48,25 +48,32 @@ bool VisualizerUV::InitRenderOption() {
  * **/
 bool VisualizerUV::SetupMode(
     bool forward, const std::shared_ptr<geometry::Image> &image) {
-    auto &render_option_with_target =
+    auto &render_option_advanced =
         (std::shared_ptr<RenderOptionAdvanced> &) render_option_ptr_;
 
+    /** Render to texture **/
+    if (!render_option_advanced->is_fbo_allocated_) {
+        glGenFramebuffers(1, &render_option_advanced->fbo_);
+        glGenRenderbuffers(1, &render_option_advanced->rbo_);
+        render_option_advanced->is_fbo_allocated_ = true;
+    }
+
     if (forward) {
-        render_option_with_target->forward_ = true;
+        render_option_advanced->forward_ = true;
         return true;
     } else {
-        render_option_with_target->forward_ = false;
+        render_option_advanced->forward_ = false;
         assert(image != nullptr);
         auto tex_image = geometry::FlipImageExt(*image);
 
         /** Single instance of the texture buffer **/
-        if (!render_option_with_target->is_ref_tex_allocated_) {
-            render_option_with_target->tex_ref_buffer_
-                = glsl::BindTexture2D(*tex_image, *render_option_with_target);
-            render_option_with_target->is_ref_tex_allocated_ = true;
+        if (!render_option_advanced->is_ref_tex_allocated_) {
+            render_option_advanced->tex_ref_buffer_
+                = glsl::BindTexture2D(*tex_image, *render_option_advanced);
+            render_option_advanced->is_ref_tex_allocated_ = true;
         } else {
-            glsl::BindTexture2D(render_option_with_target->tex_ref_buffer_,
-                                *tex_image, *render_option_with_target);
+            glsl::BindTexture2D(render_option_advanced->tex_ref_buffer_,
+                                *tex_image, *render_option_advanced);
         }
         return true;
     }

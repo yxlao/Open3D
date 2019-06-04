@@ -5,7 +5,7 @@
 #pragma once
 
 #include <Open3D/Open3D.h>
-#include <AdvancedRendering/Visualization/Visualizer/RenderOptionAdvanced>
+#include <AdvancedRendering/Visualization/Visualizer/RenderOptionAdvanced.h>
 #include <AdvancedRendering/Geometry/Lighting.h>
 #include <Open3D/Geometry/Geometry.h>
 

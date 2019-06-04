@@ -2,7 +2,7 @@
 // Created by wei on 4/12/19.
 //
 
-#include <AdvancedRendering/Visualization/Visualizer/RenderOptionAdvanced>
+#include <AdvancedRendering/Visualization/Visualizer/RenderOptionAdvanced.h>
 #include <AdvancedRendering/Geometry/TexturedTriangleMesh.h>
 #include "GeometryRendererPBR.h"
 
