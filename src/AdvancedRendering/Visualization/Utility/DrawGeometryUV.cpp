@@ -37,7 +37,7 @@ bool DrawGeometriesUV(
         }
     }
 
-    visualizer.SetupMode(forward, target);
+    visualizer.Setup(forward, target);
 
     visualizer.Run();
     visualizer.DestroyVisualizerWindow();

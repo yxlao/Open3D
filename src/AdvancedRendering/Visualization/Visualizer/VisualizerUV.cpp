@@ -46,7 +46,7 @@ bool VisualizerUV::InitRenderOption() {
  * Currently we only support one target image.
  *   It would remove the previous bound image.
  * **/
-bool VisualizerUV::SetupMode(
+bool VisualizerUV::Setup(
     bool forward, const std::shared_ptr<geometry::Image> &image) {
     auto &render_option_advanced =
         (std::shared_ptr<RenderOptionAdvanced> &) render_option_ptr_;

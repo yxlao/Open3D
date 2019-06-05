@@ -54,7 +54,7 @@ protected:
     GLuint P_;
 
     /* fragment shader */
-    GLuint tex_ref_symbol_; /* 1 target texture every time */
+    GLuint tex_ref_symbol_;
     GLuint tex_depth_symbol_;
     GLuint margin_symbol_;
     GLuint cos_thr_symbol_;

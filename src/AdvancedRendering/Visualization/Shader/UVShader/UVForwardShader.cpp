@@ -42,9 +42,9 @@ namespace visualization {
 namespace glsl {
 
 bool UVForwardShader::Compile() {
-    if (!CompileShaders(UVTexMapVertexShader,
+    if (!CompileShaders(UVForwardVertexShader,
                         nullptr,
-                        UVTexMapFragmentShader)) {
+                        UVForwardFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }

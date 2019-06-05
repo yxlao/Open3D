@@ -33,7 +33,7 @@ public:
      * Currently we only support one target image.
      *   It would remove the previous bound image.
      * **/
-    bool SetupMode(bool forward, const std::shared_ptr<geometry::Image> &image);
+    bool Setup(bool forward, const std::shared_ptr<geometry::Image> &image);
 };
 }  // namespace visualization
 }  // namespace open3d

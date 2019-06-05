@@ -42,9 +42,9 @@ namespace visualization {
 namespace glsl {
 
 bool UVBackwardShader::Compile() {
-    if (!CompileShaders(UVTexAtlasVertexShader,
+    if (!CompileShaders(UVBackwardVertexShader,
                         nullptr,
-                        UVTexAtlasFragmentShader)) {
+                        UVBackwardFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }

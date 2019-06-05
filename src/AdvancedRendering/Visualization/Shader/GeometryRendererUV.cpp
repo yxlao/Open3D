@@ -50,20 +50,25 @@ bool GeometryRendererUV::Render(const RenderOption &option,
                 GL_RGB16F, GL_RGB, GL_FLOAT,
                 false, option);
 
-            /* depth */
+            /* depth (forward, for occlusion test) */
             uv_option.tex_output_buffer_[1] = CreateTexture2D(
                 view.GetWindowWidth(), view.GetWindowHeight(),
                 GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_FLOAT,
                 false, option);
 
+            /* color (atlas, read and write)  */
+            /* weight (atlas, read and write) */
+
             uv_option.is_fbo_texture_allocated_ = true;
         }
 
+        /** Render to depth buffer **/
         uv_forward_shader_.Render(mesh, uv_option, view);
 
 //        uv_option.SetVisualizeBuffer(1);
 //        simple_texture_shader_.Render(mesh, uv_option, view);
 
+        /** Render to texture atlas **/
         uv_option.SetDepthBuffer(1);
         uv_backward_shader_.Render(mesh, uv_option, view);
     }
@@ -74,6 +79,7 @@ bool GeometryRendererUV::Render(const RenderOption &option,
 bool GeometryRendererUV::UpdateGeometry() {
     uv_forward_shader_.InvalidateGeometry();
     uv_backward_shader_.InvalidateGeometry();
+    simple_texture_shader_.InvalidateGeometry();
 
     return true;
 }

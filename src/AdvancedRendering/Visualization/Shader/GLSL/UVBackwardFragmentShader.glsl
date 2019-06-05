@@ -1,7 +1,7 @@
 #version 330 core
 
-layout(location = 1) out vec3 FragColor;
-layout(location = 0) out vec3 weight;
+layout(location = 0) out vec3 color;
+layout(location = 1) out vec3 weight;
 
 in vec2 atlas_uv;
 in vec4 ref_position;
@@ -25,10 +25,19 @@ void main() {
 
     float cos_np = dot(normal, -position);
 
-    FragColor = (cos_np > cos_thr)
+    bool mask =
+    /* clipping */
+    (proj_ref_position.x >= 0 && proj_ref_position.x <= 1) &&
+    (proj_ref_position.y >= 0 && proj_ref_position.y <= 1) &&
+    /* angle */
+    (cos_np > cos_thr)
+    /* depth buffer */
     && (current_depth - closest_depth
-    < margin * (cos_np - cos_thr) / (1 - cos_thr)) ?
+    < margin * (cos_np - cos_thr) / (1 - cos_thr));
+
+    color = mask ?
     texture(tex_image, proj_ref_position.xy).xyz : vec3(0);
 
-    weight = (cos_np > cos_thr) ? vec3(cos_np / dot(position, position)) : vec3(0);
+    weight = mask ?
+    vec3(0.1 * cos_np / dot(position, position)) : vec3(0);
 }

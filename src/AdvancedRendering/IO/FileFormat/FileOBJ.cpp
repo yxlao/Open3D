@@ -94,6 +94,8 @@ bool ReadTexturedTriangleMeshFromOBJ(const std::string &filename,
     }
 
     std::vector<std::string> tex_names;
+    auto mat = materials[0];
+    std::cout << mat.name << "\n";
     if (!materials[0].diffuse_texname.empty()) {
         tex_names.emplace_back(materials[0].diffuse_texname);
     }
