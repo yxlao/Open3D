@@ -8,12 +8,12 @@
 #include <AdvancedRendering/Geometry/Lighting.h>
 #include <AdvancedRendering/Visualization/Utility/DrawGeometryPBR.h>
 #include <AdvancedRendering/Geometry/ImageExt.h>
+#include "data_path.h"
 
 using namespace open3d;
 int main() {
     auto mesh = std::make_shared<geometry::ExtendedTriangleMesh>();
-    io::ReadExtendedTriangleMeshFromPLY(
-        "/Users/dongw1/Work/Data/planet/planet_gold.ply", *mesh);
+    io::ReadExtendedTriangleMeshFromPLY(kBasePath + "/planet/planet_gold.ply", *mesh);
 
     auto ibl = std::make_shared<geometry::IBLLighting>();
     ibl->ReadEnvFromHDR(

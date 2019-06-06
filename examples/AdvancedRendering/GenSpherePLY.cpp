@@ -9,78 +9,59 @@
 #include <Open3D/Open3D.h>
 
 #include <Eigen/Eigen>
-#include <opencv2/opencv.hpp>
+
+#include "data_path.h"
 
 using namespace open3d;
 
-Eigen::Vector3d InterpolateVec3(const cv::Mat &im, float u, float v) {
-    float y = v * (im.rows - 1);
-    float x = u * (im.cols - 1);
+Eigen::Vector3d InterpolateVec3(const geometry::Image &im, float u, float v) {
+    float y = v * (im.height_ - 1);
+    float x = u * (im.width_ - 1);
 
     int x0 = std::floor(x), x1 = std::ceil(x);
     int y0 = std::floor(y), y1 = std::ceil(y);
     float rx = x - x0, ry = y - y0;
 
-    if (im.type() == CV_8UC3) {
-        auto query = im.at<cv::Vec3b>(y0, x0) * (1 - rx) * (1 - ry) +
-                     im.at<cv::Vec3b>(y0, x1) * (1 - rx) * ry +
-                     im.at<cv::Vec3b>(y1, x0) * rx * (1 - ry) +
-                     im.at<cv::Vec3b>(y1, x1) * rx * ry;
-        return Eigen::Vector3d(query[2], query[1], query[0]) / 255.0;
-    } else if (im.type() == CV_8UC4) {
-        auto query = im.at<cv::Vec4b>(y0, x0) * (1 - rx) * (1 - ry) +
-                     im.at<cv::Vec4b>(y0, x1) * (1 - rx) * ry +
-                     im.at<cv::Vec4b>(y1, x0) * rx * (1 - ry) +
-                     im.at<cv::Vec4b>(y1, x1) * rx * ry;
-        return Eigen::Vector3d(query[2], query[1], query[0]) / 255.0;
+    if (im.bytes_per_channel_ == 1) {
+        Eigen::Vector3d color;
+        for (int c = 0; c < 3; ++c) {
+            color(c) =
+                    *geometry::PointerAt<unsigned char>(im, y0, x0, c) * (1 - rx) * (1 - ry) +
+                    *geometry::PointerAt<unsigned char>(im, y0, x1, c) * (1 - rx) * ry +
+                    *geometry::PointerAt<unsigned char>(im, y1, x0, c) * rx * (1 - ry) +
+                    *geometry::PointerAt<unsigned char>(im, y1, x1, c) * rx * ry;
+            color(c) /= 255.0;
+        }
+        return color;
     } else {
-        utility::PrintError("Invalid format (%d %d)!\n", im.depth(),
-                            im.channels());
+        utility::PrintError("Invalid format (%d %d)!\n", im.bytes_per_channel_, im.num_of_channels_);
         return Eigen::Vector3d::Zero();
     }
 }
 
-double InterpolateScalar(const cv::Mat &im, float u, float v) {
-    float y = v * (im.rows - 1);
-    float x = u * (im.cols - 1);
+double InterpolateScalar(const geometry::Image &im, float u, float v) {
+    float y = v * (im.height_ - 1);
+    float x = u * (im.width_ - 1);
 
     int x0 = std::floor(x), x1 = std::ceil(x);
     int y0 = std::floor(y), y1 = std::ceil(y);
     float rx = x - x0, ry = y - y0;
 
-    if (im.type() == CV_8UC1) {
-        auto query = im.at<uchar>(y0, x0) * (1 - rx) * (1 - ry) +
-                     im.at<uchar>(y0, x1) * (1 - rx) * ry +
-                     im.at<uchar>(y1, x0) * rx * (1 - ry) +
-                     im.at<uchar>(y1, x1) * rx * ry;
+    if (im.bytes_per_channel_ == 1) {
+        double query =
+                *geometry::PointerAt<unsigned char>(im, y0, x0, 0) * (1 - rx) * (1 - ry) +
+                *geometry::PointerAt<unsigned char>(im, y0, x1, 0) * (1 - rx) * ry +
+                *geometry::PointerAt<unsigned char>(im, y1, x0, 0) * rx * (1 - ry) +
+                *geometry::PointerAt<unsigned char>(im, y1, x1, 0) * rx * ry;
         return query / 255.0;
-    } else if (im.type() == CV_16UC1) {
-        auto query = im.at<ushort>(y0, x0) * (1 - rx) * (1 - ry) +
-                     im.at<ushort>(y0, x1) * (1 - rx) * ry +
-                     im.at<ushort>(y1, x0) * rx * (1 - ry) +
-                     im.at<ushort>(y1, x1) * rx * ry;
+    } else if (im.bytes_per_channel_ == 2) {
+        auto query = *geometry::PointerAt<unsigned short>(im, y0, x0, 0) * (1 - rx) * (1 - ry) +
+                     *geometry::PointerAt<unsigned short>(im, y0, x1, 0) * (1 - rx) * ry +
+                     *geometry::PointerAt<unsigned short>(im, y1, x0, 0) * rx * (1 - ry) +
+                     *geometry::PointerAt<unsigned short>(im, y1, x1, 0) * rx * ry;
         return query / 65535.0;
-    } else if (im.type() == CV_8UC3) {
-        auto query = im.at<cv::Vec3b>(y0, x0) * (1 - rx) * (1 - ry) +
-                     im.at<cv::Vec3b>(y0, x1) * (1 - rx) * ry +
-                     im.at<cv::Vec3b>(y1, x0) * rx * (1 - ry) +
-                     im.at<cv::Vec3b>(y1, x1) * rx * ry;
-        return query[0] / 255.0;
-    } else if (im.type() == CV_8UC4) {
-        auto query = im.at<cv::Vec4b>(y0, x0) * (1 - rx) * (1 - ry) +
-                     im.at<cv::Vec4b>(y0, x1) * (1 - rx) * ry +
-                     im.at<cv::Vec4b>(y1, x0) * rx * (1 - ry) +
-                     im.at<cv::Vec4b>(y1, x1) * rx * ry;
-        return query[0] / 255.0;
-    } else if (im.type() == CV_16UC3) {
-        auto query = im.at<cv::Vec3s>(y0, x0) * (1 - rx) * (1 - ry) +
-                     im.at<cv::Vec3s>(y0, x1) * (1 - rx) * ry +
-                     im.at<cv::Vec3s>(y1, x0) * rx * (1 - ry) +
-                     im.at<cv::Vec3s>(y1, x1) * rx * ry;
-        return query[0] / 65535.0;
     } else {
-        utility::PrintError("Invalid format (%d %d)!\n", im.depth(),
-                            im.channels());
+        utility::PrintError("Invalid format (%d %d)!\n", im.bytes_per_channel_, im.num_of_channels_);
         return 0;
     }
 }
@@ -94,20 +75,20 @@ Eigen::Vector3d GetPositionOnSphere(float u, float v) {
 int main() {
     auto mesh = std::make_shared<geometry::ExtendedTriangleMesh>();
 
-    std::string base_path = "/Users/dongw1/Work/Data/planet";
-    std::string material = "gold";
-    std::string prefix = base_path + "/" + material + "/";
-    std::vector<cv::Mat> textures;
-    textures.push_back(
-        cv::imread(prefix + "albedo.png", cv::IMREAD_UNCHANGED));
-    textures.push_back(
-        cv::imread(prefix + "/normal.png", cv::IMREAD_UNCHANGED));
-    textures.push_back(
-        cv::imread(prefix + "/metallic.png", cv::IMREAD_UNCHANGED));
-    textures.push_back(
-        cv::imread(prefix + "/roughness.png", cv::IMREAD_UNCHANGED));
-    textures.push_back(
-        cv::imread(prefix + "/ao.png", cv::IMREAD_UNCHANGED));
+    // path on mac
+    //    std::string base_path = "/Users/dongw1/Work/Data/planet";
+
+    // path on workstation
+    std::string base_path = kBasePath + "/planet";
+
+    std::string material = "plastic";
+    std::string prefix = base_path + "/" + material;
+    std::vector<geometry::Image> textures;
+    textures.push_back(*io::CreateImageFromFile(prefix + "/albedo.png"));
+    textures.push_back(*io::CreateImageFromFile(prefix + "/normal.png"));
+    textures.push_back(*io::CreateImageFromFile(prefix + "/metallic.png"));
+    textures.push_back(*io::CreateImageFromFile(prefix + "/roughness.png"));
+    textures.push_back(*io::CreateImageFromFile(prefix + "/ao.png"));
 
     /** This should be higher to store more texture information **/
     const unsigned int X_SEGMENTS = 16;
@@ -116,8 +97,8 @@ int main() {
     const float du = 1.0f / 1000000;
     for (unsigned int vi = 0; vi <= Y_SEGMENTS; ++vi) {
         for (unsigned int ui = 0; ui <= X_SEGMENTS; ++ui) {
-            float u = (float)ui / (float)X_SEGMENTS;
-            float v = (float)vi / (float)Y_SEGMENTS;
+            float u = (float) ui / (float) X_SEGMENTS;
+            float v = (float) vi / (float) Y_SEGMENTS;
 
             Eigen::Vector3d position = GetPositionOnSphere(u, v);
 
@@ -148,7 +129,7 @@ int main() {
                     Eigen::Vector3d(roughness, metallic, ao));
 
             mesh->vertex_uvs_.emplace_back(
-                Eigen::Vector2d(u, v));
+                    Eigen::Vector2d(u, v));
         }
     }
 
@@ -178,13 +159,12 @@ int main() {
     }
 
     auto ibl = std::make_shared<geometry::IBLLighting>();
-    ibl->ReadEnvFromHDR(
-            "/Users/dongw1/Work/Data/resources/textures/hdr/newport_loft.hdr");
+    ibl->ReadEnvFromHDR(kHDRPath);
 
     utility::SetVerbosityLevel(utility::VerbosityLevel::VerboseDebug);
     visualization::DrawGeometriesPBR({mesh}, {ibl});
 
-    io::WriteExtendedTriangleMeshToPLY(base_path + "/sphere.ply", *mesh);
+//    io::WriteExtendedTriangleMeshToPLY(base_path + "/sphere.ply", *mesh);
 
     return 0;
 }

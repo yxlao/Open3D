@@ -12,7 +12,7 @@
 using namespace open3d;
 
 int main() {
-    std::string base_path = "/Users/dongw1/Work/Data/resources/objects/cyborg";
+    std::string base_path = kBasePath + "/cyborg";
 
     auto mesh = std::make_shared<geometry::TexturedTriangleMesh>();
     io::ReadTexturedTriangleMeshFromOBJ(base_path + "/cyborg.obj", *mesh);
