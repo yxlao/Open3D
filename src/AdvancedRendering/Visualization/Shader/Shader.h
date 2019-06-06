@@ -1584,10 +1584,10 @@ namespace visualization {
 
 namespace glsl {
 
-const char * const UVTexAtlasFragmentShader = 
+const char * const UVBackwardFragmentShader = 
 "#version 330 core\n"
 "\n"
-"layout(location = 0) out vec3 FragColor;\n"
+"layout(location = 0) out vec3 color;\n"
 "layout(location = 1) out vec3 weight;\n"
 "\n"
 "in vec2 atlas_uv;\n"
@@ -1612,7 +1612,7 @@ const char * const UVTexAtlasFragmentShader =
 "\n"
 "    float cos_np = dot(normal, -position);\n"
 "\n"
-"    bool flag =\n"
+"    bool mask =\n"
 "    /* clipping */\n"
 "    (proj_ref_position.x >= 0 && proj_ref_position.x <= 1) &&\n"
 "    (proj_ref_position.y >= 0 && proj_ref_position.y <= 1) &&\n"
@@ -1622,10 +1622,10 @@ const char * const UVTexAtlasFragmentShader =
 "    && (current_depth - closest_depth\n"
 "    < margin * (cos_np - cos_thr) / (1 - cos_thr));\n"
 "\n"
-"    FragColor = flag ?\n"
+"    color = mask ?\n"
 "    texture(tex_image, proj_ref_position.xy).xyz : vec3(0);\n"
 "\n"
-"    weight = flag ?\n"
+"    weight = mask ?\n"
 "    vec3(0.1 * cos_np / dot(position, position)) : vec3(0);\n"
 "}\n"
 ;
@@ -1644,7 +1644,7 @@ namespace visualization {
 
 namespace glsl {
 
-const char * const UVTexAtlasVertexShader = 
+const char * const UVBackwardVertexShader = 
 "#version 330 core\n"
 "\n"
 "layout(location = 0) in vec3 vertex_position;\n"
@@ -1686,10 +1686,10 @@ namespace visualization {
 
 namespace glsl {
 
-const char * const UVTexMapFragmentShader = 
+const char * const UVForwardFragmentShader = 
 "#version 330 core\n"
 "\n"
-"layout(location = 0) out vec3 FragColor;\n"
+"layout(location = 0) out vec3 color;\n"
 "\n"
 "in vec2 uv;\n"
 "in vec3 position;\n"
@@ -1699,7 +1699,7 @@ const char * const UVTexMapFragmentShader =
 "\n"
 "void main() {\n"
 "    vec3 albedo = texture(tex_albedo, uv).rgb;\n"
-"    FragColor = vec3(albedo);\n"
+"    color = vec3(albedo);\n"
 "}\n"
 ;
 
@@ -1717,7 +1717,7 @@ namespace visualization {
 
 namespace glsl {
 
-const char * const UVTexMapVertexShader = 
+const char * const UVForwardVertexShader = 
 "#version 330 core\n"
 "\n"
 "layout(location = 0) in vec3 vertex_position;\n"

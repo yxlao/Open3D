@@ -79,7 +79,7 @@ int main() {
     //    std::string base_path = "/Users/dongw1/Work/Data/planet";
 
     // path on workstation
-    std::string base_path = kBasePath + "/planet";
+    std::string base_path = kGLTestBasePath + "/planet";
 
     std::string material = "plastic";
     std::string prefix = base_path + "/" + material;

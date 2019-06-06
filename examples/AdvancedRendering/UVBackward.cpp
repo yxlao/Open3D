@@ -13,7 +13,7 @@
 using namespace open3d;
 
 int main() {
-    std::string base_path = kBasePath + "/cyborg";
+    std::string base_path = kGLTestBasePath + "/cyborg";
 
     auto mesh = std::make_shared<geometry::TexturedTriangleMesh>();
     io::ReadTexturedTriangleMeshFromOBJ(base_path + "/cyborg.obj", *mesh);

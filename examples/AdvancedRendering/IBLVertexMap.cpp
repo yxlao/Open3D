@@ -13,7 +13,7 @@
 using namespace open3d;
 int main() {
     auto mesh = std::make_shared<geometry::ExtendedTriangleMesh>();
-    io::ReadExtendedTriangleMeshFromPLY(kBasePath + "/planet/planet_gold.ply", *mesh);
+    io::ReadExtendedTriangleMeshFromPLY(kGLTestBasePath + "/planet/planet_gold.ply", *mesh);
 
     auto ibl = std::make_shared<geometry::IBLLighting>();
     ibl->ReadEnvFromHDR(

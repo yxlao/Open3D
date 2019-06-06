@@ -78,7 +78,7 @@ Eigen::Vector3d GetPositionOnSphere(float u, float v) {
 }
 
 int main() {
-    std::string base_path = kBasePath + "/planet";
+    std::string base_path = kGLTestBasePath + "/planet";
 
     std::string material = "gold";
     std::string prefix = base_path + "/" + material;
