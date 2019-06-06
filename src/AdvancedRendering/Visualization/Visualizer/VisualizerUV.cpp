@@ -61,12 +61,12 @@ bool VisualizerUV::Setup(
     if (forward) {
         render_option_advanced->forward_ = true;
         return true;
-    } else {
+    } else { /* backward */
         render_option_advanced->forward_ = false;
         assert(image != nullptr);
         auto tex_image = geometry::FlipImageExt(*image);
 
-        /** Single instance of the texture buffer **/
+        /** Single instance of the target texture buffer **/
         if (!render_option_advanced->is_ref_tex_allocated_) {
             render_option_advanced->tex_ref_buffer_
                 = glsl::BindTexture2D(*tex_image, *render_option_advanced);

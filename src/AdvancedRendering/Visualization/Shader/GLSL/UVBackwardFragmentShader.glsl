@@ -12,7 +12,6 @@ in vec3 position;
 // material parameters
 uniform sampler2D tex_image;
 uniform sampler2D tex_depthmap;
-
 uniform float margin;
 uniform float cos_thr;
 
@@ -39,5 +38,5 @@ void main() {
     texture(tex_image, proj_ref_position.xy).xyz : vec3(0);
 
     weight = mask ?
-    vec3(0.1 * cos_np / dot(position, position)) : vec3(0);
+    vec3(cos_np / dot(position, position)) : vec3(0);
 }

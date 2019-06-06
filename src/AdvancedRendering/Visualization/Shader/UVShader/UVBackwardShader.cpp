@@ -110,6 +110,27 @@ bool UVBackwardShader::RenderGeometry(const geometry::Geometry &geometry,
     }
 
     auto advanced_option = (const RenderOptionAdvanced &) option;
+
+    if (advanced_option.render_to_fbo_) {
+        glBindFramebuffer(GL_FRAMEBUFFER, advanced_option.fbo_);
+        glBindRenderbuffer(GL_RENDERBUFFER, advanced_option.rbo_);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24,
+                              view.GetWindowWidth(), view.GetWindowHeight());
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                                  GL_RENDERBUFFER, advanced_option.rbo_);
+
+        /** color **/
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                               GL_TEXTURE_2D,
+                               advanced_option.tex_output_buffer_[2], 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,
+                               GL_TEXTURE_2D,
+                               advanced_option.tex_output_buffer_[3], 0);
+        /** weight **/
+        glClearColor(0, 0, 0, 0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
+
     GLuint tex_ref_buffer = advanced_option.tex_ref_buffer_;
     GLuint tex_depth_buffer = advanced_option.tex_depth_buffer_;
 
@@ -143,11 +164,24 @@ bool UVBackwardShader::RenderGeometry(const geometry::Geometry &geometry,
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_);
 
+    if (advanced_option.render_to_fbo_) {
+        std::vector<GLenum> draw_buffers;
+        for (int i = 0; i < 2; ++i) {
+          draw_buffers.emplace_back(GL_COLOR_ATTACHMENT0 + i);
+        }
+        glDrawBuffers(draw_buffers.size(), draw_buffers.data());
+    }
     glDrawElements(draw_arrays_mode_, draw_arrays_size_, GL_UNSIGNED_INT,
                    nullptr);
+
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
     glDisableVertexAttribArray(2);
+
+    if (advanced_option.render_to_fbo_) {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    }
 
     CheckGLState(GetShaderName() + ".Render()");
     return true;

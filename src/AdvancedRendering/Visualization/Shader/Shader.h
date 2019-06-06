@@ -1599,7 +1599,6 @@ const char * const UVBackwardFragmentShader =
 "// material parameters\n"
 "uniform sampler2D tex_image;\n"
 "uniform sampler2D tex_depthmap;\n"
-"\n"
 "uniform float margin;\n"
 "uniform float cos_thr;\n"
 "\n"
@@ -1626,7 +1625,7 @@ const char * const UVBackwardFragmentShader =
 "    texture(tex_image, proj_ref_position.xy).xyz : vec3(0);\n"
 "\n"
 "    weight = mask ?\n"
-"    vec3(0.1 * cos_np / dot(position, position)) : vec3(0);\n"
+"    vec3(cos_np / dot(position, position)) : vec3(0);\n"
 "}\n"
 ;
 
