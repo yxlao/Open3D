@@ -62,8 +62,8 @@ void VisualizerPBR::Render() {
 }
 
 bool VisualizerPBR::InitRenderOption() {
-    render_option_ptr_ = std::unique_ptr<RenderOptionWithLighting>(
-        new RenderOptionWithLighting);
+    render_option_ptr_ = std::unique_ptr<RenderOptionAdvanced>(
+        new RenderOptionAdvanced);
     return true;
 }
 
@@ -75,7 +75,7 @@ bool VisualizerPBR::UpdateLighting(
     }
 
     auto &render_option_with_lighting_ptr =
-        (std::unique_ptr<RenderOptionWithLighting> &) render_option_ptr_;
+        (std::unique_ptr<RenderOptionAdvanced> &) render_option_ptr_;
     light_renderer_ptr_->AddGeometry(lighting);
 
     return light_renderer_ptr_->RenderToOption(

@@ -1295,6 +1295,59 @@ namespace visualization {
 
 namespace glsl {
 
+const char * const SimpleTextureFragmentShader = 
+"#version 330 core\n"
+"\n"
+"layout(location = 0) out vec4 color;\n"
+"uniform sampler2D texture_vis;\n"
+"\n"
+"in vec2 uv;\n"
+"\n"
+"void main(){\n"
+"    color = texture(texture_vis, uv);\n"
+"}\n"
+;
+
+}  // namespace open3d::glsl
+
+}  // namespace open3d::visualization
+
+}  // namespace open3d
+
+// clang-format on
+// clang-format off
+namespace open3d {
+
+namespace visualization {
+
+namespace glsl {
+
+const char * const SimpleTextureVertexShader = 
+"#version 330 core\n"
+"\n"
+"layout(location = 0) in vec3 position;\n"
+"out vec2 uv;\n"
+"\n"
+"void main(){\n"
+"    gl_Position =  vec4(position, 1);\n"
+"    uv = 0.5 * (position.xy + vec2(1, 1));\n"
+"}\n"
+;
+
+}  // namespace open3d::glsl
+
+}  // namespace open3d::visualization
+
+}  // namespace open3d
+
+// clang-format on
+// clang-format off
+namespace open3d {
+
+namespace visualization {
+
+namespace glsl {
+
 const char * const SimpleVertexShader = 
 "#version 330 core\n"
 "\n"
@@ -1534,17 +1587,46 @@ namespace glsl {
 const char * const UVTexAtlasFragmentShader = 
 "#version 330 core\n"
 "\n"
-"out vec4 FragColor;\n"
+"layout(location = 0) out vec3 FragColor;\n"
+"layout(location = 1) out vec3 weight;\n"
 "\n"
-"in vec2 uv;\n"
-"in vec2 frag_coord;\n"
+"in vec2 atlas_uv;\n"
+"in vec4 ref_position;\n"
+"\n"
+"in vec3 normal;\n"
+"in vec3 position;\n"
 "\n"
 "// material parameters\n"
 "uniform sampler2D tex_image;\n"
+"uniform sampler2D tex_depthmap;\n"
+"\n"
+"uniform float margin;\n"
+"uniform float cos_thr;\n"
 "\n"
 "void main() {\n"
-"    vec3 albedo = texture(tex_image, frag_coord).rgb;\n"
-"    FragColor = vec4(albedo, 1.0);\n"
+"    vec3 proj_ref_position = ref_position.xyz / ref_position.w;\n"
+"    proj_ref_position = proj_ref_position * 0.5 + 0.5;\n"
+"\n"
+"    float closest_depth = texture(tex_depthmap, proj_ref_position.xy).r;\n"
+"    float current_depth = proj_ref_position.z;\n"
+"\n"
+"    float cos_np = dot(normal, -position);\n"
+"\n"
+"    bool flag =\n"
+"    /* clipping */\n"
+"    (proj_ref_position.x >= 0 && proj_ref_position.x <= 1) &&\n"
+"    (proj_ref_position.y >= 0 && proj_ref_position.y <= 1) &&\n"
+"    /* angle */\n"
+"    (cos_np > cos_thr)\n"
+"    /* depth buffer */\n"
+"    && (current_depth - closest_depth\n"
+"    < margin * (cos_np - cos_thr) / (1 - cos_thr));\n"
+"\n"
+"    FragColor = flag ?\n"
+"    texture(tex_image, proj_ref_position.xy).xyz : vec3(0);\n"
+"\n"
+"    weight = flag ?\n"
+"    vec3(0.1 * cos_np / dot(position, position)) : vec3(0);\n"
 "}\n"
 ;
 
@@ -1567,21 +1649,26 @@ const char * const UVTexAtlasVertexShader =
 "\n"
 "layout(location = 0) in vec3 vertex_position;\n"
 "layout(location = 1) in vec2 vertex_uv;\n"
+"layout(location = 2) in vec3 vertex_normal;\n"
 "\n"
-"out vec2 uv;\n"
-"out vec2 frag_coord;\n"
+"out vec2 atlas_uv;     /* for writing atlas value */\n"
+"out vec4 ref_position; /* for depth test */\n"
+"\n"
+"out vec3 position;\n"
+"out vec3 normal;\n"
 "\n"
 "uniform mat4 P;\n"
 "uniform mat4 V;\n"
 "uniform mat4 M;\n"
 "\n"
 "void main() {\n"
-"    uv = vertex_uv;\n"
-"    vec4 position = P * V * M * vec4(vertex_position, 1.0);\n"
-"    frag_coord = 0.5 + 0.5 * position.xy / position.w;\n"
+"    atlas_uv = vertex_uv;\n"
+"    gl_Position =  vec4(2 * atlas_uv - 1, 0, 1);\n"
 "\n"
-"    gl_Position =  vec4(2 * uv - 1, 0, 1);\n"
-"    //    P * V * vec4(position, 1.0);\n"
+"    ref_position = P * V * M * vec4(vertex_position, 1.0);\n"
+"\n"
+"    normal = (V * M * vec4(vertex_normal, 0)).xyz;\n"
+"    position = (V * M * vec4(vertex_position, 1.0)).xyz;\n"
 "}\n"
 ;
 
@@ -1602,7 +1689,7 @@ namespace glsl {
 const char * const UVTexMapFragmentShader = 
 "#version 330 core\n"
 "\n"
-"out vec4 FragColor;\n"
+"layout(location = 0) out vec3 FragColor;\n"
 "\n"
 "in vec2 uv;\n"
 "in vec3 position;\n"
@@ -1612,7 +1699,7 @@ const char * const UVTexMapFragmentShader =
 "\n"
 "void main() {\n"
 "    vec3 albedo = texture(tex_albedo, uv).rgb;\n"
-"    FragColor = vec4(albedo, 1.0);\n"
+"    FragColor = vec3(albedo);\n"
 "}\n"
 ;
 

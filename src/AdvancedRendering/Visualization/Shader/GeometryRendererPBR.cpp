@@ -2,7 +2,7 @@
 // Created by wei on 4/12/19.
 //
 
-#include <AdvancedRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
+#include <AdvancedRendering/Visualization/Visualizer/RenderOptionAdvanced.h>
 #include <AdvancedRendering/Geometry/TexturedTriangleMesh.h>
 #include "GeometryRendererPBR.h"
 
@@ -25,7 +25,7 @@ bool GeometryRendererPBR::AddGeometry(
 bool GeometryRendererPBR::Render(const RenderOption &option,
                                  const ViewControl &view) {
     if (!is_visible_ || geometry_ptr_->IsEmpty()) return true;
-    auto &option_lighting = (const RenderOptionWithLighting &) option;
+    auto &option_lighting = (const RenderOptionAdvanced &) option;
 
     /** Vertex material mapping **/
     if (geometry_ptr_->GetGeometryType()

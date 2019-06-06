@@ -10,7 +10,7 @@
 #include <AdvancedRendering/Geometry/ExtendedTriangleMesh.h>
 #include <AdvancedRendering/Visualization/Shader/Shader.h>
 #include <AdvancedRendering/Visualization/Utility/Primitives.h>
-#include <AdvancedRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
+#include <AdvancedRendering/Visualization/Visualizer/RenderOptionAdvanced.h>
 
 namespace open3d {
 namespace visualization {
@@ -70,7 +70,7 @@ bool BackgroundShader::RenderGeometry(const geometry::Geometry &geometry,
         return false;
     }
 
-    auto &lighting_option = (const RenderOptionWithLighting &) option;
+    auto &lighting_option = (const RenderOptionAdvanced &) option;
     GLuint tex_env_buffer = lighting_option.tex_env_buffer_;
 
     glUseProgram(program_);

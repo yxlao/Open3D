@@ -2,7 +2,7 @@
 // Created by wei on 4/12/19.
 //
 
-#include <AdvancedRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
+#include <AdvancedRendering/Visualization/Visualizer/RenderOptionAdvanced.h>
 #include <AdvancedRendering/Geometry/TexturedTriangleMesh.h>
 #include "GeometryRendererUV.h"
 
@@ -33,15 +33,53 @@ bool GeometryRendererUV::Render(const RenderOption &option,
 
     const auto &mesh = (const geometry::TexturedTriangleMesh &)
         (*geometry_ptr_);
-    auto uv_option = (const RenderOptionWithTargetImage &) option;
-    return uv_option.forward_ ?
-           uv_forward_shader_.Render(mesh, option, view) :
-           uv_backward_shader_.Render(mesh, option, view);
+    auto &uv_option = (RenderOptionAdvanced &) option;
+
+    if (uv_option.forward_) {
+        uv_option.render_to_fbo_ = false;
+        uv_forward_shader_.Render(mesh, uv_option, view);
+    } else {
+        uv_option.render_to_fbo_ = true;
+        if (!uv_option.is_fbo_texture_allocated_) {
+            const int kNumOutputTex = 2;
+            uv_option.tex_output_buffer_.resize(kNumOutputTex);
+
+            /* color (forward, only for debugging) */
+            uv_option.tex_output_buffer_[0] = CreateTexture2D(
+                view.GetWindowWidth(), view.GetWindowHeight(),
+                GL_RGB16F, GL_RGB, GL_FLOAT,
+                false, option);
+
+            /* depth (forward, for occlusion test) */
+            uv_option.tex_output_buffer_[1] = CreateTexture2D(
+                view.GetWindowWidth(), view.GetWindowHeight(),
+                GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_FLOAT,
+                false, option);
+
+            /* color (atlas, read and write)  */
+            /* weight (atlas, read and write) */
+
+            uv_option.is_fbo_texture_allocated_ = true;
+        }
+
+        /** Render to depth buffer **/
+        uv_forward_shader_.Render(mesh, uv_option, view);
+
+//        uv_option.SetVisualizeBuffer(1);
+//        simple_texture_shader_.Render(mesh, uv_option, view);
+
+        /** Render to texture atlas **/
+        uv_option.SetDepthBuffer(1);
+        uv_backward_shader_.Render(mesh, uv_option, view);
+    }
+
+    return true;
 }
 
 bool GeometryRendererUV::UpdateGeometry() {
     uv_forward_shader_.InvalidateGeometry();
     uv_backward_shader_.InvalidateGeometry();
+    simple_texture_shader_.InvalidateGeometry();
 
     return true;
 }

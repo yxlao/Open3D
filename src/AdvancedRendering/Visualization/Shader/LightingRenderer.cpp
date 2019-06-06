@@ -40,7 +40,7 @@ bool LightingRenderer::UpdateGeometry() {
 
 bool LightingRenderer::Render(const RenderOption &option,
                               const ViewControl &view) {
-    auto pbr_option = (const RenderOptionWithLighting &) option;
+    auto pbr_option = (const RenderOptionAdvanced &) option;
     if (pbr_option.type_ == geometry::Lighting::LightingType::IBL) {
         return background_shader_.Render(*geometry_ptr_, option, view);
     } else {
@@ -51,7 +51,7 @@ bool LightingRenderer::Render(const RenderOption &option,
 /** Call this function ONLY AFTER @AddGeometry(lighting)
  * Here we use non-constant option, in contrast to default @Render
  **/
-bool LightingRenderer::RenderToOption(RenderOptionWithLighting &option,
+bool LightingRenderer::RenderToOption(RenderOptionAdvanced &option,
                                       const ViewControl &view) {
 
     auto lighting_ptr = (std::shared_ptr<geometry::Lighting> &) geometry_ptr_;

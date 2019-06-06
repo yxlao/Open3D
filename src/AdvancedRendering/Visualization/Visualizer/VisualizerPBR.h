@@ -7,7 +7,7 @@
 #include <Open3D/Open3D.h>
 #include <AdvancedRendering/Geometry/Lighting.h>
 #include <AdvancedRendering/Visualization/Shader/LightingRenderer.h>
-#include "RenderOptionWithLighting.h"
+#include "RenderOptionAdvanced.h"
 
 namespace open3d {
 namespace visualization {

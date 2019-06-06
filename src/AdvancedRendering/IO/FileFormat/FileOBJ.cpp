@@ -94,6 +94,8 @@ bool ReadTexturedTriangleMeshFromOBJ(const std::string &filename,
     }
 
     std::vector<std::string> tex_names;
+    auto mat = materials[0];
+    std::cout << mat.name << "\n";
     if (!materials[0].diffuse_texname.empty()) {
         tex_names.emplace_back(materials[0].diffuse_texname);
     }
@@ -132,7 +134,6 @@ bool WriteTexturedTriangleMeshToOBJ(
      * size = 5: diffuse, normal, roughness, metallic, ambient */
     const std::vector<std::string> &textures,
     const geometry::TexturedTriangleMesh &mesh) {
-    /** Unsupported now **/
     return false;
 }
 } // namespace io

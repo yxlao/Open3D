@@ -13,6 +13,7 @@ bool ReadTexturedTriangleMeshFromOBJ(
     const std::string &filename,
     geometry::TexturedTriangleMesh &mesh);
 
+/** Unsupported now: tinyobjload does not support writing **/
 bool WriteTexturedTriangleMeshToOBJ(
     const std::string &filename,
     /* size = 1: diffuse;

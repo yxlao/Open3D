@@ -10,7 +10,7 @@
 #include <AdvancedRendering/Visualization/Shader/LightingRenderer.h>
 #include <AdvancedRendering/Visualization/Utility/BufferHelper.h>
 
-#include "RenderOptionWithLighting.h"
+#include "RenderOptionAdvanced.h"
 
 namespace open3d {
 namespace visualization {
@@ -33,7 +33,7 @@ public:
      * Currently we only support one target image.
      *   It would remove the previous bound image.
      * **/
-    bool SetupMode(bool forward, const std::shared_ptr<geometry::Image> &image);
+    bool Setup(bool forward, const std::shared_ptr<geometry::Image> &image);
 };
 }  // namespace visualization
 }  // namespace open3d

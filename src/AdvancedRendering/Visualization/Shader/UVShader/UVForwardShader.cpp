@@ -34,7 +34,7 @@
 
 #include <AdvancedRendering/Visualization/Shader/Shader.h>
 #include <AdvancedRendering/Geometry/TexturedTriangleMesh.h>
-#include <AdvancedRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
+#include <AdvancedRendering/Visualization/Visualizer/RenderOptionAdvanced.h>
 
 namespace open3d {
 namespace visualization {
@@ -42,9 +42,9 @@ namespace visualization {
 namespace glsl {
 
 bool UVForwardShader::Compile() {
-    if (!CompileShaders(UVTexMapVertexShader,
+    if (!CompileShaders(UVForwardVertexShader,
                         nullptr,
-                        UVTexMapFragmentShader)) {
+                        UVForwardFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }
@@ -67,8 +67,8 @@ void UVForwardShader::Release() {
 }
 
 bool UVForwardShader::BindGeometry(const geometry::Geometry &geometry,
-                                  const RenderOption &option,
-                                  const ViewControl &view) {
+                                   const RenderOption &option,
+                                   const ViewControl &view) {
     // If there is already geometry, we first unbind it.
     // We use GL_STATIC_DRAW. When geometry changes, we clear buffers and
     // rebind the geometry. Note that this approach is slow. If the geometry is
@@ -110,11 +110,25 @@ bool UVForwardShader::BindGeometry(const geometry::Geometry &geometry,
 }
 
 bool UVForwardShader::RenderGeometry(const geometry::Geometry &geometry,
-                                    const RenderOption &option,
-                                    const ViewControl &view) {
+                                     const RenderOption &option,
+                                     const ViewControl &view) {
     if (!PrepareRendering(geometry, option, view)) {
         PrintShaderWarning("Rendering failed during preparation.");
         return false;
+    }
+
+    auto advanced_option = (const RenderOptionAdvanced &) option;
+
+    if (advanced_option.render_to_fbo_) {
+        glBindFramebuffer(GL_FRAMEBUFFER, advanced_option.fbo_);
+        glBindRenderbuffer(GL_RENDERBUFFER, advanced_option.rbo_);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                               GL_TEXTURE_2D,
+                               advanced_option.tex_output_buffer_[0], 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                               GL_TEXTURE_2D,
+                               advanced_option.tex_output_buffer_[1], 0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
     glUseProgram(program_);
@@ -141,8 +155,15 @@ bool UVForwardShader::RenderGeometry(const geometry::Geometry &geometry,
 
     glDrawElements(draw_arrays_mode_, draw_arrays_size_, GL_UNSIGNED_INT,
                    nullptr);
+    glDrawArrays(GL_POINTS, 0, draw_arrays_size_);
+
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
+
+    if (advanced_option.render_to_fbo_) {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    }
 
     CheckGLState(GetShaderName() + ".Render()");
     return true;

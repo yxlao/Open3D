@@ -34,7 +34,7 @@
 
 #include <AdvancedRendering/Visualization/Shader/Shader.h>
 #include <AdvancedRendering/Geometry/TexturedTriangleMesh.h>
-#include <AdvancedRendering/Visualization/Visualizer/RenderOptionWithLighting.h>
+#include <AdvancedRendering/Visualization/Visualizer/RenderOptionAdvanced.h>
 
 namespace open3d {
 namespace visualization {
@@ -42,9 +42,9 @@ namespace visualization {
 namespace glsl {
 
 bool UVBackwardShader::Compile() {
-    if (!CompileShaders(UVTexAtlasVertexShader,
+    if (!CompileShaders(UVBackwardVertexShader,
                         nullptr,
-                        UVTexAtlasFragmentShader)) {
+                        UVBackwardFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
     }
@@ -53,8 +53,10 @@ bool UVBackwardShader::Compile() {
     V_ = glGetUniformLocation(program_, "V");
     P_ = glGetUniformLocation(program_, "P");
 
-    tex_target_symbol_ = glGetUniformLocation(program_, "tex_image");
-
+    tex_ref_symbol_ = glGetUniformLocation(program_, "tex_image");
+    tex_depth_symbol_ = glGetUniformLocation(program_, "tex_depthmap");
+    margin_symbol_ = glGetUniformLocation(program_, "margin");
+    cos_thr_symbol_ = glGetUniformLocation(program_, "cos_thr");
     CheckGLState(GetShaderName() + ".Compile");
 
     return true;
@@ -79,10 +81,11 @@ bool UVBackwardShader::BindGeometry(const geometry::Geometry &geometry,
     // Prepare data to be passed to GPU
     std::vector<Eigen::Vector3f> points;
     std::vector<Eigen::Vector2f> uvs;
+    std::vector<Eigen::Vector3f> normals;
     std::vector<Eigen::Vector3i> triangles;
 
     if (!PrepareBinding(geometry, option, view,
-                        points, uvs, triangles)) {
+                        points, uvs, normals, triangles)) {
         PrintShaderWarning("Binding failed when preparing data.");
         return false;
     }
@@ -90,6 +93,7 @@ bool UVBackwardShader::BindGeometry(const geometry::Geometry &geometry,
     // Create buffers and bind the geometry
     vertex_position_buffer_ = BindBuffer(points, GL_ARRAY_BUFFER, option);
     vertex_uv_buffer_ = BindBuffer(uvs, GL_ARRAY_BUFFER, option);
+    vertex_normal_buffer_ = BindBuffer(normals, GL_ARRAY_BUFFER, option);
     triangle_buffer_ = BindBuffer(triangles, GL_ELEMENT_ARRAY_BUFFER, option);
     CheckGLState(GetShaderName() + "BindGeometry()");
 
@@ -105,18 +109,25 @@ bool UVBackwardShader::RenderGeometry(const geometry::Geometry &geometry,
         return false;
     }
 
-    auto tex_target_buffer = ((const RenderOptionWithTargetImage &) option)
-        .tex_image_buffer_;
+    auto advanced_option = (const RenderOptionAdvanced &) option;
+    GLuint tex_ref_buffer = advanced_option.tex_ref_buffer_;
+    GLuint tex_depth_buffer = advanced_option.tex_depth_buffer_;
 
     glUseProgram(program_);
     glUniformMatrix4fv(M_, 1, GL_FALSE, view.GetModelMatrix().data());
     glUniformMatrix4fv(V_, 1, GL_FALSE, view.GetViewMatrix().data());
     glUniformMatrix4fv(P_, 1, GL_FALSE, view.GetProjectionMatrix().data());
+    glUniform1f(margin_symbol_, 0.00005);
+    glUniform1f(cos_thr_symbol_, 0.4);
 
     /** Object buffers **/
-    glUniform1i(tex_target_symbol_, 0);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, tex_target_buffer);
+    glUniform1i(tex_ref_symbol_, 0);
+    glActiveTexture(GL_TEXTURE0 + 0);
+    glBindTexture(GL_TEXTURE_2D, tex_ref_buffer);
+
+    glUniform1i(tex_depth_symbol_, 1);
+    glActiveTexture(GL_TEXTURE0 + 1);
+    glBindTexture(GL_TEXTURE_2D, tex_depth_buffer);
 
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer_);
@@ -126,12 +137,17 @@ bool UVBackwardShader::RenderGeometry(const geometry::Geometry &geometry,
     glBindBuffer(GL_ARRAY_BUFFER, vertex_uv_buffer_);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, NULL);
 
+    glEnableVertexAttribArray(2);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_normal_buffer_);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_);
 
     glDrawElements(draw_arrays_mode_, draw_arrays_size_, GL_UNSIGNED_INT,
                    nullptr);
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
 
     CheckGLState(GetShaderName() + ".Render()");
     return true;
@@ -141,6 +157,7 @@ void UVBackwardShader::UnbindGeometry() {
     if (bound_) {
         glDeleteBuffers(1, &vertex_position_buffer_);
         glDeleteBuffers(1, &vertex_uv_buffer_);
+        glDeleteBuffers(1, &vertex_normal_buffer_);
         glDeleteBuffers(1, &triangle_buffer_);
 
         bound_ = false;
@@ -183,6 +200,7 @@ bool UVBackwardShader::PrepareBinding(
     const ViewControl &view,
     std::vector<Eigen::Vector3f> &points,
     std::vector<Eigen::Vector2f> &uvs,
+    std::vector<Eigen::Vector3f> &normals,
     std::vector<Eigen::Vector3i> &triangles) {
     if (geometry.GetGeometryType() !=
         geometry::Geometry::GeometryType::TexturedTriangleMesh) {
@@ -202,6 +220,10 @@ bool UVBackwardShader::PrepareBinding(
     uvs.resize(mesh.vertex_uvs_.size());
     for (int i = 0; i < uvs.size(); ++i) {
         uvs[i] = mesh.vertex_uvs_[i].cast<float>();
+    }
+    normals.resize(mesh.vertex_normals_.size());
+    for (int i = 0; i < normals.size(); ++i) {
+        normals[i] = mesh.vertex_normals_[i].cast<float>();
     }
     triangles = mesh.triangles_;
 
