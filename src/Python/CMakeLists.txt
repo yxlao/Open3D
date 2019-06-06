@@ -39,7 +39,7 @@ execute_process(
 )
 message(STATUS "Using Python version major: ${PYTHON_VERSION_MAJOR}")
 
-set(PACKAGE_NAME open3d)
+set(PACKAGE_NAME open3d_c_api)
 
 file(GLOB_RECURSE PY_ALL_HEADER_FILES "*.h")
 file(GLOB_RECURSE PY_ALL_SOURCE_FILES "*.cpp")

@@ -45,7 +45,8 @@ data_files = [
     ('share/jupyter/nbextensions/open3d', glob.glob('open3d/static/*')),
     ('etc/jupyter/nbconfig/notebook.d', [
         'enable_jupyter_extension.json'
-    ])
+    ]),
+    ('open3d', glob.glob('open3d/open3d_c_api*'))
 ]
 
 setup(

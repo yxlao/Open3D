@@ -36,7 +36,7 @@
 #include "Python/utility/utility.h"
 #include "Python/visualization/visualization.h"
 
-PYBIND11_MODULE(open3d, m) {
+PYBIND11_MODULE(open3d_c_api, m) {
     m.doc() = "Python binding of Open3D";
 
     // Register this first, other submodule (e.g. odometry) might depend on this
