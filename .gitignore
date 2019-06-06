@@ -22,7 +22,6 @@ examples/Python/ReconstructionSystem/dataset/
 *.ipynb_checkpoints/
 *.py[cod]
 node_modules/
-static/
 **/package-lock.json
 *.old*
 docs/python_api/
