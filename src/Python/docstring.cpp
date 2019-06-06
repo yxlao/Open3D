@@ -280,7 +280,8 @@ std::string FunctionDoc::ToGoogleDocString() const {
 
 std::string FunctionDoc::NamespaceFix(const std::string& s) {
     std::string rc = std::regex_replace(s, std::regex("::"), ".");
-    rc = std::regex_replace(rc, std::regex("open3d\\.open3d\\."), "open3d.");
+    rc = std::regex_replace(rc, std::regex("open3d\\.__open3d_c_module\\."),
+                            "open3d.");
     return rc;
 }
 
