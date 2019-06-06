@@ -152,7 +152,7 @@ class PyDocsBuilder:
 
     @staticmethod
     def _generate_sub_module_class_function_docs(sub_module_name, output_dir):
-        sub_module = importlib.import_module("open3d.open3d.%s" % (sub_module_name,))
+        sub_module = importlib.import_module("open3d.__open3d_c_module.%s" % (sub_module_name,))
         sub_module_full_name = "open3d.%s" % (sub_module_name,)
         print("Generating docs for submodule: %s" % sub_module_full_name)
 
@@ -232,7 +232,7 @@ class SphinxDocsBuilder:
         # open3d
         # - __init__.py
         # - open3d.so  # Actual name depends on OS and Python version
-        self.c_module = "open3d.open3d"  # Points to the open3d.so
+        self.c_module = "open3d.__open3d_c_module"  # Points to the open3d.so
         self.c_module_relative = "open3d"  # The relative module reference to open3d.so
         self.python_api_output_dir = "python_api"
 
