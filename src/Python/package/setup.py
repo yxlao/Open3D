@@ -46,7 +46,7 @@ data_files = [
     ('etc/jupyter/nbconfig/notebook.d', [
         'enable_jupyter_extension.json'
     ]),
-    ('open3d', glob.glob('open3d/open3d_c_api*'))
+    ('open3d', glob.glob('open3d/__open3d_c_module*'))
 ]
 
 setup(

@@ -24,7 +24,7 @@
 # IN THE SOFTWARE.
 # ----------------------------------------------------------------------------
 
-from .open3d_c_api import * # py2 py3 compatible
+from .__open3d_c_module import * # py2 py3 compatible
 
 __version__ = '@PROJECT_VERSION@'
 
