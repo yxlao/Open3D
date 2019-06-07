@@ -128,6 +128,7 @@ bool UVForwardShader::RenderGeometry(const geometry::Geometry &geometry,
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
                                GL_TEXTURE_2D,
                                advanced_option.tex_output_buffer_[1], 0);
+        glClearColor(0, 0, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 

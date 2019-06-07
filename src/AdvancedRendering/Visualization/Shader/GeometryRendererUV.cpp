@@ -41,6 +41,15 @@ bool GeometryRendererUV::Render(const RenderOption &option,
         uv_forward_shader_.Render(mesh, uv_option, view);
     } else {
         if (!uv_option.is_fbo_texture_allocated_) {
+            /*** Accumulation (initial input) ***/
+            uv_option.tex_sum_color_buffer_ = CreateTexture2D(
+                view.GetWindowWidth(), view.GetWindowHeight(),
+                GL_RGB16F, GL_RGB, GL_FLOAT, false, option);
+
+            uv_option.tex_sum_weight_buffer_ = CreateTexture2D(
+                view.GetWindowWidth(), view.GetWindowHeight(),
+                GL_RGB16F, GL_RGB, GL_FLOAT, false, option);
+
             const int kNumOutputTex = 4;
             uv_option.tex_output_buffer_.resize(kNumOutputTex);
 
@@ -48,8 +57,7 @@ bool GeometryRendererUV::Render(const RenderOption &option,
             /* color (forward, only for debugging) */
             uv_option.tex_output_buffer_[0] = CreateTexture2D(
                 view.GetWindowWidth(), view.GetWindowHeight(),
-                GL_RGB16F, GL_RGB, GL_FLOAT,
-                false, option);
+                GL_RGB16F, GL_RGB, GL_FLOAT, false, option);
 
             /* depth (forward, for occlusion test) */
             uv_option.tex_output_buffer_[1] = CreateTexture2D(
@@ -65,7 +73,7 @@ bool GeometryRendererUV::Render(const RenderOption &option,
 
             /* weight (atlas, read and write. Only one channel should be enough) */
             uv_option.tex_output_buffer_[3] = CreateTexture2D(
-                    view.GetWindowWidth(), view.GetWindowHeight(),
+                view.GetWindowWidth(), view.GetWindowHeight(),
                     GL_RGB16F, GL_RGB, GL_FLOAT, false, option);
 
             uv_option.is_fbo_texture_allocated_ = true;
@@ -85,7 +93,6 @@ bool GeometryRendererUV::Render(const RenderOption &option,
         uv_option.render_to_fbo_ = true;
         uv_backward_shader_.Render(mesh, uv_option, view);
 
-        uv_option.render_to_fbo_ = false;
         uv_option.SetVisualizeBuffer(2);
         simple_texture_shader_.Render(mesh, uv_option, view);
     }

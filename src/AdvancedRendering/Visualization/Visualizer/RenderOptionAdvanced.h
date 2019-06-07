@@ -34,13 +34,16 @@ public:
     GLuint tex_ref_buffer_;
     bool forward_ = true;
 
+    GLuint tex_sum_color_buffer_;
+    GLuint tex_sum_weight_buffer_;
+
 public:
     /**************************************/
     /** States for rendering to buffer **/
     bool is_fbo_allocated_ = false;
     bool is_fbo_texture_allocated_ = false;
     bool render_to_fbo_ = false;
-    int output_textures = 0;
+
     GLuint fbo_;
     GLuint rbo_;
     std::vector<GLuint> tex_output_buffer_;

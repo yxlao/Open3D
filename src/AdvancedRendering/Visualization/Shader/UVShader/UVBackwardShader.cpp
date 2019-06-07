@@ -55,6 +55,9 @@ bool UVBackwardShader::Compile() {
 
     tex_ref_symbol_ = glGetUniformLocation(program_, "tex_image");
     tex_depth_symbol_ = glGetUniformLocation(program_, "tex_depthmap");
+//    tex_sum_color_symbol_ = glGetUniformLocation(program_, "tex_sum_color");
+//    tex_sum_weight_symbol_ = glGetUniformLocation(program_, "tex_sum_weight");
+
     margin_symbol_ = glGetUniformLocation(program_, "margin");
     cos_thr_symbol_ = glGetUniformLocation(program_, "cos_thr");
     CheckGLState(GetShaderName() + ".Compile");
@@ -126,13 +129,7 @@ bool UVBackwardShader::RenderGeometry(const geometry::Geometry &geometry,
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,
                                GL_TEXTURE_2D,
                                advanced_option.tex_output_buffer_[3], 0);
-        /** weight **/
-        glClearColor(0, 0, 0, 0);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
-
-    GLuint tex_ref_buffer = advanced_option.tex_ref_buffer_;
-    GLuint tex_depth_buffer = advanced_option.tex_depth_buffer_;
 
     glUseProgram(program_);
     glUniformMatrix4fv(M_, 1, GL_FALSE, view.GetModelMatrix().data());
@@ -141,14 +138,23 @@ bool UVBackwardShader::RenderGeometry(const geometry::Geometry &geometry,
     glUniform1f(margin_symbol_, 0.00005);
     glUniform1f(cos_thr_symbol_, 0.4);
 
-    /** Object buffers **/
+    /** Image domain buffers **/
     glUniform1i(tex_ref_symbol_, 0);
     glActiveTexture(GL_TEXTURE0 + 0);
-    glBindTexture(GL_TEXTURE_2D, tex_ref_buffer);
+    glBindTexture(GL_TEXTURE_2D, advanced_option.tex_ref_buffer_);
 
     glUniform1i(tex_depth_symbol_, 1);
     glActiveTexture(GL_TEXTURE0 + 1);
-    glBindTexture(GL_TEXTURE_2D, tex_depth_buffer);
+    glBindTexture(GL_TEXTURE_2D, advanced_option.tex_depth_buffer_);
+
+    /** (Sum) Atlas domain buffers **/
+//    glUniform1i(tex_sum_color_symbol_, 2);
+//    glActiveTexture(GL_TEXTURE0 + 2);
+//    glBindTexture(GL_TEXTURE_2D, advanced_option.tex_sum_color_buffer_);
+//
+//    glUniform1i(tex_sum_weight_symbol_, 3);
+//    glActiveTexture(GL_TEXTURE0 + 3);
+//    glBindTexture(GL_TEXTURE_2D, advanced_option.tex_sum_weight_buffer_);
 
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer_);
@@ -171,6 +177,10 @@ bool UVBackwardShader::RenderGeometry(const geometry::Geometry &geometry,
         }
         glDrawBuffers(draw_buffers.size(), draw_buffers.data());
     }
+
+    /** weight **/
+    glClearColor(0, 0, 0, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glDrawElements(draw_arrays_mode_, draw_arrays_size_, GL_UNSIGNED_INT,
                    nullptr);
 

@@ -54,6 +54,9 @@ protected:
     GLuint P_;
 
     /* fragment shader */
+    GLuint tex_sum_color_symbol_;
+    GLuint tex_sum_weight_symbol_;
+
     GLuint tex_ref_symbol_;
     GLuint tex_depth_symbol_;
     GLuint margin_symbol_;
