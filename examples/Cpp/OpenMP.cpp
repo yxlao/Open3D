@@ -24,16 +24,15 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include <cstdio>
 #include <cmath>
+#include <cstdio>
 #include <thread>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
 #include <Eigen/Dense>
 #include <Eigen/SVD>
-#include <Core/Core.h>
-#include <Core/Utility/Console.h>
+#include "Open3D/Open3D.h"
 
 #define NUM_THREADS 4
 #define NUM_START 1
@@ -81,9 +80,9 @@ void TestMatrixMultiplication(int argc, char **argv) {
     }
 
 #ifdef _OPENMP
-    PrintInfo("OpenMP is supported.\n");
+    utility::PrintInfo("OpenMP is supported.\n");
 #else
-    PrintInfo("OpenMP is not supported.\n");
+    utility::PrintInfo("OpenMP is not supported.\n");
 #endif
 
 #ifdef _OPENMP
@@ -106,35 +105,36 @@ void TestMatrixMultiplication(int argc, char **argv) {
     }
 
     if (nThreads == NUM_THREADS) {
-        PrintInfo("%d OpenMP threads were used.\n", NUM_THREADS);
+        utility::PrintInfo("%d OpenMP threads were used.\n", NUM_THREADS);
         nRet = 0;
     } else {
-        PrintInfo("Expected %d OpenMP threads, but %d were used.\n",
-                  NUM_THREADS, nThreads);
+        utility::PrintInfo("Expected %d OpenMP threads, but %d were used.\n",
+                           NUM_THREADS, nThreads);
         nRet = 1;
     }
 
     if (nSum != nSumCalc) {
-        PrintInfo(
+        utility::PrintInfo(
                 "The sum of %d through %d should be %d, "
                 "but %d was reported!\n",
                 NUM_START, NUM_END, nSumCalc, nSum);
         nRet = 1;
     } else {
-        PrintInfo("The sum of %d through %d is %d\n", NUM_START, NUM_END, nSum);
+        utility::PrintInfo("The sum of %d through %d is %d\n", NUM_START,
+                           NUM_END, nSum);
     }
 
     int test_thread = 256;
     if (argc > 1) {
         test_thread = std::stoi(argv[1]);
     }
-    open3d::PrintInfo("Benchmark multithreading up to %d threads.\n",
-                      test_thread);
+    open3d::utility::PrintInfo("Benchmark multithreading up to %d threads.\n",
+                               test_thread);
 
     for (int i = 1; i <= test_thread; i *= 2) {
         char buff[1024];
         sprintf(buff, "simple task, %d tasks, %d threads", i, i);
-        open3d::ScopeTimer t(buff);
+        open3d::utility::ScopeTimer t(buff);
 #ifdef _OPENMP
         omp_set_num_threads(i);
 #endif
@@ -145,7 +145,7 @@ void TestMatrixMultiplication(int argc, char **argv) {
     for (int i = 1; i <= test_thread; i *= 2) {
         char buff[1024];
         sprintf(buff, "simple task, %d tasks, %d threads", i, i);
-        open3d::ScopeTimer t(buff);
+        open3d::utility::ScopeTimer t(buff);
         std::vector<std::thread> threads(i);
         for (int k = 0; k < i; k++) {
             threads[k] = std::thread(simple_task);
@@ -158,7 +158,7 @@ void TestMatrixMultiplication(int argc, char **argv) {
     for (int i = 1; i <= test_thread; i *= 2) {
         char buff[1024];
         sprintf(buff, "svd, %d tasks, %d threads", i, i);
-        open3d::ScopeTimer t(buff);
+        open3d::utility::ScopeTimer t(buff);
 #ifdef _OPENMP
         omp_set_num_threads(i);
 #endif
@@ -169,7 +169,7 @@ void TestMatrixMultiplication(int argc, char **argv) {
     for (int i = 1; i <= test_thread; i *= 2) {
         char buff[1024];
         sprintf(buff, "svd task, %d tasks, %d threads", i, i);
-        open3d::ScopeTimer t(buff);
+        open3d::utility::ScopeTimer t(buff);
         std::vector<std::thread> threads(i);
         for (int k = 0; k < i; k++) {
             threads[k] = std::thread(svd_task);
@@ -200,7 +200,7 @@ void TestBindedFunction() {
     const int NCORR = 200000000;
     std::vector<Eigen::Vector3d> data;
     {
-        open3d::ScopeTimer timer1("Data generation");
+        open3d::utility::ScopeTimer timer1("Data generation");
         data.resize(NCORR);
 #ifdef _OPENMP
 #pragma omp for nowait
@@ -226,7 +226,7 @@ void TestBindedFunction() {
     ATA.setZero();
     ATb.setZero();
     {
-        open3d::ScopeTimer timer("Calling binding function");
+        open3d::utility::ScopeTimer timer("Calling binding function");
 #ifdef _OPENMP
 #pragma omp parallel
         {
@@ -262,7 +262,7 @@ void TestBindedFunction() {
     ATA.setZero();
     ATb.setZero();
     {
-        open3d::ScopeTimer timer("Calling lambda function");
+        open3d::utility::ScopeTimer timer("Calling lambda function");
 #ifdef _OPENMP
 #pragma omp parallel
         {
@@ -298,7 +298,7 @@ void TestBindedFunction() {
     ATA.setZero();
     ATb.setZero();
     {
-        open3d::ScopeTimer timer("Calling function directly");
+        open3d::utility::ScopeTimer timer("Calling function directly");
 #ifdef _OPENMP
 #pragma omp parallel
         {
@@ -334,7 +334,7 @@ void TestBindedFunction() {
     ATA.setZero();
     ATb.setZero();
     {
-        open3d::ScopeTimer timer("Direct optration");
+        open3d::utility::ScopeTimer timer("Direct optration");
 #ifdef _OPENMP
 #pragma omp parallel
         {
@@ -375,7 +375,7 @@ void TestBindedFunction() {
 int main(int argc, char **argv) {
     using namespace open3d;
 
-    if (ProgramOptionExists(argc, argv, "--test_bind")) {
+    if (utility::ProgramOptionExists(argc, argv, "--test_bind")) {
         TestBindedFunction();
     } else {
         TestMatrixMultiplication(argc, argv);

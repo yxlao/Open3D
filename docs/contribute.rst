@@ -14,8 +14,8 @@ Issues and pull requests
 
 The ``master`` branch is used only for stable development versions of Open3D. Any code change is made through four steps using the `issues and pull requests system <https://help.github.com/categories/collaborating-with-issues-and-pull-requests/>`_.
 
-1. An `issue <https://github.com/IntelVCL/Open3D/issues>`_ is opened for a feature request or a bug fix.
-2. A contributor starts a new branch or forks the repository, makes changes, and submits a `pull request <https://github.com/IntelVCL/Open3D/pulls>`_.
+1. An `issue <https://github.com/intel-isl/Open3D/issues>`_ is opened for a feature request or a bug fix.
+2. A contributor starts a new branch or forks the repository, makes changes, and submits a `pull request <https://github.com/intel-isl/Open3D/pulls>`_.
 3. Code change is reviewed and discussed in the pull request. Modifications are made to address the issues raised in the discussion.
 4. One of the admins merges the pull request to the master branch.
 
@@ -61,10 +61,11 @@ Another good reading for modern C++ coding style is `C++ Core Guidelines <https:
 Automated style Checker
 ========================
 
-Open3D's CI checks for code formatting based on the style specified in the
-``.clang-format`` file.  Please build the ``check-style`` and ``apply-style``
+Open3D's CI checks for code formatting based on the style specified in
+``.clang-format`` for C++ files and ``.style.yapf`` for Python files.
+Please build the ``check-style`` and ``apply-style``
 CMake target before submitting a pull request, or use your editor's
-`clang-format` integration to format the source code automatically.
+``clang-format`` and ``yapf`` integration to format the source code automatically.
 
 Different ``clang-format`` versions may produce slightly different
 formatting results. For standardization, ``clang-format`` version
@@ -72,8 +73,8 @@ formatting results. For standardization, ``clang-format`` version
 
 .. _1-installing-clang-format-50:
 
-Installing ``clang-format-5.0``
-----------------------------------
+Install clang-format
+--------------------
 
 By default, the make system tries to detect either ``clang-format-5.0``
 or ``clang-format`` from PATH.
@@ -111,7 +112,7 @@ macOS
 
 .. code:: bash
 
-   curl https://raw.githubusercontent.com/IntelVCL/Open3D-3rdparty/master/clang-format/clang-format%405.rb -o $(brew --repo)/Library/Taps/homebrew/homebrew-core/Formula/clang-format@5.rb
+   curl https://raw.githubusercontent.com/intel-isl/Open3D-3rdparty/master/clang-format/clang-format%405.rb -o $(brew --repo)/Library/Taps/homebrew/homebrew-core/Formula/clang-format@5.rb
    brew install clang-format@5
    clang-format --version
 
@@ -140,12 +141,12 @@ installation, select the option which allows adding clang toolchains to
    clang-format --version
 
 
-.. _2-checking-and-applying-format:
+.. _14-check-version:
 
-Checking and applying format
--------------------------------
+Checking clang-format version
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Before starting, check your ``clang-format`` version by
+After installation, check ``clang-format``'s version with
 
 .. code:: bash
 
@@ -157,7 +158,33 @@ Before starting, check your ``clang-format`` version by
 
 and make sure that version ``5.0`` is installed.
 
-.. _21-ubuntu--macos:
+
+.. _2-install-yapf:
+
+Install YAPF
+-------------------------------
+
+We use `YAPF <https://github.com/google/yapf.git>`_ for Python formatting.
+Install YAPF with
+
+.. code:: bash
+
+   # For Pip
+   pip install yapf
+
+   # For conda
+   conda install yapf
+
+You can also download `YAPF <https://github.com/google/yapf.git>`_ and install
+it from source.
+
+
+.. _3-checking-and-applying-format:
+
+Checking and applying format
+-------------------------------
+
+.. _31-ubuntu--macos:
 
 Ubuntu & macOS
 ~~~~~~~~~~~~~~~~~~
@@ -174,7 +201,7 @@ After CMake config, to apply proper style, run
 
    make apply-style
 
-.. _22-windows:
+.. _32-windows:
 
 Windows
 ~~~~~~~~~~~

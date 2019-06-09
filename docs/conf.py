@@ -23,13 +23,16 @@
 import sphinx_rtd_theme
 import sys
 import os
+import re
 
 # Import open3d raw python package with the highest priority
 # This is a trick to show open3d.open3d as open3d in the docs
 # Only tested to work on Unix
 current_file_dir = os.path.dirname(os.path.realpath(__file__))
-sys.path.insert(0, os.path.join(current_file_dir, "..", "build", "lib",
-                                "python_package", "open3d"))
+sys.path.insert(
+    0,
+    os.path.join(current_file_dir, "..", "build", "lib", "python_package",
+                 "open3d"))
 
 html_theme = "sphinx_rtd_theme"
 
@@ -46,9 +49,10 @@ html_favicon = "_static/open3d_logo.ico"
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.mathjax',
-        'sphinx.ext.autodoc',
-        'sphinx.ext.autosummary',]
+extensions = [
+    'sphinx.ext.mathjax', 'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
+    'sphinx.ext.napoleon'
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -64,15 +68,18 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Open3D'
-copyright = u'2018, Qianyi Zhou and Jaesik Park'
-author = u'Qianyi Zhou and Jaesik Park'
+copyright = u'2018 - 2019, www.open3d.org'
+author = u'www.open3d.org'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-version_list = [line.rstrip('\n').split(' ')[1] for line in open('../src/version.txt')]
+version_list = [
+    line.rstrip('\n').split(' ')[1]
+    for line in open('../src/Open3D/version.txt')
+]
 open3d_version = '.'.join(version_list)
 version = open3d_version
 # The full version, including alpha/beta/rc tags.
@@ -96,7 +103,6 @@ pygments_style = 'sphinx'
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
-
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -115,15 +121,20 @@ todo_include_todos = False
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+# Force table wrap: https://rackerlabs.github.io/docs-rackspace/tools/rtd-tables.html
+html_context = {
+    'css_files': [
+        '_static/theme_overrides.css',  # override wide tables in RTD theme
+    ],
+}
+
 # added by Jaesik to hide "View page source"
 html_show_sourcelink = False
-
 
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'Open3Ddoc'
-
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -149,20 +160,15 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'Open3D.tex', u'Open3D Documentation',
-     u'Qianyi Zhou', 'manual'),
+    (master_doc, 'Open3D.tex', u'Open3D Documentation', u'Qianyi Zhou',
+     'manual'),
 ]
-
 
 # -- Options for manual page output ---------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'open3d', u'Open3D Documentation',
-     [author], 1)
-]
-
+man_pages = [(master_doc, 'open3d', u'Open3D Documentation', [author], 1)]
 
 # -- Options for Texinfo output -------------------------------------------
 
@@ -170,10 +176,51 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'Open3D', u'Open3D Documentation',
-     author, 'Open3D', 'One line description of project.',
-     'Miscellaneous'),
+    (master_doc, 'Open3D', u'Open3D Documentation', author, 'Open3D',
+     'One line description of project.', 'Miscellaneous'),
 ]
 
-# added by Jaesik to list Python members using the source order
-autodoc_member_order = 'bysource'
+# Version 0: Added by Jaesik to list Python members using the source order
+# Version 1: Changed to 'groupwise': __init__ first, then methods, then
+#            properties. Within each, sorted alphabetically.
+autodoc_member_order = 'groupwise'
+
+
+def is_enum_class(func, func_name):
+
+    def import_from_str(class_name):
+        components = class_name.split('.')
+        mod = __import__(components[0])
+        for comp in components[1:]:
+            mod = getattr(mod, comp)
+        return mod
+
+    is_enum = False
+    try:
+        if func_name == "name" and "self: handle" in func.__doc__:
+            is_enum = True
+        else:
+            pattern = re.escape(func_name) + r"\(self: ([a-zA-Z0-9_\.]*).*\)"
+            m = re.match(pattern, func.__doc__)
+            if m:
+                c_name = m.groups()[0]
+                c = import_from_str(c_name)
+                if hasattr(c, "__entries"):
+                    is_enum = True
+    except:
+        pass
+    return is_enum
+
+
+# Keep the __init__ function doc
+def skip(app, what, name, obj, would_skip, options):
+    if name in {"__init__", "name"}:
+        if is_enum_class(obj, name):
+            return True
+        else:
+            return False
+    return would_skip
+
+
+def setup(app):
+    app.connect("autodoc-skip-member", skip)

@@ -5,7 +5,7 @@ Capture your own dataset
 
 If you have a `RealSense camera <https://www.intel.com/content/www/us/en/architecture-and-technology/realsense-overview.html>`_, capturing RGBD frames is easy by using ``sensors/realsense_recoder.py``.
 
-.. note:: This tutorial assumes that valid RealSense Python package and OpenCV python package are installed in your environment. Please follow `this instruction <https://github.com/IntelRealSense/librealsense/tree/master/wrappers/python>`_ to install RealSense Python package.
+.. note:: This tutorial assumes that valid RealSense Python package and OpenCV Python package are installed in your environment. Please follow `this instruction <https://github.com/IntelRealSense/librealsense/tree/master/wrappers/python>`_ to install RealSense Python package.
 
 Input arguments
 ``````````````````````````````````````
@@ -23,7 +23,7 @@ In either ``record_imgs`` and ``record_rosbag`` mode, the script displays the fo
 .. image:: ../../_static/ReconstructionSystem/capture_your_own_dataset/recorder.png
     :width: 400px
 
-The left side shows color image with invalid depth region markup (in gray color), and the right side show jet color coded depth map. Invalid depth pixels are object boundary, uncertain region, or distant region (more than 3m). Capturing frames without too many gray pixels is recommended for the good reconstruction quality.
+The left side shows color image with invalid depth region markup (in gray color), and the right side shows jet color coded depth map. Invalid depth pixels are object boundary, uncertain region, or distant region (more than 3m). Capturing frames without too many gray pixels is recommended for the good reconstruction quality.
 
 By default, ``record_imgs`` mode saves aligned color and depth images in ``dataset/realsense`` folder that can be used for reconstruction system.
 

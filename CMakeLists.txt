@@ -9,7 +9,7 @@ if (NOT CMAKE_VERSION VERSION_LESS "3.1")
 endif()
 
 # central location for specifying the Open3D version
-file(STRINGS "src/version.txt" OPEN3D_VERSION_READ)
+file(STRINGS "src/Open3D/version.txt" OPEN3D_VERSION_READ)
 foreach(ver ${OPEN3D_VERSION_READ})
   if (ver MATCHES "OPEN3D_VERSION_(MAJOR|MINOR|PATCH|TWEAK) +([^ ]+)$")
     set(OPEN3D_VERSION_${CMAKE_MATCH_1} "${CMAKE_MATCH_2}" CACHE INTERNAL "")
@@ -43,12 +43,12 @@ endif()
 set(PROJECT_EMAIL   "info@open3d.org")
 set(PROJECT_HOME    "http://www.open3d.org")
 set(PROJECT_DOCS    "http://www.open3d.org/docs")
-set(PROJECT_CODE    "https://github.com/IntelVCL/Open3D")
-set(PROJECT_ISSUES  "https://github.com/IntelVCL/Open3D/issues")
+set(PROJECT_CODE    "https://github.com/intel-isl/Open3D")
+set(PROJECT_ISSUES  "https://github.com/intel-isl/Open3D/issues")
 
 # configure a header file to pass the version settings to the source code
-configure_file("${PROJECT_SOURCE_DIR}/src/Open3DConfig.h.in"
-               "${PROJECT_SOURCE_DIR}/src/Open3DConfig.h")
+configure_file("${PROJECT_SOURCE_DIR}/src/Open3D/Open3DConfig.h.in"
+               "${PROJECT_SOURCE_DIR}/src/Open3D/Open3DConfig.h")
 
 if(WIN32 AND NOT CYGWIN)
     set(DEF_INSTALL_CMAKE_DIR CMake)
@@ -68,7 +68,7 @@ option(WITH_OPENMP               "Use OpenMP multi-threading"               ON)
 option(ENABLE_HEADLESS_RENDERING "Use OSMesa for headless rendering"        OFF)
 option(BUILD_CPP_EXAMPLES        "Build the Open3D example programs"        ON)
 option(BUILD_UNIT_TESTS          "Build the Open3D unit tests"              OFF)
-option(BUILD_EIGEN3              "Build eigen3 from source"                 OFF)
+option(BUILD_EIGEN3              "Use the Eigen3 that comes with Open3D"    ON)
 option(BUILD_GLEW                "Build glew from source"                   OFF)
 option(BUILD_GLFW                "Build glfw from source"                   OFF)
 option(BUILD_JPEG                "Build jpeg from source"                   OFF)
@@ -78,6 +78,7 @@ option(BUILD_PYBIND11            "Build pybind11 from source"               ON)
 option(BUILD_PYTHON_MODULE       "Build the python module"                  ON)
 option(BUILD_LIBREALSENSE        "Build support for Intel RealSense camera" OFF)
 option(BUILD_TINYFILEDIALOGS     "Build tinyfiledialogs from source"        ON)
+option(BUILD_QHULL               "Build qhull from source"                  ON)
 option(ENABLE_JUPYTER            "Enable Jupyter support for Open3D"        ON)
 option(STATIC_WINDOWS_RUNTIME    "Use static (MT/MTd) Windows runtime"      OFF)
 
