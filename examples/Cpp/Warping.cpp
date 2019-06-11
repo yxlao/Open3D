@@ -24,7 +24,9 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 
 #include "Open3D/Open3D.h"
 
@@ -38,7 +40,17 @@ int main(int argc, char** args) {
         return 1;
     }
 
-    std::string im_path(args[1]);
-    std::cout << "im_path " << im_path << std::endl;
+    std::string im_dir(args[1]);
+    std::cout << "im_dir: " << im_dir << std::endl;
+
+    size_t num_images = 6;
+
+    for (size_t im_idx = 0; im_idx < num_images; ++im_idx) {
+        std::stringstream im_path_ss;
+        im_path_ss << im_dir << "/" << std::setw(2) << std::setfill('0')
+                   << im_idx << ".jpg";
+        std::cout << im_path_ss.str() << std::endl;
+    }
+
     return 0;
 }
