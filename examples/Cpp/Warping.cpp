@@ -54,7 +54,7 @@ int main(int argc, char** args) {
         std::cout << "Reading: " << im_path.str() << std::endl;
         auto im_rgb = std::make_shared<geometry::Image>();
         io::ReadImage(im_path.str(), *im_rgb);
-        im_rgbs.push_back(im_rgb);
+        im_rgbs.push_back(im_rgb->CreateFloatImage());
     }
     std::cout << "width: " << im_rgbs[0]->width_ << "\n";
     std::cout << "height: " << im_rgbs[0]->height_ << "\n";
