@@ -24,6 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
+#include <cstdio>
 #include <iomanip>
 #include <iostream>
 #include <memory>
@@ -138,6 +139,30 @@ std::shared_ptr<geometry::Image> ComputeWarpedAverage(
     return ComputeAverageImage(im_warps);
 }
 
+std::vector<std::shared_ptr<geometry::Image>> ReadDataset(
+        const std::string& root_dir,
+        const std::string& pattern,
+        int num_images) {
+    std::vector<std::shared_ptr<geometry::Image>> im_grays;
+    for (int i = 0; i < num_images; i++) {
+        // Get path
+        char im_path_buf[1000];
+        int status = sprintf(im_path_buf, ("%s/" + pattern).c_str(),
+                             root_dir.c_str(), i);
+        if (status < 0) {
+            throw std::runtime_error("Path formatting error.");
+        }
+        std::string im_path(im_path_buf);
+        std::cout << "Reading: " << im_path << std::endl;
+
+        // Read image and convert to grayscale
+        auto im_gray = std::make_shared<geometry::Image>();
+        io::ReadImage(im_path, *im_gray);
+        im_grays.push_back(im_gray->CreateFloatImage());
+    }
+    return im_grays;
+}
+
 int main(int argc, char** args) {
     // Data path
     utility::SetVerbosityLevel(utility::VerbosityLevel::VerboseAlways);
@@ -145,16 +170,9 @@ int main(int argc, char** args) {
     std::cout << "im_dir: " << im_dir << std::endl;
 
     // Read images
-    size_t num_images = 33;
-    std::vector<std::shared_ptr<geometry::Image>> im_grays;
-    for (size_t im_idx = 0; im_idx < num_images; ++im_idx) {
-        std::stringstream im_path;
-        im_path << im_dir << "/delta-color-" << im_idx << ".png";
-        std::cout << "Reading: " << im_path.str() << std::endl;
-        auto im_gray = std::make_shared<geometry::Image>();
-        io::ReadImage(im_path.str(), *im_gray);
-        im_grays.push_back(im_gray->CreateFloatImage());
-    }
+    std::vector<std::shared_ptr<geometry::Image>> im_grays =
+            ReadDataset(im_dir, "delta-color-%d.png", 33);
+
     int width = im_grays[0]->width_;
     int height = im_grays[0]->height_;
     int num_of_channels = im_grays[0]->num_of_channels_;
