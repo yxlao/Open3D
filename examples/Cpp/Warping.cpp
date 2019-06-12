@@ -76,6 +76,45 @@ std::shared_ptr<geometry::Image> GetWarpedImage(
     return im_warped;
 }
 
+std::shared_ptr<geometry::Image> ComputeAverageImage(
+        const std::vector<std::shared_ptr<geometry::Image>>& im_grays) {
+    if (im_grays.size() == 0) {
+        return std::make_shared<geometry::Image>();
+    }
+
+    int width = im_grays[0]->width_;
+    int height = im_grays[0]->height_;
+    int num_of_channels = im_grays[0]->num_of_channels_;
+    int bytes_per_channel = im_grays[0]->bytes_per_channel_;
+    size_t num_images = im_grays.size();
+
+    auto im_avg = std::make_shared<geometry::Image>();
+    im_avg->Prepare(width, height, num_of_channels, 4);
+    for (int u = 0; u < width; ++u) {
+        for (int v = 0; v < height; ++v) {
+            *(im_avg->PointerAt<float>(u, v)) = 0;
+            for (const auto& im_gray : im_grays) {
+                *(im_avg->PointerAt<float>(u, v)) +=
+                        *(im_gray->PointerAt<float>(u, v));
+            }
+            *(im_avg->PointerAt<float>(u, v)) /= num_images;
+        }
+    }
+    return im_avg;
+}
+
+void OptimizeWarpingFields(
+        const std::vector<std::shared_ptr<geometry::Image>>& im_grays,
+        std::vector<color_map::ImageWarpingField>& warping_fields,
+        size_t num_iter) {}
+
+std::shared_ptr<geometry::Image> ComputeWarpedAverage(
+        const std::vector<std::shared_ptr<geometry::Image>>& im_grays,
+        const std::vector<color_map::ImageWarpingField>& warping_fields) {
+    auto im_warp_avg = std::make_shared<geometry::Image>();
+    return im_warp_avg;
+}
+
 int main(int argc, char** args) {
     // Data path
     utility::SetVerbosityLevel(utility::VerbosityLevel::VerboseAlways);
@@ -103,20 +142,7 @@ int main(int argc, char** args) {
     std::cout << "bytes_per_channel: " << bytes_per_channel << "\n";
 
     // Compute average image
-    auto im_avg = std::make_shared<geometry::Image>();
-    im_avg->Prepare(width, height, num_of_channels, 4);
-    for (int u = 0; u < width; ++u) {
-        for (int v = 0; v < height; ++v) {
-            *(im_avg->PointerAt<float>(u, v)) = 0;
-            for (const auto& im_gray : im_grays) {
-                *(im_avg->PointerAt<float>(u, v)) +=
-                        *(im_gray->PointerAt<float>(u, v));
-            }
-            *(im_avg->PointerAt<float>(u, v)) /= num_images;
-        }
-    }
-
-    // Write average image
+    auto im_avg = ComputeAverageImage(im_grays);
     std::string im_avg_path = im_dir + "/avg.png";
     io::WriteImage(im_avg_path, *im_avg->CreateImageFromFloatImage<uint8_t>());
 
@@ -136,6 +162,16 @@ int main(int argc, char** args) {
     size_t num_vertical_anchors = 16;
     std::vector<color_map::ImageWarpingField> warping_fields =
             InitWarpingFields(im_grays, num_vertical_anchors);
+
+    // Optimize warping fields
+    size_t num_iter = 100;
+    OptimizeWarpingFields(im_grays, warping_fields, num_iter);
+
+    // Ouput optimized image
+    auto im_warp_avg = ComputeWarpedAverage(im_grays, warping_fields);
+    std::string im_warp_avg_path = im_dir + "/avg_warp.png";
+    io::WriteImage(im_warp_avg_path,
+                   *im_warp_avg->CreateImageFromFloatImage<uint8_t>());
 
     return 0;
 }
