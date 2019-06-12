@@ -33,24 +33,39 @@
 
 using namespace open3d;
 
+std::shared_ptr<geometry::Image> GetWarpedImage(
+        const geometry::Image& image,
+        const color_map::ImageWarpingField& warp_field) {
+    int width = image.width_;
+    int height = image.height_;
+    int num_of_channels = image.num_of_channels_;
+    int bytes_per_channel = image.bytes_per_channel_;
+
+    auto im_warped = std::make_shared<geometry::Image>();
+    im_warped->Prepare(width, height, num_of_channels, bytes_per_channel);
+
+    for (size_t u = 0; u < width; u++) {
+        for (size_t v = 0; v < height; v++) {
+            Eigen::Vector2d flow = warp_field.QueryFlow(u, v);
+            // TODO
+        }
+    }
+
+    return im_warped;
+}
+
 int main(int argc, char** args) {
     // Data path
     utility::SetVerbosityLevel(utility::VerbosityLevel::VerboseAlways);
-    if (argc < 2) {
-        PrintOpen3DVersion();
-        utility::PrintInfo("Usage: ./Warping [im_path]\n");
-        return 1;
-    }
-    std::string im_dir(args[1]);
+    std::string im_dir = "/home/ylao/data/inverse-projection";
     std::cout << "im_dir: " << im_dir << std::endl;
 
     // Read images
-    size_t num_images = 6;
+    size_t num_images = 33;
     std::vector<std::shared_ptr<geometry::Image>> im_grays;
     for (size_t im_idx = 0; im_idx < num_images; ++im_idx) {
         std::stringstream im_path;
-        im_path << im_dir << "/" << std::setw(2) << std::setfill('0') << im_idx
-                << ".jpg";
+        im_path << im_dir << "/delta-color-" << im_idx << ".png";
         std::cout << "Reading: " << im_path.str() << std::endl;
         auto im_gray = std::make_shared<geometry::Image>();
         io::ReadImage(im_path.str(), *im_gray);
@@ -80,8 +95,15 @@ int main(int argc, char** args) {
     }
 
     // Write average image
-    std::string im_avg_path = im_dir + "/avg.jpg";
+    std::string im_avg_path = im_dir + "/avg.png";
     io::WriteImage(im_avg_path, *im_avg->CreateImageFromFloatImage<uint8_t>());
+
+    // Visualize one warpping field
+    color_map::ImageWarpingField simple_wf(width, height, 5);
+    int num_anchors = simple_wf.GetNumberOfAnchors();
+    for (size_t i = 0; i < num_anchors; ++i) {
+        simple_wf.flow_(i) = 10;
+    }
 
     return 0;
 }

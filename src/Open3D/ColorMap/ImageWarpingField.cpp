@@ -123,5 +123,9 @@ bool ImageWarpingField::ConvertFromJsonValue(const Json::Value &value) {
     return true;
 }
 
+int ImageWarpingField::GetNumberOfAnchors() const {
+    return anchor_w_ * anchor_h_ * 2;
+};
+
 }  // namespace color_map
 }  // namespace open3d
