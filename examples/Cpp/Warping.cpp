@@ -61,7 +61,15 @@ public:
     ~WarpFieldOptimizer() {}
 
     // Run optimization of warp_fields_
-    void Optimize(size_t num_iters = 100) {}
+    void Optimize(size_t num_iters = 100) {
+        // Currently just +100 for illustration
+        for (color_map::ImageWarpingField& wf : warp_fields_) {
+            int num_anchors = wf.GetNumberOfAnchors();
+            for (size_t i = 0; i < num_anchors; ++i) {
+                wf.flow_(i) = wf.flow_(i) + 100;
+            }
+        }
+    }
 
     // Compute average image after warping
     std::shared_ptr<geometry::Image> ComputeWarpAverageImage() {
@@ -207,36 +215,6 @@ int main(int argc, char** args) {
     std::cout << "output im_warp_avg_path: " << im_warp_avg_path << std::endl;
     io::WriteImage(im_warp_avg_path,
                    *im_warp_avg->CreateImageFromFloatImage<uint8_t>());
-
-    // int width = im_grays[0]->width_;
-    // int height = im_grays[0]->height_;
-    // int num_of_channels = im_grays[0]->num_of_channels_;
-    // int bytes_per_channel = im_grays[0]->bytes_per_channel_;
-    // std::cout << "width: " << width << "\n";
-    // std::cout << "height: " << height << "\n";
-    // std::cout << "num_of_channels: " << num_of_channels << "\n";
-    // std::cout << "bytes_per_channel: " << bytes_per_channel << "\n";
-
-    // // Compute average image
-    // auto im_avg = ComputeAverageImage(im_grays);
-    // std::string im_avg_path = im_dir + "/avg.png";
-    // io::WriteImage(im_avg_path,
-    // *im_avg->CreateImageFromFloatImage<uint8_t>());
-
-    // // Init warping fields
-    // size_t num_vertical_anchors = 16;
-    // std::vector<color_map::ImageWarpingField> warping_fields =
-    //         InitWarpingFields(im_grays, num_vertical_anchors);
-
-    // // Optimize warping fields
-    // size_t num_iter = 100;
-    // OptimizeWarpingFields(im_grays, warping_fields, num_iter);
-
-    // // Ouput optimized image
-    // auto im_warp_avg = ComputeWarpedAverage(im_grays, warping_fields);
-    // std::string im_warp_avg_path = im_dir + "/avg_warp.png";
-    // io::WriteImage(im_warp_avg_path,
-    //                *im_warp_avg->CreateImageFromFloatImage<uint8_t>());
 
     return 0;
 }
