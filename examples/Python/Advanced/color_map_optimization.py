@@ -10,7 +10,7 @@ import os, sys
 sys.path.append("../Utility")
 from file import *
 
-path = "[path_to_fountain_dataset]"
+path = "/home/ylao/data/fountain/fountain_small"
 debug_mode = False
 
 if __name__ == "__main__":
@@ -48,7 +48,7 @@ if __name__ == "__main__":
     option = o3d.color_map.ColorMapOptimizationOption()
     option.maximum_iteration = 0
     o3d.color_map.color_map_optimization(mesh, rgbd_images, camera, option)
-    o3d.visualization.draw_geometries([mesh])
+    # o3d.visualization.draw_geometries([mesh])
     o3d.io.write_triangle_mesh(
         os.path.join(path, "scene", "color_map_before_optimization.ply"), mesh)
 
