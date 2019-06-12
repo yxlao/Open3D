@@ -46,21 +46,42 @@ int main(int argc, char** args) {
 
     // Read images
     size_t num_images = 6;
-    std::vector<std::shared_ptr<geometry::Image>> im_rgbs;
+    std::vector<std::shared_ptr<geometry::Image>> im_grays;
     for (size_t im_idx = 0; im_idx < num_images; ++im_idx) {
         std::stringstream im_path;
         im_path << im_dir << "/" << std::setw(2) << std::setfill('0') << im_idx
                 << ".jpg";
         std::cout << "Reading: " << im_path.str() << std::endl;
-        auto im_rgb = std::make_shared<geometry::Image>();
-        io::ReadImage(im_path.str(), *im_rgb);
-        im_rgbs.push_back(im_rgb->CreateFloatImage());
+        auto im_gray = std::make_shared<geometry::Image>();
+        io::ReadImage(im_path.str(), *im_gray);
+        im_grays.push_back(im_gray->CreateFloatImage());
     }
-    std::cout << "width: " << im_rgbs[0]->width_ << "\n";
-    std::cout << "height: " << im_rgbs[0]->height_ << "\n";
-    std::cout << "num_of_channels: " << im_rgbs[0]->num_of_channels_ << "\n";
-    std::cout << "bytes_per_channel: " << im_rgbs[0]->bytes_per_channel_
-              << "\n";
+    int width = im_grays[0]->width_;
+    int height = im_grays[0]->height_;
+    int num_of_channels = im_grays[0]->num_of_channels_;
+    int bytes_per_channel = im_grays[0]->bytes_per_channel_;
+    std::cout << "width: " << width << "\n";
+    std::cout << "height: " << height << "\n";
+    std::cout << "num_of_channels: " << num_of_channels << "\n";
+    std::cout << "bytes_per_channel: " << bytes_per_channel << "\n";
+
+    // Compute average image
+    auto im_avg = std::make_shared<geometry::Image>();
+    im_avg->Prepare(width, height, num_of_channels, 4);
+    for (int u = 0; u < width; ++u) {
+        for (int v = 0; v < height; ++v) {
+            *(im_avg->PointerAt<float>(u, v)) = 0;
+            for (const auto& im_gray : im_grays) {
+                *(im_avg->PointerAt<float>(u, v)) +=
+                        *(im_gray->PointerAt<float>(u, v));
+            }
+            *(im_avg->PointerAt<float>(u, v)) /= num_images;
+        }
+    }
+
+    // Write average image
+    std::string im_avg_path = im_dir + "/avg.jpg";
+    io::WriteImage(im_avg_path, *im_avg->CreateImageFromFloatImage<uint8_t>());
 
     return 0;
 }
