@@ -34,20 +34,30 @@
 using namespace open3d;
 
 std::shared_ptr<geometry::Image> GetWarpedImage(
-        const geometry::Image& image,
+        const geometry::Image& im,
         const color_map::ImageWarpingField& warp_field) {
-    int width = image.width_;
-    int height = image.height_;
-    int num_of_channels = image.num_of_channels_;
-    int bytes_per_channel = image.bytes_per_channel_;
+    int width = im.width_;
+    int height = im.height_;
+    int num_of_channels = im.num_of_channels_;
+    int bytes_per_channel = im.bytes_per_channel_;
 
     auto im_warped = std::make_shared<geometry::Image>();
     im_warped->Prepare(width, height, num_of_channels, bytes_per_channel);
 
     for (size_t u = 0; u < width; u++) {
         for (size_t v = 0; v < height; v++) {
-            Eigen::Vector2d flow = warp_field.QueryFlow(u, v);
-            // TODO
+            Eigen::Vector2d u_v_warp = warp_field.GetImageWarpingField(u, v);
+            float u_warp = u_v_warp(0);
+            float v_warp = u_v_warp(1);
+
+            bool valid;
+            float pixel_val;
+            std::tie(valid, pixel_val) = im.FloatValueAt(u_warp, v_warp);
+            if (valid) {
+                *(im_warped->PointerAt<float>(u, v)) = pixel_val;
+            } else {
+                *(im_warped->PointerAt<float>(u, v)) = 0;
+            }
         }
     }
 
@@ -102,8 +112,14 @@ int main(int argc, char** args) {
     color_map::ImageWarpingField simple_wf(width, height, 5);
     int num_anchors = simple_wf.GetNumberOfAnchors();
     for (size_t i = 0; i < num_anchors; ++i) {
-        simple_wf.flow_(i) = 10;
+        simple_wf.flow_(i) = simple_wf.flow_(i) + 100;
     }
+
+    std::shared_ptr<geometry::Image> im_avg_warp =
+            GetWarpedImage(*im_avg, simple_wf);
+    std::string im_avg_warp_path = im_dir + "/avg_warp.png";
+    io::WriteImage(im_avg_warp_path,
+                   *im_avg_warp->CreateImageFromFloatImage<uint8_t>());
 
     return 0;
 }
