@@ -46,7 +46,7 @@ std::vector<color_map::ImageWarpingField> InitWarpingFields(
     return std::move(warping_fields);
 }
 
-std::shared_ptr<geometry::Image> GetWarpedImage(
+std::shared_ptr<geometry::Image> ComputeWarpedImage(
         const geometry::Image& im,
         const color_map::ImageWarpingField& warp_field) {
     int width = im.width_;
@@ -81,7 +81,6 @@ std::shared_ptr<geometry::Image> ComputeAverageImage(
     if (im_grays.size() == 0) {
         return std::make_shared<geometry::Image>();
     }
-
     int width = im_grays[0]->width_;
     int height = im_grays[0]->height_;
     int num_of_channels = im_grays[0]->num_of_channels_;
@@ -106,13 +105,37 @@ std::shared_ptr<geometry::Image> ComputeAverageImage(
 void OptimizeWarpingFields(
         const std::vector<std::shared_ptr<geometry::Image>>& im_grays,
         std::vector<color_map::ImageWarpingField>& warping_fields,
-        size_t num_iter) {}
+        size_t num_iter) {
+    if (im_grays.size() == 0) {
+        return;
+    }
+    int width = im_grays[0]->width_;
+    int height = im_grays[0]->height_;
+    int num_of_channels = im_grays[0]->num_of_channels_;
+    int bytes_per_channel = im_grays[0]->bytes_per_channel_;
+    size_t num_images = im_grays.size();
+
+    for (color_map::ImageWarpingField& wf : warping_fields) {
+        int num_anchors = wf.GetNumberOfAnchors();
+        for (size_t i = 0; i < num_anchors; ++i) {
+            wf.flow_(i) = wf.flow_(i) + 100;
+        }
+    }
+}
 
 std::shared_ptr<geometry::Image> ComputeWarpedAverage(
         const std::vector<std::shared_ptr<geometry::Image>>& im_grays,
         const std::vector<color_map::ImageWarpingField>& warping_fields) {
-    auto im_warp_avg = std::make_shared<geometry::Image>();
-    return im_warp_avg;
+    if (im_grays.size() != warping_fields.size()) {
+        throw std::runtime_error("im_grays.size() != warping_fields.size()");
+    }
+
+    std::vector<std::shared_ptr<geometry::Image>> im_warps;
+    for (size_t i = 0; i < im_grays.size(); i++) {
+        im_warps.push_back(ComputeWarpedImage(*im_grays[i], warping_fields[i]));
+    }
+
+    return ComputeAverageImage(im_warps);
 }
 
 int main(int argc, char** args) {
@@ -145,18 +168,6 @@ int main(int argc, char** args) {
     auto im_avg = ComputeAverageImage(im_grays);
     std::string im_avg_path = im_dir + "/avg.png";
     io::WriteImage(im_avg_path, *im_avg->CreateImageFromFloatImage<uint8_t>());
-
-    // Visualize one warpping field
-    color_map::ImageWarpingField simple_wf(width, height, 5);
-    int num_anchors = simple_wf.GetNumberOfAnchors();
-    for (size_t i = 0; i < num_anchors; ++i) {
-        simple_wf.flow_(i) = simple_wf.flow_(i) + 100;
-    }
-    std::shared_ptr<geometry::Image> im_avg_warp =
-            GetWarpedImage(*im_avg, simple_wf);
-    std::string im_avg_warp_path = im_dir + "/avg_warp.png";
-    io::WriteImage(im_avg_warp_path,
-                   *im_avg_warp->CreateImageFromFloatImage<uint8_t>());
 
     // Init warping fields
     size_t num_vertical_anchors = 16;
