@@ -33,6 +33,19 @@
 
 using namespace open3d;
 
+std::vector<color_map::ImageWarpingField> InitWarpingFields(
+        const std::vector<std::shared_ptr<geometry::Image>>& images,
+        size_t num_vertical_anchors) {
+    std::vector<color_map::ImageWarpingField> warping_fields;
+    for (auto i = 0; i < images.size(); i++) {
+        int width = images[i]->width_;
+        int height = images[i]->height_;
+        warping_fields.push_back(color_map::ImageWarpingField(
+                width, height, num_vertical_anchors));
+    }
+    return std::move(warping_fields);
+}
+
 std::shared_ptr<geometry::Image> GetWarpedImage(
         const geometry::Image& im,
         const color_map::ImageWarpingField& warp_field) {
@@ -60,7 +73,6 @@ std::shared_ptr<geometry::Image> GetWarpedImage(
             }
         }
     }
-
     return im_warped;
 }
 
@@ -114,12 +126,16 @@ int main(int argc, char** args) {
     for (size_t i = 0; i < num_anchors; ++i) {
         simple_wf.flow_(i) = simple_wf.flow_(i) + 100;
     }
-
     std::shared_ptr<geometry::Image> im_avg_warp =
             GetWarpedImage(*im_avg, simple_wf);
     std::string im_avg_warp_path = im_dir + "/avg_warp.png";
     io::WriteImage(im_avg_warp_path,
                    *im_avg_warp->CreateImageFromFloatImage<uint8_t>());
+
+    // Init warping fields
+    size_t num_vertical_anchors = 16;
+    std::vector<color_map::ImageWarpingField> warping_fields =
+            InitWarpingFields(im_grays, num_vertical_anchors);
 
     return 0;
 }
