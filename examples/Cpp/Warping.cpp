@@ -34,74 +34,115 @@
 
 using namespace open3d;
 
-std::vector<color_map::ImageWarpingField> InitWarpingFields(
-        const std::vector<std::shared_ptr<geometry::Image>>& images,
-        size_t num_vertical_anchors) {
-    std::vector<color_map::ImageWarpingField> warping_fields;
-    for (auto i = 0; i < images.size(); i++) {
-        int width = images[i]->width_;
-        int height = images[i]->height_;
-        warping_fields.push_back(color_map::ImageWarpingField(
-                width, height, num_vertical_anchors));
-    }
-    return std::move(warping_fields);
-}
+class WarpFieldOptimizer {
+public:
+    WarpFieldOptimizer(
+            const std::vector<std::shared_ptr<geometry::Image>>& im_grays,
+            size_t num_vertical_anchors)
+        : im_grays_(im_grays), num_vertical_anchors_(num_vertical_anchors) {
+        // TODO: ok to throw exception here?
+        if (im_grays.size() == 0) {
+            throw std::runtime_error("Empty inputs");
+        }
 
-std::shared_ptr<geometry::Image> ComputeWarpedImage(
-        const geometry::Image& im,
-        const color_map::ImageWarpingField& warp_field) {
-    int width = im.width_;
-    int height = im.height_;
-    int num_of_channels = im.num_of_channels_;
-    int bytes_per_channel = im.bytes_per_channel_;
+        // TODO: check that all images are of the same size
+        width_ = im_grays[0]->width_;
+        height_ = im_grays[0]->height_;
+        num_of_channels_ = im_grays[0]->num_of_channels_;
+        bytes_per_channel_ = im_grays[0]->bytes_per_channel_;
+        num_images_ = im_grays.size();
 
-    auto im_warped = std::make_shared<geometry::Image>();
-    im_warped->Prepare(width, height, num_of_channels, bytes_per_channel);
-
-    for (size_t u = 0; u < width; u++) {
-        for (size_t v = 0; v < height; v++) {
-            Eigen::Vector2d u_v_warp = warp_field.GetImageWarpingField(u, v);
-            float u_warp = u_v_warp(0);
-            float v_warp = u_v_warp(1);
-
-            bool valid;
-            float pixel_val;
-            std::tie(valid, pixel_val) = im.FloatValueAt(u_warp, v_warp);
-            if (valid) {
-                *(im_warped->PointerAt<float>(u, v)) = pixel_val;
-            } else {
-                *(im_warped->PointerAt<float>(u, v)) = 0;
-            }
+        // Init warping fields
+        for (auto i = 0; i < num_images_; i++) {
+            warp_fields_.push_back(color_map::ImageWarpingField(
+                    width_, height_, num_vertical_anchors));
         }
     }
-    return im_warped;
-}
+    ~WarpFieldOptimizer() {}
 
-std::shared_ptr<geometry::Image> ComputeAverageImage(
-        const std::vector<std::shared_ptr<geometry::Image>>& im_grays) {
-    if (im_grays.size() == 0) {
-        return std::make_shared<geometry::Image>();
-    }
-    int width = im_grays[0]->width_;
-    int height = im_grays[0]->height_;
-    int num_of_channels = im_grays[0]->num_of_channels_;
-    int bytes_per_channel = im_grays[0]->bytes_per_channel_;
-    size_t num_images = im_grays.size();
+    // Run optimization of warp_fields_
+    void Optimize(size_t num_iters = 100) {}
 
-    auto im_avg = std::make_shared<geometry::Image>();
-    im_avg->Prepare(width, height, num_of_channels, 4);
-    for (int u = 0; u < width; ++u) {
-        for (int v = 0; v < height; ++v) {
-            *(im_avg->PointerAt<float>(u, v)) = 0;
-            for (const auto& im_gray : im_grays) {
-                *(im_avg->PointerAt<float>(u, v)) +=
-                        *(im_gray->PointerAt<float>(u, v));
-            }
-            *(im_avg->PointerAt<float>(u, v)) /= num_images;
+    // Compute average image after warping
+    std::shared_ptr<geometry::Image> ComputeWarpAverageImage() {
+        std::vector<std::shared_ptr<geometry::Image>> im_warps;
+        for (size_t i = 0; i < num_images_; i++) {
+            im_warps.push_back(
+                    ComputeWarpedImage(*im_grays_[i], warp_fields_[i]));
         }
+        return WarpFieldOptimizer::ComputeAverageImage(im_warps);
     }
-    return im_avg;
-}
+
+protected:
+    // Compute Warped image with image and warp field
+    static std::shared_ptr<geometry::Image> ComputeWarpedImage(
+            const geometry::Image& im,
+            const color_map::ImageWarpingField& warp_field) {
+        int width = im.width_;
+        int height = im.height_;
+        int num_of_channels = im.num_of_channels_;
+        int bytes_per_channel = im.bytes_per_channel_;
+
+        auto im_warped = std::make_shared<geometry::Image>();
+        im_warped->Prepare(width, height, num_of_channels, bytes_per_channel);
+
+        for (size_t u = 0; u < width; u++) {
+            for (size_t v = 0; v < height; v++) {
+                Eigen::Vector2d u_v_warp =
+                        warp_field.GetImageWarpingField(u, v);
+                float u_warp = u_v_warp(0);
+                float v_warp = u_v_warp(1);
+
+                bool valid;
+                float pixel_val;
+                std::tie(valid, pixel_val) = im.FloatValueAt(u_warp, v_warp);
+                if (valid) {
+                    *(im_warped->PointerAt<float>(u, v)) = pixel_val;
+                } else {
+                    *(im_warped->PointerAt<float>(u, v)) = 0;
+                }
+            }
+        }
+        return im_warped;
+    }
+
+    // Compute average image
+    static std::shared_ptr<geometry::Image> ComputeAverageImage(
+            const std::vector<std::shared_ptr<geometry::Image>>& im_grays) {
+        if (im_grays.size() == 0) {
+            return std::make_shared<geometry::Image>();
+        }
+        int width = im_grays[0]->width_;
+        int height = im_grays[0]->height_;
+        int num_of_channels = im_grays[0]->num_of_channels_;
+        int bytes_per_channel = im_grays[0]->bytes_per_channel_;
+        size_t num_images = im_grays.size();
+
+        auto im_avg = std::make_shared<geometry::Image>();
+        im_avg->Prepare(width, height, num_of_channels, 4);
+        for (int u = 0; u < width; ++u) {
+            for (int v = 0; v < height; ++v) {
+                *(im_avg->PointerAt<float>(u, v)) = 0;
+                for (const auto& im_gray : im_grays) {
+                    *(im_avg->PointerAt<float>(u, v)) +=
+                            *(im_gray->PointerAt<float>(u, v));
+                }
+                *(im_avg->PointerAt<float>(u, v)) /= num_images;
+            }
+        }
+        return im_avg;
+    }
+
+public:
+    std::vector<color_map::ImageWarpingField> warp_fields_;
+    std::vector<std::shared_ptr<geometry::Image>> im_grays_;
+    size_t num_vertical_anchors_;
+    int width_ = 0;
+    int height_ = 0;
+    int num_of_channels_ = 0;
+    int bytes_per_channel_ = 0;
+    size_t num_images_ = 0;
+};
 
 void OptimizeWarpingFields(
         const std::vector<std::shared_ptr<geometry::Image>>& im_grays,
@@ -122,21 +163,6 @@ void OptimizeWarpingFields(
             wf.flow_(i) = wf.flow_(i) + 100;
         }
     }
-}
-
-std::shared_ptr<geometry::Image> ComputeWarpedAverage(
-        const std::vector<std::shared_ptr<geometry::Image>>& im_grays,
-        const std::vector<color_map::ImageWarpingField>& warping_fields) {
-    if (im_grays.size() != warping_fields.size()) {
-        throw std::runtime_error("im_grays.size() != warping_fields.size()");
-    }
-
-    std::vector<std::shared_ptr<geometry::Image>> im_warps;
-    for (size_t i = 0; i < im_grays.size(); i++) {
-        im_warps.push_back(ComputeWarpedImage(*im_grays[i], warping_fields[i]));
-    }
-
-    return ComputeAverageImage(im_warps);
 }
 
 std::vector<std::shared_ptr<geometry::Image>> ReadDataset(
@@ -173,34 +199,44 @@ int main(int argc, char** args) {
     std::vector<std::shared_ptr<geometry::Image>> im_grays =
             ReadDataset(im_dir, "delta-color-%d.png", 33);
 
-    int width = im_grays[0]->width_;
-    int height = im_grays[0]->height_;
-    int num_of_channels = im_grays[0]->num_of_channels_;
-    int bytes_per_channel = im_grays[0]->bytes_per_channel_;
-    std::cout << "width: " << width << "\n";
-    std::cout << "height: " << height << "\n";
-    std::cout << "num_of_channels: " << num_of_channels << "\n";
-    std::cout << "bytes_per_channel: " << bytes_per_channel << "\n";
-
-    // Compute average image
-    auto im_avg = ComputeAverageImage(im_grays);
-    std::string im_avg_path = im_dir + "/avg.png";
-    io::WriteImage(im_avg_path, *im_avg->CreateImageFromFloatImage<uint8_t>());
-
-    // Init warping fields
     size_t num_vertical_anchors = 16;
-    std::vector<color_map::ImageWarpingField> warping_fields =
-            InitWarpingFields(im_grays, num_vertical_anchors);
-
-    // Optimize warping fields
-    size_t num_iter = 100;
-    OptimizeWarpingFields(im_grays, warping_fields, num_iter);
-
-    // Ouput optimized image
-    auto im_warp_avg = ComputeWarpedAverage(im_grays, warping_fields);
+    WarpFieldOptimizer wf_optimizer(im_grays, num_vertical_anchors);
+    wf_optimizer.Optimize();
+    auto im_warp_avg = wf_optimizer.ComputeWarpAverageImage();
     std::string im_warp_avg_path = im_dir + "/avg_warp.png";
+    std::cout << "output im_warp_avg_path: " << im_warp_avg_path << std::endl;
     io::WriteImage(im_warp_avg_path,
                    *im_warp_avg->CreateImageFromFloatImage<uint8_t>());
+
+    // int width = im_grays[0]->width_;
+    // int height = im_grays[0]->height_;
+    // int num_of_channels = im_grays[0]->num_of_channels_;
+    // int bytes_per_channel = im_grays[0]->bytes_per_channel_;
+    // std::cout << "width: " << width << "\n";
+    // std::cout << "height: " << height << "\n";
+    // std::cout << "num_of_channels: " << num_of_channels << "\n";
+    // std::cout << "bytes_per_channel: " << bytes_per_channel << "\n";
+
+    // // Compute average image
+    // auto im_avg = ComputeAverageImage(im_grays);
+    // std::string im_avg_path = im_dir + "/avg.png";
+    // io::WriteImage(im_avg_path,
+    // *im_avg->CreateImageFromFloatImage<uint8_t>());
+
+    // // Init warping fields
+    // size_t num_vertical_anchors = 16;
+    // std::vector<color_map::ImageWarpingField> warping_fields =
+    //         InitWarpingFields(im_grays, num_vertical_anchors);
+
+    // // Optimize warping fields
+    // size_t num_iter = 100;
+    // OptimizeWarpingFields(im_grays, warping_fields, num_iter);
+
+    // // Ouput optimized image
+    // auto im_warp_avg = ComputeWarpedAverage(im_grays, warping_fields);
+    // std::string im_warp_avg_path = im_dir + "/avg_warp.png";
+    // io::WriteImage(im_warp_avg_path,
+    //                *im_warp_avg->CreateImageFromFloatImage<uint8_t>());
 
     return 0;
 }
