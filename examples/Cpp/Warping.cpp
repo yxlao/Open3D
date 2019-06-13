@@ -195,6 +195,7 @@ ReadDataset(const std::string& root_dir,
                 }
             }
         }
+        im_masks.push_back(im_mask);
     }
     return std::make_pair(im_grays, im_masks);
 }
