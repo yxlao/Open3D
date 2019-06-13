@@ -116,7 +116,6 @@ public:
                         if (ii >= anchor_w_ - 1 || jj >= anchor_h_ - 1) {
                             continue;
                         }
-                        // TODO: ADD VISIBILITY CHECK!!!!!!!!!!!!!!!!!!!!!!
                         double p = (u - ii * anchor_step_) / anchor_step_;
                         double q = (v - jj * anchor_step_) / anchor_step_;
                         Eigen::Vector2d grids[4] = {
@@ -175,7 +174,6 @@ public:
                         pattern(5) = ((ii + 1) + jj * anchor_w_) * 2 + 1;
                         pattern(6) = ((ii + 1) + (jj + 1) * anchor_w_) * 2;
                         pattern(7) = ((ii + 1) + (jj + 1) * anchor_w_) * 2 + 1;
-                        // std::cout << "pattern " << pattern << std::endl;
 
                         // Compute residual
                         double im_proxy_pixel_val;
@@ -187,14 +185,6 @@ public:
                         // Accumulate to JTJ and JTr
                         for (auto x = 0; x < J_r.size(); x++) {
                             for (auto y = 0; y < J_r.size(); y++) {
-                                // std::cout << "ii " << ii << std::endl;
-                                // std::cout << "jj " << jj << std::endl;
-                                // std::cout << "pattern(x) " << pattern(x)
-                                //           << std::endl;
-                                // std::cout << "pattern(y) " << pattern(y)
-                                //           << std::endl;
-                                // std::cout << "num_params " << num_params
-                                //           << std::endl;
                                 JTJ(pattern(x), pattern(y)) += J_r(x) * J_r(y);
                             }
                         }
