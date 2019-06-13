@@ -154,27 +154,6 @@ public:
     size_t num_images_ = 0;
 };
 
-void OptimizeWarpingFields(
-        const std::vector<std::shared_ptr<geometry::Image>>& im_grays,
-        std::vector<color_map::ImageWarpingField>& warping_fields,
-        size_t num_iter) {
-    if (im_grays.size() == 0) {
-        return;
-    }
-    int width = im_grays[0]->width_;
-    int height = im_grays[0]->height_;
-    int num_of_channels = im_grays[0]->num_of_channels_;
-    int bytes_per_channel = im_grays[0]->bytes_per_channel_;
-    size_t num_images = im_grays.size();
-
-    for (color_map::ImageWarpingField& wf : warping_fields) {
-        int num_anchors = wf.GetNumberOfAnchors();
-        for (size_t i = 0; i < num_anchors; ++i) {
-            wf.flow_(i) = wf.flow_(i) + 100;
-        }
-    }
-}
-
 std::vector<std::shared_ptr<geometry::Image>> ReadDataset(
         const std::string& root_dir,
         const std::string& pattern,
