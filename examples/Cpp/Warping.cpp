@@ -323,9 +323,9 @@ public:
         auto im_avg = std::make_shared<geometry::Image>();
         im_avg->Prepare(width_, height_, 3, 1);
 
-        // #ifdef _OPENMP
-        // #pragma omp parallel for schedule(static)
-        // #endif
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
         for (int u = 0; u < width_; u++) {
             for (int v = 0; v < height_; v++) {
                 double r = 0;
@@ -504,7 +504,7 @@ int main(int argc, char** args) {
                                               "delta-weight-%d.png", 33);
 
     WarpFieldOptimizerOption option(/*iter*/ 50, /*v_anchors*/ 16,
-                                    /*weight*/ 0.3);
+                                    /*weight*/ 0);
     WarpFieldOptimizer wf_optimizer(im_rgbs, im_masks, option);
 
     auto im_warp_avg_init = wf_optimizer.ComputeWarpAverageColorImage();
