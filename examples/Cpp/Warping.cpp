@@ -102,7 +102,7 @@ public:
                 Eigen::VectorXd JTr(num_params);
                 JTJ.setZero();
                 JTr.setZero();
-                double r2_sum_per_im = 0.0;
+                double residual = 0.0;
                 size_t num_visible_pixels = 0;
 
                 for (double u = 0; u < width_; u++) {
@@ -180,7 +180,7 @@ public:
                         std::tie(valid, im_proxy_pixel_val) =
                                 im_grays_[im_idx]->FloatValueAt(uu, vv);
                         double r = im_gray_pixel_val - im_proxy_pixel_val;
-                        r2_sum_per_im += r * r;
+                        residual += r * r;
 
                         // Accumulate to JTJ and JTr
                         for (auto x = 0; x < J_r.size(); x++) {
@@ -219,7 +219,7 @@ public:
                 }
 
                 {
-                    residual_sum += r2_sum_per_im;
+                    residual_sum += residual;
                     residual_reg_sum += residual_reg;
                 }
             }  // for (size_t im_idx = 0; im_idx < num_images_; im_idx++)
