@@ -73,10 +73,12 @@ public:
 
     // Compute average image after warping
     std::shared_ptr<geometry::Image> ComputeWarpAverageImage() {
-        std::vector<std::shared_ptr<geometry::Image>> im_warps;
+        std::vector<std::shared_ptr<geometry::Image>> im_warps(num_images_);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
         for (size_t i = 0; i < num_images_; i++) {
-            im_warps.push_back(
-                    ComputeWarpedImage(*im_grays_[i], warp_fields_[i]));
+            im_warps[i] = ComputeWarpedImage(*im_grays_[i], warp_fields_[i]);
         }
         return WarpFieldOptimizer::ComputeAverageImage(im_warps);
     }
