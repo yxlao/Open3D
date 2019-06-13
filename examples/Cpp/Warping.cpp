@@ -154,28 +154,49 @@ public:
     size_t num_images_ = 0;
 };
 
-std::vector<std::shared_ptr<geometry::Image>> ReadDataset(
-        const std::string& root_dir,
-        const std::string& pattern,
-        int num_images) {
+std::pair<std::vector<std::shared_ptr<geometry::Image>>,
+          std::vector<std::shared_ptr<geometry::Image>>>
+ReadDataset(const std::string& root_dir,
+            const std::string& im_pattern,
+            const std::string& im_mask_pattern,
+            int num_images) {
     std::vector<std::shared_ptr<geometry::Image>> im_grays;
+    std::vector<std::shared_ptr<geometry::Image>> im_masks;
     for (int i = 0; i < num_images; i++) {
-        // Get path
-        char im_path_buf[1000];
-        int status = sprintf(im_path_buf, ("%s/" + pattern).c_str(),
-                             root_dir.c_str(), i);
+        // Get im_gray
+        char buf[1000];
+        int status =
+                sprintf(buf, ("%s/" + im_pattern).c_str(), root_dir.c_str(), i);
         if (status < 0) {
-            throw std::runtime_error("Path formatting error.");
+            throw std::runtime_error("Image path formatting error.");
         }
-        std::string im_path(im_path_buf);
+        std::string im_path(buf);
         std::cout << "Reading: " << im_path << std::endl;
-
-        // Read image and convert to grayscale
         auto im_gray = std::make_shared<geometry::Image>();
         io::ReadImage(im_path, *im_gray);
         im_grays.push_back(im_gray->CreateFloatImage());
+
+        // Get im_mask
+        status = sprintf(buf, ("%s/" + im_mask_pattern).c_str(),
+                         root_dir.c_str(), i);
+        if (status < 0) {
+            throw std::runtime_error("Image mask path formatting error.");
+        }
+        std::string im_mask_path(buf);
+        std::cout << "Reading: " << im_mask_path << std::endl;
+        auto im_mask_rgb = std::make_shared<geometry::Image>();
+        io::ReadImage(im_mask_path, *im_mask_rgb);
+        auto im_mask = im_mask_rgb->CreateFloatImage()
+                               ->CreateImageFromFloatImage<uint8_t>();
+        for (size_t u = 0; u < im_mask->width_; u++) {
+            for (size_t v = 0; v < im_mask->height_; v++) {
+                if (*im_mask->PointerAt<uint8_t>(u, v) != 0) {
+                    *im_mask->PointerAt<uint8_t>(u, v) = 255;
+                }
+            }
+        }
     }
-    return im_grays;
+    return std::make_pair(im_grays, im_masks);
 }
 
 int main(int argc, char** args) {
@@ -185,8 +206,10 @@ int main(int argc, char** args) {
     std::cout << "im_dir: " << im_dir << std::endl;
 
     // Read images
-    std::vector<std::shared_ptr<geometry::Image>> im_grays =
-            ReadDataset(im_dir, "delta-color-%d.png", 33);
+    std::vector<std::shared_ptr<geometry::Image>> im_grays;
+    std::vector<std::shared_ptr<geometry::Image>> im_masks;
+    std::tie(im_grays, im_masks) = ReadDataset(im_dir, "delta-color-%d.png",
+                                               "delta-weight-%d.png", 33);
 
     size_t num_vertical_anchors = 16;
     WarpFieldOptimizer wf_optimizer(im_grays, num_vertical_anchors);
