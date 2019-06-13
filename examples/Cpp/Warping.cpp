@@ -142,7 +142,7 @@ public:
             double residual_sum = 0.0;
             double residual_reg_sum = 0.0;
 
-            if (option_.save_increments_) {
+            if (option_.save_increments_ && iter % 10 == 0) {
                 auto im_avg = ComputeWarpAverageColorImage();
                 std::string im_dir = "/home/ylao/data/inverse-projection";
 
@@ -521,7 +521,7 @@ int main(int argc, char** args) {
     std::tie(im_rgbs, im_masks) = ReadDataset(im_dir, "delta-color-%d.png",
                                               "delta-weight-%d.png", 33);
 
-    WarpFieldOptimizerOption option(/*iter*/ 100, /*v_anchors*/ 30,
+    WarpFieldOptimizerOption option(/*iter*/ 500, /*v_anchors*/ 25,
                                     /*weight*/ 0.3,
                                     /* save_increments_ */ true);
     WarpFieldOptimizer wf_optimizer(im_rgbs, im_masks, option);
