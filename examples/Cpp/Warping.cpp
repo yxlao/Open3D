@@ -75,7 +75,6 @@ public:
         width_ = im_grays[0]->width_;
         height_ = im_grays[0]->height_;
         num_of_channels_ = im_grays[0]->num_of_channels_;
-        bytes_per_channel_ = im_grays[0]->bytes_per_channel_;
         num_images_ = im_grays.size();
 
         // Init warping fields
@@ -338,7 +337,6 @@ public:
     int width_ = 0;
     int height_ = 0;
     int num_of_channels_ = 0;
-    int bytes_per_channel_ = 0;
     size_t num_images_ = 0;
     int anchor_w_;
     int anchor_h_;
@@ -405,12 +403,22 @@ int main(int argc, char** args) {
     std::tie(im_grays, im_masks) = ReadDataset(im_dir, "delta-color-%d.png",
                                                "delta-weight-%d.png", 33);
 
-    WarpFieldOptimizerOption option(/*iter*/ 10, /*v_anchors*/ 20,
-                                    /*weight*/ 0.2);
+    WarpFieldOptimizerOption option(/*iter*/ 50, /*v_anchors*/ 16,
+                                    /*weight*/ 10);
     WarpFieldOptimizer wf_optimizer(im_grays, im_masks, option);
+
+    auto im_warp_avg_init = wf_optimizer.ComputeWarpAverageImage();
+    std::string im_warp_avg_init_path =
+            im_dir + "/results/im_warp_avg_init.png";
+    std::cout << "output im_warp_avg_init_path: " << im_warp_avg_init_path
+              << std::endl;
+    io::WriteImage(im_warp_avg_init_path,
+                   *im_warp_avg_init->CreateImageFromFloatImage<uint8_t>());
+
     wf_optimizer.Optimize();
+
     auto im_warp_avg = wf_optimizer.ComputeWarpAverageImage();
-    std::string im_warp_avg_path = im_dir + "/avg_warp.png";
+    std::string im_warp_avg_path = im_dir + "/results/im_warp_avg.png";
     std::cout << "output im_warp_avg_path: " << im_warp_avg_path << std::endl;
     io::WriteImage(im_warp_avg_path,
                    *im_warp_avg->CreateImageFromFloatImage<uint8_t>());
