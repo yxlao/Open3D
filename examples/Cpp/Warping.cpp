@@ -432,7 +432,7 @@ int main(int argc, char** args) {
                                               "delta-weight-%d.png", 33);
 
     WarpFieldOptimizerOption option(/*iter*/ 50, /*v_anchors*/ 16,
-                                    /*weight*/ 10);
+                                    /*weight*/ 0.3);
     WarpFieldOptimizer wf_optimizer(im_rgbs, im_masks, option);
 
     auto im_warp_avg_init = wf_optimizer.ComputeWarpAverageImage();
