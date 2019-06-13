@@ -34,15 +34,23 @@
 
 using namespace open3d;
 
+namespace Eigen {
+typedef Eigen::Matrix<double, 8, 8> Matrix8d;
+typedef Eigen::Matrix<double, 8, 1> Vector8d;
+typedef Eigen::Matrix<int, 8, 1> Vector8i;
+}  // namespace Eigen
+
 class WarpFieldOptimizer {
 public:
     WarpFieldOptimizer(
             const std::vector<std::shared_ptr<geometry::Image>>& im_grays,
             const std::vector<std::shared_ptr<geometry::Image>>& im_masks,
-            size_t num_vertical_anchors)
+            size_t num_vertical_anchors,
+            double anchor_weight)
         : im_grays_(im_grays),
           im_masks_(im_masks),
-          num_vertical_anchors_(num_vertical_anchors) {
+          num_vertical_anchors_(num_vertical_anchors),
+          anchor_weight_(anchor_weight) {
         // TODO: ok to throw exception here?
         if (im_grays.size() == 0) {
             throw std::runtime_error("Empty inputs");
@@ -60,6 +68,11 @@ public:
             warp_fields_.push_back(color_map::ImageWarpingField(
                     width_, height_, num_vertical_anchors));
         }
+        warp_fields_identity_ = color_map::ImageWarpingField(
+                width_, height_, num_vertical_anchors);
+        anchor_w_ = warp_fields_[0].anchor_w_;
+        anchor_h_ = warp_fields_[0].anchor_h_;
+        anchor_step_ = warp_fields_[0].anchor_step_;
 
         // Init gradient images
         im_dxs_.clear();
@@ -84,28 +97,152 @@ public:
 
             for (size_t im_idx = 0; im_idx < num_images_; im_idx++) {
                 // Jacobian matrix w.r.t. warping fields' params
-                Eigen::MatrixXd JTJ;
-                Eigen::VectorXd JTr;
                 size_t num_params = warp_fields_[im_idx].GetNumParameters();
+                Eigen::MatrixXd JTJ(num_params, num_params);
+                Eigen::VectorXd JTr(num_params);
+                JTJ.setZero();
+                JTr.setZero();
+                double r2_sum_per_im = 0.0;
+                size_t num_visible_pixels = 0;
 
-                for (size_t u = 0; u < width_; u++) {
-                    for (size_t v = 0; v < height_; v++) {
-                    }
+                for (double u = 0; u < width_; u++) {
+                    for (double v = 0; v < height_; v++) {
+                        // if (!im_grays_[im_idx]->TestImageBoundary(u, v, 2)) {
+                        //     continue;
+                        // }
+                        // Compute Jacobian and residual proxy value and pattern
+                        int ii = (int)(u / anchor_step_);
+                        int jj = (int)(v / anchor_step_);
+                        if (ii >= anchor_w_ - 1 || jj >= anchor_h_ - 1) {
+                            continue;
+                        }
+                        // TODO: ADD VISIBILITY CHECK!!!!!!!!!!!!!!!!!!!!!!
+                        double p = (u - ii * anchor_step_) / anchor_step_;
+                        double q = (v - jj * anchor_step_) / anchor_step_;
+                        Eigen::Vector2d grids[4] = {
+                                warp_fields_[im_idx].QueryFlow(ii, jj),
+                                warp_fields_[im_idx].QueryFlow(ii, jj + 1),
+                                warp_fields_[im_idx].QueryFlow(ii + 1, jj),
+                                warp_fields_[im_idx].QueryFlow(ii + 1, jj + 1)};
+                        Eigen::Vector2d uuvv = (1 - p) * (1 - q) * grids[0] +
+                                               (1 - p) * (q)*grids[1] +
+                                               (p) * (1 - q) * grids[2] +
+                                               (p) * (q)*grids[3];
+                        double uu = uuvv(0);
+                        double vv = uuvv(1);
+                        // if (!im_grays_[im_idx]->TestImageBoundary(uu, vv, 2))
+                        // {
+                        //     continue;
+                        // }
+                        if (im_masks_[im_idx]->FloatValueAt(uu, vv).second ==
+                            255) {
+                            continue;
+                        }
+                        bool valid;
+                        double im_gray_pixel_val, dIdfx, dIdfy;
+                        std::tie(valid, im_gray_pixel_val) =
+                                im_grays_[im_idx]->FloatValueAt(uu, vv);
+                        std::tie(valid, dIdfx) =
+                                im_dxs_[im_idx]->FloatValueAt(uu, vv);
+                        std::tie(valid, dIdfy) =
+                                im_dys_[im_idx]->FloatValueAt(uu, vv);
+                        Eigen::Vector2d dIdf(dIdfx, dIdfy);
+                        Eigen::Vector2d dfdx =
+                                ((grids[2] - grids[0]) * (1 - q) +
+                                 (grids[3] - grids[1]) * q) /
+                                anchor_step_;
+                        Eigen::Vector2d dfdy =
+                                ((grids[1] - grids[0]) * (1 - p) +
+                                 (grids[3] - grids[2]) * p) /
+                                anchor_step_;
+
+                        Eigen::Vector8d J_r;
+                        J_r(0) = dIdf(0) * (1 - p) * (1 - q);
+                        J_r(1) = dIdf(1) * (1 - p) * (1 - q);
+                        J_r(2) = dIdf(0) * (1 - p) * (q);
+                        J_r(3) = dIdf(1) * (1 - p) * (q);
+                        J_r(4) = dIdf(0) * (p) * (1 - q);
+                        J_r(5) = dIdf(1) * (p) * (1 - q);
+                        J_r(6) = dIdf(0) * (p) * (q);
+                        J_r(7) = dIdf(1) * (p) * (q);
+
+                        Eigen::Vector8i pattern;
+                        pattern(0) = (ii + jj * anchor_w_) * 2;
+                        pattern(1) = (ii + jj * anchor_w_) * 2 + 1;
+                        pattern(2) = (ii + (jj + 1) * anchor_w_) * 2;
+                        pattern(3) = (ii + (jj + 1) * anchor_w_) * 2 + 1;
+                        pattern(4) = ((ii + 1) + jj * anchor_w_) * 2;
+                        pattern(5) = ((ii + 1) + jj * anchor_w_) * 2 + 1;
+                        pattern(6) = ((ii + 1) + (jj + 1) * anchor_w_) * 2;
+                        pattern(7) = ((ii + 1) + (jj + 1) * anchor_w_) * 2 + 1;
+                        // std::cout << "pattern " << pattern << std::endl;
+
+                        // Compute residual
+                        double im_proxy_pixel_val;
+                        std::tie(valid, im_proxy_pixel_val) =
+                                im_grays_[im_idx]->FloatValueAt(uu, vv);
+                        double r = im_gray_pixel_val - im_proxy_pixel_val;
+                        r2_sum_per_im += r * r;
+
+                        // Accumulate to JTJ and JTr
+                        for (auto x = 0; x < J_r.size(); x++) {
+                            for (auto y = 0; y < J_r.size(); y++) {
+                                // std::cout << "ii " << ii << std::endl;
+                                // std::cout << "jj " << jj << std::endl;
+                                // std::cout << "pattern(x) " << pattern(x)
+                                //           << std::endl;
+                                // std::cout << "pattern(y) " << pattern(y)
+                                //           << std::endl;
+                                // std::cout << "num_params " << num_params
+                                //           << std::endl;
+                                JTJ(pattern(x), pattern(y)) += J_r(x) * J_r(y);
+                            }
+                        }
+                        for (auto x = 0; x < J_r.size(); x++) {
+                            JTr(pattern(x)) += r * J_r(x);
+                        }
+
+                        num_visible_pixels++;
+                    }  // for (double v = 0; v < height_; v++)
+                }      // for (double u = 0; u < width_; u++)
+
+                // Per image, update anchor point with weights
+                double weight =
+                        anchor_weight_ * num_visible_pixels / width_ / height_;
+                double residual_reg;
+                for (int j = 0; j < num_params; j++) {
+                    double r = weight * (warp_fields_[im_idx].flow_(j) -
+                                         warp_fields_identity_.flow_(j));
+                    JTJ(j, j) += weight * weight;
+                    JTr(j) += weight * r;
+                    residual_reg += r * r;
                 }
-            }
-        }
 
-        // For each pixel in proxy image find corresponding pixels in im_grays
-        // and the gradient w.r.t. warp_fileds_'s parameter as Jacobian
+                bool success;
+                Eigen::VectorXd result;
+                std::tie(success, result) = utility::SolveLinearSystemPSD(
+                        JTJ, -JTr, /*prefer_sparse=*/false,
+                        /*check_symmetric=*/false,
+                        /*check_det=*/false, /*check_psd=*/false);
+                for (int j = 0; j < num_params; j++) {
+                    warp_fields_[im_idx].flow_(j) += result(j);
+                }
 
-        // Currently just +100 for illustration
-        for (color_map::ImageWarpingField& wf : warp_fields_) {
-            int num_anchors = wf.GetNumParameters();
-            for (size_t i = 0; i < num_anchors; ++i) {
-                wf.flow_(i) = wf.flow_(i) + 100;
-            }
-        }
-    }
+                {
+                    residual_sum += r2_sum_per_im;
+                    residual_reg_sum += residual_reg;
+                }
+            }  // for (size_t im_idx = 0; im_idx < num_images_; im_idx++)
+
+            // Update im_proxy after processing all images once
+            im_proxy = ComputeWarpAverageImage();
+
+            utility::PrintDebug("Residual error : %.6f, reg : %.6f\n",
+                                residual_sum, residual_reg_sum);
+
+        }  // for (size_t iter = 0; iter < num_iters; iter++)
+
+    }  // void Optimize(size_t num_iters = 100)
 
     // Compute average image after warping
     std::shared_ptr<geometry::Image> ComputeWarpAverageImage() {
@@ -181,16 +318,22 @@ protected:
 
 public:
     std::vector<color_map::ImageWarpingField> warp_fields_;
+    color_map::ImageWarpingField warp_fields_identity_;
     std::vector<std::shared_ptr<geometry::Image>> im_grays_;
     std::vector<std::shared_ptr<geometry::Image>> im_dxs_;  // dx of im_grays_
     std::vector<std::shared_ptr<geometry::Image>> im_dys_;  // dy of im_grays_
     std::vector<std::shared_ptr<geometry::Image>> im_masks_;
     size_t num_vertical_anchors_;
+    double anchor_weight_;
+
     int width_ = 0;
     int height_ = 0;
     int num_of_channels_ = 0;
     int bytes_per_channel_ = 0;
     size_t num_images_ = 0;
+    int anchor_w_;
+    int anchor_h_;
+    double anchor_step_;
 };
 
 std::pair<std::vector<std::shared_ptr<geometry::Image>>,
@@ -253,7 +396,9 @@ int main(int argc, char** args) {
                                                "delta-weight-%d.png", 33);
 
     size_t num_vertical_anchors = 16;
-    WarpFieldOptimizer wf_optimizer(im_grays, im_masks, num_vertical_anchors);
+    double anchor_weight = 0.316;
+    WarpFieldOptimizer wf_optimizer(im_grays, im_masks, num_vertical_anchors,
+                                    anchor_weight);
     wf_optimizer.Optimize();
     auto im_warp_avg = wf_optimizer.ComputeWarpAverageImage();
     std::string im_warp_avg_path = im_dir + "/avg_warp.png";
