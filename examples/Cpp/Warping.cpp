@@ -38,8 +38,11 @@ class WarpFieldOptimizer {
 public:
     WarpFieldOptimizer(
             const std::vector<std::shared_ptr<geometry::Image>>& im_grays,
+            const std::vector<std::shared_ptr<geometry::Image>>& im_masks,
             size_t num_vertical_anchors)
-        : im_grays_(im_grays), num_vertical_anchors_(num_vertical_anchors) {
+        : im_grays_(im_grays),
+          im_masks_(im_masks),
+          num_vertical_anchors_(num_vertical_anchors) {
         // TODO: ok to throw exception here?
         if (im_grays.size() == 0) {
             throw std::runtime_error("Empty inputs");
@@ -146,6 +149,7 @@ protected:
 public:
     std::vector<color_map::ImageWarpingField> warp_fields_;
     std::vector<std::shared_ptr<geometry::Image>> im_grays_;
+    std::vector<std::shared_ptr<geometry::Image>> im_masks_;
     size_t num_vertical_anchors_;
     int width_ = 0;
     int height_ = 0;
@@ -213,7 +217,7 @@ int main(int argc, char** args) {
                                                "delta-weight-%d.png", 33);
 
     size_t num_vertical_anchors = 16;
-    WarpFieldOptimizer wf_optimizer(im_grays, num_vertical_anchors);
+    WarpFieldOptimizer wf_optimizer(im_grays, im_masks, num_vertical_anchors);
     wf_optimizer.Optimize();
     auto im_warp_avg = wf_optimizer.ComputeWarpAverageImage();
     std::string im_warp_avg_path = im_dir + "/avg_warp.png";
