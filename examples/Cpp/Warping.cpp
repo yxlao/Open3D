@@ -178,7 +178,7 @@ public:
                         // Compute residual
                         double im_proxy_pixel_val;
                         std::tie(valid, im_proxy_pixel_val) =
-                                im_grays_[im_idx]->FloatValueAt(uu, vv);
+                                im_proxy->FloatValueAt(uu, vv);
                         double r = im_gray_pixel_val - im_proxy_pixel_val;
                         residual += r * r;
 
