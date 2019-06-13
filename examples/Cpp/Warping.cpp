@@ -102,6 +102,31 @@ public:
             im_dys_.push_back(
                     im_gray->Filter(geometry::Image::FilterType::Sobel3Dy));
         }
+
+        // Conver to float im_r, im_g, im_b for color interpolation
+        for (const auto& im_rgb : im_rgbs_) {
+            auto im_r = std::make_shared<geometry::Image>();
+            im_r->Prepare(width_, height_, 1, 4);
+            auto im_g = std::make_shared<geometry::Image>();
+            im_g->Prepare(width_, height_, 1, 4);
+            auto im_b = std::make_shared<geometry::Image>();
+            im_b->Prepare(width_, height_, 1, 4);
+
+            for (int u = 0; u < width_; u++) {
+                for (int v = 0; v < height_; v++) {
+                    *(im_r->PointerAt<float>(u, v)) = double(
+                            *(im_rgb->PointerAt<uint8_t>(u, v, 0)) / 255.);
+                    *(im_g->PointerAt<float>(u, v)) = double(
+                            *(im_rgb->PointerAt<uint8_t>(u, v, 1)) / 255.);
+                    *(im_b->PointerAt<float>(u, v)) = double(
+                            *(im_rgb->PointerAt<uint8_t>(u, v, 2)) / 255.);
+                }
+            }
+
+            im_rs_.push_back(im_r);
+            im_gs_.push_back(im_g);
+            im_bs_.push_back(im_b);
+        }
     }
     ~WarpFieldOptimizer() {}
 
@@ -293,6 +318,50 @@ public:
         return im_avg;
     }
 
+    // Compute average image after warping
+    std::shared_ptr<geometry::Image> ComputeWarpAverageColorImage() {
+        auto im_avg = std::make_shared<geometry::Image>();
+        im_avg->Prepare(width_, height_, 3, 1);
+
+        // #ifdef _OPENMP
+        // #pragma omp parallel for schedule(static)
+        // #endif
+        for (int u = 0; u < width_; u++) {
+            for (int v = 0; v < height_; v++) {
+                double r = 0;
+                double g = 0;
+                double b = 0;
+                size_t num_visible_image = 0;
+                for (size_t im_idx = 0; im_idx < num_images_; im_idx++) {
+                    Eigen::Vector2d uuvv =
+                            warp_fields_[im_idx].GetImageWarpingField(u, v);
+                    double uu = uuvv(0);
+                    double vv = uuvv(1);
+                    if (im_masks_[im_idx]->FloatValueAt(uu, vv).second != 1) {
+                        continue;
+                    }
+                    r += im_rs_[im_idx]->FloatValueAt(uu, vv).second;
+                    g += im_gs_[im_idx]->FloatValueAt(uu, vv).second;
+                    b += im_bs_[im_idx]->FloatValueAt(uu, vv).second;
+                    // std::cout << r << " " << g << " " << b << std::endl;
+                    num_visible_image++;
+                }
+                if (num_visible_image > 0) {
+                    r /= num_visible_image;
+                    g /= num_visible_image;
+                    b /= num_visible_image;
+                }
+                *(im_avg->PointerAt<uint8_t>(u, v, 0)) =
+                        static_cast<uint8_t>(r * 255.);
+                *(im_avg->PointerAt<uint8_t>(u, v, 1)) =
+                        static_cast<uint8_t>(g * 255.);
+                *(im_avg->PointerAt<uint8_t>(u, v, 2)) =
+                        static_cast<uint8_t>(b * 255.);
+            }
+        }
+        return im_avg;
+    }
+
 protected:
     // Compute Warped image with image and warp field
     static std::shared_ptr<geometry::Image> ComputeWarpedImage(
@@ -357,6 +426,9 @@ public:
     std::vector<color_map::ImageWarpingField> warp_fields_;
     color_map::ImageWarpingField warp_fields_identity_;
     std::vector<std::shared_ptr<geometry::Image>> im_rgbs_;
+    std::vector<std::shared_ptr<geometry::Image>> im_rs_;
+    std::vector<std::shared_ptr<geometry::Image>> im_gs_;
+    std::vector<std::shared_ptr<geometry::Image>> im_bs_;
     std::vector<std::shared_ptr<geometry::Image>> im_grays_;
     std::vector<std::shared_ptr<geometry::Image>> im_dxs_;  // dx of im_grays_
     std::vector<std::shared_ptr<geometry::Image>> im_dys_;  // dy of im_grays_
@@ -435,21 +507,19 @@ int main(int argc, char** args) {
                                     /*weight*/ 0.3);
     WarpFieldOptimizer wf_optimizer(im_rgbs, im_masks, option);
 
-    auto im_warp_avg_init = wf_optimizer.ComputeWarpAverageImage();
+    auto im_warp_avg_init = wf_optimizer.ComputeWarpAverageColorImage();
     std::string im_warp_avg_init_path =
             im_dir + "/results/im_warp_avg_init.png";
     std::cout << "output im_warp_avg_init_path: " << im_warp_avg_init_path
               << std::endl;
-    io::WriteImage(im_warp_avg_init_path,
-                   *im_warp_avg_init->CreateImageFromFloatImage<uint8_t>());
+    io::WriteImage(im_warp_avg_init_path, *im_warp_avg_init);
 
     wf_optimizer.Optimize();
 
-    auto im_warp_avg = wf_optimizer.ComputeWarpAverageImage();
+    auto im_warp_avg = wf_optimizer.ComputeWarpAverageColorImage();
     std::string im_warp_avg_path = im_dir + "/results/im_warp_avg.png";
     std::cout << "output im_warp_avg_path: " << im_warp_avg_path << std::endl;
-    io::WriteImage(im_warp_avg_path,
-                   *im_warp_avg->CreateImageFromFloatImage<uint8_t>());
+    io::WriteImage(im_warp_avg_path, *im_warp_avg);
 
     return 0;
 }
