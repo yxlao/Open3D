@@ -62,20 +62,25 @@ public:
 class WarpFieldOptimizer {
 public:
     WarpFieldOptimizer(
-            const std::vector<std::shared_ptr<geometry::Image>>& im_grays,
+            const std::vector<std::shared_ptr<geometry::Image>>& im_rgbs,
             const std::vector<std::shared_ptr<geometry::Image>>& im_masks,
             const WarpFieldOptimizerOption& option)
-        : im_grays_(im_grays), im_masks_(im_masks), option_(option) {
+        : im_rgbs_(im_rgbs), im_masks_(im_masks), option_(option) {
         // TODO: ok to throw exception here?
-        if (im_grays.size() == 0) {
+        if (im_rgbs_.size() == 0) {
             throw std::runtime_error("Empty inputs");
         }
 
+        // Prepare im_grays
+        for (const auto& im_rgb : im_rgbs) {
+            im_grays_.push_back(im_rgb->CreateFloatImage());
+        }
+
         // TODO: check that all images are of the same size
-        width_ = im_grays[0]->width_;
-        height_ = im_grays[0]->height_;
-        num_of_channels_ = im_grays[0]->num_of_channels_;
-        num_images_ = im_grays.size();
+        width_ = im_grays_[0]->width_;
+        height_ = im_grays_[0]->height_;
+        num_of_channels_ = im_grays_[0]->num_of_channels_;
+        num_images_ = im_grays_.size();
 
         // Init warping fields
         for (auto i = 0; i < num_images_; i++) {
@@ -91,7 +96,7 @@ public:
         // Init gradient images
         im_dxs_.clear();
         im_dys_.clear();
-        for (const auto& im_gray : im_grays) {
+        for (const auto& im_gray : im_grays_) {
             im_dxs_.push_back(
                     im_gray->Filter(geometry::Image::FilterType::Sobel3Dx));
             im_dys_.push_back(
@@ -351,6 +356,7 @@ protected:
 public:
     std::vector<color_map::ImageWarpingField> warp_fields_;
     color_map::ImageWarpingField warp_fields_identity_;
+    std::vector<std::shared_ptr<geometry::Image>> im_rgbs_;
     std::vector<std::shared_ptr<geometry::Image>> im_grays_;
     std::vector<std::shared_ptr<geometry::Image>> im_dxs_;  // dx of im_grays_
     std::vector<std::shared_ptr<geometry::Image>> im_dys_;  // dy of im_grays_
@@ -373,10 +379,10 @@ ReadDataset(const std::string& root_dir,
             const std::string& im_pattern,
             const std::string& im_mask_pattern,
             int num_images) {
-    std::vector<std::shared_ptr<geometry::Image>> im_grays;
+    std::vector<std::shared_ptr<geometry::Image>> im_rgbs;
     std::vector<std::shared_ptr<geometry::Image>> im_masks;
     for (int i = 0; i < num_images; i++) {
-        // Get im_gray
+        // Get im_rgb
         char buf[1000];
         int status =
                 sprintf(buf, ("%s/" + im_pattern).c_str(), root_dir.c_str(), i);
@@ -385,9 +391,9 @@ ReadDataset(const std::string& root_dir,
         }
         std::string im_path(buf);
         // std::cout << "Reading: " << im_path << std::endl;
-        auto im_gray = std::make_shared<geometry::Image>();
-        io::ReadImage(im_path, *im_gray);
-        im_grays.push_back(im_gray->CreateFloatImage());
+        auto im_rgb = std::make_shared<geometry::Image>();
+        io::ReadImage(im_path, *im_rgb);
+        im_rgbs.push_back(im_rgb);
 
         // Get im_mask
         status = sprintf(buf, ("%s/" + im_mask_pattern).c_str(),
@@ -410,7 +416,7 @@ ReadDataset(const std::string& root_dir,
         im_masks.push_back(im_mask);
     }
     std::cout << "Read " << num_images << " images" << std::endl;
-    return std::make_pair(im_grays, im_masks);
+    return std::make_pair(im_rgbs, im_masks);
 }
 
 int main(int argc, char** args) {
@@ -420,14 +426,14 @@ int main(int argc, char** args) {
     std::cout << "im_dir: " << im_dir << std::endl;
 
     // Read images
-    std::vector<std::shared_ptr<geometry::Image>> im_grays;
+    std::vector<std::shared_ptr<geometry::Image>> im_rgbs;
     std::vector<std::shared_ptr<geometry::Image>> im_masks;
-    std::tie(im_grays, im_masks) = ReadDataset(im_dir, "delta-color-%d.png",
-                                               "delta-weight-%d.png", 33);
+    std::tie(im_rgbs, im_masks) = ReadDataset(im_dir, "delta-color-%d.png",
+                                              "delta-weight-%d.png", 33);
 
     WarpFieldOptimizerOption option(/*iter*/ 50, /*v_anchors*/ 16,
                                     /*weight*/ 10);
-    WarpFieldOptimizer wf_optimizer(im_grays, im_masks, option);
+    WarpFieldOptimizer wf_optimizer(im_rgbs, im_masks, option);
 
     auto im_warp_avg_init = wf_optimizer.ComputeWarpAverageImage();
     std::string im_warp_avg_init_path =
