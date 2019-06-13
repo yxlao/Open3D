@@ -47,16 +47,19 @@ public:
             // Python/color_map/color_map.cpp
             int num_iters = 100,
             int num_vertical_anchors = 10,
-            double anchor_weight = 0.316)
+            double anchor_weight = 0.316,
+            bool save_increments = false)
         : num_iters_(num_iters),
           num_vertical_anchors_(num_vertical_anchors),
-          anchor_weight_(anchor_weight) {}
+          anchor_weight_(anchor_weight),
+          save_increments_(save_increments) {}
     ~WarpFieldOptimizerOption() {}
 
 public:
     int num_iters_;
     int num_vertical_anchors_;
     double anchor_weight_;
+    bool save_increments_;
 };
 
 class WarpFieldOptimizer {
@@ -138,6 +141,19 @@ public:
         for (size_t iter = 0; iter < option_.num_iters_; iter++) {
             double residual_sum = 0.0;
             double residual_reg_sum = 0.0;
+
+            if (option_.save_increments_) {
+                auto im_avg = ComputeWarpAverageColorImage();
+                std::string im_dir = "/home/ylao/data/inverse-projection";
+
+                std::stringstream im_path;
+                im_path << im_dir << "/results/" << std::setw(4)
+                        << std::setfill('0') << iter << ".jpg";
+
+                std::cout << "output im_warp_avg_init_path: " << im_path.str()
+                          << std::endl;
+                io::WriteImage(im_path.str(), *im_avg);
+            }
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
@@ -282,7 +298,6 @@ public:
 
             utility::PrintDebug("Residual error : %.6f, reg : %.6f\n",
                                 residual_sum, residual_reg_sum);
-
         }  // for (size_t iter = 0; iter < num_iters; iter++)
 
     }  // void Optimize(size_t num_iters = 100)
@@ -506,8 +521,9 @@ int main(int argc, char** args) {
     std::tie(im_rgbs, im_masks) = ReadDataset(im_dir, "delta-color-%d.png",
                                               "delta-weight-%d.png", 33);
 
-    WarpFieldOptimizerOption option(/*iter*/ 50, /*v_anchors*/ 16,
-                                    /*weight*/ 0.3);
+    WarpFieldOptimizerOption option(/*iter*/ 100, /*v_anchors*/ 30,
+                                    /*weight*/ 0.3,
+                                    /* save_increments_ */ true);
     WarpFieldOptimizer wf_optimizer(im_rgbs, im_masks, option);
 
     auto im_warp_avg_init = wf_optimizer.ComputeWarpAverageColorImage();
