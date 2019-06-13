@@ -40,17 +40,32 @@ typedef Eigen::Matrix<double, 8, 1> Vector8d;
 typedef Eigen::Matrix<int, 8, 1> Vector8i;
 }  // namespace Eigen
 
+class WarpFieldOptimizerOption {
+public:
+    WarpFieldOptimizerOption(
+            // Attention: when you update the defaults, update the docstrings in
+            // Python/color_map/color_map.cpp
+            int num_iters = 100,
+            int num_vertical_anchors = 10,
+            double anchor_weight = 0.316)
+        : num_iters_(num_iters),
+          num_vertical_anchors_(num_vertical_anchors),
+          anchor_weight_(anchor_weight) {}
+    ~WarpFieldOptimizerOption() {}
+
+public:
+    int num_iters_;
+    int num_vertical_anchors_;
+    double anchor_weight_;
+};
+
 class WarpFieldOptimizer {
 public:
     WarpFieldOptimizer(
             const std::vector<std::shared_ptr<geometry::Image>>& im_grays,
             const std::vector<std::shared_ptr<geometry::Image>>& im_masks,
-            size_t num_vertical_anchors,
-            double anchor_weight)
-        : im_grays_(im_grays),
-          im_masks_(im_masks),
-          num_vertical_anchors_(num_vertical_anchors),
-          anchor_weight_(anchor_weight) {
+            const WarpFieldOptimizerOption& option)
+        : im_grays_(im_grays), im_masks_(im_masks), option_(option) {
         // TODO: ok to throw exception here?
         if (im_grays.size() == 0) {
             throw std::runtime_error("Empty inputs");
@@ -66,10 +81,10 @@ public:
         // Init warping fields
         for (auto i = 0; i < num_images_; i++) {
             warp_fields_.push_back(color_map::ImageWarpingField(
-                    width_, height_, num_vertical_anchors));
+                    width_, height_, option_.num_vertical_anchors_));
         }
         warp_fields_identity_ = color_map::ImageWarpingField(
-                width_, height_, num_vertical_anchors);
+                width_, height_, option_.num_vertical_anchors_);
         anchor_w_ = warp_fields_[0].anchor_w_;
         anchor_h_ = warp_fields_[0].anchor_h_;
         anchor_step_ = warp_fields_[0].anchor_step_;
@@ -87,11 +102,11 @@ public:
     ~WarpFieldOptimizer() {}
 
     // Run optimization of warp_fields_
-    void Optimize(size_t num_iters = 100) {
+    void Optimize() {
         // Initialize proxy image with avg
         std::shared_ptr<geometry::Image> im_proxy = ComputeWarpAverageImage();
 
-        for (size_t iter = 0; iter < num_iters; iter++) {
+        for (size_t iter = 0; iter < option_.num_iters_; iter++) {
             double residual_sum = 0.0;
             double residual_reg_sum = 0.0;
 
@@ -200,8 +215,8 @@ public:
                 }      // for (double u = 0; u < width_; u++)
 
                 // Per image, update anchor point with weights
-                double weight =
-                        anchor_weight_ * num_visible_pixels / width_ / height_;
+                double weight = option_.anchor_weight_ * num_visible_pixels /
+                                width_ / height_;
                 double residual_reg;
                 for (int j = 0; j < num_params; j++) {
                     double r = weight * (warp_fields_[im_idx].flow_(j) -
@@ -318,8 +333,6 @@ public:
     std::vector<std::shared_ptr<geometry::Image>> im_dxs_;  // dx of im_grays_
     std::vector<std::shared_ptr<geometry::Image>> im_dys_;  // dy of im_grays_
     std::vector<std::shared_ptr<geometry::Image>> im_masks_;
-    size_t num_vertical_anchors_;
-    double anchor_weight_;
 
     int width_ = 0;
     int height_ = 0;
@@ -329,6 +342,8 @@ public:
     int anchor_w_;
     int anchor_h_;
     double anchor_step_;
+
+    WarpFieldOptimizerOption option_;
 };
 
 std::pair<std::vector<std::shared_ptr<geometry::Image>>,
@@ -390,10 +405,9 @@ int main(int argc, char** args) {
     std::tie(im_grays, im_masks) = ReadDataset(im_dir, "delta-color-%d.png",
                                                "delta-weight-%d.png", 33);
 
-    size_t num_vertical_anchors = 16;
-    double anchor_weight = 0.316;
-    WarpFieldOptimizer wf_optimizer(im_grays, im_masks, num_vertical_anchors,
-                                    anchor_weight);
+    WarpFieldOptimizerOption option(/*iter*/ 100, /*v_anchors*/ 20,
+                                    /*weight*/ 0.1);
+    WarpFieldOptimizer wf_optimizer(im_grays, im_masks, option);
     wf_optimizer.Optimize();
     auto im_warp_avg = wf_optimizer.ComputeWarpAverageImage();
     std::string im_warp_avg_path = im_dir + "/avg_warp.png";
