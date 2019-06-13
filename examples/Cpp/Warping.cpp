@@ -182,7 +182,13 @@ public:
                             1) {
                             continue;
                         }
+
+                        // Get the proxy reference value
                         bool valid;
+                        double im_proxy_pixel_val;
+                        std::tie(valid, im_proxy_pixel_val) =
+                                im_proxy->FloatValueAt(u, v);
+
                         double im_gray_pixel_val, dIdfx, dIdfy;
                         std::tie(valid, im_gray_pixel_val) =
                                 im_grays_[im_idx]->FloatValueAt(uu, vv);
@@ -221,9 +227,6 @@ public:
                         pattern(7) = ((ii + 1) + (jj + 1) * anchor_w_) * 2 + 1;
 
                         // Compute residual
-                        double im_proxy_pixel_val;
-                        std::tie(valid, im_proxy_pixel_val) =
-                                im_proxy->FloatValueAt(uu, vv);
                         double r = im_gray_pixel_val - im_proxy_pixel_val;
                         residual += r * r;
 
@@ -504,7 +507,7 @@ int main(int argc, char** args) {
                                               "delta-weight-%d.png", 33);
 
     WarpFieldOptimizerOption option(/*iter*/ 50, /*v_anchors*/ 16,
-                                    /*weight*/ 0);
+                                    /*weight*/ 0.3);
     WarpFieldOptimizer wf_optimizer(im_rgbs, im_masks, option);
 
     auto im_warp_avg_init = wf_optimizer.ComputeWarpAverageColorImage();
