@@ -255,7 +255,7 @@ public:
     }  // void Optimize(size_t num_iters = 100)
 
     // Compute average image after warping
-    std::shared_ptr<geometry::Image> ComputeWarpAverageImage() {
+    std::shared_ptr<geometry::Image> ComputeWarpAverageImage_DEPRECATED() {
         std::vector<std::shared_ptr<geometry::Image>> im_warps(num_images_);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
@@ -264,6 +264,36 @@ public:
             im_warps[i] = ComputeWarpedImage(*im_grays_[i], warp_fields_[i]);
         }
         return WarpFieldOptimizer::ComputeAverageImage(im_warps);
+    }
+
+    // Compute average image after warping
+    std::shared_ptr<geometry::Image> ComputeWarpAverageImage() {
+        auto im_avg = std::make_shared<geometry::Image>();
+        im_avg->Prepare(width_, height_, num_of_channels_, 4);
+        for (double u = 0; u < width_; u++) {
+            for (double v = 0; v < height_; v++) {
+                double pixel_val = 0;
+                size_t num_visible_image = 0;
+                for (size_t im_idx = 0; im_idx < num_images_; im_idx++) {
+                    Eigen::Vector2d uuvv =
+                            warp_fields_[im_idx].GetImageWarpingField(u, v);
+                    double uu = uuvv(0);
+                    double vv = uuvv(1);
+                    if (im_masks_[im_idx]->FloatValueAt(uu, vv).second != 1) {
+                        continue;
+                    }
+                    pixel_val += im_grays_[im_idx]->FloatValueAt(uu, vv).second;
+                    num_visible_image++;
+                }
+                if (num_visible_image > 0) {
+                    pixel_val /= num_visible_image;
+                } else {
+                    pixel_val = 0;
+                }
+                *(im_avg->PointerAt<float>(u, v)) = pixel_val;
+            }
+        }
+        return im_avg;
     }
 
 protected:
