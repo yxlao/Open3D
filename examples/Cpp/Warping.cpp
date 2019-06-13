@@ -60,6 +60,16 @@ public:
             warp_fields_.push_back(color_map::ImageWarpingField(
                     width_, height_, num_vertical_anchors));
         }
+
+        // Init gradient images
+        im_dxs_.clear();
+        im_dys_.clear();
+        for (const auto& im_gray : im_grays) {
+            im_dxs_.push_back(
+                    im_gray->Filter(geometry::Image::FilterType::Sobel3Dx));
+            im_dys_.push_back(
+                    im_gray->Filter(geometry::Image::FilterType::Sobel3Dy));
+        }
     }
     ~WarpFieldOptimizer() {}
 
@@ -149,6 +159,8 @@ protected:
 public:
     std::vector<color_map::ImageWarpingField> warp_fields_;
     std::vector<std::shared_ptr<geometry::Image>> im_grays_;
+    std::vector<std::shared_ptr<geometry::Image>> im_dxs_;  // dx of im_grays_
+    std::vector<std::shared_ptr<geometry::Image>> im_dys_;  // dy of im_grays_
     std::vector<std::shared_ptr<geometry::Image>> im_masks_;
     size_t num_vertical_anchors_;
     int width_ = 0;
@@ -175,7 +187,7 @@ ReadDataset(const std::string& root_dir,
             throw std::runtime_error("Image path formatting error.");
         }
         std::string im_path(buf);
-        std::cout << "Reading: " << im_path << std::endl;
+        // std::cout << "Reading: " << im_path << std::endl;
         auto im_gray = std::make_shared<geometry::Image>();
         io::ReadImage(im_path, *im_gray);
         im_grays.push_back(im_gray->CreateFloatImage());
@@ -187,7 +199,7 @@ ReadDataset(const std::string& root_dir,
             throw std::runtime_error("Image mask path formatting error.");
         }
         std::string im_mask_path(buf);
-        std::cout << "Reading: " << im_mask_path << std::endl;
+        // std::cout << "Reading: " << im_mask_path << std::endl;
         auto im_mask_rgb = std::make_shared<geometry::Image>();
         io::ReadImage(im_mask_path, *im_mask_rgb);
         auto im_mask = im_mask_rgb->CreateFloatImage()
@@ -201,6 +213,7 @@ ReadDataset(const std::string& root_dir,
         }
         im_masks.push_back(im_mask);
     }
+    std::cout << "Read " << num_images << " images" << std::endl;
     return std::make_pair(im_grays, im_masks);
 }
 
