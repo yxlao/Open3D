@@ -41,16 +41,11 @@ std::tuple<MatOutType, VecOutType, double> ComputeJTJandJTrNonRigid(
         int nonrigidval,
         bool verbose /*=true*/) {
     MatOutType JTJ(6 + nonrigidval, 6 + nonrigidval);
-    VecOutType JTr(6 + nonrigidval);
-    double r2_sum = 0.0;
     JTJ.setZero();
+    VecOutType JTr(6 + nonrigidval);
     JTr.setZero();
+    double r2_sum = 0.0;
 
-    MatOutType JTJ_private(6 + nonrigidval, 6 + nonrigidval);
-    VecOutType JTr_private(6 + nonrigidval);
-    double r2_sum_private = 0.0;
-    JTJ_private.setZero();
-    JTr_private.setZero();
     VecInTypeDouble J_r;
     VecInTypeInt pattern;
     double r;
@@ -59,19 +54,14 @@ std::tuple<MatOutType, VecOutType, double> ComputeJTJandJTrNonRigid(
         f(i, J_r, r, pattern);
         for (auto x = 0; x < J_r.size(); x++) {
             for (auto y = 0; y < J_r.size(); y++) {
-                JTJ_private(pattern(x), pattern(y)) += J_r(x) * J_r(y);
+                JTJ(pattern(x), pattern(y)) += J_r(x) * J_r(y);
             }
         }
         for (auto x = 0; x < J_r.size(); x++) {
-            JTr_private(pattern(x)) += r * J_r(x);
+            JTr(pattern(x)) += r * J_r(x);
         }
-        r2_sum_private += r * r;
+        r2_sum += r * r;
     }
-
-    JTJ += JTJ_private;
-    JTr += JTr_private;
-    r2_sum += r2_sum_private;
-
     if (verbose) {
         utility::PrintDebug("Residual : %.2e (# of elements : %d)\n",
                             r2_sum / (double)num_visible_vertices,

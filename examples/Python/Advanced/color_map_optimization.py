@@ -57,7 +57,7 @@ if __name__ == "__main__":
     # Q.-Y. Zhou and V. Koltun,
     # Color Map Optimization for 3D Reconstruction with Consumer Depth Cameras,
     # SIGGRAPH 2014
-    option.maximum_iteration = 300
+    option.maximum_iteration = 100
     option.non_rigid_camera_coordinate = True
     o3d.color_map.color_map_optimization(mesh, rgbd_images, camera, option)
     o3d.visualization.draw_geometries([mesh])
