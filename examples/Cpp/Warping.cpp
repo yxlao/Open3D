@@ -75,9 +75,32 @@ public:
 
     // Run optimization of warp_fields_
     void Optimize(size_t num_iters = 100) {
+        // Initialize proxy image with avg
+        std::shared_ptr<geometry::Image> im_proxy = ComputeWarpAverageImage();
+
+        for (size_t iter = 0; iter < num_iters; iter++) {
+            double residual_sum = 0.0;
+            double residual_reg_sum = 0.0;
+
+            for (size_t im_idx = 0; im_idx < num_images_; im_idx++) {
+                // Jacobian matrix w.r.t. warping fields' params
+                Eigen::MatrixXd JTJ;
+                Eigen::VectorXd JTr;
+                size_t num_params = warp_fields_[im_idx].GetNumParameters();
+
+                for (size_t u = 0; u < width_; u++) {
+                    for (size_t v = 0; v < height_; v++) {
+                    }
+                }
+            }
+        }
+
+        // For each pixel in proxy image find corresponding pixels in im_grays
+        // and the gradient w.r.t. warp_fileds_'s parameter as Jacobian
+
         // Currently just +100 for illustration
         for (color_map::ImageWarpingField& wf : warp_fields_) {
-            int num_anchors = wf.GetNumberOfAnchors();
+            int num_anchors = wf.GetNumParameters();
             for (size_t i = 0; i < num_anchors; ++i) {
                 wf.flow_(i) = wf.flow_(i) + 100;
             }

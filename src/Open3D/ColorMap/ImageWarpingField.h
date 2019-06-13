@@ -44,7 +44,7 @@ public:
 public:
     bool ConvertToJsonValue(Json::Value &value) const override;
     bool ConvertFromJsonValue(const Json::Value &value) override;
-    int GetNumberOfAnchors() const;
+    int GetNumParameters() const;
 
 public:
     Eigen::VectorXd flow_;

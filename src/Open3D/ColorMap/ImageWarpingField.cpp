@@ -123,7 +123,7 @@ bool ImageWarpingField::ConvertFromJsonValue(const Json::Value &value) {
     return true;
 }
 
-int ImageWarpingField::GetNumberOfAnchors() const {
+int ImageWarpingField::GetNumParameters() const {
     return anchor_w_ * anchor_h_ * 2;
 };
 

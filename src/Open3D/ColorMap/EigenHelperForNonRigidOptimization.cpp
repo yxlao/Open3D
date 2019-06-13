@@ -37,7 +37,7 @@ template <typename VecInTypeDouble,
           typename VecOutType>
 std::tuple<MatOutType, VecOutType, double> ComputeJTJandJTrNonRigid(
         std::function<void(int, VecInTypeDouble &, double &, VecInTypeInt &)> f,
-        int iteration_num,
+        int num_visible_vertices,
         int nonrigidval,
         bool verbose /*=true*/) {
     MatOutType JTJ(6 + nonrigidval, 6 + nonrigidval);
@@ -60,7 +60,7 @@ std::tuple<MatOutType, VecOutType, double> ComputeJTJandJTrNonRigid(
 #ifdef _OPENMP
 #pragma omp for nowait
 #endif
-        for (int i = 0; i < iteration_num; i++) {
+        for (int i = 0; i < num_visible_vertices; i++) {
             f(i, J_r, r, pattern);
             for (auto x = 0; x < J_r.size(); x++) {
                 for (auto y = 0; y < J_r.size(); y++) {
@@ -85,7 +85,8 @@ std::tuple<MatOutType, VecOutType, double> ComputeJTJandJTrNonRigid(
 #endif
     if (verbose) {
         utility::PrintDebug("Residual : %.2e (# of elements : %d)\n",
-                            r2_sum / (double)iteration_num, iteration_num);
+                            r2_sum / (double)num_visible_vertices,
+                            num_visible_vertices);
     }
     return std::make_tuple(std::move(JTJ), std::move(JTr), r2_sum);
 }
@@ -94,7 +95,7 @@ template std::tuple<Eigen::MatrixXd, Eigen::VectorXd, double>
 ComputeJTJandJTrNonRigid(
         std::function<
                 void(int, Eigen::Vector14d &, double &, Eigen::Vector14i &)> f,
-        int iteration_num,
+        int num_visible_vertices,
         int nonrigidval,
         bool verbose);
 
