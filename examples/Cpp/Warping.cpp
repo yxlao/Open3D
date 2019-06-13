@@ -95,6 +95,9 @@ public:
             double residual_sum = 0.0;
             double residual_reg_sum = 0.0;
 
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
             for (size_t im_idx = 0; im_idx < num_images_; im_idx++) {
                 // Jacobian matrix w.r.t. warping fields' params
                 size_t num_params = warp_fields_[im_idx].GetNumParameters();
@@ -217,7 +220,9 @@ public:
                 for (int j = 0; j < num_params; j++) {
                     warp_fields_[im_idx].flow_(j) += result(j);
                 }
-
+#ifdef _OPENMP
+#pragma omp critical
+#endif
                 {
                     residual_sum += residual;
                     residual_reg_sum += residual_reg;
