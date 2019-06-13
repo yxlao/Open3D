@@ -147,12 +147,10 @@ public:
                                                (p) * (q)*grids[3];
                         double uu = uuvv(0);
                         double vv = uuvv(1);
-                        // if (!im_grays_[im_idx]->TestImageBoundary(uu, vv, 2))
-                        // {
-                        //     continue;
-                        // }
-                        if (im_masks_[im_idx]->FloatValueAt(uu, vv).second ==
-                            255) {
+                        // std::cout << "(" << u << ", " << v << ") -> (" << uu
+                        //           << ", " << vv << ")" << std::endl;
+                        if (im_masks_[im_idx]->FloatValueAt(uu, vv).second !=
+                            1) {
                             continue;
                         }
                         bool valid;
@@ -213,6 +211,9 @@ public:
                         num_visible_pixels++;
                     }  // for (double v = 0; v < height_; v++)
                 }      // for (double u = 0; u < width_; u++)
+
+                // std::cout << "num_visible_pixels " << num_visible_pixels
+                //           << std::endl;
 
                 // Per image, update anchor point with weights
                 double weight = option_.anchor_weight_ * num_visible_pixels /
@@ -378,12 +379,11 @@ ReadDataset(const std::string& root_dir,
         // std::cout << "Reading: " << im_mask_path << std::endl;
         auto im_mask_rgb = std::make_shared<geometry::Image>();
         io::ReadImage(im_mask_path, *im_mask_rgb);
-        auto im_mask = im_mask_rgb->CreateFloatImage()
-                               ->CreateImageFromFloatImage<uint8_t>();
+        auto im_mask = im_mask_rgb->CreateFloatImage();
         for (size_t u = 0; u < im_mask->width_; u++) {
             for (size_t v = 0; v < im_mask->height_; v++) {
-                if (*im_mask->PointerAt<uint8_t>(u, v) != 0) {
-                    *im_mask->PointerAt<uint8_t>(u, v) = 255;
+                if (*im_mask->PointerAt<float>(u, v) != 0) {
+                    *im_mask->PointerAt<float>(u, v) = 1;
                 }
             }
         }
@@ -405,8 +405,8 @@ int main(int argc, char** args) {
     std::tie(im_grays, im_masks) = ReadDataset(im_dir, "delta-color-%d.png",
                                                "delta-weight-%d.png", 33);
 
-    WarpFieldOptimizerOption option(/*iter*/ 100, /*v_anchors*/ 20,
-                                    /*weight*/ 0.1);
+    WarpFieldOptimizerOption option(/*iter*/ 10, /*v_anchors*/ 20,
+                                    /*weight*/ 0.2);
     WarpFieldOptimizer wf_optimizer(im_grays, im_masks, option);
     wf_optimizer.Optimize();
     auto im_warp_avg = wf_optimizer.ComputeWarpAverageImage();
