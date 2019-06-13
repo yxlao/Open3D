@@ -212,10 +212,6 @@ int main(int argc, char** args) {
     std::tie(im_grays, im_masks) = ReadDataset(im_dir, "delta-color-%d.png",
                                                "delta-weight-%d.png", 33);
 
-    // Output one im_mask for debugging
-    std::string im_mask_path = im_dir + "/mask_0.png";
-    io::WriteImage(im_mask_path, *im_masks[0]);
-
     size_t num_vertical_anchors = 16;
     WarpFieldOptimizer wf_optimizer(im_grays, num_vertical_anchors);
     wf_optimizer.Optimize();
