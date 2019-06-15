@@ -11,14 +11,8 @@ namespace io {
 /** To be separated in another class **/
 bool ReadTexturedTriangleMeshFromOBJ(
     const std::string &filename,
-    geometry::TexturedTriangleMesh &mesh);
-
-/** Unsupported now: tinyobjload does not support writing **/
-bool WriteTexturedTriangleMeshToOBJ(
-    const std::string &filename,
-    /* size = 1: diffuse;
-     * size = 5: diffuse, normal, roughness, metallic, ambient */
-    const std::vector<std::string> &textures,
-    const geometry::TexturedTriangleMesh &mesh);
+    geometry::TexturedTriangleMesh &mesh,
+    int default_tex_width = 512,
+    int default_tex_height = 512);
 }
 }

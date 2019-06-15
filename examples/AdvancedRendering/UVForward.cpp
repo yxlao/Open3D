@@ -18,6 +18,6 @@ int main() {
     auto mesh = std::make_shared<geometry::TexturedTriangleMesh>();
     io::ReadTexturedTriangleMeshFromOBJ(base_path + "/cyborg.obj", *mesh);
 
-    auto target = io::CreateImageFromFile(base_path + "/capture.png");
+//    auto target = io::CreateImageFromFile(base_path + "/capture.png");
     visualization::DrawGeometriesUV({mesh}, true);
 }

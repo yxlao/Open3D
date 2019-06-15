@@ -103,10 +103,10 @@ bool SpotTextureMapShader::BindGeometry(const geometry::Geometry &geometry,
     CheckGLState(GetShaderName() + ".BindGeometry()");
 
     auto &mesh = (const geometry::TexturedTriangleMesh &) geometry;
-    assert(mesh.image_textures_.size() >= kNumTextures);
-    tex_buffers_.resize(mesh.image_textures_.size());
-    for (int i = 0; i < mesh.image_textures_.size(); ++i) {
-        tex_buffers_[i] = BindTexture2D(mesh.image_textures_[i], option);
+    assert(mesh.texture_images_.size() >= kNumTextures);
+    tex_buffers_.resize(mesh.texture_images_.size());
+    for (int i = 0; i < mesh.texture_images_.size(); ++i) {
+        tex_buffers_[i] = BindTexture2D(mesh.texture_images_[i], option);
     }
     CheckGLState(GetShaderName() + ".BindTexture()");
 

@@ -32,8 +32,8 @@
 #include <Open3D/Geometry/TriangleMesh.h>
 #include <Open3D/Visualization/Utility/ColorMap.h>
 
-#include <AdvancedRendering/Visualization/Shader/Shader.h>
 #include <AdvancedRendering/Geometry/TexturedTriangleMesh.h>
+#include <AdvancedRendering/Visualization/Shader/Shader.h>
 #include <AdvancedRendering/Visualization/Visualizer/RenderOptionAdvanced.h>
 
 namespace open3d {
@@ -42,8 +42,7 @@ namespace visualization {
 namespace glsl {
 
 bool UVForwardShader::Compile() {
-    if (!CompileShaders(UVForwardVertexShader,
-                        nullptr,
+    if (!CompileShaders(UVForwardVertexShader, nullptr,
                         UVForwardFragmentShader)) {
         PrintShaderWarning("Compiling shaders failed.");
         return false;
@@ -82,8 +81,7 @@ bool UVForwardShader::BindGeometry(const geometry::Geometry &geometry,
     std::vector<Eigen::Vector2f> uvs;
     std::vector<Eigen::Vector3i> triangles;
 
-    if (!PrepareBinding(geometry, option, view,
-                        points, uvs, triangles)) {
+    if (!PrepareBinding(geometry, option, view, points, uvs, triangles)) {
         PrintShaderWarning("Binding failed when preparing data.");
         return false;
     }
@@ -95,12 +93,12 @@ bool UVForwardShader::BindGeometry(const geometry::Geometry &geometry,
 
     CheckGLState(GetShaderName() + ".BindGeometry()");
 
-    auto mesh = (const geometry::TexturedTriangleMesh &) geometry;
-    assert(mesh.image_textures_.size() >= kNumObjectTextures);
+    auto mesh = (const geometry::TexturedTriangleMesh &)geometry;
+    assert(mesh.texture_images_.size() >= kNumObjectTextures);
     texes_object_buffers_.resize(kNumObjectTextures);
     for (int i = 0; i < kNumObjectTextures; ++i) {
-        texes_object_buffers_[i] = BindTexture2D(
-            mesh.image_textures_[i], option);
+        texes_object_buffers_[i] =
+                BindTexture2D(mesh.texture_images_[i], option);
     }
 
     CheckGLState(GetShaderName() + ".BindTexture()");
@@ -117,19 +115,19 @@ bool UVForwardShader::RenderGeometry(const geometry::Geometry &geometry,
         return false;
     }
 
-    auto advanced_option = (const RenderOptionAdvanced &) option;
+    auto advanced_option = (const RenderOptionAdvanced &)option;
 
     if (advanced_option.render_to_fbo_) {
-        glBindFramebuffer(GL_FRAMEBUFFER, advanced_option.fbo_);
-        glBindRenderbuffer(GL_RENDERBUFFER, advanced_option.rbo_);
+        glBindFramebuffer(GL_FRAMEBUFFER, advanced_option.fbo_forward_);
+        glBindRenderbuffer(GL_RENDERBUFFER, advanced_option.rbo_forward_);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                                GL_TEXTURE_2D,
-                               advanced_option.tex_output_buffer_[0], 0);
+                               advanced_option.tex_forward_image_buffer_, 0);
+        glClearTexImage(advanced_option.tex_forward_image_buffer_, 0,
+                GL_RGB, GL_FLOAT, nullptr);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
                                GL_TEXTURE_2D,
-                               advanced_option.tex_output_buffer_[1], 0);
-        glClearColor(0, 0, 0, 0);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                               advanced_option.tex_forward_depth_buffer_, 0);
     }
 
     glUseProgram(program_);
@@ -154,9 +152,19 @@ bool UVForwardShader::RenderGeometry(const geometry::Geometry &geometry,
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_);
 
+    if (advanced_option.render_to_fbo_) {
+        std::vector<GLenum> draw_buffers;
+        for (int i = 0; i < 1; ++i) {
+            draw_buffers.emplace_back(GL_COLOR_ATTACHMENT0 + i);
+        }
+        glDrawBuffers(draw_buffers.size(), draw_buffers.data());
+    }
+
+    glClearColor(0, 0, 0, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glDrawElements(draw_arrays_mode_, draw_arrays_size_, GL_UNSIGNED_INT,
                    nullptr);
-    glDrawArrays(GL_POINTS, 0, draw_arrays_size_);
+//    glDrawArrays(GL_POINTS, 0, draw_arrays_size_);
 
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
@@ -184,14 +192,13 @@ void UVForwardShader::UnbindGeometry() {
     }
 }
 
-bool UVForwardShader::PrepareRendering(
-    const geometry::Geometry &geometry,
-    const RenderOption &option,
-    const ViewControl &view) {
+bool UVForwardShader::PrepareRendering(const geometry::Geometry &geometry,
+                                       const RenderOption &option,
+                                       const ViewControl &view) {
     if (geometry.GetGeometryType() !=
         geometry::Geometry::GeometryType::TexturedTriangleMesh) {
         PrintShaderWarning(
-            "Rendering type is not geometry::TexturedTriangleMesh.");
+                "Rendering type is not geometry::TexturedTriangleMesh.");
         return false;
     }
     if (option.mesh_show_back_face_) {
@@ -212,20 +219,19 @@ bool UVForwardShader::PrepareRendering(
     return true;
 }
 
-bool UVForwardShader::PrepareBinding(
-    const geometry::Geometry &geometry,
-    const RenderOption &option,
-    const ViewControl &view,
-    std::vector<Eigen::Vector3f> &points,
-    std::vector<Eigen::Vector2f> &uvs,
-    std::vector<Eigen::Vector3i> &triangles) {
+bool UVForwardShader::PrepareBinding(const geometry::Geometry &geometry,
+                                     const RenderOption &option,
+                                     const ViewControl &view,
+                                     std::vector<Eigen::Vector3f> &points,
+                                     std::vector<Eigen::Vector2f> &uvs,
+                                     std::vector<Eigen::Vector3i> &triangles) {
     if (geometry.GetGeometryType() !=
         geometry::Geometry::GeometryType::TexturedTriangleMesh) {
         PrintShaderWarning(
-            "Rendering type is not geometry::TexturedTriangleMesh.");
+                "Rendering type is not geometry::TexturedTriangleMesh.");
         return false;
     }
-    auto &mesh = (const geometry::TexturedTriangleMesh &) geometry;
+    auto &mesh = (const geometry::TexturedTriangleMesh &)geometry;
     if (!mesh.HasTriangles()) {
         PrintShaderWarning("Binding failed with empty triangle mesh.");
         return false;

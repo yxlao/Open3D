@@ -107,11 +107,11 @@ bool IBLTextureMapShader::BindGeometry(const geometry::Geometry &geometry,
     CheckGLState(GetShaderName() + ".BindGeometry");
 
     auto mesh = (const geometry::TexturedTriangleMesh &) geometry;
-    assert(mesh.image_textures_.size() >= kNumObjectTextures);
-    tex_object_buffers_.resize(mesh.image_textures_.size());
-    for (int i = 0; i < mesh.image_textures_.size(); ++i) {
+    assert(mesh.texture_images_.size() >= kNumObjectTextures);
+    tex_object_buffers_.resize(mesh.texture_images_.size());
+    for (int i = 0; i < mesh.texture_images_.size(); ++i) {
         tex_object_buffers_[i] = BindTexture2D(
-            mesh.image_textures_[i], option);
+            mesh.texture_images_[i], option);
     }
 
     CheckGLState(GetShaderName() + ".BindTexture");

@@ -2,15 +2,17 @@
 // Created by Wei Dong on 2019-05-30.
 //
 
-#include <tinyobjloader/tiny_obj_loader.h>
 #include <AdvancedRendering/Geometry/TexturedTriangleMesh.h>
+#include <tinyobjloader/tiny_obj_loader.h>
 #include "../ClassIO/TexturedTriangleMeshIO.h"
 
 namespace open3d {
 namespace io {
 
 bool ReadTexturedTriangleMeshFromOBJ(const std::string &filename,
-                                     geometry::TexturedTriangleMesh &mesh) {
+                                     geometry::TexturedTriangleMesh &mesh,
+                                     int default_tex_width, /* = 512 */
+                                     int default_tex_height /* = 512 */) {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
@@ -19,13 +21,8 @@ bool ReadTexturedTriangleMeshFromOBJ(const std::string &filename,
 
     std::string warn;
     std::string err;
-    bool ret = tinyobj::LoadObj(&attrib,
-                                &shapes,
-                                &materials,
-                                &warn,
-                                &err,
-                                filename.c_str(),
-                                base_dir.c_str());
+    bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
+                                filename.c_str(), base_dir.c_str());
 
     if (!warn.empty()) {
         utility::PrintWarning("tinyobjfile: %s.\n", warn.c_str());
@@ -40,7 +37,7 @@ bool ReadTexturedTriangleMeshFromOBJ(const std::string &filename,
     // Loop over shapes (usually only one mesh)
     if (shapes.size() > 1) {
         utility::PrintWarning(
-            "More than 1 shape existing, only loading the 1st one!\n");
+                "More than 1 shape existing, only loading the 1st one!\n");
     } else if (shapes.empty()) {
         utility::PrintError("No shape found!\n");
         return false;
@@ -76,8 +73,7 @@ bool ReadTexturedTriangleMeshFromOBJ(const std::string &filename,
             tinyobj::real_t nx = attrib.normals[3 * idx.normal_index + 0];
             tinyobj::real_t ny = attrib.normals[3 * idx.normal_index + 1];
             tinyobj::real_t nz = attrib.normals[3 * idx.normal_index + 2];
-            mesh.vertex_normals_[triangle[v]] =
-                Eigen::Vector3d(nx, ny, nz);
+            mesh.vertex_normals_[triangle[v]] = Eigen::Vector3d(nx, ny, nz);
 
             tinyobj::real_t tx = attrib.texcoords[2 * idx.texcoord_index + 0];
             tinyobj::real_t ty = attrib.texcoords[2 * idx.texcoord_index + 1];
@@ -89,17 +85,15 @@ bool ReadTexturedTriangleMeshFromOBJ(const std::string &filename,
     }
 
     if (materials.empty()) {
-        utility::PrintWarning("Material not loaded!\n");
+        utility::PrintWarning("Material not found!\n");
         return true;
     }
 
     std::vector<std::string> tex_names;
     auto mat = materials[0];
-    std::cout << mat.name << "\n";
     if (!materials[0].diffuse_texname.empty()) {
         tex_names.emplace_back(materials[0].diffuse_texname);
     }
-
     std::vector<std::string> pbr_tex_names;
     if (!materials[0].normal_texname.empty()) {
         pbr_tex_names.emplace_back(materials[0].normal_texname);
@@ -116,25 +110,16 @@ bool ReadTexturedTriangleMeshFromOBJ(const std::string &filename,
 
     /** Fall back to diffuse only, if there are not enough pbr textures**/
     if (pbr_tex_names.size() == 4) {
-        tex_names.insert(tex_names.end(),
-                         pbr_tex_names.begin(), pbr_tex_names.end());
+        tex_names.insert(tex_names.end(), pbr_tex_names.begin(),
+                         pbr_tex_names.end());
     }
 
     for (auto &tex_name : tex_names) {
         tex_name = base_dir + "/" + tex_name;
     }
 
-    mesh.LoadImageTextures(tex_names);
+    mesh.LoadImageTextures(tex_names, default_tex_width, default_tex_height);
     return true;
 }
-
-bool WriteTexturedTriangleMeshToOBJ(
-    const std::string &filename,
-    /* size = 1: diffuse;
-     * size = 5: diffuse, normal, roughness, metallic, ambient */
-    const std::vector<std::string> &textures,
-    const geometry::TexturedTriangleMesh &mesh) {
-    return false;
-}
-} // namespace io
-} // namespace open3d
+}  // namespace io
+}  // namespace open3d

@@ -11,11 +11,11 @@ namespace geometry {
 
 std::shared_ptr<Image> ConvertImageFromFloatImage(const Image &image);
 std::shared_ptr<Image> FlipImageExt(const Image &image);
-}
+}  // namespace geometry
 
 namespace io {
 bool WriteImageToHDR(const std::string &filename, const geometry::Image &image);
 std::shared_ptr<geometry::Image> ReadImageFromHDR(const std::string &filename);
 
-}
+}  // namespace io
 }

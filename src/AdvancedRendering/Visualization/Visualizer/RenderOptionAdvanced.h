@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <Open3D/Open3D.h>
 #include <AdvancedRendering/Geometry/Lighting.h>
+#include <Open3D/Open3D.h>
 
 namespace open3d {
 namespace visualization {
@@ -29,37 +29,36 @@ public:
 
 public:
     /**************************************/
-    /** States for differentiable rendering: we need a reference **/
-    bool is_ref_tex_allocated_ = false;
-    GLuint tex_ref_buffer_;
     bool forward_ = true;
-
-    GLuint tex_sum_color_buffer_;
-    GLuint tex_sum_weight_buffer_;
-
-public:
-    /**************************************/
-    /** States for rendering to buffer **/
-    bool is_fbo_allocated_ = false;
-    bool is_fbo_texture_allocated_ = false;
     bool render_to_fbo_ = false;
 
-    GLuint fbo_;
-    GLuint rbo_;
-    std::vector<GLuint> tex_output_buffer_;
+    /* Input image */
+    bool is_image_tex_allocated_ = false;
+    GLuint tex_image_buffer_;
 
-    /** Manually select one in tex_output_buffer_ **/
+    bool is_fbo_allocated_ = false;
+    GLuint fbo_forward_;
+    GLuint fbo_backward_;
+    GLuint rbo_forward_;
+    GLuint rbo_backward_;
+
+    /* Output uv */
+    bool is_fbo_tex_allocated_ = false;
+    GLuint tex_forward_image_buffer_;
+    GLuint tex_forward_depth_buffer_;
+    GLuint tex_backward_uv_color_buffer_;
+    GLuint tex_backward_uv_weight_buffer_;
+
     GLuint tex_visualize_buffer_;
-    void SetVisualizeBuffer(int i) {
-        assert(i < tex_output_buffer_.size());
-        tex_visualize_buffer_ = tex_output_buffer_[i];
+    void SetVisualizeBuffer(GLuint tex_vis_buffer) {
+        tex_visualize_buffer_ = tex_vis_buffer;
     }
 
-    GLuint tex_depth_buffer_;
-    void SetDepthBuffer(int i) {
-        assert(i < tex_output_buffer_.size());
-        tex_depth_buffer_ = tex_output_buffer_[i];
-    }
+    int tex_image_width_;
+    int tex_image_height_;
+
+    int tex_uv_width_;
+    int tex_uv_height_;
 };
-}
-}
+}  // namespace visualization
+}  // namespace open3d

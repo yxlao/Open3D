@@ -47,12 +47,12 @@ bool GeometryRendererPBR::Render(const RenderOption &option,
 
         if (option_lighting.type_
             == geometry::Lighting::LightingType::IBL) {
-            return (mesh.HasUVs() && mesh.HasImageTextures(kNumTextures)) ?
+            return (mesh.HasUVs() && mesh.HasTextureImages(kNumTextures)) ?
                    ibx_texure_map_shader_.Render(mesh, option, view) :
                    false;
         } else if (option_lighting.type_
             == geometry::Lighting::LightingType::Spot) {
-            return (mesh.HasUVs() && mesh.HasImageTextures(kNumTextures)) ?
+            return (mesh.HasUVs() && mesh.HasTextureImages(kNumTextures)) ?
                    spot_light_shader_.Render(mesh, option, view) :
                    false;
         }
