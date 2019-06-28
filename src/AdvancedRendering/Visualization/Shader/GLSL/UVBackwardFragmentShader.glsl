@@ -35,5 +35,5 @@ void main() {
     < margin * (cos_np - cos_thr) / (1 - cos_thr));
 
     color = mask ? texture(tex_image, proj_ref_position.xy).xyz : vec3(0);
-    weight = mask ? vec3(cos_np / dot(position, position)) : vec3(0);
+    weight = mask ? vec3(0, min(0.1 * cos_np / dot(position, position), 1), 1) : vec3(0);
 }

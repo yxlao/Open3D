@@ -56,6 +56,7 @@ int main() {
     io::ReadTexturedTriangleMeshFromOBJ(base_path + "/fountain-10k.obj",
                                         *mesh_obj, target_tex_width,
                                         target_tex_height);
+    mesh_obj->LoadImageTextures({"./inverse-proj-result/im_warp_avg.png"}, false);
 
     /** Correct the built-in transform from blender **/
     Eigen::Matrix4d transform;
@@ -85,7 +86,7 @@ int main() {
 
     for (int i = 0; i < key_filenames.size(); ++i) {
         auto target = io::CreateImageFromFile(key_filenames[i]);
-        visualizer.EnableBackwardMode(target);
+        visualizer.EnableForwardMode();
 
         camera::PinholeCameraParameters params;
         params.intrinsic_ = intrinsic;
@@ -94,14 +95,12 @@ int main() {
 
         visualizer.UpdateRender();
         visualizer.PollEvents();
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        visualizer.CaptureScreenImage("./inverse-proj-result/render-" + std::to_string(i) + ".png");
 
-        auto pair = visualizer.GetSubTextures();
-        io::WriteImage("inverse-proj-data/delta-color-" + std::to_string(i) + ".png",
-                       *geometry::ConvertImageFromFloatImage(*pair.first));
-        io::WriteImage("inverse-proj-data/delta-weight-" + std::to_string(i) + ".png",
-                       *geometry::ConvertImageFromFloatImage(*pair.second));
-
-//        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        auto im = std::make_shared<geometry::Image>();
+        io::ReadImage(key_filenames[i], *im);
+        io::WriteImage("./inverse-proj-result/real-" + std::to_string(i) + ".png", *im);
     }
 
     visualizer.DestroyVisualizerWindow();

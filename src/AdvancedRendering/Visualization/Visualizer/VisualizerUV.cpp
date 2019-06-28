@@ -126,23 +126,6 @@ bool VisualizerUV::EnableBackwardMode(
                                 GL_RGB16F, GL_RGB, GL_FLOAT, false,
                                 *render_option_advanced);
 
-        sum_color_ = std::make_shared<geometry::Image>();
-        sum_color_->PrepareImage(render_option_advanced->tex_uv_width_,
-                                 render_option_advanced->tex_uv_height_, 3, 4);
-
-        sum_weight_ = std::make_shared<geometry::Image>();
-        sum_weight_->PrepareImage(render_option_advanced->tex_uv_width_,
-                                  render_option_advanced->tex_uv_height_, 3, 4);
-
-        for (int v = 0; v < render_option_advanced->tex_uv_height_; ++v) {
-            for (int u = 0; u < render_option_advanced->tex_uv_width_; ++u) {
-                for (int c = 0; c < 3; ++c) {
-                    *geometry::PointerAt<float>(*sum_color_, u, v, c) = 0;
-                    *geometry::PointerAt<float>(*sum_weight_, u, v, c) = 0;
-                }
-            }
-        }
-
         render_option_advanced->is_fbo_tex_allocated_ = true;
     }
 

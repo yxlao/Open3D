@@ -37,11 +37,9 @@ public:
     bool EnableForwardMode();
     bool EnableBackwardMode(const std::shared_ptr<geometry::Image> &image);
 
-    /** Reserved for accumulation **/
-    std::shared_ptr<geometry::Image> sum_color_;
-    std::shared_ptr<geometry::Image> sum_weight_;
-
-    bool UpdateSumTextures() {
+    std::pair<std::shared_ptr<geometry::Image>,
+              std::shared_ptr<geometry::Image>>
+    GetSubTextures() {
         auto advanced_render_option =
                 (const RenderOptionAdvanced &)*render_option_ptr_;
         int width = advanced_render_option.tex_uv_width_;
@@ -55,41 +53,7 @@ public:
                       advanced_render_option.tex_backward_uv_weight_buffer_);
         auto delta_weight =
                 ReadTexture2D(width, height, 3, 4, GL_RGB, GL_FLOAT);
-
-        for (int v = 0; v < height; ++v) {
-            for (int u = 0; u < width; ++u) {
-                for (int c = 0; c < 3; ++c) {
-                    auto delta_c =
-                            geometry::PointerAt<float>(*delta_color, u, v, c);
-                    auto delta_w =
-                            geometry::PointerAt<float>(*delta_weight, u, v, c);
-                    auto sum_c =
-                            geometry::PointerAt<float>(*sum_color_, u, v, c);
-                    auto sum_w =
-                            geometry::PointerAt<float>(*sum_weight_, u, v, c);
-
-                    *delta_w *= 0.005;
-                    float weight = *sum_w + *delta_w;
-                    float color =
-                            std::abs(weight) < 1e-6
-                                    ? 0
-                                    : (*delta_w * *delta_c + *sum_w * *sum_c) /
-                                              weight;
-                    //                    utility::PrintError("(%d %d %d): %f *
-                    //                    %f + %f * %f => %f\n",
-                    //                        u, v, c, *delta_w, *delta_c,
-                    //                        *sum_w, *sum_c, color);
-                    *sum_w = *delta_w;
-                    *sum_c = *delta_c;
-                }  // c
-            }      // v
-        }          // u
-    }
-
-    std::pair<std::shared_ptr<geometry::Image>,
-              std::shared_ptr<geometry::Image>>
-    GetSumTextures() {
-        return std::make_pair(sum_color_, sum_weight_);
+        return std::make_pair(delta_color, delta_weight);
     }
 };
 }  // namespace visualization

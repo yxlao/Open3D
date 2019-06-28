@@ -29,6 +29,7 @@ public:
     /** Manually load textures: nullptr allowed, fallback to other modes
      * e.g. phong **/
     bool LoadImageTextures(const std::vector<std::string> &filenames,
+                           bool flip = true,
                            int default_tex_width = 512,
                            int default_tex_height = 512) {
         std::vector<std::shared_ptr<geometry::Image>> images;
@@ -45,14 +46,17 @@ public:
             }
             images.emplace_back(image_ptr);
         }
-        LoadImageTextures(images);
+        LoadImageTextures(images, flip);
         return true;
     }
 
     void LoadImageTextures(
-            const std::vector<std::shared_ptr<geometry::Image>> &images) {
+            const std::vector<std::shared_ptr<geometry::Image>> &images,
+            bool flip) {
+        texture_images_.clear();
         for (auto &image : images) {
-            texture_images_.emplace_back(*FlipImageExt(*image));
+            texture_images_.emplace_back(
+                    flip ? *FlipImageExt(*image) : *image);
         }
     }
 
