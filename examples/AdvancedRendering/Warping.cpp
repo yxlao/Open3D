@@ -28,6 +28,7 @@
 #include <iomanip>
 #include <iostream>
 #include <memory>
+#include <numeric>
 #include <sstream>
 
 #include "Open3D/Open3D.h"
@@ -67,8 +68,12 @@ public:
     WarpFieldOptimizer(
             const std::vector<std::shared_ptr<geometry::Image>>& im_rgbs,
             const std::vector<std::shared_ptr<geometry::Image>>& im_masks,
+            const std::vector<std::shared_ptr<geometry::Image>>& im_weights,
             const WarpFieldOptimizerOption& option)
-        : im_rgbs_(im_rgbs), im_masks_(im_masks), option_(option) {
+        : im_rgbs_(im_rgbs),
+          im_masks_(im_masks),
+          im_weights_(im_weights),
+          option_(option) {
         // TODO: ok to throw exception here?
         if (im_rgbs_.size() == 0) {
             throw std::runtime_error("Empty inputs");
@@ -133,6 +138,12 @@ public:
             im_gs_.push_back(im_g);
             im_bs_.push_back(im_b);
         }
+
+        inverse_proxy_masks_.resize(im_masks_.size());
+        for (auto &inverse_proxy_mask : inverse_proxy_masks_) {
+            inverse_proxy_mask = std::make_shared<geometry::Image>();
+            inverse_proxy_mask->PrepareImage(width_, height_, 1, 1);
+        }
     }
     ~WarpFieldOptimizer() {}
 
@@ -171,11 +182,13 @@ public:
                 JTJ.setZero();
                 JTr.setZero();
                 double residual = 0.0;
-                size_t num_visible_pixels = 0;
+                float sum_visible_pixels_weight = 0;
 
                 for (double u = 0; u < width_; u++) {
                     for (double v = 0; v < height_; v++) {
-                        if (*geometry::PointerAt<unsigned char>(*mask_proxy_, u, v) == 0) {
+                        if (*geometry::PointerAt<unsigned char>(*mask_proxy_, u,
+                                                                v) == 0
+                        || (*geometry::PointerAt<unsigned char>(*inverse_proxy_masks_[im_idx], u, v) == 0)) {
                             continue;
                         }
 
@@ -252,7 +265,7 @@ public:
                         pattern(7) = ((ii + 1) + (jj + 1) * anchor_w_) * 2 + 1;
 
                         // Compute residual
-                        double r = im_gray_pixel_val - im_proxy_pixel_val;
+                        double r = (im_gray_pixel_val - im_proxy_pixel_val);
                         residual += r * r;
 
                         // Accumulate to JTJ and JTr
@@ -265,7 +278,10 @@ public:
                             JTr(pattern(x)) += r * J_r(x);
                         }
 
-                        num_visible_pixels++;
+                        sum_visible_pixels_weight +=
+                                im_weights_[im_idx]
+                                        ->FloatValueAt(uu, vv)
+                                        .second;
                     }  // for (double v = 0; v < height_; v++)
                 }      // for (double u = 0; u < width_; u++)
 
@@ -273,9 +289,9 @@ public:
                 //           << std::endl;
 
                 // Per image, update anchor point with weights
-                double weight = option_.anchor_weight_ * num_visible_pixels /
-                                width_ / height_;
-                double residual_reg;
+                double weight = option_.anchor_weight_ *
+                                sum_visible_pixels_weight / width_ / height_;
+                double residual_reg = 0;
                 for (int j = 0; j < num_params; j++) {
                     double r = weight * (warp_fields_[im_idx].flow_(j) -
                                          warp_fields_identity_.flow_(j));
@@ -321,7 +337,8 @@ public:
 #endif
         for (int u = 0; u < width_; u++) {
             for (int v = 0; v < height_; v++) {
-                if (*geometry::PointerAt<unsigned char>(*mask_proxy_, u, v) == 0) {
+                if (*geometry::PointerAt<unsigned char>(*mask_proxy_, u, v) ==
+                    0) {
                     continue;
                 }
 
@@ -364,9 +381,10 @@ public:
                 for (size_t im_idx = 0; im_idx < num_images_; im_idx++) {
                     *(geometry::PointerAt<unsigned char>(*mask, u, v)) =
                             (*(geometry::PointerAt<unsigned char>(*mask, u,
-                                                                 v)) ||
-                            (im_masks_[im_idx]->FloatValueAt(u, v).second > 0))
-                            ? 255 : 0;
+                                                                  v)) ||
+                             (im_masks_[im_idx]->FloatValueAt(u, v).second > 0))
+                                    ? 255
+                                    : 0;
                 }
             }
         }
@@ -374,6 +392,14 @@ public:
     }
 
     // Compute average image after warping
+    struct Pixel {
+        double weight;
+        double r;
+        double g;
+        double b;
+        int idx;
+    };
+
     std::shared_ptr<geometry::Image> ComputeWarpAverageColorImage() {
         auto im_avg = std::make_shared<geometry::Image>();
         im_avg->PrepareImage(width_, height_, 3, 1);
@@ -383,32 +409,64 @@ public:
 #endif
         for (int u = 0; u < width_; u++) {
             for (int v = 0; v < height_; v++) {
-                if (*geometry::PointerAt<unsigned char>(*mask_proxy_, u, v) == 0) {
+                for (size_t im_idx = 0; im_idx < num_images_; im_idx++) {
+                    *geometry::PointerAt<unsigned char>(
+                            *inverse_proxy_masks_[im_idx], u, v) = 0;
+                }
+                if (*geometry::PointerAt<unsigned char>(*mask_proxy_, u, v) ==
+                    0) {
                     continue;
                 }
-                double r = 0;
-                double g = 0;
-                double b = 0;
-                size_t num_visible_image = 0;
+
+                std::vector<Pixel> candidate_pixels;
                 for (size_t im_idx = 0; im_idx < num_images_; im_idx++) {
+
                     Eigen::Vector2d uuvv =
                             warp_fields_[im_idx].GetImageWarpingField(u, v);
                     double uu = uuvv(0);
                     double vv = uuvv(1);
-                    if (im_masks_[im_idx]->FloatValueAt(uu, vv).second != 1) {
+
+                    if (im_masks_[im_idx]->FloatValueAt(uu, vv).second < 0.5) {
                         continue;
                     }
-                    r += im_rs_[im_idx]->FloatValueAt(uu, vv).second;
-                    g += im_gs_[im_idx]->FloatValueAt(uu, vv).second;
-                    b += im_bs_[im_idx]->FloatValueAt(uu, vv).second;
-                    // std::cout << r << " " << g << " " << b << std::endl;
-                    num_visible_image++;
+
+                    candidate_pixels.push_back(
+                            {im_weights_[im_idx]->FloatValueAt(uu, vv).second,
+                             im_rs_[im_idx]->FloatValueAt(uu, vv).second,
+                             im_gs_[im_idx]->FloatValueAt(uu, vv).second,
+                             im_bs_[im_idx]->FloatValueAt(uu, vv).second,
+                             (int)im_idx});
                 }
-                if (num_visible_image > 0) {
-                    r /= num_visible_image;
-                    g /= num_visible_image;
-                    b /= num_visible_image;
+
+                double r = 0;
+                double g = 0;
+                double b = 0;
+                double sum_weights = 0;
+
+                std::sort(candidate_pixels.begin(), candidate_pixels.end(),
+                          [](const Pixel& lhs, const Pixel& rhs) {
+                              return lhs.weight > rhs.weight;
+                          });
+
+                int kTopWeightNeighbor = 5;
+                int range = std::min((int)candidate_pixels.size(),
+                                     kTopWeightNeighbor);
+
+                for (int i = 0; i < range; ++i) {
+                    const Pixel& pixel = candidate_pixels[i];
+                    r += pixel.r * pixel.weight;
+                    g += pixel.g * pixel.weight;
+                    b += pixel.b * pixel.weight;
+                    sum_weights += pixel.weight;
+                    *geometry::PointerAt<unsigned char>(*inverse_proxy_masks_[pixel.idx], u, v) = 1;
                 }
+
+                if (sum_weights > 0) {
+                    r /= sum_weights;
+                    g /= sum_weights;
+                    b /= sum_weights;
+                }
+
                 *(geometry::PointerAt<uint8_t>(*im_avg, u, v, 0)) =
                         static_cast<uint8_t>(r * 255.);
                 *(geometry::PointerAt<uint8_t>(*im_avg, u, v, 1)) =
@@ -492,8 +550,10 @@ public:
     std::vector<std::shared_ptr<geometry::Image>> im_dxs_;  // dx of im_grays_
     std::vector<std::shared_ptr<geometry::Image>> im_dys_;  // dy of im_grays_
     std::vector<std::shared_ptr<geometry::Image>> im_masks_;
+    std::vector<std::shared_ptr<geometry::Image>> im_weights_;
 
     std::shared_ptr<geometry::Image> mask_proxy_;
+    std::vector<std::shared_ptr<geometry::Image>> inverse_proxy_masks_;
 
     int width_ = 0;
     int height_ = 0;
@@ -506,14 +566,16 @@ public:
     WarpFieldOptimizerOption option_;
 };
 
-std::pair<std::vector<std::shared_ptr<geometry::Image>>,
-          std::vector<std::shared_ptr<geometry::Image>>>
+std::tuple<std::vector<std::shared_ptr<geometry::Image>>,
+           std::vector<std::shared_ptr<geometry::Image>>,
+           std::vector<std::shared_ptr<geometry::Image>>>
 ReadDataset(const std::string& root_dir,
             const std::string& im_pattern,
             const std::string& im_mask_pattern,
             int num_images) {
     std::vector<std::shared_ptr<geometry::Image>> im_rgbs;
     std::vector<std::shared_ptr<geometry::Image>> im_masks;
+    std::vector<std::shared_ptr<geometry::Image>> im_weights;
     for (int i = 0; i < num_images; i++) {
         // Get im_rgb
         char buf[1000];
@@ -538,18 +600,38 @@ ReadDataset(const std::string& root_dir,
         std::cout << "Reading: " << im_mask_path << std::endl;
         auto im_mask_rgb = std::make_shared<geometry::Image>();
         io::ReadImage(im_mask_path, *im_mask_rgb);
-        auto im_mask = CreateFloatImageFromImage(*im_mask_rgb);
+
+        // (0, weight, mask)
+        auto im_mask = std::make_shared<geometry::Image>();
+        auto im_weight = std::make_shared<geometry::Image>();
+        im_mask->PrepareImage(im_mask_rgb->width_, im_mask_rgb->height_, 1, 4);
+        im_weight->PrepareImage(im_mask_rgb->width_, im_mask_rgb->height_, 1,
+                                4);
         for (size_t u = 0; u < im_mask->width_; u++) {
             for (size_t v = 0; v < im_mask->height_; v++) {
-                if (*geometry::PointerAt<float>(*im_mask, u, v) != 0) {
-                    *geometry::PointerAt<float>(*im_mask, u, v) = 1;
-                }
+                *geometry::PointerAt<float>(*im_mask, u, v) =
+                        *geometry::PointerAt<unsigned char>(*im_mask_rgb, u, v,
+                                                            2) > 0
+                                ? 1
+                                : 0;
+                *geometry::PointerAt<float>(*im_weight, u, v) =
+                        *geometry::PointerAt<unsigned char>(*im_mask_rgb, u, v,
+                                                            1) /
+                        255.0f;
+
+                //                printf("mask = %f, weight = %f\n",
+                //                       *geometry::PointerAt<float>(*im_mask,
+                //                       u, v),
+                //                       *geometry::PointerAt<float>(*im_weight,
+                //                       u, v));
             }
         }
         im_masks.push_back(im_mask);
+        im_weights.push_back(im_weight);
     }
+
     std::cout << "Read " << num_images << " images" << std::endl;
-    return std::make_pair(im_rgbs, im_masks);
+    return std::make_tuple(im_rgbs, im_masks, im_weights);
 }
 
 int main(int argc, char** args) {
@@ -565,13 +647,14 @@ int main(int argc, char** args) {
     // Read images
     std::vector<std::shared_ptr<geometry::Image>> im_rgbs;
     std::vector<std::shared_ptr<geometry::Image>> im_masks;
-    std::tie(im_rgbs, im_masks) = ReadDataset(im_dir, "delta-color-%d.png",
-                                              "delta-weight-%d.png", 33);
+    std::vector<std::shared_ptr<geometry::Image>> im_weights;
+    std::tie(im_rgbs, im_masks, im_weights) = ReadDataset(
+            im_dir, "delta-color-%d.png", "delta-weight-%d.png", 33);
 
     WarpFieldOptimizerOption option(/*iter*/ 500, /*v_anchors*/ 25,
                                     /*weight*/ 0.3,
                                     /* save_increments_ */ true);
-    WarpFieldOptimizer wf_optimizer(im_rgbs, im_masks, option);
+    WarpFieldOptimizer wf_optimizer(im_rgbs, im_masks, im_weights, option);
 
     auto im_mask = wf_optimizer.ComputeInitMaskImage();
     std::string im_mask_path = res_dir + "/im_init_mask.png";
