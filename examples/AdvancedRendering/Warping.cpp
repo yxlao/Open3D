@@ -69,10 +69,12 @@ public:
             const std::vector<std::shared_ptr<geometry::Image>>& im_rgbs,
             const std::vector<std::shared_ptr<geometry::Image>>& im_masks,
             const std::vector<std::shared_ptr<geometry::Image>>& im_weights,
+            const std::shared_ptr<geometry::Image> &label,
             const WarpFieldOptimizerOption& option)
         : im_rgbs_(im_rgbs),
           im_masks_(im_masks),
           im_weights_(im_weights),
+          im_label_(label),
           option_(option) {
         // TODO: ok to throw exception here?
         if (im_rgbs_.size() == 0) {
@@ -192,6 +194,8 @@ public:
                             continue;
                         }
 
+                        uint8_t label_proxy = *geometry::PointerAt<uint8_t>(*im_label_, u, v);
+
                         // if (!im_grays_[im_idx]->TestImageBoundary(u, v, 2)) {
                         //     continue;
                         // }
@@ -218,6 +222,10 @@ public:
                         //           << ", " << vv << ")" << std::endl;
                         if (im_masks_[im_idx]->FloatValueAt(uu, vv).second !=
                             1) {
+                            continue;
+                        }
+                        uint8_t label_pixel = *geometry::PointerAt<uint8_t>(*im_label_, (int)uu, (int)vv);
+                        if (label_proxy != label_pixel) {
                             continue;
                         }
 
@@ -409,6 +417,8 @@ public:
 #endif
         for (int u = 0; u < width_; u++) {
             for (int v = 0; v < height_; v++) {
+                uint8_t label_proxy = *geometry::PointerAt<uint8_t>(*im_label_, u, v);
+
                 for (size_t im_idx = 0; im_idx < num_images_; im_idx++) {
                     *geometry::PointerAt<unsigned char>(
                             *inverse_proxy_masks_[im_idx], u, v) = 0;
@@ -429,6 +439,8 @@ public:
                     if (im_masks_[im_idx]->FloatValueAt(uu, vv).second < 0.5) {
                         continue;
                     }
+                    uint8_t label_pixel = *geometry::PointerAt<uint8_t>(*im_label_, (int)uu, (int)vv);
+                    if (label_pixel != label_proxy) continue;
 
                     candidate_pixels.push_back(
                             {im_weights_[im_idx]->FloatValueAt(uu, vv).second,
@@ -448,7 +460,7 @@ public:
                               return lhs.weight > rhs.weight;
                           });
 
-                int kTopWeightNeighbor = 5;
+                int kTopWeightNeighbor = 20;
                 int range = std::min((int)candidate_pixels.size(),
                                      kTopWeightNeighbor);
 
@@ -553,6 +565,7 @@ public:
     std::vector<std::shared_ptr<geometry::Image>> im_weights_;
 
     std::shared_ptr<geometry::Image> mask_proxy_;
+    std::shared_ptr<geometry::Image> im_label_;
     std::vector<std::shared_ptr<geometry::Image>> inverse_proxy_masks_;
 
     int width_ = 0;
@@ -642,6 +655,18 @@ int main(int argc, char** args) {
 
     std::cout << "im_dir: " << im_dir << std::endl;
 
+    std::vector<int> results(256);
+    std::fill(results.begin(), results.end(), 0);
+    auto labels = io::CreateImageFromFile(im_dir + "/labels.png");
+    for (int i = 0; i < labels->width_; ++i) {
+        for (int j = 0; j < labels->height_; ++j) {
+            results[*geometry::PointerAt<uint8_t>(*labels, i, j)] ++;
+        }
+    }
+    for (int i = 0; i < results.size(); ++i) {
+        printf("label[%d] = %d\n", i, results[i]);
+    }
+
     auto im = std::make_shared<geometry::Image>();
 
     // Read images
@@ -654,7 +679,7 @@ int main(int argc, char** args) {
     WarpFieldOptimizerOption option(/*iter*/ 500, /*v_anchors*/ 25,
                                     /*weight*/ 0.3,
                                     /* save_increments_ */ true);
-    WarpFieldOptimizer wf_optimizer(im_rgbs, im_masks, im_weights, option);
+    WarpFieldOptimizer wf_optimizer(im_rgbs, im_masks, im_weights, labels, option);
 
     auto im_mask = wf_optimizer.ComputeInitMaskImage();
     std::string im_mask_path = res_dir + "/im_init_mask.png";
