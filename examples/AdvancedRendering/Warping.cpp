@@ -41,6 +41,33 @@ typedef Eigen::Matrix<double, 8, 1> Vector8d;
 typedef Eigen::Matrix<int, 8, 1> Vector8i;
 }  // namespace Eigen
 
+template <typename T>
+std::vector<size_t> sort_indexes(const std::vector<T>& v, bool ascend = true) {
+    // https://stackoverflow.com/a/12399290/1255535
+    // Initialize original index locations
+    std::vector<size_t> idx(v.size());
+    std::iota(idx.begin(), idx.end(), 0);
+
+    // Sort indexes based on comparing values in v
+    if (ascend) {
+        std::sort(idx.begin(), idx.end(),
+                  [&v](size_t i1, size_t i2) { return v[i1] < v[i2]; });
+    } else {
+        std::sort(idx.begin(), idx.end(),
+                  [&v](size_t i1, size_t i2) { return v[i1] > v[i2]; });
+    }
+    return idx;
+}
+
+template <typename T>
+std::vector<size_t> argmax_k(const std::vector<T>& v, size_t k) {
+    k = std::min(k, v.size());
+    std::vector<size_t> max_indices = sort_indexes(v, false);
+    std::vector<size_t> k_max_indices(max_indices.begin(),
+                                      max_indices.begin() + k);
+    return k_max_indices;
+}
+
 class WarpFieldOptimizerOption {
 public:
     WarpFieldOptimizerOption(
@@ -414,6 +441,62 @@ public:
         int idx;
     };
 
+    std::vector<std::shared_ptr<geometry::Image>> ComputeInverseProxyMasks() {
+        std::vector<std::shared_ptr<geometry::Image>> inverse_proxy_masks(
+                im_masks_.size());
+        for (auto& inverse_proxy_mask : inverse_proxy_masks) {
+            inverse_proxy_mask = std::make_shared<geometry::Image>();
+            inverse_proxy_mask->PrepareImage(width_, height_, 1, 1);
+        }
+
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+        for (int u = 0; u < width_; u++) {
+            for (int v = 0; v < height_; v++) {
+                uint8_t label_proxy =
+                        *geometry::PointerAt<uint8_t>(*im_label_, u, v);
+
+                for (size_t im_idx = 0; im_idx < num_images_; im_idx++) {
+                    *geometry::PointerAt<unsigned char>(
+                            *inverse_proxy_masks[im_idx], u, v) = 0;
+                }
+
+                if (*geometry::PointerAt<unsigned char>(*mask_proxy_, u, v) ==
+                    0) {
+                    continue;
+                }
+
+                std::vector<double> candidate_weights;
+                std::vector<size_t> candidate_indices;
+                for (size_t im_idx = 0; im_idx < num_images_; im_idx++) {
+                    Eigen::Vector2d uuvv =
+                            warp_fields_[im_idx].GetImageWarpingField(u, v);
+                    double uu = uuvv(0);
+                    double vv = uuvv(1);
+
+                    if (im_masks_[im_idx]->FloatValueAt(uu, vv).second < 0.5) {
+                        continue;
+                    }
+                    uint8_t label_pixel = *geometry::PointerAt<uint8_t>(
+                            *im_label_, (int)uu, (int)vv);
+                    if (label_pixel != label_proxy) continue;
+
+                    candidate_weights.push_back(
+                            im_weights_[im_idx]->FloatValueAt(uu, vv).second);
+                    candidate_indices.push_back(im_idx);
+                }
+
+                for (size_t i : argmax_k(candidate_weights, 5)) {
+                    *geometry::PointerAt<unsigned char>(
+                            *inverse_proxy_masks[candidate_indices[i]], u, v) =
+                            1;
+                }
+            }
+        }
+        return inverse_proxy_masks;
+    }
+
     std::shared_ptr<geometry::Image> ComputeWarpAverageColorImage() {
         auto im_avg = std::make_shared<geometry::Image>();
         im_avg->PrepareImage(width_, height_, 3, 1);
@@ -574,6 +657,9 @@ public:
 
     std::shared_ptr<geometry::Image> mask_proxy_;
     std::shared_ptr<geometry::Image> im_label_;
+
+    // inverse_proxy_masks_[im_idx].ValueAt(u, v) == 1 iff
+    // im[im_idx] is used to compute average color for pixel (u, v)
     std::vector<std::shared_ptr<geometry::Image>> inverse_proxy_masks_;
 
     int width_ = 0;
