@@ -49,11 +49,13 @@ public:
             int num_iters = 100,
             int num_vertical_anchors = 10,
             double anchor_weight = 0.316,
-            bool save_increments = false)
+            bool save_increments = false,
+            const std::string& result_dir = "./inverse-proj-result")
         : num_iters_(num_iters),
           num_vertical_anchors_(num_vertical_anchors),
           anchor_weight_(anchor_weight),
-          save_increments_(save_increments) {}
+          save_increments_(save_increments),
+          result_dir_(result_dir) {}
     ~WarpFieldOptimizerOption() {}
 
 public:
@@ -61,6 +63,7 @@ public:
     int num_vertical_anchors_;
     double anchor_weight_;
     bool save_increments_;
+    std::string result_dir_;
 };
 
 class WarpFieldOptimizer {
@@ -69,7 +72,7 @@ public:
             const std::vector<std::shared_ptr<geometry::Image>>& im_rgbs,
             const std::vector<std::shared_ptr<geometry::Image>>& im_masks,
             const std::vector<std::shared_ptr<geometry::Image>>& im_weights,
-            const std::shared_ptr<geometry::Image> &label,
+            const std::shared_ptr<geometry::Image>& label,
             const WarpFieldOptimizerOption& option)
         : im_rgbs_(im_rgbs),
           im_masks_(im_masks),
@@ -142,7 +145,7 @@ public:
         }
 
         inverse_proxy_masks_.resize(im_masks_.size());
-        for (auto &inverse_proxy_mask : inverse_proxy_masks_) {
+        for (auto& inverse_proxy_mask : inverse_proxy_masks_) {
             inverse_proxy_mask = std::make_shared<geometry::Image>();
             inverse_proxy_mask->PrepareImage(width_, height_, 1, 1);
         }
@@ -162,11 +165,10 @@ public:
 
             if (option_.save_increments_ && iter % 10 == 0) {
                 auto im_avg = ComputeWarpAverageColorImage();
-                std::string im_dir = "./inverse-proj-result";
 
                 std::stringstream im_path;
-                im_path << im_dir << "/" << std::setw(4) << std::setfill('0')
-                        << iter << ".jpg";
+                im_path << option_.result_dir_ << "/" << std::setw(4)
+                        << std::setfill('0') << iter << ".jpg";
 
                 std::cout << "output im_warp_avg_init_path: " << im_path.str()
                           << std::endl;
@@ -189,12 +191,15 @@ public:
                 for (double u = 0; u < width_; u++) {
                     for (double v = 0; v < height_; v++) {
                         if (*geometry::PointerAt<unsigned char>(*mask_proxy_, u,
-                                                                v) == 0
-                        || (*geometry::PointerAt<unsigned char>(*inverse_proxy_masks_[im_idx], u, v) == 0)) {
+                                                                v) == 0 ||
+                            (*geometry::PointerAt<unsigned char>(
+                                     *inverse_proxy_masks_[im_idx], u, v) ==
+                             0)) {
                             continue;
                         }
 
-                        uint8_t label_proxy = *geometry::PointerAt<uint8_t>(*im_label_, u, v);
+                        uint8_t label_proxy =
+                                *geometry::PointerAt<uint8_t>(*im_label_, u, v);
 
                         // if (!im_grays_[im_idx]->TestImageBoundary(u, v, 2)) {
                         //     continue;
@@ -224,7 +229,8 @@ public:
                             1) {
                             continue;
                         }
-                        uint8_t label_pixel = *geometry::PointerAt<uint8_t>(*im_label_, (int)uu, (int)vv);
+                        uint8_t label_pixel = *geometry::PointerAt<uint8_t>(
+                                *im_label_, (int)uu, (int)vv);
                         if (label_proxy != label_pixel) {
                             continue;
                         }
@@ -417,7 +423,8 @@ public:
 #endif
         for (int u = 0; u < width_; u++) {
             for (int v = 0; v < height_; v++) {
-                uint8_t label_proxy = *geometry::PointerAt<uint8_t>(*im_label_, u, v);
+                uint8_t label_proxy =
+                        *geometry::PointerAt<uint8_t>(*im_label_, u, v);
 
                 for (size_t im_idx = 0; im_idx < num_images_; im_idx++) {
                     *geometry::PointerAt<unsigned char>(
@@ -430,7 +437,6 @@ public:
 
                 std::vector<Pixel> candidate_pixels;
                 for (size_t im_idx = 0; im_idx < num_images_; im_idx++) {
-
                     Eigen::Vector2d uuvv =
                             warp_fields_[im_idx].GetImageWarpingField(u, v);
                     double uu = uuvv(0);
@@ -439,7 +445,8 @@ public:
                     if (im_masks_[im_idx]->FloatValueAt(uu, vv).second < 0.5) {
                         continue;
                     }
-                    uint8_t label_pixel = *geometry::PointerAt<uint8_t>(*im_label_, (int)uu, (int)vv);
+                    uint8_t label_pixel = *geometry::PointerAt<uint8_t>(
+                            *im_label_, (int)uu, (int)vv);
                     if (label_pixel != label_proxy) continue;
 
                     candidate_pixels.push_back(
@@ -470,7 +477,8 @@ public:
                     g += pixel.g * pixel.weight;
                     b += pixel.b * pixel.weight;
                     sum_weights += pixel.weight;
-                    *geometry::PointerAt<unsigned char>(*inverse_proxy_masks_[pixel.idx], u, v) = 1;
+                    *geometry::PointerAt<unsigned char>(
+                            *inverse_proxy_masks_[pixel.idx], u, v) = 1;
                 }
 
                 if (sum_weights > 0) {
@@ -647,11 +655,15 @@ ReadDataset(const std::string& root_dir,
     return std::make_tuple(im_rgbs, im_masks, im_weights);
 }
 
-int main(int argc, char** args) {
+int main(int argc, char** argv) {
     // Data path
     utility::SetVerbosityLevel(utility::VerbosityLevel::VerboseAlways);
     std::string im_dir = "inverse-proj-data";
     std::string res_dir = "inverse-proj-result";
+    if (argc == 2) {
+        im_dir = std::string(argv[1]) + "/" + im_dir;
+        res_dir = std::string(argv[1]) + "/" + res_dir;
+    }
 
     std::cout << "im_dir: " << im_dir << std::endl;
 
@@ -660,7 +672,7 @@ int main(int argc, char** args) {
     auto labels = io::CreateImageFromFile(im_dir + "/labels.png");
     for (int i = 0; i < labels->width_; ++i) {
         for (int j = 0; j < labels->height_; ++j) {
-            results[*geometry::PointerAt<uint8_t>(*labels, i, j)] ++;
+            results[*geometry::PointerAt<uint8_t>(*labels, i, j)]++;
         }
     }
     for (int i = 0; i < results.size(); ++i) {
@@ -678,8 +690,10 @@ int main(int argc, char** args) {
 
     WarpFieldOptimizerOption option(/*iter*/ 500, /*v_anchors*/ 25,
                                     /*weight*/ 0.3,
-                                    /* save_increments_ */ true);
-    WarpFieldOptimizer wf_optimizer(im_rgbs, im_masks, im_weights, labels, option);
+                                    /* save_increments_ */ true,
+                                    /* result_dir */ res_dir);
+    WarpFieldOptimizer wf_optimizer(im_rgbs, im_masks, im_weights, labels,
+                                    option);
 
     auto im_mask = wf_optimizer.ComputeInitMaskImage();
     std::string im_mask_path = res_dir + "/im_init_mask.png";
