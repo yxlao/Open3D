@@ -170,12 +170,6 @@ public:
             im_gs_.push_back(im_g);
             im_bs_.push_back(im_b);
         }
-
-        inverse_proxy_masks_.resize(im_masks_.size());
-        for (auto& inverse_proxy_mask : inverse_proxy_masks_) {
-            inverse_proxy_mask = std::make_shared<geometry::Image>();
-            inverse_proxy_mask->PrepareImage(width_, height_, 1, 1);
-        }
     }
     ~WarpFieldOptimizer() {}
 
@@ -185,6 +179,8 @@ public:
         mask_proxy_ = ComputeInitMaskImage();
 
         std::shared_ptr<geometry::Image> im_proxy = ComputeWarpAverageImage();
+        std::vector<std::shared_ptr<geometry::Image>> inverse_proxy_masks =
+                ComputeInverseProxyMasks();
 
         for (size_t iter = 0; iter < option_.num_iters_; iter++) {
             double residual_sum = 0.0;
@@ -220,7 +216,7 @@ public:
                         if (*geometry::PointerAt<unsigned char>(*mask_proxy_, u,
                                                                 v) == 0 ||
                             (*geometry::PointerAt<unsigned char>(
-                                     *inverse_proxy_masks_[im_idx], u, v) ==
+                                     *inverse_proxy_masks[im_idx], u, v) ==
                              0)) {
                             continue;
                         }
@@ -361,6 +357,7 @@ public:
 
             // Update im_proxy after processing all images once
             im_proxy = ComputeWarpAverageImage();
+            inverse_proxy_masks = ComputeInverseProxyMasks();
 
             utility::PrintDebug("Residual error : %.6f, reg : %.6f\n",
                                 residual_sum, residual_reg_sum);
@@ -441,7 +438,7 @@ public:
         int idx;
     };
 
-    // inverse_proxy_masks_[im_idx].ValueAt(u, v) == 1 iff
+    // inverse_proxy_masks[im_idx].ValueAt(u, v) == 1 iff
     // im[im_idx] is used to compute average color for pixel (u, v)
     std::vector<std::shared_ptr<geometry::Image>> ComputeInverseProxyMasks()
             const {
@@ -633,8 +630,6 @@ public:
 
     std::shared_ptr<geometry::Image> mask_proxy_;
     std::shared_ptr<geometry::Image> im_label_;
-
-    std::vector<std::shared_ptr<geometry::Image>> inverse_proxy_masks_;
 
     int width_ = 0;
     int height_ = 0;
