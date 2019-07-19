@@ -367,6 +367,9 @@ public:
 
     // Compute average image after warping
     std::shared_ptr<geometry::Image> ComputeWarpAverageImage() {
+        std::vector<std::shared_ptr<geometry::Image>> inverse_proxy_masks =
+                ComputeInverseProxyMasks();
+
         auto im_avg = std::make_shared<geometry::Image>();
         im_avg->PrepareImage(width_, height_, num_of_channels_, 4);
 
@@ -388,6 +391,10 @@ public:
                     double uu = uuvv(0);
                     double vv = uuvv(1);
                     if (im_masks_[im_idx]->FloatValueAt(uu, vv).second != 1) {
+                        continue;
+                    }
+                    if (*geometry::PointerAt<unsigned char>(
+                                *inverse_proxy_masks[im_idx], u, v) == 0) {
                         continue;
                     }
                     pixel_val += im_grays_[im_idx]->FloatValueAt(uu, vv).second;
@@ -478,6 +485,7 @@ public:
                     if (im_masks_[im_idx]->FloatValueAt(uu, vv).second < 0.5) {
                         continue;
                     }
+
                     uint8_t label_pixel = *geometry::PointerAt<uint8_t>(
                             *im_label_, (int)uu, (int)vv);
                     if (label_pixel != label_proxy) continue;
