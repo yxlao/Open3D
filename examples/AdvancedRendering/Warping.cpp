@@ -441,7 +441,10 @@ public:
         int idx;
     };
 
-    std::vector<std::shared_ptr<geometry::Image>> ComputeInverseProxyMasks() {
+    // inverse_proxy_masks_[im_idx].ValueAt(u, v) == 1 iff
+    // im[im_idx] is used to compute average color for pixel (u, v)
+    std::vector<std::shared_ptr<geometry::Image>> ComputeInverseProxyMasks()
+            const {
         std::vector<std::shared_ptr<geometry::Image>> inverse_proxy_masks(
                 im_masks_.size());
         for (auto& inverse_proxy_mask : inverse_proxy_masks) {
@@ -497,7 +500,10 @@ public:
         return inverse_proxy_masks;
     }
 
-    std::shared_ptr<geometry::Image> ComputeWarpAverageColorImage() {
+    std::shared_ptr<geometry::Image> ComputeWarpAverageColorImage() const {
+        std::vector<std::shared_ptr<geometry::Image>> inverse_proxy_masks =
+                ComputeInverseProxyMasks();
+
         auto im_avg = std::make_shared<geometry::Image>();
         im_avg->PrepareImage(width_, height_, 3, 1);
 
@@ -506,68 +512,38 @@ public:
 #endif
         for (int u = 0; u < width_; u++) {
             for (int v = 0; v < height_; v++) {
-                uint8_t label_proxy =
-                        *geometry::PointerAt<uint8_t>(*im_label_, u, v);
+                double r_sum = 0;
+                double g_sum = 0;
+                double b_sum = 0;
+                double weight_sum = 0;
 
-                for (size_t im_idx = 0; im_idx < num_images_; im_idx++) {
-                    *geometry::PointerAt<unsigned char>(
-                            *inverse_proxy_masks_[im_idx], u, v) = 0;
-                }
-                if (*geometry::PointerAt<unsigned char>(*mask_proxy_, u, v) ==
-                    0) {
-                    continue;
-                }
-
-                std::vector<Pixel> candidate_pixels;
                 for (size_t im_idx = 0; im_idx < num_images_; im_idx++) {
                     Eigen::Vector2d uuvv =
                             warp_fields_[im_idx].GetImageWarpingField(u, v);
                     double uu = uuvv(0);
                     double vv = uuvv(1);
-
-                    if (im_masks_[im_idx]->FloatValueAt(uu, vv).second < 0.5) {
-                        continue;
+                    if (*geometry::PointerAt<unsigned char>(
+                                *inverse_proxy_masks[im_idx], u, v) == 1) {
+                        double weight = im_weights_[im_idx]
+                                                ->FloatValueAt(uu, vv)
+                                                .second;
+                        r_sum += im_rs_[im_idx]->FloatValueAt(uu, vv).second *
+                                 weight;
+                        g_sum += im_gs_[im_idx]->FloatValueAt(uu, vv).second *
+                                 weight;
+                        b_sum += im_bs_[im_idx]->FloatValueAt(uu, vv).second *
+                                 weight;
+                        weight_sum += weight;
                     }
-                    uint8_t label_pixel = *geometry::PointerAt<uint8_t>(
-                            *im_label_, (int)uu, (int)vv);
-                    if (label_pixel != label_proxy) continue;
-
-                    candidate_pixels.push_back(
-                            {im_weights_[im_idx]->FloatValueAt(uu, vv).second,
-                             im_rs_[im_idx]->FloatValueAt(uu, vv).second,
-                             im_gs_[im_idx]->FloatValueAt(uu, vv).second,
-                             im_bs_[im_idx]->FloatValueAt(uu, vv).second,
-                             (int)im_idx});
                 }
 
                 double r = 0;
                 double g = 0;
                 double b = 0;
-                double sum_weights = 0;
-
-                std::sort(candidate_pixels.begin(), candidate_pixels.end(),
-                          [](const Pixel& lhs, const Pixel& rhs) {
-                              return lhs.weight > rhs.weight;
-                          });
-
-                int kTopWeightNeighbor = 20;
-                int range = std::min((int)candidate_pixels.size(),
-                                     kTopWeightNeighbor);
-
-                for (int i = 0; i < range; ++i) {
-                    const Pixel& pixel = candidate_pixels[i];
-                    r += pixel.r * pixel.weight;
-                    g += pixel.g * pixel.weight;
-                    b += pixel.b * pixel.weight;
-                    sum_weights += pixel.weight;
-                    *geometry::PointerAt<unsigned char>(
-                            *inverse_proxy_masks_[pixel.idx], u, v) = 1;
-                }
-
-                if (sum_weights > 0) {
-                    r /= sum_weights;
-                    g /= sum_weights;
-                    b /= sum_weights;
+                if (weight_sum > 0) {
+                    r = r_sum / weight_sum;
+                    g = g_sum / weight_sum;
+                    b = b_sum / weight_sum;
                 }
 
                 *(geometry::PointerAt<uint8_t>(*im_avg, u, v, 0)) =
@@ -658,8 +634,6 @@ public:
     std::shared_ptr<geometry::Image> mask_proxy_;
     std::shared_ptr<geometry::Image> im_label_;
 
-    // inverse_proxy_masks_[im_idx].ValueAt(u, v) == 1 iff
-    // im[im_idx] is used to compute average color for pixel (u, v)
     std::vector<std::shared_ptr<geometry::Image>> inverse_proxy_masks_;
 
     int width_ = 0;
