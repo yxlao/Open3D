@@ -17,5 +17,6 @@ else
 fi
 sudo apt-get update
 sudo apt-get --yes install cmake
+cmake --version
 
 # ./util/scripts/install-deps-ubuntu.sh
