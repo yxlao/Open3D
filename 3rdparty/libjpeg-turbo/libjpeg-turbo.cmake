@@ -58,7 +58,9 @@ add_dependencies(turbojpeg ext_turbojpeg)
 
 ExternalProject_Get_Property(ext_turbojpeg SOURCE_DIR BINARY_DIR)
 
-set(turbojpeg_LIB_PATH ${CMAKE_BINARY_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}turbojpeg${CMAKE_STATIC_LIBRARY_SUFFIX})
+set(turbojpeg_LIB_FILES
+    ${CMAKE_BINARY_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}turbojpeg${CMAKE_STATIC_LIBRARY_SUFFIX}
+)
 target_include_directories(turbojpeg SYSTEM INTERFACE
     ${CMAKE_BINARY_DIR}/include
 )
@@ -70,7 +72,7 @@ set(JPEG_TURBO_LIBRARIES turbojpeg)
 if (NOT BUILD_SHARED_LIBS)
     install(
         FILES
-            ${turbojpeg_LIB_PATH}
+            ${turbojpeg_LIB_FILES}
         DESTINATION
             ${CMAKE_INSTALL_PREFIX}/lib
     )
