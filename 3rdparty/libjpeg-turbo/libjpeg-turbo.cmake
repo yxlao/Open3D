@@ -65,7 +65,7 @@ target_include_directories(turbojpeg SYSTEM INTERFACE
     ${CMAKE_BINARY_DIR}/include
 )
 target_link_libraries(turbojpeg INTERFACE
-    ${turbojpeg_LIB_PATH}
+    ${turbojpeg_LIB_FILES}
 )
 set(JPEG_TURBO_LIBRARIES turbojpeg)
 
