@@ -56,33 +56,24 @@ ExternalProject_Add(
 add_library(turbojpeg INTERFACE)
 add_dependencies(turbojpeg ext_turbojpeg)
 
-ExternalProject_Get_Property(ext_turbojpeg SOURCE_DIR BINARY_DIR INSTALL_DIR)
-message(STATUS "ext_turbojpeg SOURCE_DIR: ${SOURCE_DIR}")
-message(STATUS "ext_turbojpeg BINARY_DIR: ${BINARY_DIR}")
-message(STATUS "ext_turbojpeg INSTALL_DIR: ${INSTALL_DIR}")
+ExternalProject_Get_Property(ext_turbojpeg SOURCE_DIR BINARY_DIR)
 
+set(turbojpeg_LIB_PATH ${CMAKE_BINARY_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}turbojpeg${CMAKE_STATIC_LIBRARY_SUFFIX})
 target_include_directories(turbojpeg SYSTEM INTERFACE
     ${CMAKE_BINARY_DIR}/include
 )
 target_link_libraries(turbojpeg INTERFACE
-    ${CMAKE_BINARY_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}turbojpeg${CMAKE_STATIC_LIBRARY_SUFFIX}
+    ${turbojpeg_LIB_PATH}
 )
 set(JPEG_TURBO_LIBRARIES turbojpeg)
-# set(JPEG_TURBO_INCLUDE_DIRS ${CMAKE_BINARY_DIR}/include)
 
-# set(JPEG_TURBO_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/libjpeg-turbo
-#                             ${CMAKE_CURRENT_BINARY_DIR}/libjpeg-turbo)
-# set(JPEG_TURBO_INCLUDE_DIRS ${JPEG_TURBO_INCLUDE_DIRS} PARENT_SCOPE)
-
-# target_include_directories(turbojpeg-static PUBLIC
-#     ${JPEG_TURBO_INCLUDE_DIRS}
-# )
-
-# if (NOT BUILD_SHARED_LIBS)
-#     install(TARGETS turbojpeg-static  # libturbojpeg.a will be installed
-#             RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
-#             LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-#             ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
-# endif()
+if (NOT BUILD_SHARED_LIBS)
+    install(
+        FILES
+            ${turbojpeg_LIB_PATH}
+        DESTINATION
+            ${CMAKE_INSTALL_PREFIX}/lib
+    )
+endif()
 
 
