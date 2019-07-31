@@ -70,12 +70,8 @@ target_link_libraries(turbojpeg INTERFACE
 set(JPEG_TURBO_LIBRARIES turbojpeg)
 
 if (NOT BUILD_SHARED_LIBS)
-    install(
-        FILES
-            ${turbojpeg_LIB_FILES}
-        DESTINATION
-            ${CMAKE_INSTALL_PREFIX}/lib
-    )
+    install(FILES ${turbojpeg_LIB_FILES}
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 endif()
 
 
