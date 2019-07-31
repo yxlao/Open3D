@@ -40,7 +40,6 @@ ExternalProject_Add(
     PREFIX turbojpeg
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libjpeg-turbo/libjpeg-turbo
     UPDATE_COMMAND ""
-    INSTALL_DIR ${CMAKE_BINARY_DIR}
     CMAKE_GENERATOR ${CMAKE_GENERATOR}
     CMAKE_GENERATOR_PLATFORM ${CMAKE_GENERATOR_PLATFORM}
     CMAKE_GENERATOR_TOOLSET ${CMAKE_GENERATOR_TOOLSET}
@@ -63,13 +62,13 @@ message(STATUS "ext_turbojpeg BINARY_DIR: ${BINARY_DIR}")
 message(STATUS "ext_turbojpeg INSTALL_DIR: ${INSTALL_DIR}")
 
 target_include_directories(turbojpeg SYSTEM INTERFACE
-    ${INSTALL_DIR}/include
+    ${CMAKE_BINARY_DIR}/include
 )
 target_link_libraries(turbojpeg INTERFACE
-    ${INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}turbojpeg${CMAKE_STATIC_LIBRARY_SUFFIX}
+    ${CMAKE_BINARY_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}turbojpeg${CMAKE_STATIC_LIBRARY_SUFFIX}
 )
 set(JPEG_TURBO_LIBRARIES turbojpeg)
-set(JPEG_TURBO_INCLUDE_DIRS ${INSTALL_DIR}/include)
+# set(JPEG_TURBO_INCLUDE_DIRS ${CMAKE_BINARY_DIR}/include)
 
 # set(JPEG_TURBO_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/libjpeg-turbo
 #                             ${CMAKE_CURRENT_BINARY_DIR}/libjpeg-turbo)
