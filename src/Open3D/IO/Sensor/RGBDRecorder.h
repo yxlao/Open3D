@@ -35,9 +35,6 @@ class RGBDRecorder {
 public:
     RGBDRecorder() {}
     virtual ~RGBDRecorder() {}
-
-    // public:
-    //     virtual int Record();
 };
 
 }  // namespace io
