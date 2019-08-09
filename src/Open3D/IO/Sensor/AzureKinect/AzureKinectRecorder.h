@@ -47,16 +47,17 @@ namespace io {
 
 class AzureKinectRecorder : public RGBDRecorder {
 public:
-    AzureKinectRecorder(const AzureKinectSensorConfig& sensor_config);
+    AzureKinectRecorder(const AzureKinectSensorConfig& sensor_config,
+                        size_t device_index);
     virtual ~AzureKinectRecorder();
 
-    int Record(uint8_t device_index,
-               char* recording_filename,
+    int Record(char* recording_filename,
                bool record_imu,
                int32_t absoluteExposureValue);
 
 protected:
     AzureKinectSensor sensor_;
+    size_t device_index_;
 };
 
 }  // namespace io

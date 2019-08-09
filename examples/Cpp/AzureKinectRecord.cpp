@@ -300,7 +300,7 @@ int main(int argc, char **argv) {
 
     io::AzureKinectSensorConfig sensor_config;
     sensor_config.ConvertFromNativeConfig(device_config);
-    io::AzureKinectRecorder recorder(sensor_config);
-    return recorder.Record((uint8_t)device_index, recording_filename,
-                           recording_imu_enabled, absoluteExposureValue);
+    io::AzureKinectRecorder recorder(sensor_config, (size_t)device_index);
+    return recorder.Record(recording_filename, recording_imu_enabled,
+                           absoluteExposureValue);
 }
