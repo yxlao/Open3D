@@ -89,9 +89,8 @@ AzureKinectRecorder::~AzureKinectRecorder() {}
 int AzureKinectRecorder::Record(char* recording_filename,
                                 int32_t absoluteExposureValue) {
     // Convert to k4a native config
-    k4a_device_configuration_t device_config_obj =
+    k4a_device_configuration_t device_config =
             sensor_.sensor_config_.ConvertToNativeConfig();
-    k4a_device_configuration_t* device_config = &device_config_obj;
 
     const uint32_t installed_devices = k4a_device_get_installed_count();
     if (device_index_ >= installed_devices) {
@@ -100,11 +99,11 @@ int AzureKinectRecorder::Record(char* recording_filename,
     }
     sensor_.Connect(device_index_);
 
-    uint32_t camera_fps = k4a_convert_fps_to_uint(device_config->camera_fps);
+    uint32_t camera_fps = k4a_convert_fps_to_uint(device_config.camera_fps);
 
     if (camera_fps <= 0 ||
-        (device_config->color_resolution == K4A_COLOR_RESOLUTION_OFF &&
-         device_config->depth_mode == K4A_DEPTH_MODE_OFF)) {
+        (device_config.color_resolution == K4A_COLOR_RESOLUTION_OFF &&
+         device_config.depth_mode == K4A_DEPTH_MODE_OFF)) {
         utility::LogError(
                 "Either the color or depth modes must be enabled to record.\n");
         return 1;
@@ -130,7 +129,7 @@ int AzureKinectRecorder::Record(char* recording_filename,
 
     k4a_record_t recording;
     if (K4A_FAILED(k4a_record_create(recording_filename, sensor_.device_,
-                                     *device_config, &recording))) {
+                                     device_config, &recording))) {
         utility::LogError("Unable to create recording file: %s\n",
                           recording_filename);
         return 1;
@@ -140,8 +139,8 @@ int AzureKinectRecorder::Record(char* recording_filename,
 
     // Get transformation
     k4a_calibration_t calibration;
-    k4a_device_get_calibration(sensor_.device_, device_config->depth_mode,
-                               device_config->color_resolution, &calibration);
+    k4a_device_get_calibration(sensor_.device_, device_config.depth_mode,
+                               device_config.color_resolution, &calibration);
     k4a_transformation_t transformation =
             k4a_transformation_create(&calibration);
 
@@ -172,7 +171,7 @@ int AzureKinectRecorder::Record(char* recording_filename,
     // Wait for the first capture before starting recording.
     k4a_capture_t capture;
     int32_t timeout_sec_for_first_capture = 60;
-    if (device_config->wired_sync_mode == K4A_WIRED_SYNC_MODE_SUBORDINATE) {
+    if (device_config.wired_sync_mode == K4A_WIRED_SYNC_MODE_SUBORDINATE) {
         timeout_sec_for_first_capture = 360;
         utility::LogInfo("[subordinate mode] Waiting for signal from master\n");
     }
