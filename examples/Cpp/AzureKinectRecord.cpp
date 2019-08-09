@@ -298,6 +298,9 @@ int main(int argc, char **argv) {
     device_config.subordinate_delay_off_master_usec =
             subordinate_delay_off_master_usec;
 
-    return io::Record((uint8_t)device_index, recording_filename, &device_config,
-                      recording_imu_enabled, absoluteExposureValue);
+    io::AzureKinectSensorConfig sensor_config;
+    sensor_config.ConvertFromNativeConfig(device_config);
+    io::AzureKinectRecorder recorder(sensor_config);
+    return recorder.Record((uint8_t)device_index, recording_filename,
+                           recording_imu_enabled, absoluteExposureValue);
 }

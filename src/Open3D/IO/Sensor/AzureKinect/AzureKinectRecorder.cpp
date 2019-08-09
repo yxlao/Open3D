@@ -78,11 +78,21 @@ inline static uint32_t k4a_convert_fps_to_uint(k4a_fps_t fps) {
         }                                                                  \
     }
 
-int Record(uint8_t device_index,
-           char* recording_filename,
-           k4a_device_configuration_t* device_config,
-           bool record_imu,
-           int32_t absoluteExposureValue) {
+AzureKinectRecorder::AzureKinectRecorder(
+        const AzureKinectSensorConfig& sensor_config)
+    : RGBDRecorder(), sensor_(sensor_config) {}
+
+AzureKinectRecorder::~AzureKinectRecorder() {}
+
+int AzureKinectRecorder::Record(uint8_t device_index,
+                                char* recording_filename,
+                                bool record_imu,
+                                int32_t absoluteExposureValue) {
+    // Convert to k4a native config
+    k4a_device_configuration_t device_config_obj =
+            sensor_.sensor_config_.ConvertToNativeConfig();
+    k4a_device_configuration_t* device_config = &device_config_obj;
+
     const uint32_t installed_devices = k4a_device_get_installed_count();
     if (device_index >= installed_devices) {
         utility::LogError("Device not found.\n");

@@ -35,6 +35,9 @@
 namespace open3d {
 namespace io {
 
+// Avoid including AzureKinectRecorder.h
+class AzureKinectRecorder;
+
 class AzureKinectSensor : public RGBDSensor {
 public:
     AzureKinectSensor(const AzureKinectSensorConfig& sensor_config);
@@ -45,6 +48,7 @@ public:
 protected:
     AzureKinectSensorConfig sensor_config_;
     k4a_device_t device_;
+    friend class AzureKinectRecorder;
 };
 
 }  // namespace io
