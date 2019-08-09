@@ -82,7 +82,6 @@ int main(int argc, char **argv) {
     k4a_depth_mode_t recording_depth_mode = K4A_DEPTH_MODE_WFOV_2X2BINNED;
     k4a_fps_t recording_rate = K4A_FRAMES_PER_SECOND_30;
     bool recording_rate_set = false;
-    bool recording_imu_enabled = true;
     k4a_wired_sync_mode_t wired_sync_mode = K4A_WIRED_SYNC_MODE_STANDALONE;
     int32_t depth_delay_off_color_usec = 0;
     uint32_t subordinate_delay_off_master_usec = 0;
@@ -190,19 +189,6 @@ int main(int argc, char **argv) {
                 } else {
                     std::ostringstream str;
                     str << "Unknown frame rate specified: " << args[0];
-                    throw std::runtime_error(str.str());
-                }
-            });
-    cmd_parser.RegisterOption(
-            "--imu", "Set the IMU recording mode (ON, OFF, default: ON)", 1,
-            [&](const std::vector<char *> &args) {
-                if (string_compare(args[0], "on") == 0) {
-                    recording_imu_enabled = true;
-                } else if (string_compare(args[0], "off") == 0) {
-                    recording_imu_enabled = false;
-                } else {
-                    std::ostringstream str;
-                    str << "Unknown imu mode specified: " << args[0];
                     throw std::runtime_error(str.str());
                 }
             });
