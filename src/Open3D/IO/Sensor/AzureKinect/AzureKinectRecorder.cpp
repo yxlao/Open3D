@@ -80,7 +80,7 @@ inline static uint32_t k4a_convert_fps_to_uint(k4a_fps_t fps) {
 
 AzureKinectRecorder::AzureKinectRecorder(
         const AzureKinectSensorConfig& sensor_config)
-    : RGBDRecorder(), sensor_(sensor_config) {}
+    : RGBDRecorder(), sensor_(AzureKinectSensor(sensor_config)) {}
 
 AzureKinectRecorder::~AzureKinectRecorder() {}
 

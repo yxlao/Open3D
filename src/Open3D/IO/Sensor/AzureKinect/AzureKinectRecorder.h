@@ -57,7 +57,6 @@ public:
 
 protected:
     AzureKinectSensor sensor_;
-    AzureKinectSensorConfig sensor_config_;  // TODO: remove?
 };
 
 }  // namespace io
