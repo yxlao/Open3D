@@ -294,8 +294,8 @@ int main(int argc, char **argv) {
     int device_index = 0;
     int absoluteExposureValue = 0;
     std::string recording_filename;
-    if (!ParseArgs(argc, argv, sensor_config, device_index,
-                   absoluteExposureValue, recording_filename)) {
+    if (ParseArgs(argc, argv, sensor_config, device_index,
+                  absoluteExposureValue, recording_filename) != 0) {
         utility::LogError("Parse args error\n");
     }
 
