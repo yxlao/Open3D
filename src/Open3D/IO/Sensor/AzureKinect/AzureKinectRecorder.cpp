@@ -86,7 +86,7 @@ AzureKinectRecorder::AzureKinectRecorder(
 
 AzureKinectRecorder::~AzureKinectRecorder() {}
 
-int AzureKinectRecorder::Record(char* recording_filename,
+int AzureKinectRecorder::Record(const std::string& recording_filename,
                                 int32_t absoluteExposureValue) {
     // Convert to k4a native config
     k4a_device_configuration_t device_config =
@@ -128,9 +128,10 @@ int AzureKinectRecorder::Record(char* recording_filename,
     utility::LogInfo("Device started\n");
 
     k4a_record_t recording;
-    if (K4A_FAILED(k4a_record_create(recording_filename, sensor_.device_,
-                                     device_config, &recording))) {
-        utility::LogError("Unable to create recording file: %s\n",
+    if (K4A_FAILED(k4a_record_create(recording_filename.c_str(),
+                                     sensor_.device_, device_config,
+                                     &recording))) {
+        utility::LogError("Unable to create recording file: {}\n",
                           recording_filename);
         return 1;
     }

@@ -31,6 +31,7 @@
 
 #include <atomic>
 #include <memory>
+#include <string>
 
 #include "Open3D/IO/Sensor/AzureKinect/AzureKinectSensor.h"
 #include "Open3D/IO/Sensor/AzureKinect/AzureKinectSensorConfig.h"
@@ -51,7 +52,8 @@ public:
                         size_t device_index);
     virtual ~AzureKinectRecorder();
 
-    int Record(char* recording_filename, int32_t absoluteExposureValue);
+    int Record(const std::string& recording_filename,
+               int32_t absoluteExposureValue);
 
 protected:
     AzureKinectSensor sensor_;

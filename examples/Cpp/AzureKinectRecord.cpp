@@ -74,8 +74,12 @@ static int string_compare(const char *s1, const char *s2) {
     exit(0);
 }
 
-int main(int argc, char **argv) {
-    int device_index = 0;
+int ParseArgs(int argc,
+              char **argv,
+              io::AzureKinectSensorConfig &sensor_config,
+              int &device_index,
+              int &absoluteExposureValue,
+              std::string &recording_filename) {
     k4a_image_format_t recording_color_format = K4A_IMAGE_FORMAT_COLOR_MJPG;
     k4a_color_resolution_t recording_color_resolution =
             K4A_COLOR_RESOLUTION_1080P;
@@ -85,8 +89,6 @@ int main(int argc, char **argv) {
     k4a_wired_sync_mode_t wired_sync_mode = K4A_WIRED_SYNC_MODE_STANDALONE;
     int32_t depth_delay_off_color_usec = 0;
     uint32_t subordinate_delay_off_master_usec = 0;
-    int absoluteExposureValue = 0;
-    char *recording_filename;
 
     CmdParser::OptionParser cmd_parser;
     cmd_parser.RegisterOption("-h|--help", "Prints this help", [&]() {
@@ -283,9 +285,20 @@ int main(int argc, char **argv) {
     device_config.depth_delay_off_color_usec = depth_delay_off_color_usec;
     device_config.subordinate_delay_off_master_usec =
             subordinate_delay_off_master_usec;
-
-    io::AzureKinectSensorConfig sensor_config;
     sensor_config.ConvertFromNativeConfig(device_config);
+    return 0;
+}
+
+int main(int argc, char **argv) {
+    io::AzureKinectSensorConfig sensor_config;
+    int device_index = 0;
+    int absoluteExposureValue = 0;
+    std::string recording_filename;
+    ParseArgs(argc, argv, sensor_config, device_index, absoluteExposureValue,
+              recording_filename);
+    //     utility::LogError("Parse args error\n");
+    // };
+
     io::AzureKinectRecorder recorder(sensor_config, (size_t)device_index);
     return recorder.Record(recording_filename, absoluteExposureValue);
 }
