@@ -294,10 +294,10 @@ int main(int argc, char **argv) {
     int device_index = 0;
     int absoluteExposureValue = 0;
     std::string recording_filename;
-    ParseArgs(argc, argv, sensor_config, device_index, absoluteExposureValue,
-              recording_filename);
-    //     utility::LogError("Parse args error\n");
-    // };
+    if (!ParseArgs(argc, argv, sensor_config, device_index,
+                   absoluteExposureValue, recording_filename)) {
+        utility::LogError("Parse args error\n");
+    }
 
     io::AzureKinectRecorder recorder(sensor_config, (size_t)device_index);
     return recorder.Record(recording_filename, absoluteExposureValue);
