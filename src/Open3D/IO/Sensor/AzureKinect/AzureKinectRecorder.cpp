@@ -86,8 +86,7 @@ AzureKinectRecorder::AzureKinectRecorder(
 
 AzureKinectRecorder::~AzureKinectRecorder() {}
 
-int AzureKinectRecorder::Record(const std::string& recording_filename,
-                                int32_t absoluteExposureValue) {
+int AzureKinectRecorder::Record(const std::string& recording_filename) {
     // Convert to k4a native config
     k4a_device_configuration_t device_config =
             sensor_.sensor_config_.ConvertToNativeConfig();
@@ -109,20 +108,12 @@ int AzureKinectRecorder::Record(const std::string& recording_filename,
         return 1;
     }
 
-    if (absoluteExposureValue != 0) {
-        if (K4A_FAILED(k4a_device_set_color_control(
-                    sensor_.device_, K4A_COLOR_CONTROL_EXPOSURE_TIME_ABSOLUTE,
-                    K4A_COLOR_CONTROL_MODE_MANUAL, absoluteExposureValue))) {
-            utility::LogError(
-                    "Runtime error: k4a_device_set_color_control() failed\n");
-        }
-    } else {
-        if (K4A_FAILED(k4a_device_set_color_control(
-                    sensor_.device_, K4A_COLOR_CONTROL_EXPOSURE_TIME_ABSOLUTE,
-                    K4A_COLOR_CONTROL_MODE_AUTO, 0))) {
-            utility::LogError(
-                    "Runtime error: k4a_device_set_color_control() failed\n");
-        }
+    // Assume absoluteExposureValue == 0
+    if (K4A_FAILED(k4a_device_set_color_control(
+                sensor_.device_, K4A_COLOR_CONTROL_EXPOSURE_TIME_ABSOLUTE,
+                K4A_COLOR_CONTROL_MODE_AUTO, 0))) {
+        utility::LogError(
+                "Runtime error: k4a_device_set_color_control() failed\n");
     }
 
     utility::LogInfo("Device started\n");

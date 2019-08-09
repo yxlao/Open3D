@@ -78,7 +78,6 @@ int ParseArgs(int argc,
               char **argv,
               io::AzureKinectSensorConfig &sensor_config,
               int &device_index,
-              int &absoluteExposureValue,
               std::string &recording_filename) {
     k4a_image_format_t recording_color_format = K4A_IMAGE_FORMAT_COLOR_MJPG;
     k4a_color_resolution_t recording_color_resolution =
@@ -225,19 +224,6 @@ int ParseArgs(int argc,
                 }
                 subordinate_delay_off_master_usec = (uint32_t)delay;
             });
-    cmd_parser.RegisterOption(
-            "-e|--exposure-control",
-            "Set manual exposure value (-11 to 1) for the RGB camera (default: "
-            "auto exposure)",
-            1, [&](const std::vector<char *> &args) {
-                int exposureValue = std::stoi(args[0]);
-                if (exposureValue < -11 || exposureValue > 1) {
-                    throw std::runtime_error(
-                            "Exposure value range is -11 to 1.");
-                }
-                absoluteExposureValue = static_cast<int32_t>(
-                        exp2f((float)exposureValue) * 1000000.0f);
-            });
 
     int args_left = 0;
     try {
@@ -292,13 +278,12 @@ int ParseArgs(int argc,
 int main(int argc, char **argv) {
     io::AzureKinectSensorConfig sensor_config;
     int device_index = 0;
-    int absoluteExposureValue = 0;
     std::string recording_filename;
     if (ParseArgs(argc, argv, sensor_config, device_index,
-                  absoluteExposureValue, recording_filename) != 0) {
+                  recording_filename) != 0) {
         utility::LogError("Parse args error\n");
     }
 
     io::AzureKinectRecorder recorder(sensor_config, (size_t)device_index);
-    return recorder.Record(recording_filename, absoluteExposureValue);
+    return recorder.Record(recording_filename);
 }
