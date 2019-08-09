@@ -51,9 +51,7 @@ public:
                         size_t device_index);
     virtual ~AzureKinectRecorder();
 
-    int Record(char* recording_filename,
-               bool record_imu,
-               int32_t absoluteExposureValue);
+    int Record(char* recording_filename, int32_t absoluteExposureValue);
 
 protected:
     AzureKinectSensor sensor_;

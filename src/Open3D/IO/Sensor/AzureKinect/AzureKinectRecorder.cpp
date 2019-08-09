@@ -87,7 +87,6 @@ AzureKinectRecorder::AzureKinectRecorder(
 AzureKinectRecorder::~AzureKinectRecorder() {}
 
 int AzureKinectRecorder::Record(char* recording_filename,
-                                bool record_imu,
                                 int32_t absoluteExposureValue) {
     // Convert to k4a native config
     k4a_device_configuration_t device_config_obj =
@@ -127,10 +126,6 @@ int AzureKinectRecorder::Record(char* recording_filename,
         }
     }
 
-    if (record_imu) {
-        CHECK(k4a_device_start_imu(sensor_.device_), sensor_.device_);
-    }
-
     utility::LogInfo("Device started\n");
 
     k4a_record_t recording;
@@ -141,9 +136,6 @@ int AzureKinectRecorder::Record(char* recording_filename,
         return 1;
     }
 
-    if (record_imu) {
-        CHECK(k4a_record_add_imu_track(recording), sensor_.device_);
-    }
     CHECK(k4a_record_write_header(recording), sensor_.device_);
 
     // Get transformation
@@ -253,41 +245,11 @@ int AzureKinectRecorder::Record(char* recording_filename,
         if (record_on) {
             CHECK(k4a_record_write_capture(recording, capture),
                   sensor_.device_);
-
-            if (record_imu) {
-                do {
-                    k4a_imu_sample_t sample;
-                    result = k4a_device_get_imu_sample(sensor_.device_, &sample,
-                                                       0);
-                    if (result == K4A_WAIT_RESULT_TIMEOUT) {
-                        break;
-                    } else if (result != K4A_WAIT_RESULT_SUCCEEDED) {
-                        utility::LogError(
-                                "Runtime error: k4a_imu_get_sample() "
-                                "returned %d\n",
-                                result);
-                        break;
-                    }
-                    k4a_result_t write_result =
-                            k4a_record_write_imu_sample(recording, sample);
-                    if (K4A_FAILED(write_result)) {
-                        utility::LogError(
-                                "Runtime error: "
-                                "k4a_record_write_imu_sample() "
-                                "returned %d\n",
-                                write_result);
-                        break;
-                    }
-                } while (!record_finished && result != K4A_WAIT_RESULT_FAILED);
-            }
         }
         k4a_capture_release(capture);
 
     } while (!record_finished && result != K4A_WAIT_RESULT_FAILED);
 
-    if (record_imu) {
-        k4a_device_stop_imu(sensor_.device_);
-    }
     k4a_device_stop_cameras(sensor_.device_);
 
     utility::LogInfo("Saving recording...\n");
