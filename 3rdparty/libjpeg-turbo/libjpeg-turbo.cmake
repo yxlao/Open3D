@@ -58,6 +58,7 @@ ExternalProject_Add(
 # https://gitlab.kitware.com/cmake/cmake/issues/18663
 ExternalProject_Add_StepTargets(ext_turbojpeg configure build install)
 ExternalProject_Add_StepDependencies(ext_turbojpeg install ext_turbojpeg-build)
+ExternalProject_Add_StepDependencies(ext_turbojpeg install ext_turbojpeg-configure)
 ExternalProject_Add_StepDependencies(ext_turbojpeg build ext_turbojpeg-configure)
 add_dependencies(build_all_3rd_party_libs ext_turbojpeg-install)
 
