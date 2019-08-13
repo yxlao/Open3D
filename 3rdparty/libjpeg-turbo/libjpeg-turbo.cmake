@@ -53,8 +53,16 @@ ExternalProject_Add(
         -DCMAKE_POSITION_INDEPENDENT_CODE=ON
 )
 
+
+# Workaround multiple-times build bug
+# https://gitlab.kitware.com/cmake/cmake/issues/18663
+ExternalProject_Add_StepTargets(ext_turbojpeg configure build install)
+ExternalProject_Add_StepDependencies(ext_turbojpeg install ext_turbojpeg-build)
+ExternalProject_Add_StepDependencies(ext_turbojpeg build ext_turbojpeg-configure)
+add_dependencies(build_all_3rd_party_libs ext_turbojpeg-install)
+
 add_library(turbojpeg INTERFACE)
-add_dependencies(turbojpeg ext_turbojpeg)
+add_dependencies(turbojpeg ext_turbojpeg-install)
 
 # If MSVC, the OUTPUT_NAME was set to turbojpeg-static
 if(MSVC)
@@ -81,7 +89,3 @@ if (NOT BUILD_SHARED_LIBS)
     install(FILES ${turbojpeg_LIB_FILES}
             DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 endif()
-
-add_dependencies(build_all_3rd_party_libs turbojpeg)
-
-
