@@ -1,3 +1,24 @@
+if (BUILD_AZURE_KINECT)
+    # Conditionally include header files in Open3D.h
+    set(BUILD_AZURE_KINECT_COMMENT "")
+    if (WIN32)
+        include_directories("C:/Program\ Files/Azure\ Kinect\ SDK\ v1.1.1/sdk/include")
+        link_directories("C:/Program\ Files/Azure\ Kinect\ SDK\ v1.1.1/sdk/windows-desktop/amd64/release/lib")
+        link_directories("C:/Program\ Files/Azure\ Kinect\ SDK\ v1.1.1/sdk/windows-desktop/amd64/release/bin")
+    else()
+        find_package(k4a QUIET)
+        find_package(k4arecord QUIET)
+        if (k4a_FOUND)
+            message(STATUS "Enabling Azure Kinect Support: ${k4a_INCLUDE_DIRS}")
+        else ()
+            message(FATAL_ERROR "Kinect SDK NOT found. Please install according \
+                    to https://github.com/microsoft/Azure-Kinect-Sensor-SDK/blob/develop/docs/usage.md")
+        endif ()
+    endif()
+else()
+    set(BUILD_AZURE_KINECT_COMMENT "//")
+endif()
+
 # Configure a header file to pass the version settings to the source code
 configure_file("${PROJECT_SOURCE_DIR}/src/Open3D/Open3D.h.in"
                "${PROJECT_SOURCE_DIR}/src/Open3D/Open3D.h")
@@ -67,13 +88,13 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 
 target_link_libraries(${CMAKE_PROJECT_NAME} k4a k4arecord)
 
-# if (BUILD_AZURE_KINECT)
-#     if (WIN32)
-#         target_link_libraries(${CMAKE_PROJECT_NAME} k4a k4arecord)
-#     else()
-#         target_link_libraries(${CMAKE_PROJECT_NAME} k4a::k4a k4a::k4arecord)
-#     endif()
-# endif()
+if (BUILD_AZURE_KINECT)
+    if (WIN32)
+        target_link_libraries(${CMAKE_PROJECT_NAME} k4a k4arecord)
+    else()
+        target_link_libraries(${CMAKE_PROJECT_NAME} k4a::k4a k4a::k4arecord)
+    endif()
+endif()
 
 # input_dirs: a list of absolute paths in the source dir
 # output_dirs: a list of relative paths in the install dir
