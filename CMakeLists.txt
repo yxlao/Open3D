@@ -83,6 +83,30 @@ option(BUILD_QHULL               "Build qhull from source"                  ON)
 option(ENABLE_JUPYTER            "Enable Jupyter support for Open3D"        ON)
 option(STATIC_WINDOWS_RUNTIME    "Use static (MT/MTd) Windows runtime"      OFF)
 
+# Azure kinect
+# TODO: remove this
+if (BUILD_AZURE_KINECT)
+    # Conditionally include header files in Open3D.h
+    set(BUILD_AZURE_KINECT_COMMENT "")
+    if (WIN32)
+        include_directories("C:/Program\ Files/Azure\ Kinect\ SDK\ v1.1.1/sdk/include")
+        link_directories("C:/Program\ Files/Azure\ Kinect\ SDK\ v1.1.1/sdk/windows-desktop/amd64/release/lib")
+        link_directories("C:/Program\ Files/Azure\ Kinect\ SDK\ v1.1.1/sdk/windows-desktop/amd64/release/bin")
+    else()
+        find_package(k4a QUIET)
+        find_package(k4arecord QUIET)
+        if (k4a_FOUND)
+            message(STATUS "Enabling Azure Kinect Support: ${k4a_INCLUDE_DIRS}")
+        else ()
+            message(FATAL_ERROR "Kinect SDK NOT found. Please install according \
+                    to https://github.com/microsoft/Azure-Kinect-Sensor-SDK/blob/develop/docs/usage.md")
+        endif ()
+    endif()
+else()
+    set(BUILD_AZURE_KINECT_COMMENT "//")
+endif()
+
+
 # default built type
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING

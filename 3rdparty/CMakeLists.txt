@@ -104,7 +104,7 @@ message(STATUS "Building libjpeg-turbo from source")
 include(libjpeg-turbo/libjpeg-turbo.cmake)
 
 # Azure Kinect
-include(azure_kinect/azure_kinect.cmake)
+# include(azure_kinect/azure_kinect.cmake)
 
 # JSONCPP
 if ((APPLE) AND ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU"))
