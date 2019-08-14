@@ -103,6 +103,9 @@ endif ()
 message(STATUS "Building libjpeg-turbo from source")
 include(libjpeg-turbo/libjpeg-turbo.cmake)
 
+# Azure Kinect
+include(azure_kinect/azure_kinect.cmake)
+
 # JSONCPP
 if ((APPLE) AND ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU"))
     # It is a known bug that g++ on OSX only supports libstdc++
