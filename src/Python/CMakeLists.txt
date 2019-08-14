@@ -44,6 +44,13 @@ set(PACKAGE_NAME open3d)
 file(GLOB_RECURSE PY_ALL_HEADER_FILES "*.h")
 file(GLOB_RECURSE PY_ALL_SOURCE_FILES "*.cpp")
 
+# TODO: consider explicitly listing the files
+if (BUILD_AZURE_KINECT)
+    target_compile_definitions(${PACKAGE_NAME} PRIVATE BUILD_AZURE_KINECT)
+else()
+    list(REMOVE_ITEM PY_ALL_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/io/sensor.cpp")
+endif()
+
 ADD_SOURCE_GROUP(Core)
 ADD_SOURCE_GROUP(IO)
 ADD_SOURCE_GROUP(Tutorial)

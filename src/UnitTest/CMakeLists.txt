@@ -5,6 +5,7 @@ include_directories(".")
 
 file(GLOB_RECURSE UNIT_TEST_SOURCE_FILES "*.cpp")
 
+# TODO: consider explicitly listing the files
 if (NOT BUILD_AZURE_KINECT)
     set (EXCLUDE_DIR "IO/Sensor")
     foreach (TMP_PATH ${UNIT_TEST_SOURCE_FILES})
