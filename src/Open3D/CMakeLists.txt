@@ -65,14 +65,8 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
                       ${3RDPARTY_LIBRARIES}
                       ${OMP_LIBRARIES})
 
-target_link_libraries(${CMAKE_PROJECT_NAME} k4a k4arecord)
-
 if (BUILD_AZURE_KINECT)
-    if (WIN32)
-        target_link_libraries(${CMAKE_PROJECT_NAME} k4a k4arecord)
-    else()
-        target_link_libraries(${CMAKE_PROJECT_NAME} k4a::k4a k4a::k4arecord)
-    endif()
+    target_link_libraries(${CMAKE_PROJECT_NAME} k4a k4arecord)
 endif()
 
 # input_dirs: a list of absolute paths in the source dir
