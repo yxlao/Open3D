@@ -93,8 +93,10 @@ if (BUILD_AZURE_KINECT)
         link_directories("C:/Program\ Files/Azure\ Kinect\ SDK\ v1.1.1/sdk/windows-desktop/amd64/release/lib")
         link_directories("C:/Program\ Files/Azure\ Kinect\ SDK\ v1.1.1/sdk/windows-desktop/amd64/release/bin")
     else()
-        find_package(k4a QUIET)
-        find_package(k4arecord QUIET)
+        # The property names are compatible with k4a 1.1.1, future k4a version
+        # might change the property names.
+        find_package(k4a 1.1.1 QUIET)
+        find_package(k4arecord 1.1.1 QUIET)
         if (k4a_FOUND)
             get_target_property(k4a_INCLUDE_DIRS k4a::k4a INTERFACE_INCLUDE_DIRECTORIES)
             get_target_property(k4arecord_INCLUDE_DIRS k4a::k4arecord INTERFACE_INCLUDE_DIRECTORIES)
