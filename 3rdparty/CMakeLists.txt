@@ -110,10 +110,17 @@ include(libjpeg-turbo/libjpeg-turbo.cmake)
 if (BUILD_AZURE_KINECT)
     # Conditionally include header files in Open3D.h
     set(BUILD_AZURE_KINECT_COMMENT "")
+
+    # Export the following variables:
+    # - k4a_INCLUDE_DIRS
+    # - k4a_LIBRARY_DIRS
+    # - k4a_LIBRARIES
     if (WIN32)
-        include_directories("C:/Program\ Files/Azure\ Kinect\ SDK\ v1.1.1/sdk/include")
-        link_directories("C:/Program\ Files/Azure\ Kinect\ SDK\ v1.1.1/sdk/windows-desktop/amd64/release/lib")
-        link_directories("C:/Program\ Files/Azure\ Kinect\ SDK\ v1.1.1/sdk/windows-desktop/amd64/release/bin")
+        set(k4a_INCLUDE_DIRS "C:/Program\ Files/Azure\ Kinect\ SDK\ v1.1.1/sdk/include")
+        set(k4a_LIBRARY_DIRS
+            "C:/Program\ Files/Azure\ Kinect\ SDK\ v1.1.1/sdk/windows-desktop/amd64/release/lib"
+            "C:/Program\ Files/Azure\ Kinect\ SDK\ v1.1.1/sdk/windows-desktop/amd64/release/bin"
+        )
     else()
         # The property names are compatible with k4a 1.1.1, future k4a version
         # might change the property names.
@@ -134,11 +141,18 @@ if (BUILD_AZURE_KINECT)
             target_link_libraries(k4a INTERFACE ${k4a_LIBRARIES})
             add_library(k4arecord INTERFACE)
             target_link_libraries(k4arecord INTERFACE ${k4arecord_LIBRARIES})
+
+            set(k4a_INCLUDE_DIRS k4a_INCLUDE_DIRS)
+            get_filename_component(k4a_LIBRARY_DIR ${k4a_LIBRARIES} ABSOLUTE)
+            get_filename_component(k4arecord_LIBRARY_DIR ${k4arecord_LIBRARIES} ABSOLUTE)
+            set(k4a_LIBRARY_DIRS k4a_LIBRARY_DIR k4arecord_LIBRARY_DIR)
         else ()
             message(FATAL_ERROR "Kinect SDK NOT found. Please install according \
                     to https://github.com/microsoft/Azure-Kinect-Sensor-SDK/blob/develop/docs/usage.md")
         endif ()
     endif()
+    set(k4a_LIBRARIES k4a k4arecord)
+
 else()
     set(BUILD_AZURE_KINECT_COMMENT "//")
 endif()
@@ -355,6 +369,7 @@ list(APPEND 3RDPARTY_INCLUDE_DIRS
      ${qhull_INCLUDE_DIRS}
      ${googletest_INCLUDE_DIRS}
      ${fmt_INCLUDE_DIRS}
+     ${k4a_INCLUDE_DIRS}
 )
 
 # set 3RDPARTY_INCLUDE_DIRS_AT_INSTALL
@@ -365,6 +380,7 @@ list(APPEND 3RDPARTY_INCLUDE_DIRS_AT_INSTALL
      ${GLEW_INCLUDE_DIRS}
      ${GLFW_INCLUDE_DIRS}
      ${fmt_INCLUDE_DIRS}
+     ${k4a_INCLUDE_DIRS}  # TODO: remove the need to install k4a header
 )
 
 # set 3RDPARTY_LIBRARY_DIRS
@@ -373,6 +389,7 @@ list(APPEND 3RDPARTY_LIBRARY_DIRS
     ${GLFW_LIBRARY_DIRS}
     ${JSONCPP_LIBRARY_DIRS}
     ${PNG_LIBRARY_DIRS}
+    ${k4a_LIBRARY_DIRS}
 )
 
 # set 3RDPARTY_LIBRARIES
@@ -387,6 +404,7 @@ list(APPEND 3RDPARTY_LIBRARIES
      ${qhull_LIBRARIES}
      ${googletest_LIBRARIES}
      ${fmt_LIBRARIES}
+     ${k4a_LIBRARIES}
 )
 
 # set PRE_BUILT_3RDPARTY_LIBRARIES. When building Open3D as shared library,
