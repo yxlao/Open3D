@@ -47,4 +47,9 @@ if (BUILD_AZURE_KINECT)
 else()
     set(BUILD_AZURE_KINECT_COMMENT "//")
 endif()
+
+# For configure_file
 set(BUILD_AZURE_KINECT_COMMENT ${BUILD_AZURE_KINECT_COMMENT} PARENT_SCOPE)
+
+# For make_python_package on Windows
+set(k4a_LIBRARY_DIRS ${k4a_LIBRARY_DIRS} PARENT_SCOPE)
