@@ -57,6 +57,8 @@ ExternalProject_Add(
         -DCMAKE_C_FLAGS_DEBUG=${CMAKE_C_FLAGS_DEBUG}
         -DCMAKE_CXX_FLAGS_RELEASE=${CMAKE_CXX_FLAGS_RELEASE}
         -DCMAKE_CXX_FLAGS_DEBUG=${CMAKE_CXX_FLAGS_DEBUG}
+        -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+        -DCMAKE_C_COMPILER=${DCMAKE_C_COMPILER}
         -DENABLE_STATIC=ON
         -DENABLE_SHARED=OFF
         -DWITH_SIMD=${WITH_SIMD}
@@ -94,5 +96,3 @@ if (NOT BUILD_SHARED_LIBS)
 endif()
 
 add_dependencies(build_all_3rd_party_libs turbojpeg)
-
-

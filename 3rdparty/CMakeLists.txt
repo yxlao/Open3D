@@ -43,7 +43,7 @@ if (BUILD_EIGEN3)
 endif ()
 
 # flann
-Directories("${CMAKE_CURRENT_SOURCE_DIR}/flann"  flann_INCLUDE_DIRS)
+include(flann/flann.cmake)
 
 # GLEW
 if (BUILD_GLEW)
@@ -305,6 +305,7 @@ list(APPEND 3RDPARTY_INCLUDE_DIRS
      ${GLEW_INCLUDE_DIRS}
      ${GLFW_INCLUDE_DIRS}
      ${JPEG_TURBO_INCLUDE_DIRS}
+     ${flann_INCLUDE_DIRS}
      ${JSONCPP_INCLUDE_DIRS}
      ${liblzf_INCLUDE_DIRS}
      ${tomasakeninemoeller_INCLUDE_DIRS}
@@ -343,6 +344,7 @@ list(APPEND 3RDPARTY_LIBRARIES
      ${GLEW_LIBRARIES}
      ${GLFW_LIBRARIES}
      ${JPEG_TURBO_LIBRARIES}
+     ${flann_LIBRARIES}
      ${JSONCPP_LIBRARIES}
      ${PNG_LIBRARIES}
      ${tinyfiledialogs_LIBRARIES}
