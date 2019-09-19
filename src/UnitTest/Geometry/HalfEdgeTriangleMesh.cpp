@@ -35,6 +35,10 @@
 using namespace open3d;
 using namespace unit_test;
 
+class Open3DTest : public ::testing::Test {};
+
+TEST_F(Open3DTest, Demo){std::cerr << "This is the error msg\n"}
+
 // [0: (-1, 2)]__________[1: (1, 2)]
 //             |        /|
 //              |  (0) /  |
