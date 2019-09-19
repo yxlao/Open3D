@@ -481,12 +481,12 @@ std::shared_ptr<PointCloud> TriangleMesh::SamplePointsUniformlyImpl(
 std::shared_ptr<PointCloud> TriangleMesh::SamplePointsUniformly(
         size_t number_of_points) const {
     if (number_of_points <= 0) {
-        utility::LogWarning("[SamplePointsUniformly] number_of_points <= 0");
+        utility::LogWarning("[SamplePointsUniformly] number_of_points <= 0\n");
         return std::make_shared<PointCloud>();
     }
     if (triangles_.size() == 0) {
         utility::LogWarning(
-                "[SamplePointsUniformly] input mesh has no triangles");
+                "[SamplePointsUniformly] input mesh has no triangles\n");
         return std::make_shared<PointCloud>();
     }
 
@@ -503,26 +503,25 @@ std::shared_ptr<PointCloud> TriangleMesh::SamplePointsPoissonDisk(
         double init_factor /* = 5 */,
         const std::shared_ptr<PointCloud> pcl_init /* = nullptr */) const {
     if (number_of_points <= 0) {
-        utility::LogWarning("[SamplePointsPoissonDisk] number_of_points <= 0");
+        utility::LogWarning(
+                "[SamplePointsPoissonDisk] number_of_points <= 0\n");
         return std::make_shared<PointCloud>();
     }
     if (triangles_.size() == 0) {
         utility::LogWarning(
-                "[SamplePointsPoissonDisk] input mesh has no triangles");
+                "[SamplePointsPoissonDisk] input mesh has no triangles\n");
         return std::make_shared<PointCloud>();
     }
     if (pcl_init == nullptr && init_factor < 1) {
         utility::LogWarning(
                 "[SamplePointsPoissonDisk] either pass pcl_init with #points "
-                "> "
-                "number_of_points or init_factor > 1");
+                "> number_of_points or init_factor > 1\n");
         return std::make_shared<PointCloud>();
     }
     if (pcl_init != nullptr && pcl_init->points_.size() < number_of_points) {
         utility::LogWarning(
                 "[SamplePointsPoissonDisk] either pass pcl_init with #points "
-                "> "
-                "number_of_points, or init_factor > 1");
+                "> number_of_points, or init_factor > 1\n");
         return std::make_shared<PointCloud>();
     }
 

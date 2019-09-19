@@ -58,7 +58,7 @@ void ViewControl::SetViewMatrices(
     if (window_height_ <= 0 || window_width_ <= 0) {
         utility::LogWarning(
                 "[ViewControl] SetViewPoint() failed because window height and "
-                "width are not set.");
+                "width are not set.\n");
         return;
     }
     glViewport(0, 0, window_width_, window_height_);
