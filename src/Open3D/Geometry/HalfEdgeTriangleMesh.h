@@ -98,8 +98,6 @@ protected:
     int NextHalfEdgeOnBoundary(int curr_half_edge_index) const;
 
 public:
-    std::vector<Eigen::Vector3i> triangles_;
-    std::vector<Eigen::Vector3d> triangle_normals_;
     std::vector<HalfEdge> half_edges_;
 
     /// Counter-clockwise ordered half-edges started from each vertex

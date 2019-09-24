@@ -167,12 +167,6 @@ HalfEdgeTriangleMesh::CreateFromTriangleMesh(const TriangleMesh &mesh) {
     mesh_cpy->triangle_normals_ = mesh.triangle_normals_;
     mesh_cpy->adjacency_list_ = mesh.adjacency_list_;
 
-    // Purge to remove duplications
-    mesh_cpy->RemoveDuplicatedVertices();
-    mesh_cpy->RemoveDuplicatedTriangles();
-    mesh_cpy->RemoveUnreferencedVertices();
-    mesh_cpy->RemoveDegenerateTriangles();
-
     // Collect half edges
     // Check: for valid manifolds, there mustn't be duplicated half-edges
     std::unordered_map<Eigen::Vector2i, size_t,
@@ -287,8 +281,6 @@ HalfEdgeTriangleMesh::CreateFromTriangleMesh(const TriangleMesh &mesh) {
     het_mesh->vertices_ = mesh_cpy->vertices_;
     het_mesh->vertex_normals_ = mesh_cpy->vertex_normals_;
     het_mesh->vertex_colors_ = mesh_cpy->vertex_colors_;
-    het_mesh->triangles_ = mesh_cpy->triangles_;
-    het_mesh->triangle_normals_ = mesh_cpy->triangle_normals_;
 
     return het_mesh;
 }

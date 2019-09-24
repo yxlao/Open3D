@@ -101,17 +101,6 @@ void pybind_halfedgetrianglemesh(py::module &m) {
                             std::to_string(mesh.half_edges_.size()) +
                             " half edges.";
                  })
-            .def_readwrite("triangles",
-                           &geometry::HalfEdgeTriangleMesh::triangles_,
-                           "``int`` array of shape ``(num_triangles, 3)``, use "
-                           "``numpy.asarray()`` to access data: List of "
-                           "triangles denoted by the index of points forming "
-                           "the triangle.")
-            .def_readwrite("triangle_normals",
-                           &geometry::HalfEdgeTriangleMesh::triangle_normals_,
-                           "``float64`` array of shape ``(num_triangles, 3)``, "
-                           "use ``numpy.asarray()`` to access data: Triangle "
-                           "normals.")
             .def("has_half_edges",
                  &geometry::HalfEdgeTriangleMesh::HasHalfEdges,
                  "Returns ``True`` if half-edges have already been computed.")
