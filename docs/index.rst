@@ -31,6 +31,7 @@ Open3D: A Modern Library for 3D Data Processing
     :maxdepth: 1
     :caption: Tutorial
 
+    tutorial/DataStructure/index
     tutorial/Basic/index
     tutorial/Advanced/index
     tutorial/ReconstructionSystem/index

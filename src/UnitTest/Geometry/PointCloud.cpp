@@ -30,12 +30,22 @@
 #include "Open3D/Geometry/Image.h"
 #include "Open3D/Geometry/PointCloud.h"
 #include "Open3D/Geometry/RGBDImage.h"
+#include "Open3D/Visualization/Utility/DrawGeometry.h"
 #include "TestUtility/UnitTest.h"
 
 using namespace Eigen;
 using namespace open3d;
 using namespace std;
 using namespace unit_test;
+
+TEST(PointCloud, Demo) {
+    auto pcd = std::make_shared<geometry::PointCloud>();
+    pcd->points_.push_back({0.0, 0.0, 0.0});  // (x, y, z)
+    pcd->points_.push_back({1.0, 1.0, 1.0});  // (x, y, z)
+    pcd->colors_.push_back({1.0, 0.0, 0.0});  // Red
+    pcd->colors_.push_back({1.0, 0.0, 0.0});  // Red
+    visualization::DrawGeometries({pcd});
+}
 
 // ----------------------------------------------------------------------------
 //
