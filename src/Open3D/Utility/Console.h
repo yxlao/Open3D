@@ -63,6 +63,14 @@ public:
         White = 7
     };
 
+    /// Context managed class for changing console color
+    /// Sets console color at constructor and resets color at destructor
+    class WithColor {
+    public:
+        WithColor(TextColor text_color, int highlight_text);
+        ~WithColor();
+    };
+
     Logger() : verbosity_level_(VerbosityLevel::Info) {}
     Logger(Logger const &) = delete;
     void operator=(Logger const &) = delete;
@@ -74,11 +82,9 @@ public:
 
     void VFatal(const char *format, fmt::format_args args) const {
         if (verbosity_level_ >= VerbosityLevel::Fatal) {
+            WithColor wc(TextColor::Red, 1);
             std::string err_msg = fmt::vformat(format, args);
-            std::string full_msg =
-                    fmt::format("{}[Open3D FATAL] {}{}",
-                                SChangeConsoleColor(TextColor::Red, 1), err_msg,
-                                SResetConsoleColor());
+            std::string full_msg = fmt::format("[Open3D FATAL] {}", err_msg);
             throw std::runtime_error(full_msg);
         }
     }
@@ -143,11 +149,9 @@ public:
     template <typename... Args>
     void Fatalf(const char *format, const Args &... args) const {
         if (verbosity_level_ >= VerbosityLevel::Fatal) {
+            WithColor wc(TextColor::Red, 1);
             std::string err_msg = fmt::sprintf(format, args...);
-            std::string full_msg =
-                    fmt::format("{}[Open3D FATAL] {}{}",
-                                SChangeConsoleColor(TextColor::Red, 1), err_msg,
-                                SResetConsoleColor());
+            std::string full_msg = fmt::format("[Open3D FATAL] {}", err_msg);
             throw std::runtime_error(full_msg);
         }
     }
@@ -195,11 +199,6 @@ protected:
     /// blue, magenta, cyan, white \param emphasis_text is 0 or 1
     void ChangeConsoleColor(TextColor text_color, int highlight_text) const;
     void ResetConsoleColor() const;
-    /// Prefix to change console text color
-    std::string SChangeConsoleColor(TextColor text_color,
-                                    int highlight_text) const;
-    /// Suffix to reset console text color
-    std::string SResetConsoleColor() const;
 
 public:
     VerbosityLevel verbosity_level_;
