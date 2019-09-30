@@ -63,14 +63,6 @@ public:
         White = 7
     };
 
-    /// Context managed class for changing console color
-    /// Sets console color at constructor and resets color at destructor
-    class WithColor {
-    public:
-        WithColor(TextColor text_color, int highlight_text);
-        ~WithColor();
-    };
-
     Logger() : verbosity_level_(VerbosityLevel::Info) {}
     Logger(Logger const &) = delete;
     void operator=(Logger const &) = delete;
@@ -91,19 +83,17 @@ public:
 
     void VError(const char *format, fmt::format_args args) const {
         if (verbosity_level_ >= VerbosityLevel::Error) {
-            ChangeConsoleColor(TextColor::Red, 1);
+            WithColor wc(TextColor::Red, 1);
             fmt::print("[Open3D ERROR] ");
             fmt::vprint(format, args);
-            ResetConsoleColor();
         }
     }
 
     void VWarning(const char *format, fmt::format_args args) const {
         if (verbosity_level_ >= VerbosityLevel::Warning) {
-            ChangeConsoleColor(TextColor::Yellow, 1);
+            WithColor wc(TextColor::Yellow, 1);
             fmt::print("[Open3D WARNING] ");
             fmt::vprint(format, args);
-            ResetConsoleColor();
         }
     }
 
@@ -159,20 +149,18 @@ public:
     template <typename... Args>
     void Errorf(const char *format, const Args &... args) const {
         if (verbosity_level_ >= VerbosityLevel::Error) {
-            ChangeConsoleColor(TextColor::Red, 1);
+            WithColor wc(TextColor::Red, 1);
             fmt::print("[Open3D ERROR] ");
             fmt::printf(format, args...);
-            ResetConsoleColor();
         }
     }
 
     template <typename... Args>
     void Warningf(const char *format, const Args &... args) const {
         if (verbosity_level_ >= VerbosityLevel::Warning) {
-            ChangeConsoleColor(TextColor::Yellow, 1);
+            WithColor wc(TextColor::Yellow, 1);
             fmt::print("[Open3D WARNING] ");
             fmt::printf(format, args...);
-            ResetConsoleColor();
         }
     }
 
@@ -193,12 +181,16 @@ public:
     }
 
 protected:
-    /// Internal function to change text color for the console
-    /// Note there is no security check for parameters.
-    /// \param text_color, from 0 to 7, they are black, red, green, yellow,
-    /// blue, magenta, cyan, white \param emphasis_text is 0 or 1
-    void ChangeConsoleColor(TextColor text_color, int highlight_text) const;
-    void ResetConsoleColor() const;
+    /// Context managed class for changing console color
+    /// Sets console color at constructor and resets color at destructor
+    class WithColor {
+    public:
+        /// \param text_color, from 0 to 7, they are black, red, green, yellow,
+        /// blue, magenta, cyan, white \param emphasis_text is 0 or 1
+        /// Note there is no security check for parameters.
+        WithColor(TextColor text_color, int highlight_text);
+        ~WithColor();
+    };
 
 public:
     VerbosityLevel verbosity_level_;

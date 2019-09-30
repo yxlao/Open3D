@@ -32,8 +32,6 @@
 using namespace open3d;
 
 int main(int argc, char **argv) {
-    utility::LogFatal("This Fatal message terminates the program\n");
-
     utility::SetVerbosityLevel(utility::VerbosityLevel::Debug);
 
     utility::LogDebug("This Debug message should be visible, {} {:.2f}\n",
