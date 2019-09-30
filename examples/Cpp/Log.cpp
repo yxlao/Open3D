@@ -25,11 +25,14 @@
 // ----------------------------------------------------------------------------
 
 #include <cstdio>
+#include <exception>
 
 #include "Open3D/Open3D.h"
 
+using namespace open3d;
+
 int main(int argc, char **argv) {
-    using namespace open3d;
+    utility::LogFatal("This Fatal message terminates the program\n");
 
     utility::SetVerbosityLevel(utility::VerbosityLevel::Debug);
 
@@ -62,6 +65,11 @@ int main(int argc, char **argv) {
     utility::LogError("This Error message should be visible, {} {:.2f}\n",
                       "format:", 0.42001);
 
+    try {
+        utility::LogFatal("This Fatal exception is catched\n");
+    } catch (const std::exception &e) {
+        utility::LogInfo("Catched exception msg: \"{}\"", e.what());
+    }
     utility::LogFatal("This Fatal message terminates the program\n");
     utility::LogFatal("This Fatal message should NOT be visible\n");
 
