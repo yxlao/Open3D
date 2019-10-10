@@ -39,7 +39,7 @@ namespace open3d {
 class Device {
 public:
     /// Type for device
-    enum class DeviceType { CPU = 0, GPU = 1 };
+    enum class DeviceType { CPU = 0, CUDA = 1 };
 
     /// Defalut constructor
     Device() : device_type_(DeviceType::CPU), device_id_(0) {}
@@ -59,8 +59,8 @@ public:
             if (device_name_lower == "cpu") {
                 device_type_ = DeviceType::CPU;
                 is_valid = true;
-            } else if (device_name_lower == "gpu") {
-                device_type_ = DeviceType::GPU;
+            } else if (device_name_lower == "cuda") {
+                device_type_ = DeviceType::CUDA;
                 is_valid = true;
             }
         }
@@ -80,8 +80,8 @@ public:
             case DeviceType::CPU:
                 str += "CPU";
                 break;
-            case DeviceType::GPU:
-                str += "GPU";
+            case DeviceType::CUDA:
+                str += "CUDA";
                 break;
             default:
                 utility::LogFatal("Unsupported device type\n");

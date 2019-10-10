@@ -61,14 +61,14 @@ Tensor Tensor::Contiguous() const {
         // Returns a shallow copy of the current Tensor
         return Tensor(shape_, strides_, data_ptr_, dtype_, device_, blob_);
     } else {
-        // TODO: Make both CPU/GPU kernels an OP, with registration mecanism
+        // TODO: Make both CPU/CUDA kernels an OP, with registration mecanism
         // TOOD: Consider making a Tensor accessor class
-        if (device_.device_type_ == Device::DeviceType::GPU) {
-            // TODO: write a GPU Kernel
+        if (device_.device_type_ == Device::DeviceType::CUDA) {
+            // TODO: write a CUDA Kernel
             Tensor cpu_clone = CloneTo(Device("CPU:0"));
             Tensor cpu_contiguous = cpu_clone.Contiguous();
-            Tensor gpu_contiguous = cpu_contiguous.CloneTo(device_);
-            return gpu_contiguous;
+            Tensor cuda_contiguous = cpu_contiguous.CloneTo(device_);
+            return cuda_contiguous;
         } else if (device_.device_type_ == Device::DeviceType::CPU) {
             Tensor dst_tensor(shape_, dtype_, device_);
             // int64_t to avoid MSVC openmp error
@@ -118,7 +118,7 @@ std::string Tensor::ToString(bool with_suffix,
                              const std::string& indent) const {
     std::ostringstream rc;
 
-    if (device_.device_type_ == Device::DeviceType::GPU) {
+    if (device_.device_type_ == Device::DeviceType::CUDA) {
         // Copy to CPU for printing
         // TODO: improve Contiguous() so that only the used part is copied
         Tensor host_tensor = CopyTo(Device("CPU:0"));

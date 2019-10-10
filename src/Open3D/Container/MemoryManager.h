@@ -91,9 +91,9 @@ public:
 };
 
 #ifdef BUILD_CUDA_MODULE
-class GPUMemoryManager : public DeviceMemoryManager {
+class CUDAMemoryManager : public DeviceMemoryManager {
 public:
-    GPUMemoryManager();
+    CUDAMemoryManager();
     void* Malloc(size_t byte_size, const Device& device) override;
     void Free(void* ptr, const Device& device) override;
     void Memcpy(void* dst_ptr,

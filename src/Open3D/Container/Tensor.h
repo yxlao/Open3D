@@ -118,7 +118,7 @@ public:
         }
         AssertTemplateDtype<T>();
         T value;
-        if (device_.device_type_ == Device::DeviceType::GPU) {
+        if (device_.device_type_ == Device::DeviceType::CUDA) {
             MemoryManager::MemcpyToHost(&value, data_ptr_, device_, sizeof(T));
         } else {
             value = *static_cast<T*>(data_ptr_);

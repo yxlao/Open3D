@@ -8,7 +8,7 @@ set (CONTAINER_SRC
 if (BUILD_CUDA_MODULE)
     set (CONTAINER_SRC
         ${CONTAINER_SRC}
-        MemoryManagerGPU.cu
+        MemoryManagerCUDA.cu
     )
 endif()
 

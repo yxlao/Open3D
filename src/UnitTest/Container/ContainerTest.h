@@ -41,7 +41,7 @@ public:
 #ifdef BUILD_CUDA_MODULE
         return {
                 Device("CPU:0"),
-                Device("GPU:0"),
+                Device("CUDA:0"),
         };
 #else
         return {
@@ -58,9 +58,9 @@ public:
 #ifdef BUILD_CUDA_MODULE
         return {
                 {Device("CPU:0"), Device("CPU:0")},
-                {Device("CPU:0"), Device("GPU:0")},
-                {Device("GPU:0"), Device("CPU:0")},
-                {Device("GPU:0"), Device("GPU:0")},
+                {Device("CPU:0"), Device("CUDA:0")},
+                {Device("CUDA:0"), Device("CPU:0")},
+                {Device("CUDA:0"), Device("CUDA:0")},
         };
 #else
         return {
