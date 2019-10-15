@@ -35,8 +35,8 @@ namespace open3d {
 namespace kernel {
 
 void CopyCPUKernel(const Tensor& src, Tensor& dst) {
-    // src and dst have been checked to have the same
-    // shape, strides, dtype, device
+    // src and dst have been checked to have the same shape, dtype, device
+    // dst must be contiguous
     SizeVector shape = src.GetShape();
     SizeVector strides = src.GetStrides();
     Dtype dtype = src.GetDtype();
@@ -54,6 +54,7 @@ void CopyCPUKernel(const Tensor& src, Tensor& dst) {
 #pragma omp parallel for schedule(static)
 #endif
     // int64_t to avoid MSVC openmp error
+    // TODO: Benchmark auto-vectorization v.s. OpenMP
     for (int64_t dst_offset = 0; dst_offset < num_elements; dst_offset++) {
         size_t ind = static_cast<size_t>(dst_offset);
         SizeVector indices(shape.size());

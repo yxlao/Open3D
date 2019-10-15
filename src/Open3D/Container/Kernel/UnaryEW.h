@@ -39,6 +39,7 @@ void CopyCPUKernel(const Tensor& src, Tensor& dst);
 void CopyCUDAKernel(const Tensor& src, Tensor& dst);
 #endif
 
+/// Copy src tensor to dst tensor
 void Copy(const Tensor& src, Tensor& dst);
 
 }  // namespace kernel
