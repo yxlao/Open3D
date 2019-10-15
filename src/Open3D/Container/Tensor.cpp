@@ -77,16 +77,9 @@ std::string Tensor::ToString(bool with_suffix,
                              const std::string& indent) const {
     std::ostringstream rc;
 
-    if (device_.device_type_ == Device::DeviceType::CUDA) {
-        // Copy to CPU for printing
-        // TODO: improve Contiguous() so that only the used part is copied
-        Tensor host_tensor = Copy(Device("CPU:0"));
-        rc << host_tensor.ToString(false, "");
-    } else if (!IsContiguous()) {
-        // Copy to Contiguous() buffer for printing
-        // TODO: if we implement an Accessor class, can maybe avoid this
-        Tensor contiguous_tensor = Contiguous();
-        rc << contiguous_tensor.ToString(false, "");
+    if (device_.device_type_ == Device::DeviceType::CUDA || !IsContiguous()) {
+        Tensor host_contiguous_tensor = Copy(Device("CPU:0"));
+        rc << host_contiguous_tensor.ToString(false, "");
     } else {
         if (shape_.size() == 0) {
             rc << indent;
