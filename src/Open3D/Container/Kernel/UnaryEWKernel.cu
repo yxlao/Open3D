@@ -39,6 +39,11 @@ void CopyCUDAKernel(const Tensor& src, Tensor& dst) {
     if (src.IsContiguous()) {
 
     }
+
+    // Temp implementation
+    Device cpu_device = Device("CPU:0");
+    Tensor cpu_contiguous = src.Clone(cpu_device).Copy(cpu_device);
+    MemoryManager::MemcpyBlob(dst.GetBlob(), cpu_contiguous.GetBlob());
 }
 
 }  // namespace kernel

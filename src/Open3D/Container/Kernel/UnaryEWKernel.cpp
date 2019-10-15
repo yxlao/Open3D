@@ -55,7 +55,7 @@ void CopyCPUKernel(const Tensor& src, Tensor& dst) {
         MemoryManager::Memcpy(dst.GetDataPtr(), dst.GetDevice(),
                               src.GetDataPtr(), src.GetDevice(),
                               element_byte_size * num_elements);
-        utility::LogWarning("Contiguous optimized!!!!!!!!!!\n");
+        utility::LogWarning("Contiguous optimized for cpu -> cpu\n");
     } else {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)

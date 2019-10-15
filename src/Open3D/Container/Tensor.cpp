@@ -38,13 +38,8 @@
 namespace open3d {
 
 Tensor Tensor::Copy(const Device& device) const {
-    // TODO: contiguous transform can happen together with copy in kernel
-    Tensor contiguous_tensor = Contiguous();
     Tensor dst_tensor(shape_, dtype_, device);
-    MemoryManager::Memcpy(dst_tensor.GetDataPtr(), dst_tensor.GetDevice(),
-                          contiguous_tensor.GetDataPtr(),
-                          contiguous_tensor.GetDevice(),
-                          shape_.NumElements() * DtypeUtil::ByteSize(dtype_));
+    kernel::Copy(*this, dst_tensor);
     return dst_tensor;
 }
 
@@ -62,21 +57,8 @@ Tensor Tensor::Contiguous() const {
         // Returns a shallow copy of the current Tensor
         return Tensor(shape_, strides_, data_ptr_, dtype_, device_, blob_);
     } else {
-        // TODO: Make both CPU/CUDA kernels an OP, with registration mecanism
-        // TOOD: Consider making a Tensor accessor class
-        if (device_.device_type_ == Device::DeviceType::CUDA) {
-            // TODO: write a CUDA Kernel
-            Tensor cpu_clone = Clone(Device("CPU:0"));
-            Tensor cpu_contiguous = cpu_clone.Contiguous();
-            Tensor cuda_contiguous = cpu_contiguous.Clone(device_);
-            return cuda_contiguous;
-        } else if (device_.device_type_ == Device::DeviceType::CPU) {
-            Tensor dst_tensor(shape_, dtype_, device_);
-            kernel::Copy(*this, dst_tensor);
-            return dst_tensor;
-        } else {
-            utility::LogFatal("Unknown device\n");
-        }
+        // Compact the tensor to contiguous on the same device
+        return Copy(device_);
     }
 }
 

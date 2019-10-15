@@ -215,15 +215,17 @@ TEST_P(TensorPermuteDevices, ToString) {
     // utility::LogDebug("\n{}\n", t4.ToString());
 }
 
-TEST_P(TensorPermuteDevices, CopyContinuous) {
+TEST_P(TensorPermuteDevices, CopyContiguous) {
     Device device = GetParam();
 
     std::vector<float> vals{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11,
                             12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23};
     Tensor t(vals, {2, 3, 4}, Dtype::Float32, device);
+    EXPECT_TRUE(t.IsContiguous());
 
     Tensor t_0 = t[0];
     EXPECT_THROW(t_0.AsScalar<float>(), std::runtime_error);
+    EXPECT_TRUE(t_0.IsContiguous());
 
     Tensor t_1 = t[1];
     EXPECT_EQ(t_1.GetShape(), SizeVector({3, 4}));
@@ -231,6 +233,7 @@ TEST_P(TensorPermuteDevices, CopyContinuous) {
     EXPECT_EQ(t_1.GetDataPtr(), static_cast<uint8_t *>(t.GetDataPtr()) +
                                         1 * 3 * 4 * sizeof(float));
     EXPECT_NE(t_1.GetDataPtr(), t_1.GetBlob()->v_);
+    EXPECT_TRUE(t_1.IsContiguous());
 
     Tensor t_1_copy = t_1.Copy(device);
     EXPECT_EQ(t_1_copy.GetShape(), SizeVector({3, 4}));
