@@ -31,6 +31,7 @@
 #include "Open3D/Container/Blob.h"
 #include "Open3D/Container/Device.h"
 #include "Open3D/Container/Dtype.h"
+#include "Open3D/Container/Kernel/Kernel.h"
 #include "Open3D/Container/SizeVector.h"
 #include "Open3D/Utility/Console.h"
 
@@ -71,31 +72,7 @@ Tensor Tensor::Contiguous() const {
             return cuda_contiguous;
         } else if (device_.device_type_ == Device::DeviceType::CPU) {
             Tensor dst_tensor(shape_, dtype_, device_);
-            // int64_t to avoid MSVC openmp error
-            int64_t num_elements = static_cast<int64_t>(shape_.NumElements());
-            size_t num_dims = shape_.size();
-            SizeVector default_strides = DefaultStrides(shape_);
-            size_t element_byte_size = DtypeUtil::ByteSize(dtype_);
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static)
-#endif
-            for (int64_t dst_offset = 0; dst_offset < num_elements;
-                 dst_offset++) {
-                size_t ind = static_cast<size_t>(dst_offset);
-                SizeVector indices(shape_.size());
-                size_t src_offset = 0;
-                for (size_t dim = 0; dim < num_dims; dim++) {
-                    src_offset += ind / default_strides[dim] * strides_[dim];
-                    ind = ind % default_strides[dim];
-                }
-                void* src_ptr = static_cast<uint8_t*>(data_ptr_) +
-                                src_offset * element_byte_size;
-                void* dst_ptr = static_cast<uint8_t*>(dst_tensor.GetDataPtr()) +
-                                dst_offset * element_byte_size;
-                MemoryManager::Memcpy(dst_ptr, dst_tensor.GetDevice(),
-                                      const_cast<const void*>(src_ptr),
-                                      GetDevice(), element_byte_size);
-            }
+            kernel::Copy(*this, dst_tensor);
             return dst_tensor;
         } else {
             utility::LogFatal("Unknown device\n");
