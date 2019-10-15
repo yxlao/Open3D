@@ -29,7 +29,17 @@
 
 namespace open3d {
 namespace kernel {
-void CopyCUDAKernel(const Tensor& src, Tensor& dst) {}
+
+void CopyCUDAKernel(const Tensor& src, Tensor& dst) {
+    // src and dst have been checked to have the same shape, dtype, and dst
+    // must be contiguous
+    Device src_device= src.GetDevice();
+    Device dst_device = dst.GetDevice();
+
+    if (src.IsContiguous()) {
+
+    }
+}
 
 }  // namespace kernel
 }  // namespace open3d

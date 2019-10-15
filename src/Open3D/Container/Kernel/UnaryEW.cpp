@@ -36,35 +36,35 @@ void Copy(const Tensor& src, Tensor& dst) {
     // Check shape
     // TODO: in the future, we may support automatic broadcasting
     if (src.GetShape() != dst.GetShape()) {
-        utility::LogError("src and dst tensor shape mismatch {} != {}\n",
+        utility::LogFatal("src and dst tensor shape mismatch {} != {}\n",
                           src.GetShape().ToString(), dst.GetShape().ToString());
     }
 
     // Check strides
     // TODO: currently we require dst to be contiguous
     if (!dst.IsContiguous()) {
-        utility::LogError("dst tensor must be contiguous\n");
+        utility::LogFatal("Unimplemented: dst must be contiguous\n");
     }
 
     // Check dtype
     // TODO: in the future, we may want to allow automatic casting
     if (src.GetDtype() != dst.GetDtype()) {
-        utility::LogError("src and dst tensor dtype mismatch {} != {}\n",
+        utility::LogFatal("src and dst tensor dtype mismatch {} != {}\n",
                           DtypeUtil::ToString(src.GetDtype()),
                           DtypeUtil::ToString(dst.GetDtype()));
     }
 
     // Disbatch to device
-    Device::DeviceType src_device = src.GetDevice().device_type_;
-    Device::DeviceType dst_device = dst.GetDevice().device_type_;
-    if ((src_device != Device::DeviceType::CPU &&
-         src_device != Device::DeviceType::CUDA) ||
-        (dst_device != Device::DeviceType::CPU &&
-         dst_device != Device::DeviceType::CUDA)) {
+    Device::DeviceType src_device_type = src.GetDevice().device_type_;
+    Device::DeviceType dst_device_type = dst.GetDevice().device_type_;
+    if ((src_device_type != Device::DeviceType::CPU &&
+         src_device_type != Device::DeviceType::CUDA) ||
+        (dst_device_type != Device::DeviceType::CPU &&
+         dst_device_type != Device::DeviceType::CUDA)) {
         utility::LogFatal("Unimplemented device\n");
     }
-    if (src_device == Device::DeviceType::CPU &&
-        src_device == Device::DeviceType::CPU) {
+    if (src_device_type == Device::DeviceType::CPU &&
+        src_device_type == Device::DeviceType::CPU) {
         CopyCPUKernel(src, dst);
     } else {
 #ifdef BUILD_CUDA_MODULE
