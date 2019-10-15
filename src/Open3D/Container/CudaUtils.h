@@ -45,4 +45,8 @@ inline void __OPEN3D_CUDA_CHECK(cudaError_t err,
     }
 }
 
+#ifndef OPEN3D_HOST_DEVICE
+#define OPEN3D_HOST_DEVICE __host__ __device__
+#endif
+
 }  // namespace open3d

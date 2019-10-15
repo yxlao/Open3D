@@ -44,7 +44,6 @@ void CopyCPUKernel(const Tensor& src, Tensor& dst) {
     Device device = src.GetDevice();
 
     int64_t num_elements = static_cast<int64_t>(shape.NumElements());
-    size_t num_dims = shape.size();
     SizeVector default_strides = Tensor::DefaultStrides(shape);
     size_t element_byte_size = DtypeUtil::ByteSize(dtype);
 
@@ -55,23 +54,25 @@ void CopyCPUKernel(const Tensor& src, Tensor& dst) {
         MemoryManager::Memcpy(dst.GetDataPtr(), dst.GetDevice(),
                               src.GetDataPtr(), src.GetDevice(),
                               element_byte_size * num_elements);
-        utility::LogWarning("Contiguous optimized for cpu -> cpu\n");
+        utility::LogWarning("Contiguous optimized for {} -> {}\n",
+                            src.GetDevice().ToString(),
+                            dst.GetDevice().ToString());
     } else {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
         // int64_t to avoid MSVC openmp error
         // TODO: Benchmark auto-vectorization v.s. OpenMP
-        for (int64_t dst_offset = 0; dst_offset < num_elements; dst_offset++) {
-            size_t ind = static_cast<size_t>(dst_offset);
+        for (int64_t dst_index = 0; dst_index < num_elements; dst_index++) {
+            size_t ind = static_cast<size_t>(dst_index);
             SizeVector indices(shape.size());
-            size_t src_offset = 0;
-            for (size_t dim = 0; dim < num_dims; dim++) {
-                src_offset += ind / default_strides[dim] * strides[dim];
+            size_t src_index = 0;
+            for (size_t dim = 0; dim < shape.size(); dim++) {
+                src_index += ind / default_strides[dim] * strides[dim];
                 ind = ind % default_strides[dim];
             }
-            const void* src_ptr = src_data_ptr + src_offset * element_byte_size;
-            void* dst_ptr = dst_data_ptr + dst_offset * element_byte_size;
+            const void* src_ptr = src_data_ptr + src_index * element_byte_size;
+            void* dst_ptr = dst_data_ptr + dst_index * element_byte_size;
             MemoryManager::Memcpy(dst_ptr, device,
                                   const_cast<const void*>(src_ptr), device,
                                   element_byte_size);
