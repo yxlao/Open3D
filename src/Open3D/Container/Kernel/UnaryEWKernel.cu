@@ -30,10 +30,11 @@
 #include <cuda_runtime.h>
 
 #include "Open3D/Container/CudaUtils.cuh"
+#include "Open3D/Container/Dispatch.h"
 
 static constexpr int threads_per_block = 128;
 static constexpr int items_per_thread = 4;
-constexpr int MAX_DIMS = 25;
+static constexpr int MAX_DIMS = 25;
 
 namespace open3d {
 namespace kernel {
@@ -124,25 +125,29 @@ void CopyCUDAKernel(const Tensor& src, Tensor& dst) {
             utility::LogWarning("To launch kernel for {} -> {}\n",
                                 src.GetDevice().ToString(),
                                 dst.GetDevice().ToString());
-            switch (dtype) {
-                case Dtype::Float32:
-                    CopyToContiguousCUDASameDevice<float>(src, dst);
-                    break;
-                case Dtype::Float64:
-                    CopyToContiguousCUDASameDevice<double>(src, dst);
-                    break;
-                case Dtype::Int32:
-                    CopyToContiguousCUDASameDevice<int32_t>(src, dst);
-                    break;
-                case Dtype::Int64:
-                    CopyToContiguousCUDASameDevice<int64_t>(src, dst);
-                    break;
-                case Dtype::UInt8:
-                    CopyToContiguousCUDASameDevice<uint8_t>(src, dst);
-                    break;
-                default:
-                    utility::LogFatal("Unsupported data type\n");
-            }
+            DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
+                CopyToContiguousCUDASameDevice<scalar_t>(src, dst);
+            });
+
+            // switch (dtype) {
+            //     case Dtype::Float32:
+            //         CopyToContiguousCUDASameDevice<float>(src, dst);
+            //         break;
+            //     case Dtype::Float64:
+            //         CopyToContiguousCUDASameDevice<double>(src, dst);
+            //         break;
+            //     case Dtype::Int32:
+            //         CopyToContiguousCUDASameDevice<int32_t>(src, dst);
+            //         break;
+            //     case Dtype::Int64:
+            //         CopyToContiguousCUDASameDevice<int64_t>(src, dst);
+            //         break;
+            //     case Dtype::UInt8:
+            //         CopyToContiguousCUDASameDevice<uint8_t>(src, dst);
+            //         break;
+            //     default:
+            //         utility::LogFatal("Unsupported data type\n");
+            // }
         } else {
             // Works for both CPU -> GPU or GPU -> CPU
             Tensor src_conti = src.Copy(src.GetDevice());
