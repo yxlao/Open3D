@@ -128,26 +128,6 @@ void CopyCUDAKernel(const Tensor& src, Tensor& dst) {
             DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
                 CopyToContiguousCUDASameDevice<scalar_t>(src, dst);
             });
-
-            // switch (dtype) {
-            //     case Dtype::Float32:
-            //         CopyToContiguousCUDASameDevice<float>(src, dst);
-            //         break;
-            //     case Dtype::Float64:
-            //         CopyToContiguousCUDASameDevice<double>(src, dst);
-            //         break;
-            //     case Dtype::Int32:
-            //         CopyToContiguousCUDASameDevice<int32_t>(src, dst);
-            //         break;
-            //     case Dtype::Int64:
-            //         CopyToContiguousCUDASameDevice<int64_t>(src, dst);
-            //         break;
-            //     case Dtype::UInt8:
-            //         CopyToContiguousCUDASameDevice<uint8_t>(src, dst);
-            //         break;
-            //     default:
-            //         utility::LogFatal("Unsupported data type\n");
-            // }
         } else {
             // Works for both CPU -> GPU or GPU -> CPU
             Tensor src_conti = src.Copy(src.GetDevice());
