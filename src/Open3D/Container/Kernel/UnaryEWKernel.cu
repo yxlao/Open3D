@@ -57,7 +57,8 @@ OPEN3D_HOST_DEVICE static void CopyElementKernel(const void* src, void* dst) {
     *static_cast<T*>(dst) = *static_cast<const T*>(src);
 }
 
-struct OffsetCalculator {
+class OffsetCalculator {
+public:
     OffsetCalculator(size_t num_dims,
                      const size_t* src_strides,
                      const size_t* dst_strides)
@@ -77,6 +78,7 @@ struct OffsetCalculator {
         return src_idx;
     }
 
+protected:
     size_t num_dims_;
     size_t src_strides_[MAX_DIMS];
     size_t dst_strides_[MAX_DIMS];

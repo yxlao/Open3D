@@ -29,8 +29,23 @@
 #include "Open3D/Container/Dtype.h"
 #include "Open3D/Utility/Console.h"
 
-// Inspired by
-// https://github.com/pytorch/pytorch/blob/master/aten/src/ATen/Dispatch.h
+/// Call a numerical templated funciton based on Dtype. Warp the function to
+/// a lambda function to use DISPATCH_DTYPE_TO_TEMPLATE.
+///
+/// Before:
+///     if (dtype == Dtype::Float32) {
+///         func<float>(args);
+///     } else if (dtype == Dtype::Float64) {
+///         func<double>(args);
+///     } else ...
+///
+/// Now:
+///     DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
+///        func<scalar_t>(args);
+///     });
+///
+/// Inspired by:
+///     https://github.com/pytorch/pytorch/blob/master/aten/src/ATen/Dispatch.h
 #define DISPATCH_DTYPE_TO_TEMPLATE(DTYPE, LAMBDA_FUNC)        \
     [&] {                                                     \
         switch (DTYPE) {                                      \
