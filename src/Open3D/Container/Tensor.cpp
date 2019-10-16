@@ -30,6 +30,7 @@
 
 #include "Open3D/Container/Blob.h"
 #include "Open3D/Container/Device.h"
+#include "Open3D/Container/Dispatch.h"
 #include "Open3D/Container/Dtype.h"
 #include "Open3D/Container/Kernel/Kernel.h"
 #include "Open3D/Container/SizeVector.h"
@@ -119,25 +120,9 @@ std::string Tensor::ToString(bool with_suffix,
 
 std::string Tensor::ScalarPtrToString(const void* ptr) const {
     std::string str = "";
-    switch (dtype_) {
-        case Dtype::Float32:
-            str = fmt::format("{}", *static_cast<const float*>(ptr));
-            break;
-        case Dtype::Float64:
-            str = fmt::format("{}", *static_cast<const double*>(ptr));
-            break;
-        case Dtype::Int32:
-            str = fmt::format("{}", *static_cast<const int32_t*>(ptr));
-            break;
-        case Dtype::Int64:
-            str = fmt::format("{}", *static_cast<const int64_t*>(ptr));
-            break;
-        case Dtype::UInt8:
-            str = fmt::format("{}", *static_cast<const uint8_t*>(ptr));
-            break;
-        default:
-            utility::LogFatal("Unsupported data type\n");
-    }
+    DISPATCH_DTYPE_TO_TEMPLATE(dtype_, [&]() {
+        str = fmt::format("{}", *static_cast<const scalar_t*>(ptr));
+    });
     return str;
 }
 

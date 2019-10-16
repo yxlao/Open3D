@@ -26,10 +26,9 @@
 
 #include "Open3D/Container/Kernel/UnaryEW.cuh"
 
-#include "Open3D/Container/Tensor.h"
 #include "Open3D/Container/CudaUtils.cuh"
 #include "Open3D/Container/Dispatch.h"
-
+#include "Open3D/Container/Tensor.h"
 
 static constexpr int threads_per_block = 128;
 static constexpr int items_per_thread = 4;
