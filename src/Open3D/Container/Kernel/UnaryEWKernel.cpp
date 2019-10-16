@@ -47,8 +47,8 @@ void CopyCPUKernel(const Tensor& src, Tensor& dst) {
     SizeVector default_strides = Tensor::DefaultStrides(shape);
     size_t element_byte_size = DtypeUtil::ByteSize(dtype);
 
-    const uint8_t* src_data_ptr = static_cast<const uint8_t*>(src.GetDataPtr());
-    uint8_t* dst_data_ptr = static_cast<uint8_t*>(dst.GetDataPtr());
+    const char* src_data_ptr = static_cast<const char*>(src.GetDataPtr());
+    char* dst_data_ptr = static_cast<char*>(dst.GetDataPtr());
 
     if (src.IsContiguous()) {
         MemoryManager::Memcpy(dst.GetDataPtr(), dst.GetDevice(),

@@ -47,8 +47,8 @@ Tensor Tensor::Clone(const Device& device) const {
     auto new_blob = std::make_shared<Blob>(blob_->byte_size_, device);
     MemoryManager::MemcpyBlob(new_blob, blob_);
     size_t data_offset =
-            static_cast<uint8_t*>(data_ptr_) - static_cast<uint8_t*>(blob_->v_);
-    void* new_data_ptr = static_cast<uint8_t*>(new_blob->v_) + data_offset;
+            static_cast<char*>(data_ptr_) - static_cast<char*>(blob_->v_);
+    void* new_data_ptr = static_cast<char*>(new_blob->v_) + data_offset;
     return Tensor(shape_, strides_, new_data_ptr, dtype_, device, new_blob);
 }
 
@@ -85,7 +85,7 @@ std::string Tensor::ToString(bool with_suffix,
             rc << indent;
             rc << ScalarPtrToString(data_ptr_);
         } else if (shape_.size() == 1) {
-            const uint8_t* ptr = static_cast<const uint8_t*>(data_ptr_);
+            const char* ptr = static_cast<const char*>(data_ptr_);
             rc << "[";
             std::string delim = "";
             size_t element_byte_size = DtypeUtil::ByteSize(dtype_);
@@ -161,7 +161,7 @@ Tensor Tensor::operator[](size_t i) const {
     }
     SizeVector new_shape(shape_.begin() + 1, shape_.end());
     SizeVector new_stride(strides_.begin() + 1, strides_.end());
-    void* new_data_ptr = static_cast<uint8_t*>(data_ptr_) +
+    void* new_data_ptr = static_cast<char*>(data_ptr_) +
                          strides_[0] * DtypeUtil::ByteSize(dtype_) * i;
     return Tensor(new_shape, new_stride, new_data_ptr, dtype_, device_, blob_);
 }
@@ -193,7 +193,7 @@ Tensor Tensor::Slice(size_t dim, size_t start, size_t stop, size_t step) const {
         stop = start;
     }
 
-    void* new_data_ptr = static_cast<uint8_t*>(data_ptr_) +
+    void* new_data_ptr = static_cast<char*>(data_ptr_) +
                          start * strides_[dim] * DtypeUtil::ByteSize(dtype_);
     SizeVector new_shape = shape_;
     SizeVector new_strides = strides_;

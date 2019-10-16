@@ -76,8 +76,8 @@ static void CopyToContiguousCUDASameDevice(const Tensor& src, Tensor& dst) {
     int items_per_block = threads_per_block * items_per_thread;
     int grid_size = (N + items_per_block - 1) / items_per_block;
 
-    const uint8_t* src_data_ptr = static_cast<const uint8_t*>(src.GetDataPtr());
-    uint8_t* dst_data_ptr = static_cast<uint8_t*>(dst.GetDataPtr());
+    const char* src_data_ptr = static_cast<const char*>(src.GetDataPtr());
+    char* dst_data_ptr = static_cast<char*>(dst.GetDataPtr());
     int element_byte_size = DtypeUtil::ByteSize(src.GetDtype());
     OffsetCalculator offset_calculator(src.GetShape().size(),
                                        src.GetStrides().data(),
