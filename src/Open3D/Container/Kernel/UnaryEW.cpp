@@ -65,10 +65,10 @@ void Copy(const Tensor& src, Tensor& dst) {
     }
     if (src_device_type == Device::DeviceType::CPU &&
         src_device_type == Device::DeviceType::CPU) {
-        CopyCPUKernel(src, dst);
+        CopyCPU(src, dst);
     } else {
 #ifdef BUILD_CUDA_MODULE
-        CopyCUDAKernel(src, dst);
+        CopyCUDA(src, dst);
 #endif
     }
 }

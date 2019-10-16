@@ -35,7 +35,7 @@
 namespace open3d {
 namespace kernel {
 
-void CopyCPUKernel(const Tensor& src, Tensor& dst) {
+void CopyCPU(const Tensor& src, Tensor& dst) {
     // src and dst have been checked to have the same shape, dtype, device, and
     // dst must be contiguous
     SizeVector shape = src.GetShape();

@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Open3D/Container/Kernel/UnaryEW.cuh"
+#include "Open3D/Container/Kernel/UnaryEW.h"
 
 #include "Open3D/Container/CudaUtils.cuh"
 #include "Open3D/Container/Dispatch.h"
@@ -36,6 +36,20 @@ static constexpr int MAX_DIMS = 25;
 
 namespace open3d {
 namespace kernel {
+
+template <int threads_per_block, int items_per_thread, typename func_t>
+__global__ void ElementWiseKernel(int N, func_t f) {
+    int items_per_block = threads_per_block * items_per_thread;
+    int idx = blockIdx.x * items_per_block + threadIdx.x;
+#pragma unroll
+    for (int i = 0; i < items_per_thread; i++) {
+        if (idx < N) {
+            f(idx);
+            idx += threads_per_block;
+        }
+    }
+}
+
 
 template <typename T>
 OPEN3D_HOST_DEVICE static void CopyElementKernel(const void* src, void* dst) {
@@ -93,7 +107,7 @@ static void CopyToContiguousCUDASameDevice(const Tensor& src, Tensor& dst) {
             <<<grid_size, threads_per_block, 0>>>(N, f);
 }
 
-void CopyCUDAKernel(const Tensor& src, Tensor& dst) {
+void CopyCUDA(const Tensor& src, Tensor& dst) {
     // It has been checked that
     // - src and dst have the same shape, dtype, and dst
     // - dst must be contiguous
@@ -119,7 +133,7 @@ void CopyCUDAKernel(const Tensor& src, Tensor& dst) {
             // Works for both CPU -> GPU or GPU -> CPU
             Tensor src_conti = src.Copy(src.GetDevice());
             // Careful about the resursions
-            CopyCUDAKernel(src_conti, dst);
+            CopyCUDA(src_conti, dst);
         }
     }
 }

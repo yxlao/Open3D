@@ -33,10 +33,10 @@ namespace open3d {
 namespace kernel {
 
 // TODO: use dispatch mecanism to avoid ifdef
-void CopyCPUKernel(const Tensor& src, Tensor& dst);
+void CopyCPU(const Tensor& src, Tensor& dst);
 
 #ifdef BUILD_CUDA_MODULE
-void CopyCUDAKernel(const Tensor& src, Tensor& dst);
+void CopyCUDA(const Tensor& src, Tensor& dst);
 #endif
 
 /// Copy src tensor to dst tensor
