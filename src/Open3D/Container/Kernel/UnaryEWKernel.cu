@@ -31,19 +31,19 @@
 
 #include "Open3D/Container/CudaUtils.h"
 
-static constexpr size_t threads_per_block = 128;
-static constexpr size_t items_per_thread = 4;
-constexpr size_t MAX_DIMS = 25;
+static constexpr int threads_per_block = 128;
+static constexpr int items_per_thread = 4;
+constexpr int MAX_DIMS = 25;
 
 namespace open3d {
 namespace kernel {
 
-template <size_t threads_per_block, size_t items_per_thread, typename func_t>
-__global__ void elementwise_kernel(size_t N, func_t f) {
-    size_t items_per_block = threads_per_block * items_per_thread;
-    size_t idx = blockIdx.x * items_per_block + threadIdx.x;
+template <int threads_per_block, int items_per_thread, typename func_t>
+__global__ void elementwise_kernel(int N, func_t f) {
+    int items_per_block = threads_per_block * items_per_thread;
+    int idx = blockIdx.x * items_per_block + threadIdx.x;
 #pragma unroll
-    for (size_t i = 0; i < items_per_thread; i++) {
+    for (int i = 0; i < items_per_thread; i++) {
         if (idx < N) {
             f(idx);
             idx += threads_per_block;
@@ -83,19 +83,19 @@ struct OffsetCalculator {
 
 template <typename T>
 static void CopyToContiguousCUDASameDevice(const Tensor& src, Tensor& dst) {
-    size_t N = static_cast<size_t>(src.GetShape().NumElements());
-    size_t items_per_block = threads_per_block * items_per_thread;
-    size_t grid_size = (N + items_per_block - 1) / items_per_block;
+    int N = static_cast<int>(src.GetShape().NumElements());
+    int items_per_block = threads_per_block * items_per_thread;
+    int grid_size = (N + items_per_block - 1) / items_per_block;
 
     const uint8_t* src_data_ptr = static_cast<const uint8_t*>(src.GetDataPtr());
     uint8_t* dst_data_ptr = static_cast<uint8_t*>(dst.GetDataPtr());
-    size_t element_byte_size = DtypeUtil::ByteSize(src.GetDtype());
+    int element_byte_size = DtypeUtil::ByteSize(src.GetDtype());
     OffsetCalculator offset_calculator(src.GetShape().size(),
                                        src.GetStrides().data(),
                                        dst.GetStrides().data());
 
-    auto f = [=] OPEN3D_HOST_DEVICE(size_t idx) {
-        size_t src_idx = offset_calculator.GetOffset(idx);
+    auto f = [=] OPEN3D_HOST_DEVICE(int idx) {
+        int src_idx = offset_calculator.GetOffset(idx);
         const void* src_ptr = src_data_ptr + src_idx * element_byte_size;
         void* dst_ptr = dst_data_ptr + idx * element_byte_size;
         templated_copy<T>(src_ptr, dst_ptr);
