@@ -62,17 +62,17 @@ void CopyCPUKernel(const Tensor& src, Tensor& dst) {
 #pragma omp parallel for schedule(static)
 #endif
         // int64_t to avoid MSVC openmp error
-        // TODO: Benchmark auto-vectorization v.s. OpenMP
-        for (int64_t dst_index = 0; dst_index < num_elements; dst_index++) {
-            size_t ind = static_cast<size_t>(dst_index);
+        // Note that this uses OpenMP but we may also use auto-vectorization
+        for (int64_t dst_idx = 0; dst_idx < num_elements; dst_idx++) {
+            size_t ind = static_cast<size_t>(dst_idx);
             SizeVector indices(shape.size());
-            size_t src_index = 0;
+            size_t src_idx = 0;
             for (size_t dim = 0; dim < shape.size(); dim++) {
-                src_index += ind / default_strides[dim] * strides[dim];
+                src_idx += ind / default_strides[dim] * strides[dim];
                 ind = ind % default_strides[dim];
             }
-            const void* src_ptr = src_data_ptr + src_index * element_byte_size;
-            void* dst_ptr = dst_data_ptr + dst_index * element_byte_size;
+            const void* src_ptr = src_data_ptr + src_idx * element_byte_size;
+            void* dst_ptr = dst_data_ptr + dst_idx * element_byte_size;
             MemoryManager::Memcpy(dst_ptr, device,
                                   const_cast<const void*>(src_ptr), device,
                                   element_byte_size);

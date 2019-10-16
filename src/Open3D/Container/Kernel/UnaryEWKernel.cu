@@ -33,6 +33,7 @@
 
 static constexpr int threads_per_block = 128;
 static constexpr int items_per_thread = 4;
+constexpr int MAX_DIMS = 25;
 
 namespace open3d {
 namespace kernel {
@@ -40,21 +41,65 @@ namespace kernel {
 template <int threads_per_block, int items_per_thread, typename func_t>
 __global__ void elementwise_kernel(int N, func_t f) {
     int items_per_block = threads_per_block * items_per_thread;
-    int index = blockIdx.x * items_per_block + threadIdx.x;
+    int idx = blockIdx.x * items_per_block + threadIdx.x;
 #pragma unroll
     for (int i = 0; i < items_per_thread; i++) {
-        if (index < N) {
-            f(index);
-            index += threads_per_block;
+        if (idx < N) {
+            f(idx);
+            idx += threads_per_block;
         }
     }
 }
 
+template <typename T>
+OPEN3D_HOST_DEVICE void templated_copy(const void* src, void* dst) {
+    *static_cast<T*>(dst) = *static_cast<const T*>(src);
+}
+
+struct OffsetCalculator {
+    OffsetCalculator(int num_dims,
+                     const size_t* src_strides,
+                     const size_t* dst_strides)
+        : num_dims_(num_dims) {
+        for (int i = 0; i < num_dims_; i++) {
+            src_strides_[i] = src_strides[i];
+            dst_strides_[i] = dst_strides[i];
+        }
+    }
+
+    OPEN3D_HOST_DEVICE int GetOffset(int idx) const {
+        int src_idx = 0;
+        for (int dim = 0; dim < num_dims_; dim++) {
+            src_idx += idx / dst_strides_[dim] * src_strides_[dim];
+            idx = idx % dst_strides_[dim];
+        }
+        return src_idx;
+    }
+
+    int num_dims_;
+    int src_strides_[MAX_DIMS];
+    int dst_strides_[MAX_DIMS];
+};
+
+template <typename T>
 static void CopyToContiguousCUDASameDevice(const Tensor& src, Tensor& dst) {
     int N = static_cast<int>(src.GetShape().NumElements());
     int items_per_block = threads_per_block * items_per_thread;
     int grid_size = (N + items_per_block - 1) / items_per_block;
-    auto f = [=]OPEN3D_HOST_DEVICE(int idx) {};
+
+    const uint8_t* src_data_ptr = static_cast<const uint8_t*>(src.GetDataPtr());
+    uint8_t* dst_data_ptr = static_cast<uint8_t*>(dst.GetDataPtr());
+    size_t element_byte_size = DtypeUtil::ByteSize(src.GetDtype());
+    OffsetCalculator offset_calculator(src.GetShape().size(), src.GetStrides().data(),
+                                       dst.GetStrides().data());
+
+    auto f = [=] OPEN3D_HOST_DEVICE(int idx) {
+        int src_idx = offset_calculator.GetOffset(idx);
+        const void* src_ptr = src_data_ptr + src_idx * element_byte_size;
+        void* dst_ptr = dst_data_ptr + idx * element_byte_size;
+        templated_copy<T>(src_ptr, dst_ptr);
+    };
+
     elementwise_kernel<threads_per_block, items_per_thread>
             <<<grid_size, threads_per_block, 0>>>(N, f);
 }
@@ -76,7 +121,25 @@ void CopyCUDAKernel(const Tensor& src, Tensor& dst) {
                             dst.GetDevice().ToString());
     } else {
         if (src.GetDevice() == dst.GetDevice()) {
-            CopyToContiguousCUDASameDevice(src, dst);
+            switch (dtype) {
+                case Dtype::Float32:
+                    CopyToContiguousCUDASameDevice<float>(src, dst);
+                    break;
+                case Dtype::Float64:
+                    CopyToContiguousCUDASameDevice<double>(src, dst);
+                    break;
+                case Dtype::Int32:
+                    CopyToContiguousCUDASameDevice<int32_t>(src, dst);
+                    break;
+                case Dtype::Int64:
+                    CopyToContiguousCUDASameDevice<int64_t>(src, dst);
+                    break;
+                case Dtype::UInt8:
+                    CopyToContiguousCUDASameDevice<uint8_t>(src, dst);
+                    break;
+                default:
+                    utility::LogFatal("Unsupported data type\n");
+            }
         } else {
             // Works for both CPU -> GPU or GPU -> CPU
             Tensor src_conti = src.Copy(src.GetDevice());
