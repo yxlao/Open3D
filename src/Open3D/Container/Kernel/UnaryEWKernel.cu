@@ -53,7 +53,7 @@ __global__ void elementwise_kernel(int N, func_t f) {
 }
 
 template <typename T>
-OPEN3D_HOST_DEVICE void templated_copy(const void* src, void* dst) {
+OPEN3D_HOST_DEVICE static void CopyElementKernel(const void* src, void* dst) {
     *static_cast<T*>(dst) = *static_cast<const T*>(src);
 }
 
@@ -99,7 +99,7 @@ static void CopyToContiguousCUDASameDevice(const Tensor& src, Tensor& dst) {
         int src_idx = offset_calculator.GetOffset(idx);
         const void* src_ptr = src_data_ptr + src_idx * element_byte_size;
         void* dst_ptr = dst_data_ptr + idx * element_byte_size;
-        templated_copy<T>(src_ptr, dst_ptr);
+        CopyElementKernel<T>(src_ptr, dst_ptr);
     };
 
     elementwise_kernel<threads_per_block, items_per_thread>
