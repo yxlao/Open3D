@@ -280,7 +280,7 @@ TEST_P(TensorPermuteDevices, Slice) {
                       DtypeUtil::ByteSize(Dtype::Float32) * 3 * 4);
 }
 
-TEST_P(TensorPermuteDevices, CopyNonContinuous) {
+TEST_P(TensorPermuteDevices, CopyNonContiguous) {
     Device device = GetParam();
 
     std::vector<float> vals{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11,

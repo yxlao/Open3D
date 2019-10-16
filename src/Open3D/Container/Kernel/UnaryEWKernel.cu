@@ -90,7 +90,8 @@ static void CopyToContiguousCUDASameDevice(const Tensor& src, Tensor& dst) {
     const uint8_t* src_data_ptr = static_cast<const uint8_t*>(src.GetDataPtr());
     uint8_t* dst_data_ptr = static_cast<uint8_t*>(dst.GetDataPtr());
     size_t element_byte_size = DtypeUtil::ByteSize(src.GetDtype());
-    OffsetCalculator offset_calculator(src.GetShape().size(), src.GetStrides().data(),
+    OffsetCalculator offset_calculator(src.GetShape().size(),
+                                       src.GetStrides().data(),
                                        dst.GetStrides().data());
 
     auto f = [=] OPEN3D_HOST_DEVICE(int idx) {
@@ -109,7 +110,6 @@ void CopyCUDAKernel(const Tensor& src, Tensor& dst) {
     // - src and dst have the same shape, dtype, and dst
     // - dst must be contiguous
     // - at least one of src or dst is CUDA device
-
     SizeVector shape = src.GetShape();
     Dtype dtype = src.GetDtype();
     if (src.IsContiguous()) {
@@ -121,6 +121,9 @@ void CopyCUDAKernel(const Tensor& src, Tensor& dst) {
                             dst.GetDevice().ToString());
     } else {
         if (src.GetDevice() == dst.GetDevice()) {
+            utility::LogWarning("To launch kernel for {} -> {}\n",
+                                src.GetDevice().ToString(),
+                                dst.GetDevice().ToString());
             switch (dtype) {
                 case Dtype::Float32:
                     CopyToContiguousCUDASameDevice<float>(src, dst);
