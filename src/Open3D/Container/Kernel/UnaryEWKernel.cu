@@ -24,13 +24,12 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
+#include "Open3D/Container/Kernel/UnaryEW.cuh"
+
 #include "Open3D/Container/Tensor.h"
-
-#include <cuda.h>
-#include <cuda_runtime.h>
-
 #include "Open3D/Container/CudaUtils.cuh"
 #include "Open3D/Container/Dispatch.h"
+
 
 static constexpr int threads_per_block = 128;
 static constexpr int items_per_thread = 4;
@@ -38,19 +37,6 @@ static constexpr int MAX_DIMS = 25;
 
 namespace open3d {
 namespace kernel {
-
-template <int threads_per_block, int items_per_thread, typename func_t>
-__global__ void elementwise_kernel(int N, func_t f) {
-    int items_per_block = threads_per_block * items_per_thread;
-    int idx = blockIdx.x * items_per_block + threadIdx.x;
-#pragma unroll
-    for (int i = 0; i < items_per_thread; i++) {
-        if (idx < N) {
-            f(idx);
-            idx += threads_per_block;
-        }
-    }
-}
 
 template <typename T>
 OPEN3D_HOST_DEVICE static void CopyElementKernel(const void* src, void* dst) {
@@ -104,7 +90,7 @@ static void CopyToContiguousCUDASameDevice(const Tensor& src, Tensor& dst) {
         CopyElementKernel<T>(src_ptr, dst_ptr);
     };
 
-    elementwise_kernel<threads_per_block, items_per_thread>
+    ElementWiseKernel<threads_per_block, items_per_thread>
             <<<grid_size, threads_per_block, 0>>>(N, f);
 }
 
