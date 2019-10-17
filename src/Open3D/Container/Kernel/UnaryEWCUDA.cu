@@ -28,11 +28,11 @@
 
 #include "Open3D/Container/CudaUtils.cuh"
 #include "Open3D/Container/Dispatch.h"
+#include "Open3D/Container/Kernel/CUDALauncher.cuh"
 #include "Open3D/Container/Tensor.h"
 
 static constexpr int threads_per_block = 128;
 static constexpr int items_per_thread = 4;
-static constexpr int MAX_DIMS = 25;
 
 namespace open3d {
 namespace kernel {
@@ -50,38 +50,10 @@ __global__ void ElementWiseKernel(int N, func_t f) {
     }
 }
 
-
 template <typename T>
 OPEN3D_HOST_DEVICE static void CopyElementKernel(const void* src, void* dst) {
     *static_cast<T*>(dst) = *static_cast<const T*>(src);
 }
-
-class OffsetCalculator {
-public:
-    OffsetCalculator(size_t num_dims,
-                     const size_t* src_strides,
-                     const size_t* dst_strides)
-        : num_dims_(num_dims) {
-        for (size_t i = 0; i < num_dims_; i++) {
-            src_strides_[i] = src_strides[i];
-            dst_strides_[i] = dst_strides[i];
-        }
-    }
-
-    OPEN3D_HOST_DEVICE size_t GetOffset(size_t idx) const {
-        size_t src_idx = 0;
-        for (size_t dim = 0; dim < num_dims_; dim++) {
-            src_idx += idx / dst_strides_[dim] * src_strides_[dim];
-            idx = idx % dst_strides_[dim];
-        }
-        return src_idx;
-    }
-
-protected:
-    size_t num_dims_;
-    size_t src_strides_[MAX_DIMS];
-    size_t dst_strides_[MAX_DIMS];
-};
 
 template <typename T>
 static void CopyToContiguousCUDASameDevice(const Tensor& src, Tensor& dst) {
