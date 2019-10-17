@@ -164,9 +164,9 @@ public:
         }
     }
 
-protected:
     static SizeVector DefaultStrides(const SizeVector& shape);
 
+protected:
     std::string ScalarPtrToString(const void* ptr) const;
 
 protected:
