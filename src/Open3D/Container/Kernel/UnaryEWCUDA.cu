@@ -31,52 +31,17 @@
 #include "Open3D/Container/Kernel/CUDALauncher.cuh"
 #include "Open3D/Container/Tensor.h"
 
-static constexpr int threads_per_block = 128;
-static constexpr int items_per_thread = 4;
-
 namespace open3d {
 namespace kernel {
 
-template <int threads_per_block, int items_per_thread, typename func_t>
-__global__ void ElementWiseKernel(int N, func_t f) {
-    int items_per_block = threads_per_block * items_per_thread;
-    int idx = blockIdx.x * items_per_block + threadIdx.x;
-#pragma unroll
-    for (int i = 0; i < items_per_thread; i++) {
-        if (idx < N) {
-            f(idx);
-            idx += threads_per_block;
-        }
-    }
-}
-
-template <typename T>
-OPEN3D_HOST_DEVICE static void CopyElementKernel(const void* src, void* dst) {
-    *static_cast<T*>(dst) = *static_cast<const T*>(src);
-}
-
-template <typename T>
-static void CopyToContiguousCUDASameDevice(const Tensor& src, Tensor& dst) {
-    int N = static_cast<int>(src.GetShape().NumElements());
-    int items_per_block = threads_per_block * items_per_thread;
-    int grid_size = (N + items_per_block - 1) / items_per_block;
-
-    const char* src_data_ptr = static_cast<const char*>(src.GetDataPtr());
-    char* dst_data_ptr = static_cast<char*>(dst.GetDataPtr());
-    int element_byte_size = DtypeUtil::ByteSize(src.GetDtype());
-    OffsetCalculator offset_calculator(src.GetShape().size(),
-                                       src.GetStrides().data(),
-                                       dst.GetStrides().data());
-
-    auto f = [=] OPEN3D_HOST_DEVICE(int idx) {
-        int src_idx = offset_calculator.GetOffset(idx);
-        const void* src_ptr = src_data_ptr + src_idx * element_byte_size;
-        void* dst_ptr = dst_data_ptr + idx * element_byte_size;
-        CopyElementKernel<T>(src_ptr, dst_ptr);
-    };
-
-    ElementWiseKernel<threads_per_block, items_per_thread>
-            <<<grid_size, threads_per_block, 0>>>(N, f);
+template <typename scalar_t>
+void LaunchCopyKernel(const Tensor& src, Tensor& dst) {
+    LaunchUnaryEWKernel<scalar_t>(
+            src, dst,
+            [] OPEN3D_HOST_DEVICE(const void* src, void* dst) -> void {
+                *static_cast<scalar_t*>(dst) =
+                        *static_cast<const scalar_t*>(src);
+            });
 }
 
 void CopyCUDA(const Tensor& src, Tensor& dst) {
@@ -99,7 +64,7 @@ void CopyCUDA(const Tensor& src, Tensor& dst) {
                                 src.GetDevice().ToString(),
                                 dst.GetDevice().ToString());
             DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
-                CopyToContiguousCUDASameDevice<scalar_t>(src, dst);
+                LaunchCopyKernel<scalar_t>(src, dst);
             });
         } else {
             // Works for both CPU -> GPU or GPU -> CPU
