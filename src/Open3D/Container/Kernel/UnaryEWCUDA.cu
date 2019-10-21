@@ -35,13 +35,9 @@ namespace open3d {
 namespace kernel {
 
 template <typename scalar_t>
-void LaunchCopyKernel(const Tensor& src, Tensor& dst) {
-    LaunchUnaryEWKernel<scalar_t>(
-            src, dst,
-            [] OPEN3D_HOST_DEVICE(const void* src, void* dst) -> void {
-                *static_cast<scalar_t*>(dst) =
-                        *static_cast<const scalar_t*>(src);
-            });
+static OPEN3D_HOST_DEVICE void CUDACopyElementKernel(const void* src,
+                                                     void* dst) {
+    *static_cast<scalar_t*>(dst) = *static_cast<const scalar_t*>(src);
 }
 
 void CopyCUDA(const Tensor& src, Tensor& dst) {
@@ -55,16 +51,16 @@ void CopyCUDA(const Tensor& src, Tensor& dst) {
         MemoryManager::Memcpy(dst.GetDataPtr(), dst.GetDevice(),
                               src.GetDataPtr(), src.GetDevice(),
                               DtypeUtil::ByteSize(dtype) * shape.NumElements());
-        utility::LogWarning("Contiguous optimized for {} -> {}\n",
-                            src.GetDevice().ToString(),
-                            dst.GetDevice().ToString());
     } else {
         if (src.GetDevice() == dst.GetDevice()) {
-            utility::LogWarning("To launch kernel for {} -> {}\n",
-                                src.GetDevice().ToString(),
-                                dst.GetDevice().ToString());
-            DISPATCH_DTYPE_TO_TEMPLATE(
-                    dtype, [&]() { LaunchCopyKernel<scalar_t>(src, dst); });
+            DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
+                CUDALauncher::LaunchUnaryEWKernel<scalar_t>(
+                        src, dst,
+                        // Need to wrap as extended CUDA lamba function
+                        [] OPEN3D_HOST_DEVICE(const void* src, void* dst) {
+                            CUDACopyElementKernel<scalar_t>(src, dst);
+                        });
+            });
         } else {
             // Works for both CPU -> GPU or GPU -> CPU
             Tensor src_conti = src.Copy(src.GetDevice());
