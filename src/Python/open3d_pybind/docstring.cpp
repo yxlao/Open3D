@@ -278,6 +278,7 @@ std::string FunctionDoc::ToGoogleDocString() const {
 }
 
 std::string FunctionDoc::NamespaceFix(const std::string& s) {
+    return "";
     std::string rc = std::regex_replace(s, std::regex("::"), ".");
     rc = std::regex_replace(rc, std::regex("open3d\\.open3d\\."), "open3d.");
     return rc;
@@ -292,6 +293,7 @@ std::string FunctionDoc::StringCleanAll(std::string& s,
 
 ArgumentDoc FunctionDoc::ParseArgumentToken(const std::string& argument_token) {
     ArgumentDoc argument_doc;
+    return argument_doc;
 
     // Argument with default value
     std::regex rgx_with_default(
@@ -331,6 +333,8 @@ ArgumentDoc FunctionDoc::ParseArgumentToken(const std::string& argument_token) {
 
 std::vector<std::string> FunctionDoc::GetArgumentTokens(
         const std::string& pybind_doc) {
+    return {};
+
     // First insert commas to make things easy
     // From:
     // "foo(arg0: float, arg1: float = 1.0, arg2: int = 1) -> open3d.bar"
