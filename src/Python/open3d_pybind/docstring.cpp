@@ -36,10 +36,11 @@
 #include "open3d_pybind/docstring.h"
 
 namespace open3d {
+namespace open3d_pybind {
 namespace docstring {
 
 // ref: enum_base in pybind11.h
-py::handle static_property =
+py::handle StaticProperty =
         py::handle((PyObject*)py::detail::get_internals().static_property_type);
 
 void ClassMethodDocInject(py::module& pybind_module,
@@ -381,4 +382,5 @@ std::vector<std::string> FunctionDoc::GetArgumentTokens(
 }
 
 }  // namespace docstring
+}  // namespace open3d_pybind
 }  // namespace open3d

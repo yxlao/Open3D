@@ -36,7 +36,8 @@
 
 #include <sstream>
 
-using namespace open3d;
+namespace open3d {
+namespace open3d_pybind {
 
 void pybind_voxelgrid(py::module &m) {
     py::class_<geometry::Voxel, std::shared_ptr<geometry::Voxel>> voxel(
@@ -65,9 +66,9 @@ void pybind_voxelgrid(py::module &m) {
             .def_readwrite("grid_index", &geometry::Voxel::grid_index_,
                            "Int numpy array of shape (3,): Grid coordinate "
                            "index of the voxel.")
-            .def_readwrite(
-                    "color", &geometry::Voxel::color_,
-                    "Float64 numpy array of shape (3,): Color of the voxel.");
+            .def_readwrite("color", &geometry::Voxel::color_,
+                           "Float64 numpy array of shape (3,): Color of "
+                           "the voxel.");
 
     py::class_<geometry::VoxelGrid, PyGeometry3D<geometry::VoxelGrid>,
                std::shared_ptr<geometry::VoxelGrid>, geometry::Geometry3D>
@@ -88,7 +89,8 @@ void pybind_voxelgrid(py::module &m) {
             .def_readwrite("voxels", &geometry::VoxelGrid::voxels_,
                            "List of ``Voxel``: Voxels contained in voxel grid")
             .def("has_colors", &geometry::VoxelGrid::HasColors,
-                 "Returns ``True`` if the voxel grid contains voxel colors.")
+                 "Returns ``True`` if the voxel grid contains voxel "
+                 "colors.")
             .def("has_voxels", &geometry::VoxelGrid::HasVoxels,
                  "Returns ``True`` if the voxel grid contains voxels.")
             .def("get_voxel", &geometry::VoxelGrid::GetVoxel, "point"_a,
@@ -101,15 +103,19 @@ void pybind_voxelgrid(py::module &m) {
             .def("carve_depth_map", &geometry::VoxelGrid::CarveDepthMap,
                  "depth_map"_a, "camera_params"_a,
                  "Remove all voxels from the VoxelGrid where none of the "
-                 "boundary points of the voxel projects to depth value that is "
-                 "smaller, or equal than the projected depth of the boundary "
+                 "boundary points of the voxel projects to depth value "
+                 "that is "
+                 "smaller, or equal than the projected depth of the "
+                 "boundary "
                  "point. The point is not carved if none of the boundary "
                  "points of the voxel projects to a valid image location.")
             .def("carve_silhouette", &geometry::VoxelGrid::CarveSilhouette,
                  "silhouette_mask"_a, "camera_params"_a,
                  "Remove all voxels from the VoxelGrid where none of the "
-                 "boundary points of the voxel projects to a valid mask pixel "
-                 "(pixel value > 0). The point is not carved if none of the "
+                 "boundary points of the voxel projects to a valid mask "
+                 "pixel "
+                 "(pixel value > 0). The point is not carved if none of "
+                 "the "
                  "boundary points of the voxel projects to a valid image "
                  "location.")
             .def("to_octree", &geometry::VoxelGrid::ToOctree, "max_depth"_a,
@@ -155,13 +161,15 @@ void pybind_voxelgrid(py::module &m) {
             m, "VoxelGrid", "carve_depth_map",
             {{"depth_map", "Depth map (Image) used for VoxelGrid carving."},
              {"camera_parameters",
-              "PinholeCameraParameters used to record the given depth_map."}});
+              "PinholeCameraParameters used to record the given "
+              "depth_map."}});
     docstring::ClassMethodDocInject(
             m, "VoxelGrid", "carve_silhouette",
             {{"silhouette_mask",
               "Silhouette mask (Image) used for VoxelGrid carving."},
              {"camera_parameters",
-              "PinholeCameraParameters used to record the given depth_map."}});
+              "PinholeCameraParameters used to record the given "
+              "depth_map."}});
     docstring::ClassMethodDocInject(
             m, "VoxelGrid", "to_octree",
             {{"max_depth", "int: Maximum depth of the octree."}});
@@ -202,3 +210,6 @@ void pybind_voxelgrid(py::module &m) {
 }
 
 void pybind_voxelgrid_methods(py::module &m) {}
+
+}  // namespace open3d_pybind
+}  // namespace open3d

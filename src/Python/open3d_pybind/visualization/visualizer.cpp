@@ -33,9 +33,11 @@
 #include "open3d_pybind/visualization/visualization.h"
 #include "open3d_pybind/visualization/visualization_trampoline.h"
 
-using namespace open3d;
+namespace open3d {
+namespace open3d_pybind {
 
-// Functions have similar arguments, thus the arg docstrings may be shared
+// Functions have similar arguments, thus the arg docstrings may be
+// shared
 static const std::unordered_map<std::string, std::string>
         map_visualizer_docstrings = {
                 {"callback_func", "The call back function."},
@@ -75,7 +77,8 @@ void pybind_visualizer(py::module &m) {
                  "Function to destroy a window")
             .def("register_animation_callback",
                  &visualization::Visualizer::RegisterAnimationCallback,
-                 "Function to register a callback function for animation",
+                 "Function to register a callback function for "
+                 "animation",
                  "callback_func"_a)
             .def("run", &visualization::Visualizer::Run,
                  "Function to activate the window")
@@ -104,7 +107,8 @@ void pybind_visualizer(py::module &m) {
                  py::return_value_policy::reference_internal)
             .def("capture_screen_float_buffer",
                  &visualization::Visualizer::CaptureScreenFloatBuffer,
-                 "Function to capture screen and store RGB in a float buffer",
+                 "Function to capture screen and store RGB in a float "
+                 "buffer",
                  "do_render"_a = false)
             .def("capture_screen_image",
                  &visualization::Visualizer::CaptureScreenImage,
@@ -135,12 +139,14 @@ void pybind_visualizer(py::module &m) {
             .def("__repr__",
                  [](const visualization::VisualizerWithKeyCallback &vis) {
                      return std::string(
-                                    "VisualizerWithKeyCallback with name ") +
+                                    "VisualizerWithKeyCallback with "
+                                    "name ") +
                             vis.GetWindowName();
                  })
             .def("register_key_callback",
                  &visualization::VisualizerWithKeyCallback::RegisterKeyCallback,
-                 "Function to register a callback function for a key press "
+                 "Function to register a callback function for a key "
+                 "press "
                  "event",
                  "key"_a, "callback_func"_a);
 
@@ -154,7 +160,9 @@ void pybind_visualizer(py::module &m) {
     visualizer_edit.def(py::init<double, bool, const std::string &>())
             .def("__repr__",
                  [](const visualization::VisualizerWithEditing &vis) {
-                     return std::string("VisualizerWithEditing with name ") +
+                     return std::string(
+                                    "VisualizerWithEditing with "
+                                    "name ") +
                             vis.GetWindowName();
                  })
             .def("get_picked_points",
@@ -205,3 +213,6 @@ void pybind_visualizer(py::module &m) {
 }
 
 void pybind_visualizer_method(py::module &m) {}
+
+}  // namespace open3d_pybind
+}  // namespace open3d

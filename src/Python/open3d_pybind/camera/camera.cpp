@@ -30,7 +30,8 @@
 #include "open3d_pybind/camera/camera.h"
 #include "open3d_pybind/docstring.h"
 
-using namespace open3d;
+namespace open3d {
+namespace open3d_pybind {
 
 void pybind_camera_classes(py::module &m) {
     // open3d.camera.PinholeCameraIntrinsic
@@ -124,7 +125,7 @@ void pybind_camera_classes(py::module &m) {
                    "Default camera intrinsic parameter for Kinect2 color "
                    "camera.")
             .export_values();
-    pinhole_intr_params.attr("__doc__") = docstring::static_property(
+    pinhole_intr_params.attr("__doc__") = docstring::StaticProperty(
             py::cpp_function(
                     [](py::handle arg) -> std::string { return "Enum class"; }),
             py::none(), py::none(), "");
@@ -176,3 +177,6 @@ void pybind_camera(py::module &m) {
     py::module m_submodule = m.def_submodule("camera");
     pybind_camera_classes(m_submodule);
 }
+
+}  // namespace open3d_pybind
+}  // namespace open3d

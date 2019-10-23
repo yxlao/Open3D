@@ -27,5 +27,9 @@
 #pragma once
 
 #include "open3d_pybind/open3d_pybind.h"
+namespace open3d {
+namespace open3d_pybind {
 
 void pybind_color_map(py::module &m);
+}
+}  // namespace open3d

@@ -35,7 +35,8 @@
 #include "open3d_pybind/geometry/geometry.h"
 #include "open3d_pybind/geometry/geometry_trampoline.h"
 
-using namespace open3d;
+namespace open3d {
+namespace open3d_pybind {
 
 void pybind_pointcloud(py::module &m) {
     py::class_<geometry::PointCloud, PyGeometry3D<geometry::PointCloud>,
@@ -299,3 +300,6 @@ void pybind_pointcloud(py::module &m) {
 }
 
 void pybind_pointcloud_methods(py::module &m) {}
+
+}  // namespace open3d_pybind
+}  // namespace open3d

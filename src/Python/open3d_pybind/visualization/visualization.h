@@ -28,6 +28,9 @@
 
 #include "open3d_pybind/open3d_pybind.h"
 
+namespace open3d {
+namespace open3d_pybind {
+
 void pybind_visualization(py::module &m);
 
 void pybind_renderoption(py::module &m);
@@ -39,3 +42,6 @@ void pybind_renderoption_method(py::module &m);
 void pybind_viewcontrol_method(py::module &m);
 void pybind_visualizer_method(py::module &m);
 void pybind_visualization_utility_methods(py::module &m);
+
+}  // namespace open3d_pybind
+}  // namespace open3d

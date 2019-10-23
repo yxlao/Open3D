@@ -30,7 +30,8 @@
 #include "open3d_pybind/geometry/geometry.h"
 #include "open3d_pybind/geometry/geometry_trampoline.h"
 
-using namespace open3d;
+namespace open3d {
+namespace open3d_pybind {
 
 void pybind_kdtreeflann(py::module &m) {
     // open3d.geometry.KDTreeSearchParam
@@ -52,7 +53,7 @@ void pybind_kdtreeflann(py::module &m) {
             .value("HybridSearch",
                    geometry::KDTreeSearchParam::SearchType::Hybrid)
             .export_values();
-    kdtree_search_param_type.attr("__doc__") = docstring::static_property(
+    kdtree_search_param_type.attr("__doc__") = docstring::StaticProperty(
             py::cpp_function([](py::handle arg) -> std::string {
                 return "Enum class for Geometry types.";
             }),
@@ -272,3 +273,6 @@ void pybind_kdtreeflann(py::module &m) {
     docstring::ClassMethodDocInject(m, "KDTreeFlann", "set_matrix_data",
                                     map_kd_tree_flann_method_docs);
 }
+
+}  // namespace open3d_pybind
+}  // namespace open3d

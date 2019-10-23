@@ -31,7 +31,8 @@
 #include "open3d_pybind/geometry/geometry.h"
 #include "open3d_pybind/geometry/geometry_trampoline.h"
 
-using namespace open3d;
+namespace open3d {
+namespace open3d_pybind {
 
 void pybind_lineset(py::module &m) {
     py::class_<geometry::LineSet, PyGeometry3D<geometry::LineSet>,
@@ -127,3 +128,6 @@ void pybind_lineset(py::module &m) {
 }
 
 void pybind_lineset_methods(py::module &m) {}
+
+}  // namespace open3d_pybind
+}  // namespace open3d

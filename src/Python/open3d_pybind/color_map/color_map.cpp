@@ -33,7 +33,8 @@
 #include "open3d_pybind/color_map/color_map.h"
 #include "open3d_pybind/docstring.h"
 
-using namespace open3d;
+namespace open3d {
+namespace open3d_pybind {
 
 void pybind_color_map_classes(py::module &m) {
     py::class_<color_map::ColorMapOptimizationOption>
@@ -190,3 +191,6 @@ void pybind_color_map(py::module &m) {
     pybind_color_map_classes(m_submodule);
     pybind_color_map_methods(m_submodule);
 }
+
+}  // namespace open3d_pybind
+}  // namespace open3d

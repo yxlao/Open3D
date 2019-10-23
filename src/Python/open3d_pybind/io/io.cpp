@@ -27,7 +27,8 @@
 #include "open3d_pybind/io/io.h"
 #include "open3d_pybind/open3d_pybind.h"
 
-using namespace open3d;
+namespace open3d {
+namespace open3d_pybind {
 
 void pybind_io(py::module &m) {
     py::module m_io = m.def_submodule("io");
@@ -36,3 +37,6 @@ void pybind_io(py::module &m) {
     pybind_sensor(m_io);
 #endif
 }
+
+}  // namespace open3d_pybind
+}  // namespace open3d

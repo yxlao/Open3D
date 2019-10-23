@@ -32,7 +32,8 @@
 #include "open3d_pybind/geometry/geometry.h"
 #include "open3d_pybind/geometry/geometry_trampoline.h"
 
-using namespace open3d;
+namespace open3d {
+namespace open3d_pybind {
 
 void pybind_trianglemesh(py::module &m) {
     py::class_<geometry::TriangleMesh, PyGeometry3D<geometry::TriangleMesh>,
@@ -618,3 +619,6 @@ void pybind_trianglemesh(py::module &m) {
 }
 
 void pybind_trianglemesh_methods(py::module &m) {}
+
+}  // namespace open3d_pybind
+}  // namespace open3d

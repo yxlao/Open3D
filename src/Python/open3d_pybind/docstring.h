@@ -32,6 +32,7 @@
 #include "open3d_pybind/open3d_pybind.h"
 
 namespace open3d {
+namespace open3d_pybind {
 namespace docstring {
 
 class ArgumentDoc {
@@ -143,7 +144,8 @@ void ClassMethodDocInject(
                 map_parameter_body_docs =
                         std::unordered_map<std::string, std::string>());
 
-extern py::handle static_property;
+extern py::handle StaticProperty;
 
 }  // namespace docstring
+}  // namespace open3d_pybind
 }  // namespace open3d

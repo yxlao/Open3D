@@ -32,7 +32,8 @@
 #include "open3d_pybind/docstring.h"
 #include "open3d_pybind/integration/integration.h"
 
-using namespace open3d;
+namespace open3d {
+namespace open3d_pybind {
 
 template <class TSDFVolumeBase = integration::TSDFVolume>
 class PyTSDFVolume : public TSDFVolumeBase {
@@ -65,7 +66,7 @@ void pybind_integration_classes(py::module &m) {
             .value("Gray32", integration::TSDFVolumeColorType::Gray32)
             .export_values();
     // Trick to write docs without listing the members in the enum class again.
-    tsdf_volume_color_type.attr("__doc__") = docstring::static_property(
+    tsdf_volume_color_type.attr("__doc__") = docstring::StaticProperty(
             py::cpp_function([](py::handle arg) -> std::string {
                 return "Enum class for TSDFVolumeColorType.";
             }),
@@ -216,3 +217,6 @@ void pybind_integration(py::module &m) {
     pybind_integration_classes(m_submodule);
     pybind_integration_methods(m_submodule);
 }
+
+}  // namespace open3d_pybind
+}  // namespace open3d

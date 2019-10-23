@@ -32,7 +32,8 @@
 #include "open3d_pybind/docstring.h"
 #include "open3d_pybind/registration/registration.h"
 
-using namespace open3d;
+namespace open3d {
+namespace open3d_pybind {
 
 template <class GlobalOptimizationMethodBase =
                   registration::GlobalOptimizationMethod>
@@ -74,7 +75,7 @@ void pybind_global_optimization(py::module &m) {
     auto pose_graph_node_vector =
             py::bind_vector<std::vector<registration::PoseGraphNode>>(
                     m, "PoseGraphNodeVector");
-    pose_graph_node_vector.attr("__doc__") = docstring::static_property(
+    pose_graph_node_vector.attr("__doc__") = docstring::StaticProperty(
             py::cpp_function([](py::handle arg) -> std::string {
                 return "Vector of PoseGraphNode";
             }),
@@ -134,7 +135,7 @@ void pybind_global_optimization(py::module &m) {
     auto pose_graph_edge_vector =
             py::bind_vector<std::vector<registration::PoseGraphEdge>>(
                     m, "PoseGraphEdgeVector");
-    pose_graph_edge_vector.attr("__doc__") = docstring::static_property(
+    pose_graph_edge_vector.attr("__doc__") = docstring::StaticProperty(
             py::cpp_function([](py::handle arg) -> std::string {
                 return "Vector of PoseGraphEdge";
             }),
@@ -373,3 +374,6 @@ void pybind_global_optimization_methods(py::module &m) {
              {"criteria", "Global optimization convergence criteria."},
              {"option", "Global optimization option."}});
 }
+
+}  // namespace open3d_pybind
+}  // namespace open3d

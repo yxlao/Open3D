@@ -33,7 +33,8 @@
 #include "open3d_pybind/docstring.h"
 #include "open3d_pybind/odometry/odometry.h"
 
-using namespace open3d;
+namespace open3d {
+namespace open3d_pybind {
 
 template <class RGBDOdometryJacobianBase = odometry::RGBDOdometryJacobian>
 class PyRGBDOdometryJacobian : public RGBDOdometryJacobianBase {
@@ -209,3 +210,6 @@ void pybind_odometry(py::module &m) {
     pybind_odometry_classes(m_submodule);
     pybind_odometry_methods(m_submodule);
 }
+
+}  // namespace open3d_pybind
+}  // namespace open3d

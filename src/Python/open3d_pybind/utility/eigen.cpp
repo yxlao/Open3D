@@ -27,17 +27,13 @@
 #include "open3d_pybind/docstring.h"
 #include "open3d_pybind/open3d_pybind.h"
 
-using namespace open3d;
-
-namespace pybind11 {
-
 template <typename Vector,
           typename holder_type = std::unique_ptr<Vector>,
           typename... Args>
-py::class_<Vector, holder_type> bind_vector_without_repr(
+static py::class_<Vector, holder_type> bind_vector_without_repr(
         py::module &m, std::string const &name, Args &&... args) {
     // hack function to disable __repr__ for the convenient function
-    // bind_vector()
+    // py::bind_vector()
     using Class_ = py::class_<Vector, holder_type>;
     Class_ cl(m, name.c_str(), std::forward<Args>(args)...);
     cl.def(py::init<>());
@@ -55,7 +51,7 @@ py::class_<Vector, holder_type> bind_vector_without_repr(
 //   and etc. doesn't work. The current solution is to explicitly implement
 //   bindings for each py array types.
 template <typename EigenVector>
-std::vector<EigenVector> py_array_to_vectors_double(
+static std::vector<EigenVector> py_array_to_vectors_double(
         py::array_t<double, py::array::c_style | py::array::forcecast> array) {
     size_t eigen_vector_size = EigenVector::SizeAtCompileTime;
     if (array.ndim() != 2 || array.shape(1) != eigen_vector_size) {
@@ -73,7 +69,7 @@ std::vector<EigenVector> py_array_to_vectors_double(
 }
 
 template <typename EigenVector>
-std::vector<EigenVector> py_array_to_vectors_int(
+static std::vector<EigenVector> py_array_to_vectors_int(
         py::array_t<int, py::array::c_style | py::array::forcecast> array) {
     size_t eigen_vector_size = EigenVector::SizeAtCompileTime;
     if (array.ndim() != 2 || array.shape(1) != eigen_vector_size) {
@@ -89,8 +85,7 @@ std::vector<EigenVector> py_array_to_vectors_int(
 
 template <typename EigenVector,
           typename EigenAllocator = Eigen::aligned_allocator<EigenVector>>
-std::vector<EigenVector, EigenAllocator>
-py_array_to_vectors_int_eigen_allocator(
+std::vector<EigenVector, EigenAllocator> static py_array_to_vectors_int_eigen_allocator(
         py::array_t<int, py::array::c_style | py::array::forcecast> array) {
     size_t eigen_vector_size = EigenVector::SizeAtCompileTime;
     if (array.ndim() != 2 || array.shape(1) != eigen_vector_size) {
@@ -106,8 +101,7 @@ py_array_to_vectors_int_eigen_allocator(
 
 template <typename EigenVector,
           typename EigenAllocator = Eigen::aligned_allocator<EigenVector>>
-std::vector<EigenVector, EigenAllocator>
-py_array_to_vectors_int64_eigen_allocator(
+std::vector<EigenVector, EigenAllocator> static py_array_to_vectors_int64_eigen_allocator(
         py::array_t<int64_t, py::array::c_style | py::array::forcecast> array) {
     size_t eigen_vector_size = EigenVector::SizeAtCompileTime;
     if (array.ndim() != 2 || array.shape(1) != eigen_vector_size) {
@@ -121,14 +115,10 @@ py_array_to_vectors_int64_eigen_allocator(
     return eigen_vectors;
 }
 
-}  // namespace pybind11
-
-namespace {
-
 template <typename Scalar,
           typename Vector = std::vector<Scalar>,
           typename holder_type = std::unique_ptr<Vector>>
-py::class_<Vector, holder_type> pybind_eigen_vector_of_scalar(
+static py::class_<Vector, holder_type> pybind_eigen_vector_of_scalar(
         py::module &m, const std::string &bind_name) {
     auto vec = py::bind_vector<std::vector<Scalar>>(m, bind_name,
                                                     py::buffer_protocol());
@@ -159,13 +149,13 @@ template <typename EigenVector,
           typename Vector = std::vector<EigenVector>,
           typename holder_type = std::unique_ptr<Vector>,
           typename InitFunc>
-py::class_<Vector, holder_type> pybind_eigen_vector_of_vector(
+static py::class_<Vector, holder_type> pybind_eigen_vector_of_vector(
         py::module &m,
         const std::string &bind_name,
         const std::string &repr_name,
         InitFunc init_func) {
     typedef typename EigenVector::Scalar Scalar;
-    auto vec = py::bind_vector_without_repr<std::vector<EigenVector>>(
+    auto vec = bind_vector_without_repr<std::vector<EigenVector>>(
             m, bind_name, py::buffer_protocol());
     vec.def(py::init(init_func));
     vec.def_buffer([](std::vector<EigenVector> &v) -> py::buffer_info {
@@ -231,15 +221,15 @@ template <typename EigenVector,
           typename Vector = std::vector<EigenVector, EigenAllocator>,
           typename holder_type = std::unique_ptr<Vector>,
           typename InitFunc>
-py::class_<Vector, holder_type> pybind_eigen_vector_of_vector_eigen_allocator(
-        py::module &m,
-        const std::string &bind_name,
-        const std::string &repr_name,
-        InitFunc init_func) {
+static py::class_<Vector, holder_type>
+pybind_eigen_vector_of_vector_eigen_allocator(py::module &m,
+                                              const std::string &bind_name,
+                                              const std::string &repr_name,
+                                              InitFunc init_func) {
     typedef typename EigenVector::Scalar Scalar;
-    auto vec = py::bind_vector_without_repr<
-            std::vector<EigenVector, EigenAllocator>>(m, bind_name,
-                                                      py::buffer_protocol());
+    auto vec =
+            bind_vector_without_repr<std::vector<EigenVector, EigenAllocator>>(
+                    m, bind_name, py::buffer_protocol());
     vec.def(py::init(init_func));
     vec.def_buffer(
             [](std::vector<EigenVector, EigenAllocator> &v) -> py::buffer_info {
@@ -277,14 +267,14 @@ template <typename EigenMatrix,
           typename EigenAllocator = Eigen::aligned_allocator<EigenMatrix>,
           typename Vector = std::vector<EigenMatrix, EigenAllocator>,
           typename holder_type = std::unique_ptr<Vector>>
-py::class_<Vector, holder_type> pybind_eigen_vector_of_matrix(
+static py::class_<Vector, holder_type> pybind_eigen_vector_of_matrix(
         py::module &m,
         const std::string &bind_name,
         const std::string &repr_name) {
     typedef typename EigenMatrix::Scalar Scalar;
-    auto vec = py::bind_vector_without_repr<
-            std::vector<EigenMatrix, EigenAllocator>>(m, bind_name,
-                                                      py::buffer_protocol());
+    auto vec =
+            bind_vector_without_repr<std::vector<EigenMatrix, EigenAllocator>>(
+                    m, bind_name, py::buffer_protocol());
     vec.def_buffer(
             [](std::vector<EigenMatrix, EigenAllocator> &v) -> py::buffer_info {
                 // We use this function to bind Eigen default matrix.
@@ -321,11 +311,12 @@ py::class_<Vector, holder_type> pybind_eigen_vector_of_matrix(
     return vec;
 }
 
-}  // unnamed namespace
+namespace open3d {
+namespace open3d_pybind {
 
 void pybind_eigen(py::module &m) {
     auto intvector = pybind_eigen_vector_of_scalar<int>(m, "IntVector");
-    intvector.attr("__doc__") = docstring::static_property(
+    intvector.attr("__doc__") = docstring::StaticProperty(
             py::cpp_function([](py::handle arg) -> std::string {
                 return R"(Convert int32 numpy array of shape ``(n,)`` to Open3D format.)";
             }),
@@ -333,7 +324,7 @@ void pybind_eigen(py::module &m) {
 
     auto doublevector =
             pybind_eigen_vector_of_scalar<double>(m, "DoubleVector");
-    doublevector.attr("__doc__") = docstring::static_property(
+    doublevector.attr("__doc__") = docstring::StaticProperty(
             py::cpp_function([](py::handle arg) -> std::string {
                 return R"(Convert float64 numpy array of shape ``(n,)`` to Open3D format.)";
             }),
@@ -341,8 +332,8 @@ void pybind_eigen(py::module &m) {
 
     auto vector3dvector = pybind_eigen_vector_of_vector<Eigen::Vector3d>(
             m, "Vector3dVector", "std::vector<Eigen::Vector3d>",
-            py::py_array_to_vectors_double<Eigen::Vector3d>);
-    vector3dvector.attr("__doc__") = docstring::static_property(
+            py_array_to_vectors_double<Eigen::Vector3d>);
+    vector3dvector.attr("__doc__") = docstring::StaticProperty(
             py::cpp_function([](py::handle arg) -> std::string {
                 return R"(Convert float64 numpy array of shape ``(n, 3)`` to Open3D format..
 
@@ -367,8 +358,8 @@ Example usage
 
     auto vector3ivector = pybind_eigen_vector_of_vector<Eigen::Vector3i>(
             m, "Vector3iVector", "std::vector<Eigen::Vector3i>",
-            py::py_array_to_vectors_int<Eigen::Vector3i>);
-    vector3ivector.attr("__doc__") = docstring::static_property(
+            py_array_to_vectors_int<Eigen::Vector3i>);
+    vector3ivector.attr("__doc__") = docstring::StaticProperty(
             py::cpp_function([](py::handle arg) -> std::string {
                 return R"(Convert int32 numpy array of shape ``(n, 3)`` to Open3D format..
 
@@ -410,8 +401,8 @@ Example usage
 
     auto vector2ivector = pybind_eigen_vector_of_vector<Eigen::Vector2i>(
             m, "Vector2iVector", "std::vector<Eigen::Vector2i>",
-            py::py_array_to_vectors_int<Eigen::Vector2i>);
-    vector2ivector.attr("__doc__") = docstring::static_property(
+            py_array_to_vectors_int<Eigen::Vector2i>);
+    vector2ivector.attr("__doc__") = docstring::StaticProperty(
             py::cpp_function([](py::handle arg) -> std::string {
                 return "Convert int32 numpy array of shape ``(n, 2)`` to "
                        "Open3D format.";
@@ -420,21 +411,24 @@ Example usage
 
     auto matrix4dvector = pybind_eigen_vector_of_matrix<Eigen::Matrix4d>(
             m, "Matrix4dVector", "std::vector<Eigen::Matrix4d>");
-    matrix4dvector.attr("__doc__") = docstring::static_property(
+    matrix4dvector.attr("__doc__") = docstring::StaticProperty(
             py::cpp_function([](py::handle arg) -> std::string {
                 return "Convert float64 numpy array of shape ``(n, 4, 4)`` to "
                        "Open3D format.";
             }),
             py::none(), py::none(), "");
 
-    auto vector4ivector = pybind_eigen_vector_of_vector_eigen_allocator<
-            Eigen::Vector4i>(
-            m, "Vector4iVector", "std::vector<Eigen::Vector4i>",
-            py::py_array_to_vectors_int_eigen_allocator<Eigen::Vector4i>);
-    vector4ivector.attr("__doc__") = docstring::static_property(
+    auto vector4ivector =
+            pybind_eigen_vector_of_vector_eigen_allocator<Eigen::Vector4i>(
+                    m, "Vector4iVector", "std::vector<Eigen::Vector4i>",
+                    py_array_to_vectors_int_eigen_allocator<Eigen::Vector4i>);
+    vector4ivector.attr("__doc__") = docstring::StaticProperty(
             py::cpp_function([](py::handle arg) -> std::string {
                 return "Convert int numpy array of shape ``(n, 4)`` to "
                        "Open3D format.";
             }),
             py::none(), py::none(), "");
 }
+
+}  // namespace open3d_pybind
+}  // namespace open3d

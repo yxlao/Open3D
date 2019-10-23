@@ -31,7 +31,8 @@
 #include "open3d_pybind/visualization/visualization.h"
 #include "open3d_pybind/visualization/visualization_trampoline.h"
 
-using namespace open3d;
+namespace open3d {
+namespace open3d_pybind {
 
 void pybind_renderoption(py::module &m) {
     // open3d.visualization.RenderOption
@@ -62,10 +63,10 @@ void pybind_renderoption(py::module &m) {
                  "Function to save visualization::RenderOption to a JSON "
                  "file.",
                  "filename"_a)
-            .def_readwrite(
-                    "background_color",
-                    &visualization::RenderOption::background_color_,
-                    "float numpy array of size ``(3,)``: Background RGB color.")
+            .def_readwrite("background_color",
+                           &visualization::RenderOption::background_color_,
+                           "float numpy array of size ``(3,)``: Background "
+                           "RGB color.")
             .def_readwrite("light_on", &visualization::RenderOption::light_on_,
                            "bool: Whether to turn on Phong lighting.")
             .def_readwrite("point_size",
@@ -80,10 +81,10 @@ void pybind_renderoption(py::module &m) {
             .def_readwrite("show_coordinate_frame",
                            &visualization::RenderOption::show_coordinate_frame_,
                            "bool: Whether to show coordinate frame.")
-            .def_readwrite(
-                    "mesh_show_back_face",
-                    &visualization::RenderOption::mesh_show_back_face_,
-                    "bool: Whether to show back faces for ``TriangleMesh``.")
+            .def_readwrite("mesh_show_back_face",
+                           &visualization::RenderOption::mesh_show_back_face_,
+                           "bool: Whether to show back faces for "
+                           "``TriangleMesh``.")
             .def_readwrite("point_color_option",
                            &visualization::RenderOption::point_color_option_,
                            "``PointColorOption``: Point color option for "
@@ -92,10 +93,10 @@ void pybind_renderoption(py::module &m) {
                            &visualization::RenderOption::mesh_shade_option_,
                            "``MeshShadeOption``: Mesh shading option for "
                            "``TriangleMesh``.")
-            .def_readwrite(
-                    "mesh_color_option",
-                    &visualization::RenderOption::mesh_color_option_,
-                    "``MeshColorOption``: Color option for ``TriangleMesh``.");
+            .def_readwrite("mesh_color_option",
+                           &visualization::RenderOption::mesh_color_option_,
+                           "``MeshColorOption``: Color option for "
+                           "``TriangleMesh``.");
     docstring::ClassMethodDocInject(m, "RenderOption", "load_from_json",
                                     {{"filename", "Path to file."}});
     docstring::ClassMethodDocInject(m, "RenderOption", "save_to_json",
@@ -106,7 +107,7 @@ void pybind_renderoption(py::module &m) {
     py::enum_<visualization::RenderOption::PointColorOption>
             enum_point_color_option(m, "PointColorOption", py::arithmetic(),
                                     "PointColorOption");
-    enum_point_color_option.attr("__doc__") = docstring::static_property(
+    enum_point_color_option.attr("__doc__") = docstring::StaticProperty(
             py::cpp_function([](py::handle arg) -> std::string {
                 return "Enum class for point color for ``PointCloud``.";
             }),
@@ -131,7 +132,7 @@ void pybind_renderoption(py::module &m) {
     py::enum_<visualization::RenderOption::MeshShadeOption>
             enum_mesh_shade_option(m, "MeshShadeOption", py::arithmetic(),
                                    "MeshShadeOption");
-    enum_mesh_shade_option.attr("__doc__") = docstring::static_property(
+    enum_mesh_shade_option.attr("__doc__") = docstring::StaticProperty(
             py::cpp_function([](py::handle arg) -> std::string {
                 return "Enum class for msh shading for ``TriangleMesh``.";
             }),
@@ -148,7 +149,7 @@ void pybind_renderoption(py::module &m) {
     py::enum_<visualization::RenderOption::MeshColorOption>
             enum_mesh_clor_option(m, "MeshColorOption", py::arithmetic(),
                                   "MeshColorOption");
-    enum_mesh_clor_option.attr("__doc__") = docstring::static_property(
+    enum_mesh_clor_option.attr("__doc__") = docstring::StaticProperty(
             py::cpp_function([](py::handle arg) -> std::string {
                 return "Enum class for color for ``TriangleMesh``.";
             }),
@@ -169,3 +170,6 @@ void pybind_renderoption(py::module &m) {
 }
 
 void pybind_renderoption_method(py::module &m) {}
+
+}  // namespace open3d_pybind
+}  // namespace open3d

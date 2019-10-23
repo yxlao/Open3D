@@ -30,9 +30,10 @@
 #include "open3d_pybind/geometry/geometry.h"
 #include "open3d_pybind/geometry/geometry_trampoline.h"
 
-using namespace open3d;
+namespace open3d {
+namespace open3d_pybind {
 
-void pybind_geometry_classes(py::module &m) {
+void pybind_geometry_classes(py::module& m) {
     // open3d.geometry.Geometry
     py::class_<geometry::Geometry, PyGeometry<geometry::Geometry>,
                std::shared_ptr<geometry::Geometry>>
@@ -53,8 +54,9 @@ void pybind_geometry_classes(py::module &m) {
     // open3d.geometry.Geometry.Type
     py::enum_<geometry::Geometry::GeometryType> geometry_type(geometry, "Type",
                                                               py::arithmetic());
-    // Trick to write docs without listing the members in the enum class again.
-    geometry_type.attr("__doc__") = docstring::static_property(
+    // Trick to write docs without listing the members in the enum class
+    // again.
+    geometry_type.attr("__doc__") = docstring::StaticProperty(
             py::cpp_function([](py::handle arg) -> std::string {
                 return "Enum class for Geometry types.";
             }),
@@ -87,7 +89,8 @@ void pybind_geometry_classes(py::module &m) {
                  "Returns the center of the geometry coordinates.")
             .def("get_axis_aligned_bounding_box",
                  &geometry::Geometry3D::GetAxisAlignedBoundingBox,
-                 "Returns an axis-aligned bounding box of the geometry.")
+                 "Returns an axis-aligned bounding box of the "
+                 "geometry.")
             .def("get_oriented_bounding_box",
                  &geometry::Geometry3D::GetOrientedBoundingBox,
                  "Returns an oriented bounding box of the geometry.")
@@ -101,7 +104,8 @@ void pybind_geometry_classes(py::module &m) {
                  "Apply scaling to the geometry coordinates.", "scale"_a,
                  "center"_a = true)
             .def("rotate", &geometry::Geometry3D::Rotate,
-                 "Apply rotation to the geometry coordinates and normals.",
+                 "Apply rotation to the geometry coordinates and "
+                 "normals.",
                  "R"_a, "center"_a = true)
             .def_static("get_rotation_matrix_from_xyz",
                         &geometry::Geometry3D::GetRotationMatrixFromXYZ,
@@ -139,17 +143,21 @@ void pybind_geometry_classes(py::module &m) {
             m, "Geometry3D", "translate",
             {{"translation", "A 3D vector to transform the geometry"},
              {"relative",
-              "If true, the translation vector is directly added to the "
+              "If true, the translation vector is directly added to "
+              "the "
               "geometry "
-              "coordinates. Otherwise, the center is moved to the translation "
+              "coordinates. Otherwise, the center is moved to the "
+              "translation "
               "vector."}});
     docstring::ClassMethodDocInject(
             m, "Geometry3D", "scale",
             {{"scale",
-              "The scale parameter that is multiplied to the points/vertices "
+              "The scale parameter that is multiplied to "
+              "the points/vertices "
               "of the geometry"},
              {"center",
-              "If true, then the scale is applied to the centered geometry"}});
+              "If true, then the scale is applied to the "
+              "centered geometry"}});
     docstring::ClassMethodDocInject(m, "Geometry3D", "rotate",
                                     {{"R", "The rotation matrix"},
                                      {"center",
@@ -170,7 +178,7 @@ void pybind_geometry_classes(py::module &m) {
     docstring::ClassMethodDocInject(m, "Geometry2D", "get_max_bound");
 }
 
-void pybind_geometry(py::module &m) {
+void pybind_geometry(py::module& m) {
     py::module m_submodule = m.def_submodule("geometry");
     pybind_geometry_classes(m_submodule);
     pybind_kdtreeflann(m_submodule);
@@ -191,3 +199,6 @@ void pybind_geometry(py::module &m) {
     pybind_octree(m_submodule);
     pybind_boundingvolume(m_submodule);
 }
+
+}  // namespace open3d_pybind
+}  // namespace open3d

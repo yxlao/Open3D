@@ -31,7 +31,8 @@
 
 #include "open3d_pybind/open3d_pybind.h"
 
-using namespace open3d;
+namespace open3d {
+namespace open3d_pybind {
 
 template <class VisualizerBase = visualization::Visualizer>
 class PyVisualizer : public VisualizerBase {
@@ -83,3 +84,6 @@ public:
         PYBIND11_OVERLOAD(void, ViewControlBase, Translate, x, y, xo, yo);
     }
 };
+
+}  // namespace open3d_pybind
+}  // namespace open3d

@@ -30,7 +30,8 @@
 #include "open3d_pybind/geometry/geometry.h"
 #include "open3d_pybind/geometry/geometry_trampoline.h"
 
-using namespace open3d;
+namespace open3d {
+namespace open3d_pybind {
 
 void pybind_boundingvolume(py::module &m) {
     py::class_<geometry::OrientedBoundingBox,
@@ -112,3 +113,6 @@ void pybind_boundingvolume(py::module &m) {
                                     "get_box_points");
     docstring::ClassMethodDocInject(m, "AxisAlignedBoundingBox", "get_extent");
 }
+
+}  // namespace open3d_pybind
+}  // namespace open3d

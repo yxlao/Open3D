@@ -32,12 +32,14 @@
 #include "open3d_pybind/geometry/geometry.h"
 #include "open3d_pybind/geometry/geometry_trampoline.h"
 
-using namespace open3d;
+namespace open3d {
+namespace open3d_pybind {
 
 void pybind_half_edge(py::module &m) {
     py::class_<geometry::HalfEdgeTriangleMesh::HalfEdge> half_edge(
             m, "HalfEdge",
-            "HalfEdge class contains vertex, triangle info about a half edge, "
+            "HalfEdge class contains vertex, triangle info about a half "
+            "edge, "
             "as well as relations of next and twin half edge.");
     py::detail::bind_default_constructor<
             geometry::HalfEdgeTriangleMesh::HalfEdge>(half_edge);
@@ -56,7 +58,8 @@ void pybind_half_edge(py::module &m) {
                  })
             .def("is_boundary",
                  &geometry::HalfEdgeTriangleMesh::HalfEdge::IsBoundary,
-                 "Returns ``True`` iff the half edge is the boundary (has not "
+                 "Returns ``True`` iff the half edge is the boundary (has "
+                 "not "
                  "twin, i.e. twin index == -1).")
             .def_readwrite(
                     "next", &geometry::HalfEdgeTriangleMesh::HalfEdge::next_,
@@ -85,8 +88,10 @@ void pybind_halfedgetrianglemesh(py::module &m) {
                geometry::MeshBase>
             half_edge_triangle_mesh(
                     m, "HalfEdgeTriangleMesh",
-                    "HalfEdgeTriangleMesh inherits TriangleMesh class with the "
-                    "addition of HalfEdge data structure for each half edge in "
+                    "HalfEdgeTriangleMesh inherits TriangleMesh class with "
+                    "the "
+                    "addition of HalfEdge data structure for each half "
+                    "edge in "
                     "the mesh as well as related functions.");
     py::detail::bind_default_constructor<geometry::HalfEdgeTriangleMesh>(
             half_edge_triangle_mesh);
@@ -96,7 +101,8 @@ void pybind_halfedgetrianglemesh(py::module &m) {
             .def("__repr__",
                  [](const geometry::HalfEdgeTriangleMesh &mesh) {
                      return std::string(
-                                    "geometry::HalfEdgeTriangleMesh with ") +
+                                    "geometry::HalfEdgeTriangleMesh "
+                                    "with ") +
                             std::to_string(mesh.vertices_.size()) +
                             " points and " +
                             std::to_string(mesh.half_edges_.size()) +
@@ -115,22 +121,26 @@ void pybind_halfedgetrianglemesh(py::module &m) {
                            "normals.")
             .def("has_half_edges",
                  &geometry::HalfEdgeTriangleMesh::HasHalfEdges,
-                 "Returns ``True`` if half-edges have already been computed.")
+                 "Returns ``True`` if half-edges have already been "
+                 "computed.")
             .def("boundary_half_edges_from_vertex",
                  &geometry::HalfEdgeTriangleMesh::BoundaryHalfEdgesFromVertex,
                  "vertex_index"_a,
-                 "Query manifold boundary half edges from a starting vertex. "
+                 "Query manifold boundary half edges from a starting "
+                 "vertex. "
                  "If query vertex is not on boundary, empty vector will be "
                  "returned.")
             .def("boundary_vertices_from_vertex",
                  &geometry::HalfEdgeTriangleMesh::BoundaryVerticesFromVertex,
                  "vertex_index"_a
-                 "Query manifold boundary vertices from a starting vertex. If "
+                 "Query manifold boundary vertices from a starting vertex. "
+                 "If "
                  "query vertex is not on boundary, empty vector will be "
                  "returned.")
             .def("get_boundaries",
                  &geometry::HalfEdgeTriangleMesh::GetBoundaries,
-                 "Returns a vector of boundaries. A boundary is a vector of "
+                 "Returns a vector of boundaries. A boundary is a vector "
+                 "of "
                  "vertices.")
             .def_static("create_from_triangle_mesh",
                         &geometry::HalfEdgeTriangleMesh::CreateFromTriangleMesh,
@@ -158,3 +168,6 @@ void pybind_halfedgetrianglemesh(py::module &m) {
                                     "create_from_triangle_mesh",
                                     {{"mesh", "The input TriangleMesh"}});
 }
+
+}  // namespace open3d_pybind
+}  // namespace open3d
