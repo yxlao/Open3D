@@ -36,6 +36,7 @@
 #include "Open3D/Geometry/TriangleMesh.h"
 #include "Open3D/IO/ClassIO/ImageWarpingFieldIO.h"
 #include "Open3D/IO/ClassIO/PinholeCameraTrajectoryIO.h"
+#include "Open3D/IO/ClassIO/TriangleMeshIO.h"
 #include "Open3D/Utility/Console.h"
 #include "Open3D/Utility/Eigen.h"
 
@@ -45,8 +46,9 @@ namespace {
 
 using namespace color_map;
 void OptimizeImageCoorNonrigid(
-        const geometry::TriangleMesh& mesh,
+        geometry::TriangleMesh& mesh,
         const std::vector<std::shared_ptr<geometry::Image>>& images_gray,
+        const std::vector<std::shared_ptr<geometry::Image>>& images_color,
         const std::vector<std::shared_ptr<geometry::Image>>& images_dx,
         const std::vector<std::shared_ptr<geometry::Image>>& images_dy,
         std::vector<ImageWarpingField>& warping_fields,
@@ -140,6 +142,15 @@ void OptimizeImageCoorNonrigid(
         SetProxyIntensityForVertex(mesh, images_gray, warping_fields, camera,
                                    visiblity_vertex_to_image, proxy_intensity,
                                    option.image_boundary_margin_);
+
+        color_map::SetGeometryColorAverage(mesh, images_color, warping_fields,
+                                           camera, visiblity_vertex_to_image,
+                                           option.image_boundary_margin_,
+                                           option.invisible_vertex_color_knn_);
+
+        std::string file_name = fmt::format("color_map_iter_{}.ply", itr);
+        io::WriteTriangleMesh(file_name, mesh);
+        utility::LogInfo("[ColorMapOptimization] Saved in {}", file_name);
     }
 }
 
@@ -304,10 +315,11 @@ void ColorMapOptimization(
         utility::LogDebug("[ColorMapOptimization] :: Non-Rigid Optimization");
         auto warping_uv_ = CreateWarpingFields(images_gray, option);
         auto warping_uv_init_ = CreateWarpingFields(images_gray, option);
-        OptimizeImageCoorNonrigid(
-                mesh, images_gray, images_dx, images_dy, warping_uv_,
-                warping_uv_init_, camera, visiblity_vertex_to_image,
-                visiblity_image_to_vertex, proxy_intensity, option);
+        OptimizeImageCoorNonrigid(mesh, images_gray, images_color, images_dx,
+                                  images_dy, warping_uv_, warping_uv_init_,
+                                  camera, visiblity_vertex_to_image,
+                                  visiblity_image_to_vertex, proxy_intensity,
+                                  option);
         SetGeometryColorAverage(mesh, images_color, warping_uv_, camera,
                                 visiblity_vertex_to_image,
                                 option.image_boundary_margin_,
