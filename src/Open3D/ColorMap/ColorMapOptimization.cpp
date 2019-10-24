@@ -148,7 +148,9 @@ void OptimizeImageCoorNonrigid(
                                            option.image_boundary_margin_,
                                            option.invisible_vertex_color_knn_);
 
-        std::string file_name = fmt::format("color_map_iter_{}.ply", itr);
+        std::string root_dir =
+                "/home/yixing/data/fountain/fountain_small/iters";
+        std::string file_name = fmt::format("{}/color_map_iter_{}.ply", itr);
         io::WriteTriangleMesh(file_name, mesh);
         utility::LogInfo("[ColorMapOptimization] Saved in {}", file_name);
     }
