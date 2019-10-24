@@ -58,58 +58,36 @@ def get_camera_centers_lineset(Ts, color=np.array([1, 0, 0])):
     return ls
 
 
+def flip_geometry(geometry):
+    flip_transform = [[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]]
+    geometry.transform(flip_transform)
+    return geometry
+
+
 if __name__ == "__main__":
-    example_dir = Path(
-        "/home/ylao/repo/Open3D/examples/Python/ReconstructionSystem")
-    fragment_dir = example_dir / "dataset/realsense/fragments"
-    scene_dir = example_dir / "dataset/realsense/scene"
 
-    all_frame_Ts = []
-    for fragment_id in range(2):
-        pose_graph_path = fragment_dir / f"fragment_optimized_{fragment_id:03d}.json"
-        pose_graph = o3d.io.read_pose_graph(str(pose_graph_path))
+    root_dir = Path("/home/yixing/data/redwood_recon/bedroom")
+    mesh_path = root_dir / "ours_bedroom" / "bedroom.ply"
+    pose_path = root_dir / "pose_bedroom" / "bedroom.log"
 
-        Ts = []
-        camera_centers = []
-        num_nodes = len(pose_graph.nodes)
-        print("num_nodes", num_nodes)
-        for i in range(num_nodes):
-            pose = pose_graph.nodes[i].pose
-            T = np.linalg.inv(pose)
-            Ts.append(T)
-            camera_center = plot3d.cameracenter_from_T(T)
-            camera_centers.append(camera_center)
-        all_frame_Ts.append(Ts)
+    mesh = o3d.io.read_triangle_mesh(str(mesh_path))
+    mesh.compute_vertex_normals()
 
-        # Get point cloud
-        pcd_path = fragment_dir / f"fragment_{fragment_id:03d}.ply"
-        pcd = o3d.io.read_point_cloud(str(pcd_path))
+    pose_graph = o3d.io.read_pinhole_camera_trajectory(str(pose_path))
 
-        # Get poses as lineset
-        camera_centers_ls = get_camera_centers_lineset(Ts)
+    Ts = []
+    camera_centers = []
+    for camera_parameter in pose_graph.parameters[::15]:
+        T = camera_parameter.extrinsic
+        Ts.append(T)
+        camera_center = plot3d.cameracenter_from_T(T)
+        camera_centers.append(camera_center)
 
-        # Get reference coordinates
-        camera_frames = get_camera_frames(Ts, size=0.02)
+    # Get poses as lineset
+    camera_centers_ls = get_camera_centers_lineset(Ts)
 
-        # Visualize
-        o3d.draw_geometries([pcd, camera_centers_ls, camera_frames])
-        # o3d.draw_geometries([pcd])
+    # Get reference coordinates
+    camera_frames = get_camera_frames(Ts, size=0.03)
 
-    scene_mesh_path = scene_dir / "integrated.ply"
-    scene_mesh = o3d.io.read_triangle_mesh(str(scene_mesh_path))
-
-    scene_pose_graph_path = scene_dir / "refined_registration_optimized.json"
-    scene_pose_graph = o3d.io.read_pose_graph(str(scene_pose_graph_path))
-    num_fragments = len(scene_pose_graph.nodes)
-
-    registered_Ts = []
-    for fragment_id in range(num_fragments):
-        pose = scene_pose_graph.nodes[fragment_id].pose
-        for T in all_frame_Ts[fragment_id]:
-            registered_T = T @ np.linalg.inv(pose)
-            registered_Ts.append(registered_T)
-
-    camera_frames = get_camera_frames(registered_Ts, size=0.02)
-    camera_centers_ls = get_camera_centers_lineset(registered_Ts)
-    o3d.draw_geometries([scene_mesh, camera_frames, camera_centers_ls])
-    # o3d.draw_geometries([scene_mesh])
+    # Visualize
+    o3d.visualization.draw_geometries([mesh, camera_centers_ls, camera_frames])
