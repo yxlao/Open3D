@@ -13,49 +13,23 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(dir_path, '../Misc'))
 import meshes
 
-
-def problem_generator():
-    o3d.utility.set_verbosity_level(o3d.utility.Debug)
-
-    points = []
-    normals = []
-    for _ in range(4):
-        for _ in range(4):
-            pt = (np.random.uniform(-2, 2), np.random.uniform(-2, 2), 0)
-            points.append(pt)
-            normals.append((0, 0, 1))
-    points = np.array(points, dtype=np.float64)
-    normals = np.array(normals, dtype=np.float64)
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(points)
-    pcd.normals = o3d.utility.Vector3dVector(normals)
-    radii = [1, 2]
-    yield pcd, radii
-
-    o3d.utility.set_verbosity_level(o3d.utility.Info)
-
-    gt_mesh = o3d.geometry.TriangleMesh.create_sphere()
-    gt_mesh.compute_vertex_normals()
-    pcd = gt_mesh.sample_points_poisson_disk(100)
-    radii = [0.5, 1, 2]
-    yield pcd, radii
-
+if __name__ == "__main__":
     gt_mesh = meshes.bunny()
     gt_mesh.compute_vertex_normals()
-    pcd = gt_mesh.sample_points_poisson_disk(2000)
-    radii = [0.005, 0.01, 0.02, 0.04]
-    yield pcd, radii
+    pcd = gt_mesh.sample_points_poisson_disk(10000)
+    o3d.io.write_point_cloud("bunny.ply", pcd)
+    radii = [0.02, 0.05]
 
-    gt_mesh = meshes.armadillo()
-    gt_mesh.compute_vertex_normals()
-    pcd = gt_mesh.sample_points_poisson_disk(2000)
-    radii = [5, 10]
-    yield pcd, radii
+    o3d.visualization.draw_geometries([pcd])
+    rec_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(
+        pcd, o3d.utility.DoubleVector(radii))
+    o3d.visualization.draw_geometries([pcd, rec_mesh])
 
-
-if __name__ == "__main__":
-    for pcd, radii in problem_generator():
-        o3d.visualization.draw_geometries([pcd])
-        rec_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(
-            pcd, o3d.utility.DoubleVector(radii))
-        o3d.visualization.draw_geometries([pcd, rec_mesh])
+    mesh = rec_mesh
+    target_number_of_triangles = arget_number_of_triangles = np.asarray(mesh.triangles).shape[0] // 2
+    mesh_smp = mesh.simplify_quadric_decimation(
+            target_number_of_triangles=target_number_of_triangles)
+    print("quadric decimated mesh has %d triangles and %d vertices" %
+            (np.asarray(mesh_smp.triangles).shape[0],
+            np.asarray(mesh_smp.vertices).shape[0]))
+    o3d.visualization.draw_geometries([mesh_smp])
