@@ -35,6 +35,9 @@
 #include "open3d_pybind/utility/utility.h"
 #include "open3d_pybind/visualization/visualization.h"
 
+#include "Open3D/Odometry/Odometry.h"
+using namespace open3d;
+
 PYBIND11_MODULE(open3d, m) {
     m.doc() = "Python binding of Open3D";
 

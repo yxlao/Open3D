@@ -59,6 +59,24 @@ public:
 };
 
 void pybind_odometry_classes(py::module &m) {
+    py::class_<Calculator> calculator(
+            m, "Calculator",
+            "Calculator class performs numerical computations.");
+    calculator.def("add", &Calculator::Add,
+                   "Performs ``a`` plus ``b``. Unlike "
+                   ":meth:`open3d.odometry.Calculator.sub`, "
+                   ":meth:`open3d.odometry.Calculator.add` is "
+                   "commutative.",
+                   "a"_a, "b"_a);
+    calculator.def("sub", &Calculator::Add, "Performs ``b`` from ``a``", "a"_a,
+                   "b"_a);
+    docstring::ClassMethodDocInject(m, "Calculator", "add",
+                                    {{"a", "LHS operand for summation."},
+                                     {"b", "RHS operand for summation."}});
+    docstring::ClassMethodDocInject(m, "Calculator", "sub",
+                                    {{"a", "LHS operand for subtraction."},
+                                     {"b", "RHS operand for subtraction."}});
+
     // open3d.odometry.OdometryOption
     py::class_<odometry::OdometryOption> odometry_option(
             m, "OdometryOption", "Class that defines Odometry options.");

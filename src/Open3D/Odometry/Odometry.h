@@ -57,4 +57,29 @@ std::tuple<bool, Eigen::Matrix4d, Eigen::Matrix6d> ComputeRGBDOdometry(
         const OdometryOption &option = OdometryOption());
 
 }  // namespace odometry
+
+/// \brief Calculator class performs numerical computations.
+///
+/// If detailed description is needed, add a blank line after the "brief"
+/// section. Here is the detailed description of the Calculator class.
+class Calculator {
+public:
+    /// \brief Computes summation.
+    ///
+    /// Performs \p a plus \p b. Unlike \ref Sub, \ref Add is commutative.
+    /// \param a LHS operand for summation.
+    /// \param b RHS operand for summation.
+    /// \return The sum of \p a and \p b.
+    int Add(int a, int b) { return a + b; }
+
+    /// \brief Computes subtraction.
+    ///
+    /// If detailed description is needed, add a blank line after the "brief"
+    /// section. Substracts \p b from \p a.
+    /// \param a LHS operand for subtraction.
+    /// \param b RHS operand for subtraction.
+    /// \return The difference of \p a and \p b.
+    int Sub(int a, int b) { return a - b; }
+};
+
 }  // namespace open3d
