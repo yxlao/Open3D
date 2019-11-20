@@ -288,4 +288,6 @@ void Tensor::IndexSet(const std::vector<Tensor>& index_tensors,
                        indexed_out_shape);
 }
 
+Tensor Tensor::Max() const {}
+
 }  // namespace open3d

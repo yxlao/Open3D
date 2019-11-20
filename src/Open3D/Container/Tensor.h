@@ -201,8 +201,12 @@ public:
     void IndexSet(const std::vector<Tensor>& index_tensors,
                   const Tensor& src_tensor);
 
-    /// Helper function to return scalar value of a scalar Tensor, the Tensor
-    /// mush have empty shape ()
+    /// \brief Returns max value in a Tensor of shape (). Note that we currently
+    /// support full reduction only. Dimension-wise reduction is not supported.
+    Tensor Max() const;
+
+    /// Helper function to return scalar value of a scalar Tensor, the
+    /// Tensor mush have empty shape ()
     template <typename T>
     T Item() const {
         if (shape_.size() != 0) {

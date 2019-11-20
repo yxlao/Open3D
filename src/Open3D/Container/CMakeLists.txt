@@ -1,10 +1,13 @@
 set (KERNEL_SRC
     Kernel/UnaryEW.cpp
     Kernel/UnaryEWCPU.cpp
+    Kernel/Reduction.cpp
+    Kernel/ReductionCPU.cpp
 )
 
 set (KERNEL_CUDA_SRC
     Kernel/UnaryEWCUDA.cu
+    Kernel/ReductionCUDA.cpp
 )
 
 set (CONTAINER_SRC

@@ -26,18 +26,18 @@
 
 #pragma once
 
-#include <vector>
-
-#include "Open3D/Container/SizeVector.h"
 #include "Open3D/Container/Tensor.h"
 
 namespace open3d {
+namespace kernel {
 
-/// \brief Fill omitted dimensions and get output shape for advanced indexing.
-/// \param tensor The Tensor to be indexed.
-/// \param index_tensors The Tensors that specify the index.
-/// \return A tuple of full_index_tensors and output_shape.
-std::tuple<std::vector<Tensor>, SizeVector> PreprocessIndexTensors(
-        const Tensor& tensor, const std::vector<Tensor>& index_tensors);
+void MaxCPU(const Tensor& src, Tensor& dst);
 
+#ifdef BUILD_CUDA_MODULE
+void MaxCUDA(const Tensor& src, Tensor& dst);
+#endif
+
+void Max(const Tensor& src, Tensor& dst);
+
+}  // namespace kernel
 }  // namespace open3d

@@ -26,4 +26,5 @@
 
 #pragma once
 
+#include "Open3D/Container/Kernel/Reduction.h"
 #include "Open3D/Container/Kernel/UnaryEW.h"

@@ -40,7 +40,6 @@ void Copy(const Tensor& src, Tensor& dst) {
     }
 
     // Check dtype
-    // TODO: in the future, we may want to allow automatic casting
     if (src.GetDtype() != dst.GetDtype()) {
         utility::LogError("src and dst tensor dtype mismatch {} != {}",
                           DtypeUtil::ToString(src.GetDtype()),
