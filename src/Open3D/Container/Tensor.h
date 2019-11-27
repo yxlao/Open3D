@@ -252,30 +252,36 @@ public:
 
     /// Returns True if the underlying memory buffer is contiguous. A contiguous
     /// Tensor's data_ptr_ does not need to point to the beginning of blob_.
-    bool IsContiguous() const { return DefaultStrides(shape_) == strides_; };
+    inline bool IsContiguous() const {
+        return DefaultStrides(shape_) == strides_;
+    };
 
     /// Returns a contiguous Tensor containing the same data in the same device.
     /// If self tensor is already contiguous, the same underlying memory will be
     /// used.
     Tensor Contiguous() const;
 
-    SizeVector GetShape() const { return shape_; }
+    inline SizeVector GetShape() const { return shape_; }
 
-    int64_t GetShape(int64_t dim) const { return shape_[WrapDim(dim, NumDims())]; }
+    inline int64_t GetShape(int64_t dim) const {
+        return shape_[WrapDim(dim, NumDims())];
+    }
 
-    SizeVector GetStrides() const { return strides_; }
+    inline SizeVector GetStrides() const { return strides_; }
 
-    int64_t GetStride(int64_t dim) const { return strides_[WrapDim(dim, NumDims())]; }
+    inline int64_t GetStride(int64_t dim) const {
+        return strides_[WrapDim(dim, NumDims())];
+    }
 
-    void* GetDataPtr() { return data_ptr_; }
+    inline void* GetDataPtr() { return data_ptr_; }
 
-    const void* GetDataPtr() const { return data_ptr_; }
+    inline const void* GetDataPtr() const { return data_ptr_; }
 
-    Dtype GetDtype() const { return dtype_; }
+    inline Dtype GetDtype() const { return dtype_; }
 
-    Device GetDevice() const { return device_; }
+    inline Device GetDevice() const { return device_; }
 
-    std::shared_ptr<Blob> GetBlob() const { return blob_; }
+    inline std::shared_ptr<Blob> GetBlob() const { return blob_; }
 
     inline int64_t NumElements() const { return shape_.NumElements(); }
 

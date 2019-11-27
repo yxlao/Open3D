@@ -48,7 +48,7 @@ static constexpr int64_t MAX_OPERANDS = 10;
 /// - In the future, we may revisit this part when we enable dlpack support.
 struct TensorRef {
     TensorRef(const Tensor& t) {
-        data_ptr_ = const_cast<void*>(t.GetDataPtr());
+        data_ptr_ = static_cast<char*>(const_cast<void*>(t.GetDataPtr()));
         num_dims_ = t.NumDims();
         dtype_byte_size_ = DtypeUtil::ByteSize(t.GetDtype());
         for (int64_t i = 0; i < num_dims_; ++i) {
@@ -59,7 +59,7 @@ struct TensorRef {
 
     TensorRef() : data_ptr_(nullptr), num_dims_(0), dtype_byte_size_(0) {}
 
-    void* data_ptr_;
+    char* data_ptr_;
     int64_t num_dims_ = 0;
     int64_t dtype_byte_size_ = 0;
     int64_t shape_[MAX_DIMS];
