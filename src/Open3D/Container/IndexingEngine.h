@@ -64,24 +64,28 @@ struct TensorRef {
     int64_t strides_[MAX_DIMS];
 };
 
-/// Indexing Engine for unary-elementwise, binary-elementwise and reduction ops
-/// with support for broadcasting.
+/// Indexing Engine for elementwise ops with broadcasting support.
+///
+/// Fancy indexing is supported by restriding input tensor and treating the
+/// operation as elementwise op. Reduction op will be supported by
+/// IndexingEngine in the future.
 ///
 /// After constructing IndexingEngine on the host, the indexing methods can be
 /// used from both host and device
 class IndexingEngine {
 public:
-    /// Only single output is supported for simplicity. To extend this funciton
+    /// Only single output is supported for simplicity. To extend this function
     /// to support multiple outputs, one may check for shape compatibility of
     /// all outputs.
     IndexingEngine(const std::vector<Tensor>& input_tensors,
-                   const Tensor& output_tensor,
-                   bool enable_reduction = false)
-        : enable_reduction_(enable_reduction) {
+                   const Tensor& output_tensor) {
+        // Conver to TensorRef
         for (int64_t i = 0; i < input_tensors.size(); ++i) {
             inputs_[i] = TensorRef(input_tensors[i]);
         }
         output_ = TensorRef(output_tensor);
+
+        // Broadcast inputs
     }
 
     /// Return the total number of workloads (e.g. computations) needed for
@@ -90,10 +94,7 @@ public:
     ///
     /// Typically for non-reduction ops, NumWorkloads() is the same as
     /// number of output elements.
-    OPEN3D_HOST_DEVICE int64_t NumWorkloads() const {
-        // TODO
-        return 0;
-    }
+    OPEN3D_HOST_DEVICE int64_t NumWorkloads() const { return 0; }
 
     OPEN3D_HOST_DEVICE char** GetInputPtrs(int64_t workload_idx) const {
         // TODO
@@ -108,9 +109,6 @@ public:
     OPEN3D_HOST_DEVICE int64_t NumInputs() const { return num_inputs_; }
 
 protected:
-    /// Whether the op is a reduction op.
-    bool enable_reduction_ = false;
-
     /// Number of input Tensors.
     int64_t num_inputs_ = 0;
 
