@@ -261,7 +261,11 @@ public:
 
     SizeVector GetShape() const { return shape_; }
 
+    int64_t GetShape(int64_t dim) const { return shape_[WrapDim(dim, NumDims())]; }
+
     SizeVector GetStrides() const { return strides_; }
+
+    int64_t GetStride(int64_t dim) const { return strides_[WrapDim(dim, NumDims())]; }
 
     void* GetDataPtr() { return data_ptr_; }
 
@@ -273,9 +277,9 @@ public:
 
     std::shared_ptr<Blob> GetBlob() const { return blob_; }
 
-    int64_t NumElements() const { return shape_.NumElements(); }
+    inline int64_t NumElements() const { return shape_.NumElements(); }
 
-    int64_t NumDims() const { return shape_.size(); }
+    inline int64_t NumDims() const { return shape_.size(); }
 
     template <typename T>
     void AssertTemplateDtype() const {
