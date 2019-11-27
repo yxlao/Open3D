@@ -26,6 +26,7 @@
 
 #pragma once
 
+#include "Open3D/Container/Broadcast.h"
 #include "Open3D/Container/CudaUtils.cuh"
 #include "Open3D/Container/Dtype.h"
 #include "Open3D/Container/SizeVector.h"
@@ -85,8 +86,13 @@ public:
         }
         output_ = TensorRef(output_tensor);
 
-        // Broadcast inputs
+        // Broadcast inputs to match output shape
+        for (TensorRef& input : inputs_) {
+            BroadcastRestride(input, output_);
+        }
     }
+
+    static void BroadcastRestride(TensorRef& src, TensorRef& dst) {}
 
     /// Return the total number of workloads (e.g. computations) needed for
     /// the op. The scheduler schedules these workloads to run on parallel
