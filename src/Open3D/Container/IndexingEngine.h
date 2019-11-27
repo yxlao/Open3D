@@ -47,6 +47,7 @@ static constexpr int64_t MAX_OPERANDS = 10;
 ///   int64_t*.
 /// - In the future, we may revisit this part when we enable dlpack support.
 struct TensorRef {
+    TensorRef() : data_ptr_(nullptr), num_dims_(0), dtype_byte_size_(0) {}
     TensorRef(const Tensor& t) {
         data_ptr_ = static_cast<char*>(const_cast<void*>(t.GetDataPtr()));
         num_dims_ = t.NumDims();
@@ -56,9 +57,6 @@ struct TensorRef {
             strides_[i] = t.GetStride(i);
         }
     }
-
-    TensorRef() : data_ptr_(nullptr), num_dims_(0), dtype_byte_size_(0) {}
-
     char* data_ptr_;
     int64_t num_dims_ = 0;
     int64_t dtype_byte_size_ = 0;
@@ -78,7 +76,13 @@ public:
     /// all outputs.
     IndexingEngine(const std::vector<Tensor>& input_tensors,
                    const Tensor& output_tensor,
-                   bool enable_reduction = false) {}
+                   bool enable_reduction = false)
+        : enable_reduction_(enable_reduction) {
+        for (int64_t i = 0; i < input_tensors.size(); ++i) {
+            inputs_[i] = TensorRef(input_tensors[i]);
+        }
+        output_ = TensorRef(output_tensor);
+    }
 
     /// Return the total number of workloads (e.g. computations) needed for
     /// the op. The scheduler schedules these workloads to run on parallel
