@@ -76,8 +76,8 @@ struct TensorRef {
 class IndexingEngine {
 public:
     /// Only single output is supported for simplicity. To extend this function
-    /// to support multiple outputs, one may check for shape compatibility of
-    /// all outputs.
+    /// to support multiple outputs, one may check for shape
+    /// brocast-compatibility for all outputs.
     IndexingEngine(const std::vector<Tensor>& input_tensors,
                    const Tensor& output_tensor) {
         // Conver to TensorRef
@@ -92,7 +92,32 @@ public:
         }
     }
 
-    static void BroadcastRestride(TensorRef& src, TensorRef& dst) {}
+    /// Reassign new strides and shape to \p src such that \p src and \p dst
+    /// can be iterated elementwise.
+    ///
+    /// [Before]
+    /// src_shape:       [ 2,  1,  3]
+    /// src_strides:     [ 3,  3,  1]
+    /// dst_shape:   [ 2,  2,  2,  3]
+    /// dst_strides: [12,  6,  3,  1]
+    ///
+    /// [After]
+    /// src_shape:   [ 1,  2,  1,  3] <- if omitted dim i, shape[i]  <- 0
+    /// src_strides: [ 0,  3,  0,  1] <- if shape[i] == 1, stride[i] <- 0
+    ///                                  if omitted dim i, stride[i] <- 0
+    /// dst_shape:   [ 2,  2,  2,  3]
+    /// dst_strides: [12,  6,  3,  1]
+    ///
+    /// \param src The source TensorRef.
+    /// \param dst The destination TensorRef.
+    static void BroadcastRestride(TensorRef& src, TensorRef& dst) {
+        SizeVector src_shape(src.shape_, src.shape_ + src.num_dims_);
+        SizeVector dst_shape(dst.shape_, dst.shape_ + dst.num_dims_);
+        if (!CanBeBrocastedToShape(src_shape, dst_shape)) {
+            utility::LogError("Input shape {} can not be broadcasted to {}.",
+                              src_shape, dst_shape);
+        }
+    }
 
     /// Return the total number of workloads (e.g. computations) needed for
     /// the op. The scheduler schedules these workloads to run on parallel
