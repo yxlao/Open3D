@@ -164,7 +164,9 @@ public:
     /// number of output elements.
     OPEN3D_HOST_DEVICE int64_t NumWorkloads() const { return 0; }
 
-    OPEN3D_HOST_DEVICE char** GetInputPtrs(int64_t workload_idx) const {
+    /// Note: no out-of-range checks for input_idx in OPEN3D_HOST_DEVICE.
+    OPEN3D_HOST_DEVICE char* GetInputPtr(int64_t workload_idx,
+                                         int64_t input_idx) const {
         // TODO
         return nullptr;
     }
@@ -176,12 +178,8 @@ public:
 
     OPEN3D_HOST_DEVICE int64_t NumInputs() const { return num_inputs_; }
 
-    OPEN3D_HOST_DEVICE TensorRef* GetInputs() { return inputs_; }
-
-    OPEN3D_HOST_DEVICE TensorRef GetInput(int64_t i) {
-        // No out-of-range checks in OPEN3D_HOST_DEVICE
-        return inputs_[i];
-    }
+    /// Note: no out-of-range checks for input_idx in OPEN3D_HOST_DEVICE
+    OPEN3D_HOST_DEVICE TensorRef GetInput(int64_t i) { return inputs_[i]; }
 
     OPEN3D_HOST_DEVICE TensorRef GetOutput() { return output_; }
 
