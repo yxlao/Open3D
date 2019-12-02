@@ -48,18 +48,18 @@ static constexpr int64_t MAX_OPERANDS = 10;
 ///   int64_t*.
 /// - In the future, we may revisit this part when we enable dlpack support.
 struct TensorRef {
-    TensorRef() : data_ptr_(nullptr), num_dims_(0), dtype_byte_size_(0) {}
+    TensorRef() : data_ptr_(nullptr), ndims_(0), dtype_byte_size_(0) {}
     TensorRef(const Tensor& t) {
         data_ptr_ = static_cast<char*>(const_cast<void*>(t.GetDataPtr()));
-        num_dims_ = t.NumDims();
+        ndims_ = t.NumDims();
         dtype_byte_size_ = DtypeUtil::ByteSize(t.GetDtype());
-        for (int64_t i = 0; i < num_dims_; ++i) {
+        for (int64_t i = 0; i < ndims_; ++i) {
             shape_[i] = t.GetShape(i);
             strides_[i] = t.GetStride(i);
         }
     }
     char* data_ptr_;
-    int64_t num_dims_ = 0;
+    int64_t ndims_ = 0;
     int64_t dtype_byte_size_ = 0;
     int64_t shape_[MAX_DIMS];
     int64_t strides_[MAX_DIMS];
@@ -111,8 +111,8 @@ public:
     /// \param src The source TensorRef to be broadcasted.
     /// \param dst The destination TensorRef to be broadcasted to.
     static void BroadcastRestride(TensorRef& src, const TensorRef& dst) {
-        int64_t src_ndims = static_cast<int64_t>(src.strides_.size());
-        int64_t dst_ndims = static_cast<int64_t>(dst.strides_.size());
+        int64_t src_ndims = src.ndims_;
+        int64_t dst_ndims = dst.ndims_;
         int64_t ndims = dst_ndims;
 
         // Fill omitted dimensions.
@@ -151,6 +151,10 @@ public:
     }
 
     OPEN3D_HOST_DEVICE int64_t NumInputs() const { return num_inputs_; }
+
+    // OPEN3D_HOST_DEVICE TensorRef* GetInputs { return inputs_; }
+
+    // OPEN3D_HOST_DEVICE TensorRef GetOutput { return output; }
 
 protected:
     /// Number of input Tensors.
