@@ -78,9 +78,12 @@ TEST_P(IndexingEnginePermuteDevices, BroadcastRestride) {
 
     EXPECT_EQ(indexer.NumInputs(), 2);
     EXPECT_EQ(indexer.NumWorkloads(), 24);
-    EXPECT_EQ(SizeVector(indexer.GetShape(),
-                         indexer.GetShape() + indexer.NumDims()),
+    EXPECT_EQ(SizeVector(indexer.GetMasterShape(),
+                         indexer.GetMasterShape() + indexer.NumDims()),
               SizeVector({2, 2, 2, 1, 3}));
+    EXPECT_EQ(SizeVector(indexer.GetMasterStrides(),
+                         indexer.GetMasterStrides() + indexer.NumDims()),
+              SizeVector({12, 6, 3, 3, 1}));
 
     TensorRef input0_tr = indexer.GetInput(0);
     TensorRef input1_tr = indexer.GetInput(1);

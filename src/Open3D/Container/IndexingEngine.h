@@ -105,7 +105,15 @@ public:
         }
         ndims_ = output_.ndims_;
         for (int64_t i = 0; i < ndims_; ++i) {
-            shape_[i] = output_.shape_[i];
+            master_shape_[i] = output_.shape_[i];
+        }
+
+        // Fill master_strides_.
+        int64_t stride = 1;
+        for (int64_t i = ndims_ - 1; i >= 0; --i) {
+            master_strides_[i] = stride;
+            // Handles 0-sized dimensions
+            stride *= std::max<int64_t>(master_shape_[i], 1);
         }
     }
 
@@ -160,7 +168,13 @@ public:
 
     OPEN3D_HOST_DEVICE int64_t NumDims() const { return ndims_; }
 
-    OPEN3D_HOST_DEVICE const int64_t* GetShape() const { return shape_; }
+    OPEN3D_HOST_DEVICE const int64_t* GetMasterShape() const {
+        return master_shape_;
+    }
+
+    OPEN3D_HOST_DEVICE const int64_t* GetMasterStrides() const {
+        return master_strides_;
+    }
 
     /// Return the total number of workloads (e.g. computations) needed for
     /// the op. The scheduler schedules these workloads to run on parallel
@@ -171,7 +185,7 @@ public:
     OPEN3D_HOST_DEVICE int64_t NumWorkloads() const {
         int64_t num_workloads = 1;
         for (int64_t i = 0; i < ndims_; ++i) {
-            num_workloads *= shape_[i];
+            num_workloads *= master_shape_[i];
         }
         return num_workloads;
     }
@@ -179,7 +193,6 @@ public:
     /// Note: no out-of-range checks for input_idx in OPEN3D_HOST_DEVICE.
     OPEN3D_HOST_DEVICE char* GetInputPtr(int64_t workload_idx,
                                          int64_t input_idx) const {
-        // TODO
         return nullptr;
     }
 
@@ -209,7 +222,10 @@ protected:
     /// same as GetNumWorkloads() for the IndexingEngine.
     /// For broadcasting, the shape is the same as the output shape. For
     /// reduction, the shape is the same as the input shape.
-    int64_t shape_[MAX_DIMS];
+    int64_t master_shape_[MAX_DIMS];
+
+    /// The default strides for master_shape_.
+    int64_t master_strides_[MAX_DIMS];
 
     /// IndexingEngine's global number of dimensions.
     int64_t ndims_;
