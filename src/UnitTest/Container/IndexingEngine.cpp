@@ -68,28 +68,36 @@ TEST_P(IndexingEnginePermuteDevices, TensorRef) {
     EXPECT_EQ(SizeVector(tr.strides_, tr.strides_ + 3), SizeVector({3, 3, 1}));
 }
 
-// TEST_P(IndexingEnginePermuteDevices, BroadcastRestride) {
-//     Device device = GetParam();
+TEST_P(IndexingEnginePermuteDevices, BroadcastRestride) {
+    Device device = GetParam();
 
-//     Tensor input0({2, 1, 3}, Dtype::Float32, device);
-//     Tensor input1({1, 3}, Dtype::Float32, device);
-//     Tensor output({2, 2, 2, 3}, Dtype::Float32, device);
-//     IndexingEngine indexer({input0, input1}, output);
+    Tensor input0({2, 1, 1, 3}, Dtype::Float32, device);
+    Tensor input1({1, 3}, Dtype::Float32, device);
+    Tensor output({2, 2, 2, 1, 3}, Dtype::Float32, device);
+    IndexingEngine indexer({input0, input1}, output);
 
-//     EXPECT_EQ(indexer.NumInputs(), 2);
-//     TensorRef input0_tr = indexer.GetInput(0);
-//     TensorRef input1_tr = indexer.GetInput(1);
-//     TensorRef output_tr = indexer.GetOutput();
+    EXPECT_EQ(indexer.NumInputs(), 2);
+    TensorRef input0_tr = indexer.GetInput(0);
+    TensorRef input1_tr = indexer.GetInput(1);
+    TensorRef output_tr = indexer.GetOutput();
 
-//     // Check ndims
-//     EXPECT_EQ(input0_tr.ndims_, 4);
-//     EXPECT_EQ(input1_tr.ndims_, 4);
+    EXPECT_EQ(input0_tr.ndims_, 5);
+    EXPECT_EQ(input1_tr.ndims_, 5);
 
-//     // Check shapes
-//     EXPECT_EQ(SizeVector(input0_tr.shape_, input0_tr.shape_ + 4),
-//               SizeVector({1, 2, 1, 3}));
-//     EXPECT_EQ(SizeVector(input1_tr.shape_, input1_tr.shape_ + 4),
-//               SizeVector({1, 1, 1, 3}));
-//     EXPECT_EQ(SizeVector(output_tr.shape_, output_tr.shape_ + 4),
-//               SizeVector({2, 2, 2, 3}));
-// }
+    EXPECT_EQ(SizeVector(input0_tr.shape_, input0_tr.shape_ + input0_tr.ndims_),
+              SizeVector({1, 2, 1, 1, 3}));
+    EXPECT_EQ(SizeVector(input1_tr.shape_, input1_tr.shape_ + input1_tr.ndims_),
+              SizeVector({1, 1, 1, 1, 3}));
+    EXPECT_EQ(SizeVector(output_tr.shape_, output_tr.shape_ + output_tr.ndims_),
+              SizeVector({2, 2, 2, 1, 3}));
+
+    EXPECT_EQ(SizeVector(input0_tr.strides_,
+                         input0_tr.strides_ + input0_tr.ndims_),
+              SizeVector({0, 3, 0, 3, 1}));
+    EXPECT_EQ(SizeVector(input1_tr.strides_,
+                         input1_tr.strides_ + input1_tr.ndims_),
+              SizeVector({0, 0, 0, 3, 1}));
+    EXPECT_EQ(SizeVector(output_tr.strides_,
+                         output_tr.strides_ + output_tr.ndims_),
+              SizeVector({12, 6, 3, 3, 1}));
+}

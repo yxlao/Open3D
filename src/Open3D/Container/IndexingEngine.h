@@ -32,8 +32,6 @@
 #include "Open3D/Container/SizeVector.h"
 #include "Open3D/Container/Tensor.h"
 
-#include "Open3D/Utility/Console.h"
-
 namespace open3d {
 
 static constexpr int64_t MAX_DIMS = 10;
@@ -102,61 +100,61 @@ public:
         num_inputs_ = static_cast<int64_t>(input_tensors.size());
 
         // Broadcast inputs to match output shape.
-        for (TensorRef& input : inputs_) {
-            BroadcastRestride(input, output_);
+        for (int64_t i = 0; i < num_inputs_; ++i) {
+            BroadcastRestride(inputs_[i], output_);
         }
     }
 
-    /// Broadcast \p src to \p dst by assigning shape 1 to omitted dimensions
-    /// and stride 0 to broadcasted dimensions. This allows element-wise
-    /// iteration of input and output tensors based on the new shape and
-    /// strides.
+    /// Broadcast src to dst by setting shape 1 to omitted dimensions and
+    /// setting stride 0 to brocasted dimensions.
+    ///
+    /// Note that other approaches may also work. E.g. one could set src's shape
+    /// to exactly the same as dst's shape. In general, if a dimension is of
+    /// size 1, the stride have no effect in computing offsets; or likewise if a
+    /// dimension has stride 0, the shape have no effect in computing offsets.
     ///
     /// [Before]
-    /// src.shape_:   [     2,  1,  3]
-    /// src.strides_: [     3,  3,  1]
-    /// dst.shape_:   [ 2,  2,  2,  3]
-    /// dst.strides_: [12,  6,  3,  1]
+    ///                 Omitted
+    ///                 |       Broadcast
+    ///                 |       |   No broadcast
+    ///                 |       |   |
+    ///                 V       V   V
+    /// src.shape_:   [     2,  1,  1,  3]
+    /// src.strides_: [     3,  3,  3,  1]
+    /// dst.shape_:   [ 2,  2,  2,  1,  3]
+    /// dst.strides_: [12,  6,  3,  3,  1]
+    ///
     /// [After]
-    /// src.shape_:   [ 1,  2,  1,  3]  # Updated
-    /// src.strides_: [ 0,  3,  0,  1]  # Updated
-    /// dst.shape_:   [ 2,  2,  2,  3]  # Unchanged
-    /// dst.strides_: [12,  6,  3,  1]  # Unchanged
+    /// src.shape_:   [ 1,  2,  1,  1,  3]
+    /// src.strides_: [ 0,  3,  0,  3,  1]
     ///
     /// \param src The source TensorRef to be broadcasted.
     /// \param dst The destination TensorRef to be broadcasted to.
+
+    /// src.shape_:   [ 1,  1,  1,  1,  3]
+    /// src.strides_: [ 0,  0,  0,  3,  1]
     static void BroadcastRestride(TensorRef& src, const TensorRef& dst) {
         int64_t src_ndims = src.ndims_;
-        int64_t dst_ndims = dst.ndims_;
-        int64_t ndims = dst_ndims;
-
-        utility::LogInfo("src_shape_before: {} {} {} {}", src.shape_[0],
-                         src.shape_[1], src.shape_[2], src.shape_[3]);
-
-        utility::LogInfo("src_strides_before: {} {} {} {}", src.strides_[0],
-                         src.strides_[1], src.strides_[2], src.strides_[3]);
+        int64_t ndims = dst.ndims_;
 
         // Fill omitted dimensions.
-        for (int64_t i = 0; i < ndims - src_ndims; ++i) {
+        int64_t ndims_omitted = ndims - src_ndims;
+        for (int64_t i = src_ndims - 1; i >= 0; --i) {
+            src.shape_[ndims_omitted + i] = src.shape_[i];
+            src.strides_[ndims_omitted + i] = src.strides_[i];
+        }
+        for (int64_t i = 0; i < ndims_omitted; ++i) {
             src.shape_[i] = 1;
             src.strides_[i] = 0;
         }
         src.ndims_ = ndims;
 
         // Fill broadcasted dimensions.
-        for (int64_t i = 0; i < src_ndims; ++i) {
-            src.shape_[ndims - src_ndims + i] = src.shape_[i];
-            if (src.shape_[i] == 1) {
-                src.strides_[ndims - src_ndims + i] = 0;
-            } else {
-                src.strides_[ndims - src_ndims + i] = src.strides_[i];
+        for (int64_t i = 0; i < ndims; ++i) {
+            if (src.shape_[i] == 1 && dst.shape_[i] != 1) {
+                src.strides_[i] = 0;
             }
         }
-
-        utility::LogInfo("src_shape: {} {} {} {}", src.shape_[0], src.shape_[1],
-                         src.shape_[2], src.shape_[3]);
-        utility::LogInfo("src_strides: {} {} {} {}", src.strides_[0],
-                         src.strides_[1], src.strides_[2], src.strides_[3]);
     }
 
     OPEN3D_HOST_DEVICE TensorRef* GetNumWorkloads() { return inputs_; }
