@@ -103,6 +103,10 @@ public:
         for (int64_t i = 0; i < num_inputs_; ++i) {
             BroadcastRestride(inputs_[i], output_);
         }
+        ndims_ = output_.ndims_;
+        for (int64_t i = 0; i < ndims_; ++i) {
+            shape_[i] = output_.shape_[i];
+        }
     }
 
     /// Broadcast src to dst by setting shape 1 to omitted dimensions and
@@ -154,7 +158,9 @@ public:
         }
     }
 
-    OPEN3D_HOST_DEVICE TensorRef* GetNumWorkloads() { return inputs_; }
+    OPEN3D_HOST_DEVICE int64_t NumDims() const { return ndims_; }
+
+    OPEN3D_HOST_DEVICE const int64_t* GetShape() const { return shape_; }
 
     /// Return the total number of workloads (e.g. computations) needed for
     /// the op. The scheduler schedules these workloads to run on parallel
@@ -162,7 +168,13 @@ public:
     ///
     /// Typically for non-reduction ops, NumWorkloads() is the same as
     /// number of output elements.
-    OPEN3D_HOST_DEVICE int64_t NumWorkloads() const { return 0; }
+    OPEN3D_HOST_DEVICE int64_t NumWorkloads() const {
+        int64_t num_workloads = 1;
+        for (int64_t i = 0; i < ndims_; ++i) {
+            num_workloads *= shape_[i];
+        }
+        return num_workloads;
+    }
 
     /// Note: no out-of-range checks for input_idx in OPEN3D_HOST_DEVICE.
     OPEN3D_HOST_DEVICE char* GetInputPtr(int64_t workload_idx,
@@ -192,6 +204,15 @@ protected:
 
     /// Output TensorRef.
     TensorRef output_;
+
+    /// IndexingEngine's global shape. The shape's number of elements is the
+    /// same as GetNumWorkloads() for the IndexingEngine.
+    /// For broadcasting, the shape is the same as the output shape. For
+    /// reduction, the shape is the same as the input shape.
+    int64_t shape_[MAX_DIMS];
+
+    /// IndexingEngine's global number of dimensions.
+    int64_t ndims_;
 };
 
 }  // namespace open3d
