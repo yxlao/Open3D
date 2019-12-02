@@ -130,9 +130,6 @@ public:
     ///
     /// \param src The source TensorRef to be broadcasted.
     /// \param dst The destination TensorRef to be broadcasted to.
-
-    /// src.shape_:   [ 1,  1,  1,  1,  3]
-    /// src.strides_: [ 0,  0,  0,  3,  1]
     static void BroadcastRestride(TensorRef& src, const TensorRef& dst) {
         int64_t src_ndims = src.ndims_;
         int64_t ndims = dst.ndims_;
