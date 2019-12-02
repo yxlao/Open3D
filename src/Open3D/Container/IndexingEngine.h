@@ -49,6 +49,7 @@ static constexpr int64_t MAX_OPERANDS = 10;
 /// - In the future, we may revisit this part when we enable dlpack support.
 struct TensorRef {
     TensorRef() : data_ptr_(nullptr), ndims_(0), dtype_byte_size_(0) {}
+
     TensorRef(const Tensor& t) {
         data_ptr_ = static_cast<char*>(const_cast<void*>(t.GetDataPtr()));
         ndims_ = t.NumDims();
@@ -58,6 +59,17 @@ struct TensorRef {
             strides_[i] = t.GetStride(i);
         }
     }
+
+    TensorRef(const TensorRef& tr) {
+        data_ptr_ = tr.data_ptr_;
+        ndims_ = tr.ndims_;
+        dtype_byte_size_ = tr.dtype_byte_size_;
+        for (int64_t i = 0; i < ndims_; ++i) {
+            shape_[i] = tr.shape_[i];
+            strides_[i] = tr.strides_[i];
+        }
+    }
+
     char* data_ptr_;
     int64_t ndims_ = 0;
     int64_t dtype_byte_size_ = 0;
@@ -132,6 +144,8 @@ public:
         }
     }
 
+    OPEN3D_HOST_DEVICE TensorRef* GetNumWorkloads() { return inputs_; }
+
     /// Return the total number of workloads (e.g. computations) needed for
     /// the op. The scheduler schedules these workloads to run on parallel
     /// threads.
@@ -152,9 +166,9 @@ public:
 
     OPEN3D_HOST_DEVICE int64_t NumInputs() const { return num_inputs_; }
 
-    // OPEN3D_HOST_DEVICE TensorRef* GetInputs { return inputs_; }
+    OPEN3D_HOST_DEVICE TensorRef* GetInputs() { return inputs_; }
 
-    // OPEN3D_HOST_DEVICE TensorRef GetOutput { return output; }
+    OPEN3D_HOST_DEVICE TensorRef GetOutput() { return output_; }
 
 protected:
     /// Number of input Tensors.
