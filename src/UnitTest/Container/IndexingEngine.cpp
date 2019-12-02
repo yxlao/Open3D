@@ -55,7 +55,41 @@ INSTANTIATE_TEST_SUITE_P(
                 testing::ValuesIn(PermuteSizesDefaultStrides::TestCases()),
                 testing::ValuesIn(PermuteDevices::TestCases())));
 
-TEST_P(IndexingEnginePermuteDevices, Constructor) {
+TEST_P(IndexingEnginePermuteDevices, TensorRef) {
     Device device = GetParam();
-    (void)device;
+
+    Tensor t({2, 1, 3}, Dtype::Float32, device);
+    TensorRef tr(t);
+
+    EXPECT_EQ(tr.ndims_, 3);
+    EXPECT_EQ(tr.dtype_byte_size_, 4);
+    EXPECT_EQ(tr.data_ptr_, t.GetDataPtr());
+    EXPECT_EQ(SizeVector(tr.shape_, tr.shape_ + 3), SizeVector({2, 1, 3}));
+    EXPECT_EQ(SizeVector(tr.strides_, tr.strides_ + 3), SizeVector({3, 3, 1}));
 }
+
+// TEST_P(IndexingEnginePermuteDevices, BroadcastRestride) {
+//     Device device = GetParam();
+
+//     Tensor input0({2, 1, 3}, Dtype::Float32, device);
+//     Tensor input1({1, 3}, Dtype::Float32, device);
+//     Tensor output({2, 2, 2, 3}, Dtype::Float32, device);
+//     IndexingEngine indexer({input0, input1}, output);
+
+//     EXPECT_EQ(indexer.NumInputs(), 2);
+//     TensorRef input0_tr = indexer.GetInput(0);
+//     TensorRef input1_tr = indexer.GetInput(1);
+//     TensorRef output_tr = indexer.GetOutput();
+
+//     // Check ndims
+//     EXPECT_EQ(input0_tr.ndims_, 4);
+//     EXPECT_EQ(input1_tr.ndims_, 4);
+
+//     // Check shapes
+//     EXPECT_EQ(SizeVector(input0_tr.shape_, input0_tr.shape_ + 4),
+//               SizeVector({1, 2, 1, 3}));
+//     EXPECT_EQ(SizeVector(input1_tr.shape_, input1_tr.shape_ + 4),
+//               SizeVector({1, 1, 1, 3}));
+//     EXPECT_EQ(SizeVector(output_tr.shape_, output_tr.shape_ + 4),
+//               SizeVector({2, 2, 2, 3}));
+// }

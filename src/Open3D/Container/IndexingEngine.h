@@ -32,6 +32,8 @@
 #include "Open3D/Container/SizeVector.h"
 #include "Open3D/Container/Tensor.h"
 
+#include "Open3D/Utility/Console.h"
+
 namespace open3d {
 
 static constexpr int64_t MAX_DIMS = 10;
@@ -97,6 +99,7 @@ public:
             inputs_[i] = TensorRef(input_tensors[i]);
         }
         output_ = TensorRef(output_tensor);
+        num_inputs_ = static_cast<int64_t>(input_tensors.size());
 
         // Broadcast inputs to match output shape.
         for (TensorRef& input : inputs_) {
@@ -127,11 +130,18 @@ public:
         int64_t dst_ndims = dst.ndims_;
         int64_t ndims = dst_ndims;
 
+        utility::LogInfo("src_shape_before: {} {} {} {}", src.shape_[0],
+                         src.shape_[1], src.shape_[2], src.shape_[3]);
+
+        utility::LogInfo("src_strides_before: {} {} {} {}", src.strides_[0],
+                         src.strides_[1], src.strides_[2], src.strides_[3]);
+
         // Fill omitted dimensions.
         for (int64_t i = 0; i < ndims - src_ndims; ++i) {
             src.shape_[i] = 1;
             src.strides_[i] = 0;
         }
+        src.ndims_ = ndims;
 
         // Fill broadcasted dimensions.
         for (int64_t i = 0; i < src_ndims; ++i) {
@@ -142,6 +152,11 @@ public:
                 src.strides_[ndims - src_ndims + i] = src.strides_[i];
             }
         }
+
+        utility::LogInfo("src_shape: {} {} {} {}", src.shape_[0], src.shape_[1],
+                         src.shape_[2], src.shape_[3]);
+        utility::LogInfo("src_strides: {} {} {} {}", src.strides_[0],
+                         src.strides_[1], src.strides_[2], src.strides_[3]);
     }
 
     OPEN3D_HOST_DEVICE TensorRef* GetNumWorkloads() { return inputs_; }
@@ -167,6 +182,11 @@ public:
     OPEN3D_HOST_DEVICE int64_t NumInputs() const { return num_inputs_; }
 
     OPEN3D_HOST_DEVICE TensorRef* GetInputs() { return inputs_; }
+
+    OPEN3D_HOST_DEVICE TensorRef GetInput(int64_t i) {
+        // No out-of-range checks in OPEN3D_HOST_DEVICE
+        return inputs_[i];
+    }
 
     OPEN3D_HOST_DEVICE TensorRef GetOutput() { return output_; }
 
