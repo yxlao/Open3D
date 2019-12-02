@@ -72,7 +72,7 @@ struct TensorRef {
 /// IndexingEngine in the future.
 ///
 /// After constructing IndexingEngine on the host, the indexing methods can be
-/// used from both host and device
+/// used from both host and device.
 class IndexingEngine {
 public:
     /// Only single output is supported for simplicity. To extend this function
@@ -80,19 +80,57 @@ public:
     /// all outputs.
     IndexingEngine(const std::vector<Tensor>& input_tensors,
                    const Tensor& output_tensor) {
-        // Conver to TensorRef
+        // Conver to TensorRef.
         for (int64_t i = 0; i < input_tensors.size(); ++i) {
             inputs_[i] = TensorRef(input_tensors[i]);
         }
         output_ = TensorRef(output_tensor);
 
-        // Broadcast inputs to match output shape
+        // Broadcast inputs to match output shape.
         for (TensorRef& input : inputs_) {
             BroadcastRestride(input, output_);
         }
     }
 
-    static void BroadcastRestride(TensorRef& src, TensorRef& dst) {}
+    /// Broadcast \p src to \p dst by assigning shape 1 to omitted dimensions
+    /// and stride 0 to broadcasted dimensions. This allows element-wise
+    /// iteration of input and output tensors based on the new shape and
+    /// strides.
+    ///
+    /// [Before]
+    /// src.shape_:   [     2,  1,  3]
+    /// src.strides_: [     3,  3,  1]
+    /// dst.shape_:   [ 2,  2,  2,  3]
+    /// dst.strides_: [12,  6,  3,  1]
+    /// [After]
+    /// src.shape_:   [ 1,  2,  1,  3]  # Updated
+    /// src.strides_: [ 0,  3,  0,  1]  # Updated
+    /// dst.shape_:   [ 2,  2,  2,  3]  # Unchanged
+    /// dst.strides_: [12,  6,  3,  1]  # Unchanged
+    ///
+    /// \param src The source TensorRef to be broadcasted.
+    /// \param dst The destination TensorRef to be broadcasted to.
+    static void BroadcastRestride(TensorRef& src, const TensorRef& dst) {
+        int64_t src_ndims = static_cast<int64_t>(src.strides_.size());
+        int64_t dst_ndims = static_cast<int64_t>(dst.strides_.size());
+        int64_t ndims = dst_ndims;
+
+        // Fill omitted dimensions.
+        for (int64_t i = 0; i < ndims - src_ndims; ++i) {
+            src.shape_[i] = 1;
+            src.strides_[i] = 0;
+        }
+
+        // Fill broadcasted dimensions.
+        for (int64_t i = 0; i < src_ndims; ++i) {
+            src.shape_[ndims - src_ndims + i] = src.shape_[i];
+            if (src.shape_[i] == 1) {
+                src.strides_[ndims - src_ndims + i] = 0;
+            } else {
+                src.strides_[ndims - src_ndims + i] = src.strides_[i];
+            }
+        }
+    }
 
     /// Return the total number of workloads (e.g. computations) needed for
     /// the op. The scheduler schedules these workloads to run on parallel
@@ -118,10 +156,10 @@ protected:
     /// Number of input Tensors.
     int64_t num_inputs_ = 0;
 
-    /// Array of input TensorRefs
+    /// Array of input TensorRefs.
     TensorRef inputs_[MAX_OPERANDS];
 
-    /// Output TensorRef
+    /// Output TensorRef.
     TensorRef output_;
 };
 
