@@ -686,3 +686,16 @@ TEST_P(TensorPermuteDevices, T) {
     Tensor t_3d(vals, {2, 3, 4}, Dtype::Float32, device);
     EXPECT_THROW(t_3d.T(), std::runtime_error);
 }
+
+TEST_P(TensorPermuteDevices, VectorInitializer) {
+    Device device = GetParam();
+    Tensor t({2, 3}, Dtype::Float32, device);
+
+    // Check shallow copy.
+    std::vector<Tensor> t_vec0{t, t};
+    EXPECT_EQ(t.GetDataPtr(), t_vec0[0].GetDataPtr());
+    EXPECT_EQ(t.GetDataPtr(), t_vec0[1].GetDataPtr());
+    std::vector<Tensor> t_vec1({t, t});
+    EXPECT_EQ(t.GetDataPtr(), t_vec1[0].GetDataPtr());
+    EXPECT_EQ(t.GetDataPtr(), t_vec1[1].GetDataPtr());
+}
