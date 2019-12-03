@@ -41,9 +41,9 @@ static OPEN3D_HOST_DEVICE void CUDACopyElementKernel(const void* src,
 }
 
 void IndexGetCUDA(const Tensor& src,
-                    Tensor& dst,
-                    const std::vector<Tensor>& index_tensors,
-                    const SizeVector& indexed_out_shape) {
+                  Tensor& dst,
+                  const std::vector<Tensor>& index_tensors,
+                  const SizeVector& indexed_out_shape) {
     Dtype dtype = src.GetDtype();
     DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
         CUDALauncher::LaunchRhsIndexedUnaryEWKernel<scalar_t>(
@@ -56,9 +56,9 @@ void IndexGetCUDA(const Tensor& src,
 }
 
 void IndexSetCUDA(const Tensor& src,
-                    Tensor& dst,
-                    const std::vector<Tensor>& index_tensors,
-                    const SizeVector& indexed_out_shape) {
+                  Tensor& dst,
+                  const std::vector<Tensor>& index_tensors,
+                  const SizeVector& indexed_out_shape) {
     Dtype dtype = src.GetDtype();
     DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
         CUDALauncher::LaunchLhsIndexedUnaryEWKernel<scalar_t>(

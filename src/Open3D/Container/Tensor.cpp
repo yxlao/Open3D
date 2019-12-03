@@ -275,8 +275,7 @@ void Tensor::IndexSet(const std::vector<Tensor>& index_tensors,
                           src_tensor.GetShape(), indexed_out_shape);
     }
 
-    kernel::IndexSet(src_tensor, *this, full_index_tensors,
-                       indexed_out_shape);
+    kernel::IndexSet(src_tensor, *this, full_index_tensors, indexed_out_shape);
 }
 
 Tensor Tensor::Permute(const SizeVector& dims) const {
