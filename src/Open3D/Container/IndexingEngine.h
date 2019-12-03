@@ -190,8 +190,8 @@ public:
         return num_workloads;
     }
 
-    OPEN3D_HOST_DEVICE char* GetInputPtr(int64_t workload_idx,
-                                         int64_t input_idx) const {
+    OPEN3D_HOST_DEVICE char* GetInputPtr(int64_t input_idx,
+                                         int64_t workload_idx) const {
         if (input_idx < 0 || input_idx >= num_inputs_) {
             return nullptr;
         }

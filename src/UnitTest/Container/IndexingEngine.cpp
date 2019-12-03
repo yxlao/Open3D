@@ -76,6 +76,15 @@ TEST_P(IndexingEnginePermuteDevices, BroadcastRestride) {
     Tensor output({2, 2, 2, 1, 3}, Dtype::Float32, device);
     IndexingEngine indexer({input0, input1}, output);
 
+    TensorRef input0_tr = indexer.GetInput(0);
+    TensorRef input1_tr = indexer.GetInput(1);
+    TensorRef output_tr = indexer.GetOutput();
+
+    EXPECT_EQ(input0_tr.ndims_, 5);
+    EXPECT_EQ(input1_tr.ndims_, 5);
+    EXPECT_EQ(output_tr.ndims_, 5);
+
+    // Check Indexer's global info
     EXPECT_EQ(indexer.NumInputs(), 2);
     EXPECT_EQ(indexer.NumWorkloads(), 24);
     EXPECT_EQ(SizeVector(indexer.GetMasterShape(),
@@ -85,13 +94,7 @@ TEST_P(IndexingEnginePermuteDevices, BroadcastRestride) {
                          indexer.GetMasterStrides() + indexer.NumDims()),
               SizeVector({12, 6, 3, 3, 1}));
 
-    TensorRef input0_tr = indexer.GetInput(0);
-    TensorRef input1_tr = indexer.GetInput(1);
-    TensorRef output_tr = indexer.GetOutput();
-
-    EXPECT_EQ(input0_tr.ndims_, 5);
-    EXPECT_EQ(input1_tr.ndims_, 5);
-
+    // Check tensor shape
     EXPECT_EQ(SizeVector(input0_tr.shape_, input0_tr.shape_ + input0_tr.ndims_),
               SizeVector({1, 2, 1, 1, 3}));
     EXPECT_EQ(SizeVector(input1_tr.shape_, input1_tr.shape_ + input1_tr.ndims_),
@@ -99,6 +102,7 @@ TEST_P(IndexingEnginePermuteDevices, BroadcastRestride) {
     EXPECT_EQ(SizeVector(output_tr.shape_, output_tr.shape_ + output_tr.ndims_),
               SizeVector({2, 2, 2, 1, 3}));
 
+    // Check tensor strides
     EXPECT_EQ(SizeVector(input0_tr.strides_,
                          input0_tr.strides_ + input0_tr.ndims_),
               SizeVector({0, 3, 0, 3, 1}));
@@ -109,3 +113,18 @@ TEST_P(IndexingEnginePermuteDevices, BroadcastRestride) {
                          output_tr.strides_ + output_tr.ndims_),
               SizeVector({12, 6, 3, 3, 1}));
 }
+
+// TEST_P(IndexingEnginePermuteDevices, Pointers) {
+//     Device device = GetParam();
+
+//     Tensor input0({3, 1, 1}, Dtype::Float32, device);
+//     Tensor input1({2, 1}, Dtype::Float32, device);
+//     Tensor output({3, 2, 1}, Dtype::Float32, device);
+//     IndexingEngine indexer({input0, input1}, output);
+
+//     char* input0_base_ptr = static_cast<char*>(input0.GetDataPtr());
+//     char* input1_base_ptr = static_cast<char*>(input1.GetDataPtr());
+//     char* output_base_ptr = static_cast<char*>(output.GetDataPtr());
+
+//     EXPECT_EQ(indexer.GetInputPtr(0, 0), input0_base_ptr + 0);
+// }
