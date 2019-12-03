@@ -96,7 +96,13 @@ public:
     }
 
     /// Copy constructor with lvalue input, e.g. `Tensor dst(src)`
-    Tensor(const Tensor& other);
+    Tensor(const Tensor& other)
+        : Tensor(other.GetShape(),
+                 other.GetStrides(),
+                 const_cast<void*>(other.GetDataPtr()),
+                 other.GetDtype(),
+                 other.GetDevice(),
+                 other.GetBlob()) {}
 
     /// Copy constructor with rvalue input, e.g. `Tensor dst(src[0])`
     Tensor(Tensor&& other)

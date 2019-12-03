@@ -40,12 +40,6 @@
 
 namespace open3d {
 
-/// Copy constructor with lvalue input, e.g. `Tensor dst(src)`
-Tensor::Tensor(const Tensor& other)
-    : Tensor(other.GetShape(), other.GetDtype(), other.GetDevice()) {
-    kernel::Copy(other, *this);
-}
-
 /// Tensor assignment lvalue = lvalue, e.g. `tensor_a = tensor_b`
 Tensor& Tensor::operator=(const Tensor& other) & {
     kernel::Copy(other, *this);
