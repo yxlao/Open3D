@@ -32,14 +32,13 @@
 namespace open3d {
 namespace kernel {
 
-/// Raw copy
+void Copy(const Tensor& src, Tensor& dst);
+
 void CopyCPU(const Tensor& src, Tensor& dst);
 
 #ifdef BUILD_CUDA_MODULE
 void CopyCUDA(const Tensor& src, Tensor& dst);
 #endif
-
-void Copy(const Tensor& src, Tensor& dst);
 
 }  // namespace kernel
 }  // namespace open3d
