@@ -95,7 +95,7 @@ public:
         }
     }
 
-    /// Copy constructor with lvalue input, e.g. `Tensor dst(src)`
+    /// Copy constructor with lvalue input, e.g. `Tensor dst(src)`.
     Tensor(const Tensor& other)
         : Tensor(other.GetShape(),
                  other.GetStrides(),
@@ -104,7 +104,7 @@ public:
                  other.GetDevice(),
                  other.GetBlob()) {}
 
-    /// Copy constructor with rvalue input, e.g. `Tensor dst(src[0])`
+    /// Copy constructor with rvalue input, e.g. `Tensor dst(src[0])`.
     Tensor(Tensor&& other)
         : Tensor(other.GetShape(),
                  other.GetStrides(),

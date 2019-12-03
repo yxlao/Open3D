@@ -687,20 +687,24 @@ TEST_P(TensorPermuteDevices, T) {
     EXPECT_THROW(t_3d.T(), std::runtime_error);
 }
 
-static void *FirstTensorDataPtr(const std::vector<Tensor> &tensors) {
-    return const_cast<void *>(tensors[0].GetDataPtr());
-}
-
-TEST_P(TensorPermuteDevices, DISABLED_VectorInitializer) {
+TEST_P(TensorPermuteDevices, ShallowCopyConstructor) {
     Device device = GetParam();
     Tensor t({2, 3}, Dtype::Float32, device);
 
-    // Check shallow copy.
+    // Copy constructor.
+    Tensor t_copy(t);
+    EXPECT_EQ(t.GetDataPtr(), t_copy.GetDataPtr());
+
+    // Vector initialization.
     std::vector<Tensor> t_vec0{t};
     EXPECT_EQ(t.GetDataPtr(), t_vec0[0].GetDataPtr());
 
     std::vector<Tensor> t_vec1({t});
     EXPECT_EQ(t.GetDataPtr(), t_vec1[0].GetDataPtr());
 
+    // Vector initialization list passed to function.
+    auto FirstTensorDataPtr = [](const std::vector<Tensor> &tensors) -> void * {
+        return const_cast<void *>(tensors[0].GetDataPtr());
+    };
     EXPECT_EQ(t.GetDataPtr(), FirstTensorDataPtr({t}));
 }
