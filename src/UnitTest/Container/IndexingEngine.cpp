@@ -114,17 +114,37 @@ TEST_P(IndexingEnginePermuteDevices, BroadcastRestride) {
               SizeVector({12, 6, 3, 3, 1}));
 }
 
-// TEST_P(IndexingEnginePermuteDevices, Pointers) {
-//     Device device = GetParam();
+TEST_P(IndexingEnginePermuteDevices, GetPointers) {
+    Device device = GetParam();
 
-//     Tensor input0({3, 1, 1}, Dtype::Float32, device);
-//     Tensor input1({2, 1}, Dtype::Float32, device);
-//     Tensor output({3, 2, 1}, Dtype::Float32, device);
-//     IndexingEngine indexer({input0, input1}, output);
+    Tensor input0({3, 1, 1}, Dtype::Float32, device);
+    Tensor input1({2, 1}, Dtype::Float32, device);
+    Tensor output({3, 2, 1}, Dtype::Float32, device);
+    IndexingEngine indexer({input0, input1}, output);
 
-//     char* input0_base_ptr = static_cast<char*>(input0.GetDataPtr());
-//     char* input1_base_ptr = static_cast<char*>(input1.GetDataPtr());
-//     char* output_base_ptr = static_cast<char*>(output.GetDataPtr());
+    char* input0_base_ptr = static_cast<char*>(input0.GetDataPtr());
+    char* input1_base_ptr = static_cast<char*>(input1.GetDataPtr());
+    char* output_base_ptr = static_cast<char*>(output.GetDataPtr());
+    int64_t dtype_byte_size = DtypeUtil::ByteSize(Dtype::Float32);
 
-//     EXPECT_EQ(indexer.GetInputPtr(0, 0), input0_base_ptr + 0);
-// }
+    EXPECT_EQ(indexer.GetInputPtr(0, 0), input0_base_ptr + 0 * dtype_byte_size);
+    EXPECT_EQ(indexer.GetInputPtr(0, 1), input0_base_ptr + 0 * dtype_byte_size);
+    EXPECT_EQ(indexer.GetInputPtr(0, 2), input0_base_ptr + 1 * dtype_byte_size);
+    EXPECT_EQ(indexer.GetInputPtr(0, 3), input0_base_ptr + 1 * dtype_byte_size);
+    EXPECT_EQ(indexer.GetInputPtr(0, 4), input0_base_ptr + 2 * dtype_byte_size);
+    EXPECT_EQ(indexer.GetInputPtr(0, 5), input0_base_ptr + 2 * dtype_byte_size);
+
+    EXPECT_EQ(indexer.GetInputPtr(1, 0), input1_base_ptr + 0 * dtype_byte_size);
+    EXPECT_EQ(indexer.GetInputPtr(1, 1), input1_base_ptr + 1 * dtype_byte_size);
+    EXPECT_EQ(indexer.GetInputPtr(1, 2), input1_base_ptr + 0 * dtype_byte_size);
+    EXPECT_EQ(indexer.GetInputPtr(1, 3), input1_base_ptr + 1 * dtype_byte_size);
+    EXPECT_EQ(indexer.GetInputPtr(1, 4), input1_base_ptr + 0 * dtype_byte_size);
+    EXPECT_EQ(indexer.GetInputPtr(1, 5), input1_base_ptr + 1 * dtype_byte_size);
+
+    EXPECT_EQ(indexer.GetOutputPtr(0), output_base_ptr + 0 * dtype_byte_size);
+    EXPECT_EQ(indexer.GetOutputPtr(1), output_base_ptr + 1 * dtype_byte_size);
+    EXPECT_EQ(indexer.GetOutputPtr(2), output_base_ptr + 2 * dtype_byte_size);
+    EXPECT_EQ(indexer.GetOutputPtr(3), output_base_ptr + 3 * dtype_byte_size);
+    EXPECT_EQ(indexer.GetOutputPtr(4), output_base_ptr + 4 * dtype_byte_size);
+    EXPECT_EQ(indexer.GetOutputPtr(5), output_base_ptr + 5 * dtype_byte_size);
+}
