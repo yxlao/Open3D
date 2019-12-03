@@ -40,4 +40,26 @@ namespace open3d {
 std::tuple<std::vector<Tensor>, SizeVector> PreprocessIndexTensors(
         const Tensor& tensor, const std::vector<Tensor>& index_tensors);
 
+class AdvancedIndexing {
+    AdvancedIndexing(const Tensor& tensor,
+                     const std::vector<Tensor>& index_tensors)
+        : tensor_(tensor), index_tensors_(index_tensors) {
+        // The constructor makes shallow copies of the tensors to keep input
+        // tensors untouched by the preprocessing.
+        RunPreprocess();
+    }
+
+    void RunPreprocess();
+
+    Tensor GetPreprocessedTensor() const { return tensor_; }
+
+    std::vector<Tensor> GetPreprocessedIndexTensors() const {
+        return index_tensors_;
+    }
+
+protected:
+    Tensor tensor_;
+    std::vector<Tensor> index_tensors_;
+};
+
 }  // namespace open3d

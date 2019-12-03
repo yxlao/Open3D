@@ -32,6 +32,27 @@
 
 namespace open3d {
 
+void AdvancedIndexing::RunPreprocess() {
+    // Dimension check
+    if (index_tensors_.size() > tensor_.NumDims()) {
+        utility::LogError(
+                "Number of index_tensors {} exceeds tensor dimension "
+                "{}.",
+                index_tensors_.size(), tensor_.NumDims());
+    }
+
+    // Index tensors must be using int64_t.
+    // Boolean indexing tensors will be supported in the future by
+    // converting to int64_t tensors.
+    for (const Tensor& index_tensor : index_tensors_) {
+        if (index_tensor.GetDtype() != Dtype::Int64) {
+            utility::LogError(
+                    "Index tensor must have Int64 dtype, but {} was used.",
+                    DtypeUtil::ToString(index_tensor.GetDtype()));
+        }
+    }
+}
+
 std::tuple<std::vector<Tensor>, SizeVector> PreprocessIndexTensors(
         const Tensor& tensor, const std::vector<Tensor>& index_tensors) {
     // Index tensors must be using int64_t
