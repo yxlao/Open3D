@@ -26,4 +26,5 @@
 
 #pragma once
 
+#include "Open3D/Container/Kernel/AdvancedIndexing.h"
 #include "Open3D/Container/Kernel/UnaryEW.h"

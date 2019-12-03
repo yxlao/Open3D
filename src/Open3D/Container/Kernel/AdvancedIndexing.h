@@ -24,40 +24,43 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Open3D/Container/Kernel/UnaryEW.h"
+#pragma once
 
-#include "Open3D/Container/Dispatch.h"
-#include "Open3D/Container/Dtype.h"
-#include "Open3D/Container/Kernel/CPULauncher.h"
-#include "Open3D/Container/MemoryManager.h"
-#include "Open3D/Container/SizeVector.h"
 #include "Open3D/Container/Tensor.h"
 #include "Open3D/Utility/Console.h"
 
 namespace open3d {
 namespace kernel {
 
-template <typename scalar_t>
-static void CPUCopyElementKernel(const void* src, void* dst) {
-    *static_cast<scalar_t*>(dst) = *static_cast<const scalar_t*>(src);
-}
+void IndexedGetCPU(const Tensor& src,
+                   Tensor& dst,
+                   const std::vector<Tensor>& index_tensors,
+                   const SizeVector& indexed_out_shape);
+#ifdef BUILD_CUDA_MODULE
+void IndexedGetCUDA(const Tensor& src,
+                    Tensor& dst,
+                    const std::vector<Tensor>& index_tensors,
+                    const SizeVector& indexed_out_shape);
+#endif
+void IndexedGet(const Tensor& src,
+                Tensor& dst,
+                const std::vector<Tensor>& index_tensors,
+                const SizeVector& indexed_out_shape);
 
-void CopyCPU(const Tensor& src, Tensor& dst) {
-    // src and dst have been checked to have the same shape, dtype, device
-    SizeVector shape = src.GetShape();
-    Dtype dtype = src.GetDtype();
-    if (src.IsContiguous() && dst.IsContiguous() &&
-        src.GetShape() == dst.GetShape()) {
-        MemoryManager::Memcpy(dst.GetDataPtr(), dst.GetDevice(),
-                              src.GetDataPtr(), src.GetDevice(),
-                              DtypeUtil::ByteSize(dtype) * shape.NumElements());
-    } else {
-        DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
-            CPULauncher::LaunchUnaryEWKernel<scalar_t>(
-                    src, dst, CPUCopyElementKernel<scalar_t>);
-        });
-    }
-}
+void IndexedSetCPU(const Tensor& src,
+                   Tensor& dst,
+                   const std::vector<Tensor>& index_tensors,
+                   const SizeVector& indexed_out_shape);
+#ifdef BUILD_CUDA_MODULE
+void IndexedSetCUDA(const Tensor& src,
+                    Tensor& dst,
+                    const std::vector<Tensor>& index_tensors,
+                    const SizeVector& indexed_out_shape);
+#endif
+void IndexedSet(const Tensor& src,
+                Tensor& dst,
+                const std::vector<Tensor>& index_tensors,
+                const SizeVector& indexed_out_shape);
 
 }  // namespace kernel
 }  // namespace open3d

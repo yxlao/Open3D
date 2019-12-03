@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Open3D/Container/Kernel/UnaryEW.h"
+#include "Open3D/Container/Kernel/AdvancedIndexing.h"
 
 #include "Open3D/Container/Dispatch.h"
 #include "Open3D/Container/Dtype.h"
@@ -42,22 +42,28 @@ static void CPUCopyElementKernel(const void* src, void* dst) {
     *static_cast<scalar_t*>(dst) = *static_cast<const scalar_t*>(src);
 }
 
-void CopyCPU(const Tensor& src, Tensor& dst) {
-    // src and dst have been checked to have the same shape, dtype, device
-    SizeVector shape = src.GetShape();
+void IndexedGetCPU(const Tensor& src,
+                   Tensor& dst,
+                   const std::vector<Tensor>& index_tensors,
+                   const SizeVector& indexed_out_shape) {
     Dtype dtype = src.GetDtype();
-    if (src.IsContiguous() && dst.IsContiguous() &&
-        src.GetShape() == dst.GetShape()) {
-        MemoryManager::Memcpy(dst.GetDataPtr(), dst.GetDevice(),
-                              src.GetDataPtr(), src.GetDevice(),
-                              DtypeUtil::ByteSize(dtype) * shape.NumElements());
-    } else {
-        DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
-            CPULauncher::LaunchUnaryEWKernel<scalar_t>(
-                    src, dst, CPUCopyElementKernel<scalar_t>);
-        });
-    }
+    DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
+        CPULauncher::LaunchRhsIndexedUnaryEWKernel<scalar_t>(
+                src, dst, index_tensors, indexed_out_shape,
+                CPUCopyElementKernel<scalar_t>);
+    });
 }
 
+void IndexedSetCPU(const Tensor& src,
+                   Tensor& dst,
+                   const std::vector<Tensor>& index_tensors,
+                   const SizeVector& indexed_out_shape) {
+    Dtype dtype = src.GetDtype();
+    DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
+        CPULauncher::LaunchLhsIndexedUnaryEWKernel<scalar_t>(
+                src, dst, index_tensors, indexed_out_shape,
+                CPUCopyElementKernel<scalar_t>);
+    });
+}
 }  // namespace kernel
 }  // namespace open3d

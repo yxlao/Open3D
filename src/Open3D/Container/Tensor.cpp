@@ -28,7 +28,7 @@
 
 #include <sstream>
 
-#include "Open3D/Container/AdvancedIndexing.h"
+#include "Open3D/Container/AdvancedPreprocess.h"
 #include "Open3D/Container/Blob.h"
 #include "Open3D/Container/Broadcast.h"
 #include "Open3D/Container/Device.h"

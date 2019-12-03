@@ -24,40 +24,48 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Open3D/Container/Kernel/UnaryEW.h"
+#include "Open3D/Container/Kernel/AdvancedIndexing.h"
 
-#include "Open3D/Container/Dispatch.h"
-#include "Open3D/Container/Dtype.h"
-#include "Open3D/Container/Kernel/CPULauncher.h"
-#include "Open3D/Container/MemoryManager.h"
-#include "Open3D/Container/SizeVector.h"
 #include "Open3D/Container/Tensor.h"
 #include "Open3D/Utility/Console.h"
 
 namespace open3d {
 namespace kernel {
 
-template <typename scalar_t>
-static void CPUCopyElementKernel(const void* src, void* dst) {
-    *static_cast<scalar_t*>(dst) = *static_cast<const scalar_t*>(src);
-}
-
-void CopyCPU(const Tensor& src, Tensor& dst) {
-    // src and dst have been checked to have the same shape, dtype, device
-    SizeVector shape = src.GetShape();
-    Dtype dtype = src.GetDtype();
-    if (src.IsContiguous() && dst.IsContiguous() &&
-        src.GetShape() == dst.GetShape()) {
-        MemoryManager::Memcpy(dst.GetDataPtr(), dst.GetDevice(),
-                              src.GetDataPtr(), src.GetDevice(),
-                              DtypeUtil::ByteSize(dtype) * shape.NumElements());
+void IndexedGet(const Tensor& src,
+                Tensor& dst,
+                const std::vector<Tensor>& index_tensors,
+                const SizeVector& indexed_out_shape) {
+    if (src.GetDevice().device_type_ == Device::DeviceType::CPU &&
+        dst.GetDevice().device_type_ == Device::DeviceType::CPU) {
+        IndexedGetCPU(src, dst, index_tensors, indexed_out_shape);
+    } else if (src.GetDevice().device_type_ == Device::DeviceType::CUDA &&
+               dst.GetDevice().device_type_ == Device::DeviceType::CUDA) {
+#ifdef BUILD_CUDA_MODULE
+        IndexedGetCUDA(src, dst, index_tensors, indexed_out_shape);
+#endif
     } else {
-        DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
-            CPULauncher::LaunchUnaryEWKernel<scalar_t>(
-                    src, dst, CPUCopyElementKernel<scalar_t>);
-        });
+        utility::LogError("Unimplemented device");
     }
 }
+
+void IndexedSet(const Tensor& src,
+                Tensor& dst,
+                const std::vector<Tensor>& index_tensors,
+                const SizeVector& indexed_out_shape) {
+    if (src.GetDevice().device_type_ == Device::DeviceType::CPU &&
+        dst.GetDevice().device_type_ == Device::DeviceType::CPU) {
+        IndexedSetCPU(src, dst, index_tensors, indexed_out_shape);
+
+    } else if (src.GetDevice().device_type_ == Device::DeviceType::CUDA &&
+               dst.GetDevice().device_type_ == Device::DeviceType::CUDA) {
+#ifdef BUILD_CUDA_MODULE
+        IndexedSetCUDA(src, dst, index_tensors, indexed_out_shape);
+#endif
+    } else {
+        utility::LogError("Unimplemented device");
+    }
+}  // namespace kernel
 
 }  // namespace kernel
 }  // namespace open3d

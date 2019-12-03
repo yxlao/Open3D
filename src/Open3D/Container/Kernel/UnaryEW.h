@@ -41,35 +41,5 @@ void CopyCUDA(const Tensor& src, Tensor& dst);
 
 void Copy(const Tensor& src, Tensor& dst);
 
-void IndexedGetCPU(const Tensor& src,
-                   Tensor& dst,
-                   const std::vector<Tensor>& index_tensors,
-                   const SizeVector& indexed_out_shape);
-#ifdef BUILD_CUDA_MODULE
-void IndexedGetCUDA(const Tensor& src,
-                    Tensor& dst,
-                    const std::vector<Tensor>& index_tensors,
-                    const SizeVector& indexed_out_shape);
-#endif
-void IndexedGet(const Tensor& src,
-                Tensor& dst,
-                const std::vector<Tensor>& index_tensors,
-                const SizeVector& indexed_out_shape);
-
-void IndexedSetCPU(const Tensor& src,
-                   Tensor& dst,
-                   const std::vector<Tensor>& index_tensors,
-                   const SizeVector& indexed_out_shape);
-#ifdef BUILD_CUDA_MODULE
-void IndexedSetCUDA(const Tensor& src,
-                    Tensor& dst,
-                    const std::vector<Tensor>& index_tensors,
-                    const SizeVector& indexed_out_shape);
-#endif
-void IndexedSet(const Tensor& src,
-                Tensor& dst,
-                const std::vector<Tensor>& index_tensors,
-                const SizeVector& indexed_out_shape);
-
 }  // namespace kernel
 }  // namespace open3d
