@@ -190,20 +190,37 @@ public:
         return num_workloads;
     }
 
-    /// Note: no out-of-range checks for input_idx in OPEN3D_HOST_DEVICE.
     OPEN3D_HOST_DEVICE char* GetInputPtr(int64_t workload_idx,
                                          int64_t input_idx) const {
-        return nullptr;
+        if (input_idx < 0 || input_idx >= num_inputs_) {
+            return nullptr;
+        }
+        return GetWorkloadDataPtr(inputs_[input_idx], workload_idx);
     }
 
     OPEN3D_HOST_DEVICE char* GetOutputPtr(int64_t workload_idx) const {
-        // TODO
-        return nullptr;
+        return GetWorkloadDataPtr(output_, workload_idx);
+    }
+
+    /// Note: can be optimized by computing all input ptrs and output ptr
+    /// together.
+    OPEN3D_HOST_DEVICE char* GetWorkloadDataPtr(const TensorRef& tr,
+                                                int64_t workload_idx) const {
+        if (workload_idx < 0 || workload_idx >= NumWorkloads()) {
+            return nullptr;
+        }
+        int64_t offset = 0;
+#pragma unroll
+        for (int64_t i = 0; i < ndims_; ++i) {
+            offset += workload_idx / master_strides_[i] * tr.strides_[i];
+            workload_idx = workload_idx % master_strides_[i];
+        }
+        return tr.data_ptr_ + offset * tr.dtype_byte_size_;
     }
 
     OPEN3D_HOST_DEVICE int64_t NumInputs() const { return num_inputs_; }
 
-    /// Note: no out-of-range checks for input_idx in OPEN3D_HOST_DEVICE
+    /// Note: no out-of-range checks for in OPEN3D_HOST_DEVICE
     OPEN3D_HOST_DEVICE TensorRef GetInput(int64_t i) { return inputs_[i]; }
 
     OPEN3D_HOST_DEVICE TensorRef GetOutput() { return output_; }
