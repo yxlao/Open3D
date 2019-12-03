@@ -25,7 +25,7 @@
 // ----------------------------------------------------------------------------
 
 #include "Open3D/Container/Tensor.h"
-#include "Open3D/Container/AdvancedPreprocess.h"
+#include "Open3D/Container/AdvancedIndexing.h"
 #include "Open3D/Container/Dtype.h"
 #include "Open3D/Container/Kernel/Kernel.h"
 #include "Open3D/Container/MemoryManager.h"

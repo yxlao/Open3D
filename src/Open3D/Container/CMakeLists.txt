@@ -1,17 +1,17 @@
 set (KERNEL_SRC
-    Kernel/AdvancedIndexing.cpp
-    Kernel/AdvancedIndexingCPU.cpp
+    Kernel/IndexGetSet.cpp
+    Kernel/IndexGetSetCPU.cpp
     Kernel/UnaryEW.cpp
     Kernel/UnaryEWCPU.cpp
 )
 
 set (KERNEL_CUDA_SRC
-    Kernel/AdvancedIndexingCUDA.cu
+    Kernel/IndexGetSetCUDA.cu
     Kernel/UnaryEWCUDA.cu
 )
 
 set (CONTAINER_SRC
-    AdvancedPreprocess.cpp
+    AdvancedIndexing.cpp
     Broadcast.cpp
     MemoryManager.cpp
     MemoryManagerCPU.cpp

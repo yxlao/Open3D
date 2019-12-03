@@ -24,46 +24,51 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Open3D/Container/Kernel/AdvancedIndexing.h"
+#include "Open3D/Container/Kernel/IndexGetSet.h"
 
+#include "Open3D/Container/CudaUtils.cuh"
 #include "Open3D/Container/Dispatch.h"
-#include "Open3D/Container/Dtype.h"
-#include "Open3D/Container/Kernel/CPULauncher.h"
-#include "Open3D/Container/MemoryManager.h"
-#include "Open3D/Container/SizeVector.h"
+#include "Open3D/Container/Kernel/CUDALauncher.cuh"
 #include "Open3D/Container/Tensor.h"
-#include "Open3D/Utility/Console.h"
 
 namespace open3d {
 namespace kernel {
 
 template <typename scalar_t>
-static void CPUCopyElementKernel(const void* src, void* dst) {
+static OPEN3D_HOST_DEVICE void CUDACopyElementKernel(const void* src,
+                                                     void* dst) {
     *static_cast<scalar_t*>(dst) = *static_cast<const scalar_t*>(src);
 }
 
-void IndexGetCPU(const Tensor& src,
-                 Tensor& dst,
-                 const std::vector<Tensor>& index_tensors,
-                 const SizeVector& indexed_out_shape) {
+void IndexGetCUDA(const Tensor& src,
+                  Tensor& dst,
+                  const std::vector<Tensor>& index_tensors,
+                  const SizeVector& indexed_out_shape) {
     Dtype dtype = src.GetDtype();
     DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
-        CPULauncher::LaunchRhsIndexedUnaryEWKernel<scalar_t>(
+        CUDALauncher::LaunchRhsIndexedUnaryEWKernel<scalar_t>(
                 src, dst, index_tensors, indexed_out_shape,
-                CPUCopyElementKernel<scalar_t>);
+                // Need to wrap as extended CUDA lamba function
+                [] OPEN3D_HOST_DEVICE(const void* src, void* dst) {
+                    CUDACopyElementKernel<scalar_t>(src, dst);
+                });
     });
 }
 
-void IndexSetCPU(const Tensor& src,
-                 Tensor& dst,
-                 const std::vector<Tensor>& index_tensors,
-                 const SizeVector& indexed_out_shape) {
+void IndexSetCUDA(const Tensor& src,
+                  Tensor& dst,
+                  const std::vector<Tensor>& index_tensors,
+                  const SizeVector& indexed_out_shape) {
     Dtype dtype = src.GetDtype();
     DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
-        CPULauncher::LaunchLhsIndexedUnaryEWKernel<scalar_t>(
+        CUDALauncher::LaunchLhsIndexedUnaryEWKernel<scalar_t>(
                 src, dst, index_tensors, indexed_out_shape,
-                CPUCopyElementKernel<scalar_t>);
+                // Need to wrap as extended CUDA lamba function
+                [] OPEN3D_HOST_DEVICE(const void* src, void* dst) {
+                    CUDACopyElementKernel<scalar_t>(src, dst);
+                });
     });
 }
+
 }  // namespace kernel
 }  // namespace open3d

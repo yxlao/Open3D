@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Open3D/Container/Kernel/AdvancedIndexing.h"
+#include "Open3D/Container/Kernel/IndexGetSet.h"
 
 #include "Open3D/Container/Tensor.h"
 #include "Open3D/Utility/Console.h"
