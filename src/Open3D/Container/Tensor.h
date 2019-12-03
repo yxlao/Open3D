@@ -99,7 +99,13 @@ public:
     Tensor(const Tensor& other);
 
     /// Copy constructor with rvalue input, e.g. `Tensor dst(src[0])`
-    Tensor(Tensor&& other);
+    Tensor(Tensor&& other)
+        : Tensor(other.GetShape(),
+                 other.GetStrides(),
+                 other.GetDataPtr(),
+                 other.GetDtype(),
+                 other.GetDevice(),
+                 other.GetBlob()) {}
 
     /// Tensor assignment lvalue = lvalue, e.g. `tensor_a = tensor_b`
     Tensor& operator=(const Tensor& other) &;

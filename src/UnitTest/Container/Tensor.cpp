@@ -691,7 +691,7 @@ static void *FirstTensorDataPtr(const std::vector<Tensor> &tensors) {
     return const_cast<void *>(tensors[0].GetDataPtr());
 }
 
-TEST_P(TensorPermuteDevices, VectorInitializer) {
+TEST_P(TensorPermuteDevices, DISABLED_VectorInitializer) {
     Device device = GetParam();
     Tensor t({2, 3}, Dtype::Float32, device);
 
