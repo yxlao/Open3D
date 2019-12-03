@@ -32,38 +32,38 @@
 namespace open3d {
 namespace kernel {
 
-void IndexedGet(const Tensor& src,
-                Tensor& dst,
-                const std::vector<Tensor>& index_tensors,
-                const SizeVector& indexed_out_shape);
+void IndexGet(const Tensor& src,
+              Tensor& dst,
+              const std::vector<Tensor>& index_tensors,
+              const SizeVector& indexed_out_shape);
 
-void IndexedGetCPU(const Tensor& src,
-                   Tensor& dst,
-                   const std::vector<Tensor>& index_tensors,
-                   const SizeVector& indexed_out_shape);
+void IndexGetCPU(const Tensor& src,
+                 Tensor& dst,
+                 const std::vector<Tensor>& index_tensors,
+                 const SizeVector& indexed_out_shape);
 
 #ifdef BUILD_CUDA_MODULE
-void IndexedGetCUDA(const Tensor& src,
-                    Tensor& dst,
-                    const std::vector<Tensor>& index_tensors,
-                    const SizeVector& indexed_out_shape);
+void IndexGetCUDA(const Tensor& src,
+                  Tensor& dst,
+                  const std::vector<Tensor>& index_tensors,
+                  const SizeVector& indexed_out_shape);
 #endif
 
-void IndexedSet(const Tensor& src,
-                Tensor& dst,
-                const std::vector<Tensor>& index_tensors,
-                const SizeVector& indexed_out_shape);
+void IndexSet(const Tensor& src,
+              Tensor& dst,
+              const std::vector<Tensor>& index_tensors,
+              const SizeVector& indexed_out_shape);
 
-void IndexedSetCPU(const Tensor& src,
-                   Tensor& dst,
-                   const std::vector<Tensor>& index_tensors,
-                   const SizeVector& indexed_out_shape);
+void IndexSetCPU(const Tensor& src,
+                 Tensor& dst,
+                 const std::vector<Tensor>& index_tensors,
+                 const SizeVector& indexed_out_shape);
 
 #ifdef BUILD_CUDA_MODULE
-void IndexedSetCUDA(const Tensor& src,
-                    Tensor& dst,
-                    const std::vector<Tensor>& index_tensors,
-                    const SizeVector& indexed_out_shape);
+void IndexSetCUDA(const Tensor& src,
+                  Tensor& dst,
+                  const std::vector<Tensor>& index_tensors,
+                  const SizeVector& indexed_out_shape);
 #endif
 
 }  // namespace kernel

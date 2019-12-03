@@ -40,7 +40,7 @@ static OPEN3D_HOST_DEVICE void CUDACopyElementKernel(const void* src,
     *static_cast<scalar_t*>(dst) = *static_cast<const scalar_t*>(src);
 }
 
-void IndexedGetCUDA(const Tensor& src,
+void IndexGetCUDA(const Tensor& src,
                     Tensor& dst,
                     const std::vector<Tensor>& index_tensors,
                     const SizeVector& indexed_out_shape) {
@@ -55,7 +55,7 @@ void IndexedGetCUDA(const Tensor& src,
     });
 }
 
-void IndexedSetCUDA(const Tensor& src,
+void IndexSetCUDA(const Tensor& src,
                     Tensor& dst,
                     const std::vector<Tensor>& index_tensors,
                     const SizeVector& indexed_out_shape) {

@@ -551,7 +551,7 @@ TEST_P(TensorPermuteDevices, IndexGetActualBroadcast) {
     SizeVector indexed_out_shape;
     std::tie(full_index_tensors, indexed_out_shape) =
             PreprocessIndexTensors(src_t, indices);
-    kernel::IndexedGet(src_t, dst_t, full_index_tensors, indexed_out_shape);
+    kernel::IndexGet(src_t, dst_t, full_index_tensors, indexed_out_shape);
 
     EXPECT_TRUE(dst_t.IsContiguous());
     EXPECT_EQ(dst_t.GetShape(), SizeVector({3, 2, 2}));
