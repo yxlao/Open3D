@@ -580,7 +580,7 @@ TEST_P(TensorPermuteDevices, DISABLED_IndexGetSeparateBySlice) {
               std::vector<float>({0, 4, 8, 13, 17, 21}));
 }
 
-TEST_P(TensorPermuteDevices, IndexGetTricky) {
+TEST_P(TensorPermuteDevices, DISABLED_IndexGetTricky) {
     Device device = GetParam();
 
     std::vector<float> vals{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11,
