@@ -42,13 +42,23 @@ namespace open3d {
 
 /// Tensor assignment lvalue = lvalue, e.g. `tensor_a = tensor_b`
 Tensor& Tensor::operator=(const Tensor& other) & {
-    kernel::Copy(other, *this);
+    shape_ = other.shape_;
+    strides_ = other.strides_;
+    dtype_ = other.dtype_;
+    device_ = other.device_;
+    blob_ = other.blob_;
+    data_ptr_ = other.data_ptr_;
     return *this;
 }
 
 /// Tensor assignment lvalue = rvalue, e.g. `tensor_a = tensor_b[0]`
 Tensor& Tensor::operator=(Tensor&& other) & {
-    kernel::Copy(other, *this);
+    shape_ = other.shape_;
+    strides_ = other.strides_;
+    dtype_ = other.dtype_;
+    device_ = other.device_;
+    blob_ = other.blob_;
+    data_ptr_ = other.data_ptr_;
     return *this;
 }
 

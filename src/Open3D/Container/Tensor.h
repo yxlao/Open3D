@@ -113,12 +113,12 @@ public:
                  other.GetDevice(),
                  other.GetBlob()) {}
 
-    /// Tensor assignment lvalue = lvalue, e.g. `tensor_a = tensor_b`
-    /// TODO: change to shallow copy. A deep copy (assignment) must turn LHS to
-    /// a rvalue.
+    /// Tensor assignment lvalue = lvalue, e.g. `tensor_a = tensor_b`, resulting
+    /// in a "shallow" copy.
     Tensor& operator=(const Tensor& other) &;
 
-    /// Tensor assignment lvalue = rvalue, e.g. `tensor_a = tensor_b[0]`
+    /// Tensor assignment lvalue = rvalue, e.g. `tensor_a = tensor_b[0]`,
+    /// resulting in a "shallow" copy.
     Tensor& operator=(Tensor&& other) &;
 
     /// Tensor assignment rvalue = lvalue, e.g. `tensor_a[0] = tensor_b`
@@ -190,6 +190,15 @@ public:
                  int64_t start,
                  int64_t stop,
                  int64_t step = 1) const;
+
+    /// Convert to rvalue such that the Tensor can be assigned.
+    /// E.g. in numpy
+    /// tensor_a = tensor_b     # tensor_a is lvalue, tensor_a variable will
+    ///                         # now referecne tensor_b, that is, tensor_a
+    ///                         # and tensor_b share exactly the same memory.
+    /// tensor_a[:] = tensor_b  # tensor_a[:] is rvalue, tensor_b's values are
+    ///                         # assigned to tensor_a's memory.
+    Tensor ToRvalue() const { return *this; }
 
     /// \brief Advanced indexing getter
     ///
