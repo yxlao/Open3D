@@ -97,6 +97,8 @@ void AdvancedIndexing::RunPreprocess() {
         }
     }
 
+    // Expand (broadcast with view) all index_tensors_ to a common shape.
+
     // Fill implied 0-d index tensors at the tail dimensions.
     // 0-d index tensor represents a fully sliced dimension, i.e. [:] in Numpy.
     // Partial slice e.g. [1:3] shall be handled outside of advanced indexing.
@@ -131,6 +133,13 @@ void AdvancedIndexing::RunPreprocess() {
     for (const auto& index_tensor : index_tensors_) {
         utility::LogInfo("index_tensor.GetShape().ToString(): {}",
                          index_tensor.GetShape().ToString());
+    }
+
+    // Put index tensors_ on the same device as tensor_
+    for (size_t i = 0; i < index_tensors_.size(); ++i) {
+        if (index_tensors_[i].GetDevice() != tensor_.GetDevice()) {
+            index_tensors_[i] = index_tensors_[i].Copy(tensor_.GetDevice());
+        }
     }
 }
 
