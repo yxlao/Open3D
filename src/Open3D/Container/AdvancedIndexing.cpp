@@ -32,6 +32,51 @@
 
 namespace open3d {
 
+bool AdvancedIndexing::IsIndexSplittedBySlice(
+        const std::vector<Tensor>& index_tensors) {
+    bool index_dim_started = false;
+    bool index_dim_ended = false;
+    for (const Tensor& index_tensor : index_tensors) {
+        if (index_tensor.NumDims() == 0) {
+            // This dimension is sliced.
+            if (index_dim_started) {
+                index_dim_ended = true;
+            }
+        } else {
+            // This dimension is indexed.
+            if (index_dim_ended) {
+                return true;
+            }
+            if (!index_dim_started) {
+                index_dim_started = true;
+            }
+        }
+    }
+    return false;
+}
+
+std::pair<Tensor, std::vector<Tensor>>
+AdvancedIndexing::ShuffleIndexedDimsToFront(
+        const Tensor& tensor, const std::vector<Tensor>& index_tensors) {
+    int64_t ndims = tensor.NumDims();
+    std::vector<int64_t> permutation;
+    std::vector<Tensor> permuted_index_tensors;
+    for (int64_t i = 0; i < ndims; ++i) {
+        if (index_tensors[i].NumDims() != 0) {
+            permutation.push_back(i);
+            permuted_index_tensors.emplace_back(index_tensors[i]);
+        }
+    }
+    for (int64_t i = 0; i < ndims; ++i) {
+        if (index_tensors[i].NumDims() == 0) {
+            permutation.push_back(i);
+            permuted_index_tensors.emplace_back(index_tensors[i]);
+        }
+    }
+    return std::make_pair(tensor.Permute(permutation),
+                          std::move(permuted_index_tensors));
+}
+
 void AdvancedIndexing::RunPreprocess() {
     // Dimension check
     if (index_tensors_.size() > tensor_.NumDims()) {
@@ -77,6 +122,10 @@ void AdvancedIndexing::RunPreprocess() {
     //
     // See "Combining advanced and basic indexing" section of
     // https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
+    if (IsIndexSplittedBySlice(index_tensors_)) {
+        std::tie(tensor_, index_tensors_) =
+                ShuffleIndexedDimsToFront(tensor_, index_tensors_);
+    }
 }
 
 std::tuple<std::vector<Tensor>, SizeVector> PreprocessIndexTensors(

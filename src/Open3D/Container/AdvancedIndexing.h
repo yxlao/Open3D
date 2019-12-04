@@ -58,6 +58,17 @@ public:
 
     SizeVector GetOutputShape() const { return output_shape_; }
 
+    /// Returns true if the indexed dimension is splitted by (full) slice.
+    /// E.g. A[[1, 2], :, [1, 2]] returns true
+    ///      A[[1, 2], [1, 2], :] returns false
+    static bool IsIndexSplittedBySlice(
+            const std::vector<Tensor>& index_tensors);
+
+    /// Shuffle indexed dimensions in front of the slice dimensions for the
+    /// tensor and index tensors.
+    static std::pair<Tensor, std::vector<Tensor>> ShuffleIndexedDimsToFront(
+            const Tensor& tensor, const std::vector<Tensor>& index_tensors);
+
 protected:
     /// Preprocess tensor and index tensors.
     void RunPreprocess();
@@ -71,6 +82,14 @@ protected:
 
     /// Output shape.
     SizeVector output_shape_;
+
+    // /// Number of dimension actually being indexed.
+    // /// E.g. A[[1, 2], :, [1, 2]] returns 2.
+    // int64_t ndims_indexed = 0;
+
+    // /// Number of dimension actually being sliced.
+    // /// E.g. A[[1, 2], :, [1, 2]] returns 1.
+    // int64_t ndims_sliced = 0;
 };
 
 }  // namespace open3d

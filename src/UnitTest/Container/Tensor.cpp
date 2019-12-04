@@ -708,3 +708,21 @@ TEST_P(TensorPermuteDevices, ShallowCopyConstructor) {
     };
     EXPECT_EQ(t.GetDataPtr(), FirstTensorDataPtr({t}));
 }
+
+TEST_P(TensorPermuteDevices, AdvancedIndexing_IsIndexSplittedBySlice) {
+    Device device = GetParam();
+
+    Tensor idx(std::vector<int64_t>({1, 2}), {2}, Dtype::Int64, device);
+    Tensor slice(Tensor(SizeVector(), Dtype::Int64, device));
+
+    EXPECT_FALSE(AdvancedIndexing::IsIndexSplittedBySlice({slice}));
+    EXPECT_FALSE(AdvancedIndexing::IsIndexSplittedBySlice({slice, idx}));
+    EXPECT_FALSE(AdvancedIndexing::IsIndexSplittedBySlice({idx, slice}));
+    EXPECT_FALSE(AdvancedIndexing::IsIndexSplittedBySlice({slice, idx, idx}));
+    EXPECT_FALSE(
+            AdvancedIndexing::IsIndexSplittedBySlice({slice, idx, idx, slice}));
+
+    EXPECT_TRUE(AdvancedIndexing::IsIndexSplittedBySlice({idx, slice, idx}));
+    EXPECT_TRUE(
+            AdvancedIndexing::IsIndexSplittedBySlice({idx, slice, slice, idx}));
+}
