@@ -126,6 +126,12 @@ void AdvancedIndexing::RunPreprocess() {
         std::tie(tensor_, index_tensors_) =
                 ShuffleIndexedDimsToFront(tensor_, index_tensors_);
     }
+    utility::LogInfo("tensor_.GetShape().ToString(): {}",
+                     tensor_.GetShape().ToString());
+    for (const auto& index_tensor : index_tensors_) {
+        utility::LogInfo("index_tensor.GetShape().ToString(): {}",
+                         index_tensor.GetShape().ToString());
+    }
 }
 
 std::tuple<std::vector<Tensor>, SizeVector> PreprocessIndexTensors(

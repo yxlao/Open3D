@@ -580,6 +580,24 @@ TEST_P(TensorPermuteDevices, DISABLED_IndexGetSeparateBySlice) {
               std::vector<float>({0, 4, 8, 13, 17, 21}));
 }
 
+TEST_P(TensorPermuteDevices, IndexGetTricky) {
+    Device device = GetParam();
+
+    std::vector<float> vals{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11,
+                            12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23};
+    Tensor t(vals, {2, 3, 4}, Dtype::Float32, device);
+
+    std::vector<Tensor> indices = {
+            Tensor(std::vector<int64_t>{0, 1}, {2}, Dtype::Int64, device),
+            Tensor(std::vector<int64_t>{0, 1}, {2}, Dtype::Int64, device),
+            Tensor(SizeVector(), Dtype::Int64, device)};
+
+    Tensor t_fancy = t.IndexGet(indices);
+    // EXPECT_EQ(t_fancy.GetShape(), SizeVector({2, 3}));
+    // EXPECT_EQ(t_fancy.ToFlatVector<float>(),
+    //           std::vector<float>({0, 4, 8, 13, 17, 21}));
+}
+
 TEST_P(TensorPermuteDevices, IndexSet) {
     Device device = GetParam();
 

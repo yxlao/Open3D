@@ -247,10 +247,28 @@ Tensor Tensor::Slice(int64_t dim,
 }
 
 Tensor Tensor::IndexGet(const std::vector<Tensor>& index_tensors) const {
-    AdvancedIndexing ai(*this, index_tensors);
-    Tensor preprocessed_tensor = ai.GetPreprocessedTensor();
-    std::vector<Tensor> preprocessed_index_tensors =
-            ai.GetPreprocessedIndexTensors();
+    // AdvancedIndexing ai(*this, index_tensors);
+    // Tensor preprocessed_tensor = ai.GetPreprocessedTensor();
+    // std::vector<Tensor> preprocessed_index_tensors =
+    //         ai.GetPreprocessedIndexTensors();
+
+    // // Dimension check
+    // if (index_tensors.size() > shape_.size()) {
+    //     utility::LogError(
+    //             "Number of index_tensors {} exceeds tensor dimension {}.",
+    //             index_tensors.size(), shape_.size());
+    // }
+
+    // SizeVector indexed_out_shape;
+    // std::tie(preprocessed_index_tensors, indexed_out_shape) =
+    //         PreprocessIndexTensors(preprocessed_tensor,
+    //                                preprocessed_index_tensors);
+
+    // Tensor dst = Tensor(indexed_out_shape, dtype_, device_);
+    // kernel::IndexGet(preprocessed_tensor, dst, preprocessed_index_tensors,
+    //                  indexed_out_shape);
+
+    // return dst;
 
     // Dimension check
     if (index_tensors.size() > shape_.size()) {
@@ -261,12 +279,11 @@ Tensor Tensor::IndexGet(const std::vector<Tensor>& index_tensors) const {
 
     std::vector<Tensor> full_index_tensors;
     SizeVector indexed_out_shape;
-    std::tie(full_index_tensors, indexed_out_shape) = PreprocessIndexTensors(
-            preprocessed_tensor, preprocessed_index_tensors);
+    std::tie(full_index_tensors, indexed_out_shape) =
+            PreprocessIndexTensors(*this, index_tensors);
 
     Tensor dst = Tensor(indexed_out_shape, dtype_, device_);
-    kernel::IndexGet(preprocessed_tensor, dst, full_index_tensors,
-                     indexed_out_shape);
+    kernel::IndexGet(*this, dst, full_index_tensors, indexed_out_shape);
 
     return dst;
 }
