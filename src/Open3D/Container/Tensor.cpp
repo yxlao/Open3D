@@ -90,7 +90,7 @@ void Tensor::Assign(const Tensor& other) {
 Tensor Tensor::Broadcast(const SizeVector& dst_shape) const {
     if (!CanBeBrocastedToShape(shape_, dst_shape)) {
         utility::LogError("Cannot broadcast shape {} to shape {}.",
-                          GetShape().ToString(), dst_shape);
+                          shape_.ToString(), dst_shape);
     }
     Tensor dst_tensor(dst_shape, GetDtype(), GetDevice());
     dst_tensor.ToRvalue() = *this;
@@ -98,9 +98,9 @@ Tensor Tensor::Broadcast(const SizeVector& dst_shape) const {
 }
 
 Tensor Tensor::Expand(const SizeVector& dst_shape) const {
-    if (!CanBeBrocastedToShape(GetShape(), dst_shape)) {
+    if (!CanBeBrocastedToShape(shape_, dst_shape)) {
         utility::LogError("Cannot expand shape {} to shape {}.",
-                          GetShape().ToString(), dst_shape);
+                          shape_.ToString(), dst_shape);
     }
     Tensor dst_tensor = *this;
     // TODO
@@ -316,10 +316,10 @@ void Tensor::IndexSet(const std::vector<Tensor>& index_tensors,
     std::tie(full_index_tensors, indexed_out_shape) =
             PreprocessIndexTensors(*this, index_tensors);
 
-    // Broadcast src_tensor.GetShape() to indexed_out_shape
-    if (!CanBeBrocastedToShape(src_tensor.GetShape(), indexed_out_shape)) {
+    // Broadcast src_tensor.shape_ to indexed_out_shape
+    if (!CanBeBrocastedToShape(src_tensor.shape_, indexed_out_shape)) {
         utility::LogError("IndexSet: cannot broadcast {} to {}.",
-                          src_tensor.GetShape(), indexed_out_shape);
+                          src_tensor.shape_, indexed_out_shape);
     }
 
     kernel::IndexSet(src_tensor, *this, full_index_tensors, indexed_out_shape);
@@ -347,8 +347,8 @@ Tensor Tensor::Permute(const SizeVector& dims) const {
     }
 
     // Map to new shape and strides
-    const SizeVector& old_shape = GetShape();
-    const SizeVector& old_stides = GetStrides();
+    const SizeVector& old_shape = shape_;
+    const SizeVector& old_stides = strides_;
     SizeVector new_shape(n_dims);
     SizeVector new_strides(n_dims);
     for (int64_t i = 0; i < n_dims; ++i) {
