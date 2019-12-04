@@ -170,8 +170,7 @@ public:
     /// Expand Tensor to a new broadcastable shape, returns a new view.
     ///
     /// Tensors can be expanded to broadcastable shape by setting dimension of
-    /// size 1 to have stride 0, without allocating new memory. Setting a
-    /// dimension to have size -1 means keeping the dimension's original size.
+    /// size 1 to have stride 0, without allocating new memory.
     Tensor Expand(const SizeVector& dst_shape) const;
 
     /// Copy Tensor to a specified device
