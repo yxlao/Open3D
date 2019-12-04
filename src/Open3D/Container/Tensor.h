@@ -114,6 +114,8 @@ public:
                  other.GetBlob()) {}
 
     /// Tensor assignment lvalue = lvalue, e.g. `tensor_a = tensor_b`
+    /// TODO: change to shallow copy. A deep copy (assignment) must turn LHS to
+    /// a rvalue.
     Tensor& operator=(const Tensor& other) &;
 
     /// Tensor assignment lvalue = rvalue, e.g. `tensor_a = tensor_b[0]`
