@@ -92,7 +92,7 @@ Tensor Tensor::Broadcast(const SizeVector& dst_shape) const {
         utility::LogError("Cannot broadcast shape {} to shape {}.",
                           shape_.ToString(), dst_shape);
     }
-    Tensor dst_tensor(dst_shape, GetDtype(), GetDevice());
+    Tensor dst_tensor(dst_shape, dtype_, device_);
     dst_tensor.ToRvalue() = *this;
     return dst_tensor;
 }
@@ -362,8 +362,8 @@ Tensor Tensor::Permute(const SizeVector& dims) const {
 
 Tensor Tensor::AsStrided(const SizeVector& new_shape,
                          const SizeVector& new_strides) const {
-    Tensor result(new_shape, new_strides, const_cast<void*>(GetDataPtr()),
-                  GetDtype(), GetDevice(), GetBlob());
+    Tensor result(new_shape, new_strides, const_cast<void*>(data_ptr_), dtype_,
+                  device_, blob_);
     return result;
 }
 
