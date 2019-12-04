@@ -109,7 +109,7 @@ TEST_P(TensorPermuteDevices, FillSlice) {
     EXPECT_EQ(t.ToFlatVector<float>(), std::vector<float>({1, 1, 1, 1, 1, 1}));
 }
 
-TEST_P(TensorPermuteDevices, FillFancy) {
+TEST_P(TensorPermuteDevices, IndexSetFillFancy) {
     Device device = GetParam();
     Tensor t(std::vector<float>(2 * 3 * 4, 0), {2, 3, 4}, Dtype::Float32,
              device);
