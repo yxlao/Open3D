@@ -593,9 +593,9 @@ TEST_P(TensorPermuteDevices, IndexGetTricky) {
             Tensor(SizeVector(), Dtype::Int64, device)};
 
     Tensor t_fancy = t.IndexGet(indices);
-    // EXPECT_EQ(t_fancy.GetShape(), SizeVector({2, 3}));
-    // EXPECT_EQ(t_fancy.ToFlatVector<float>(),
-    //           std::vector<float>({0, 4, 8, 13, 17, 21}));
+    EXPECT_EQ(t_fancy.GetShape(), SizeVector({2, 4}));
+    EXPECT_EQ(t_fancy.ToFlatVector<float>(),
+              std::vector<float>({0, 1, 2, 3, 16, 17, 18, 19}));
 }
 
 TEST_P(TensorPermuteDevices, IndexSet) {
