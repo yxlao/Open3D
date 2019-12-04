@@ -102,9 +102,16 @@ Tensor Tensor::Expand(const SizeVector& dst_shape) const {
         utility::LogError("Cannot expand shape {} to shape {}.",
                           shape_.ToString(), dst_shape);
     }
-    Tensor dst_tensor = *this;
-    // TODO
-    return dst_tensor;
+    SizeVector new_shape = dst_shape;
+    SizeVector new_strides(NumDims());
+    for (int64_t i = 0; i < NumDims(); ++i) {
+        if (shape_[i] == 1 && dst_shape[i] != 1) {
+            new_strides[i] = 0;
+        } else {
+            new_strides[i] = strides_[i];
+        }
+    }
+    return AsStrided(new_shape, new_strides);
 }
 
 Tensor Tensor::Copy(const Device& device) const {
