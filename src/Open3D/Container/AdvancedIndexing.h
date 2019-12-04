@@ -56,11 +56,21 @@ public:
         return index_tensors_;
     }
 
+    SizeVector GetOutputShape() const { return output_shape_; }
+
 protected:
+    /// Preprocess tensor and index tensors.
     void RunPreprocess();
 
+    /// The processed tensors being indexed. The tensor still uses the same
+    /// underlying memory, but it may have been reshaped and restrided.
     Tensor tensor_;
+
+    /// The processed index tensors.
     std::vector<Tensor> index_tensors_;
+
+    /// Output shape.
+    SizeVector output_shape_;
 };
 
 }  // namespace open3d

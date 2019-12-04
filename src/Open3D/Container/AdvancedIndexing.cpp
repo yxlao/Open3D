@@ -41,7 +41,7 @@ void AdvancedIndexing::RunPreprocess() {
                 index_tensors_.size(), tensor_.NumDims());
     }
 
-    // Index tensors must be using int64_t.
+    // Index tensors must be using int64.
     // Boolean indexing tensors will be supported in the future by
     // converting to int64_t tensors.
     for (const Tensor& index_tensor : index_tensors_) {
@@ -51,6 +51,32 @@ void AdvancedIndexing::RunPreprocess() {
                     DtypeUtil::ToString(index_tensor.GetDtype()));
         }
     }
+
+    // Fill implied 0-d index tensors at the tail dimensions.
+    // 0-d index tensor represents a fully sliced dimension, i.e. [:] in Numpy.
+    // Partial slice e.g. [1:3] shall be handled outside of advanced indexing.
+    //
+    // E.g. Given A.shape == [5, 6, 7, 8],
+    //      A[[1, 2], [3, 4]] is converted to
+    //      A[[1, 2], [3, 4], :, :].
+    Tensor empty_index_tensor =
+            Tensor(SizeVector(), Dtype::Int64, tensor_.GetDevice());
+    int64_t num_omitted_dims = tensor_.NumDims() - index_tensors_.size();
+    for (int64_t i = 0; i < num_omitted_dims; ++i) {
+        index_tensors_.push_back(empty_index_tensor);
+    }
+
+    // Transpose all indexed dimensions to front if indexed dimensions are
+    // splitted by sliced dimensions. The tensor being indexed are dimshuffled
+    // accordingly.
+    //
+    // E.g. Given A.shape == [5, 6, 7, 8],
+    //      A[[1, 2], :, [3, 4], :] is converted to
+    //      A.permute([0, 2, 1, 3])[[1, 2], [3, 4], :, :].
+    //      The resulting shape is (2, 6, 8).
+    //
+    // See "Combining advanced and basic indexing" section of
+    // https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
 }
 
 std::tuple<std::vector<Tensor>, SizeVector> PreprocessIndexTensors(
@@ -66,7 +92,7 @@ std::tuple<std::vector<Tensor>, SizeVector> PreprocessIndexTensors(
 
     // Fill implied 0-d indexing tensors at the tail dimensions.
     Tensor empty_index_tensor =
-            Tensor(SizeVector(), Dtype::Int32, tensor.GetDevice());
+            Tensor(SizeVector(), Dtype::Int64, tensor.GetDevice());
     std::vector<Tensor> full_index_tensors = index_tensors;
     for (int64_t i = 0; i < tensor.NumDims() - index_tensors.size(); ++i) {
         full_index_tensors.push_back(empty_index_tensor);
