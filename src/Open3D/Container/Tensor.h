@@ -160,7 +160,7 @@ public:
             scalar_t casted_v = static_cast<scalar_t>(v);
             Tensor tmp(std::vector<scalar_t>({casted_v}), SizeVector({}),
                        GetDtype(), GetDevice());
-            *this = tmp;
+            ToRvalue() = tmp;
         });
     }
 
