@@ -237,6 +237,8 @@ Tensor Tensor::Slice(int64_t dim,
 }
 
 Tensor Tensor::IndexGet(const std::vector<Tensor>& index_tensors) const {
+    AdvancedIndexing ai(*this, index_tensors);
+
     // Dimension check
     if (index_tensors.size() > shape_.size()) {
         utility::LogError(

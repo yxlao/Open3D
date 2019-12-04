@@ -41,6 +41,7 @@ std::tuple<std::vector<Tensor>, SizeVector> PreprocessIndexTensors(
         const Tensor& tensor, const std::vector<Tensor>& index_tensors);
 
 class AdvancedIndexing {
+public:
     AdvancedIndexing(const Tensor& tensor,
                      const std::vector<Tensor>& index_tensors)
         : tensor_(tensor), index_tensors_(index_tensors) {
@@ -49,8 +50,6 @@ class AdvancedIndexing {
         RunPreprocess();
     }
 
-    void RunPreprocess();
-
     Tensor GetPreprocessedTensor() const { return tensor_; }
 
     std::vector<Tensor> GetPreprocessedIndexTensors() const {
@@ -58,6 +57,8 @@ class AdvancedIndexing {
     }
 
 protected:
+    void RunPreprocess();
+
     Tensor tensor_;
     std::vector<Tensor> index_tensors_;
 };
