@@ -88,7 +88,7 @@ void Tensor::Assign(const Tensor& other) {
 
 /// Broadcast Tensor to a new broadcastable shape
 Tensor Tensor::Broadcast(const SizeVector& dst_shape) const {
-    if (!CanBeBrocastedToShape(GetShape(), dst_shape)) {
+    if (!CanBeBrocastedToShape(shape_, dst_shape)) {
         utility::LogError("Cannot broadcast shape {} to shape {}.",
                           GetShape().ToString(), dst_shape);
     }
@@ -103,6 +103,7 @@ Tensor Tensor::Expand(const SizeVector& dst_shape) const {
                           GetShape().ToString(), dst_shape);
     }
     Tensor dst_tensor = *this;
+    // TODO
     return dst_tensor;
 }
 
