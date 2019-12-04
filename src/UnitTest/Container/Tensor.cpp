@@ -162,10 +162,30 @@ TEST_P(TensorPermuteDevicePairs, CopyBroadcast) {
                                 0, 1, 2, 0, 1, 2, 3, 4, 5, 3, 4, 5};
     Tensor src_t(src_vals, src_shape, dtype, src_device);
     Tensor dst_t(dst_shape, dtype, dst_device);
-    dst_t.CopyFrom(src_t);  // Equivalently, dst_t = src_t
+    dst_t.CopyFrom(src_t);  // Equivalently, dst_t.ToRvalue() = src_t;
 
     EXPECT_EQ(dst_t.GetShape(), dst_shape);
     EXPECT_EQ(dst_t.ToFlatVector<float>(), dst_vals);
+}
+
+TEST_P(TensorPermuteDevices, Expand) {
+    Device device = GetParam();
+    Dtype dtype(Dtype::Float32);
+
+    // Expand {2, 1, 3} to {2, 2, 2, 3} without memory copy
+    SizeVector src_shape{2, 1, 3};
+    SizeVector dst_shape{2, 2, 2, 3};
+
+    std::vector<float> src_vals{0, 1, 2, 3, 4, 5};
+    std::vector<float> dst_vals{0, 1, 2, 0, 1, 2, 3, 4, 5, 3, 4, 5,
+                                0, 1, 2, 0, 1, 2, 3, 4, 5, 3, 4, 5};
+    Tensor src_t(src_vals, src_shape, dtype, device);
+    Tensor dst_t = src_t.Expand(dst_shape);
+
+    EXPECT_EQ(dst_t.GetShape(), dst_shape);
+    EXPECT_EQ(dst_t.ToFlatVector<float>(), dst_vals);
+    EXPECT_EQ(dst_t.GetBlob(), src_t.GetBlob());
+    EXPECT_EQ(dst_t.GetDataPtr(), src_t.GetDataPtr());
 }
 
 TEST_P(TensorPermuteDevices, DefaultStrides) {

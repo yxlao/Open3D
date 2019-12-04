@@ -102,16 +102,32 @@ Tensor Tensor::Expand(const SizeVector& dst_shape) const {
         utility::LogError("Cannot expand shape {} to shape {}.",
                           shape_.ToString(), dst_shape);
     }
-    SizeVector new_shape = dst_shape;
-    SizeVector new_strides(NumDims());
-    for (int64_t i = 0; i < NumDims(); ++i) {
-        if (shape_[i] == 1 && dst_shape[i] != 1) {
+    int64_t src_ndims = NumDims();
+    int64_t dst_ndims = dst_shape.size();
+    int64_t omitted_ndims = dst_ndims - src_ndims;
+
+    // Fill 1 in shape for omitted dimensions in front.
+    // Noe that unexpanded_new_shape is not the expanded shape. The expanded
+    // shape is the dst_shape.
+    SizeVector unexpanded_new_shape(dst_ndims, 1);
+    for (int64_t i = 0; i < src_ndims; ++i) {
+        unexpanded_new_shape[i + omitted_ndims] = shape_[i];
+    }
+
+    // Fill 0 in strides for omitted dimensions in front.
+    SizeVector new_strides(dst_ndims, 0);
+    for (int64_t i = 0; i < src_ndims; ++i) {
+        new_strides[i + omitted_ndims] = strides_[i];
+    }
+
+    // Set stride to 0 if the dimension is expanded.
+    for (int64_t i = 0; i < dst_ndims; ++i) {
+        if (unexpanded_new_shape[i] == 1 && dst_shape[i] != 1) {
             new_strides[i] = 0;
-        } else {
-            new_strides[i] = strides_[i];
         }
     }
-    return AsStrided(new_shape, new_strides);
+
+    return AsStrided(dst_shape, new_strides);
 }
 
 Tensor Tensor::Copy(const Device& device) const {
