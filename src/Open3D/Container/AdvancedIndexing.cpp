@@ -80,11 +80,11 @@ AdvancedIndexing::ShuffleIndexedDimsToFront(
 std::pair<std::vector<Tensor>, SizeVector>
 AdvancedIndexing::ExpandToCommonShapeExcpetZeroDim(
         const std::vector<Tensor>& index_tensors) {
-    SizeVector common_shape({});  // {} can be broadcasted to any shape.
+    SizeVector replacement_shape({});  // {} can be broadcasted to any shape.
     for (const Tensor& index_tensor : index_tensors) {
         if (index_tensor.NumDims() != 0) {
-            common_shape =
-                    BroadcastedShape(common_shape, index_tensor.GetShape());
+            replacement_shape = BroadcastedShape(replacement_shape,
+                                                 index_tensor.GetShape());
         }
     }
 
@@ -93,11 +93,26 @@ AdvancedIndexing::ExpandToCommonShapeExcpetZeroDim(
         if (index_tensor.NumDims() == 0) {
             expanded_tensors.push_back(index_tensor);
         } else {
-            expanded_tensors.push_back(index_tensor.Expand(common_shape));
+            expanded_tensors.push_back(index_tensor.Expand(replacement_shape));
         }
     }
 
-    return std::make_pair(expanded_tensors, common_shape);
+    return std::make_pair(expanded_tensors, replacement_shape);
+}
+
+Tensor AdvancedIndexing::RestrideTensor(const Tensor& tensor,
+                                        int64_t dims_before,
+                                        int64_t dims_indexed,
+                                        SizeVector replacement_shape) {
+    SizeVector shape = tensor.GetShape();
+    SizeVector strides = tensor.GetStrides();
+    int64_t end = dims_before + dims_indexed;
+    shape.erase(shape.begin() + dims_before, shape.begin() + end);
+    strides.erase(strides.begin() + dims_before, strides.begin() + end);
+    shape.insert(shape.begin() + dims_before, replacement_shape.begin(),
+                 replacement_shape.end());
+    strides.insert(strides.begin() + dims_before, replacement_shape.size(), 0);
+    return tensor.AsStrided(shape, strides);
 }
 
 void AdvancedIndexing::RunPreprocess() {
@@ -165,9 +180,46 @@ void AdvancedIndexing::RunPreprocess() {
 
     // Expand (broadcast with view) all index_tensors_ to a common shape,
     // ignoring 0-d index_tensors_.
-    SizeVector common_shape;
-    std::tie(index_tensors_, common_shape) =
+    SizeVector replacement_shape;
+    std::tie(index_tensors_, replacement_shape) =
             ExpandToCommonShapeExcpetZeroDim(index_tensors_);
+
+    int64_t element_byte_size = DtypeUtil::ByteSize(tensor_.GetDtype());
+    int64_t dims_before = 0;
+    int64_t dims_after = 0;
+    int64_t dims_indexed = 0;
+    for (size_t dim = 0; dim < tensor_.NumDims(); dim++) {
+        if (index_tensors_[dim].NumDims() == 0) {
+            if (dims_indexed == 0) {
+                dims_before++;
+            } else {
+                dims_after++;
+            }
+        } else {
+            dims_indexed++;
+            indexed_shape_.push_back(tensor_.GetShape(dim));
+            indexed_byte_size_strides_.push_back(tensor_.GetStride(dim) *
+                                                 element_byte_size);
+        }
+    }
+
+    // If the indexed_shape_ contains a dimension of size 0 but the
+    // replacement shape does not, the index is out of bounds. This is because
+    // there is no valid number to index an empty tensor.
+    // Normally, out of bounds is detected in the advanded indexing kernel. We
+    // detecte here for more helpful error message.
+    auto contains_zero = [](const SizeVector& vals) -> bool {
+        return std::any_of(vals.begin(), vals.end(),
+                           [](int64_t val) { return val == 0; });
+    };
+    if (contains_zero(indexed_shape_) && !contains_zero(replacement_shape)) {
+        utility::LogError("Index is out of bounds for dimension with size 0");
+    }
+
+    // Restride tensor_ and index tensors_.
+    // tensor_ =
+    //         RestrideTensor(tensor_, dims_before, dims_after,
+    //         replacement_shape);
 }
 
 std::tuple<std::vector<Tensor>, SizeVector> PreprocessIndexTensors(

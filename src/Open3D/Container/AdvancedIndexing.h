@@ -40,6 +40,7 @@ namespace open3d {
 std::tuple<std::vector<Tensor>, SizeVector> PreprocessIndexTensors(
         const Tensor& tensor, const std::vector<Tensor>& index_tensors);
 
+/// This class is based on PyTorch's aten/src/ATen/native/Indexing.cpp.
 class AdvancedIndexing {
 public:
     AdvancedIndexing(const Tensor& tensor,
@@ -74,6 +75,23 @@ public:
     static std::pair<std::vector<Tensor>, SizeVector>
     ExpandToCommonShapeExcpetZeroDim(const std::vector<Tensor>& index_tensors);
 
+    // Replace indexed dimensions with stride 0 and the size of the result
+    // tensor.
+    //
+    // The offset in these dimensions is computed by the kernel using
+    // the index tensor's values and the stride of the tensor. The new shape is
+    // not meaningful. It's used to make the shape compatible with the result
+    // tensor.
+    //
+    // Effectively, we throw away the tensor's shape and strides for the sole
+    // purpose of element-wise iteration for the Indexer. The tensor's original
+    // strides are stored in indexed_shape_ and indexed_byte_size_strides_,
+    // which are passed to fancy indexing kernels.
+    static Tensor RestrideTensor(const Tensor& tensor,
+                                 int64_t dims_before,
+                                 int64_t dims_indexed,
+                                 SizeVector replacement_shape);
+
 protected:
     /// Preprocess tensor and index tensors.
     void RunPreprocess();
@@ -87,6 +105,14 @@ protected:
 
     /// Output shape.
     SizeVector output_shape_;
+
+    /// The shape of the indexed dimensions. See the docstring of
+    /// RestrideTensor for details.
+    SizeVector indexed_shape_;
+
+    /// The strides for indexed dimensions, in byte size. See the docstring of
+    /// RestrideTensor for details.
+    SizeVector indexed_byte_size_strides_;
 
     // /// Number of dimension actually being indexed.
     // /// E.g. A[[1, 2], :, [1, 2]] returns 2.
