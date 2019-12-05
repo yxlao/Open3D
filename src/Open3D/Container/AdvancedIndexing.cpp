@@ -80,9 +80,24 @@ AdvancedIndexing::ShuffleIndexedDimsToFront(
 std::pair<std::vector<Tensor>, SizeVector>
 AdvancedIndexing::ExpandToCommonShapeExcpetZeroDim(
         const std::vector<Tensor>& index_tensors) {
-    SizeVector common_shape;
-    std::vector<Tensor> expaned_tensors;
-    return std::make_pair(expaned_tensors, common_shape);
+    SizeVector common_shape({});  // {} can be broadcasted to any shape.
+    for (const Tensor& index_tensor : index_tensors) {
+        if (index_tensor.NumDims() != 0) {
+            common_shape =
+                    BroadcastedShape(common_shape, index_tensor.GetShape());
+        }
+    }
+
+    std::vector<Tensor> expanded_tensors;
+    for (const Tensor& index_tensor : index_tensors) {
+        if (index_tensor.NumDims() == 0) {
+            expanded_tensors.push_back(index_tensor);
+        } else {
+            expanded_tensors.push_back(index_tensor.Expand(common_shape));
+        }
+    }
+
+    return std::make_pair(expanded_tensors, common_shape);
 }
 
 void AdvancedIndexing::RunPreprocess() {
@@ -121,9 +136,9 @@ void AdvancedIndexing::RunPreprocess() {
 
     // Expand (broadcast with view) all index_tensors_ to a common shape,
     // ignoring 0-d index_tensors_.
-    // SizeVector common_shape;
-    // std::tie(index_tensors_, common_shape) =
-    //         ExpandToCommonShapeExcpetZeroDim(index_tensors_);
+    SizeVector common_shape;
+    std::tie(index_tensors_, common_shape) =
+            ExpandToCommonShapeExcpetZeroDim(index_tensors_);
 
     // Transpose all indexed dimensions to front if indexed dimensions are
     // splitted by sliced dimensions. The tensor being indexed are dimshuffled
