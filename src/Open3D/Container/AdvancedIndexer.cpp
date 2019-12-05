@@ -118,18 +118,11 @@ Tensor AdvancedIndexer::RestrideTensor(const Tensor& tensor,
 Tensor AdvancedIndexer::RestrideIndexTensor(const Tensor& index_tensor,
                                             int64_t dims_before,
                                             int64_t dims_after) {
-    utility::LogInfo(">>>>>> 5.1");
-    utility::LogInfo("NumDims {}", index_tensor.NumDims());
-    utility::LogInfo(">>>>>> 5.13");
     SizeVector old_shape = index_tensor.GetShape();
-    utility::LogInfo(">>>>>> 5.15");
     SizeVector new_shape(dims_before + index_tensor.NumDims() + dims_after, 1);
-    utility::LogInfo(">>>>>> 5.2");
     std::copy(old_shape.begin(), old_shape.end(),
               new_shape.begin() + dims_before);
-    utility::LogInfo(">>>>>> 5.3");
     Tensor expanded = index_tensor.Expand(new_shape);
-    utility::LogInfo(">>>>>> 5.4");
     return expanded;
 }
 
@@ -163,13 +156,9 @@ void AdvancedIndexer::RunPreprocess() {
     Tensor empty_index_tensor =
             Tensor(SizeVector(), Dtype::Int64, tensor_.GetDevice());
     int64_t num_omitted_dims = tensor_.NumDims() - index_tensors_.size();
-    utility::LogInfo("before index_tensors_.size() = {}, num_omitted_dims = {}",
-                     index_tensors_.size(), num_omitted_dims);
     for (int64_t i = 0; i < num_omitted_dims; ++i) {
         index_tensors_.push_back(empty_index_tensor);
     }
-    utility::LogInfo("after index_tensors_.size() = {}, num_omitted_dims = {}",
-                     index_tensors_.size(), num_omitted_dims);
 
     // Transpose all indexed dimensions to front if indexed dimensions are
     // splitted by sliced dimensions. The tensor being indexed are dimshuffled
@@ -194,15 +183,11 @@ void AdvancedIndexer::RunPreprocess() {
         }
     }
 
-    utility::LogInfo(">>>>>> 1");
-
     // Expand (broadcast with view) all index_tensors_ to a common shape,
     // ignoring 0-d index_tensors_.
     SizeVector replacement_shape;
     std::tie(index_tensors_, replacement_shape) =
             ExpandToCommonShapeExcpetZeroDim(index_tensors_);
-
-    utility::LogInfo(">>>>>> 2");
 
     int64_t dims_before = 0;
     int64_t dims_after = 0;
@@ -229,8 +214,6 @@ void AdvancedIndexer::RunPreprocess() {
         }
     }
 
-    utility::LogInfo(">>>>>> 3");
-
     // If the indexed_shape_ contains a dimension of size 0 but the
     // replacement shape does not, the index is out of bounds. This is because
     // there is no valid number to index an empty tensor.
@@ -244,26 +227,21 @@ void AdvancedIndexer::RunPreprocess() {
         utility::LogError("Index is out of bounds for dimension with size 0");
     }
 
-    utility::LogInfo(">>>>>> 4");
-
     // Restride tensor_ and index tensors_.
-    utility::LogInfo(">>>>>> 5");
+    tensor_ =
+            RestrideTensor(tensor_, dims_before, dims_after, replacement_shape);
+    for (size_t dim = 0; dim < index_tensors_.size(); dim++) {
+        if (index_tensors_[dim].NumDims() != 0) {
+            index_tensors_[dim] = RestrideIndexTensor(index_tensors_[dim],
+                                                      dims_before, dims_after);
+        }
+    }
     utility::LogInfo("tensor_.GetShape().ToString(): {}",
                      tensor_.GetShape().ToString());
     for (const auto& index_tensor : index_tensors_) {
         utility::LogInfo("index_tensor.GetShape().ToString(): {}",
                          index_tensor.GetShape().ToString());
     }
-    utility::LogInfo("index_tensors_.size() = {}, tensor_.NumDims() = {}",
-                     index_tensors_.size(), tensor_.NumDims());
-
-    for (size_t dim = 0; dim < index_tensors_.size(); dim++) {
-        index_tensors_[dim] = RestrideIndexTensor(index_tensors_[dim],
-                                                  dims_before, dims_after);
-    }
-    tensor_ =
-            RestrideTensor(tensor_, dims_before, dims_after, replacement_shape);
-    utility::LogInfo(">>>>>> 6");
 }
 
 std::tuple<std::vector<Tensor>, SizeVector> PreprocessIndexTensors(
