@@ -62,7 +62,11 @@ public:
                                      func_t element_kernel) {
         std::vector<Tensor> inputs;
         inputs.push_back(src);
-        inputs.insert(inputs.end(), index_tensors.begin(), index_tensors.end());
+        for (const Tensor& index_tensor : index_tensors) {
+            if (index_tensor.NumDims() != 0) {
+                inputs.push_back(index_tensor);
+            }
+        }
         Indexer indexer({inputs}, dst);
         utility::LogInfo("CPULauncher::LaunchIndexGetKernel reached");
 
@@ -73,6 +77,7 @@ public:
                     "indexd_strides' ndim {}",
                     num_indices, indexed_strides.size());
         }
+        utility::LogInfo("num_indices = {}", num_indices);
 
         // #ifdef _OPENMP
         // #pragma omp parallel for schedule(static)
@@ -93,8 +98,12 @@ public:
                     index += indexed_shape[i];
                 }
                 offset += index * indexed_strides[i];
+                utility::LogInfo("i = {}, offset += {} * {}, now offset = {}:",
+                                 i, index, indexed_strides[i], offset);
             }
 
+            utility::LogInfo("workload_idx: {}, offset: {}", workload_idx,
+                             offset);
             element_kernel(indexer.GetInputPtr(0, workload_idx),
                            indexer.GetOutputPtr(workload_idx), offset);
         }

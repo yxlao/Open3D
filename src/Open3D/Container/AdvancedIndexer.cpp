@@ -160,6 +160,14 @@ void AdvancedIndexer::RunPreprocess() {
         index_tensors_.push_back(empty_index_tensor);
     }
 
+    // Fill 0 to 0-d index tensors. The omitted indexing tensors is equivalent
+    // to always increment offset 0.
+    for (Tensor& index_tensor : index_tensors_) {
+        if (index_tensor.NumDims() == 0) {
+            index_tensor.Fill(0);
+        }
+    }
+
     // Transpose all indexed dimensions to front if indexed dimensions are
     // splitted by sliced dimensions. The tensor being indexed are dimshuffled
     // accordingly.
@@ -213,6 +221,12 @@ void AdvancedIndexer::RunPreprocess() {
             indexed_strides_.push_back(tensor_.GetStride(dim));
         }
     }
+    utility::LogInfo("dims_before {}, dims_after {}, dims_indexed {}",
+                     dims_before, dims_after, dims_indexed);
+    utility::LogInfo("indexed_shape_ {}", indexed_shape_.ToString());
+    utility::LogInfo("indexed_strides_ {}", indexed_strides_.ToString());
+    utility::LogInfo("replacement_shape {}", replacement_shape.ToString());
+    utility::LogInfo("output_shape_ {}", output_shape_.ToString());
 
     // If the indexed_shape_ contains a dimension of size 0 but the
     // replacement shape does not, the index is out of bounds. This is because
@@ -228,8 +242,12 @@ void AdvancedIndexer::RunPreprocess() {
     }
 
     // Restride tensor_ and index tensors_.
-    tensor_ =
-            RestrideTensor(tensor_, dims_before, dims_after, replacement_shape);
+    utility::LogInfo("Before restride, tensor_.GetShape() {}",
+                     tensor_.GetShape());
+    tensor_ = RestrideTensor(tensor_, dims_before, dims_indexed,
+                             replacement_shape);
+    utility::LogInfo("After restride, tensor_.GetShape() {}",
+                     tensor_.GetShape());
     for (size_t dim = 0; dim < index_tensors_.size(); dim++) {
         if (index_tensors_[dim].NumDims() != 0) {
             index_tensors_[dim] = RestrideIndexTensor(index_tensors_[dim],
