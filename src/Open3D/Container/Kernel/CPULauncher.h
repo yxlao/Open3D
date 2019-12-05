@@ -86,6 +86,7 @@ public:
             for (int64_t i = 0; i < num_indices; ++i) {
                 int64_t index = *(reinterpret_cast<int64_t*>(
                         indexer.GetInputPtr(i + 1, workload_idx)));
+                utility::LogInfo("index: {}", index);
                 assert(index >= -indexed_shape[i] && index < indexed_shape[i] &&
                        "Index out of bounds");
                 if (index < 0) {
