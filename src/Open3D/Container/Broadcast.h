@@ -34,19 +34,19 @@
 namespace open3d {
 
 /// \brief Returns true if two shapes are compatible for broadcasting.
-/// \param lhs_shape Shape of the left-hand-side Tensor.
-/// \param rhs_shape Shape of the left-hand-side Tensor.
-/// \return Returns true if \p lhs_shape and \p rhs_shape are compatible for
+/// \param l_shape Shape of the left-hand-side Tensor.
+/// \param r_shape Shape of the left-hand-side Tensor.
+/// \return Returns true if \p l_shape and \p r_shape are compatible for
 /// broadcasting.
-bool IsCompatibleBroadcastShape(const SizeVector& lhs_shape,
-                                const SizeVector& rhs_shape);
+bool IsCompatibleBroadcastShape(const SizeVector& l_shape,
+                                const SizeVector& r_shape);
 
 /// \brief Returns the broadcasted shape of two shapes.
-/// \param lhs_shape Shape of the left-hand-side Tensor.
-/// \param rhs_shape Shape of the left-hand-side Tensor.
+/// \param l_shape Shape of the left-hand-side Tensor.
+/// \param r_shape Shape of the left-hand-side Tensor.
 /// \return The broadcasted shape.
-SizeVector BroadcastedShape(const SizeVector& lhs_shape,
-                            const SizeVector& rhs_shape);
+SizeVector BroadcastedShape(const SizeVector& l_shape,
+                            const SizeVector& r_shape);
 
 /// \brief Returns true if \p src_shape can be brocasted to \p dst_shape.
 /// \param src_shape Source tensor shape.
