@@ -33,10 +33,10 @@ namespace open3d {
 
 bool IsCompatibleBroadcastShape(const SizeVector& lhs_shape,
                                 const SizeVector& rhs_shape) {
-    int64_t left_ndim = lhs_shape.size();
-    int64_t right_ndim = rhs_shape.size();
+    int64_t lhs_ndim = lhs_shape.size();
+    int64_t rhs_ndim = rhs_shape.size();
 
-    if (left_ndim == 0 || right_ndim == 0) {
+    if (lhs_ndim == 0 || rhs_ndim == 0) {
         return true;
     }
 
@@ -44,11 +44,11 @@ bool IsCompatibleBroadcastShape(const SizeVector& lhs_shape,
     // E.g. LHS: [100, 200, 2, 3, 4]
     //      RHS:           [2, 1, 4] <- only last 3 dims need to be checked
     // Checked from right to left
-    int64_t shorter_ndim = std::min(left_ndim, right_ndim);
+    int64_t shorter_ndim = std::min(lhs_ndim, rhs_ndim);
     for (int64_t ind = 0; ind < shorter_ndim; ++ind) {
-        int64_t left_dim = lhs_shape[left_ndim - 1 - ind];
-        int64_t right_dim = rhs_shape[right_ndim - 1 - ind];
-        if (!(left_dim == right_dim || left_dim == 1 || right_dim == 1)) {
+        int64_t lhs_dim = lhs_shape[lhs_ndim - 1 - ind];
+        int64_t rhs_dim = rhs_shape[rhs_ndim - 1 - ind];
+        if (!(lhs_dim == rhs_dim || lhs_dim == 1 || rhs_dim == 1)) {
             return false;
         }
     }
@@ -62,26 +62,26 @@ SizeVector BroadcastedShape(const SizeVector& lhs_shape,
                           lhs_shape, rhs_shape);
     }
 
-    int64_t left_ndim = lhs_shape.size();
-    int64_t right_ndim = rhs_shape.size();
-    int64_t shorter_ndim = std::min(left_ndim, right_ndim);
-    int64_t longer_ndim = std::max(left_ndim, right_ndim);
+    int64_t lhs_ndim = lhs_shape.size();
+    int64_t rhs_ndim = rhs_shape.size();
+    int64_t shorter_ndim = std::min(lhs_ndim, rhs_ndim);
+    int64_t longer_ndim = std::max(lhs_ndim, rhs_ndim);
 
-    if (left_ndim == 0) {
+    if (lhs_ndim == 0) {
         return rhs_shape;
     }
-    if (right_ndim == 0) {
+    if (rhs_ndim == 0) {
         return lhs_shape;
     }
 
     SizeVector broadcasted_shape(longer_ndim, 0);
     // Checked from right to left
     for (int64_t ind = 0; ind < longer_ndim; ind++) {
-        int64_t left_ind = left_ndim - longer_ndim + ind;
-        int64_t right_ind = right_ndim - longer_ndim + ind;
-        int64_t left_dim = left_ind >= 0 ? lhs_shape[left_ind] : 0;
-        int64_t right_dim = right_ind >= 0 ? rhs_shape[right_ind] : 0;
-        broadcasted_shape[ind] = std::max(left_dim, right_dim);
+        int64_t lhs_ind = lhs_ndim - longer_ndim + ind;
+        int64_t rhs_ind = rhs_ndim - longer_ndim + ind;
+        int64_t lhs_dim = lhs_ind >= 0 ? lhs_shape[lhs_ind] : 0;
+        int64_t rhs_dim = rhs_ind >= 0 ? rhs_shape[rhs_ind] : 0;
+        broadcasted_shape[ind] = std::max(lhs_dim, rhs_dim);
     }
     return broadcasted_shape;
 }
