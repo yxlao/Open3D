@@ -198,6 +198,7 @@ void AdvancedIndexer::RunPreprocess() {
     int64_t dims_before = 0;
     int64_t dims_after = 0;
     int64_t dims_indexed = 0;
+    bool replacement_shape_inserted = false;
     for (size_t dim = 0; dim < tensor_.NumDims(); dim++) {
         if (index_tensors_[dim].NumDims() == 0) {
             if (dims_indexed == 0) {
@@ -205,11 +206,18 @@ void AdvancedIndexer::RunPreprocess() {
             } else {
                 dims_after++;
             }
+            output_shape_.push_back(tensor_.GetShape(dim));
         } else {
+            if (!replacement_shape_inserted) {
+                output_shape_.insert(output_shape_.end(),
+                                     replacement_shape.begin(),
+                                     replacement_shape.end());
+                replacement_shape_inserted = true;
+            }
             dims_indexed++;
             indexed_shape_.push_back(tensor_.GetShape(dim));
-            indexed_strides_in_bytes.push_back(tensor_.GetStride(dim) *
-                                               element_byte_size);
+            indexed_strides_in_bytes_.push_back(tensor_.GetStride(dim) *
+                                                element_byte_size);
         }
     }
 

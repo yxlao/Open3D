@@ -85,7 +85,7 @@ public:
     //
     // Effectively, we throw away the tensor's shape and strides for the sole
     // purpose of element-wise iteration for the Indexer. The tensor's original
-    // strides are stored in indexed_shape_ and indexed_strides_in_bytes,
+    // strides are stored in indexed_shape_ and indexed_strides_in_bytes_,
     // which are passed to fancy indexing kernels.
     static Tensor RestrideTensor(const Tensor& tensor,
                                  int64_t dims_before,
@@ -119,7 +119,7 @@ protected:
 
     /// The strides for indexed dimensions, in byte size. See the docstring of
     /// RestrideTensor for details.
-    SizeVector indexed_strides_in_bytes;
+    SizeVector indexed_strides_in_bytes_;
 };
 
 }  // namespace open3d

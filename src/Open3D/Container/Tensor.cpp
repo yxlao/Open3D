@@ -327,25 +327,26 @@ Tensor Tensor::IndexGet(const std::vector<Tensor>& index_tensors) const {
 
 void Tensor::IndexSet(const std::vector<Tensor>& index_tensors,
                       const Tensor& src_tensor) {
-    // Dimension check
-    if (index_tensors.size() > shape_.size()) {
-        utility::LogError(
-                "Number of index_tensors {} exceeds tensor dimension {}.",
-                index_tensors.size(), shape_.size());
-    }
+    // // Dimension check
+    // if (index_tensors.size() > shape_.size()) {
+    //     utility::LogError(
+    //             "Number of index_tensors {} exceeds tensor dimension {}.",
+    //             index_tensors.size(), shape_.size());
+    // }
 
-    std::vector<Tensor> full_index_tensors;
-    SizeVector indexed_out_shape;
-    std::tie(full_index_tensors, indexed_out_shape) =
-            PreprocessIndexTensors(*this, index_tensors);
+    // std::vector<Tensor> full_index_tensors;
+    // SizeVector indexed_out_shape;
+    // std::tie(full_index_tensors, indexed_out_shape) =
+    //         PreprocessIndexTensors(*this, index_tensors);
 
-    // Broadcast src_tensor.shape_ to indexed_out_shape
-    if (!CanBeBrocastedToShape(src_tensor.shape_, indexed_out_shape)) {
-        utility::LogError("IndexSet: cannot broadcast {} to {}.",
-                          src_tensor.shape_, indexed_out_shape);
-    }
+    // // Broadcast src_tensor.shape_ to indexed_out_shape
+    // if (!CanBeBrocastedToShape(src_tensor.shape_, indexed_out_shape)) {
+    //     utility::LogError("IndexSet: cannot broadcast {} to {}.",
+    //                       src_tensor.shape_, indexed_out_shape);
+    // }
 
-    kernel::IndexSet(src_tensor, *this, full_index_tensors, indexed_out_shape);
+    // kernel::IndexSet(src_tensor, *this, full_index_tensors,
+    // indexed_out_shape);
 }
 
 Tensor Tensor::Permute(const SizeVector& dims) const {
