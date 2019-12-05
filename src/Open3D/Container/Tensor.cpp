@@ -285,10 +285,16 @@ Tensor Tensor::Slice(int64_t dim,
 
 Tensor Tensor::IndexGet(const std::vector<Tensor>& index_tensors) const {
     AdvancedIndexer ai(*this, index_tensors);
-    Tensor preprocessed_tensor = ai.GetPreprocessedTensor();
-    std::vector<Tensor> preprocessed_index_tensors =
-            ai.GetPreprocessedIndexTensors();
 
+    Tensor dst = Tensor(ai.GetOutputShape(), dtype_, device_);
+    kernel::IndexGet(ai.GetTensor(), ai.GetIndexTensors(), ai.GetIndexedShape(),
+                     ai.GetIndexedStridesInBytes());
+
+    return dst;
+}
+
+void Tensor::IndexSet(const std::vector<Tensor>& index_tensors,
+                      const Tensor& src_tensor) {
     // Dimension check
     if (index_tensors.size() > shape_.size()) {
         utility::LogError(
@@ -296,57 +302,18 @@ Tensor Tensor::IndexGet(const std::vector<Tensor>& index_tensors) const {
                 index_tensors.size(), shape_.size());
     }
 
+    std::vector<Tensor> full_index_tensors;
     SizeVector indexed_out_shape;
-    std::tie(preprocessed_index_tensors, indexed_out_shape) =
-            PreprocessIndexTensors(preprocessed_tensor,
-                                   preprocessed_index_tensors);
+    std::tie(full_index_tensors, indexed_out_shape) =
+            PreprocessIndexTensors(*this, index_tensors);
 
-    Tensor dst = Tensor(indexed_out_shape, dtype_, device_);
-    kernel::IndexGet(preprocessed_tensor, dst, preprocessed_index_tensors,
-                     indexed_out_shape);
+    // Broadcast src_tensor.shape_ to indexed_out_shape
+    if (!CanBeBrocastedToShape(src_tensor.shape_, indexed_out_shape)) {
+        utility::LogError("IndexSet: cannot broadcast {} to {}.",
+                          src_tensor.shape_, indexed_out_shape);
+    }
 
-    return dst;
-
-    // // Dimension check
-    // if (index_tensors.size() > shape_.size()) {
-    //     utility::LogError(
-    //             "Number of index_tensors {} exceeds tensor dimension {}.",
-    //             index_tensors.size(), shape_.size());
-    // }
-
-    // std::vector<Tensor> full_index_tensors;
-    // SizeVector indexed_out_shape;
-    // std::tie(full_index_tensors, indexed_out_shape) =
-    //         PreprocessIndexTensors(*this, index_tensors);
-
-    // Tensor dst = Tensor(indexed_out_shape, dtype_, device_);
-    // kernel::IndexGet(*this, dst, full_index_tensors, indexed_out_shape);
-
-    // return dst;
-}
-
-void Tensor::IndexSet(const std::vector<Tensor>& index_tensors,
-                      const Tensor& src_tensor) {
-    // // Dimension check
-    // if (index_tensors.size() > shape_.size()) {
-    //     utility::LogError(
-    //             "Number of index_tensors {} exceeds tensor dimension {}.",
-    //             index_tensors.size(), shape_.size());
-    // }
-
-    // std::vector<Tensor> full_index_tensors;
-    // SizeVector indexed_out_shape;
-    // std::tie(full_index_tensors, indexed_out_shape) =
-    //         PreprocessIndexTensors(*this, index_tensors);
-
-    // // Broadcast src_tensor.shape_ to indexed_out_shape
-    // if (!CanBeBrocastedToShape(src_tensor.shape_, indexed_out_shape)) {
-    //     utility::LogError("IndexSet: cannot broadcast {} to {}.",
-    //                       src_tensor.shape_, indexed_out_shape);
-    // }
-
-    // kernel::IndexSet(src_tensor, *this, full_index_tensors,
-    // indexed_out_shape);
+    kernel::IndexSet(src_tensor, *this, full_index_tensors, indexed_out_shape);
 }
 
 Tensor Tensor::Permute(const SizeVector& dims) const {

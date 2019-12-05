@@ -32,21 +32,21 @@
 namespace open3d {
 namespace kernel {
 
-void IndexGet(const Tensor& src,
-              Tensor& dst,
+void IndexGet(const Tensor& tensor,
               const std::vector<Tensor>& index_tensors,
-              const SizeVector& indexed_out_shape);
+              const SizeVector& indexed_shape,
+              const SizeVector& indexed_strides_in_bytes);
 
-void IndexGetCPU(const Tensor& src,
-                 Tensor& dst,
+void IndexGetCPU(const Tensor& tensor,
                  const std::vector<Tensor>& index_tensors,
-                 const SizeVector& indexed_out_shape);
+                 const SizeVector& indexed_shape,
+                 const SizeVector& indexed_strides_in_bytes);
 
 #ifdef BUILD_CUDA_MODULE
-void IndexGetCUDA(const Tensor& src,
-                  Tensor& dst,
+void IndexGetCUDA(const Tensor& tensor,
                   const std::vector<Tensor>& index_tensors,
-                  const SizeVector& indexed_out_shape);
+                  const SizeVector& indexed_shape,
+                  const SizeVector& indexed_strides_in_bytes);
 #endif
 
 void IndexSet(const Tensor& src,

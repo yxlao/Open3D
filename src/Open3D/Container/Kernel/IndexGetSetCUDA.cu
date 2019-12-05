@@ -40,19 +40,19 @@ static OPEN3D_HOST_DEVICE void CUDACopyElementKernel(const void* src,
     *static_cast<scalar_t*>(dst) = *static_cast<const scalar_t*>(src);
 }
 
-void IndexGetCUDA(const Tensor& src,
-                  Tensor& dst,
+void IndexGetCUDA(const Tensor& tensor,
                   const std::vector<Tensor>& index_tensors,
-                  const SizeVector& indexed_out_shape) {
-    Dtype dtype = src.GetDtype();
-    DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
-        CUDALauncher::LaunchRhsIndexedUnaryEWKernel<scalar_t>(
-                src, dst, index_tensors, indexed_out_shape,
-                // Need to wrap as extended CUDA lamba function
-                [] OPEN3D_HOST_DEVICE(const void* src, void* dst) {
-                    CUDACopyElementKernel<scalar_t>(src, dst);
-                });
-    });
+                  const SizeVector& indexed_shape,
+                  const SizeVector& indexed_strides_in_bytes) {
+    // Dtype dtype = src.GetDtype();
+    // DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
+    //     CUDALauncher::LaunchRhsIndexedUnaryEWKernel<scalar_t>(
+    //             src, dst, index_tensors, indexed_out_shape,
+    //             // Need to wrap as extended CUDA lamba function
+    //             [] OPEN3D_HOST_DEVICE(const void* src, void* dst) {
+    //                 CUDACopyElementKernel<scalar_t>(src, dst);
+    //             });
+    // });
 }
 
 void IndexSetCUDA(const Tensor& src,

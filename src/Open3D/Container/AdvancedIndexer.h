@@ -51,13 +51,19 @@ public:
         RunPreprocess();
     }
 
-    Tensor GetPreprocessedTensor() const { return tensor_; }
+    inline Tensor GetTensor() const { return tensor_; }
 
-    std::vector<Tensor> GetPreprocessedIndexTensors() const {
+    inline std::vector<Tensor> GetIndexTensors() const {
         return index_tensors_;
     }
 
-    SizeVector GetOutputShape() const { return output_shape_; }
+    inline SizeVector GetOutputShape() const { return output_shape_; }
+
+    inline SizeVector GetIndexedShape() const { return indexed_shape_; }
+
+    inline SizeVector GetIndexedStridesInBytes() const {
+        return indexed_strides_in_bytes_;
+    }
 
     /// Returns true if the indexed dimension is splitted by (full) slice.
     /// E.g. A[[1, 2], :, [1, 2]] returns true

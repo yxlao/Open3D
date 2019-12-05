@@ -550,36 +550,37 @@ TEST_P(TensorPermuteDevices, IndexGetBroadcast) {
             std::vector<float>({5, 10, 17, 22, 5, 10, 17, 22, 5, 10, 17, 22}));
 }
 
-TEST_P(TensorPermuteDevices, IndexGetActualBroadcast) {
-    Device device = GetParam();
+// TEST_P(TensorPermuteDevices, IndexGetActualBroadcast) {
+//     Device device = GetParam();
 
-    std::vector<float> vals{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11,
-                            12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23};
-    Tensor src_t(vals, {2, 3, 4}, Dtype::Float32, device);
+//     std::vector<float> vals{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11,
+//                             12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23};
+//     Tensor src_t(vals, {2, 3, 4}, Dtype::Float32, device);
 
-    // t[:, [1, 2], [1, 2]] to shape {2, 2}
-    std::vector<Tensor> indices = {
-            Tensor(SizeVector(), Dtype::Int64, device),
-            Tensor(std::vector<int64_t>({1, 2}), {2}, Dtype::Int64, device),
-            Tensor(std::vector<int64_t>({1, 2}), {2}, Dtype::Int64, device)};
+//     // t[:, [1, 2], [1, 2]] to shape {2, 2}
+//     std::vector<Tensor> indices = {
+//             Tensor(SizeVector(), Dtype::Int64, device),
+//             Tensor(std::vector<int64_t>({1, 2}), {2}, Dtype::Int64, device),
+//             Tensor(std::vector<int64_t>({1, 2}), {2}, Dtype::Int64, device)};
 
-    // Broadcast to shape {3, 2, 2}
-    SizeVector dst_shape{3, 2, 2};
-    Tensor dst_t(dst_shape, Dtype::Float32, device);
+//     // Broadcast to shape {3, 2, 2}
+//     SizeVector dst_shape{3, 2, 2};
+//     Tensor dst_t(dst_shape, Dtype::Float32, device);
 
-    // Expose the interal step to remove copy
-    std::vector<Tensor> full_index_tensors;
-    SizeVector indexed_out_shape;
-    std::tie(full_index_tensors, indexed_out_shape) =
-            PreprocessIndexTensors(src_t, indices);
-    kernel::IndexGet(src_t, dst_t, full_index_tensors, indexed_out_shape);
+//     // Expose the interal step to remove copy
+//     std::vector<Tensor> full_index_tensors;
+//     SizeVector indexed_out_shape;
+//     std::tie(full_index_tensors, indexed_out_shape) =
+//             PreprocessIndexTensors(src_t, indices);
+//     kernel::IndexGet(src_t, dst_t, full_index_tensors, indexed_out_shape);
 
-    EXPECT_TRUE(dst_t.IsContiguous());
-    EXPECT_EQ(dst_t.GetShape(), SizeVector({3, 2, 2}));
-    EXPECT_EQ(
-            dst_t.ToFlatVector<float>(),
-            std::vector<float>({5, 10, 17, 22, 5, 10, 17, 22, 5, 10, 17, 22}));
-}
+//     EXPECT_TRUE(dst_t.IsContiguous());
+//     EXPECT_EQ(dst_t.GetShape(), SizeVector({3, 2, 2}));
+//     EXPECT_EQ(
+//             dst_t.ToFlatVector<float>(),
+//             std::vector<float>({5, 10, 17, 22, 5, 10, 17, 22, 5, 10, 17,
+//             22}));
+// }
 
 TEST_P(TensorPermuteDevices, DISABLED_IndexGetSeparateBySlice) {
     Device device = GetParam();
