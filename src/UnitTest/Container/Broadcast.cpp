@@ -32,23 +32,31 @@ using namespace std;
 using namespace open3d;
 
 TEST(Broadcast, IsCompatibleBroadcastShape) {
-    // 0-dim
+    // A 0-dim tensor is compatible with any shape.
+    EXPECT_TRUE(IsCompatibleBroadcastShape({}, {}));
     EXPECT_TRUE(IsCompatibleBroadcastShape({}, {}));
     EXPECT_TRUE(IsCompatibleBroadcastShape({}, {1}));
+    EXPECT_TRUE(IsCompatibleBroadcastShape({1}, {}));
     EXPECT_TRUE(IsCompatibleBroadcastShape({}, {2}));
+    EXPECT_TRUE(IsCompatibleBroadcastShape({2}, {}));
     EXPECT_TRUE(IsCompatibleBroadcastShape({}, {1, 1}));
+    EXPECT_TRUE(IsCompatibleBroadcastShape({1, 1}, {}));
     EXPECT_TRUE(IsCompatibleBroadcastShape({}, {1, 2}));
+    EXPECT_TRUE(IsCompatibleBroadcastShape({1, 2}, {}));
 
-    // Dim with 0 size
+    // Dim with size 0 is compatible with dim with size 0 or 1.
+    EXPECT_TRUE(IsCompatibleBroadcastShape({0}, {0}));
     EXPECT_TRUE(IsCompatibleBroadcastShape({1}, {0}));
+    EXPECT_TRUE(IsCompatibleBroadcastShape({0}, {1}));
     EXPECT_TRUE(IsCompatibleBroadcastShape({2, 0}, {2, 1}));
     EXPECT_TRUE(IsCompatibleBroadcastShape({2, 1}, {2, 0}));
     EXPECT_FALSE(IsCompatibleBroadcastShape({2, 0}, {2, 3}));
     EXPECT_FALSE(IsCompatibleBroadcastShape({2, 3}, {2, 0}));
 
-    // Regular cases
+    // Regular cases.
     EXPECT_TRUE(IsCompatibleBroadcastShape({1}, {1}));
     EXPECT_TRUE(IsCompatibleBroadcastShape({1}, {2, 1}));
+    EXPECT_TRUE(IsCompatibleBroadcastShape({2, 1}, {1}));
 
     EXPECT_TRUE(IsCompatibleBroadcastShape({2, 1, 3}, {2, 5, 3}));
     EXPECT_TRUE(IsCompatibleBroadcastShape({2, 5, 3}, {2, 1, 3}));
@@ -62,15 +70,23 @@ TEST(Broadcast, IsCompatibleBroadcastShape) {
 }
 
 TEST(Broadcast, BroadcastedShape) {
-    // 0-dim
+    // A 0-dim tensor can be brocasted to any shape.
+    EXPECT_EQ(BroadcastedShape({}, {}), SizeVector({}));
     EXPECT_EQ(BroadcastedShape({}, {}), SizeVector({}));
     EXPECT_EQ(BroadcastedShape({}, {1}), SizeVector({1}));
+    EXPECT_EQ(BroadcastedShape({1}, {}), SizeVector({1}));
     EXPECT_EQ(BroadcastedShape({}, {2}), SizeVector({2}));
+    EXPECT_EQ(BroadcastedShape({2}, {}), SizeVector({2}));
     EXPECT_EQ(BroadcastedShape({}, {1, 1}), SizeVector({1, 1}));
+    EXPECT_EQ(BroadcastedShape({1, 1}, {}), SizeVector({1, 1}));
     EXPECT_EQ(BroadcastedShape({}, {1, 2}), SizeVector({1, 2}));
+    EXPECT_EQ(BroadcastedShape({1, 2}, {}), SizeVector({1, 2}));
 
-    // Dim with 0 size
+    // Dim with size 0 is compatible with dim with size 0 or 1. The brocasted
+    // size is 0.
+    EXPECT_EQ(BroadcastedShape({0}, {0}), SizeVector({0}));
     EXPECT_EQ(BroadcastedShape({1}, {0}), SizeVector({0}));
+    EXPECT_EQ(BroadcastedShape({0}, {1}), SizeVector({0}));
     EXPECT_EQ(BroadcastedShape({2, 0}, {2, 1}), SizeVector({2, 0}));
     EXPECT_EQ(BroadcastedShape({2, 1}, {2, 0}), SizeVector({2, 0}));
     EXPECT_THROW(BroadcastedShape({2, 0}, {2, 3}), std::runtime_error);
@@ -79,6 +95,7 @@ TEST(Broadcast, BroadcastedShape) {
     // Regular cases
     EXPECT_EQ(BroadcastedShape({1}, {1}), SizeVector({1}));
     EXPECT_EQ(BroadcastedShape({1}, {2, 1}), SizeVector({2, 1}));
+    EXPECT_EQ(BroadcastedShape({2, 1}, {1}), SizeVector({2, 1}));
 
     EXPECT_EQ(BroadcastedShape({2, 1, 3}, {2, 5, 3}), SizeVector({2, 5, 3}));
     EXPECT_EQ(BroadcastedShape({2, 5, 3}, {2, 1, 3}), SizeVector({2, 5, 3}));
