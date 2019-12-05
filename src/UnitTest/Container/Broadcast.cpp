@@ -90,7 +90,7 @@ TEST(Broadcast, BroadcastedShape) {
     EXPECT_THROW(BroadcastedShape({2, 0}, {2, 3}), std::runtime_error);
     EXPECT_THROW(BroadcastedShape({2, 3}, {2, 0}), std::runtime_error);
 
-    // Regular cases
+    // Regular cases.
     EXPECT_EQ(BroadcastedShape({1}, {1}), SizeVector({1}));
     EXPECT_EQ(BroadcastedShape({1}, {2, 1}), SizeVector({2, 1}));
     EXPECT_EQ(BroadcastedShape({2, 1}, {1}), SizeVector({2, 1}));
