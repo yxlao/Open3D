@@ -27,6 +27,7 @@
 #include "Open3D/Container/Kernel/IndexGetSet.h"
 
 #include "Open3D/Container/Dtype.h"
+#include "Open3D/Container/Kernel/UnaryEW.h"
 #include "Open3D/Container/MemoryManager.h"
 #include "Open3D/Container/SizeVector.h"
 #include "Open3D/Container/Tensor.h"
@@ -35,16 +36,26 @@
 namespace open3d {
 namespace kernel {
 
-void IndexGet(const Tensor& tensor,
+void IndexGet(const Tensor& src,
+              Tensor& dst,
               const std::vector<Tensor>& index_tensors,
               const SizeVector& indexed_shape,
               const SizeVector& indexed_strides) {
-    // index_tensors has been preprocessed to be on the same device as tensor.
-    if (tensor.GetDevice().device_type_ == Device::DeviceType::CPU) {
-        IndexGetCPU(tensor, index_tensors, indexed_shape, indexed_strides);
-    } else if (tensor.GetDevice().device_type_ == Device::DeviceType::CUDA) {
+    // index_tensors has been preprocessed to be on the same device as src.
+    // dst may be in a different device.
+    if (dst.GetDevice() != src.GetDevice()) {
+        Tensor dst_same_device(dst.GetShape(), dst.GetDtype(), src.GetDevice());
+        IndexGet(src, dst_same_device, index_tensors, indexed_shape,
+                 indexed_strides);
+        Copy(dst_same_device, dst);
+        return;
+    }
+
+    if (src.GetDevice().device_type_ == Device::DeviceType::CPU) {
+        IndexGetCPU(src, dst, index_tensors, indexed_shape, indexed_strides);
+    } else if (src.GetDevice().device_type_ == Device::DeviceType::CUDA) {
 #ifdef BUILD_CUDA_MODULE
-        IndexGetCUDA(tensor, index_tensors, indexed_shape, indexed_strides);
+        IndexGetCUDA(src, dst, index_tensors, indexed_shape, indexed_strides);
 #endif
     } else {
         utility::LogError("Unimplemented device");

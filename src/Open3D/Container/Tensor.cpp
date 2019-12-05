@@ -287,8 +287,8 @@ Tensor Tensor::IndexGet(const std::vector<Tensor>& index_tensors) const {
     AdvancedIndexer ai(*this, index_tensors);
 
     Tensor dst = Tensor(ai.GetOutputShape(), dtype_, device_);
-    kernel::IndexGet(ai.GetTensor(), ai.GetIndexTensors(), ai.GetIndexedShape(),
-                     ai.GetIndexedStrides());
+    kernel::IndexGet(ai.GetTensor(), dst, ai.GetIndexTensors(),
+                     ai.GetIndexedShape(), ai.GetIndexedStrides());
 
     return dst;
 }

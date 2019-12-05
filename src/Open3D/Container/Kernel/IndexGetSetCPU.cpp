@@ -45,7 +45,8 @@ static void CPUCopyElementKernel(const void* src, void* dst) {
 //             *(static_cast<const scalar_t*>(src) + offset);
 // }
 
-void IndexGetCPU(const Tensor& tensor,
+void IndexGetCPU(const Tensor& src,
+                 Tensor& dst,
                  const std::vector<Tensor>& index_tensors,
                  const SizeVector& indexed_shape,
                  const SizeVector& indexed_strides) {
