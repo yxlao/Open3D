@@ -134,12 +134,6 @@ void AdvancedIndexing::RunPreprocess() {
         index_tensors_.push_back(empty_index_tensor);
     }
 
-    // Expand (broadcast with view) all index_tensors_ to a common shape,
-    // ignoring 0-d index_tensors_.
-    SizeVector common_shape;
-    std::tie(index_tensors_, common_shape) =
-            ExpandToCommonShapeExcpetZeroDim(index_tensors_);
-
     // Transpose all indexed dimensions to front if indexed dimensions are
     // splitted by sliced dimensions. The tensor being indexed are dimshuffled
     // accordingly.
@@ -162,12 +156,18 @@ void AdvancedIndexing::RunPreprocess() {
                          index_tensor.GetShape().ToString());
     }
 
-    // Put index tensors_ on the same device as tensor_
+    // Put index tensors_ on the same device as tensor_.
     for (size_t i = 0; i < index_tensors_.size(); ++i) {
         if (index_tensors_[i].GetDevice() != tensor_.GetDevice()) {
             index_tensors_[i] = index_tensors_[i].Copy(tensor_.GetDevice());
         }
     }
+
+    // Expand (broadcast with view) all index_tensors_ to a common shape,
+    // ignoring 0-d index_tensors_.
+    SizeVector common_shape;
+    std::tie(index_tensors_, common_shape) =
+            ExpandToCommonShapeExcpetZeroDim(index_tensors_);
 }
 
 std::tuple<std::vector<Tensor>, SizeVector> PreprocessIndexTensors(
