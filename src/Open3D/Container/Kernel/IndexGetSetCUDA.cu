@@ -43,7 +43,7 @@ static OPEN3D_HOST_DEVICE void CUDACopyElementKernel(const void* src,
 void IndexGetCUDA(const Tensor& tensor,
                   const std::vector<Tensor>& index_tensors,
                   const SizeVector& indexed_shape,
-                  const SizeVector& indexed_strides_in_bytes) {
+                  const SizeVector& indexed_strides) {
     // Dtype dtype = src.GetDtype();
     // DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
     //     CUDALauncher::LaunchRhsIndexedUnaryEWKernel<scalar_t>(

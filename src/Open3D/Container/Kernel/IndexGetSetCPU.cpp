@@ -39,10 +39,16 @@ static void CPUCopyElementKernel(const void* src, void* dst) {
     *static_cast<scalar_t*>(dst) = *static_cast<const scalar_t*>(src);
 }
 
+// template <typename scalar_t>
+// static void CPUIndexGetKernel(const void* src, void* dst, int64_t offset) {
+//     *static_cast<scalar_t*>(dst) =
+//             *(static_cast<const scalar_t*>(src) + offset);
+// }
+
 void IndexGetCPU(const Tensor& tensor,
                  const std::vector<Tensor>& index_tensors,
                  const SizeVector& indexed_shape,
-                 const SizeVector& indexed_strides_in_bytes) {
+                 const SizeVector& indexed_strides) {
     // Dtype dtype = src.GetDtype();
     // DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
     //     CPULauncher::LaunchRhsIndexedUnaryEWKernel<scalar_t>(

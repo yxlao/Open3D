@@ -194,7 +194,6 @@ void AdvancedIndexer::RunPreprocess() {
     std::tie(index_tensors_, replacement_shape) =
             ExpandToCommonShapeExcpetZeroDim(index_tensors_);
 
-    int64_t element_byte_size = DtypeUtil::ByteSize(tensor_.GetDtype());
     int64_t dims_before = 0;
     int64_t dims_after = 0;
     int64_t dims_indexed = 0;
@@ -216,8 +215,7 @@ void AdvancedIndexer::RunPreprocess() {
             }
             dims_indexed++;
             indexed_shape_.push_back(tensor_.GetShape(dim));
-            indexed_strides_in_bytes_.push_back(tensor_.GetStride(dim) *
-                                                element_byte_size);
+            indexed_strides_.push_back(tensor_.GetStride(dim));
         }
     }
 
@@ -235,13 +233,12 @@ void AdvancedIndexer::RunPreprocess() {
     }
 
     // Restride tensor_ and index tensors_.
-    // tensor_ =
-    //         RestrideTensor(tensor_, dims_before, dims_after,
-    //         replacement_shape);
-    // for (size_t dim = 0; dim < tensor_.NumDims(); dim++) {
-    //     index_tensors_[dim] = RestrideIndexTensor(index_tensors_[dim],
-    //                                               dims_before, dims_after);
-    // }
+    tensor_ =
+            RestrideTensor(tensor_, dims_before, dims_after, replacement_shape);
+    for (size_t dim = 0; dim < tensor_.NumDims(); dim++) {
+        index_tensors_[dim] = RestrideIndexTensor(index_tensors_[dim],
+                                                  dims_before, dims_after);
+    }
 }
 
 std::tuple<std::vector<Tensor>, SizeVector> PreprocessIndexTensors(

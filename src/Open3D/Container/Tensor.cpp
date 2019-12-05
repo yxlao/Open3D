@@ -288,7 +288,7 @@ Tensor Tensor::IndexGet(const std::vector<Tensor>& index_tensors) const {
 
     Tensor dst = Tensor(ai.GetOutputShape(), dtype_, device_);
     kernel::IndexGet(ai.GetTensor(), ai.GetIndexTensors(), ai.GetIndexedShape(),
-                     ai.GetIndexedStridesInBytes());
+                     ai.GetIndexedStrides());
 
     return dst;
 }

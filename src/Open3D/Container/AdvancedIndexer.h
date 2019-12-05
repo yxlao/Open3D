@@ -61,9 +61,7 @@ public:
 
     inline SizeVector GetIndexedShape() const { return indexed_shape_; }
 
-    inline SizeVector GetIndexedStridesInBytes() const {
-        return indexed_strides_in_bytes_;
-    }
+    inline SizeVector GetIndexedStrides() const { return indexed_strides_; }
 
     /// Returns true if the indexed dimension is splitted by (full) slice.
     /// E.g. A[[1, 2], :, [1, 2]] returns true
@@ -91,7 +89,7 @@ public:
     //
     // Effectively, we throw away the tensor's shape and strides for the sole
     // purpose of element-wise iteration for the Indexer. The tensor's original
-    // strides are stored in indexed_shape_ and indexed_strides_in_bytes_,
+    // strides are stored in indexed_shape_ and indexed_strides_,
     // which are passed to fancy indexing kernels.
     static Tensor RestrideTensor(const Tensor& tensor,
                                  int64_t dims_before,
@@ -123,9 +121,9 @@ protected:
     /// RestrideTensor for details.
     SizeVector indexed_shape_;
 
-    /// The strides for indexed dimensions, in byte size. See the docstring of
-    /// RestrideTensor for details.
-    SizeVector indexed_strides_in_bytes_;
+    /// The strides for indexed dimensions, in element numbers (not byte size).
+    /// See the docstring of RestrideTensor for details.
+    SizeVector indexed_strides_;
 };
 
 }  // namespace open3d

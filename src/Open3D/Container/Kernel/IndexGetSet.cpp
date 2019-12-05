@@ -38,15 +38,13 @@ namespace kernel {
 void IndexGet(const Tensor& tensor,
               const std::vector<Tensor>& index_tensors,
               const SizeVector& indexed_shape,
-              const SizeVector& indexed_strides_in_bytes) {
+              const SizeVector& indexed_strides) {
     // index_tensors has been preprocessed to be on the same device as tensor.
     if (tensor.GetDevice().device_type_ == Device::DeviceType::CPU) {
-        IndexGetCPU(tensor, index_tensors, indexed_shape,
-                    indexed_strides_in_bytes);
+        IndexGetCPU(tensor, index_tensors, indexed_shape, indexed_strides);
     } else if (tensor.GetDevice().device_type_ == Device::DeviceType::CUDA) {
 #ifdef BUILD_CUDA_MODULE
-        IndexGetCUDA(tensor, index_tensors, indexed_shape,
-                     indexed_strides_in_bytes);
+        IndexGetCUDA(tensor, index_tensors, indexed_shape, indexed_strides);
 #endif
     } else {
         utility::LogError("Unimplemented device");

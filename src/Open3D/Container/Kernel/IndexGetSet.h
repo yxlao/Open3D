@@ -35,18 +35,18 @@ namespace kernel {
 void IndexGet(const Tensor& tensor,
               const std::vector<Tensor>& index_tensors,
               const SizeVector& indexed_shape,
-              const SizeVector& indexed_strides_in_bytes);
+              const SizeVector& indexed_strides);
 
 void IndexGetCPU(const Tensor& tensor,
                  const std::vector<Tensor>& index_tensors,
                  const SizeVector& indexed_shape,
-                 const SizeVector& indexed_strides_in_bytes);
+                 const SizeVector& indexed_strides);
 
 #ifdef BUILD_CUDA_MODULE
 void IndexGetCUDA(const Tensor& tensor,
                   const std::vector<Tensor>& index_tensors,
                   const SizeVector& indexed_shape,
-                  const SizeVector& indexed_strides_in_bytes);
+                  const SizeVector& indexed_strides);
 #endif
 
 void IndexSet(const Tensor& src,
