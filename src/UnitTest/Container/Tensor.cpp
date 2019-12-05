@@ -25,7 +25,7 @@
 // ----------------------------------------------------------------------------
 
 #include "Open3D/Container/Tensor.h"
-#include "Open3D/Container/AdvancedIndexing.h"
+#include "Open3D/Container/AdvancedIndexer.h"
 #include "Open3D/Container/Dtype.h"
 #include "Open3D/Container/Kernel/Kernel.h"
 #include "Open3D/Container/MemoryManager.h"
@@ -754,14 +754,14 @@ TEST_P(TensorPermuteDevices, AdvancedIndexing_IsIndexSplittedBySlice) {
     Tensor idx(std::vector<int64_t>({1, 2}), {2}, Dtype::Int64, device);
     Tensor slice(Tensor(SizeVector(), Dtype::Int64, device));
 
-    EXPECT_FALSE(AdvancedIndexing::IsIndexSplittedBySlice({slice}));
-    EXPECT_FALSE(AdvancedIndexing::IsIndexSplittedBySlice({slice, idx}));
-    EXPECT_FALSE(AdvancedIndexing::IsIndexSplittedBySlice({idx, slice}));
-    EXPECT_FALSE(AdvancedIndexing::IsIndexSplittedBySlice({slice, idx, idx}));
+    EXPECT_FALSE(AdvancedIndexer::IsIndexSplittedBySlice({slice}));
+    EXPECT_FALSE(AdvancedIndexer::IsIndexSplittedBySlice({slice, idx}));
+    EXPECT_FALSE(AdvancedIndexer::IsIndexSplittedBySlice({idx, slice}));
+    EXPECT_FALSE(AdvancedIndexer::IsIndexSplittedBySlice({slice, idx, idx}));
     EXPECT_FALSE(
-            AdvancedIndexing::IsIndexSplittedBySlice({slice, idx, idx, slice}));
+            AdvancedIndexer::IsIndexSplittedBySlice({slice, idx, idx, slice}));
 
-    EXPECT_TRUE(AdvancedIndexing::IsIndexSplittedBySlice({idx, slice, idx}));
+    EXPECT_TRUE(AdvancedIndexer::IsIndexSplittedBySlice({idx, slice, idx}));
     EXPECT_TRUE(
-            AdvancedIndexing::IsIndexSplittedBySlice({idx, slice, slice, idx}));
+            AdvancedIndexer::IsIndexSplittedBySlice({idx, slice, slice, idx}));
 }

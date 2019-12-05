@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Open3D/Container/AdvancedIndexing.h"
+#include "Open3D/Container/AdvancedIndexer.h"
 
 #include "Open3D/Container/Broadcast.h"
 #include "Open3D/Container/SizeVector.h"
@@ -32,7 +32,7 @@
 
 namespace open3d {
 
-bool AdvancedIndexing::IsIndexSplittedBySlice(
+bool AdvancedIndexer::IsIndexSplittedBySlice(
         const std::vector<Tensor>& index_tensors) {
     bool index_dim_started = false;
     bool index_dim_ended = false;
@@ -56,7 +56,7 @@ bool AdvancedIndexing::IsIndexSplittedBySlice(
 }
 
 std::pair<Tensor, std::vector<Tensor>>
-AdvancedIndexing::ShuffleIndexedDimsToFront(
+AdvancedIndexer::ShuffleIndexedDimsToFront(
         const Tensor& tensor, const std::vector<Tensor>& index_tensors) {
     int64_t ndims = tensor.NumDims();
     std::vector<int64_t> permutation;
@@ -78,7 +78,7 @@ AdvancedIndexing::ShuffleIndexedDimsToFront(
 }
 
 std::pair<std::vector<Tensor>, SizeVector>
-AdvancedIndexing::ExpandToCommonShapeExcpetZeroDim(
+AdvancedIndexer::ExpandToCommonShapeExcpetZeroDim(
         const std::vector<Tensor>& index_tensors) {
     SizeVector replacement_shape({});  // {} can be broadcasted to any shape.
     for (const Tensor& index_tensor : index_tensors) {
@@ -100,10 +100,10 @@ AdvancedIndexing::ExpandToCommonShapeExcpetZeroDim(
     return std::make_pair(expanded_tensors, replacement_shape);
 }
 
-Tensor AdvancedIndexing::RestrideTensor(const Tensor& tensor,
-                                        int64_t dims_before,
-                                        int64_t dims_indexed,
-                                        SizeVector replacement_shape) {
+Tensor AdvancedIndexer::RestrideTensor(const Tensor& tensor,
+                                       int64_t dims_before,
+                                       int64_t dims_indexed,
+                                       SizeVector replacement_shape) {
     SizeVector shape = tensor.GetShape();
     SizeVector strides = tensor.GetStrides();
     int64_t end = dims_before + dims_indexed;
@@ -115,9 +115,9 @@ Tensor AdvancedIndexing::RestrideTensor(const Tensor& tensor,
     return tensor.AsStrided(shape, strides);
 }
 
-Tensor AdvancedIndexing::RestrideIndexTensor(const Tensor& index_tensor,
-                                             int64_t dims_before,
-                                             int64_t dims_after) {
+Tensor AdvancedIndexer::RestrideIndexTensor(const Tensor& index_tensor,
+                                            int64_t dims_before,
+                                            int64_t dims_after) {
     SizeVector old_shape = index_tensor.GetShape();
     SizeVector new_shape(dims_before + index_tensor.NumDims() + dims_after, 1);
     std::copy(old_shape.begin(), old_shape.end(),
@@ -125,7 +125,7 @@ Tensor AdvancedIndexing::RestrideIndexTensor(const Tensor& index_tensor,
     return index_tensor.Expand(new_shape);
 }
 
-void AdvancedIndexing::RunPreprocess() {
+void AdvancedIndexer::RunPreprocess() {
     // Dimension check
     if (index_tensors_.size() > tensor_.NumDims()) {
         utility::LogError(
@@ -208,8 +208,8 @@ void AdvancedIndexing::RunPreprocess() {
         } else {
             dims_indexed++;
             indexed_shape_.push_back(tensor_.GetShape(dim));
-            indexed_byte_size_strides_.push_back(tensor_.GetStride(dim) *
-                                                 element_byte_size);
+            indexed_strides_in_bytes.push_back(tensor_.GetStride(dim) *
+                                               element_byte_size);
         }
     }
 
@@ -227,14 +227,13 @@ void AdvancedIndexing::RunPreprocess() {
     }
 
     // Restride tensor_ and index tensors_.
-    auto t =
-            RestrideTensor(tensor_, dims_before, dims_after, replacement_shape);
-    (void)t;
-    for (size_t dim = 0; dim < tensor_.NumDims(); dim++) {
-        auto t = RestrideIndexTensor(index_tensors_[dim], dims_before,
-                                     dims_after);
-        (void)t;
-    }
+    // tensor_ =
+    //         RestrideTensor(tensor_, dims_before, dims_after,
+    //         replacement_shape);
+    // for (size_t dim = 0; dim < tensor_.NumDims(); dim++) {
+    //     index_tensors_[dim] = RestrideIndexTensor(index_tensors_[dim],
+    //                                               dims_before, dims_after);
+    // }
 }
 
 std::tuple<std::vector<Tensor>, SizeVector> PreprocessIndexTensors(

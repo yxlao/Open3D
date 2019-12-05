@@ -11,7 +11,7 @@ set (KERNEL_CUDA_SRC
 )
 
 set (CONTAINER_SRC
-    AdvancedIndexing.cpp
+    AdvancedIndexer.cpp
     Broadcast.cpp
     MemoryManager.cpp
     MemoryManagerCPU.cpp

@@ -41,10 +41,10 @@ std::tuple<std::vector<Tensor>, SizeVector> PreprocessIndexTensors(
         const Tensor& tensor, const std::vector<Tensor>& index_tensors);
 
 /// This class is based on PyTorch's aten/src/ATen/native/Indexing.cpp.
-class AdvancedIndexing {
+class AdvancedIndexer {
 public:
-    AdvancedIndexing(const Tensor& tensor,
-                     const std::vector<Tensor>& index_tensors)
+    AdvancedIndexer(const Tensor& tensor,
+                    const std::vector<Tensor>& index_tensors)
         : tensor_(tensor), index_tensors_(index_tensors) {
         // The constructor makes shallow copies of the tensors to keep input
         // tensors untouched by the preprocessing.
@@ -85,7 +85,7 @@ public:
     //
     // Effectively, we throw away the tensor's shape and strides for the sole
     // purpose of element-wise iteration for the Indexer. The tensor's original
-    // strides are stored in indexed_shape_ and indexed_byte_size_strides_,
+    // strides are stored in indexed_shape_ and indexed_strides_in_bytes,
     // which are passed to fancy indexing kernels.
     static Tensor RestrideTensor(const Tensor& tensor,
                                  int64_t dims_before,
@@ -119,15 +119,7 @@ protected:
 
     /// The strides for indexed dimensions, in byte size. See the docstring of
     /// RestrideTensor for details.
-    SizeVector indexed_byte_size_strides_;
-
-    // /// Number of dimension actually being indexed.
-    // /// E.g. A[[1, 2], :, [1, 2]] returns 2.
-    // int64_t ndims_indexed = 0;
-
-    // /// Number of dimension actually being sliced.
-    // /// E.g. A[[1, 2], :, [1, 2]] returns 1.
-    // int64_t ndims_sliced = 0;
+    SizeVector indexed_strides_in_bytes;
 };
 
 }  // namespace open3d

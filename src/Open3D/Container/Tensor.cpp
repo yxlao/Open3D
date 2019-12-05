@@ -28,7 +28,7 @@
 
 #include <sstream>
 
-#include "Open3D/Container/AdvancedIndexing.h"
+#include "Open3D/Container/AdvancedIndexer.h"
 #include "Open3D/Container/Blob.h"
 #include "Open3D/Container/Broadcast.h"
 #include "Open3D/Container/Device.h"
@@ -284,7 +284,7 @@ Tensor Tensor::Slice(int64_t dim,
 }
 
 Tensor Tensor::IndexGet(const std::vector<Tensor>& index_tensors) const {
-    AdvancedIndexing ai(*this, index_tensors);
+    AdvancedIndexer ai(*this, index_tensors);
     Tensor preprocessed_tensor = ai.GetPreprocessedTensor();
     std::vector<Tensor> preprocessed_index_tensors =
             ai.GetPreprocessedIndexTensors();
