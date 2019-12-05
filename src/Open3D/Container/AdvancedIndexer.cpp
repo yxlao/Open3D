@@ -221,12 +221,6 @@ void AdvancedIndexer::RunPreprocess() {
             indexed_strides_.push_back(tensor_.GetStride(dim));
         }
     }
-    utility::LogInfo("dims_before {}, dims_after {}, dims_indexed {}",
-                     dims_before, dims_after, dims_indexed);
-    utility::LogInfo("indexed_shape_ {}", indexed_shape_.ToString());
-    utility::LogInfo("indexed_strides_ {}", indexed_strides_.ToString());
-    utility::LogInfo("replacement_shape {}", replacement_shape.ToString());
-    utility::LogInfo("output_shape_ {}", output_shape_.ToString());
 
     // If the indexed_shape_ contains a dimension of size 0 but the
     // replacement shape does not, the index is out of bounds. This is because
@@ -242,24 +236,27 @@ void AdvancedIndexer::RunPreprocess() {
     }
 
     // Restride tensor_ and index tensors_.
-    utility::LogInfo("Before restride, tensor_.GetShape() {}",
-                     tensor_.GetShape());
     tensor_ = RestrideTensor(tensor_, dims_before, dims_indexed,
                              replacement_shape);
-    utility::LogInfo("After restride, tensor_.GetShape() {}",
-                     tensor_.GetShape());
     for (size_t dim = 0; dim < index_tensors_.size(); dim++) {
         if (index_tensors_[dim].NumDims() != 0) {
             index_tensors_[dim] = RestrideIndexTensor(index_tensors_[dim],
                                                       dims_before, dims_after);
         }
     }
-    utility::LogInfo("tensor_.GetShape().ToString(): {}",
-                     tensor_.GetShape().ToString());
+
+    utility::LogDebug("tensor_.GetShape().ToString(): {}",
+                      tensor_.GetShape().ToString());
     for (const auto& index_tensor : index_tensors_) {
-        utility::LogInfo("index_tensor.GetShape().ToString(): {}",
-                         index_tensor.GetShape().ToString());
+        utility::LogDebug("index_tensor.GetShape().ToString(): {}",
+                          index_tensor.GetShape().ToString());
     }
+    utility::LogDebug("dims_before {}, dims_after {}, dims_indexed {}",
+                      dims_before, dims_after, dims_indexed);
+    utility::LogDebug("indexed_shape_ {}", indexed_shape_.ToString());
+    utility::LogDebug("indexed_strides_ {}", indexed_strides_.ToString());
+    utility::LogDebug("replacement_shape {}", replacement_shape.ToString());
+    utility::LogDebug("output_shape_ {}", output_shape_.ToString());
 }
 
 std::tuple<std::vector<Tensor>, SizeVector> PreprocessIndexTensors(

@@ -68,7 +68,6 @@ public:
             }
         }
         Indexer indexer({inputs}, dst);
-        utility::LogInfo("CPULauncher::LaunchIndexGetKernel reached");
 
         int64_t num_indices = indexed_shape.size();
         if (num_indices != indexed_strides.size()) {
@@ -77,11 +76,10 @@ public:
                     "indexd_strides' ndim {}",
                     num_indices, indexed_strides.size());
         }
-        utility::LogInfo("num_indices = {}", num_indices);
 
-        // #ifdef _OPENMP
-        // #pragma omp parallel for schedule(static)
-        // #endif
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
         for (int64_t workload_idx = 0; workload_idx < indexer.NumWorkloads();
              ++workload_idx) {
             const void* src_ptr = indexer.GetInputPtr(0, workload_idx);
@@ -91,19 +89,13 @@ public:
             for (int64_t i = 0; i < num_indices; ++i) {
                 int64_t index = *(reinterpret_cast<int64_t*>(
                         indexer.GetInputPtr(i + 1, workload_idx)));
-                utility::LogInfo("index: {}", index);
                 assert(index >= -indexed_shape[i] && index < indexed_shape[i] &&
                        "Index out of bounds");
                 if (index < 0) {
                     index += indexed_shape[i];
                 }
                 offset += index * indexed_strides[i];
-                utility::LogInfo("i = {}, offset += {} * {}, now offset = {}:",
-                                 i, index, indexed_strides[i], offset);
             }
-
-            utility::LogInfo("workload_idx: {}, offset: {}", workload_idx,
-                             offset);
             element_kernel(indexer.GetInputPtr(0, workload_idx),
                            indexer.GetOutputPtr(workload_idx), offset);
         }
