@@ -208,7 +208,7 @@ void AdvancedIndexer::RunPreprocess() {
     int64_t dims_after = 0;
     int64_t dims_indexed = 0;
     bool replacement_shape_inserted = false;
-    for (size_t dim = 0; dim < tensor_.NumDims(); dim++) {
+    for (size_t dim = 0; dim < index_tensors_.size(); dim++) {
         if (index_tensors_[dim].NumDims() == 0) {
             if (dims_indexed == 0) {
                 dims_before++;
@@ -257,7 +257,7 @@ void AdvancedIndexer::RunPreprocess() {
     utility::LogInfo("index_tensors_.size() = {}, tensor_.NumDims() = {}",
                      index_tensors_.size(), tensor_.NumDims());
 
-    for (size_t dim = 0; dim < tensor_.NumDims(); dim++) {
+    for (size_t dim = 0; dim < index_tensors_.size(); dim++) {
         index_tensors_[dim] = RestrideIndexTensor(index_tensors_[dim],
                                                   dims_before, dims_after);
     }
