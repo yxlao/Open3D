@@ -60,21 +60,43 @@ public:
                                      const SizeVector& indexed_shape,
                                      const SizeVector& indexed_strides,
                                      func_t element_kernel) {
-        utility::LogInfo("CPULauncher::LaunchIndexGetKernel reached");
         std::vector<Tensor> inputs;
         inputs.push_back(src);
         inputs.insert(inputs.end(), index_tensors.begin(), index_tensors.end());
         Indexer indexer({inputs}, dst);
-        (void)indexer;
+        utility::LogInfo("CPULauncher::LaunchIndexGetKernel reached");
+
+        int64_t num_indices = indexed_shape.size();
+        if (num_indices != indexed_strides.size()) {
+            utility::LogError(
+                    "Internal error: indexed_shape's ndim {} does not equal to "
+                    "indexd_strides' ndim {}",
+                    num_indices, indexed_strides.size());
+        }
+
         // #ifdef _OPENMP
         // #pragma omp parallel for schedule(static)
         // #endif
-        //         for (int64_t workload_idx = 0; workload_idx <
-        //         indexer.NumWorkloads();
-        //              ++workload_idx) {
-        //             element_kernel(indexer.GetInputPtr(0, workload_idx),
-        //                            indexer.GetOutputPtr(workload_idx));
-        //         }
+        for (int64_t workload_idx = 0; workload_idx < indexer.NumWorkloads();
+             ++workload_idx) {
+            const void* src_ptr = indexer.GetInputPtr(0, workload_idx);
+            void* dst_ptr = indexer.GetOutputPtr(workload_idx);
+
+            int64_t offset = 0;
+            for (int64_t i = 0; i < num_indices; ++i) {
+                int64_t index = *(reinterpret_cast<int64_t*>(
+                        indexer.GetInputPtr(i + 1, workload_idx)));
+                assert(index >= -indexed_shape[i] && index < indexed_shape[i] &&
+                       "Index out of bounds");
+                if (index < 0) {
+                    index += indexed_shape[i];
+                }
+                offset += index * indexed_strides[i];
+            }
+
+            element_kernel(indexer.GetInputPtr(0, workload_idx),
+                           indexer.GetOutputPtr(workload_idx), offset);
+        }
     }
 
     // dst = src[index_tensors]
