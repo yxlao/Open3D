@@ -173,6 +173,38 @@ public:
     /// size 1 to have stride 0, without allocating new memory.
     Tensor Expand(const SizeVector& dst_shape) const;
 
+    /// Returns a tensor with the same data and number of elements as input, but
+    /// with the specified shape. When possible, the returned tensor will be a
+    /// view of input. Otherwise, it will be a copy.
+    ///
+    /// Contiguous inputs and inputs with compatible strides can be reshaped
+    /// without copying, but you should not depend on the copying vs. viewing
+    /// behavior.
+    ///
+    /// Ref: https://pytorch.org/docs/stable/tensors.html
+    ///      aten/src/ATen/native/TensorShape.cpp
+    ///      aten/src/ATen/TensorUtils.cpp
+    Tensor Reshape(const SizeVector& dst_shape) const;
+
+    /// Returns a new tensor view with the same data but of a different shape.
+    ///
+    /// The returned tensor shares the same data and must have the same number
+    /// of elements, but may have a different size. For a tensor to be viewed,
+    /// the new view size must be compatible with its original size and stride,
+    /// i.e., each new view dimension must either be a subspace of an original
+    /// dimension, or only span across original dimensions d, d+1, ...,
+    /// d+kd,d+1,…,d+k that satisfy the following contiguity-like condition that
+    /// for all i = 0, ..., k-1, strides[i] = stride[i + 1] * shape[i + 1].
+    ///
+    /// Otherwise, contiguous() needs to be called before the tensor can be
+    /// viewed. See also: reshape(), which returns a view if the shapes are
+    /// compatible, and copies (equivalent to calling contiguous()) otherwise.
+    ///
+    /// Ref: https://pytorch.org/docs/stable/tensors.html
+    ///      aten/src/ATen/native/TensorShape.cpp
+    ///      aten/src/ATen/TensorUtils.cpp
+    Tensor View(const SizeVector& dst_shape) const;
+
     /// Copy Tensor to a specified device
     /// The resulting Tensor will be compacted and contiguous
     Tensor Copy(const Device& device) const;
@@ -331,6 +363,22 @@ public:
     }
 
     static SizeVector DefaultStrides(const SizeVector& shape);
+
+    /// On a high level,
+    /// 1. separate `oldshape` into chunks of dimensions, where the dimensions
+    /// are
+    ///    ``contiguous'' in each chunk, i.e., oldstride[i] = oldshape[i+1] *
+    ///     oldstride[i+1]
+    /// 2. `newshape` must be able to be separated into same number of chunks as
+    ///    `oldshape` was separated into, where each chunk of newshape has
+    ///    matching
+    ///    ``numel'', i.e., number of subspaces, as the corresponding chunk of
+    ///    `oldshape`.
+    /// Ref: aten/src/ATen/TensorUtils.cpp
+    static std::pair<bool, SizeVector> ComputeNewStrides(
+            const SizeVector& old_shape,
+            const SizeVector& old_strides,
+            const SizeVector& new_shape);
 
 protected:
     std::string ScalarPtrToString(const void* ptr) const;

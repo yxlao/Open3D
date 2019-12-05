@@ -130,6 +130,36 @@ Tensor Tensor::Expand(const SizeVector& dst_shape) const {
     return AsStrided(dst_shape, new_strides);
 }
 
+Tensor Tensor::Reshape(const SizeVector& dst_shape) const {
+    SizeVector inferred_dst_shape = InferShape(dst_shape, NumElements());
+    bool can_restride;
+    SizeVector new_strides;
+    std::tie(can_restride, new_strides) =
+            ComputeNewStrides(shape_, strides_, inferred_dst_shape);
+    if (can_restride) {
+        return AsStrided(inferred_dst_shape, new_strides);
+    } else {
+        return Contiguous().View(inferred_dst_shape);
+    }
+}
+
+Tensor Tensor::View(const SizeVector& dst_shape) const {
+    SizeVector inferred_dst_shape = InferShape(dst_shape, NumElements());
+    bool can_restride;
+    SizeVector new_strides;
+    std::tie(can_restride, new_strides) =
+            ComputeNewStrides(shape_, strides_, inferred_dst_shape);
+    if (can_restride) {
+        return AsStrided(inferred_dst_shape, new_strides);
+    } else {
+        utility::LogError(
+                "View shape {} is not compatible with Tensor's size {} and "
+                "sride {}, at least one dimension spacs across two contiguous "
+                "subspaces. Use Reshape() instead.",
+                dst_shape, shape_, strides_);
+    }
+}
+
 Tensor Tensor::Copy(const Device& device) const {
     Tensor dst_tensor(shape_, dtype_, device);
     kernel::Copy(*this, dst_tensor);
@@ -166,6 +196,72 @@ SizeVector Tensor::DefaultStrides(const SizeVector& shape) {
         stride_size *= std::max<int64_t>(shape[i - 1], 1);
     }
     return strides;
+}
+
+std::pair<bool, SizeVector> Tensor::ComputeNewStrides(
+        const SizeVector& old_shape,
+        const SizeVector& old_strides,
+        const SizeVector& new_shape) {
+    if (old_shape.empty()) {
+        return std::make_pair(true, SizeVector(new_shape.size(), 1));
+    }
+
+    // NOTE: stride is arbitrary in the numel() == 0 case;
+    // to match NumPy behavior we copy the strides if the size matches,
+    // otherwise we use the stride as if it were computed via resize. This could
+    // perhaps be combined with the below code, but the complexity didn't seem
+    // worth it.
+    int64_t numel = old_shape.NumElements();
+    if (numel == 0 && old_shape == new_shape) {
+        return std::make_pair(true, old_strides);
+    }
+
+    SizeVector new_strides(new_shape.size());
+    if (numel == 0) {
+        for (int64_t view_d = new_shape.size() - 1; view_d >= 0; view_d--) {
+            if (view_d == (int64_t)(new_shape.size() - 1)) {
+                new_strides[view_d] = 1;
+            } else {
+                new_strides[view_d] =
+                        std::max<int64_t>(new_shape[view_d + 1], 1) *
+                        new_strides[view_d + 1];
+            }
+        }
+        return std::make_pair(true, new_strides);
+    }
+
+    int64_t view_d = new_shape.size() - 1;
+    // stride for each subspace in the chunk
+    int64_t chunk_base_stride = old_strides.back();
+    // numel in current chunk
+    int64_t tensor_numel = 1;
+    int64_t view_numel = 1;
+    for (int64_t tensor_d = old_shape.size() - 1; tensor_d >= 0; tensor_d--) {
+        tensor_numel *= old_shape[tensor_d];
+        // if end of tensor size chunk, check view
+        if ((tensor_d == 0) ||
+            (old_shape[tensor_d - 1] != 1 &&
+             old_strides[tensor_d - 1] != tensor_numel * chunk_base_stride)) {
+            while (view_d >= 0 &&
+                   (view_numel < tensor_numel || new_shape[view_d] == 1)) {
+                new_strides[view_d] = view_numel * chunk_base_stride;
+                view_numel *= new_shape[view_d];
+                view_d--;
+            }
+            if (view_numel != tensor_numel) {
+                return std::make_pair(false, SizeVector());
+            }
+            if (tensor_d > 0) {
+                chunk_base_stride = old_strides[tensor_d - 1];
+                tensor_numel = 1;
+                view_numel = 1;
+            }
+        }
+    }
+    if (view_d != -1) {
+        return std::make_pair(false, SizeVector());
+    }
+    return std::make_pair(true, new_strides);
 }
 
 std::string Tensor::ToString(bool with_suffix,
