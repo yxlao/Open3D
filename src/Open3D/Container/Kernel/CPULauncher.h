@@ -53,6 +53,30 @@ public:
         }
     }
 
+    template <typename scalar_t, typename func_t>
+    static void LaunchIndexGetKernel(const Tensor& src,
+                                     Tensor& dst,
+                                     const std::vector<Tensor>& index_tensors,
+                                     const SizeVector& indexed_shape,
+                                     const SizeVector& indexed_strides,
+                                     func_t element_kernel) {
+        utility::LogInfo("CPULauncher::LaunchIndexGetKernel reached");
+        std::vector<Tensor> inputs;
+        inputs.push_back(src);
+        inputs.insert(inputs.end(), index_tensors.begin(), index_tensors.end());
+        Indexer indexer({inputs}, dst);
+        (void)indexer;
+        // #ifdef _OPENMP
+        // #pragma omp parallel for schedule(static)
+        // #endif
+        //         for (int64_t workload_idx = 0; workload_idx <
+        //         indexer.NumWorkloads();
+        //              ++workload_idx) {
+        //             element_kernel(indexer.GetInputPtr(0, workload_idx),
+        //                            indexer.GetOutputPtr(workload_idx));
+        //         }
+    }
+
     // dst = src[index_tensors]
     template <typename scalar_t, typename func_t>
     static void LaunchRhsIndexedUnaryEWKernel(

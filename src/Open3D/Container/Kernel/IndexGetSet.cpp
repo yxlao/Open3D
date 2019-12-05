@@ -41,6 +41,7 @@ void IndexGet(const Tensor& src,
               const std::vector<Tensor>& index_tensors,
               const SizeVector& indexed_shape,
               const SizeVector& indexed_strides) {
+    utility::LogInfo("IndexGet kernel reached");
     // index_tensors has been preprocessed to be on the same device as src.
     // dst may be in a different device.
     if (dst.GetDevice() != src.GetDevice()) {

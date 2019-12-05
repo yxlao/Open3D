@@ -284,7 +284,9 @@ Tensor Tensor::Slice(int64_t dim,
 }
 
 Tensor Tensor::IndexGet(const std::vector<Tensor>& index_tensors) const {
+    utility::LogInfo("Tensor::IndexGet reached");
     AdvancedIndexer ai(*this, index_tensors);
+    utility::LogInfo("AdvancedIndexer ai(*this, index_tensors) done");
 
     Tensor dst = Tensor(ai.GetOutputShape(), dtype_, device_);
     kernel::IndexGet(ai.GetTensor(), dst, ai.GetIndexTensors(),

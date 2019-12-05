@@ -337,7 +337,7 @@ protected:
 
 protected:
     /// SizeVector of the Tensor. SizeVector[i] is the legnth of dimension i.
-    SizeVector shape_;
+    SizeVector shape_ = {};
 
     /// Stride of a Tensor.
     /// The stride of a n-dimensional tensor is also n-dimensional. Stride(i) is
@@ -345,10 +345,10 @@ protected:
     /// before eaching the next element in dimension i. For example, a 2x3x4
     /// float32 dense tensor has shape(2, 3, 4) and stride(12, 4, 1). A slicing
     /// operation performed on the tensor can change the shape and stride.
-    SizeVector strides_;
+    SizeVector strides_ = {};
 
     /// Data pointer points to the starting memory address in the blob
-    void* data_ptr_;
+    void* data_ptr_ = nullptr;
 
     /// Data type
     Dtype dtype_;
@@ -358,7 +358,7 @@ protected:
     Device device_;
 
     /// Underlying memory buffer for Tensor.
-    std::shared_ptr<Blob> blob_;
+    std::shared_ptr<Blob> blob_ = nullptr;
 };
 
 }  // namespace open3d

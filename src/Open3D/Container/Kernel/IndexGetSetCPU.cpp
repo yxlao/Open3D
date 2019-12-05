@@ -39,23 +39,23 @@ static void CPUCopyElementKernel(const void* src, void* dst) {
     *static_cast<scalar_t*>(dst) = *static_cast<const scalar_t*>(src);
 }
 
-// template <typename scalar_t>
-// static void CPUIndexGetKernel(const void* src, void* dst, int64_t offset) {
-//     *static_cast<scalar_t*>(dst) =
-//             *(static_cast<const scalar_t*>(src) + offset);
-// }
+template <typename scalar_t>
+static void CPUIndexGetKernel(const void* src, void* dst, int64_t offset) {
+    *static_cast<scalar_t*>(dst) =
+            *(static_cast<const scalar_t*>(src) + offset);
+}
 
 void IndexGetCPU(const Tensor& src,
                  Tensor& dst,
                  const std::vector<Tensor>& index_tensors,
                  const SizeVector& indexed_shape,
                  const SizeVector& indexed_strides) {
-    // Dtype dtype = src.GetDtype();
-    // DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
-    //     CPULauncher::LaunchRhsIndexedUnaryEWKernel<scalar_t>(
-    //             src, dst, index_tensors, indexed_out_shape,
-    //             CPUCopyElementKernel<scalar_t>);
-    // });
+    Dtype dtype = src.GetDtype();
+    DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
+        CPULauncher::LaunchIndexGetKernel<scalar_t>(
+                src, dst, index_tensors, indexed_shape, indexed_strides,
+                CPUIndexGetKernel<scalar_t>);
+    });
 }
 
 void IndexSetCPU(const Tensor& src,
