@@ -77,6 +77,14 @@ AdvancedIndexing::ShuffleIndexedDimsToFront(
                           std::move(permuted_index_tensors));
 }
 
+std::pair<std::vector<Tensor>, SizeVector>
+AdvancedIndexing::ExpandToCommonShapeExcpetZeroDim(
+        const std::vector<Tensor>& index_tensors) {
+    SizeVector common_shape;
+    std::vector<Tensor> expaned_tensors;
+    return std::make_pair(expaned_tensors, common_shape);
+}
+
 void AdvancedIndexing::RunPreprocess() {
     // Dimension check
     if (index_tensors_.size() > tensor_.NumDims()) {
@@ -97,8 +105,6 @@ void AdvancedIndexing::RunPreprocess() {
         }
     }
 
-    // Expand (broadcast with view) all index_tensors_ to a common shape.
-
     // Fill implied 0-d index tensors at the tail dimensions.
     // 0-d index tensor represents a fully sliced dimension, i.e. [:] in Numpy.
     // Partial slice e.g. [1:3] shall be handled outside of advanced indexing.
@@ -112,6 +118,12 @@ void AdvancedIndexing::RunPreprocess() {
     for (int64_t i = 0; i < num_omitted_dims; ++i) {
         index_tensors_.push_back(empty_index_tensor);
     }
+
+    // Expand (broadcast with view) all index_tensors_ to a common shape,
+    // ignoring 0-d index_tensors_.
+    // SizeVector common_shape;
+    // std::tie(index_tensors_, common_shape) =
+    //         ExpandToCommonShapeExcpetZeroDim(index_tensors_);
 
     // Transpose all indexed dimensions to front if indexed dimensions are
     // splitted by sliced dimensions. The tensor being indexed are dimshuffled

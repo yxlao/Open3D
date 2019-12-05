@@ -69,6 +69,11 @@ public:
     static std::pair<Tensor, std::vector<Tensor>> ShuffleIndexedDimsToFront(
             const Tensor& tensor, const std::vector<Tensor>& index_tensors);
 
+    /// Expand all tensors to the broadcasted shape, 0-dim tensors are ignored.
+    /// Thorws exception if the common broadcasted shape does not exist.
+    static std::pair<std::vector<Tensor>, SizeVector>
+    ExpandToCommonShapeExcpetZeroDim(const std::vector<Tensor>& index_tensors);
+
 protected:
     /// Preprocess tensor and index tensors.
     void RunPreprocess();

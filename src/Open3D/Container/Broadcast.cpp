@@ -31,10 +31,10 @@
 
 namespace open3d {
 
-bool IsCompatibleBroadcastShape(const SizeVector& left_shape,
-                                const SizeVector& right_shape) {
-    int64_t left_ndim = left_shape.size();
-    int64_t right_ndim = right_shape.size();
+bool IsCompatibleBroadcastShape(const SizeVector& lhs_shape,
+                                const SizeVector& rhs_shape) {
+    int64_t left_ndim = lhs_shape.size();
+    int64_t right_ndim = rhs_shape.size();
 
     if (left_ndim == 0 || right_ndim == 0) {
         return true;
@@ -46,8 +46,8 @@ bool IsCompatibleBroadcastShape(const SizeVector& left_shape,
     // Checked from right to left
     int64_t shorter_ndim = std::min(left_ndim, right_ndim);
     for (int64_t ind = 0; ind < shorter_ndim; ++ind) {
-        int64_t left_dim = left_shape[left_ndim - 1 - ind];
-        int64_t right_dim = right_shape[right_ndim - 1 - ind];
+        int64_t left_dim = lhs_shape[left_ndim - 1 - ind];
+        int64_t right_dim = rhs_shape[right_ndim - 1 - ind];
         if (!(left_dim == right_dim || left_dim == 1 || right_dim == 1)) {
             return false;
         }
@@ -55,23 +55,23 @@ bool IsCompatibleBroadcastShape(const SizeVector& left_shape,
     return true;
 }
 
-SizeVector BroadcastedShape(const SizeVector& left_shape,
-                            const SizeVector& right_shape) {
-    if (!IsCompatibleBroadcastShape(left_shape, right_shape)) {
+SizeVector BroadcastedShape(const SizeVector& lhs_shape,
+                            const SizeVector& rhs_shape) {
+    if (!IsCompatibleBroadcastShape(lhs_shape, rhs_shape)) {
         utility::LogError("Shape {} and {} are not broadcast-compatible",
-                          left_shape, right_shape);
+                          lhs_shape, rhs_shape);
     }
 
-    int64_t left_ndim = left_shape.size();
-    int64_t right_ndim = right_shape.size();
+    int64_t left_ndim = lhs_shape.size();
+    int64_t right_ndim = rhs_shape.size();
     int64_t shorter_ndim = std::min(left_ndim, right_ndim);
     int64_t longer_ndim = std::max(left_ndim, right_ndim);
 
     if (left_ndim == 0) {
-        return right_shape;
+        return rhs_shape;
     }
     if (right_ndim == 0) {
-        return left_shape;
+        return lhs_shape;
     }
 
     SizeVector broadcasted_shape(longer_ndim, 0);
@@ -79,8 +79,8 @@ SizeVector BroadcastedShape(const SizeVector& left_shape,
     for (int64_t ind = 0; ind < longer_ndim; ind++) {
         int64_t left_ind = left_ndim - longer_ndim + ind;
         int64_t right_ind = right_ndim - longer_ndim + ind;
-        int64_t left_dim = left_ind >= 0 ? left_shape[left_ind] : 0;
-        int64_t right_dim = right_ind >= 0 ? right_shape[right_ind] : 0;
+        int64_t left_dim = left_ind >= 0 ? lhs_shape[left_ind] : 0;
+        int64_t right_dim = right_ind >= 0 ? rhs_shape[right_ind] : 0;
         broadcasted_shape[ind] = std::max(left_dim, right_dim);
     }
     return broadcasted_shape;
