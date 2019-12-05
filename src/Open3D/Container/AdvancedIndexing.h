@@ -92,6 +92,13 @@ public:
                                  int64_t dims_indexed,
                                  SizeVector replacement_shape);
 
+    // Add dimensions of size 1 to an index tensor so that it can be broadcast
+    // to the result shape and iterated over element-wise like the result tensor
+    // and the restrided src.
+    static Tensor RestrideIndexTensor(const Tensor& index_tensor,
+                                      int64_t dims_before,
+                                      int64_t dims_after);
+
 protected:
     /// Preprocess tensor and index tensors.
     void RunPreprocess();

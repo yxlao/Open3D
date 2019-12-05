@@ -115,6 +115,16 @@ Tensor AdvancedIndexing::RestrideTensor(const Tensor& tensor,
     return tensor.AsStrided(shape, strides);
 }
 
+Tensor AdvancedIndexing::RestrideIndexTensor(const Tensor& index_tensor,
+                                             int64_t dims_before,
+                                             int64_t dims_after) {
+    SizeVector old_shape = index_tensor.GetShape();
+    SizeVector new_shape(dims_before + index_tensor.NumDims() + dims_after, 1);
+    std::copy(old_shape.begin(), old_shape.end(),
+              new_shape.begin() + dims_before);
+    return index_tensor.Expand(new_shape);
+}
+
 void AdvancedIndexing::RunPreprocess() {
     // Dimension check
     if (index_tensors_.size() > tensor_.NumDims()) {
@@ -217,9 +227,14 @@ void AdvancedIndexing::RunPreprocess() {
     }
 
     // Restride tensor_ and index tensors_.
-    // tensor_ =
-    //         RestrideTensor(tensor_, dims_before, dims_after,
-    //         replacement_shape);
+    auto t =
+            RestrideTensor(tensor_, dims_before, dims_after, replacement_shape);
+    (void)t;
+    for (size_t dim = 0; dim < tensor_.NumDims(); dim++) {
+        auto t = RestrideIndexTensor(index_tensors_[dim], dims_before,
+                                     dims_after);
+        (void)t;
+    }
 }
 
 std::tuple<std::vector<Tensor>, SizeVector> PreprocessIndexTensors(
