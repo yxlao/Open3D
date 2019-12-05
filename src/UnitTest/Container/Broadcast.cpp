@@ -34,7 +34,6 @@ using namespace open3d;
 TEST(Broadcast, IsCompatibleBroadcastShape) {
     // A 0-dim tensor is compatible with any shape.
     EXPECT_TRUE(IsCompatibleBroadcastShape({}, {}));
-    EXPECT_TRUE(IsCompatibleBroadcastShape({}, {}));
     EXPECT_TRUE(IsCompatibleBroadcastShape({}, {1}));
     EXPECT_TRUE(IsCompatibleBroadcastShape({1}, {}));
     EXPECT_TRUE(IsCompatibleBroadcastShape({}, {2}));
@@ -46,8 +45,8 @@ TEST(Broadcast, IsCompatibleBroadcastShape) {
 
     // Dim with size 0 is compatible with dim with size 0 or 1.
     EXPECT_TRUE(IsCompatibleBroadcastShape({0}, {0}));
-    EXPECT_TRUE(IsCompatibleBroadcastShape({1}, {0}));
     EXPECT_TRUE(IsCompatibleBroadcastShape({0}, {1}));
+    EXPECT_TRUE(IsCompatibleBroadcastShape({1}, {0}));
     EXPECT_TRUE(IsCompatibleBroadcastShape({2, 0}, {2, 1}));
     EXPECT_TRUE(IsCompatibleBroadcastShape({2, 1}, {2, 0}));
     EXPECT_FALSE(IsCompatibleBroadcastShape({2, 0}, {2, 3}));
@@ -72,7 +71,6 @@ TEST(Broadcast, IsCompatibleBroadcastShape) {
 TEST(Broadcast, BroadcastedShape) {
     // A 0-dim tensor can be brocasted to any shape.
     EXPECT_EQ(BroadcastedShape({}, {}), SizeVector({}));
-    EXPECT_EQ(BroadcastedShape({}, {}), SizeVector({}));
     EXPECT_EQ(BroadcastedShape({}, {1}), SizeVector({1}));
     EXPECT_EQ(BroadcastedShape({1}, {}), SizeVector({1}));
     EXPECT_EQ(BroadcastedShape({}, {2}), SizeVector({2}));
@@ -85,8 +83,8 @@ TEST(Broadcast, BroadcastedShape) {
     // Dim with size 0 is compatible with dim with size 0 or 1. The brocasted
     // size is 0.
     EXPECT_EQ(BroadcastedShape({0}, {0}), SizeVector({0}));
-    EXPECT_EQ(BroadcastedShape({1}, {0}), SizeVector({0}));
     EXPECT_EQ(BroadcastedShape({0}, {1}), SizeVector({0}));
+    EXPECT_EQ(BroadcastedShape({1}, {0}), SizeVector({0}));
     EXPECT_EQ(BroadcastedShape({2, 0}, {2, 1}), SizeVector({2, 0}));
     EXPECT_EQ(BroadcastedShape({2, 1}, {2, 0}), SizeVector({2, 0}));
     EXPECT_THROW(BroadcastedShape({2, 0}, {2, 3}), std::runtime_error);
@@ -108,37 +106,41 @@ TEST(Broadcast, BroadcastedShape) {
     EXPECT_THROW(BroadcastedShape({5, 3}, {2, 4, 3}), std::runtime_error);
 }
 
-// TEST(Broadcast, CanBeBrocastedToShape) {
-//     // A 0-dim tensor can be brocasted to any shape.
-//     EXPECT_TRUE(CanBeBrocastedToShape({}, {}));
-//     EXPECT_TRUE(CanBeBrocastedToShape({}, {1}));
-//     EXPECT_TRUE(CanBeBrocastedToShape({}, {2}));
-//     EXPECT_TRUE(CanBeBrocastedToShape({}, {1, 1}));
+TEST(Broadcast, CanBeBrocastedToShape) {
+    // A 0-dim tensor can be brocasted to any shape. Not commutative.
+    EXPECT_TRUE(CanBeBrocastedToShape({}, {}));
+    EXPECT_TRUE(CanBeBrocastedToShape({}, {1}));
+    EXPECT_FALSE(CanBeBrocastedToShape({1}, {}));
+    EXPECT_TRUE(CanBeBrocastedToShape({}, {2}));
+    EXPECT_FALSE(CanBeBrocastedToShape({2}, {}));
+    EXPECT_TRUE(CanBeBrocastedToShape({}, {1, 1}));
+    EXPECT_FALSE(CanBeBrocastedToShape({1, 1}, {}));
+    EXPECT_TRUE(CanBeBrocastedToShape({}, {1, 2}));
+    EXPECT_FALSE(CanBeBrocastedToShape({1, 2}, {}));
 
-//     // No tensor, except 0-dim tensor itself, can be brocasted to 0-dim.
-//     EXPECT_FALSE(CanBeBrocastedToShape({1}, {}));
-//     EXPECT_FALSE(CanBeBrocastedToShape({2}, {}));
-//     EXPECT_FALSE(CanBeBrocastedToShape({1, 1}, {}));
+    // Dim with size 0 can only be brocasteded to 0.
+    // Dim with size 1 can be brodacasted to 0.
+    // Only dim with size 0 or 1 can be brocasted to 0.
+    EXPECT_TRUE(CanBeBrocastedToShape({0}, {0}));
+    EXPECT_FALSE(CanBeBrocastedToShape({0}, {1}));
+    EXPECT_TRUE(CanBeBrocastedToShape({1}, {0}));
+    EXPECT_FALSE(CanBeBrocastedToShape({2, 0}, {2, 1}));
+    EXPECT_TRUE(CanBeBrocastedToShape({2, 1}, {2, 0}));
+    EXPECT_FALSE(CanBeBrocastedToShape({2, 0}, {2, 3}));
+    EXPECT_FALSE(CanBeBrocastedToShape({2, 3}, {2, 0}));
 
-//     // Dim with 0-size cannot be brocasted to or from any non 0-sized dim.
-//     EXPECT_TRUE(CanBeBrocastedToShape({0}, {0}));
-//     EXPECT_FALSE(CanBeBrocastedToShape({0}, {1}));
-//     EXPECT_FALSE(CanBeBrocastedToShape({1}, {0}));
+    // Regular cases. Not commutative.
+    EXPECT_TRUE(CanBeBrocastedToShape({1}, {1}));
+    EXPECT_TRUE(CanBeBrocastedToShape({1}, {2, 1}));
+    EXPECT_FALSE(CanBeBrocastedToShape({2, 1}, {1}));
 
-//     EXPECT_TRUE(CanBeBrocastedToShape({2, 0, 3}, {2, 1, 3}));
-//     EXPECT_TRUE(CanBeBrocastedToShape({2, 1, 3}, {2, 0, 3}));
+    EXPECT_TRUE(CanBeBrocastedToShape({2, 1, 3}, {2, 5, 3}));
+    EXPECT_FALSE(CanBeBrocastedToShape({2, 5, 3}, {2, 1, 3}));
+    EXPECT_FALSE(CanBeBrocastedToShape({2, 1, 3}, {5, 3}));
+    EXPECT_FALSE(CanBeBrocastedToShape({5, 3}, {2, 1, 3}));
 
-//     EXPECT_FALSE(CanBeBrocastedToShape({2, 0, 3}, {2, 4, 3}));
-//     EXPECT_FALSE(CanBeBrocastedToShape({2, 4, 3}, {2, 0, 3}));
-
-//     // // Regular cases
-//     // EXPECT_TRUE(CanBeBrocastedToShape({2, 1, 3}, {2, 5, 3}));
-//     // EXPECT_TRUE(CanBeBrocastedToShape({2, 5, 3}, {2, 1, 3}));
-//     // EXPECT_TRUE(CanBeBrocastedToShape({2, 1, 3}, {5, 3}));
-//     // EXPECT_TRUE(CanBeBrocastedToShape({5, 3}, {2, 1, 3}));
-
-//     // EXPECT_FALSE(CanBeBrocastedToShape({2, 4, 3}, {2, 5, 3}));
-//     // EXPECT_FALSE(CanBeBrocastedToShape({2, 5, 3}, {2, 4, 3}));
-//     // EXPECT_FALSE(CanBeBrocastedToShape({2, 4, 3}, {5, 3}));
-//     // EXPECT_FALSE(CanBeBrocastedToShape({5, 3}, {2, 4, 3}));
-// }
+    EXPECT_FALSE(CanBeBrocastedToShape({2, 4, 3}, {2, 5, 3}));
+    EXPECT_FALSE(CanBeBrocastedToShape({2, 5, 3}, {2, 4, 3}));
+    EXPECT_FALSE(CanBeBrocastedToShape({2, 4, 3}, {5, 3}));
+    EXPECT_FALSE(CanBeBrocastedToShape({5, 3}, {2, 4, 3}));
+}
