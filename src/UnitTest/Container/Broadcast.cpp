@@ -119,7 +119,6 @@ TEST(Broadcast, CanBeBrocastedToShape) {
     EXPECT_FALSE(CanBeBrocastedToShape({1, 2}, {}));
 
     // Dim with size 0 can only be brocasteded to 0.
-    // Dim with size 1 can be brodacasted to 0.
     // Only dim with size 0 or 1 can be brocasted to 0.
     EXPECT_TRUE(CanBeBrocastedToShape({0}, {0}));
     EXPECT_FALSE(CanBeBrocastedToShape({0}, {1}));
