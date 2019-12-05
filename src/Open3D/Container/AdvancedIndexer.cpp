@@ -122,8 +122,8 @@ Tensor AdvancedIndexer::RestrideIndexTensor(const Tensor& index_tensor,
     SizeVector new_shape(dims_before + index_tensor.NumDims() + dims_after, 1);
     std::copy(old_shape.begin(), old_shape.end(),
               new_shape.begin() + dims_before);
-    Tensor expanded = index_tensor.Expand(new_shape);
-    return expanded;
+    Tensor reshaped = index_tensor.Reshape(new_shape);
+    return reshaped;
 }
 
 void AdvancedIndexer::RunPreprocess() {
