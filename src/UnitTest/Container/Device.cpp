@@ -38,6 +38,7 @@ TEST(Device, DefaultConstructor) {
 }
 
 TEST(Device, CPUMustBeID0) {
+    EXPECT_EQ(Device(Device::DeviceType::CPU, 0).GetID(), 0);
     EXPECT_THROW(Device(Device::DeviceType::CPU, 1), std::runtime_error);
 }
 
