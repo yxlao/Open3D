@@ -81,6 +81,10 @@ public:
         return str;
     }
 
+    DeviceType GetType() const { return device_type_; }
+
+    int GetID() const { return device_id_; }
+
 protected:
     void AssertCPUDeviceIDIsZero() {
         if (device_type_ == DeviceType::CPU && device_id_ != 0) {
