@@ -26,7 +26,7 @@
 
 #include "Open3D/Container/Kernel/UnaryEW.h"
 
-#include "Open3D/Container/CudaUtils.cuh"
+#include "Open3D/Container/CudaUtils.h"
 #include "Open3D/Container/Dispatch.h"
 #include "Open3D/Container/Kernel/CUDALauncher.cuh"
 #include "Open3D/Container/Tensor.h"
