@@ -51,9 +51,9 @@ void IndexGet(const Tensor& src,
         return;
     }
 
-    if (src.GetDevice().device_type_ == Device::DeviceType::CPU) {
+    if (src.GetDevice().GetType() == Device::DeviceType::CPU) {
         IndexGetCPU(src, dst, index_tensors, indexed_shape, indexed_strides);
-    } else if (src.GetDevice().device_type_ == Device::DeviceType::CUDA) {
+    } else if (src.GetDevice().GetType() == Device::DeviceType::CUDA) {
 #ifdef BUILD_CUDA_MODULE
         IndexGetCUDA(src, dst, index_tensors, indexed_shape, indexed_strides);
 #endif
@@ -75,9 +75,9 @@ void IndexSet(const Tensor& src,
                  indexed_strides);
     }
 
-    if (dst.GetDevice().device_type_ == Device::DeviceType::CPU) {
+    if (dst.GetDevice().GetType() == Device::DeviceType::CPU) {
         IndexSetCPU(src, dst, index_tensors, indexed_shape, indexed_strides);
-    } else if (dst.GetDevice().device_type_ == Device::DeviceType::CUDA) {
+    } else if (dst.GetDevice().GetType() == Device::DeviceType::CUDA) {
 #ifdef BUILD_CUDA_MODULE
         IndexSetCUDA(src, dst, index_tensors, indexed_shape, indexed_strides);
 #endif

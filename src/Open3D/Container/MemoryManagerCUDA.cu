@@ -45,7 +45,7 @@ void CUDAMemoryManager::SetDevice(int device_id) {
 
 void* CUDAMemoryManager::Malloc(size_t byte_size, const Device& device) {
     void* ptr;
-    if (device.device_type_ == Device::DeviceType::CUDA) {
+    if (device.GetType() == Device::DeviceType::CUDA) {
         OPEN3D_CUDA_CHECK(cudaMalloc(static_cast<void**>(&ptr), byte_size));
     } else {
         utility::LogError("Unimplemented device");
@@ -54,7 +54,7 @@ void* CUDAMemoryManager::Malloc(size_t byte_size, const Device& device) {
 }
 
 void CUDAMemoryManager::Free(void* ptr, const Device& device) {
-    if (device.device_type_ == Device::DeviceType::CUDA) {
+    if (device.GetType() == Device::DeviceType::CUDA) {
         if (IsCUDAPointer(ptr) && ptr) {
             OPEN3D_CUDA_CHECK(cudaFree(ptr));
         }
@@ -70,20 +70,20 @@ void CUDAMemoryManager::Memcpy(void* dst_ptr,
                                size_t num_bytes) {
     cudaMemcpyKind memcpy_kind;
 
-    if (dst_device.device_type_ == Device::DeviceType::CUDA &&
-        src_device.device_type_ == Device::DeviceType::CPU) {
+    if (dst_device.GetType() == Device::DeviceType::CUDA &&
+        src_device.GetType() == Device::DeviceType::CPU) {
         memcpy_kind = cudaMemcpyHostToDevice;
         if (!IsCUDAPointer(dst_ptr)) {
             utility::LogError("dst_ptr is not a CUDA pointer");
         }
-    } else if (dst_device.device_type_ == Device::DeviceType::CPU &&
-               src_device.device_type_ == Device::DeviceType::CUDA) {
+    } else if (dst_device.GetType() == Device::DeviceType::CPU &&
+               src_device.GetType() == Device::DeviceType::CUDA) {
         memcpy_kind = cudaMemcpyDeviceToHost;
         if (!IsCUDAPointer(src_ptr)) {
             utility::LogError("src_ptr is not a CUDA pointer");
         }
-    } else if (dst_device.device_type_ == Device::DeviceType::CUDA &&
-               src_device.device_type_ == Device::DeviceType::CUDA) {
+    } else if (dst_device.GetType() == Device::DeviceType::CUDA &&
+               src_device.GetType() == Device::DeviceType::CUDA) {
         memcpy_kind = cudaMemcpyDeviceToDevice;
         if (!IsCUDAPointer(dst_ptr)) {
             utility::LogError("dst_ptr is not a CUDA pointer");

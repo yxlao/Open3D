@@ -47,8 +47,8 @@ void CopyCUDA(const Tensor& src, Tensor& dst) {
     SizeVector shape = src.GetShape();
     Dtype dtype = src.GetDtype();
 
-    if (src.GetDevice().device_type_ == Device::DeviceType::CUDA &&
-        dst.GetDevice().device_type_ == Device::DeviceType::CUDA) {
+    if (src.GetDevice().GetType() == Device::DeviceType::CUDA &&
+        dst.GetDevice().GetType() == Device::DeviceType::CUDA) {
         if (src.IsContiguous() && dst.IsContiguous() &&
             src.GetShape() == dst.GetShape()) {
             MemoryManager::Memcpy(
@@ -66,12 +66,10 @@ void CopyCUDA(const Tensor& src, Tensor& dst) {
                         });
             });
         }
-    } else if (src.GetDevice().device_type_ == Device::DeviceType::CPU &&
-                       dst.GetDevice().device_type_ ==
-                               Device::DeviceType::CUDA ||
-               src.GetDevice().device_type_ == Device::DeviceType::CUDA &&
-                       dst.GetDevice().device_type_ ==
-                               Device::DeviceType::CPU) {
+    } else if (src.GetDevice().GetType() == Device::DeviceType::CPU &&
+                       dst.GetDevice().GetType() == Device::DeviceType::CUDA ||
+               src.GetDevice().GetType() == Device::DeviceType::CUDA &&
+                       dst.GetDevice().GetType() == Device::DeviceType::CPU) {
         Tensor src_conti = src.Contiguous();  // No op if already contiguous
         if (dst.IsContiguous() && src.GetShape() == dst.GetShape()) {
             MemoryManager::Memcpy(

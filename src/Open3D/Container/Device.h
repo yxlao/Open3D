@@ -120,7 +120,7 @@ protected:
         }
     }
 
-public:
+protected:
     DeviceType device_type_;
     int device_id_;
 };
