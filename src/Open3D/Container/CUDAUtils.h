@@ -24,10 +24,10 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-/// \file CudaUtils.h
+/// \file CUDAUtils.h
 /// \brief Common CUDA utilities
 ///
-/// CudaUtils.h may be included from CPU-only code.
+/// CUDAUtils.h may be included from CPU-only code.
 /// Use #ifdef __CUDACC__ to mark conitional compilation
 
 #pragma once
