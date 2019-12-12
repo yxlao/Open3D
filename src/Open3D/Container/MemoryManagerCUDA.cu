@@ -35,14 +35,6 @@ namespace open3d {
 
 CUDAMemoryManager::CUDAMemoryManager() {}
 
-void CUDAMemoryManager::SetDevice(int device_id) {
-    int curr_device_id = -1;
-    OPEN3D_CUDA_CHECK(cudaGetDevice(&curr_device_id));
-    if (curr_device_id != device_id) {
-        OPEN3D_CUDA_CHECK(cudaSetDevice(device_id));
-    }
-}
-
 void* CUDAMemoryManager::Malloc(size_t byte_size, const Device& device) {
     void* ptr;
     if (device.GetType() == Device::DeviceType::CUDA) {
