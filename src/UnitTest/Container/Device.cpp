@@ -37,6 +37,10 @@ TEST(Device, DefaultConstructor) {
     EXPECT_EQ(ctx.device_id_, 0);
 }
 
+TEST(Device, CPUMustBeID0) {
+    EXPECT_THROW(Device(Device::DeviceType::CPU, 1), std::runtime_error);
+}
+
 TEST(Device, SpecifiedConstructor) {
     Device ctx(Device::DeviceType::CUDA, 1);
     EXPECT_EQ(ctx.device_type_, Device::DeviceType::CUDA);
