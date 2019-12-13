@@ -109,20 +109,24 @@ TEST_P(TensorPermuteDevices, FillSlice) {
     EXPECT_EQ(t.ToFlatVector<float>(), std::vector<float>({1, 1, 1, 1, 1, 1}));
 }
 
-TEST_P(TensorPermuteDevices, IndexSetFillFancy) {
-    Device device = GetParam();
-    Tensor t(std::vector<float>(2 * 3 * 4, 0), {2, 3, 4}, Dtype::Float32,
-             device);
-    Tensor v(std::vector<float>({1}), SizeVector({}), Dtype::Float32, device);
+TEST_P(TensorPermuteDevicePairs, IndexSetFillFancy) {
+    Device dst_device;
+    Device src_device;
+    std::tie(dst_device, src_device) = GetParam();
+    Tensor dst_t(std::vector<float>(2 * 3 * 4, 0), {2, 3, 4}, Dtype::Float32,
+                 dst_device);
+    Tensor src_t(std::vector<float>({1}), SizeVector({}), Dtype::Float32,
+                 src_device);
 
     // t[:, [1, 2], [1, 2]]
     std::vector<Tensor> indices = {
-            Tensor(SizeVector(), Dtype::Int64, device),
-            Tensor(std::vector<int64_t>({1, 2}), {2}, Dtype::Int64, device),
-            Tensor(std::vector<int64_t>({1, 2}), {2}, Dtype::Int64, device)};
+            Tensor(SizeVector(), Dtype::Int64, dst_device),
+            Tensor(std::vector<int64_t>({1, 2}), {2}, Dtype::Int64, src_device),
+            Tensor(std::vector<int64_t>({1, 2}), {2}, Dtype::Int64,
+                   dst_device)};
 
-    t.IndexSet(indices, v);  // We cannot use T.Fill() here
-    EXPECT_EQ(t.ToFlatVector<float>(),
+    dst_t.IndexSet(indices, src_t);  // We cannot use T.Fill() here
+    EXPECT_EQ(dst_t.ToFlatVector<float>(),
               std::vector<float>({0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0,
                                   0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0}));
 }
