@@ -67,17 +67,6 @@ void IndexSet(const Tensor& src,
               const std::vector<Tensor>& index_tensors,
               const SizeVector& indexed_shape,
               const SizeVector& indexed_strides) {
-    utility::LogInfo("1");
-
-    utility::LogInfo("src {}", src.GetDevice().ToString());
-    utility::LogInfo("dst {}", dst.GetDevice().ToString());
-    for (const Tensor& index_tensor : index_tensors) {
-        utility::LogInfo("index_tensor {}",
-                         index_tensor.GetDevice().ToString());
-    }
-
-    utility::LogInfo("1 done");
-
     // index_tensors has been preprocessed to be on the same device as dst,
     // however, src may be in a deifferent device.
     if (dst.GetDevice() != src.GetDevice()) {
@@ -87,26 +76,11 @@ void IndexSet(const Tensor& src,
         return;
     }
 
-    utility::LogInfo("2");
-
-    utility::LogInfo("src {}", src.GetDevice().ToString());
-    utility::LogInfo("dst {}", dst.GetDevice().ToString());
-    for (const Tensor& index_tensor : index_tensors) {
-        utility::LogInfo("index_tensor {}",
-                         index_tensor.GetDevice().ToString());
-    }
-
-    utility::LogInfo("2 done");
-
     if (dst.GetDevice().GetType() == Device::DeviceType::CPU) {
-        utility::LogInfo("3");
         IndexSetCPU(src, dst, index_tensors, indexed_shape, indexed_strides);
-        utility::LogInfo("3 done");
     } else if (dst.GetDevice().GetType() == Device::DeviceType::CUDA) {
 #ifdef BUILD_CUDA_MODULE
-        utility::LogInfo("4");
         IndexSetCUDA(src, dst, index_tensors, indexed_shape, indexed_strides);
-        utility::LogInfo("4 done");
 #endif
     } else {
         utility::LogError("Unimplemented device");
