@@ -63,35 +63,55 @@ void CUDAMemoryManager::Memcpy(void* dst_ptr,
                                const void* src_ptr,
                                const Device& src_device,
                                size_t num_bytes) {
-    cudaMemcpyKind memcpy_kind;
-
     if (dst_device.GetType() == Device::DeviceType::CUDA &&
         src_device.GetType() == Device::DeviceType::CPU) {
-        memcpy_kind = cudaMemcpyHostToDevice;
+        CUDASwitchDevice switcher(dst_device.GetID());
         if (!IsCUDAPointer(dst_ptr)) {
             utility::LogError("dst_ptr is not a CUDA pointer");
         }
+        OPEN3D_CUDA_CHECK(cudaMemcpy(dst_ptr, src_ptr, num_bytes,
+                                     cudaMemcpyHostToDevice));
     } else if (dst_device.GetType() == Device::DeviceType::CPU &&
                src_device.GetType() == Device::DeviceType::CUDA) {
-        memcpy_kind = cudaMemcpyDeviceToHost;
+        CUDASwitchDevice switcher(src_device.GetID());
         if (!IsCUDAPointer(src_ptr)) {
             utility::LogError("src_ptr is not a CUDA pointer");
         }
+        OPEN3D_CUDA_CHECK(cudaMemcpy(dst_ptr, src_ptr, num_bytes,
+                                     cudaMemcpyDeviceToHost));
     } else if (dst_device.GetType() == Device::DeviceType::CUDA &&
                src_device.GetType() == Device::DeviceType::CUDA) {
-        memcpy_kind = cudaMemcpyDeviceToDevice;
+        CUDASwitchDevice dst_switcher(dst_device.GetID());
         if (!IsCUDAPointer(dst_ptr)) {
             utility::LogError("dst_ptr is not a CUDA pointer");
         }
+        CUDASwitchDevice src_switcher(src_device.GetID());
         if (!IsCUDAPointer(src_ptr)) {
             utility::LogError("src_ptr is not a CUDA pointer");
+        }
+
+        if (dst_device == src_device) {
+            CUDASwitchDevice switcher(src_device.GetID());
+            OPEN3D_CUDA_CHECK(cudaMemcpy(dst_ptr, src_ptr, num_bytes,
+                                         cudaMemcpyDeviceToDevice));
+        } else if (CUDAState::GetInstance()->IsP2PEnabled(src_device.GetID(),
+                                                          dst_device.GetID())) {
+            OPEN3D_CUDA_CHECK(cudaMemcpyPeer(dst_ptr, dst_device.GetID(),
+                                             src_ptr, src_device.GetID(),
+                                             num_bytes));
+        } else {
+            void* cpu_buf = MemoryManager::Malloc(num_bytes, Device("CPU:0"));
+            CUDASwitchDevice src_switcher(src_device.GetID());
+            OPEN3D_CUDA_CHECK(cudaMemcpy(cpu_buf, src_ptr, num_bytes,
+                                         cudaMemcpyDeviceToHost));
+            CUDASwitchDevice dst_switcher(dst_device.GetID());
+            OPEN3D_CUDA_CHECK(cudaMemcpy(dst_ptr, cpu_buf, num_bytes,
+                                         cudaMemcpyHostToDevice));
+            MemoryManager::Free(cpu_buf, Device("CPU:0"));
         }
     } else {
         utility::LogError("Wrong cudaMemcpyKind");
     }
-
-    CUDASwitchDevice switcher(src_device.GetID());
-    OPEN3D_CUDA_CHECK(cudaMemcpy(dst_ptr, src_ptr, num_bytes, memcpy_kind));
 }
 
 bool CUDAMemoryManager::IsCUDAPointer(const void* ptr) {
