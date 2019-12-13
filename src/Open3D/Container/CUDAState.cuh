@@ -108,41 +108,40 @@ private:
         p2p_enabled_ = std::vector<std::vector<bool>>(
                 num_devices_, std::vector<bool>(num_devices_, false));
 
-        for (int src_id = 0; src_id < num_devices_; ++src_id) {
-            for (int tar_id = 0; tar_id < num_devices_; ++tar_id) {
-                if (src_id == tar_id) {
-                    p2p_enabled_[src_id][tar_id] = true;
-                }
-            }
-        }
-
         // for (int src_id = 0; src_id < num_devices_; ++src_id) {
         //     for (int tar_id = 0; tar_id < num_devices_; ++tar_id) {
         //         if (src_id == tar_id) {
         //             p2p_enabled_[src_id][tar_id] = true;
-        //         } else {
-        //             OPEN3D_CUDA_CHECK(cudaSetDevice(src_id));
-        //             // Check access.
-        //             int can_access = 0;
-        //             OPEN3D_CUDA_CHECK(cudaDeviceCanAccessPeer(&can_access,
-        //                                                       src_id,
-        //                                                       tar_id));
-        //             // Enable access.
-        //             if (can_access) {
-        //                 p2p_enabled_[src_id][tar_id] = true;
-        //                 cudaError_t err = cudaDeviceEnablePeerAccess(tar_id,
-        //                 0); if (err == cudaErrorPeerAccessAlreadyEnabled) {
-        //                     // Ignore error since p2p is already enabled.
-        //                     cudaGetLastError();
-        //                 } else {
-        //                     OPEN3D_CUDA_CHECK(err);
-        //                 }
-        //             } else {
-        //                 p2p_enabled_[src_id][tar_id] = false;
-        //             }
         //         }
         //     }
         // }
+
+        for (int src_id = 0; src_id < num_devices_; ++src_id) {
+            for (int tar_id = 0; tar_id < num_devices_; ++tar_id) {
+                if (src_id == tar_id) {
+                    p2p_enabled_[src_id][tar_id] = true;
+                } else {
+                    OPEN3D_CUDA_CHECK(cudaSetDevice(src_id));
+                    // Check access.
+                    int can_access = 0;
+                    OPEN3D_CUDA_CHECK(cudaDeviceCanAccessPeer(&can_access,
+                                                              src_id, tar_id));
+                    // Enable access.
+                    if (can_access) {
+                        p2p_enabled_[src_id][tar_id] = true;
+                        cudaError_t err = cudaDeviceEnablePeerAccess(tar_id, 0);
+                        if (err == cudaErrorPeerAccessAlreadyEnabled) {
+                            // Ignore error since p2p is already enabled.
+                            cudaGetLastError();
+                        } else {
+                            OPEN3D_CUDA_CHECK(err);
+                        }
+                    } else {
+                        p2p_enabled_[src_id][tar_id] = false;
+                    }
+                }
+            }
+        }
 
         // Restore previous device.
         OPEN3D_CUDA_CHECK(cudaSetDevice(prev_dev));
