@@ -24,13 +24,13 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
+#ifdef BUILD_CUDA_MODULE
+
 #include "Open3D/Container/CUDAState.cuh"
 #include "TestUtility/UnitTest.h"
 
 using namespace std;
 using namespace open3d;
-
-#ifdef BUILD_CUDA_MODULE
 
 TEST(CUDAState, InitState) {
     std::shared_ptr<CUDAState> cuda_state = CUDAState::GetInstance();

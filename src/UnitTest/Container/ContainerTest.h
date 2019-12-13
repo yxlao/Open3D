@@ -33,16 +33,27 @@
 
 #include "TestUtility/UnitTest.h"
 
+#ifdef BUILD_CUDA_MODULE
+#include "Open3D/Container/CUDAState.cuh"
+#endif
+
 namespace open3d {
 
 class PermuteDevices : public testing::TestWithParam<Device> {
 public:
     static std::vector<Device> TestCases() {
 #ifdef BUILD_CUDA_MODULE
-        return {
-                Device("CPU:0"),
-                Device("CUDA:0"),
-        };
+        std::shared_ptr<CUDAState> cuda_state = CUDAState::GetInstance();
+        if (cuda_state->GetNumDevices() >= 1) {
+            return {
+                    Device("CPU:0"),
+                    Device("CUDA:0"),
+            };
+        } else {
+            return {
+                    Device("CPU:0"),
+            };
+        }
 #else
         return {
                 Device("CPU:0"),
@@ -56,16 +67,48 @@ class PermuteDevicePairs
 public:
     static std::vector<std::pair<Device, Device>> TestCases() {
 #ifdef BUILD_CUDA_MODULE
-        return {
-                {Device("CPU:0"), Device("CPU:0")},
-                {Device("CPU:0"), Device("CUDA:0")},
-                {Device("CUDA:0"), Device("CPU:0")},
-                {Device("CUDA:0"), Device("CUDA:0")},
-        };
+        std::shared_ptr<CUDAState> cuda_state = CUDAState::GetInstance();
+        if (cuda_state->GetNumDevices() >= 1) {
+            return {
+                    {Device("CPU:0"), Device("CPU:0")},
+                    {Device("CPU:0"), Device("CUDA:0")},
+                    {Device("CUDA:0"), Device("CPU:0")},
+                    {Device("CUDA:0"), Device("CUDA:0")},
+            };
+        } else {
+            return {
+                    {Device("CPU:0"), Device("CPU:0")},
+            };
+        }
 #else
         return {
                 {Device("CPU:0"), Device("CPU:0")},
         };
+#endif
+    }
+};
+
+class PermuteCUDADevicePairs
+    : public testing::TestWithParam<std::pair<Device, Device>> {
+    static std::vector<std::pair<Device, Device>> TestCases() {
+#ifdef BUILD_CUDA_MODULE
+        std::shared_ptr<CUDAState> cuda_state = CUDAState::GetInstance();
+        if (cuda_state->GetNumDevices() >= 2) {
+            return {
+                    {Device("CUDA:0"), Device("CUDA:0")},
+                    {Device("CUDA:0"), Device("CUDA:1")},
+                    {Device("CUDA:1"), Device("CUDA:0")},
+                    {Device("CUDA:1"), Device("CUDA:1")},
+            };
+        } else if (cuda_state->GetNumDevices() == 1) {
+            return {
+                    {Device("CUDA:0"), Device("CUDA:0")},
+            };
+        } else {
+            return {};
+        }
+#else
+        return {};
 #endif
     }
 };

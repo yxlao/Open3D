@@ -96,3 +96,26 @@ TEST_P(MemoryManagerPermuteDevicePairs, MemcpyBlob) {
                                 num_bytes);
     ASSERT_STREQ(dst_vals, src_vals);
 }
+
+TEST_P(MemoryManagerPermuteDevicePairs, MemcpyMultiGPU) {
+    Device dst_device;
+    Device src_device;
+    std::tie(dst_device, src_device) = GetParam();
+
+    char dst_vals[6] = "xxxxx";
+    char src_vals[6] = "hello";
+    size_t num_bytes = strlen(src_vals) + 1;
+
+    void* dst_ptr = MemoryManager::Malloc(num_bytes, dst_device);
+    void* src_ptr = MemoryManager::Malloc(num_bytes, src_device);
+    MemoryManager::MemcpyFromHost(src_ptr, src_device, (void*)src_vals,
+                                  num_bytes);
+
+    MemoryManager::Memcpy(dst_ptr, dst_device, src_ptr, src_device, num_bytes);
+    MemoryManager::MemcpyToHost((void*)dst_vals, dst_ptr, dst_device,
+                                num_bytes);
+    ASSERT_STREQ(dst_vals, src_vals);
+
+    MemoryManager::Free(dst_ptr, dst_device);
+    MemoryManager::Free(src_ptr, src_device);
+}
