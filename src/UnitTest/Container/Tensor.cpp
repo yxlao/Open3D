@@ -670,17 +670,19 @@ TEST_P(TensorPermuteDevicePairs, IndexGetSeparateBySlice) {
               std::vector<float>({0, 4, 8, 13, 17, 21}));
 }
 
-TEST_P(TensorPermuteDevices, IndexGetSliceEnd) {
-    Device device = GetParam();
+TEST_P(TensorPermuteDevicePairs, IndexGetSliceEnd) {
+    Device idx_device;
+    Device src_device;
+    std::tie(idx_device, src_device) = GetParam();
 
     std::vector<float> vals{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11,
                             12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23};
-    Tensor src_t(vals, {2, 3, 4}, Dtype::Float32, device);
+    Tensor src_t(vals, {2, 3, 4}, Dtype::Float32, src_device);
 
     std::vector<Tensor> indices = {
-            Tensor(std::vector<int64_t>{0, 1}, {2}, Dtype::Int64, device),
-            Tensor(std::vector<int64_t>{0, 1}, {2}, Dtype::Int64, device),
-            Tensor(SizeVector(), Dtype::Int64, device)};
+            Tensor(std::vector<int64_t>{0, 1}, {2}, Dtype::Int64, idx_device),
+            Tensor(std::vector<int64_t>{0, 1}, {2}, Dtype::Int64, idx_device),
+            Tensor(SizeVector(), Dtype::Int64, idx_device)};
 
     Tensor dst_t = src_t.IndexGet(indices);
     EXPECT_EQ(dst_t.GetShape(), SizeVector({2, 4}));
