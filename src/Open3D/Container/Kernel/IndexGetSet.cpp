@@ -47,7 +47,7 @@ void IndexGet(const Tensor& src,
         Tensor dst_same_device(dst.GetShape(), dst.GetDtype(), src.GetDevice());
         IndexGet(src, dst_same_device, index_tensors, indexed_shape,
                  indexed_strides);
-        Copy(dst_same_device, dst);
+        dst.CopyFrom(dst_same_device);
         return;
     }
 
