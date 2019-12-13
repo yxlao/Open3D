@@ -101,32 +101,6 @@ public:
     }
 };
 
-class PermuteCUDADevicePairs
-    : public testing::TestWithParam<std::pair<Device, Device>> {
-public:
-    static std::vector<std::pair<Device, Device>> TestCases() {
-#ifdef BUILD_CUDA_MODULE
-        std::shared_ptr<CUDAState> cuda_state = CUDAState::GetInstance();
-        if (cuda_state->GetNumDevices() >= 2) {
-            return {
-                    {Device("CUDA:0"), Device("CUDA:0")},
-                    {Device("CUDA:0"), Device("CUDA:1")},
-                    {Device("CUDA:1"), Device("CUDA:0")},
-                    {Device("CUDA:1"), Device("CUDA:1")},
-            };
-        } else if (cuda_state->GetNumDevices() == 1) {
-            return {
-                    {Device("CUDA:0"), Device("CUDA:0")},
-            };
-        } else {
-            return {};
-        }
-#else
-        return {};
-#endif
-    }
-};
-
 class PermuteSizesDefaultStrides
     : public testing::TestWithParam<std::pair<SizeVector, SizeVector>> {
 public:
