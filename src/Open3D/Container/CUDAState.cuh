@@ -59,8 +59,6 @@ namespace open3d {
 class CUDAState {
 public:
     static std::shared_ptr<CUDAState> GetInstance() {
-        // Note: for testing, we need to figure out a way to deliberately
-        // disable P2P to test both cases.
         static std::shared_ptr<CUDAState> instance{new CUDAState};
         return instance;
     }
@@ -108,6 +106,9 @@ private:
         p2p_enabled_ = std::vector<std::vector<bool>>(
                 num_devices_, std::vector<bool>(num_devices_, false));
 
+        // Note: To run non-p2p tests on a p2p capable machine, uncomment the
+        // following lines an comment out the lines where p2p is enabled.
+        //
         // for (int src_id = 0; src_id < num_devices_; ++src_id) {
         //     for (int tar_id = 0; tar_id < num_devices_; ++tar_id) {
         //         if (src_id == tar_id) {
