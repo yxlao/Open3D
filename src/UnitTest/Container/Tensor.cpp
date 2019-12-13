@@ -514,37 +514,44 @@ TEST_P(TensorPermuteDevicePairs, CopyNonContiguous) {
     }
 }
 
-TEST_P(TensorPermuteDevices, IndexGet) {
-    Device device = GetParam();
+TEST_P(TensorPermuteDevicePairs, IndexGet) {
+    Device any_device;
+    Device src_device;
+    std::tie(any_device, src_device) = GetParam();
 
     std::vector<float> vals{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11,
                             12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23};
-    Tensor t(vals, {2, 3, 4}, Dtype::Float32, device);
+    Tensor src_t(vals, {2, 3, 4}, Dtype::Float32, src_device);
 
     // t[:, [1, 2], [1, 2]]
     std::vector<Tensor> indices = {
-            Tensor(SizeVector(), Dtype::Int64, device),
-            Tensor(std::vector<int64_t>({1, 2}), {2}, Dtype::Int64, device),
-            Tensor(std::vector<int64_t>({1, 2}), {2}, Dtype::Int64, device)};
+            Tensor(SizeVector(), Dtype::Int64, any_device),
+            Tensor(std::vector<int64_t>({1, 2}), {2}, Dtype::Int64, src_device),
+            Tensor(std::vector<int64_t>({1, 2}), {2}, Dtype::Int64,
+                   any_device)};
 
-    Tensor t_1 = t.IndexGet(indices);
-    EXPECT_TRUE(t_1.IsContiguous());
-    EXPECT_EQ(t_1.GetShape(), SizeVector({2, 2}));
-    EXPECT_EQ(t_1.ToFlatVector<float>(), std::vector<float>({5, 10, 17, 22}));
+    Tensor dst_t = src_t.IndexGet(indices);
+    EXPECT_TRUE(dst_t.IsContiguous());
+    EXPECT_EQ(dst_t.GetShape(), SizeVector({2, 2}));
+    EXPECT_EQ(dst_t.ToFlatVector<float>(), std::vector<float>({5, 10, 17, 22}));
 }
 
-TEST_P(TensorPermuteDevices, IndexGetNegative) {
-    Device device = GetParam();
+TEST_P(TensorPermuteDevicePairs, IndexGetNegative) {
+    Device any_device;
+    Device src_device;
+    std::tie(any_device, src_device) = GetParam();
 
     std::vector<float> vals{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11,
                             12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23};
-    Tensor t(vals, {2, 3, 4}, Dtype::Float32, device);
+    Tensor t(vals, {2, 3, 4}, Dtype::Float32, src_device);
 
     // t[:, [1, -1], [1, -2]]
     std::vector<Tensor> indices = {
-            Tensor(SizeVector(), Dtype::Int64, device),
-            Tensor(std::vector<int64_t>({1, -1}), {2}, Dtype::Int64, device),
-            Tensor(std::vector<int64_t>({1, -2}), {2}, Dtype::Int64, device)};
+            Tensor(SizeVector(), Dtype::Int64, any_device),
+            Tensor(std::vector<int64_t>({1, -1}), {2}, Dtype::Int64,
+                   any_device),
+            Tensor(std::vector<int64_t>({1, -2}), {2}, Dtype::Int64,
+                   src_device)};
 
     Tensor t_1 = t.IndexGet(indices);
     EXPECT_TRUE(t_1.IsContiguous());
