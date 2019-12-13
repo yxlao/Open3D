@@ -47,6 +47,12 @@ INSTANTIATE_TEST_SUITE_P(
         MemoryManagerPermuteDevicePairs,
         testing::ValuesIn(MemoryManagerPermuteDevicePairs::TestCases()));
 
+class MemoryManagerPermuteCUDADevicePairs : public PermuteCUDADevicePairs {};
+INSTANTIATE_TEST_SUITE_P(
+        MemoryManager,
+        MemoryManagerPermuteCUDADevicePairs,
+        testing::ValuesIn(MemoryManagerPermuteCUDADevicePairs::TestCases()));
+
 TEST_P(MemoryManagerPermuteDevices, MallocFree) {
     Device device = GetParam();
 
@@ -97,7 +103,7 @@ TEST_P(MemoryManagerPermuteDevicePairs, MemcpyBlob) {
     ASSERT_STREQ(dst_vals, src_vals);
 }
 
-TEST_P(MemoryManagerPermuteDevicePairs, MemcpyMultiGPU) {
+TEST_P(MemoryManagerPermuteCUDADevicePairs, MemcpyMultiGPU) {
     Device dst_device;
     Device src_device;
     std::tie(dst_device, src_device) = GetParam();

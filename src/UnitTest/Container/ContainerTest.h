@@ -90,6 +90,7 @@ public:
 
 class PermuteCUDADevicePairs
     : public testing::TestWithParam<std::pair<Device, Device>> {
+public:
     static std::vector<std::pair<Device, Device>> TestCases() {
 #ifdef BUILD_CUDA_MODULE
         std::shared_ptr<CUDAState> cuda_state = CUDAState::GetInstance();
