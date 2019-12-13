@@ -62,6 +62,7 @@ void CopyCUDA(const Tensor& src, Tensor& dst) {
         } else if (src_device == dst_device ||
                    CUDAState::GetInstance()->IsP2PEnabled(src_device,
                                                           dst_device)) {
+            CUDASwitchDevice switcher(src_device);
             DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
                 Indexer indexer({src}, dst);
                 CUDALauncher::LaunchUnaryEWKernel<scalar_t>(
@@ -72,9 +73,7 @@ void CopyCUDA(const Tensor& src, Tensor& dst) {
                         });
             });
         } else {
-            // Tensor::Clone does not use the copy kernel
-            Tensor src_clone = src.Clone(dst_device);
-            CopyCUDA(src_clone, dst);
+            dst.CopyFrom(src.Clone(dst_device));
         }
     } else if (src_device.GetType() == Device::DeviceType::CPU &&
                        dst_device.GetType() == Device::DeviceType::CUDA ||
@@ -87,12 +86,7 @@ void CopyCUDA(const Tensor& src, Tensor& dst) {
                     src_conti.GetDevice(),
                     DtypeUtil::ByteSize(dtype) * shape.NumElements());
         } else {
-            Tensor src_transfer(src.GetShape(), src.GetDtype(), dst_device);
-            MemoryManager::Memcpy(
-                    src_transfer.GetDataPtr(), src_transfer.GetDevice(),
-                    src_conti.GetDataPtr(), src_conti.GetDevice(),
-                    DtypeUtil::ByteSize(dtype) * shape.NumElements());
-            dst.CopyFrom(src_transfer);
+            dst.CopyFrom(src.Clone(dst_device));
         }
     } else {
         utility::LogError("Wrong device type {} -> {}", src_device.ToString(),
