@@ -39,7 +39,7 @@ CUDAMemoryManager::CUDAMemoryManager() {}
 void* CUDAMemoryManager::Malloc(size_t byte_size, const Device& device) {
     void* ptr;
     if (device.GetType() == Device::DeviceType::CUDA) {
-        CUDASwitchDeviceInScope switcher(device.GetID());
+        CUDASwitchDevice switcher(device.GetID());
         OPEN3D_CUDA_CHECK(cudaMalloc(static_cast<void**>(&ptr), byte_size));
     } else {
         utility::LogError("Unimplemented device");
@@ -50,7 +50,7 @@ void* CUDAMemoryManager::Malloc(size_t byte_size, const Device& device) {
 void CUDAMemoryManager::Free(void* ptr, const Device& device) {
     if (device.GetType() == Device::DeviceType::CUDA) {
         if (IsCUDAPointer(ptr) && ptr) {
-            CUDASwitchDeviceInScope switcher(device.GetID());
+            CUDASwitchDevice switcher(device.GetID());
             OPEN3D_CUDA_CHECK(cudaFree(ptr));
         }
     } else {
@@ -90,7 +90,7 @@ void CUDAMemoryManager::Memcpy(void* dst_ptr,
         utility::LogError("Wrong cudaMemcpyKind");
     }
 
-    CUDASwitchDeviceInScope switcher(src_device.GetID());
+    CUDASwitchDevice switcher(src_device.GetID());
     OPEN3D_CUDA_CHECK(cudaMemcpy(dst_ptr, src_ptr, num_bytes, memcpy_kind));
 }
 

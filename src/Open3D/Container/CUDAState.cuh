@@ -138,17 +138,15 @@ private:
 
 /// Switch CUDA device id in the current scope. The device id will be resetted
 /// once leaving the scope.
-class CUDASwitchDeviceInScope {
+class CUDASwitchDevice {
 public:
-    CUDASwitchDeviceInScope(int device_id) {
+    CUDASwitchDevice(int device_id) {
         OPEN3D_CUDA_CHECK(cudaGetDevice(&prev_device_id_));
         if (device_id != prev_device_id_) {
             OPEN3D_CUDA_CHECK(cudaSetDevice(device_id));
         }
     }
-    ~CUDASwitchDeviceInScope() {
-        OPEN3D_CUDA_CHECK(cudaSetDevice(prev_device_id_));
-    }
+    ~CUDASwitchDevice() { OPEN3D_CUDA_CHECK(cudaSetDevice(prev_device_id_)); }
 
 private:
     int prev_device_id_;
