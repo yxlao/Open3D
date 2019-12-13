@@ -71,15 +71,15 @@ public:
         if (cuda_state->GetNumDevices() > 1) {
             // To test multiple CUDA devices, we only need to test CUDA 0 and 1.
             return {
-                    {Device("CPU:0"), Device("CPU:0")},
-                    {Device("CPU:0"), Device("CUDA:0")},
-                    {Device("CPU:0"), Device("CUDA:1")},
-                    {Device("CUDA:0"), Device("CPU:0")},
-                    {Device("CUDA:0"), Device("CUDA:0")},
-                    {Device("CUDA:0"), Device("CUDA:1")},
-                    {Device("CUDA:1"), Device("CPU:0")},
-                    {Device("CUDA:1"), Device("CUDA:0")},
-                    {Device("CUDA:1"), Device("CUDA:1")},
+                    {Device("CPU:0"), Device("CPU:0")},    // 0
+                    {Device("CPU:0"), Device("CUDA:0")},   // 1
+                    {Device("CPU:0"), Device("CUDA:1")},   // 2
+                    {Device("CUDA:0"), Device("CPU:0")},   // 3
+                    {Device("CUDA:0"), Device("CUDA:0")},  // 4
+                    {Device("CUDA:0"), Device("CUDA:1")},  // 5
+                    {Device("CUDA:1"), Device("CPU:0")},   // 6
+                    {Device("CUDA:1"), Device("CUDA:0")},  // 7
+                    {Device("CUDA:1"), Device("CUDA:1")},  // 8
             };
         } else if (cuda_state->GetNumDevices() == 1) {
             return {

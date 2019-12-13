@@ -26,6 +26,7 @@
 
 #include "Open3D/Container/Kernel/UnaryEW.h"
 
+#include "Open3D/Container/CUDAState.cuh"
 #include "Open3D/Container/CUDAUtils.h"
 #include "Open3D/Container/Dispatch.h"
 #include "Open3D/Container/Kernel/CUDALauncher.cuh"
@@ -47,15 +48,20 @@ void CopyCUDA(const Tensor& src, Tensor& dst) {
     SizeVector shape = src.GetShape();
     Dtype dtype = src.GetDtype();
 
-    if (src.GetDevice().GetType() == Device::DeviceType::CUDA &&
-        dst.GetDevice().GetType() == Device::DeviceType::CUDA) {
+    Device src_device = src.GetDevice();
+    Device dst_device = dst.GetDevice();
+
+    if (src_device.GetType() == Device::DeviceType::CUDA &&
+        dst_device.GetType() == Device::DeviceType::CUDA) {
         if (src.IsContiguous() && dst.IsContiguous() &&
             src.GetShape() == dst.GetShape()) {
+            // MemoryManager handles p2p and non-p2p device copy.
             MemoryManager::Memcpy(
-                    dst.GetDataPtr(), dst.GetDevice(), src.GetDataPtr(),
-                    src.GetDevice(),
+                    dst.GetDataPtr(), dst_device, src.GetDataPtr(), src_device,
                     DtypeUtil::ByteSize(dtype) * shape.NumElements());
-        } else {
+        } else if (src_device == dst_device ||
+                   CUDAState::GetInstance()->IsP2PEnabled(src_device,
+                                                          dst_device)) {
             DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
                 Indexer indexer({src}, dst);
                 CUDALauncher::LaunchUnaryEWKernel<scalar_t>(
@@ -65,20 +71,23 @@ void CopyCUDA(const Tensor& src, Tensor& dst) {
                             CUDACopyElementKernel<scalar_t>(src, dst);
                         });
             });
+        } else {
+            // Tensor::Clone does not use the copy kernel
+            Tensor src_clone = src.Clone(dst_device);
+            CopyCUDA(src_clone, dst);
         }
-    } else if (src.GetDevice().GetType() == Device::DeviceType::CPU &&
-                       dst.GetDevice().GetType() == Device::DeviceType::CUDA ||
-               src.GetDevice().GetType() == Device::DeviceType::CUDA &&
-                       dst.GetDevice().GetType() == Device::DeviceType::CPU) {
+    } else if (src_device.GetType() == Device::DeviceType::CPU &&
+                       dst_device.GetType() == Device::DeviceType::CUDA ||
+               src_device.GetType() == Device::DeviceType::CUDA &&
+                       dst_device.GetType() == Device::DeviceType::CPU) {
         Tensor src_conti = src.Contiguous();  // No op if already contiguous
         if (dst.IsContiguous() && src.GetShape() == dst.GetShape()) {
             MemoryManager::Memcpy(
-                    dst.GetDataPtr(), dst.GetDevice(), src_conti.GetDataPtr(),
+                    dst.GetDataPtr(), dst_device, src_conti.GetDataPtr(),
                     src_conti.GetDevice(),
                     DtypeUtil::ByteSize(dtype) * shape.NumElements());
         } else {
-            Tensor src_transfer(src.GetShape(), src.GetDtype(),
-                                dst.GetDevice());
+            Tensor src_transfer(src.GetShape(), src.GetDtype(), dst_device);
             MemoryManager::Memcpy(
                     src_transfer.GetDataPtr(), src_transfer.GetDevice(),
                     src_conti.GetDataPtr(), src_conti.GetDevice(),
@@ -86,9 +95,8 @@ void CopyCUDA(const Tensor& src, Tensor& dst) {
             dst.CopyFrom(src_transfer);
         }
     } else {
-        utility::LogError("Wrong device type {} -> {}",
-                          src.GetDevice().ToString(),
-                          dst.GetDevice().ToString());
+        utility::LogError("Wrong device type {} -> {}", src_device.ToString(),
+                          dst_device.ToString());
     }
 }
 

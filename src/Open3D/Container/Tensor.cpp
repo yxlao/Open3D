@@ -169,6 +169,7 @@ Tensor Tensor::Copy(const Device& device) const {
 void Tensor::CopyFrom(const Tensor& other) { AsRvalue() = other; }
 
 Tensor Tensor::Clone(const Device& device) const {
+    // Clone should not use kernel::Copy to avoid infinite recursions.
     auto new_blob = std::make_shared<Blob>(blob_->byte_size_, device);
     MemoryManager::MemcpyBlob(new_blob, blob_);
     int64_t data_offset =

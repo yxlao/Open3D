@@ -85,6 +85,10 @@ public:
         return p2p_enabled_[src_id][tar_id];
     }
 
+    bool IsP2PEnabled(const Device& src, const Device& tar) {
+        return p2p_enabled_[src.GetID()][tar.GetID()];
+    }
+
     std::vector<std::vector<bool>> GetP2PEnabled() const {
         return p2p_enabled_;
     }

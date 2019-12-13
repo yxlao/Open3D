@@ -37,9 +37,9 @@ namespace open3d {
 CUDAMemoryManager::CUDAMemoryManager() {}
 
 void* CUDAMemoryManager::Malloc(size_t byte_size, const Device& device) {
+    CUDASwitchDevice switcher(device);
     void* ptr;
     if (device.GetType() == Device::DeviceType::CUDA) {
-        CUDASwitchDevice switcher(device.GetID());
         OPEN3D_CUDA_CHECK(cudaMalloc(static_cast<void**>(&ptr), byte_size));
     } else {
         utility::LogError("Unimplemented device");
@@ -48,9 +48,9 @@ void* CUDAMemoryManager::Malloc(size_t byte_size, const Device& device) {
 }
 
 void CUDAMemoryManager::Free(void* ptr, const Device& device) {
+    CUDASwitchDevice switcher(device);
     if (device.GetType() == Device::DeviceType::CUDA) {
-        if (IsCUDAPointer(ptr) && ptr) {
-            CUDASwitchDevice switcher(device.GetID());
+        if (ptr && IsCUDAPointer(ptr)) {
             OPEN3D_CUDA_CHECK(cudaFree(ptr));
         }
     } else {

@@ -34,6 +34,7 @@ namespace open3d {
 namespace kernel {
 
 void Copy(const Tensor& src, Tensor& dst) {
+    // Check shape
     if (!CanBeBrocastedToShape(src.GetShape(), dst.GetShape())) {
         utility::LogError("Shape {} can not be broadcasted to {}.",
                           src.GetShape(), dst.GetShape());
