@@ -36,6 +36,7 @@
 #include <vector>
 
 #include "Open3D/Container/CUDAUtils.h"
+#include "Open3D/Container/Device.h"
 #include "Open3D/Utility/Console.h"
 
 namespace open3d {
@@ -146,6 +147,15 @@ public:
             OPEN3D_CUDA_CHECK(cudaSetDevice(device_id));
         }
     }
+
+    CUDASwitchDevice(const Device& device) : CUDASwitchDevice(device.GetID()) {}
+
+    void SwitchTo(int device_id) const {
+        OPEN3D_CUDA_CHECK(cudaSetDevice(device_id));
+    }
+
+    void SwitchTo(const Device& device) const { SwitchTo(device.GetID()); }
+
     ~CUDASwitchDevice() { OPEN3D_CUDA_CHECK(cudaSetDevice(prev_device_id_)); }
 
 private:
