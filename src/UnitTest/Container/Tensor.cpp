@@ -460,12 +460,14 @@ TEST_P(TensorPermuteDevices, SliceAssign) {
                                   16, 17, 18, 19, 203, 21, 223, 23}));
 }
 
-TEST_P(TensorPermuteDevices, CopyNonContiguous) {
-    Device device = GetParam();
+TEST_P(TensorPermuteDevicePairs, CopyNonContiguous) {
+    Device dst_device;
+    Device src_device;
+    std::tie(dst_device, src_device) = GetParam();
 
     std::vector<float> vals{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11,
                             12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23};
-    Tensor t(vals, {2, 3, 4}, Dtype::Float32, device);
+    Tensor t(vals, {2, 3, 4}, Dtype::Float32, src_device);
 
     // t[0:2:1, 0:3:2, 0:4:2]
     Tensor t_1 = t.Slice(0, 0, 2, 1).Slice(1, 0, 3, 2).Slice(2, 0, 4, 2);
@@ -476,20 +478,40 @@ TEST_P(TensorPermuteDevices, CopyNonContiguous) {
               std::vector<float>({0, 2, 8, 10, 12, 14, 20, 22}));
 
     // Copy ensures contiguous
-    Tensor t_1_copy = t_1.Copy(device);
-    EXPECT_TRUE(t_1_copy.IsContiguous());
-    EXPECT_EQ(t_1_copy.GetShape(), SizeVector({2, 2, 2}));
-    EXPECT_EQ(t_1_copy.GetStrides(), SizeVector({4, 2, 1}));
-    EXPECT_EQ(t_1_copy.ToFlatVector<float>(),
-              std::vector<float>({0, 2, 8, 10, 12, 14, 20, 22}));
+    {
+        Tensor t_1_copy = t_1.Copy(src_device);
+        EXPECT_TRUE(t_1_copy.IsContiguous());
+        EXPECT_EQ(t_1_copy.GetShape(), SizeVector({2, 2, 2}));
+        EXPECT_EQ(t_1_copy.GetStrides(), SizeVector({4, 2, 1}));
+        EXPECT_EQ(t_1_copy.ToFlatVector<float>(),
+                  std::vector<float>({0, 2, 8, 10, 12, 14, 20, 22}));
+    }
+    {
+        Tensor t_1_copy = t_1.Copy(dst_device);
+        EXPECT_TRUE(t_1_copy.IsContiguous());
+        EXPECT_EQ(t_1_copy.GetShape(), SizeVector({2, 2, 2}));
+        EXPECT_EQ(t_1_copy.GetStrides(), SizeVector({4, 2, 1}));
+        EXPECT_EQ(t_1_copy.ToFlatVector<float>(),
+                  std::vector<float>({0, 2, 8, 10, 12, 14, 20, 22}));
+    }
 
     // Clone replicates the exact syntax
-    Tensor t_1_clone = t_1.Clone(device);
-    EXPECT_FALSE(t_1_clone.IsContiguous());
-    EXPECT_EQ(t_1_clone.GetShape(), SizeVector({2, 2, 2}));
-    EXPECT_EQ(t_1_clone.GetStrides(), SizeVector({12, 8, 2}));
-    EXPECT_EQ(t_1_clone.ToFlatVector<float>(),
-              std::vector<float>({0, 2, 8, 10, 12, 14, 20, 22}));
+    {
+        Tensor t_1_clone = t_1.Clone(src_device);
+        EXPECT_FALSE(t_1_clone.IsContiguous());
+        EXPECT_EQ(t_1_clone.GetShape(), SizeVector({2, 2, 2}));
+        EXPECT_EQ(t_1_clone.GetStrides(), SizeVector({12, 8, 2}));
+        EXPECT_EQ(t_1_clone.ToFlatVector<float>(),
+                  std::vector<float>({0, 2, 8, 10, 12, 14, 20, 22}));
+    }
+    {
+        Tensor t_1_clone = t_1.Clone(dst_device);
+        EXPECT_FALSE(t_1_clone.IsContiguous());
+        EXPECT_EQ(t_1_clone.GetShape(), SizeVector({2, 2, 2}));
+        EXPECT_EQ(t_1_clone.GetStrides(), SizeVector({12, 8, 2}));
+        EXPECT_EQ(t_1_clone.ToFlatVector<float>(),
+                  std::vector<float>({0, 2, 8, 10, 12, 14, 20, 22}));
+    }
 }
 
 TEST_P(TensorPermuteDevices, IndexGet) {
