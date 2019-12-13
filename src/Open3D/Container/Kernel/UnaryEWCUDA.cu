@@ -59,9 +59,10 @@ void CopyCUDA(const Tensor& src, Tensor& dst) {
             MemoryManager::Memcpy(
                     dst.GetDataPtr(), dst_device, src.GetDataPtr(), src_device,
                     DtypeUtil::ByteSize(dtype) * shape.NumElements());
-        } else if (src_device == dst_device ||
-                   CUDAState::GetInstance()->IsP2PEnabled(src_device,
-                                                          dst_device)) {
+        } else if (src_device == dst_device) {
+            // For more optimized version, one can check if P2P from src to dst
+            // is enabled, then put synchronization with streams on both src and
+            // dst to wait for copy kernel to complete.
             CUDASwitchDevice switcher(src_device);
             DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
                 Indexer indexer({src}, dst);
