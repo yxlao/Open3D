@@ -68,7 +68,20 @@ public:
     static std::vector<std::pair<Device, Device>> TestCases() {
 #ifdef BUILD_CUDA_MODULE
         std::shared_ptr<CUDAState> cuda_state = CUDAState::GetInstance();
-        if (cuda_state->GetNumDevices() >= 1) {
+        if (cuda_state->GetNumDevices() > 1) {
+            // To test multiple CUDA devices, we only need to test CUDA 0 and 1.
+            return {
+                    {Device("CPU:0"), Device("CPU:0")},
+                    {Device("CPU:0"), Device("CUDA:0")},
+                    {Device("CPU:0"), Device("CUDA:1")},
+                    {Device("CUDA:0"), Device("CPU:0")},
+                    {Device("CUDA:0"), Device("CUDA:0")},
+                    {Device("CUDA:0"), Device("CUDA:1")},
+                    {Device("CUDA:1"), Device("CPU:0")},
+                    {Device("CUDA:1"), Device("CUDA:0")},
+                    {Device("CUDA:1"), Device("CUDA:1")},
+            };
+        } else if (cuda_state->GetNumDevices() == 1) {
             return {
                     {Device("CPU:0"), Device("CPU:0")},
                     {Device("CPU:0"), Device("CUDA:0")},
