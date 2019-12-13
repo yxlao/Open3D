@@ -107,6 +107,15 @@ private:
         // Check and enable all possible peer to peer access.
         p2p_enabled_ = std::vector<std::vector<bool>>(
                 num_devices_, std::vector<bool>(num_devices_, false));
+
+        for (int src_id = 0; src_id < num_devices_; ++src_id) {
+            for (int tar_id = 0; tar_id < num_devices_; ++tar_id) {
+                if (src_id == tar_id) {
+                    p2p_enabled_[src_id][tar_id] = true;
+                }
+            }
+        }
+
         // for (int src_id = 0; src_id < num_devices_; ++src_id) {
         //     for (int tar_id = 0; tar_id < num_devices_; ++tar_id) {
         //         if (src_id == tar_id) {
