@@ -59,6 +59,8 @@ namespace open3d {
 class CUDAState {
 public:
     static std::shared_ptr<CUDAState> GetInstance() {
+        // Note: for testing, we need to figure out a way to deliberately
+        // disable P2P to test both cases.
         static std::shared_ptr<CUDAState> instance{new CUDAState};
         return instance;
     }
