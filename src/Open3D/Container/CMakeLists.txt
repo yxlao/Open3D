@@ -14,6 +14,7 @@ set (CONTAINER_SRC
     DLPack/DLPackConverter.cpp
     AdvancedIndexing.cpp
     Broadcast.cpp
+    CUDAUtils.cpp
     MemoryManager.cpp
     MemoryManagerCPU.cpp
     MemoryManagerCUDA.cu

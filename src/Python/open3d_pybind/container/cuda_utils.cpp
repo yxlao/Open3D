@@ -24,14 +24,15 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#pragma once
+#include "open3d_pybind/container/container.h"
 
-#include "open3d_pybind/open3d_pybind.h"
+#include "Open3D/Container/CUDAUtils.h"
 
-void pybind_container(py::module& m);
+using namespace open3d;
 
-void pybind_cuda_utils(py::module& m);
-void pybind_container_dtype(py::module& m);
-void pybind_container_device(py::module& m);
-void pybind_container_size_vector(py::module& m);
-void pybind_container_tensor(py::module& m);
+void pybind_cuda_utils(py::module &m) {
+    py::module m_cuda = m.def_submodule("cuda");
+
+    m_cuda.def("device_count", cuda::DeviceCount);
+    m_cuda.def("is_available", cuda::IsAvailable);
+}

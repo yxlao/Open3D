@@ -28,6 +28,7 @@
 #include "open3d_pybind/open3d_pybind.h"
 
 void pybind_container(py::module &m) {
+    pybind_cuda_utils(m);
     pybind_container_dtype(m);
     pybind_container_device(m);
     pybind_container_size_vector(m);

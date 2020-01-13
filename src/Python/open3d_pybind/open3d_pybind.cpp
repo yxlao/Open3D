@@ -43,6 +43,7 @@ PYBIND11_MODULE(open3d_pybind, m) {
     pybind_utility(m);
 
     pybind_container(m);
+
     pybind_camera(m);
     pybind_color_map(m);
     pybind_geometry(m);

@@ -69,8 +69,8 @@ inline void __OPEN3D_CUDA_CHECK(cudaError_t err,
 
 namespace cuda {
 
-inline int DeviceCount();
-inline bool IsAvailable();
+int DeviceCount();
+bool IsAvailable();
 
 }  // namespace cuda
 }  // namespace open3d
