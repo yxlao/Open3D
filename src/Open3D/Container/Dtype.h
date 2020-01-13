@@ -91,6 +91,9 @@ public:
     static std::string ToString(const Dtype &dtype) {
         std::string str = "";
         switch (dtype) {
+            case Dtype::Undefined:
+                str = "Undefined";
+                break;
             case Dtype::Float32:
                 str = "Float32";
                 break;

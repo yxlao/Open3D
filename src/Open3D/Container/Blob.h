@@ -76,8 +76,12 @@ public:
         : deleter_(deleter), data_ptr_(data_ptr), device_(device) {}
 
     ~Blob() {
-        if (deleter_ && data_ptr_) {
-            deleter_(data_ptr_);
+        if (deleter_) {
+            // Our custom deleter's void* argument is not used. The deleter
+            // function itself shall handle destruction without the argument.
+            // The void(void*) signature is kept to be consistent with DLPack's
+            // deleter.
+            deleter_(nullptr);
         } else {
             MemoryManager::Free(data_ptr_, device_);
         }

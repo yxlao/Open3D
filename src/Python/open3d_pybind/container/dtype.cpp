@@ -24,42 +24,26 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Open3D/Container/Blob.h"
-#include "Open3D/Container/Device.h"
-#include "Open3D/Container/MemoryManager.h"
-#include "TestUtility/UnitTest.h"
+#include "open3d_pybind/container/container.h"
+#include "open3d_pybind/docstring.h"
+#include "open3d_pybind/open3d_pybind.h"
 
-#include "Container/ContainerTest.h"
+#include "Open3D/Container/Dtype.h"
 
-using namespace std;
 using namespace open3d;
 
-class BlobPermuteDevices : public PermuteDevices {};
-INSTANTIATE_TEST_SUITE_P(Blob,
-                         BlobPermuteDevices,
-                         testing::ValuesIn(PermuteDevices::TestCases()));
+void pybind_container_dtype(py::module &m) {
+    py::enum_<Dtype>(m, "Dtype")
+            .value("Undefined", Dtype::Undefined)
+            .value("Float32", Dtype::Float32)
+            .value("Float64", Dtype::Float64)
+            .value("Int32", Dtype::Int32)
+            .value("Int64", Dtype::Int64)
+            .value("UInt8", Dtype::UInt8)
+            .export_values();
 
-TEST_P(BlobPermuteDevices, BlobConstructor) {
-    Device device = GetParam();
-
-    Blob b(10, Device(device));
-}
-
-TEST_P(BlobPermuteDevices, BlobConstructorWithExternalMemory) {
-    Device device = GetParam();
-
-    void* data_ptr = MemoryManager::Malloc(8, device);
-    bool deleter_called = false;
-
-    auto deleter = [&device, &deleter_called, data_ptr](void* dummy) -> void {
-        MemoryManager::Free(data_ptr, device);
-        deleter_called = true;
-    };
-
-    {
-        Blob b(device, data_ptr, deleter);
-        EXPECT_EQ(b.GetDataPtr(), data_ptr);
-        EXPECT_FALSE(deleter_called);
-    }
-    EXPECT_TRUE(deleter_called);
+    py::class_<DtypeUtil> dtype_util(m, "DtypeUtil");
+    dtype_util.def(py::init<>())
+            .def("byte_size", &DtypeUtil::ByteSize)
+            .def("to_string", &DtypeUtil::ToString);
 }

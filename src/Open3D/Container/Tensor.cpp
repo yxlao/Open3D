@@ -258,12 +258,14 @@ std::pair<bool, SizeVector> Tensor::ComputeNewStrides(
 std::string Tensor::ToString(bool with_suffix,
                              const std::string& indent) const {
     std::ostringstream rc;
-
     if (device_.GetType() == Device::DeviceType::CUDA || !IsContiguous()) {
         Tensor host_contiguous_tensor = Copy(Device("CPU:0"));
         rc << host_contiguous_tensor.ToString(false, "");
     } else {
-        if (shape_.size() == 0) {
+        if (shape_.NumElements() == 0) {
+            rc << indent;
+            rc << "0-element Tensor";
+        } else if (shape_.size() == 0) {
             rc << indent;
             rc << ScalarPtrToString(data_ptr_);
         } else if (shape_.size() == 1) {

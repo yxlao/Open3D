@@ -24,42 +24,21 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Open3D/Container/Blob.h"
-#include "Open3D/Container/Device.h"
-#include "Open3D/Container/MemoryManager.h"
-#include "TestUtility/UnitTest.h"
+#pragma once
 
-#include "Container/ContainerTest.h"
+#include <string>
 
-using namespace std;
-using namespace open3d;
+#include "Open3D/Container/Dtype.h"
+#include "Open3D/Container/Tensor.h"
 
-class BlobPermuteDevices : public PermuteDevices {};
-INSTANTIATE_TEST_SUITE_P(Blob,
-                         BlobPermuteDevices,
-                         testing::ValuesIn(PermuteDevices::TestCases()));
+#include "open3d_pybind/open3d_pybind.h"
 
-TEST_P(BlobPermuteDevices, BlobConstructor) {
-    Device device = GetParam();
+namespace open3d {
+namespace pybind_utils {
 
-    Blob b(10, Device(device));
-}
+Dtype ArrayFormatToDtype(const std::string& format);
 
-TEST_P(BlobPermuteDevices, BlobConstructorWithExternalMemory) {
-    Device device = GetParam();
+std::string DtypeToArrayFormat(const Dtype& dtype);
 
-    void* data_ptr = MemoryManager::Malloc(8, device);
-    bool deleter_called = false;
-
-    auto deleter = [&device, &deleter_called, data_ptr](void* dummy) -> void {
-        MemoryManager::Free(data_ptr, device);
-        deleter_called = true;
-    };
-
-    {
-        Blob b(device, data_ptr, deleter);
-        EXPECT_EQ(b.GetDataPtr(), data_ptr);
-        EXPECT_FALSE(deleter_called);
-    }
-    EXPECT_TRUE(deleter_called);
-}
+}  // namespace pybind_utils
+}  // namespace open3d

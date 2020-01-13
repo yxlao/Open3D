@@ -24,42 +24,33 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Open3D/Container/Blob.h"
-#include "Open3D/Container/Device.h"
-#include "Open3D/Container/MemoryManager.h"
-#include "TestUtility/UnitTest.h"
+#include "open3d_pybind/container/container.h"
+#include "open3d_pybind/docstring.h"
+#include "open3d_pybind/open3d_pybind.h"
 
-#include "Container/ContainerTest.h"
+#include "Open3D/Container/SizeVector.h"
 
-using namespace std;
 using namespace open3d;
 
-class BlobPermuteDevices : public PermuteDevices {};
-INSTANTIATE_TEST_SUITE_P(Blob,
-                         BlobPermuteDevices,
-                         testing::ValuesIn(PermuteDevices::TestCases()));
+void pybind_container_size_vector(py::module &m) {
+    py::class_<SizeVector> size_vector(m, "SizeVector",
+                                       "SizeVector is a vector of int64_t for "
+                                       "specifying shape, strides and etc.");
 
-TEST_P(BlobPermuteDevices, BlobConstructor) {
-    Device device = GetParam();
-
-    Blob b(10, Device(device));
-}
-
-TEST_P(BlobPermuteDevices, BlobConstructorWithExternalMemory) {
-    Device device = GetParam();
-
-    void* data_ptr = MemoryManager::Malloc(8, device);
-    bool deleter_called = false;
-
-    auto deleter = [&device, &deleter_called, data_ptr](void* dummy) -> void {
-        MemoryManager::Free(data_ptr, device);
-        deleter_called = true;
-    };
-
-    {
-        Blob b(device, data_ptr, deleter);
-        EXPECT_EQ(b.GetDataPtr(), data_ptr);
-        EXPECT_FALSE(deleter_called);
-    }
-    EXPECT_TRUE(deleter_called);
+    size_vector
+            .def(py::init([](py::array_t<int64_t, py::array::c_style |
+                                                          py::array::forcecast>
+                                     np_array) {
+                py::buffer_info info = np_array.request();
+                if (info.ndim != 1) {
+                    utility::LogError("SizeVector must be 1-D array.");
+                }
+                // The buffer is copied to avoid corruption.
+                int64_t *start = static_cast<int64_t *>(info.ptr);
+                return new SizeVector(start, start + info.shape[0]);
+            }))
+            .def("to_string", &SizeVector::ToString)
+            .def("__repr__", [](const SizeVector &size_vector) {
+                return size_vector.ToString();
+            });
 }

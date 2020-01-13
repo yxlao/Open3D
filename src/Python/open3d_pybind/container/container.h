@@ -24,42 +24,13 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Open3D/Container/Blob.h"
-#include "Open3D/Container/Device.h"
-#include "Open3D/Container/MemoryManager.h"
-#include "TestUtility/UnitTest.h"
+#pragma once
 
-#include "Container/ContainerTest.h"
+#include "open3d_pybind/open3d_pybind.h"
 
-using namespace std;
-using namespace open3d;
+void pybind_container(py::module& m);
 
-class BlobPermuteDevices : public PermuteDevices {};
-INSTANTIATE_TEST_SUITE_P(Blob,
-                         BlobPermuteDevices,
-                         testing::ValuesIn(PermuteDevices::TestCases()));
-
-TEST_P(BlobPermuteDevices, BlobConstructor) {
-    Device device = GetParam();
-
-    Blob b(10, Device(device));
-}
-
-TEST_P(BlobPermuteDevices, BlobConstructorWithExternalMemory) {
-    Device device = GetParam();
-
-    void* data_ptr = MemoryManager::Malloc(8, device);
-    bool deleter_called = false;
-
-    auto deleter = [&device, &deleter_called, data_ptr](void* dummy) -> void {
-        MemoryManager::Free(data_ptr, device);
-        deleter_called = true;
-    };
-
-    {
-        Blob b(device, data_ptr, deleter);
-        EXPECT_EQ(b.GetDataPtr(), data_ptr);
-        EXPECT_FALSE(deleter_called);
-    }
-    EXPECT_TRUE(deleter_called);
-}
+void pybind_container_dtype(py::module& m);
+void pybind_container_device(py::module& m);
+void pybind_container_size_vector(py::module& m);
+void pybind_container_tensor(py::module& m);

@@ -32,7 +32,21 @@ try:
 except:
     pass
 
-from .open3d import * # py2 py3 compatible
+from open3d.open3d_pybind import camera
+from open3d.open3d_pybind import color_map
+from open3d.open3d_pybind import geometry
+from open3d.open3d_pybind import integration
+from open3d.open3d_pybind import io
+from open3d.open3d_pybind import odometry
+from open3d.open3d_pybind import registration
+from open3d.open3d_pybind import utility
+from open3d.open3d_pybind import visualization
+
+from open3d.open3d_pybind import Dtype
+from open3d.open3d_pybind import Device
+from open3d.open3d_pybind import DtypeUtil
+from open3d.core import SizeVector
+from open3d.core import Tensor
 
 __version__ = '@PROJECT_VERSION@'
 
@@ -47,6 +61,7 @@ if "@ENABLE_JUPYTER@" == "ON":
             'require': 'open3d/extension'
         }]
 
+
 _build_config = {
-        "BUILD_TENSORFLOW_OPS" : "@BUILD_TENSORFLOW_OPS@" == "ON",
-        }
+    "BUILD_TENSORFLOW_OPS": "@BUILD_TENSORFLOW_OPS@" == "ON",
+}

@@ -168,8 +168,10 @@ Tensor FromDLPack(const DLManagedTensor* src) {
     }
 
     // Open3D Blob's expects an std::function<void(void*)> deleter.
-    std::function<void(void*)> deleter = [src](void*) -> void {
-        src->deleter(const_cast<DLManagedTensor*>(src));
+    auto deleter = [src](void* dummy) -> void {
+        if (src->deleter != nullptr) {
+            src->deleter(const_cast<DLManagedTensor*>(src));
+        }
     };
 
     SizeVector shape(src->dl_tensor.shape,

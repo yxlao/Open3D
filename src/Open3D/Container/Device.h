@@ -33,7 +33,7 @@
 
 namespace open3d {
 
-/// Device context spedifies device type and device id
+/// Device context specifying device type and device id.
 /// For CPU, there is only one device with id 0
 class Device {
 public:
@@ -46,7 +46,7 @@ public:
     }
 
     /// Constructor with device specified
-    Device(const DeviceType& device_type, int device_id)
+    Device(DeviceType device_type, int device_id)
         : device_type_(device_type), device_id_(device_id) {
         AssertCPUDeviceIDIsZero();
     }
