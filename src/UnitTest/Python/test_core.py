@@ -173,6 +173,7 @@ def test_tensor_from_pytorch(device):
         th_t = th_t.cuda(device_id)
 
     o3_t = o3d.Tensor.from_dlpack(torch.utils.dlpack.to_dlpack(th_t))
+    # TODO: fix cpu to cpu copy
     if device_type == o3d.Device.DeviceType.CUDA:
         np.testing.assert_equal(th_t.cpu().numpy(), o3_t.cpu().numpy())
     else:
