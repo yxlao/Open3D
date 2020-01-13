@@ -32,6 +32,7 @@
 #include "open3d_pybind/pybind_utils.h"
 
 #include "Open3D/Container/Blob.h"
+#include "Open3D/Container/CUDAUtils.h"
 #include "Open3D/Container/Device.h"
 #include "Open3D/Container/Dispatch.h"
 #include "Open3D/Container/Dtype.h"
@@ -82,38 +83,58 @@ void pybind_container_tensor(py::module& m) {
 
     tensor.def(py::init([](py::array np_array, const Dtype& dtype,
                            const Device& device) {
-              py::buffer_info info = np_array.request();
-              SizeVector shape(info.shape.begin(), info.shape.end());
-              Tensor t;
-              DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
-                  t = Tensor(ToFlatVector<scalar_t>(np_array), shape, dtype,
-                             device);
-              });
-              return t;
-          }))
-            .def("numpy",
-                 [](const Tensor& tensor) {
-                     if (tensor.GetDevice().GetType() !=
-                         Device::DeviceType::CPU) {
-                         utility::LogError(
-                                 "Can only convert CPU Tensor to numpy. Copy "
-                                 "Tensor to CPU before converting to numpy.");
-                     }
-                     py::dtype py_dtype =
-                             py::dtype(pybind_utils::DtypeToArrayFormat(
-                                     tensor.GetDtype()));
-                     py::array::ShapeContainer py_shape(tensor.GetShape());
-                     SizeVector strides = tensor.GetStrides();
-                     int64_t element_byte_size =
-                             DtypeUtil::ByteSize(tensor.GetDtype());
-                     for (auto& s : strides) {
-                         s *= element_byte_size;
-                     }
-                     py::array::StridesContainer py_strides(strides);
+        py::buffer_info info = np_array.request();
+        SizeVector shape(info.shape.begin(), info.shape.end());
+        Tensor t;
+        DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
+            t = Tensor(ToFlatVector<scalar_t>(np_array), shape, dtype, device);
+        });
+        return t;
+    }));
 
-                     return py::array(py_dtype, py_shape, py_strides,
-                                      tensor.GetDataPtr());
-                 })
+    // // Device transfer
+    // tensor.def("cuda",
+    //            [](const Tensor& tensor, int64_t device_id = 0) {
+    //                if (!cuda::IsAvailable()) {
+    //                    utility::LogError(
+    //                            "CUDA is not available, cannot copy Tensor.");
+    //                }
+    //                if (device_id < 0 || device_id >= cuda::DeviceCount()) {
+    //                    utility::LogError(
+    //                            "Invalid device_id {}, must satisfy 0 <= "
+    //                            "device_id < {}",
+    //                            device_id, cuda::DeviceCount());
+    //                }
+    //                return tensor.Copy(
+    //                        Device(Device::DeviceType::CUDA, device_id));
+    //            })
+    //         .def("cpu", [](const Tensor& tensor) {
+    //             return tensor.Copy(Device(Device::DeviceType::CPU, 0));
+    //         });
+
+    // Buffer I/O for Numpy and DLPack(PyTorch)
+    tensor.def("numpy",
+               [](const Tensor& tensor) {
+                   if (tensor.GetDevice().GetType() !=
+                       Device::DeviceType::CPU) {
+                       utility::LogError(
+                               "Can only convert CPU Tensor to numpy. Copy "
+                               "Tensor to CPU before converting to numpy.");
+                   }
+                   py::dtype py_dtype = py::dtype(
+                           pybind_utils::DtypeToArrayFormat(tensor.GetDtype()));
+                   py::array::ShapeContainer py_shape(tensor.GetShape());
+                   SizeVector strides = tensor.GetStrides();
+                   int64_t element_byte_size =
+                           DtypeUtil::ByteSize(tensor.GetDtype());
+                   for (auto& s : strides) {
+                       s *= element_byte_size;
+                   }
+                   py::array::StridesContainer py_strides(strides);
+
+                   return py::array(py_dtype, py_shape, py_strides,
+                                    tensor.GetDataPtr());
+               })
             .def_static(
                     "from_numpy",
                     [](py::array np_array) {
