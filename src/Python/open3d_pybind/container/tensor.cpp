@@ -108,9 +108,9 @@ void pybind_container_tensor(py::module& m) {
     //                return tensor.Copy(
     //                        Device(Device::DeviceType::CUDA, device_id));
     //            })
-    //         .def("cpu", [](const Tensor& tensor) {
-    //             return tensor.Copy(Device(Device::DeviceType::CPU, 0));
-    //         });
+    tensor.def("cpu", [](const Tensor& tensor) {
+        return tensor.Copy(Device(Device::DeviceType::CPU, 0));
+    });
 
     // Buffer I/O for Numpy and DLPack(PyTorch)
     tensor.def("numpy",

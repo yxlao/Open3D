@@ -173,10 +173,16 @@ def test_tensor_from_pytorch(device):
         th_t = th_t.cuda(device_id)
 
     o3_t = o3d.Tensor.from_dlpack(torch.utils.dlpack.to_dlpack(th_t))
-    np.testing.assert_equal(th_t.cpu().numpy(), o3_t.cpu().numpy())
+    if device_type == o3d.Device.DeviceType.CUDA:
+        np.testing.assert_equal(th_t.cpu().numpy(), o3_t.cpu().numpy())
+    else:
+        np.testing.assert_equal(th_t.numpy(), o3_t.numpy())
 
     th_t[0, 0] = 100
-    np.testing.assert_equal(th_t.cpu().numpy(), o3_t.cpu().numpy())
+    if device_type == o3d.Device.DeviceType.CUDA:
+        np.testing.assert_equal(th_t.cpu().numpy(), o3_t.cpu().numpy())
+    else:
+        np.testing.assert_equal(th_t.numpy(), o3_t.numpy())
 
 
 def test_tensor_to_pytorch():
