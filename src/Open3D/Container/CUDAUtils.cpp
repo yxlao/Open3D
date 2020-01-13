@@ -24,53 +24,22 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-/// \file CUDAUtils.h
-/// \brief Common CUDA utilities
-///
-/// CUDAUtils.h may be included from CPU-only code.
-/// Use #ifdef __CUDACC__ to mark conitional compilation
-
-#pragma once
-
-#include "Open3D/Utility/Console.h"
-
-#ifdef BUILD_CUDA_MODULE
-
-#include <cuda.h>
-#include <cuda_runtime.h>
-
-#define OPEN3D_HOST_DEVICE __host__ __device__
-#define OPEN3D_ASSERT_HOST_DEVICE_LAMBDA(type)                            \
-    static_assert(__nv_is_extended_host_device_lambda_closure_type(type), \
-                  #type " must be a __host__ __device__ lambda")
-#define OPEN3D_CUDA_CHECK(err) \
-    open3d::__OPEN3D_CUDA_CHECK(err, __FILE__, __LINE__)
-
-#else  // #ifdef BUILD_CUDA_MODULE
-
-#define OPEN3D_HOST_DEVICE
-#define OPEN3D_ASSERT_HOST_DEVICE_LAMBDA(type)
-#define OPEN3D_CUDA_CHECK(err)
-
-#endif  // #ifdef BUILD_CUDA_MODULE
+#include "Open3D/Container/CUDAUtils.h"
+#include "Open3D/Container/CUDAState.cuh"
 
 namespace open3d {
-
-#ifdef BUILD_CUDA_MODULE
-inline void __OPEN3D_CUDA_CHECK(cudaError_t err,
-                                const char *file,
-                                const int line) {
-    if (err != cudaSuccess) {
-        utility::LogError("{}:{} CUDA runtime error: {}", file, line,
-                          cudaGetErrorString(err));
-    }
-}
-#endif
-
 namespace cuda {
 
-inline int DeviceCount();
-inline bool IsAvailable();
+int DeviceCount() {
+#ifdef BUILD_CUDA_MODULE
+    std::shared_ptr<CUDAState> cuda_state = CUDAState::GetInstance();
+    return cuda_state->GetNumDevices();
+#else
+    return 0;
+#endif
+}
+
+bool IsAvailable() { return cuda::DeviceCount() > 0; }
 
 }  // namespace cuda
 }  // namespace open3d
