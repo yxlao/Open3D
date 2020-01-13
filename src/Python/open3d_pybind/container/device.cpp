@@ -44,7 +44,8 @@ void pybind_container_device(py::module &m) {
             .def("__ene__", &Device::operator!=)
             .def("to_string", &Device::ToString)
             .def("get_type", &Device::GetType)
-            .def("get_id", &Device::GetID);
+            .def("get_id", &Device::GetID)
+            .def("__repr__", &Device::ToString);
 
     py::enum_<Device::DeviceType>(device, "DeviceType")
             .value("CPU", Device::DeviceType::CPU)

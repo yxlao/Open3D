@@ -45,6 +45,7 @@ from open3d.open3d_pybind import visualization
 from open3d.open3d_pybind import Dtype
 from open3d.open3d_pybind import Device
 from open3d.open3d_pybind import DtypeUtil
+from open3d.open3d_pybind import cuda
 from open3d.core import SizeVector
 from open3d.core import Tensor
 

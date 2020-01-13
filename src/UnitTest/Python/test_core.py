@@ -32,6 +32,17 @@ import time
 import pytest
 
 
+def list_devices():
+    devices = [o3d.Device("CPU:" + str(0))]
+    if (o3d.cuda.device_count() != torch.cuda.device_count()):
+        raise RuntimeError(
+            f"o3d.cuda.device_count() != torch.cuda.device_count(), {o3d.cuda.device_count()} != {torch.cuda.device_count()}"
+        )
+    for i in range(o3d.cuda.device_count()):
+        devices.append(o3d.Device("CUDA:" + str(i)))
+    return devices
+
+
 def test_dtype():
     dtype = o3d.Dtype.Int32
     assert o3d.DtypeUtil.byte_size(dtype) == 4
@@ -149,16 +160,23 @@ def test_tensor_from_to_numpy():
     np.testing.assert_equal(np_t, o3_t.numpy())
 
 
-def test_tensor_from_pytorch():
+@pytest.mark.parametrize("device", list_devices())
+def test_tensor_from_pytorch(device):
+    print(f"Testing device {device}")
+    device_id = device.get_id()
+    device_type = device.get_type()
+
     np_r = np.random.randint(10, size=(10, 10)).astype(np.int32)
     th_r = torch.Tensor(np_r)
     th_t = th_r[1:10:2, 1:10:3].T
+    if device_type == o3d.Device.DeviceType.CUDA:
+        th_t = th_t.cuda(device_id)
 
     o3_t = o3d.Tensor.from_dlpack(torch.utils.dlpack.to_dlpack(th_t))
-    np.testing.assert_equal(th_t.numpy(), o3_t.numpy())
+    np.testing.assert_equal(th_t.cpu().numpy(), o3_t.numpy())
 
     th_t[0, 0] = 100
-    np.testing.assert_equal(th_t.numpy(), o3_t.numpy())
+    np.testing.assert_equal(th_t.cpu().numpy(), o3_t.numpy())
 
 
 def test_tensor_to_pytorch():
