@@ -92,25 +92,25 @@ void pybind_container_tensor(py::module& m) {
         return t;
     }));
 
-    // // Device transfer
-    // tensor.def("cuda",
-    //            [](const Tensor& tensor, int64_t device_id = 0) {
-    //                if (!cuda::IsAvailable()) {
-    //                    utility::LogError(
-    //                            "CUDA is not available, cannot copy Tensor.");
-    //                }
-    //                if (device_id < 0 || device_id >= cuda::DeviceCount()) {
-    //                    utility::LogError(
-    //                            "Invalid device_id {}, must satisfy 0 <= "
-    //                            "device_id < {}",
-    //                            device_id, cuda::DeviceCount());
-    //                }
-    //                return tensor.Copy(
-    //                        Device(Device::DeviceType::CUDA, device_id));
-    //            })
-    tensor.def("cpu", [](const Tensor& tensor) {
-        return tensor.Copy(Device(Device::DeviceType::CPU, 0));
-    });
+    // Device transfer
+    tensor.def("cuda",
+               [](const Tensor& tensor, int64_t device_id = 0) {
+                   if (!cuda::IsAvailable()) {
+                       utility::LogError(
+                               "CUDA is not available, cannot copy Tensor.");
+                   }
+                   if (device_id < 0 || device_id >= cuda::DeviceCount()) {
+                       utility::LogError(
+                               "Invalid device_id {}, must satisfy 0 <= "
+                               "device_id < {}",
+                               device_id, cuda::DeviceCount());
+                   }
+                   return tensor.Copy(
+                           Device(Device::DeviceType::CUDA, device_id));
+               })
+            .def("cpu", [](const Tensor& tensor) {
+                return tensor.Copy(Device(Device::DeviceType::CPU, 0));
+            });
 
     // Buffer I/O for Numpy and DLPack(PyTorch)
     tensor.def("numpy",
