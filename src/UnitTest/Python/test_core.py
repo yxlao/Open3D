@@ -162,7 +162,6 @@ def test_tensor_from_to_numpy():
 
 @pytest.mark.parametrize("device", list_devices())
 def test_tensor_from_pytorch(device):
-    print(f"Testing device {device}")
     device_id = device.get_id()
     device_type = device.get_type()
 
@@ -179,7 +178,21 @@ def test_tensor_from_pytorch(device):
     np.testing.assert_equal(th_t.cpu().numpy(), o3_t.cpu().numpy())
 
 
-def test_tensor_to_pytorch():
+@pytest.mark.parametrize("device", list_devices())
+def test_tensor_to_pytorch(device):
+    np_r = np.random.randint(10, size=(10, 10)).astype(np.int32)
+    np_t = np_r[1:10:2, 1:10:3].T
+
+    o3_t = o3d.Tensor(np_t, device=device)
+    th_t = torch.utils.dlpack.from_dlpack(o3_t.to_dlpack())
+    np.testing.assert_equal(o3_t.cpu().numpy(), np_t)
+    np.testing.assert_equal(th_t.cpu().numpy(), np_t)
+
+    th_t[0, 0] = 100
+    np.testing.assert_equal(o3_t.cpu().numpy(), th_t.cpu().numpy())
+
+
+def test_tensor_numpy_to_open3d_to_pytorch():
     # Numpy -> Open3D -> PyTorch all share the same memory
     np_r = np.random.randint(10, size=(10, 10)).astype(np.int32)
     np_t = np_r[1:10:2, 1:10:3].T
