@@ -25,7 +25,10 @@
 // ----------------------------------------------------------------------------
 
 #include "Open3D/Container/CUDAUtils.h"
+
+#ifdef BUILD_CUDA_MODULE
 #include "Open3D/Container/CUDAState.cuh"
+#endif
 
 namespace open3d {
 namespace cuda {
