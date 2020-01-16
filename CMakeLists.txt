@@ -2,7 +2,7 @@
 # https://cmake.org/cmake/help/v3.1/
 # https://gitlab.kitware.com/cmake/community/wikis/doc/tutorials/
 
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.9.0)
 set (CMAKE_CXX_STANDARD 11)
 
 add_custom_target(build_all_3rd_party_libs
@@ -186,23 +186,6 @@ elseif (UNIX)
     set(BUILD_LIBREALSENSE OFF)
 endif ()
 
-# Set OpenMP
-if (WITH_OPENMP)
-    find_package(OpenMP QUIET)
-    if (OPENMP_FOUND)
-        message(STATUS "Using installed OpenMP ${OpenMP_VERSION}")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-
-        set(Config_Open3D_C_FLAGS          ${OpenMP_C_FLAGS})
-        set(Config_Open3D_CXX_FLAGS        ${OpenMP_CXX_FLAGS})
-        set(Config_Open3D_EXE_LINKER_FLAGS ${OpenMP_EXE_LINKER_FLAGS})
-    else ()
-        message(STATUS "OpenMP NOT found")
-    endif ()
-  endif ()
-
 # recursively parse and return the entire directory tree.
 # the result is placed in output
 function(Directories root output)
@@ -217,6 +200,17 @@ function(Directories root output)
     endforeach()
     set (${output} ${data} PARENT_SCOPE)
 endfunction()
+
+# Set OpenMP
+if (WITH_OPENMP)
+    find_package(OpenMP QUIET)
+    if(OpenMP_CXX_FOUND)
+        message(STATUS "Using installed OpenMP ${OpenMP_VERSION}")
+        link_libraries(OpenMP::OpenMP_CXX)
+    else()
+        message(STATUS "OpenMP NOT found")
+    endif()
+endif ()
 
 macro(ADD_SOURCE_GROUP MODULE_NAME)
     file(GLOB MODULE_HEADER_FILES "${MODULE_NAME}/*.h")

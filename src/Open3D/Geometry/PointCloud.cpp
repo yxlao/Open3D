@@ -48,6 +48,11 @@ PointCloud &PointCloud::Clear() {
 bool PointCloud::IsEmpty() const { return !HasPoints(); }
 
 Eigen::Vector3d PointCloud::GetMinBound() const {
+#ifdef _OPENMP
+    utility::LogInfo("OpenMP actually enabled");
+#else
+    utility::LogInfo("OpenMP actually not enabled");
+#endif
     return ComputeMinBound(points_);
 }
 
