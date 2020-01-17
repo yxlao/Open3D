@@ -132,22 +132,21 @@ void pybind_container_tensor(py::module& m) {
                    }
                    py::array::StridesContainer py_strides(strides);
 
-                   auto TensorCapsuleDestructor = [](PyObject* data) {
-                       Tensor* tensor = (Tensor*)PyCapsule_GetPointer(
-                               data, "open3d_tensor");
-                       if (tensor) {
-                       } else {
-                           PyErr_Clear();
-                       }
-                   };
+                   Tensor* tmp_tensor = new Tensor(tensor);
+                   py::capsule free_when_done(tmp_tensor, [](void* f) {
+                       Tensor* tmp = reinterpret_cast<Tensor*>(f);
+                       utility::LogInfo("Freeing temp tensor.");
+                       delete tmp;
+                   });
 
-                   // https://stackoverflow.com/questions/44659924/returning-numpy-arrays-via-pybind11
-                   // https://github.com/pybind/pybind11/issues/1042
-                   py::capsule tensor_base(&tensor, "open3d_tensor",
-                                           TensorCapsuleDestructor);
+                   //    //
+                   //    https://stackoverflow.com/questions/44659924/returning-numpy-arrays-via-pybind11
+                   //    // https://github.com/pybind/pybind11/issues/1042
+                   //    py::capsule tensor_base(&tensor, "open3d_tensor",
+                   //                            TensorCapsuleDestructor);
 
                    return py::array(py_dtype, py_shape, py_strides,
-                                    tensor.GetDataPtr(), tensor_base);
+                                    tensor.GetDataPtr(), free_when_done);
                })
             .def_static(
                     "from_numpy",
