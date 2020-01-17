@@ -152,6 +152,8 @@ def test_tensor_from_to_numpy():
     np.testing.assert_equal(np_t, np_t_dst)
     np_t[0, 0] = 100
     np.testing.assert_equal(np_t, np_t_dst)
+    np_t_dst[0, 1] = 200
+    np.testing.assert_equal(np_t, np_t_dst)
 
     # np_t[0, 0] = 100
     # np.testing.assert_equal(np_t, o3_t.numpy())
