@@ -146,7 +146,7 @@ def test_tensor_constructor():
 def test_tensor_from_to_numpy():
     # Normal strides o3d -> numpy
     src_t = np.array([[0., 1., 2.], [3., 4., 5.]])
-    o3d_t = o3d.Tensor(src_t) # Copy
+    o3d_t = o3d.Tensor(src_t)  # Copy
     dst_t = o3d_t.numpy()
     np.testing.assert_equal(dst_t, src_t)
 
@@ -155,7 +155,7 @@ def test_tensor_from_to_numpy():
 
     # Normal strides numpy -> o3d -> numpy
     src_t = np.array([[0., 1., 2.], [3., 4., 5.]])
-    o3d_t = o3d.Tensor.from_numpy(src_t) # Shared memory
+    o3d_t = o3d.Tensor.from_numpy(src_t)  # Shared memory
     dst_t = o3d_t.numpy()
     np.testing.assert_equal(dst_t, src_t)
 
@@ -170,7 +170,7 @@ def test_tensor_from_to_numpy():
     # Special strides numpy -> o3d -> numpy
     ran_t = np.random.randint(10, size=(10, 10)).astype(np.int32)
     src_t = ran_t[1:10:2, 1:10:3].T
-    o3d_t = o3d.Tensor.from_numpy(src_t) # Shared memory
+    o3d_t = o3d.Tensor.from_numpy(src_t)  # Shared memory
     dst_t = o3d_t.numpy()
     np.testing.assert_equal(dst_t, src_t)
 
@@ -187,30 +187,25 @@ def test_tensor_to_numpy_scope():
     src_t = np.array([[10, 11, 12.], [13., 14., 15.]])
 
     def get_dst_t():
-        o3d_t = o3d.Tensor(src_t) # Copy
+        o3d_t = o3d.Tensor(src_t)  # Copy
         dst_t = o3d_t.numpy()
-        print(dst_t)
         return dst_t
 
     dst_t = get_dst_t()
     np.testing.assert_equal(dst_t, src_t)
-    print(dst_t)
-    print(dst_t.base)
 
 
-# def test_tensor_to_numpy_scope_pytorch():
-#     src_t = np.array([[10, 11, 12.], [13., 14., 15.]])
+@pytest.mark.parametrize("device", list_devices())
+def test_tensor_to_pytorch_scope(device):
+    src_t = np.array([[10, 11, 12.], [13., 14., 15.]])
 
-#     def get_dst_t():
-#         o3d_t = torch.Tensor(src_t) # Copy
-#         dst_t = o3d_t.numpy()
-#         print(dst_t)
-#         return dst_t
+    def get_dst_t():
+        o3d_t = o3d.Tensor(src_t, device=device)  # Copy
+        dst_t = torch.utils.dlpack.from_dlpack(o3d_t.to_dlpack())
+        return dst_t
 
-#     dst_t = get_dst_t()
-#     np.testing.assert_equal(dst_t, src_t)
-#     print(dst_t)
-#     print(dst_t.base)
+    dst_t = get_dst_t().cpu().numpy()
+    np.testing.assert_equal(dst_t, src_t)
 
 
 @pytest.mark.parametrize("device", list_devices())
