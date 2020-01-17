@@ -141,6 +141,8 @@ void pybind_container_tensor(py::module& m) {
                        }
                    };
 
+                   // https://stackoverflow.com/questions/44659924/returning-numpy-arrays-via-pybind11
+                   // https://github.com/pybind/pybind11/issues/1042
                    py::capsule tensor_base(&tensor, "open3d_tensor",
                                            TensorCapsuleDestructor);
 
