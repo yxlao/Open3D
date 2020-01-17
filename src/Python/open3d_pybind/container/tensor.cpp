@@ -132,6 +132,8 @@ void pybind_container_tensor(py::module& m) {
                    }
                    py::array::StridesContainer py_strides(strides);
 
+                   py::capsule dummy_base(&tensor, [](void* dummy) {});
+
                    return py::array(py_dtype, py_shape, py_strides,
                                     tensor.GetDataPtr());
                })
