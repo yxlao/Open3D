@@ -60,22 +60,6 @@ static std::vector<T> ToFlatVector(
     return std::vector<T>(start, start + info.size);
 }
 
-// See PyTorch's torch/csrc/Module.cpp
-void DLPackCapsuleDestructor(PyObject* data) {
-    DLManagedTensor* dl_managed_tensor =
-            (DLManagedTensor*)PyCapsule_GetPointer(data, "dltensor");
-    if (dl_managed_tensor) {
-        // the dl_managed_tensor has not been consumed, call deleter ourselves
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
-        dl_managed_tensor->deleter(
-                const_cast<DLManagedTensor*>(dl_managed_tensor));
-    } else {
-        // The dl_managed_tensor has been consumed
-        // PyCapsule_GetPointer has set an error indicator
-        PyErr_Clear();
-    }
-}
-
 void pybind_container_tensor(py::module& m) {
     py::class_<Tensor> tensor(
             m, "Tensor",
@@ -207,8 +191,25 @@ void pybind_container_tensor(py::module& m) {
             .def("to_dlpack",
                  [](const Tensor& tensor) {
                      DLManagedTensor* dl_managed_tensor = tensor.ToDLPack();
+                     // See PyTorch's torch/csrc/Module.cpp
+                     auto capsule_destructor = [](PyObject* data) {
+                         DLManagedTensor* dl_managed_tensor =
+                                 (DLManagedTensor*)PyCapsule_GetPointer(
+                                         data, "dltensor");
+                         if (dl_managed_tensor) {
+                             // the dl_managed_tensor has not been consumed,
+                             // call deleter ourselves
+                             dl_managed_tensor->deleter(
+                                     const_cast<DLManagedTensor*>(
+                                             dl_managed_tensor));
+                         } else {
+                             // The dl_managed_tensor has been consumed
+                             // PyCapsule_GetPointer has set an error indicator
+                             PyErr_Clear();
+                         }
+                     };
                      return py::capsule(dl_managed_tensor, "dltensor",
-                                        DLPackCapsuleDestructor);
+                                        capsule_destructor);
                  })
             .def_static("from_dlpack",
                         [](py::capsule data) {
