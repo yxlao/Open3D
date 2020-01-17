@@ -26,7 +26,7 @@
 
 #include "open3d_pybind/core/container.h"
 
-#include "Open3D/Container/CUDAUtils.h"
+#include "Open3D/Core/CUDAUtils.h"
 
 using namespace open3d;
 

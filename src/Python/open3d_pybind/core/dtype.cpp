@@ -28,7 +28,7 @@
 #include "open3d_pybind/docstring.h"
 #include "open3d_pybind/open3d_pybind.h"
 
-#include "Open3D/Container/Dtype.h"
+#include "Open3D/Core/Dtype.h"
 
 using namespace open3d;
 

@@ -31,13 +31,13 @@
 #include "open3d_pybind/open3d_pybind.h"
 #include "open3d_pybind/pybind_utils.h"
 
-#include "Open3D/Container/Blob.h"
-#include "Open3D/Container/CUDAUtils.h"
-#include "Open3D/Container/Device.h"
-#include "Open3D/Container/Dispatch.h"
-#include "Open3D/Container/Dtype.h"
-#include "Open3D/Container/SizeVector.h"
-#include "Open3D/Container/Tensor.h"
+#include "Open3D/Core/Blob.h"
+#include "Open3D/Core/CUDAUtils.h"
+#include "Open3D/Core/Device.h"
+#include "Open3D/Core/Dispatch.h"
+#include "Open3D/Core/Dtype.h"
+#include "Open3D/Core/SizeVector.h"
+#include "Open3D/Core/Tensor.h"
 
 using namespace open3d;
 

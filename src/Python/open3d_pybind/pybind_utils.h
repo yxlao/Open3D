@@ -28,8 +28,8 @@
 
 #include <string>
 
-#include "Open3D/Container/Dtype.h"
-#include "Open3D/Container/Tensor.h"
+#include "Open3D/Core/Dtype.h"
+#include "Open3D/Core/Tensor.h"
 
 #include "open3d_pybind/open3d_pybind.h"
 
