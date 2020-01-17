@@ -132,10 +132,20 @@ void pybind_container_tensor(py::module& m) {
                    }
                    py::array::StridesContainer py_strides(strides);
 
-                   py::capsule dummy_base(&tensor, [](void* dummy) {});
+                   auto TensorCapsuleDestructor = [](PyObject* data) {
+                       Tensor* tensor = (Tensor*)PyCapsule_GetPointer(
+                               data, "open3d_tensor");
+                       if (tensor) {
+                       } else {
+                           PyErr_Clear();
+                       }
+                   };
+
+                   py::capsule tensor_base(&tensor, "open3d_tensor",
+                                           TensorCapsuleDestructor);
 
                    return py::array(py_dtype, py_shape, py_strides,
-                                    tensor.GetDataPtr());
+                                    tensor.GetDataPtr(), tensor_base);
                })
             .def_static(
                     "from_numpy",

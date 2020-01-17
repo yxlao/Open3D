@@ -144,29 +144,43 @@ def test_tensor_constructor():
 
 
 def test_tensor_from_to_numpy():
+    # Normal strides o3d -> numpy
+    src_t = np.array([[0., 1., 2.], [3., 4., 5.]])
+    o3d_t = o3d.Tensor(src_t) # Copy
+    dst_t = o3d_t.numpy()
+    np.testing.assert_equal(dst_t, src_t)
+
+    dst_t[0, 0] = 100
+    np.testing.assert_equal(dst_t, o3d_t.numpy())
+
     # Normal strides numpy -> o3d -> numpy
-    np_t = np.array([[0., 1., 2.], [3., 4., 5.]])
-    o3_t = o3d.Tensor(np_t)
-    np_t_dst = o3_t.numpy()
+    src_t = np.array([[0., 1., 2.], [3., 4., 5.]])
+    o3d_t = o3d.Tensor.from_numpy(src_t) # Shared memory
+    dst_t = o3d_t.numpy()
+    np.testing.assert_equal(dst_t, src_t)
 
-    np.testing.assert_equal(np_t, np_t_dst)
-    np_t[0, 0] = 100
-    np.testing.assert_equal(np_t, np_t_dst)
-    np_t_dst[0, 1] = 200
-    np.testing.assert_equal(np_t, np_t_dst)
+    dst_t[0, 0] = 100
+    np.testing.assert_equal(dst_t, src_t)
+    np.testing.assert_equal(dst_t, o3d_t.numpy())
 
-    # np_t[0, 0] = 100
-    # np.testing.assert_equal(np_t, o3_t.numpy())
-    # print(np_t, o3_t.numpy())
-    # import ipdb; ipdb.set_trace()
+    src_t[0, 1] = 200
+    np.testing.assert_equal(dst_t, src_t)
+    np.testing.assert_equal(dst_t, o3d_t.numpy())
 
-    # # Special strides
-    # np_r = np.random.randint(10, size=(10, 10)).astype(np.int32)
-    # np_t = np_r[1:10:2, 1:10:3].T
-    # o3_t = o3d.Tensor.from_numpy(np_t)
-    # np.testing.assert_equal(np_t, o3_t.numpy())
-    # np_t[0, 0] = 100
-    # np.testing.assert_equal(np_t, o3_t.numpy())
+    # Special strides numpy -> o3d -> numpy
+    ran_t = np.random.randint(10, size=(10, 10)).astype(np.int32)
+    src_t = ran_t[1:10:2, 1:10:3].T
+    o3d_t = o3d.Tensor.from_numpy(src_t) # Shared memory
+    dst_t = o3d_t.numpy()
+    np.testing.assert_equal(dst_t, src_t)
+
+    dst_t[0, 0] = 100
+    np.testing.assert_equal(dst_t, src_t)
+    np.testing.assert_equal(dst_t, o3d_t.numpy())
+
+    src_t[0, 1] = 200
+    np.testing.assert_equal(dst_t, src_t)
+    np.testing.assert_equal(dst_t, o3d_t.numpy())
 
 
 @pytest.mark.parametrize("device", list_devices())
