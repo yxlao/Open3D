@@ -132,18 +132,37 @@ void pybind_container_tensor(py::module& m) {
                    }
                    py::array::StridesContainer py_strides(strides);
 
-                   Tensor* tmp_tensor = new Tensor(tensor);
-                   py::capsule free_when_done(tmp_tensor, [](void* f) {
-                       Tensor* tmp = reinterpret_cast<Tensor*>(f);
-                       utility::LogInfo("Freeing temp tensor.");
-                       delete tmp;
+                   // `base_tensor` is a shallow copy of `tensor`. `base_tensor`
+                   // is on the heap and is owned by py::capsule
+                   // `free_when_done`. The capsule is referenced as the "base"
+                   // of the numpy tensor returned by o3d.Tensor.numpy(). When
+                   // the "base" goes out-of-scope (e.g. when all numpy tensors
+                   // referencing the base have gone out-of-scope), the deleter
+                   // is called to free the `base_tensor`.
+                   //
+                   // This behavior is important when the origianl `tensor` goes
+                   // out-of-scope while we still want to keep the data alive.
+                   // e.g.
+                   //
+                   // ```python
+                   // def get_np_tensor():
+                   //     o3d_t = o3d.Tensor(...)
+                   //     return o3d_t.numpy()
+                   //
+                   // # Now, `o3d_t` is out-of-scope, but `np_t` still
+                   // references # the base tensor which references the
+                   // underlying data of # `o3d_t`. Thus np_t is still valid.
+                   // When np_t goes # out-of-scope, the underlying data will be
+                   // finally freed. np_t = get_np_tensor()
+                   // ```
+                   //
+                   // See:
+                   // https://stackoverflow.com/questions/44659924/returning-numpy-arrays-via-pybind11
+                   Tensor* base_tensor = new Tensor(tensor);
+                   py::capsule free_when_done(base_tensor, [](void* t) {
+                       Tensor* base_tensor = reinterpret_cast<Tensor*>(t);
+                       delete base_tensor;
                    });
-
-                   //    //
-                   //    https://stackoverflow.com/questions/44659924/returning-numpy-arrays-via-pybind11
-                   //    // https://github.com/pybind/pybind11/issues/1042
-                   //    py::capsule tensor_base(&tensor, "open3d_tensor",
-                   //                            TensorCapsuleDestructor);
 
                    return py::array(py_dtype, py_shape, py_strides,
                                     tensor.GetDataPtr(), free_when_done);
