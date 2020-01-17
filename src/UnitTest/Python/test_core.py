@@ -144,30 +144,29 @@ def test_tensor_constructor():
 
 
 def test_tensor_from_to_numpy():
-    # Normal strides o3d -> numpy
-    src_t = np.array([[0., 1., 2.], [3., 4., 5.]])
-    o3d_t = o3d.Tensor(src_t)  # Copy
-    dst_t = o3d_t.numpy()
-    np.testing.assert_equal(dst_t, src_t)
+    # a->b copy; b, c share memory
+    a = np.ones((2, 2))
+    b = o3d.Tensor(a)
+    c = b.numpy()
 
-    dst_t[0, 0] = 100
-    np.testing.assert_equal(dst_t, o3d_t.numpy())
+    c[0, 1] = 200
+    r = np.array([[1., 200.], [1., 1.]])
+    np.testing.assert_equal(r, b.numpy())
+    np.testing.assert_equal(r, c)
 
-    # Normal strides numpy -> o3d -> numpy
-    src_t = np.array([[0., 1., 2.], [3., 4., 5.]])
-    o3d_t = o3d.Tensor.from_numpy(src_t)  # Shared memory
-    dst_t = o3d_t.numpy()
-    np.testing.assert_equal(dst_t, src_t)
+    # a, b, c share memory
+    a = np.array([[1., 1.], [1., 1.]])
+    b = o3d.Tensor.from_numpy(a)
+    c = b.numpy()
 
-    dst_t[0, 0] = 100
-    np.testing.assert_equal(dst_t, src_t)
-    np.testing.assert_equal(dst_t, o3d_t.numpy())
+    a[0, 0] = 100
+    c[0, 1] = 200
+    r = np.array([[100., 200.], [1., 1.]])
+    np.testing.assert_equal(r, a)
+    np.testing.assert_equal(r, b.numpy())
+    np.testing.assert_equal(r, c)
 
-    src_t[0, 1] = 200
-    np.testing.assert_equal(dst_t, src_t)
-    np.testing.assert_equal(dst_t, o3d_t.numpy())
-
-    # Special strides numpy -> o3d -> numpy
+    # Special strides
     ran_t = np.random.randint(10, size=(10, 10)).astype(np.int32)
     src_t = ran_t[1:10:2, 1:10:3].T
     o3d_t = o3d.Tensor.from_numpy(src_t)  # Shared memory
@@ -184,7 +183,7 @@ def test_tensor_from_to_numpy():
 
 
 def test_tensor_to_numpy_scope():
-    src_t = np.array([[10, 11, 12.], [13., 14., 15.]])
+    src_t = np.array([[10., 11., 12.], [13., 14., 15.]])
 
     def get_dst_t():
         o3d_t = o3d.Tensor(src_t)  # Copy
@@ -209,10 +208,25 @@ def test_tensor_to_pytorch_scope(device):
 
 
 @pytest.mark.parametrize("device", list_devices())
-def test_tensor_from_pytorch(device):
+def test_tensor_from_to_pytorch(device):
     device_id = device.get_id()
     device_type = device.get_type()
 
+    # a, b, c share memory
+    a = torch.ones((2, 2))
+    if device_type == o3d.Device.DeviceType.CUDA:
+        a = a.cuda(device_id)
+    b = o3d.Tensor.from_dlpack(torch.utils.dlpack.to_dlpack(a))
+    c = torch.utils.dlpack.from_dlpack(b.to_dlpack())
+
+    a[0, 0] = 100
+    c[0, 1] = 200
+    r = np.array([[100., 200.], [1., 1.]])
+    np.testing.assert_equal(r, a.cpu().numpy())
+    np.testing.assert_equal(r, b.cpu().numpy())
+    np.testing.assert_equal(r, c.cpu().numpy())
+
+    # Special strides
     np_r = np.random.randint(10, size=(10, 10)).astype(np.int32)
     th_r = torch.Tensor(np_r)
     th_t = th_r[1:10:2, 1:10:3].T
@@ -226,30 +240,15 @@ def test_tensor_from_pytorch(device):
     np.testing.assert_equal(th_t.cpu().numpy(), o3_t.cpu().numpy())
 
 
-@pytest.mark.parametrize("device", list_devices())
-def test_tensor_to_pytorch(device):
-    np_r = np.random.randint(10, size=(10, 10)).astype(np.int32)
-    np_t = np_r[1:10:2, 1:10:3].T
-
-    o3_t = o3d.Tensor(np_t, device=device)
-    th_t = torch.utils.dlpack.from_dlpack(o3_t.to_dlpack())
-    np.testing.assert_equal(o3_t.cpu().numpy(), np_t)
-    np.testing.assert_equal(th_t.cpu().numpy(), np_t)
-
-    th_t[0, 0] = 100
-    np.testing.assert_equal(o3_t.cpu().numpy(), th_t.cpu().numpy())
-
-
 def test_tensor_numpy_to_open3d_to_pytorch():
     # Numpy -> Open3D -> PyTorch all share the same memory
-    np_r = np.random.randint(10, size=(10, 10)).astype(np.int32)
-    np_t = np_r[1:10:2, 1:10:3].T
+    a = np.ones((2, 2))
+    b = o3d.Tensor.from_numpy(a)
+    c = torch.utils.dlpack.from_dlpack(b.to_dlpack())
 
-    o3_t = o3d.Tensor.from_numpy(np_t)
-    th_t = torch.utils.dlpack.from_dlpack(o3_t.to_dlpack())
-    np.testing.assert_equal(np_t, o3_t.numpy())
-    np.testing.assert_equal(np_t, th_t.numpy())
-
-    np_t[0, 0] = 100
-    np.testing.assert_equal(np_t, o3_t.numpy())
-    np.testing.assert_equal(np_t, th_t.numpy())
+    a[0, 0] = 100
+    c[0, 1] = 200
+    r = np.array([[100., 200.], [1., 1.]])
+    np.testing.assert_equal(r, a)
+    np.testing.assert_equal(r, b.cpu().numpy())
+    np.testing.assert_equal(r, c.cpu().numpy())
