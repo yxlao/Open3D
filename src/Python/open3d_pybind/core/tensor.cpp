@@ -26,7 +26,7 @@
 
 #include <vector>
 
-#include "open3d_pybind/container/container.h"
+#include "open3d_pybind/core/container.h"
 #include "open3d_pybind/docstring.h"
 #include "open3d_pybind/open3d_pybind.h"
 #include "open3d_pybind/pybind_utils.h"

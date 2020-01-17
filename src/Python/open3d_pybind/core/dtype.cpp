@@ -24,15 +24,26 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "open3d_pybind/container/container.h"
+#include "open3d_pybind/core/container.h"
+#include "open3d_pybind/docstring.h"
+#include "open3d_pybind/open3d_pybind.h"
 
-#include "Open3D/Container/CUDAUtils.h"
+#include "Open3D/Container/Dtype.h"
 
 using namespace open3d;
 
-void pybind_cuda_utils(py::module &m) {
-    py::module m_cuda = m.def_submodule("cuda");
+void pybind_core_dtype(py::module &m) {
+    py::enum_<Dtype>(m, "Dtype")
+            .value("Undefined", Dtype::Undefined)
+            .value("Float32", Dtype::Float32)
+            .value("Float64", Dtype::Float64)
+            .value("Int32", Dtype::Int32)
+            .value("Int64", Dtype::Int64)
+            .value("UInt8", Dtype::UInt8)
+            .export_values();
 
-    m_cuda.def("device_count", cuda::DeviceCount);
-    m_cuda.def("is_available", cuda::IsAvailable);
+    py::class_<DtypeUtil> dtype_util(m, "DtypeUtil");
+    dtype_util.def(py::init<>())
+            .def("byte_size", &DtypeUtil::ByteSize)
+            .def("to_string", &DtypeUtil::ToString);
 }

@@ -27,7 +27,7 @@
 #include "open3d_pybind/open3d_pybind.h"
 #include "open3d_pybind/camera/camera.h"
 #include "open3d_pybind/color_map/color_map.h"
-#include "open3d_pybind/container/container.h"
+#include "open3d_pybind/core/container.h"
 #include "open3d_pybind/geometry/geometry.h"
 #include "open3d_pybind/integration/integration.h"
 #include "open3d_pybind/io/io.h"
