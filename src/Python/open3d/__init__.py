@@ -32,6 +32,17 @@ try:
 except:
     pass
 
+# Workaround when multiple copies of the OpenMP runtime have been linked to
+# the program, which happens when PyTorch loads OpenMP runtime first. Not that
+# this method is "unsafe, unsupported, undocumented", but we found it to be
+# generally safe to use. This should be deprecated once we found a way to
+# "ensure that only a single OpenMP runtime is linked into the process".
+#
+# https://github.com/llvm-mirror/openmp/blob/8453ca8594e1a5dd8a250c39bf8fcfbfb1760e60/runtime/src/i18n/en_US.txt#L449
+# https://github.com/dmlc/xgboost/issues/1715
+import os
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
+
 from open3d.open3d_pybind import camera
 from open3d.open3d_pybind import color_map
 from open3d.open3d_pybind import geometry
