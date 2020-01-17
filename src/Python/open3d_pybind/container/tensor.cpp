@@ -160,10 +160,20 @@ void pybind_container_tensor(py::module& m) {
                    // See:
                    // https://stackoverflow.com/questions/44659924/returning-numpy-arrays-via-pybind11
                    Tensor* base_tensor = new Tensor(tensor);
-                   py::capsule base_tensor_capsule(base_tensor, [](void* t) {
-                       Tensor* base_tensor = reinterpret_cast<Tensor*>(t);
-                       delete base_tensor;
-                   });
+
+                   // See PyTorch's torch/csrc/Module.cpp
+                   auto capsule_destructor = [](PyObject* data) {
+                       Tensor* base_tensor = reinterpret_cast<Tensor*>(
+                               PyCapsule_GetPointer(data, "open3d::Tensor"));
+                       if (base_tensor) {
+                           delete base_tensor;
+                       } else {
+                           PyErr_Clear();
+                       }
+                   };
+
+                   py::capsule base_tensor_capsule(
+                           base_tensor, "open3d::Tensor", capsule_destructor);
 
                    return py::array(py_dtype, py_shape, py_strides,
                                     tensor.GetDataPtr(), base_tensor_capsule);
