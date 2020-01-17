@@ -32,7 +32,7 @@
 
 using namespace open3d;
 
-void pybind_container_device(py::module &m) {
+void pybind_core_device(py::module &m) {
     py::class_<Device> device(
             m, "Device",
             "Device context specifying device type and device id.");

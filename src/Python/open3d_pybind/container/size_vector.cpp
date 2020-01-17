@@ -32,7 +32,7 @@
 
 using namespace open3d;
 
-void pybind_container_size_vector(py::module &m) {
+void pybind_core_size_vector(py::module &m) {
     py::class_<SizeVector> size_vector(m, "SizeVector",
                                        "SizeVector is a vector of int64_t for "
                                        "specifying shape, strides and etc.");

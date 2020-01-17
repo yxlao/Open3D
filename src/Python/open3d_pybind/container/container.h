@@ -28,10 +28,10 @@
 
 #include "open3d_pybind/open3d_pybind.h"
 
-void pybind_container(py::module& m);
+void pybind_core(py::module& m);
 
 void pybind_cuda_utils(py::module& m);
-void pybind_container_dtype(py::module& m);
-void pybind_container_device(py::module& m);
-void pybind_container_size_vector(py::module& m);
-void pybind_container_tensor(py::module& m);
+void pybind_core_dtype(py::module& m);
+void pybind_core_device(py::module& m);
+void pybind_core_size_vector(py::module& m);
+void pybind_core_tensor(py::module& m);

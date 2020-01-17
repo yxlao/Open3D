@@ -32,7 +32,7 @@
 
 using namespace open3d;
 
-void pybind_container_dtype(py::module &m) {
+void pybind_core_dtype(py::module &m) {
     py::enum_<Dtype>(m, "Dtype")
             .value("Undefined", Dtype::Undefined)
             .value("Float32", Dtype::Float32)

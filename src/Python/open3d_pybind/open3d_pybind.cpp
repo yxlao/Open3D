@@ -42,7 +42,7 @@ PYBIND11_MODULE(open3d_pybind, m) {
     // Register this first, other submodule (e.g. odometry) might depend on this
     pybind_utility(m);
 
-    pybind_container(m);
+    pybind_core(m);
 
     pybind_camera(m);
     pybind_color_map(m);
