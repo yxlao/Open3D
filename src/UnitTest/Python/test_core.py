@@ -183,6 +183,21 @@ def test_tensor_from_to_numpy():
     np.testing.assert_equal(dst_t, o3d_t.numpy())
 
 
+def test_tensor_to_numpy_scope():
+    src_t = np.array([[10, 11, 12.], [13., 14., 15.]])
+
+    def get_dst_t():
+        o3d_t = o3d.Tensor(src_t) # Copy
+        dst_t = o3d_t.numpy()
+        print(dst_t)
+        return dst_t
+
+    dst_t = get_dst_t()
+    np.testing.assert_equal(dst_t, src_t)
+    print(dst_t)
+    print(dst_t.base)
+
+
 @pytest.mark.parametrize("device", list_devices())
 def test_tensor_from_pytorch(device):
     device_id = device.get_id()
