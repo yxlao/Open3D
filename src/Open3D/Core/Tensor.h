@@ -334,7 +334,7 @@ public:
     Tensor operator/=(const Tensor& value) { return Div_(value); }
 
     /// Returns the sum of the tensor long the given \p dims.
-    /// \param dims A list of dimensions.
+    /// \param dims A list of dimensions to be reduced.
     /// \param keep_dim If true, the reduced dims will be retained as size 1.
     Tensor Sum(const SizeVector& dims, bool keep_dim = false) const;
 

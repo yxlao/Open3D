@@ -65,5 +65,15 @@ SizeVector BroadcastedShape(const SizeVector& l_shape,
 bool CanBeBrocastedToShape(const SizeVector& src_shape,
                            const SizeVector& dst_shape);
 
+/// \brief Returns the shape after reduction.
+///
+/// E.g. CanBeBrocastedToShape({1, 2}, {3, 5, 2}) -> true
+///      CanBeBrocastedToShape({1, 2}, {3, 5, 3}) -> false
+/// \param dims A list of dimensions to be reduced.
+/// \param keep_dim If true, the reduced dims will be retained as size 1.
+SizeVector ReductionShape(const SizeVector& src_shape,
+                          const SizeVector dims,
+                          bool keep_dim);
+
 }  // namespace shape_util
 }  // namespace open3d

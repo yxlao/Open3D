@@ -153,3 +153,8 @@ TEST(ShapeUtil, CanBeBrocastedToShape) {
     EXPECT_FALSE(shape_util::CanBeBrocastedToShape({2, 4, 3}, {5, 3}));
     EXPECT_FALSE(shape_util::CanBeBrocastedToShape({5, 3}, {2, 4, 3}));
 }
+
+TEST(ShapeUtil, ReductionShape) {
+    // A 0-dim tensor can be brocasted to any shape. Not commutative.
+    EXPECT_EQ(shape_util::ReductionShape({}, {}, false), SizeVector({}));
+}
