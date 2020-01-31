@@ -26,6 +26,10 @@
 
 #include "Open3D/Core/Kernel/Reduction.h"
 
+#include "Open3D/Core/Dispatch.h"
+#include "Open3D/Core/Indexer.h"
+#include "Open3D/Core/Kernel/CPULauncher.h"
+
 namespace open3d {
 namespace kernel {
 
@@ -39,7 +43,23 @@ void ReductionCPU(const Tensor& src,
                   const SizeVector& dims,
                   bool keep_dim,
                   ReductionOpCode op_code) {
-    utility::LogError("Unimplemented ReductionCPU.");
+    if (!keep_dim) {
+        utility::LogError("Unimplemented. To implement dst reshape.");
+    }
+    Dtype dtype = dst.GetDtype();
+    Indexer indexer({src}, dst, DtypePolicy::ASSERT_SAME, dims);
+
+    DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
+        switch (op_code) {
+            case ReductionOpCode::Sum:
+                dst.Fill(0);
+                CPULauncher::LaunchReductionKernel<scalar_t>(
+                        indexer, CPUSumReductionKernel<scalar_t>);
+                break;
+            default:
+                break;
+        }
+    });
 }
 
 }  // namespace kernel

@@ -136,12 +136,6 @@ public:
         }
         output_ = TensorRef(output_tensor);
 
-        // Broadcast inputs to match output shape, by resetting input's shape
-        // and strides.
-        for (int64_t i = 0; i < num_inputs_; ++i) {
-            BroadcastRestride(inputs_[i], output_.ndims_, output_.shape_);
-        }
-
         // Reduce inputs to match output shape, by resetting output's shape and
         // strides.
         //
@@ -164,14 +158,38 @@ public:
                 utility::LogError(
                         "Internal error: reduction op can only have 1 inputs.");
             }
+            // Only handles keep_dim == true in Indexer.
+            if (shape_util::ReductionShape(input_tensors[0].GetShape(),
+                                           reduction_dims,
+                                           true) != output_tensor.GetShape()) {
+                utility::LogError(
+                        "Reduction dimensions mismatch, input's shape {}, "
+                        "reduction dims {}, output's shape {}.",
+                        input_tensors[0].GetShape(), reduction_dims,
+                        output_tensor.GetShape());
+            }
             ReductionRestride(output_, inputs_[0].ndims_, inputs_[0].shape_,
                               reduction_dims);
-        }
 
-        // Fill global shape
-        ndims_ = output_.ndims_;
-        for (int64_t i = 0; i < ndims_; ++i) {
-            master_shape_[i] = output_.shape_[i];
+            // Fill global shape
+            ndims_ = inputs_[0].ndims_;
+            for (int64_t i = 0; i < ndims_; ++i) {
+                master_shape_[i] = inputs_[0].shape_[i];
+            }
+        } else {
+            // Theoretically, reduction can be mixed with broadcasting. For
+            // simplicity, we require explicit broadcasting after reduction.
+            // Broadcast inputs to match output shape, by resetting input's
+            // shape and strides.
+            for (int64_t i = 0; i < num_inputs_; ++i) {
+                BroadcastRestride(inputs_[i], output_.ndims_, output_.shape_);
+            }
+
+            // Fill global shape
+            ndims_ = output_.ndims_;
+            for (int64_t i = 0; i < ndims_; ++i) {
+                master_shape_[i] = output_.shape_[i];
+            }
         }
 
         // Fill global strides master_strides_.
@@ -235,10 +253,22 @@ public:
         }
     }
 
+    /// Smmetricial to BroadcastRestride. Set the reduced dimensions' stride to
+    /// 0 at output. Currently only support the keep_dim=true case.
     static void ReductionRestride(TensorRef& dst,
                                   int64_t src_ndims,
                                   const int64_t* src_shape,
-                                  const SizeVector& reduction_dims) {}
+                                  const SizeVector& reduction_dims) {
+        if (dst.ndims_ != src_ndims) {
+            utility::LogError("Internal error, src ndims {} != dst ndims {}",
+                              src_ndims, dst.ndims_);
+        }
+        for (int64_t i = 0; i < dst.ndims_; ++i) {
+            if (dst.shape_[i] == 1 && src_shape[i] != 1) {
+                dst.strides_[i] = 0;
+            }
+        }
+    }
 
     /// Returns number of dimensions of the Indexer.
     OPEN3D_HOST_DEVICE int64_t NumDims() const { return ndims_; }

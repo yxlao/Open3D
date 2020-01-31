@@ -66,6 +66,16 @@ public:
     }
 
     template <typename scalar_t, typename func_t>
+    static void LaunchReductionKernel(const Indexer& indexer,
+                                      func_t element_kernel) {
+        for (int64_t workload_idx = 0; workload_idx < indexer.NumWorkloads();
+             ++workload_idx) {
+            element_kernel(indexer.GetInputPtr(0, workload_idx),
+                           indexer.GetOutputPtr(workload_idx));
+        }
+    }
+
+    template <typename scalar_t, typename func_t>
     static void LaunchAdvancedIndexerKernel(const AdvancedIndexer& indexer,
                                             func_t element_kernel) {
 #ifdef _OPENMP
