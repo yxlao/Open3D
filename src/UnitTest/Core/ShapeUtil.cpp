@@ -155,6 +155,30 @@ TEST(ShapeUtil, CanBeBrocastedToShape) {
 }
 
 TEST(ShapeUtil, ReductionShape) {
-    // A 0-dim tensor can be brocasted to any shape. Not commutative.
+    // Emtpy cases
     EXPECT_EQ(shape_util::ReductionShape({}, {}, false), SizeVector({}));
+    EXPECT_EQ(shape_util::ReductionShape({}, {}, true), SizeVector({}));
+
+    // Out-of-range exception.
+    EXPECT_THROW(shape_util::ReductionShape({}, {1}, false),
+                 std::runtime_error);
+    EXPECT_THROW(shape_util::ReductionShape({1}, {2}, false),
+                 std::runtime_error);
+
+    // Dimension with size 0 can be reduced to size 1.
+    EXPECT_EQ(shape_util::ReductionShape({2, 0}, {1}, false), SizeVector({2}));
+    EXPECT_EQ(shape_util::ReductionShape({2, 0}, {1}, true),
+              SizeVector({2, 1}));
+
+    // Regular cases.
+    EXPECT_EQ(shape_util::ReductionShape({2, 3, 4}, {0, 2}, false),
+              SizeVector({3}));
+    EXPECT_EQ(shape_util::ReductionShape({2, 3, 4}, {0, 2}, true),
+              SizeVector({1, 3, 1}));
+
+    // Wrap-around is fine.
+    EXPECT_EQ(shape_util::ReductionShape({2, 3, 4}, {0, -1}, false),
+              SizeVector({3}));
+    EXPECT_EQ(shape_util::ReductionShape({2, 3, 4}, {0, -1}, true),
+              SizeVector({1, 3, 1}));
 }

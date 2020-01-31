@@ -121,7 +121,7 @@ SizeVector ReductionShape(const SizeVector& src_shape,
             out_shape[WrapDim(dim, out_shape.size())] = 1;
         }
     } else {
-        // if dim i is reduced, dims_mask[i] == true
+        // If dim i is reduced, dims_mask[i] == true
         std::vector<bool> dims_mask(dims.size(), false);
         for (const int64_t& dim : dims) {
             dims_mask[WrapDim(dim, out_shape.size())] = true;
@@ -130,8 +130,8 @@ SizeVector ReductionShape(const SizeVector& src_shape,
         for (int64_t i = 0; i < out_shape.size(); ++i) {
             if (!dims_mask[i]) {
                 out_shape[to_fill] = out_shape[i];
+                to_fill++;
             }
-            to_fill++;
         }
         out_shape.resize(to_fill);
     }
