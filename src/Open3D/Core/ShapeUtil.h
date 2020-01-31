@@ -28,10 +28,12 @@
 
 #include "Open3D/Core/Dispatch.h"
 #include "Open3D/Core/SizeVector.h"
-#include "Open3D/Core/Tensor.h"
 #include "Open3D/Utility/Console.h"
 
 namespace open3d {
+
+class Tensor;
+
 namespace shape_util {
 
 /// \brief Returns true if two shapes are compatible for broadcasting.
@@ -74,6 +76,19 @@ bool CanBeBrocastedToShape(const SizeVector& src_shape,
 SizeVector ReductionShape(const SizeVector& src_shape,
                           const SizeVector dims,
                           bool keep_dim);
+
+/// \brief Wrap around negative \p dim.
+///
+/// E.g. If max_dim == 5, dim -1 will be converted to 4.
+int64_t WrapDim(int64_t dim, int64_t max_dim);
+
+// Infers the size of a dim with size -1, if it exists. Also checks that new
+// shape is compatible with the number of elements.
+//
+// E.g. Shape({2, -1, 4}) with num_elemnts 24, will be inferred as {2, 3, 4}.
+//
+// Ref: PyTorch's aten/src/ATen/InferSize.h
+SizeVector InferShape(SizeVector shape, int64_t num_elements);
 
 }  // namespace shape_util
 }  // namespace open3d

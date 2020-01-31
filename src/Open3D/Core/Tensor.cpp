@@ -128,7 +128,8 @@ Tensor Tensor::Expand(const SizeVector& dst_shape) const {
 }
 
 Tensor Tensor::Reshape(const SizeVector& dst_shape) const {
-    SizeVector inferred_dst_shape = InferShape(dst_shape, NumElements());
+    SizeVector inferred_dst_shape =
+            shape_util::InferShape(dst_shape, NumElements());
     bool can_restride;
     SizeVector new_strides;
     std::tie(can_restride, new_strides) =
@@ -141,7 +142,8 @@ Tensor Tensor::Reshape(const SizeVector& dst_shape) const {
 }
 
 Tensor Tensor::View(const SizeVector& dst_shape) const {
-    SizeVector inferred_dst_shape = InferShape(dst_shape, NumElements());
+    SizeVector inferred_dst_shape =
+            shape_util::InferShape(dst_shape, NumElements());
     bool can_restride;
     SizeVector new_strides;
     std::tie(can_restride, new_strides) =
@@ -399,7 +401,7 @@ Tensor Tensor::Permute(const SizeVector& dims) const {
     // Check dims are permuntation of [0, 1, 2, ..., n-1]
     std::vector<bool> seen_dims(n_dims, false);
     for (const int64_t& dim : dims) {
-        seen_dims[WrapDim(dim, n_dims)] = true;
+        seen_dims[shape_util::WrapDim(dim, n_dims)] = true;
     }
     if (!std::all_of(seen_dims.begin(), seen_dims.end(),
                      [](bool seen) { return seen; })) {
@@ -413,7 +415,7 @@ Tensor Tensor::Permute(const SizeVector& dims) const {
     SizeVector new_shape(n_dims);
     SizeVector new_strides(n_dims);
     for (int64_t i = 0; i < n_dims; ++i) {
-        int64_t old_dim = WrapDim(dims[i], n_dims);
+        int64_t old_dim = shape_util::WrapDim(dims[i], n_dims);
         new_shape[i] = old_shape[old_dim];
         new_strides[i] = old_stides[old_dim];
     }
@@ -430,8 +432,8 @@ Tensor Tensor::AsStrided(const SizeVector& new_shape,
 
 Tensor Tensor::Transpose(int64_t dim0, int64_t dim1) const {
     int64_t n_dims = NumDims();
-    dim0 = WrapDim(dim0, n_dims);
-    dim1 = WrapDim(dim1, n_dims);
+    dim0 = shape_util::WrapDim(dim0, n_dims);
+    dim1 = shape_util::WrapDim(dim1, n_dims);
     SizeVector dims(n_dims);
     std::iota(dims.begin(), dims.end(), 0);
     dims[dim0] = dim1;

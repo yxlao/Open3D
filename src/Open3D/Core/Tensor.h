@@ -35,6 +35,7 @@
 #include "Open3D/Core/DLPack/dlpack.h"
 #include "Open3D/Core/Device.h"
 #include "Open3D/Core/Dtype.h"
+#include "Open3D/Core/ShapeUtil.h"
 #include "Open3D/Core/SizeVector.h"
 
 namespace open3d {
@@ -365,7 +366,7 @@ public:
     inline const SizeVector& GetShapeRef() const { return shape_; }
 
     inline int64_t GetShape(int64_t dim) const {
-        return shape_[WrapDim(dim, NumDims())];
+        return shape_[shape_util::WrapDim(dim, NumDims())];
     }
 
     inline SizeVector GetStrides() const { return strides_; }
@@ -373,7 +374,7 @@ public:
     inline const SizeVector& GetStridesRef() const { return strides_; }
 
     inline int64_t GetStride(int64_t dim) const {
-        return strides_[WrapDim(dim, NumDims())];
+        return strides_[shape_util::WrapDim(dim, NumDims())];
     }
 
     inline void* GetDataPtr() { return data_ptr_; }
