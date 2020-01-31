@@ -24,12 +24,13 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Open3D/Core/Broadcast.h"
+#include "Open3D/Core/ShapeUtil.h"
 
 #include "Open3D/Core/SizeVector.h"
 #include "Open3D/Core/Tensor.h"
 
 namespace open3d {
+namespace shape_util {
 
 /// Expand a shape with ones in front. Returning a shape with size of ndims.
 /// E.g. ExpandFrontDims({2, 3}, 5) == {1, 1, 1, 2, 3}
@@ -111,4 +112,5 @@ bool CanBeBrocastedToShape(const SizeVector& src_shape,
     }
 }
 
+}  // namespace shape_util
 }  // namespace open3d

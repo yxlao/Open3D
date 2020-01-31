@@ -32,6 +32,7 @@
 #include "Open3D/Utility/Console.h"
 
 namespace open3d {
+namespace shape_util {
 
 /// \brief Returns true if two shapes are compatible for broadcasting.
 ///
@@ -64,4 +65,5 @@ SizeVector BroadcastedShape(const SizeVector& l_shape,
 bool CanBeBrocastedToShape(const SizeVector& src_shape,
                            const SizeVector& dst_shape);
 
+}  // namespace shape_util
 }  // namespace open3d

@@ -30,11 +30,11 @@
 
 #include "Open3D/Core/AdvancedIndexing.h"
 #include "Open3D/Core/Blob.h"
-#include "Open3D/Core/Broadcast.h"
 #include "Open3D/Core/Device.h"
 #include "Open3D/Core/Dispatch.h"
 #include "Open3D/Core/Dtype.h"
 #include "Open3D/Core/Kernel/Kernel.h"
+#include "Open3D/Core/ShapeUtil.h"
 #include "Open3D/Core/SizeVector.h"
 #include "Open3D/Utility/Console.h"
 
@@ -85,7 +85,7 @@ void Tensor::Assign(const Tensor& other) {
 
 /// Broadcast Tensor to a new broadcastable shape
 Tensor Tensor::Broadcast(const SizeVector& dst_shape) const {
-    if (!CanBeBrocastedToShape(shape_, dst_shape)) {
+    if (!shape_util::CanBeBrocastedToShape(shape_, dst_shape)) {
         utility::LogError("Cannot broadcast shape {} to shape {}.",
                           shape_.ToString(), dst_shape);
     }
@@ -95,7 +95,7 @@ Tensor Tensor::Broadcast(const SizeVector& dst_shape) const {
 }
 
 Tensor Tensor::Expand(const SizeVector& dst_shape) const {
-    if (!CanBeBrocastedToShape(shape_, dst_shape)) {
+    if (!shape_util::CanBeBrocastedToShape(shape_, dst_shape)) {
         utility::LogError("Cannot expand shape {} to shape {}.",
                           shape_.ToString(), dst_shape);
     }
@@ -453,8 +453,8 @@ Tensor Tensor::T() const {
 }
 
 Tensor Tensor::Add(const Tensor& value) const {
-    Tensor dst_tensor(BroadcastedShape(shape_, value.shape_), dtype_,
-                      GetDevice());
+    Tensor dst_tensor(shape_util::BroadcastedShape(shape_, value.shape_),
+                      dtype_, GetDevice());
     kernel::Add(*this, value, dst_tensor);
     return dst_tensor;
 }
@@ -465,8 +465,8 @@ Tensor Tensor::Add_(const Tensor& value) {
 }
 
 Tensor Tensor::Sub(const Tensor& value) const {
-    Tensor dst_tensor(BroadcastedShape(shape_, value.shape_), dtype_,
-                      GetDevice());
+    Tensor dst_tensor(shape_util::BroadcastedShape(shape_, value.shape_),
+                      dtype_, GetDevice());
     kernel::Sub(*this, value, dst_tensor);
     return dst_tensor;
 }
@@ -477,8 +477,8 @@ Tensor Tensor::Sub_(const Tensor& value) {
 }
 
 Tensor Tensor::Mul(const Tensor& value) const {
-    Tensor dst_tensor(BroadcastedShape(shape_, value.shape_), dtype_,
-                      GetDevice());
+    Tensor dst_tensor(shape_util::BroadcastedShape(shape_, value.shape_),
+                      dtype_, GetDevice());
     kernel::Mul(*this, value, dst_tensor);
     return dst_tensor;
 }
@@ -489,8 +489,8 @@ Tensor Tensor::Mul_(const Tensor& value) {
 }
 
 Tensor Tensor::Div(const Tensor& value) const {
-    Tensor dst_tensor(BroadcastedShape(shape_, value.shape_), dtype_,
-                      GetDevice());
+    Tensor dst_tensor(shape_util::BroadcastedShape(shape_, value.shape_),
+                      dtype_, GetDevice());
     kernel::Div(*this, value, dst_tensor);
     return dst_tensor;
 }

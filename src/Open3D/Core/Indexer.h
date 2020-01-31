@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include "Open3D/Core/Broadcast.h"
+#include "Open3D/Core/ShapeUtil.h"
 #include "Open3D/Core/CUDAUtils.h"
 #include "Open3D/Core/Dtype.h"
 #include "Open3D/Core/SizeVector.h"

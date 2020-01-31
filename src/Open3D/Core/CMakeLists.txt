@@ -19,7 +19,7 @@ set (KERNEL_CUDA_SRC
 set (CORE_SRC
     DLPack/DLPackConverter.cpp
     AdvancedIndexing.cpp
-    Broadcast.cpp
+    ShapeUtil.cpp
     CUDAUtils.cpp
     MemoryManager.cpp
     MemoryManagerCPU.cpp
