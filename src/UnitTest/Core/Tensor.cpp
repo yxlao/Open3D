@@ -920,3 +920,12 @@ TEST_P(TensorPermuteDevices, Div_) {
     a /= b;
     EXPECT_EQ(a.ToFlatVector<float>(), std::vector<float>({0, 1, 2, 3, 4, 5}));
 }
+
+TEST_P(TensorPermuteDevices, Sum) {
+    Device device = GetParam();
+    Tensor src(std::vector<float>({0, 1, 2, 3, 4, 5}), {2, 3}, Dtype::Float32,
+               device);
+    Tensor dst = src.Sum({1}, false);
+    EXPECT_EQ(dst.GetShape(), SizeVector({2}));
+    EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({3, 12}));
+}
