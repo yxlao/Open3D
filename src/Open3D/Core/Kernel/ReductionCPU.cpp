@@ -29,6 +29,11 @@
 namespace open3d {
 namespace kernel {
 
+template <typename scalar_t>
+static void CPUSumReductionKernel(const void* src, void* dst) {
+    *static_cast<scalar_t*>(dst) += *static_cast<const scalar_t*>(src);
+}
+
 void ReductionCPU(const Tensor& src,
                   Tensor& dst,
                   const SizeVector& dims,

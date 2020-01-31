@@ -26,9 +26,9 @@
 
 #pragma once
 
-#include "Open3D/Core/ShapeUtil.h"
 #include "Open3D/Core/CUDAUtils.h"
 #include "Open3D/Core/Dtype.h"
+#include "Open3D/Core/ShapeUtil.h"
 #include "Open3D/Core/SizeVector.h"
 #include "Open3D/Core/Tensor.h"
 #include "Open3D/Utility/Console.h"
@@ -105,7 +105,8 @@ public:
     /// all outputs.
     Indexer(const std::vector<Tensor>& input_tensors,
             const Tensor& output_tensor,
-            DtypePolicy dtype_policy = DtypePolicy::ASSERT_SAME) {
+            DtypePolicy dtype_policy = DtypePolicy::ASSERT_SAME,
+            const SizeVector& reduction_dims = {}) {
         // Dtype sanity check and handling.
         if (dtype_policy == DtypePolicy::CAST ||
             dtype_policy == DtypePolicy::CAST_INPUTS) {
@@ -135,9 +136,16 @@ public:
         }
         output_ = TensorRef(output_tensor);
 
+        // Theoretically, reduction can be mixed with broadcasting, e.g.
+        // src = np.ones ((2, 3, 1))
+        // dst = np.empty((   3, 4))
+        // np.sum(a, (0), out=b).
+        if (reduction_dims.size() > 0) {
+        }
+
         // Broadcast inputs to match output shape.
         for (int64_t i = 0; i < num_inputs_; ++i) {
-            BroadcastRestride(inputs_[i], output_);
+            BroadcastRestride(inputs_[i], output_.ndims_, output_.shape_);
         }
         ndims_ = output_.ndims_;
         for (int64_t i = 0; i < ndims_; ++i) {
@@ -178,12 +186,13 @@ public:
     ///
     /// \param src The source TensorRef to be broadcasted.
     /// \param dst The destination TensorRef to be broadcasted to.
-    static void BroadcastRestride(TensorRef& src, const TensorRef& dst) {
+    static void BroadcastRestride(TensorRef& src,
+                                  int64_t dst_ndims,
+                                  const int64_t* dst_shape) {
         int64_t src_ndims = src.ndims_;
-        int64_t ndims = dst.ndims_;
 
         // Fill omitted dimensions.
-        int64_t ndims_omitted = ndims - src_ndims;
+        int64_t ndims_omitted = dst_ndims - src_ndims;
         for (int64_t i = src_ndims - 1; i >= 0; --i) {
             src.shape_[ndims_omitted + i] = src.shape_[i];
             src.strides_[ndims_omitted + i] = src.strides_[i];
@@ -192,11 +201,11 @@ public:
             src.shape_[i] = 1;
             src.strides_[i] = 0;
         }
-        src.ndims_ = ndims;
+        src.ndims_ = dst_ndims;
 
         // Fill broadcasted dimensions.
-        for (int64_t i = 0; i < ndims; ++i) {
-            if (src.shape_[i] == 1 && dst.shape_[i] != 1) {
+        for (int64_t i = 0; i < dst_ndims; ++i) {
+            if (src.shape_[i] == 1 && dst_shape[i] != 1) {
                 src.strides_[i] = 0;
             }
         }
