@@ -333,6 +333,11 @@ public:
     Tensor Div_(const Tensor& value);
     Tensor operator/=(const Tensor& value) { return Div_(value); }
 
+    /// Returns the sum of the tensor long the given \p dims.
+    /// \param dims A list of dimensions.
+    /// \param keep_dim If true, the reduced dims will be retained as size 1.
+    Tensor Sum(const SizeVector& dims, bool keep_dim = false) const;
+
     /// Retrive all values as an std::vector, for debugging and testing
     template <typename T>
     std::vector<T> ToFlatVector() const {

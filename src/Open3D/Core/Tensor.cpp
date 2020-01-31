@@ -500,4 +500,10 @@ Tensor Tensor::Div_(const Tensor& value) {
     return *this;
 }
 
+Tensor Tensor::Sum(const SizeVector& dims, bool keep_dim) const {
+    Tensor dst;
+    kernel::Reduction(*this, dst, dims, keep_dim, kernel::ReductionOpCode::Sum);
+    return dst;
+}
+
 }  // namespace open3d
