@@ -136,23 +136,45 @@ public:
         }
         output_ = TensorRef(output_tensor);
 
-        // Theoretically, reduction can be mixed with broadcasting, e.g.
-        // src = np.ones ((2, 3, 1))
-        // dst = np.empty((   3, 4))
-        // np.sum(a, (0), out=b).
-        if (reduction_dims.size() > 0) {
-        }
-
-        // Broadcast inputs to match output shape.
+        // Broadcast inputs to match output shape, by resetting input's shape
+        // and strides.
         for (int64_t i = 0; i < num_inputs_; ++i) {
             BroadcastRestride(inputs_[i], output_.ndims_, output_.shape_);
         }
+
+        // Reduce inputs to match output shape, by resetting output's shape and
+        // strides.
+        //
+        // e.g.
+        // [Before]
+        // src.shape_:     [2, 3]
+        // src.strides_:   [3, 1]
+        // dst.shape_:     [   3]
+        // dst.strides_:   [   1]
+        // reduction_dim = [0]
+        //
+        // [After]
+        // src.shape_:     [2, 3]
+        // src.strides_:   [3, 1]
+        // dst.shape_:     [1, 3] <- Reduced dimension will have shape 1
+        // dst.strides_:   [0, 1] <- Reduced dimension will have stride 0
+        // master_shape_:  [2, 3]
+        if (reduction_dims.size() > 0) {
+            if (num_inputs_ != 1) {
+                utility::LogError(
+                        "Internal error: reduction op can only have 1 inputs.");
+            }
+            ReductionRestride(output_, inputs_[0].ndims_, inputs_[0].shape_,
+                              reduction_dims);
+        }
+
+        // Fill global shape
         ndims_ = output_.ndims_;
         for (int64_t i = 0; i < ndims_; ++i) {
             master_shape_[i] = output_.shape_[i];
         }
 
-        // Fill master_strides_.
+        // Fill global strides master_strides_.
         int64_t stride = 1;
         for (int64_t i = ndims_ - 1; i >= 0; --i) {
             master_strides_[i] = stride;
@@ -205,11 +227,18 @@ public:
 
         // Fill broadcasted dimensions.
         for (int64_t i = 0; i < dst_ndims; ++i) {
+            // It is okay if src.shape_[i] != 1 && dst.shape[i] == 1 for
+            // reduction.
             if (src.shape_[i] == 1 && dst_shape[i] != 1) {
                 src.strides_[i] = 0;
             }
         }
     }
+
+    static void ReductionRestride(TensorRef& dst,
+                                  int64_t src_ndims,
+                                  const int64_t* src_shape,
+                                  const SizeVector& reduction_dims) {}
 
     /// Returns number of dimensions of the Indexer.
     OPEN3D_HOST_DEVICE int64_t NumDims() const { return ndims_; }
@@ -299,11 +328,19 @@ protected:
 
     /// Indexer's global shape. The shape's number of elements is the
     /// same as GetNumWorkloads() for the Indexer.
-    /// For broadcasting, the shape is the same as the output shape. For
-    /// reduction, the shape is the same as the input shape.
+    /// - For broadcasting, master_shape_ is the same as the output shape.
+    /// - For reduction, master_shape_ is the same as the input shape.
+    /// - Currently we don't allow broadcasting mixed with reduction. But if
+    ///   broadcasting mixed with reduction is allowed, master_shape_ is a mix
+    ///   of input shape and output shape. First, fill in all ommited dimensions
+    ///   (in inputs for broadcasting) and reduction dimensions (as if
+    ///   keepdim=true always) with size 1. For each axis, the master dimension
+    ///   is the non-1 dimension (if both are 1, then the master dimension is 1
+    ///   in that axis).
     int64_t master_shape_[MAX_DIMS];
 
-    /// The default strides for master_shape_.
+    /// The default strides for master_shape_ for internal use only. Used to
+    /// compute the actual strides and ultimately the index offsets.
     int64_t master_strides_[MAX_DIMS];
 
     /// Indexer's global number of dimensions.
