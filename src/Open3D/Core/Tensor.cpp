@@ -503,7 +503,8 @@ Tensor Tensor::Div_(const Tensor& value) {
 }
 
 Tensor Tensor::Sum(const SizeVector& dims, bool keep_dim) const {
-    Tensor dst;
+    Tensor dst(shape_util::ReductionShape(shape_, dims, keep_dim), dtype_,
+               GetDevice());
     kernel::Reduction(*this, dst, dims, keep_dim, kernel::ReductionOpCode::Sum);
     return dst;
 }
