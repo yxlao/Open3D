@@ -35,79 +35,75 @@
 
 namespace open3d {
 namespace kernel {
+namespace cpu_launcher {
 
-class CPULauncher {
-public:
-    template <typename scalar_t, typename func_t>
-    static void LaunchUnaryEWKernel(const Indexer& indexer,
-                                    func_t element_kernel) {
+template <typename scalar_t, typename func_t>
+void LaunchUnaryEWKernel(const Indexer& indexer, func_t element_kernel) {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-        for (int64_t workload_idx = 0; workload_idx < indexer.NumWorkloads();
-             ++workload_idx) {
-            element_kernel(indexer.GetInputPtr(0, workload_idx),
-                           indexer.GetOutputPtr(workload_idx));
-        }
+    for (int64_t workload_idx = 0; workload_idx < indexer.NumWorkloads();
+         ++workload_idx) {
+        element_kernel(indexer.GetInputPtr(0, workload_idx),
+                       indexer.GetOutputPtr(workload_idx));
     }
+}
 
-    template <typename scalar_t, typename func_t>
-    static void LaunchBinaryEWKernel(const Indexer& indexer,
-                                     func_t element_kernel) {
+template <typename scalar_t, typename func_t>
+void LaunchBinaryEWKernel(const Indexer& indexer, func_t element_kernel) {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-        for (int64_t workload_idx = 0; workload_idx < indexer.NumWorkloads();
-             ++workload_idx) {
-            element_kernel(indexer.GetInputPtr(0, workload_idx),
-                           indexer.GetInputPtr(1, workload_idx),
-                           indexer.GetOutputPtr(workload_idx));
-        }
+    for (int64_t workload_idx = 0; workload_idx < indexer.NumWorkloads();
+         ++workload_idx) {
+        element_kernel(indexer.GetInputPtr(0, workload_idx),
+                       indexer.GetInputPtr(1, workload_idx),
+                       indexer.GetOutputPtr(workload_idx));
     }
+}
 
-    template <typename scalar_t, typename func_t>
-    static void LaunchReductionKernelSerial(const Indexer& indexer,
-                                            func_t element_kernel) {
-        for (int64_t workload_idx = 0; workload_idx < indexer.NumWorkloads();
-             ++workload_idx) {
-            element_kernel(indexer.GetInputPtr(0, workload_idx),
-                           indexer.GetOutputPtr(workload_idx));
-        }
+template <typename scalar_t, typename func_t>
+void LaunchReductionKernelSerial(const Indexer& indexer,
+                                 func_t element_kernel) {
+    for (int64_t workload_idx = 0; workload_idx < indexer.NumWorkloads();
+         ++workload_idx) {
+        element_kernel(indexer.GetInputPtr(0, workload_idx),
+                       indexer.GetOutputPtr(workload_idx));
     }
+}
 
-    template <typename scalar_t, typename func_t>
-    static void LaunchReductionKernelTwoPass(const Indexer& indexer,
-                                             func_t element_kernel) {
-        for (int64_t workload_idx = 0; workload_idx < indexer.NumWorkloads();
-             ++workload_idx) {
-            element_kernel(indexer.GetInputPtr(0, workload_idx),
-                           indexer.GetOutputPtr(workload_idx));
-        }
+template <typename scalar_t, typename func_t>
+void LaunchReductionKernelTwoPass(const Indexer& indexer,
+                                  func_t element_kernel) {
+    for (int64_t workload_idx = 0; workload_idx < indexer.NumWorkloads();
+         ++workload_idx) {
+        element_kernel(indexer.GetInputPtr(0, workload_idx),
+                       indexer.GetOutputPtr(workload_idx));
     }
+}
 
-    template <typename scalar_t, typename func_t>
-    static void LaunchReductionParallelDim(const Indexer& indexer,
-                                           func_t element_kernel) {
-        for (int64_t workload_idx = 0; workload_idx < indexer.NumWorkloads();
-             ++workload_idx) {
-            element_kernel(indexer.GetInputPtr(0, workload_idx),
-                           indexer.GetOutputPtr(workload_idx));
-        }
+template <typename scalar_t, typename func_t>
+void LaunchReductionParallelDim(const Indexer& indexer, func_t element_kernel) {
+    for (int64_t workload_idx = 0; workload_idx < indexer.NumWorkloads();
+         ++workload_idx) {
+        element_kernel(indexer.GetInputPtr(0, workload_idx),
+                       indexer.GetOutputPtr(workload_idx));
     }
+}
 
-    template <typename scalar_t, typename func_t>
-    static void LaunchAdvancedIndexerKernel(const AdvancedIndexer& indexer,
-                                            func_t element_kernel) {
+template <typename scalar_t, typename func_t>
+void LaunchAdvancedIndexerKernel(const AdvancedIndexer& indexer,
+                                 func_t element_kernel) {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-        for (int64_t workload_idx = 0; workload_idx < indexer.NumWorkloads();
-             ++workload_idx) {
-            element_kernel(indexer.GetInputPtr(workload_idx),
-                           indexer.GetOutputPtr(workload_idx));
-        }
+    for (int64_t workload_idx = 0; workload_idx < indexer.NumWorkloads();
+         ++workload_idx) {
+        element_kernel(indexer.GetInputPtr(workload_idx),
+                       indexer.GetOutputPtr(workload_idx));
     }
-};
+}
 
+}  // namespace cpu_launcher
 }  // namespace kernel
 }  // namespace open3d

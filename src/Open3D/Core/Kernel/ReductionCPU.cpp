@@ -65,14 +65,14 @@ void ReductionCPU(const Tensor& src,
         // Determine scheduling strategy.
         if (parallel_util::GetMaxThreads() == 1 ||
             parallel_util::InParallel()) {
-            CPULauncher::LaunchReductionKernelSerial<scalar_t>(indexer,
-                                                               element_kernel);
-        } else if (indexer.NumWorkloads() == 1) {
-            CPULauncher::LaunchReductionKernelTwoPass<scalar_t>(indexer,
+            cpu_launcher::LaunchReductionKernelSerial<scalar_t>(indexer,
                                                                 element_kernel);
+        } else if (indexer.NumWorkloads() == 1) {
+            cpu_launcher::LaunchReductionKernelTwoPass<scalar_t>(
+                    indexer, element_kernel);
         } else {
-            CPULauncher::LaunchReductionParallelDim<scalar_t>(indexer,
-                                                              element_kernel);
+            cpu_launcher::LaunchReductionParallelDim<scalar_t>(indexer,
+                                                               element_kernel);
         }
 
     });
