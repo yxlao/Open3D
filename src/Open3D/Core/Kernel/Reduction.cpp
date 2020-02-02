@@ -35,25 +35,23 @@ void Reduction(const Tensor& src,
                const SizeVector& dims,
                bool keep_dim,
                ReductionOpCode op_code) {
-    // SizeVector keep_dim_shape =
-    //         shape_util::ReductionShape(src.GetShape(), dims, true);
+    SizeVector keep_dim_shape =
+            shape_util::ReductionShape(src.GetShape(), dims, true);
     SizeVector non_keep_dim_shape =
             shape_util::ReductionShape(src.GetShape(), dims, false);
-    // if (keep_dim && keep_dim_shape != dst.GetShape()) {
-    //     utility::LogError("Expected output shape {} but got {}.",
-    //                       keep_dim_shape.ToString(),
-    //                       dst.GetShape().ToString());
-    // }
-    // if (!keep_dim && non_keep_dim_shape != dst.GetShape()) {
-    //     utility::LogError("Expected output shape {} but got {}.",
-    //                       keep_dim_shape.ToString(),
-    //                       dst.GetShape().ToString());
-    // }
+    if (keep_dim && keep_dim_shape != dst.GetShape()) {
+        utility::LogError("Expected output shape {} but got {}.",
+                          keep_dim_shape.ToString(), dst.GetShape().ToString());
+    }
+    if (!keep_dim && non_keep_dim_shape != dst.GetShape()) {
+        utility::LogError("Expected output shape {} but got {}.",
+                          keep_dim_shape.ToString(), dst.GetShape().ToString());
+    }
 
-    // // Always reshape to keep_dim case. This reshaping is copy-free.
-    // if (!keep_dim) {
-    //     dst = dst.Reshape(keep_dim_shape);
-    // }
+    // Always reshape to keep_dim case. This reshaping is copy-free.
+    if (!keep_dim) {
+        dst = dst.Reshape(keep_dim_shape);
+    }
 
     if (src.GetDevice() != dst.GetDevice()) {
         utility::LogError("Device mismatch {} != {}.",
@@ -74,9 +72,9 @@ void Reduction(const Tensor& src,
         utility::LogError("Unimplemented device.");
     }
 
-    // if (!keep_dim) {
-    //     dst = dst.Reshape(non_keep_dim_shape);
-    // }
+    if (!keep_dim) {
+        dst = dst.Reshape(non_keep_dim_shape);
+    }
 }
 
 }  // namespace kernel
