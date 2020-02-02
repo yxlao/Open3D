@@ -113,7 +113,7 @@ bool CanBeBrocastedToShape(const SizeVector& src_shape,
 }
 
 SizeVector ReductionShape(const SizeVector& src_shape,
-                          const SizeVector dims,
+                          const SizeVector& dims,
                           bool keep_dim) {
     SizeVector out_shape = src_shape;
     if (keep_dim) {

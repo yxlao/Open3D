@@ -25,6 +25,7 @@
 // ----------------------------------------------------------------------------
 
 #include "Open3D/Core/Kernel/Reduction.h"
+#include "Open3D/Core/SizeVector.h"
 
 namespace open3d {
 namespace kernel {
@@ -34,6 +35,26 @@ void Reduction(const Tensor& src,
                const SizeVector& dims,
                bool keep_dim,
                ReductionOpCode op_code) {
+    SizeVector keep_dim_shape =
+            shape_util::ReductionShape(src.GetShape(), dims, true);
+    SizeVector non_keep_dim_shape =
+            shape_util::ReductionShape(src.GetShape(), dims, false);
+    // if (keep_dim && keep_dim_shape != dst.GetShape()) {
+    //     utility::LogError("Expected output shape {} but got {}.",
+    //                       keep_dim_shape.ToString(),
+    //                       dst.GetShape().ToString());
+    // }
+    // if (!keep_dim && non_keep_dim_shape != dst.GetShape()) {
+    //     utility::LogError("Expected output shape {} but got {}.",
+    //                       keep_dim_shape.ToString(),
+    //                       dst.GetShape().ToString());
+    // }
+
+    // // Always reshape to keep_dim case. This reshaping is copy-free.
+    // if (!keep_dim) {
+    //     dst = dst.Reshape(keep_dim_shape);
+    // }
+
     if (src.GetDevice() != dst.GetDevice()) {
         utility::LogError("Device mismatch {} != {}.",
                           src.GetDevice().ToString(),
@@ -52,6 +73,10 @@ void Reduction(const Tensor& src,
     } else {
         utility::LogError("Unimplemented device.");
     }
+
+    // if (!keep_dim) {
+    //     dst = dst.Reshape(non_keep_dim_shape);
+    // }
 }
 
 }  // namespace kernel

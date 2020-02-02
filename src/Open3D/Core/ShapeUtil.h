@@ -74,7 +74,7 @@ bool CanBeBrocastedToShape(const SizeVector& src_shape,
 /// \param dims A list of dimensions to be reduced.
 /// \param keep_dim If true, the reduced dims will be retained as size 1.
 SizeVector ReductionShape(const SizeVector& src_shape,
-                          const SizeVector dims,
+                          const SizeVector& dims,
                           bool keep_dim);
 
 /// \brief Wrap around negative \p dim.

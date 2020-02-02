@@ -43,9 +43,6 @@ void ReductionCPU(const Tensor& src,
                   const SizeVector& dims,
                   bool keep_dim,
                   ReductionOpCode op_code) {
-    if (!keep_dim) {
-        utility::LogError("Unimplemented. To implement dst reshape.");
-    }
     Dtype dtype = dst.GetDtype();
     Indexer indexer({src}, dst, DtypePolicy::ASSERT_SAME, dims);
 
