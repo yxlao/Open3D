@@ -196,11 +196,10 @@ std::pair<bool, SizeVector> Tensor::ComputeNewStrides(
         return std::make_pair(true, SizeVector(new_shape.size(), 1));
     }
 
-    // NOTE: stride is arbitrary in the numel() == 0 case;
-    // to match NumPy behavior we copy the strides if the size matches,
-    // otherwise we use the stride as if it were computed via resize. This could
-    // perhaps be combined with the below code, but the complexity didn't seem
-    // worth it.
+    // NOTE: Stride is arbitrary in the numel() == 0 case. To match NumPy
+    // behavior we copy the strides if the size matches, otherwise we use the
+    // stride as if it were computed via resize. This could perhaps be combined
+    // with the below code, but the complexity didn't seem worth it.
     int64_t numel = old_shape.NumElements();
     if (numel == 0 && old_shape == new_shape) {
         return std::make_pair(true, old_strides);
@@ -221,14 +220,14 @@ std::pair<bool, SizeVector> Tensor::ComputeNewStrides(
     }
 
     int64_t view_d = new_shape.size() - 1;
-    // stride for each subspace in the chunk
+    // Stride for each subspace in the chunk
     int64_t chunk_base_stride = old_strides.back();
-    // numel in current chunk
+    // Numel in current chunk
     int64_t tensor_numel = 1;
     int64_t view_numel = 1;
     for (int64_t tensor_d = old_shape.size() - 1; tensor_d >= 0; tensor_d--) {
         tensor_numel *= old_shape[tensor_d];
-        // if end of tensor size chunk, check view
+        // If end of tensor size chunk, check view
         if ((tensor_d == 0) ||
             (old_shape[tensor_d - 1] != 1 &&
              old_strides[tensor_d - 1] != tensor_numel * chunk_base_stride)) {
