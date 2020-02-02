@@ -407,16 +407,13 @@ public:
 
     static SizeVector DefaultStrides(const SizeVector& shape);
 
-    /// On a high level,
-    /// 1. separate `oldshape` into chunks of dimensions, where the dimensions
-    /// are
-    ///    ``contiguous'' in each chunk, i.e., oldstride[i] = oldshape[i+1] *
-    ///     oldstride[i+1]
+    /// 1. Separate `oldshape` into chunks of dimensions, where the dimensions
+    ///    are ``contiguous'' in each chunk, i.e.,
+    ///    oldstride[i] = oldshape[i+1] * oldstride[i+1]
     /// 2. `newshape` must be able to be separated into same number of chunks as
     ///    `oldshape` was separated into, where each chunk of newshape has
-    ///    matching
-    ///    ``numel'', i.e., number of subspaces, as the corresponding chunk of
-    ///    `oldshape`.
+    ///    matching ``numel'', i.e., number of subspaces, as the corresponding
+    ///    chunk of `oldshape`.
     /// Ref: aten/src/ATen/TensorUtils.cpp
     static std::pair<bool, SizeVector> ComputeNewStrides(
             const SizeVector& old_shape,
