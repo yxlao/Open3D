@@ -29,6 +29,7 @@
 #include "Open3D/Core/Dispatch.h"
 #include "Open3D/Core/Indexer.h"
 #include "Open3D/Core/Kernel/CPULauncher.h"
+#include "Open3D/Core/ParallelUtil.h"
 
 namespace open3d {
 namespace kernel {
@@ -47,9 +48,9 @@ void ReductionCPU(const Tensor& src,
     Indexer indexer({src}, dst, DtypePolicy::ASSERT_SAME, dims);
 
     DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
+        // Optain identity and element kernel based on op_code.
         scalar_t identity;
         std::function<void(void*, void*)> element_kernel;
-
         switch (op_code) {
             case ReductionOpCode::Sum:
                 identity = static_cast<scalar_t>(0);
@@ -59,10 +60,21 @@ void ReductionCPU(const Tensor& src,
                 utility::LogError("Unsupported op code.");
                 break;
         }
-
         dst.Fill(identity);
-        CPULauncher::LaunchReductionKernelSerial<scalar_t>(indexer,
-                                                           element_kernel);
+
+        // Determine scheduling strategy.
+        if (parallel_util::GetMaxThreads() == 1 ||
+            parallel_util::InParallel()) {
+            CPULauncher::LaunchReductionKernelSerial<scalar_t>(indexer,
+                                                               element_kernel);
+        } else if (indexer.NumWorkloads() == 1) {
+            CPULauncher::LaunchReductionKernelTwoPass<scalar_t>(indexer,
+                                                                element_kernel);
+        } else {
+            CPULauncher::LaunchReductionParallelDim<scalar_t>(indexer,
+                                                              element_kernel);
+        }
+
     });
 }
 
