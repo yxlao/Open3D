@@ -35,8 +35,8 @@ void Reduction(const Tensor& src,
                const SizeVector& dims,
                bool keep_dim,
                ReductionOpCode op_code) {
-    SizeVector keep_dim_shape =
-            shape_util::ReductionShape(src.GetShape(), dims, true);
+    // SizeVector keep_dim_shape =
+    //         shape_util::ReductionShape(src.GetShape(), dims, true);
     SizeVector non_keep_dim_shape =
             shape_util::ReductionShape(src.GetShape(), dims, false);
     // if (keep_dim && keep_dim_shape != dst.GetShape()) {
