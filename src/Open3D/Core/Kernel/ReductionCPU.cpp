@@ -47,15 +47,22 @@ void ReductionCPU(const Tensor& src,
     Indexer indexer({src}, dst, DtypePolicy::ASSERT_SAME, dims);
 
     DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
+        scalar_t identity;
+        std::function<void(void*, void*)> element_kernel;
+
         switch (op_code) {
             case ReductionOpCode::Sum:
-                dst.Fill(0);
-                CPULauncher::LaunchReductionKernel<scalar_t>(
-                        indexer, CPUSumReductionKernel<scalar_t>);
+                identity = static_cast<scalar_t>(0);
+                element_kernel = CPUSumReductionKernel<scalar_t>;
                 break;
             default:
+                utility::LogError("Unsupported op code.");
                 break;
         }
+
+        dst.Fill(identity);
+        CPULauncher::LaunchReductionKernelSerial<scalar_t>(indexer,
+                                                           element_kernel);
     });
 }
 
