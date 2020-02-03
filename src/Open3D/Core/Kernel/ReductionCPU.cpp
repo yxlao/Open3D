@@ -63,6 +63,7 @@ void ReductionCPU(const Tensor& src,
         dst.Fill(identity);
 
         // Determine scheduling strategy.
+        // Ref: PyTorch's TensorIterator::parallel_reduce
         if (parallel_util::GetMaxThreads() == 1 ||
             parallel_util::InParallel()) {
             cpu_launcher::LaunchReductionKernelSerial<scalar_t>(indexer,

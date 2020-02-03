@@ -86,6 +86,7 @@ void LaunchReductionKernelTwoPass(const Indexer& indexer,
                 "single-output reduction ops.");
     }
     int64_t num_threads = parallel_util::GetMaxThreads();
+
     for (int64_t workload_idx = 0; workload_idx < indexer.NumWorkloads();
          ++workload_idx) {
         element_kernel(indexer.GetInputPtr(0, workload_idx),
