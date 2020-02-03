@@ -357,9 +357,6 @@ public:
             inputs_[i].shape_[dim] = size;
         }
 
-        utility::LogInfo(
-                "output_.dtype_byte_size_ * output_.strides_[dim] * start {}",
-                output_.dtype_byte_size_ * output_.strides_[dim] * start);
         output_.data_ptr_ =
                 static_cast<char*>(output_.data_ptr_) +
                 output_.dtype_byte_size_ * output_.strides_[dim] * start;
@@ -377,7 +374,7 @@ protected:
         for (int64_t i = ndims_ - 1; i >= 0; --i) {
             master_strides_[i] = stride;
             // Handles 0-sized dimensions
-            stride *= std::max<int64_t>(master_shape_[i], 1);
+            stride = master_shape_[i] > 1 ? stride * master_shape_[i] : stride;
         }
     }
 
