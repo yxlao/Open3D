@@ -351,19 +351,23 @@ public:
     /// \param size The size to iterate in dimension \p dim.
     OPEN3D_HOST_DEVICE void Narrow(int64_t dim, int64_t start, int64_t size) {
         assert(dim >= 0 && dim < ndims_ && size > 0);
-        int64_t original_size = output_.shape_[dim];
+        int64_t original_size = master_shape_[dim];
+        master_shape_[dim] = size;
+
+        assert(output_.shape_[dim] == original_size);
         output_.shape_[dim] = size;
-        for (auto& input : inputs_) {
-            assert(input.shape_[dim] == original_size);
-            input.shape_[dim] = size;
+        for (int64_t i = 0; i < num_inputs_; ++i) {
+            assert(inputs_[i].shape_[dim] == original_size);
+            inputs_[i].shape_[dim] = size;
         }
+
         output_.data_ptr_ =
                 static_cast<char*>(output_.data_ptr_) +
                 output_.dtype_byte_size_ * output_.strides_[dim] * start;
-        for (auto& input : inputs_) {
-            input.data_ptr_ =
-                    static_cast<char*>(input.data_ptr_) +
-                    input.dtype_byte_size_ * input.strides_[dim] * start;
+        for (int64_t i = 0; i < num_inputs_; ++i) {
+            inputs_[i].data_ptr_ = static_cast<char*>(inputs_[i].data_ptr_) +
+                                   inputs_[i].dtype_byte_size_ *
+                                           inputs_[i].strides_[dim] * start;
         }
     }
 
@@ -393,6 +397,9 @@ protected:
     /// Output TensorRef.
     TensorRef output_;
 
+    /// is_reduction_dims_[i] == True iff dimension i is reduced.
+    bool is_reduction_dims_[MAX_DIMS] = {false};
+
     /// Indexer's global shape. The shape's number of elements is the
     /// same as GetNumWorkloads() for the Indexer.
     /// - For broadcasting, master_shape_ is the same as the output shape.
@@ -405,9 +412,6 @@ protected:
     ///   is the non-1 dimension (if both are 1, then the master dimension is 1
     ///   in that axis).
     int64_t master_shape_[MAX_DIMS];
-
-    /// is_reduction_dims_[i] == True iff dimension i is reduced.
-    bool is_reduction_dims_[MAX_DIMS] = {false};
 
     /// The default strides for master_shape_ for internal use only. Used to
     /// compute the actual strides and ultimately the index offsets.

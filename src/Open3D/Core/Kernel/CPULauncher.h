@@ -135,9 +135,9 @@ void LaunchReductionParallelDim(const Indexer& indexer, func_t element_kernel) {
                 "LaunchReductionKernelTwoPass instead.");
     }
 
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static)
-#endif
+    // #ifdef _OPENMP
+    // #pragma omp parallel for schedule(static)
+    // #endif
     for (int64_t i = 0; i < indexer_shape[best_dim]; ++i) {
         Indexer sub_indexer(indexer);
         sub_indexer.Narrow(best_dim, i, 1);
