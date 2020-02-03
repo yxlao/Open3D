@@ -85,12 +85,26 @@ void LaunchReductionKernelTwoPass(const Indexer& indexer,
                 "Internal error: two-pass reduction only works for "
                 "single-output reduction ops.");
     }
+    int64_t num_workloads = indexer.NumWorkloads();
     int64_t num_threads = parallel_util::GetMaxThreads();
+    int64_t workload_per_thread =
+            (num_workloads + num_threads - 1) / num_threads;
+    std::vector<scalar_t> thread_results(num_threads, identity);
 
-    for (int64_t workload_idx = 0; workload_idx < indexer.NumWorkloads();
-         ++workload_idx) {
-        element_kernel(indexer.GetInputPtr(0, workload_idx),
-                       indexer.GetOutputPtr(workload_idx));
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+    for (int64_t thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
+        int64_t start = thread_idx * workload_per_thread;
+        int64_t end = std::min(start + workload_per_thread, num_workloads);
+        for (int64_t workload_idx = start; workload_idx < end; ++workload_idx) {
+            element_kernel(indexer.GetInputPtr(0, workload_idx),
+                           &thread_results[thread_idx]);
+        }
+    }
+    void* output_ptr = indexer.GetOutputPtr(0);
+    for (int64_t thread_idx = 0; thread_idx < num_threads; ++thread_idx) {
+        element_kernel(&thread_results[thread_idx], output_ptr);
     }
 }
 
