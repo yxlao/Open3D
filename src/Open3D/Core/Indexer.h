@@ -115,7 +115,7 @@ public:
             }
         }
 
-        // Conver to TensorRef.
+        // Convert to TensorRef.
         num_inputs_ = static_cast<int64_t>(input_tensors.size());
         if (num_inputs_ > MAX_OPERANDS) {
             utility::LogError("Operation has too many inputs {} > {}",
@@ -126,24 +126,27 @@ public:
         }
         output_ = TensorRef(output_tensor);
 
-        // Reduce inputs to match output shape, by resetting output's shape and
-        // strides.
-        //
-        // e.g.
-        // [Before]
-        // src.shape_:     [2, 3]
-        // src.strides_:   [3, 1]
-        // dst.shape_:     [   3]
-        // dst.strides_:   [   1]
-        // reduction_dim = [0]
-        //
-        // [After]
-        // src.shape_:     [2, 3]
-        // src.strides_:   [3, 1]
-        // dst.shape_:     [1, 3] <- Reduced dimension will have shape 1
-        // dst.strides_:   [0, 1] <- Reduced dimension will have stride 0
-        // master_shape_:  [2, 3]
+        // Theoretically, reduction can be mixed with broadcasting. For
+        // simplicity, we require explicit broadcasting after reduction.
         if (reduction_dims.size() > 0) {
+            // Reduce inputs to match output shape, by resetting output's shape
+            // and strides.
+            //
+            // e.g.
+            // [Before]
+            // src.shape_:     [2, 3]
+            // src.strides_:   [3, 1]
+            // reduction_dim:  [0]
+            // dst.shape_:     [1, 3]
+            // dst.strides_:   [3, 1]
+            //
+            // [After]
+            // src.shape_:     [2, 3]
+            // src.strides_:   [3, 1]
+            // dst.shape_:     [1, 3] <- Reduced dimension will have shape 1
+            // dst.strides_:   [0, 1] <- Reduced dimension will have stride 0
+            // master_shape_:  [2, 3] <- master_shape == src.shape_ for
+            // reudction
             if (num_inputs_ != 1) {
                 utility::LogError(
                         "Internal error: reduction op can only have 1 inputs.");
@@ -172,8 +175,6 @@ public:
                 is_reduction_dims_[reduction_dim] = true;
             }
         } else {
-            // Theoretically, reduction can be mixed with broadcasting. For
-            // simplicity, we require explicit broadcasting after reduction.
             // Broadcast inputs to match output shape, by resetting input's
             // shape and strides.
             for (int64_t i = 0; i < num_inputs_; ++i) {
