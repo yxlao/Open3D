@@ -164,6 +164,9 @@ TEST(ShapeUtil, ReductionShape) {
                  std::runtime_error);
     EXPECT_THROW(shape_util::ReductionShape({1}, {2}, false),
                  std::runtime_error);
+    EXPECT_THROW(shape_util::ReductionShape({}, {1}, true), std::runtime_error);
+    EXPECT_THROW(shape_util::ReductionShape({1}, {2}, true),
+                 std::runtime_error);
 
     // Dimension with size 0 can be reduced to size 1.
     EXPECT_EQ(shape_util::ReductionShape({2, 0}, {1}, false), SizeVector({2}));

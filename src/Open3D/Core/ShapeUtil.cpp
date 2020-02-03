@@ -115,19 +115,22 @@ bool CanBeBrocastedToShape(const SizeVector& src_shape,
 SizeVector ReductionShape(const SizeVector& src_shape,
                           const SizeVector& dims,
                           bool keep_dim) {
+    int64_t src_ndims = src_shape.size();
     SizeVector out_shape = src_shape;
+
+    // WrapDim throws exception if out-of-range.
     if (keep_dim) {
         for (const int64_t& dim : dims) {
-            out_shape[WrapDim(dim, out_shape.size())] = 1;
+            out_shape[WrapDim(dim, src_ndims)] = 1;
         }
     } else {
         // If dim i is reduced, dims_mask[i] == true
-        std::vector<bool> dims_mask(out_shape.size(), false);
+        std::vector<bool> dims_mask(src_ndims, false);
         for (const int64_t& dim : dims) {
-            dims_mask[dim] = true;
+            dims_mask[WrapDim(dim, src_ndims)] = true;
         }
         int64_t to_fill = 0;
-        for (int64_t i = 0; i < out_shape.size(); ++i) {
+        for (int64_t i = 0; i < src_ndims; ++i) {
             if (!dims_mask[i]) {
                 out_shape[to_fill] = out_shape[i];
                 to_fill++;
