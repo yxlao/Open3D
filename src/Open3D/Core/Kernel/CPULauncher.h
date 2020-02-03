@@ -139,10 +139,16 @@ void LaunchReductionParallelDim(const Indexer& indexer, func_t element_kernel) {
     // #pragma omp parallel for schedule(static)
     // #endif
     for (int64_t i = 0; i < indexer_shape[best_dim]; ++i) {
+        utility::LogInfo("indexer_shape[{}]: {}", best_dim,
+                         indexer_shape[best_dim]);
         Indexer sub_indexer(indexer);
         sub_indexer.Narrow(best_dim, i, 1);
         LaunchReductionKernelSerial<scalar_t>(sub_indexer, element_kernel);
     }
+
+    // Indexer sub_indexer(indexer);
+    // sub_indexer.Narrow(best_dim, 2, 1);
+    // LaunchReductionKernelSerial<scalar_t>(sub_indexer, element_kernel);
 }
 
 template <typename scalar_t, typename func_t>

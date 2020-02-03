@@ -189,12 +189,7 @@ public:
         }
 
         // Fill global strides master_strides_.
-        int64_t stride = 1;
-        for (int64_t i = ndims_ - 1; i >= 0; --i) {
-            master_strides_[i] = stride;
-            // Handles 0-sized dimensions
-            stride *= std::max<int64_t>(master_shape_[i], 1);
-        }
+        UpdateMasterStrides();
     }
 
     /// Broadcast src to dst by setting shape 1 to omitted dimensions and
@@ -353,6 +348,7 @@ public:
         assert(dim >= 0 && dim < ndims_ && size > 0);
         int64_t original_size = master_shape_[dim];
         master_shape_[dim] = size;
+        UpdateMasterStrides();
 
         assert(output_.shape_[dim] == original_size);
         output_.shape_[dim] = size;
@@ -361,6 +357,9 @@ public:
             inputs_[i].shape_[dim] = size;
         }
 
+        utility::LogInfo(
+                "output_.dtype_byte_size_ * output_.strides_[dim] * start {}",
+                output_.dtype_byte_size_ * output_.strides_[dim] * start);
         output_.data_ptr_ =
                 static_cast<char*>(output_.data_ptr_) +
                 output_.dtype_byte_size_ * output_.strides_[dim] * start;
@@ -372,6 +371,16 @@ public:
     }
 
 protected:
+    /// Update master_strides_ based on master_shape_.
+    OPEN3D_HOST_DEVICE void UpdateMasterStrides() {
+        int64_t stride = 1;
+        for (int64_t i = ndims_ - 1; i >= 0; --i) {
+            master_strides_[i] = stride;
+            // Handles 0-sized dimensions
+            stride *= std::max<int64_t>(master_shape_[i], 1);
+        }
+    }
+
     /// Get data pointer from a TensorRef with \p workload_idx.
     /// Note: can be optimized by computing all input ptrs and output ptr
     /// together.
