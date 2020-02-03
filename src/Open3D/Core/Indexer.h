@@ -59,16 +59,6 @@ struct TensorRef {
         }
     }
 
-    OPEN3D_HOST_DEVICE TensorRef(const TensorRef& tr) {
-        data_ptr_ = tr.data_ptr_;
-        ndims_ = tr.ndims_;
-        dtype_byte_size_ = tr.dtype_byte_size_;
-        for (int64_t i = 0; i < ndims_; ++i) {
-            shape_[i] = tr.shape_[i];
-            strides_[i] = tr.strides_[i];
-        }
-    }
-
     void* data_ptr_;
     int64_t ndims_ = 0;
     int64_t dtype_byte_size_ = 0;
