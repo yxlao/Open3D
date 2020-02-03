@@ -48,6 +48,12 @@ void Reduction(const Tensor& src,
                           keep_dim_shape.ToString(), dst.GetShape().ToString());
     }
 
+    // Directly copy for non-reduction.
+    if (dims.size() == 0) {
+        dst.AsRvalue() = src;
+        return;
+    }
+
     // Always reshape to keep_dim case. This reshaping is copy-free.
     if (!keep_dim) {
         dst = dst.Reshape(keep_dim_shape);
