@@ -30,7 +30,7 @@ namespace open3d {
 namespace kernel {
 namespace parallel_util {
 
-int GetMaxThreads() {
+inline int GetMaxThreads() {
 #ifdef _OPENMP
     return omp_get_max_threads();
 #else
@@ -38,7 +38,7 @@ int GetMaxThreads() {
 #endif
 }
 
-bool InParallel() {
+inline bool InParallel() {
 #ifdef _OPENMP
     return omp_in_parallel();
 #else

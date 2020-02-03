@@ -285,18 +285,31 @@ public:
         return master_strides_;
     }
 
-    /// Return the total number of workloads (e.g. computations) needed for
+    /// Returns the total number of workloads (e.g. computations) needed for
     /// the op. The scheduler schedules these workloads to run on parallel
     /// threads.
     ///
-    /// Typically for non-reduction ops, NumWorkloads() is the same as
-    /// number of output elements.
+    /// For non-reduction ops, NumWorkloads() is the same as number of output
+    /// elements (e.g. for broadcasting ops).
+    ///
+    /// For reduction ops, NumWorkLoads() is the same as the number of input
+    /// elements. Currently we don't allow mixing broadcasting and reduction in
+    /// one op kernel.
     OPEN3D_HOST_DEVICE int64_t NumWorkloads() const {
         int64_t num_workloads = 1;
         for (int64_t i = 0; i < ndims_; ++i) {
             num_workloads *= master_shape_[i];
         }
         return num_workloads;
+    }
+
+    /// Returns the number of output elements.
+    OPEN3D_HOST_DEVICE int64_t NumOutputElements() const {
+        int64_t num_output_elements = 1;
+        for (int64_t i = 0; i < output_.ndims_; ++i) {
+            num_output_elements *= output_.shape_[i];
+        }
+        return num_output_elements;
     }
 
     /// Get input Tensor data pointer based on \p workload_idx.
@@ -312,7 +325,7 @@ public:
         return GetWorkloadDataPtr(inputs_[input_idx], workload_idx);
     }
 
-    // Get output Tensor data pointer based on \p workload_idx.
+    /// Get output Tensor data pointer based on \p workload_idx.
     ///
     /// \param workload_idx The index of the compute workload, similar to
     /// thread_id, if a thread only processes one workload.
