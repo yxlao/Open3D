@@ -176,6 +176,11 @@ public:
             for (int64_t i = 0; i < ndims_; ++i) {
                 master_shape_[i] = inputs_[0].shape_[i];
             }
+
+            // Fill is_reduction_dims_
+            for (const int64_t reduction_dim : reduction_dims) {
+                is_reduction_dims_[reduction_dim] = true;
+            }
         } else {
             // Theoretically, reduction can be mixed with broadcasting. For
             // simplicity, we require explicit broadcasting after reduction.
@@ -343,6 +348,11 @@ public:
     /// Returns output TensorRef.
     OPEN3D_HOST_DEVICE TensorRef GetOutput() { return output_; }
 
+    /// Returns true if the \p i -th dimension is reduced.
+    OPEN3D_HOST_DEVICE bool IsReductionDim(int64_t i) const {
+        return is_reduction_dims_[i];
+    }
+
 protected:
     /// Get data pointer from a TensorRef with \p workload_idx.
     /// Note: can be optimized by computing all input ptrs and output ptr
@@ -382,12 +392,15 @@ protected:
     ///   in that axis).
     int64_t master_shape_[MAX_DIMS];
 
+    /// is_reduction_dims_[i] == True iff dimension i is reduced.
+    bool is_reduction_dims_[MAX_DIMS] = {false};
+
     /// The default strides for master_shape_ for internal use only. Used to
     /// compute the actual strides and ultimately the index offsets.
     int64_t master_strides_[MAX_DIMS];
 
     /// Indexer's global number of dimensions.
-    int64_t ndims_;
+    int64_t ndims_ = 0;
 };
 
 }  // namespace open3d
