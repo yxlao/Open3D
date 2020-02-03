@@ -24,42 +24,42 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "Open3D/Core/Kernel/UnaryEW.h"
+#include "Open3D/Core/Blob.h"
+#include "Open3D/Core/Device.h"
+#include "Open3D/Core/MemoryManager.h"
+#include "TestUtility/UnitTest.h"
 
-#include "Open3D/Core/ShapeUtil.h"
-#include "Open3D/Core/Tensor.h"
-#include "Open3D/Utility/Console.h"
+#include "Core/ContainerTest.h"
 
-namespace open3d {
-namespace kernel {
+using namespace std;
+using namespace open3d;
 
-void Copy(const Tensor& src, Tensor& dst) {
-    // Check shape
-    if (!shape_util::CanBeBrocastedToShape(src.GetShape(), dst.GetShape())) {
-        utility::LogError("Shape {} can not be broadcasted to {}.",
-                          src.GetShape(), dst.GetShape());
-    }
+class BlobPermuteDevices : public PermuteDevices {};
+INSTANTIATE_TEST_SUITE_P(Blob,
+                         BlobPermuteDevices,
+                         testing::ValuesIn(PermuteDevices::TestCases()));
 
-    // Disbatch to device
-    Device::DeviceType src_device_type = src.GetDevice().GetType();
-    Device::DeviceType dst_device_type = dst.GetDevice().GetType();
-    if ((src_device_type != Device::DeviceType::CPU &&
-         src_device_type != Device::DeviceType::CUDA) ||
-        (dst_device_type != Device::DeviceType::CPU &&
-         dst_device_type != Device::DeviceType::CUDA)) {
-        utility::LogError("Copy: Unimplemented device");
-    }
-    if (src_device_type == Device::DeviceType::CPU &&
-        dst_device_type == Device::DeviceType::CPU) {
-        CopyCPU(src, dst);
-    } else {
-#ifdef BUILD_CUDA_MODULE
-        CopyCUDA(src, dst);
-#else
-        utility::LogError("Not compiled with CUDA, but CUDA device is used.");
-#endif
-    }
+TEST_P(BlobPermuteDevices, BlobConstructor) {
+    Device device = GetParam();
+
+    Blob b(10, Device(device));
 }
 
-}  // namespace kernel
-}  // namespace open3d
+TEST_P(BlobPermuteDevices, BlobConstructorWithExternalMemory) {
+    Device device = GetParam();
+
+    void* data_ptr = MemoryManager::Malloc(8, device);
+    bool deleter_called = false;
+
+    auto deleter = [&device, &deleter_called, data_ptr](void* dummy) -> void {
+        MemoryManager::Free(data_ptr, device);
+        deleter_called = true;
+    };
+
+    {
+        Blob b(device, data_ptr, deleter);
+        EXPECT_EQ(b.GetDataPtr(), data_ptr);
+        EXPECT_FALSE(deleter_called);
+    }
+    EXPECT_TRUE(deleter_called);
+}

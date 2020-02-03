@@ -31,7 +31,7 @@
 #include "Open3D/Core/MemoryManager.h"
 #include "Open3D/Core/SizeVector.h"
 
-#include "Container/ContainerTest.h"
+#include "Core/ContainerTest.h"
 #include "TestUtility/UnitTest.h"
 
 using namespace std;
@@ -919,4 +919,100 @@ TEST_P(TensorPermuteDevices, Div_) {
              device);
     a /= b;
     EXPECT_EQ(a.ToFlatVector<float>(), std::vector<float>({0, 1, 2, 3, 4, 5}));
+}
+
+TEST_P(TensorPermuteDevices, SumKeepDim) {
+    Device device = GetParam();
+    Tensor src(std::vector<float>({0,  1,  2,  3,  4,  5,  6,  7,
+                                   8,  9,  10, 11, 12, 13, 14, 15,
+                                   16, 17, 18, 19, 20, 21, 22, 23}),
+               {2, 3, 4}, Dtype::Float32, device);
+    Tensor dst;
+
+    dst = src.Sum({}, true);
+    EXPECT_EQ(dst.GetShape(), SizeVector({2, 3, 4}));
+    EXPECT_EQ(dst.ToFlatVector<float>(),
+              std::vector<float>({0,  1,  2,  3,  4,  5,  6,  7,
+                                  8,  9,  10, 11, 12, 13, 14, 15,
+                                  16, 17, 18, 19, 20, 21, 22, 23}));
+
+    dst = src.Sum({0}, true);
+    EXPECT_EQ(dst.GetShape(), SizeVector({1, 3, 4}));
+    EXPECT_EQ(dst.ToFlatVector<float>(),
+              std::vector<float>(
+                      {12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34}));
+
+    dst = src.Sum({1}, true);
+    EXPECT_EQ(dst.GetShape(), SizeVector({2, 1, 4}));
+    EXPECT_EQ(dst.ToFlatVector<float>(),
+              std::vector<float>({12, 15, 18, 21, 48, 51, 54, 57}));
+
+    dst = src.Sum({2}, true);
+    EXPECT_EQ(dst.GetShape(), SizeVector({2, 3, 1}));
+    EXPECT_EQ(dst.ToFlatVector<float>(),
+              std::vector<float>({6, 22, 38, 54, 70, 86}));
+
+    dst = src.Sum({0, 1}, true);
+    EXPECT_EQ(dst.GetShape(), SizeVector({1, 1, 4}));
+    EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({60, 66, 72, 78}));
+
+    dst = src.Sum({0, 2}, true);
+    EXPECT_EQ(dst.GetShape(), SizeVector({1, 3, 1}));
+    EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({60, 92, 124}));
+
+    dst = src.Sum({1, 2}, true);
+    EXPECT_EQ(dst.GetShape(), SizeVector({2, 1, 1}));
+    EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({66, 210}));
+
+    dst = src.Sum({0, 1, 2}, true);
+    EXPECT_EQ(dst.GetShape(), SizeVector({1, 1, 1}));
+    EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({276}));
+}
+
+TEST_P(TensorPermuteDevices, SumNotKeepDim) {
+    Device device = GetParam();
+    Tensor src(std::vector<float>({0,  1,  2,  3,  4,  5,  6,  7,
+                                   8,  9,  10, 11, 12, 13, 14, 15,
+                                   16, 17, 18, 19, 20, 21, 22, 23}),
+               {2, 3, 4}, Dtype::Float32, device);
+    Tensor dst;
+
+    dst = src.Sum({}, false);
+    EXPECT_EQ(dst.GetShape(), SizeVector({2, 3, 4}));
+    EXPECT_EQ(dst.ToFlatVector<float>(),
+              std::vector<float>({0,  1,  2,  3,  4,  5,  6,  7,
+                                  8,  9,  10, 11, 12, 13, 14, 15,
+                                  16, 17, 18, 19, 20, 21, 22, 23}));
+
+    dst = src.Sum({0}, false);
+    EXPECT_EQ(dst.GetShape(), SizeVector({3, 4}));
+    EXPECT_EQ(dst.ToFlatVector<float>(),
+              std::vector<float>(
+                      {12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34}));
+
+    dst = src.Sum({1}, false);
+    EXPECT_EQ(dst.GetShape(), SizeVector({2, 4}));
+    EXPECT_EQ(dst.ToFlatVector<float>(),
+              std::vector<float>({12, 15, 18, 21, 48, 51, 54, 57}));
+
+    dst = src.Sum({2}, false);
+    EXPECT_EQ(dst.GetShape(), SizeVector({2, 3}));
+    EXPECT_EQ(dst.ToFlatVector<float>(),
+              std::vector<float>({6, 22, 38, 54, 70, 86}));
+
+    dst = src.Sum({0, 1}, false);
+    EXPECT_EQ(dst.GetShape(), SizeVector({4}));
+    EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({60, 66, 72, 78}));
+
+    dst = src.Sum({0, 2}, false);
+    EXPECT_EQ(dst.GetShape(), SizeVector({3}));
+    EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({60, 92, 124}));
+
+    dst = src.Sum({1, 2}, false);
+    EXPECT_EQ(dst.GetShape(), SizeVector({2}));
+    EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({66, 210}));
+
+    dst = src.Sum({0, 1, 2}, false);
+    EXPECT_EQ(dst.GetShape(), SizeVector({}));
+    EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({276}));
 }
