@@ -110,6 +110,31 @@ void LaunchReductionKernelTwoPass(const Indexer& indexer,
 
 template <typename scalar_t, typename func_t>
 void LaunchReductionParallelDim(const Indexer& indexer, func_t element_kernel) {
+    // Prefers outer dimension >= num_threads.
+    const int64_t* indexer_shape = indexer.GetMasterShape();
+    const int64_t num_dims = indexer.NumDims();
+    int64_t num_threads = parallel_util::GetMaxThreads();
+
+    // Init best_dim as the outer-most non-reduction dim.
+    int64_t best_dim = num_dims - 1;
+    while (best_dim >= 0 && indexer.IsReductionDim(best_dim)) {
+        best_dim--;
+    }
+    for (int64_t dim = best_dim; dim >= 0 && !indexer.IsReductionDim(dim);
+         --dim) {
+        if (indexer_shape[dim] >= num_threads) {
+            best_dim = dim;
+            break;
+        } else if (indexer_shape[dim] > indexer_shape[best_dim]) {
+            best_dim = dim;
+        }
+    }
+    if (best_dim == -1) {
+        utility::LogError(
+                "Internal error: all dims are reduction dims, use "
+                "LaunchReductionKernelTwoPass instead.");
+    }
+
     for (int64_t workload_idx = 0; workload_idx < indexer.NumWorkloads();
          ++workload_idx) {
         element_kernel(indexer.GetInputPtr(0, workload_idx),
