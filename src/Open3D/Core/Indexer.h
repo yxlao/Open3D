@@ -344,6 +344,29 @@ public:
         return is_reduction_dims_[i];
     }
 
+    /// Narrows iteration to a specific range in a specific dimension.
+    /// \param dim The dimension to be narrowed to.
+    /// \param start Starting index (inclusive) for dimension \p dim. No
+    /// dimension wraping is available.
+    /// \param size The size to iterate in dimension \p dim.
+    OPEN3D_HOST_DEVICE void Narrow(int64_t dim, int64_t start, int64_t size) {
+        assert(dim >= 0 && dim < ndims_ && size > 0);
+        int64_t original_size = output_.shape_[dim];
+        output_.shape_[dim] = size;
+        for (auto& input : inputs_) {
+            assert(input.shape_[dim] == original_size);
+            input.shape_[dim] = size;
+        }
+        output_.data_ptr_ =
+                static_cast<char*>(output_.data_ptr_) +
+                output_.dtype_byte_size_ * output_.strides_[dim] * start;
+        for (auto& input : inputs_) {
+            input.data_ptr_ =
+                    static_cast<char*>(input.data_ptr_) +
+                    input.dtype_byte_size_ * input.strides_[dim] * start;
+        }
+    }
+
 protected:
     /// Get data pointer from a TensorRef with \p workload_idx.
     /// Note: can be optimized by computing all input ptrs and output ptr
