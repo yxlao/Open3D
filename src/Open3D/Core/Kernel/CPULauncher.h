@@ -74,7 +74,8 @@ void LaunchReductionKernelSerial(const Indexer& indexer,
 
 template <typename scalar_t, typename func_t>
 void LaunchReductionKernelTwoPass(const Indexer& indexer,
-                                  func_t element_kernel) {
+                                  func_t element_kernel,
+                                  scalar_t identity) {
     for (int64_t workload_idx = 0; workload_idx < indexer.NumWorkloads();
          ++workload_idx) {
         element_kernel(indexer.GetInputPtr(0, workload_idx),

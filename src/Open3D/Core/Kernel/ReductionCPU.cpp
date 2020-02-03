@@ -69,7 +69,7 @@ void ReductionCPU(const Tensor& src,
                                                                 element_kernel);
         } else if (indexer.NumWorkloads() == 1) {
             cpu_launcher::LaunchReductionKernelTwoPass<scalar_t>(
-                    indexer, element_kernel);
+                    indexer, element_kernel, identity);
         } else {
             cpu_launcher::LaunchReductionParallelDim<scalar_t>(indexer,
                                                                element_kernel);
