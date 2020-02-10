@@ -48,6 +48,21 @@ namespace open3d {
 namespace kernel {
 namespace cuda_launcher {
 
+// Utility class used to avoid linker errors with extern
+// unsized shared memory arrays with templated type
+template <class T>
+struct SharedMemory {
+    __device__ inline operator T*() {
+        extern __shared__ int __smem[];
+        return (T*)__smem;
+    }
+
+    __device__ inline operator const T*() const {
+        extern __shared__ int __smem[];
+        return (T*)__smem;
+    }
+};
+
 // Applies f for each element
 // Works for unary / binary elementwise operations
 template <int64_t threads_per_block, int64_t items_per_thread, typename func_t>
@@ -60,6 +75,34 @@ __global__ void ElementWiseKernel(int64_t num_elems, func_t f) {
             f(idx);
             idx += threads_per_block;
         }
+    }
+}
+
+template <typename scalar_t, typename func_t>
+__global__ void ReductionKernelOneOutput(Indexer indexer,
+                                         func_t element_kernel) {
+    scalar_t* sdata = SharedMemory<scalar_t>();
+    int64_t n = indexer.NumWorkloads();
+    int64_t tid = threadIdx.x;
+    int64_t i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (i < n) {
+        sdata[tid] = *reinterpret_cast<scalar_t*>(indexer.GetInputPtr(0, i));
+    } else {
+        sdata[tid] = 0;
+    }
+    __syncthreads();
+
+    for (int64_t s = blockDim.x / 2; s > 0; s >>= 1) {
+        if (tid < s && tid + s < n) {
+            // element_kernel(src, dst) -> dst = dst + src
+            element_kernel(&sdata[tid + s], &sdata[tid]);
+        }
+        __syncthreads();
+    }
+
+    if (i < n && tid == 0) {
+        *reinterpret_cast<scalar_t*>(indexer.GetOutputPtr(i)) = sdata[tid];
     }
 }
 
@@ -96,6 +139,19 @@ void LaunchBinaryEWKernel(const Indexer& indexer, func_t element_kernel) {
 
     ElementWiseKernel<threads_per_block, items_per_thread>
             <<<grid_size, threads_per_block, 0>>>(num_elems, f);
+}
+
+template <typename scalar_t, typename func_t>
+void LaunchReductionKernelOneOutput(const Indexer& indexer,
+                                    func_t element_kernel) {
+    OPEN3D_ASSERT_HOST_DEVICE_LAMBDA(func_t);
+
+    int64_t grid_size = 4;
+    int64_t block_size = 128;
+
+    ReductionKernelOneOutput<scalar_t>
+            <<<grid_size, block_size, block_size * sizeof(scalar_t)>>>(
+                    indexer, element_kernel);
 }
 
 template <typename scalar_t, typename func_t>

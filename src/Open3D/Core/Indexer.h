@@ -39,7 +39,7 @@ namespace open3d {
 static constexpr int64_t MAX_DIMS = 16;
 
 // Maximum number of operands (inputs) of an op.
-static constexpr int64_t MAX_OPERANDS = 8;
+static constexpr int64_t MAX_OPERANDS = 2;
 
 /// A minimalistic class that reference a Tensor.
 struct TensorRef {
@@ -81,8 +81,7 @@ enum class DtypePolicy {
 /// Indexing engine for elementwise ops with broadcasting support.
 ///
 /// Fancy indexing is supported by restriding input tensor and treating the
-/// operation as elementwise op. Reduction op will be supported by
-/// Indexer in the future.
+/// operation as elementwise op.
 ///
 /// After constructing Indexer on the host, the indexing methods can be
 /// used from both host and device.
@@ -145,8 +144,7 @@ public:
             // src.strides_:   [3, 1]
             // dst.shape_:     [1, 3] <- Reduced dimension will have shape 1
             // dst.strides_:   [0, 1] <- Reduced dimension will have stride 0
-            // master_shape_:  [2, 3] <- master_shape == src.shape_ for
-            // reudction
+            // master_shape_:  [2, 3] <- master_shape == src.shape for reduction
             if (num_inputs_ != 1) {
                 utility::LogError(
                         "Internal error: reduction op can only have 1 inputs.");
@@ -244,7 +242,7 @@ public:
         }
     }
 
-    /// Smmetricial to BroadcastRestride. Set the reduced dimensions' stride to
+    /// Symmetrical to BroadcastRestride. Set the reduced dimensions' stride to
     /// 0 at output. Currently only support the keep_dim=true case.
     static void ReductionRestride(TensorRef& dst,
                                   int64_t src_ndims,
@@ -412,7 +410,7 @@ protected:
     /// - For reduction, master_shape_ is the same as the input shape.
     /// - Currently we don't allow broadcasting mixed with reduction. But if
     ///   broadcasting mixed with reduction is allowed, master_shape_ is a mix
-    ///   of input shape and output shape. First, fill in all ommited dimensions
+    ///   of input shape and output shape. First, fill in all omitted dimensions
     ///   (in inputs for broadcasting) and reduction dimensions (as if
     ///   keepdim=true always) with size 1. For each axis, the master dimension
     ///   is the non-1 dimension (if both are 1, then the master dimension is 1

@@ -1016,3 +1016,20 @@ TEST_P(TensorPermuteDevices, SumNotKeepDim) {
     EXPECT_EQ(dst.GetShape(), SizeVector({}));
     EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({276}));
 }
+
+TEST_P(TensorPermuteDevices, SumCUDA) {
+    Device device = GetParam();
+    if (device != Device("CUDA:0")) {
+        return;
+    }
+
+    Tensor src(std::vector<float>({0,  1,  2,  3,  4,  5,  6,  7,
+                                   8,  9,  10, 11, 12, 13, 14, 15,
+                                   16, 17, 18, 19, 20, 21, 22, 23}),
+               {2, 3, 4}, Dtype::Float32, device);
+    Tensor dst;
+
+    dst = src.Sum({0, 1, 2}, true);
+    EXPECT_EQ(dst.GetShape(), SizeVector({1, 1, 1}));
+    EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({276}));
+}

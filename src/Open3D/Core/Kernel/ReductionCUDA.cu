@@ -26,15 +26,60 @@
 
 #include "Open3D/Core/Kernel/Reduction.h"
 
+#include "Open3D/Core/CUDAState.cuh"
+#include "Open3D/Core/CUDAUtils.h"
+#include "Open3D/Core/Dispatch.h"
+#include "Open3D/Core/Kernel/CUDALauncher.cuh"
+#include "Open3D/Core/Tensor.h"
+
 namespace open3d {
 namespace kernel {
+
+template <typename scalar_t>
+static OPEN3D_HOST_DEVICE void CUDASumReductionKernel(const void* src,
+                                                      void* dst) {
+    *static_cast<scalar_t*>(dst) += *static_cast<const scalar_t*>(src);
+}
 
 void ReductionCUDA(const Tensor& src,
                    Tensor& dst,
                    const SizeVector& dims,
                    bool keep_dim,
                    ReductionOpCode op_code) {
-    utility::LogError("Unimplemented ReductionCUDA.");
+    Dtype dtype = dst.GetDtype();
+    Indexer indexer({src}, dst, DtypePolicy::ASSERT_SAME, dims);
+
+    CUDADeviceSwitcher switcher(src.GetDevice());
+    DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
+        // Optain identity and element kernel based on op_code.
+        scalar_t identity;
+        std::function<void(void*, void*)> element_kernel;
+        switch (op_code) {
+            case ReductionOpCode::Sum:
+                identity = static_cast<scalar_t>(0);
+                element_kernel = CUDASumReductionKernel<scalar_t>;
+                break;
+            default:
+                utility::LogError("Unsupported op code.");
+                break;
+        }
+        dst.Fill(identity);
+    });
+
+    DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
+        cuda_launcher::LaunchReductionKernelOneOutput<scalar_t>(
+                indexer,
+                // Need to wrap as extended CUDA lamba function
+                [] OPEN3D_HOST_DEVICE(const void* src, void* dst) {
+                    CUDASumReductionKernel<scalar_t>(src, dst);
+                });
+    });
+
+    if (dims.size() != src.NumDims()) {
+        utility::LogError("Unimplemented case for ReductionCUDA.");
+    }
+
+    // utility::LogError("Unimplemented ReductionCUDA.");
 }
 
 }  // namespace kernel
