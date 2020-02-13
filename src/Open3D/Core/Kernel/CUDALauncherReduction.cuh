@@ -134,6 +134,76 @@ __global__ void ReductionKernelOneOutput(Indexer indexer,
 }
 
 template <typename scalar_t, typename func_t>
+__global__ void ReduceKernelInit(Indexer indexer,
+                                 scalar_t identity,
+                                 func_t element_kernel,
+                                 scalar_t* g_odata,
+                                 unsigned int n) {
+    cg::thread_block cta = cg::this_thread_block();
+    scalar_t* sdata = SharedMemory<scalar_t>();
+    unsigned int tid = threadIdx.x;
+    unsigned int i = blockIdx.x * blockDim.x * 2 + threadIdx.x;
+    unsigned int grid_stride = blockDim.x * 2 * gridDim.x;
+
+    // Reduce multiple elements per thread. Larger gridDim.x results in larger
+    // grid_stride and fewer elements per thread.
+    scalar_t local_result = identity;
+    while (i < n) {
+        // local_result += g_idata[i];
+        element_kernel(indexer.GetInputPtr(0, i), &local_result);
+        if (i + blockDim.x < n) {
+            // local_result += g_idata[i + blockDim.x];
+            element_kernel(indexer.GetInputPtr(0, i + blockDim.x),
+                           &local_result);
+        }
+        i += grid_stride;
+    }
+    sdata[tid] = local_result;
+    cg::sync(cta);
+
+    // Unrolled: 512, 256, 128.
+    if (blockDim.x >= 512 && tid < 256) {
+        // local_result += sdata[tid + 256];
+        element_kernel(indexer.GetInputPtr(0, tid + 256), &local_result);
+        sdata[tid] = local_result;
+    }
+    cg::sync(cta);
+    if (blockDim.x >= 256 && tid < 128) {
+        // local_result += sdata[tid + 128];
+        element_kernel(indexer.GetInputPtr(0, tid + 128), &local_result);
+        sdata[tid] = local_result;
+    }
+    cg::sync(cta);
+    if (blockDim.x >= 128 && tid < 64) {
+        // local_result += sdata[tid + 64];
+        element_kernel(indexer.GetInputPtr(0, tid + 64), &local_result);
+        sdata[tid] = local_result;
+    }
+    cg::sync(cta);
+
+    // Single warp reduction with shuffle: 64, 32, 16, 8, 4, 2, 1
+    cg::thread_block_tile<32> tile32 = cg::tiled_partition<32>(cta);
+    if (cta.thread_rank() < 32) {
+        // Fetch final intermediate result from 2nd warp
+        if (blockDim.x >= 64) {
+            // local_result += sdata[tid + 32];
+            element_kernel(indexer.GetInputPtr(0, tid + 32), &local_result);
+        }
+        // Reduce final warp using shuffle
+        for (int offset = tile32.size() / 2; offset > 0; offset /= 2) {
+            // local_result += tile32.shfl_down(local_result, offset);
+            scalar_t temp = tile32.shfl_down(local_result, offset);
+            element_kernel(&temp, &local_result);
+        }
+    }
+
+    // Write result for this block to global mem.
+    if (cta.thread_rank() == 0) {
+        g_odata[blockIdx.x] = local_result;
+    }
+}
+
+template <typename scalar_t, typename func_t>
 void LaunchReductionKernelOneOutput(const Indexer& indexer,
                                     scalar_t identity,
                                     func_t element_kernel) {
@@ -155,10 +225,12 @@ void LaunchReductionKernelOneOutput(const Indexer& indexer,
     OPEN3D_CUDA_CHECK(
             cudaMalloc((void**)&d_tdata, grid_size * sizeof(scalar_t)));
 
-    ReductionKernelOneOutput<scalar_t>
-            <<<grid_size, block_size,
-               GetSMSize<scalar_t>(grid_size, block_size)>>>(indexer, identity,
-                                                             element_kernel);
+    ReduceKernelInit<scalar_t><<<grid_size, block_size,
+                                 GetSMSize<scalar_t>(grid_size, block_size)>>>(
+            indexer, identity, element_kernel, d_odata, n);
+
+    OPEN3D_CUDA_CHECK(cudaMemcpy(indexer.GetOutputPtr(0), d_odata,
+                                 sizeof(scalar_t), cudaMemcpyDeviceToHost));
 }
 
 }  // namespace cuda_launcher
