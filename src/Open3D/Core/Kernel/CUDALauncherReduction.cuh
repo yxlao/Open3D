@@ -134,6 +134,7 @@ __global__ void ReductionKernelOneOutput(Indexer indexer,
 
 template <typename scalar_t, typename func_t>
 void LaunchReductionKernelOneOutput(const Indexer& indexer,
+                                    scalar_t identity,
                                     func_t element_kernel) {
     OPEN3D_ASSERT_HOST_DEVICE_LAMBDA(func_t);
 

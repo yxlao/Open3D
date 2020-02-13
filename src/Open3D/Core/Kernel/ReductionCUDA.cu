@@ -64,11 +64,9 @@ void ReductionCUDA(const Tensor& src,
                 break;
         }
         dst.Fill(identity);
-    });
 
-    DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
         cuda_launcher::LaunchReductionKernelOneOutput<scalar_t>(
-                indexer,
+                indexer, identity,
                 // Need to wrap as extended CUDA lamba function
                 [] OPEN3D_HOST_DEVICE(const void* src, void* dst) {
                     CUDASumReductionKernel<scalar_t>(src, dst);
