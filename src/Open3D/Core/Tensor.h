@@ -163,13 +163,13 @@ public:
         Dtype dtype = GetDtype();
         Device device = GetDevice();
         DISPATCH_DTYPE_TO_TEMPLATE(GetDtype(), [&]() {
+            // Currently DISPATCH_DTYPE_TO_TEMPLATE doesn't work with capturing
+            // "this". The workaround is to capture with "&"" and avoid calling
+            // member function or accessing member variables inside the lambda
+            // function.
             scalar_t casted_v = static_cast<scalar_t>(v);
-            std::cout << __FILE__ << ":" << __LINE__ << std::endl;
-            std::cout << __FILE__ << ":" << __LINE__ << ": "
-                      << (GetBlob() == nullptr) << std::endl;
             v_tensor = Tensor(std::vector<scalar_t>({casted_v}), SizeVector({}),
                               dtype, device);
-            std::cout << __FILE__ << ":" << __LINE__ << std::endl;
         });
         AsRvalue() = v_tensor;
     }
