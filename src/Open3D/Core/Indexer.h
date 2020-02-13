@@ -36,10 +36,10 @@
 namespace open3d {
 
 // Maximum number of dimensions of TensorRef.
-static constexpr int64_t MAX_DIMS = 16;
+static constexpr int64_t MAX_DIMS = 12;
 
 // Maximum number of operands (inputs) of an op.
-static constexpr int64_t MAX_OPERANDS = 2;
+static constexpr int64_t MAX_OPERANDS = 12;
 
 /// A minimalistic class that reference a Tensor.
 struct TensorRef {
