@@ -190,8 +190,16 @@ __global__ void ReduceKernelInit(Indexer indexer,
             // local_result += sdata[tid + 32];
             element_kernel(indexer.GetInputPtr(0, tid + 32), &local_result);
         }
+        if (blockDim.x >= 32) {
+            // local_result += sdata[tid + 32];
+            element_kernel(indexer.GetInputPtr(0, tid + 16), &local_result);
+        }
+        if (blockDim.x >= 16) {
+            // local_result += sdata[tid + 32];
+            element_kernel(indexer.GetInputPtr(0, tid + 8), &local_result);
+        }
         // Reduce final warp using shuffle
-        for (int offset = tile32.size() / 2; offset > 0; offset /= 2) {
+        for (int offset = 4; offset > 0; offset /= 2) {
             // local_result += tile32.shfl_down(local_result, offset);
             local_temp = tile32.shfl_down(local_result, offset);
             element_kernel(&local_temp, &local_result);
