@@ -158,13 +158,20 @@ public:
     /// \brief Fill the whole Tensor with a scalar value, the scalar will be
     /// casted to the Tensor's dtype.
     template <typename T>
-    void Fill(const T& v) {
+    void Fill(T v) {
+        Tensor v_tensor;
+        Dtype dtype = GetDtype();
+        Device device = GetDevice();
         DISPATCH_DTYPE_TO_TEMPLATE(GetDtype(), [&]() {
             scalar_t casted_v = static_cast<scalar_t>(v);
-            Tensor tmp(std::vector<scalar_t>({casted_v}), SizeVector({}),
-                       GetDtype(), GetDevice());
-            AsRvalue() = tmp;
+            std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+            std::cout << __FILE__ << ":" << __LINE__ << ": "
+                      << (GetBlob() == nullptr) << std::endl;
+            v_tensor = Tensor(std::vector<scalar_t>({casted_v}), SizeVector({}),
+                              dtype, device);
+            std::cout << __FILE__ << ":" << __LINE__ << std::endl;
         });
+        AsRvalue() = v_tensor;
     }
 
     /// Broadcast Tensor to a new broadcastable shape.
