@@ -383,7 +383,7 @@ public:
 
     inline Dtype GetDtype() const { return dtype_; }
 
-    inline Device GetDevice() const { return GetBlob()->GetDevice(); }
+    Device GetDevice() const;
 
     inline std::shared_ptr<Blob> GetBlob() const { return blob_; }
 

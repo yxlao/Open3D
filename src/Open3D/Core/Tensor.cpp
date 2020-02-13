@@ -508,4 +508,11 @@ Tensor Tensor::Sum(const SizeVector& dims, bool keep_dim) const {
     return dst;
 }
 
+Device Tensor::GetDevice() const {
+    if (blob_ == nullptr) {
+        utility::LogError("Blob is null, cannot get device");
+    }
+    return blob_->GetDevice();
+}
+
 }  // namespace open3d

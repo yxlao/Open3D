@@ -127,8 +127,16 @@ void LaunchReductionKernelOneOutput(const Indexer& indexer,
                                     func_t element_kernel) {
     OPEN3D_ASSERT_HOST_DEVICE_LAMBDA(func_t);
 
-    int64_t grid_size = 4;
-    int64_t block_size = 128;
+    int64_t n = indexer.NumWorkloads();
+    int64_t grid_size = 0;
+    int64_t block_size = 0;
+    std::tie(grid_size, block_size) = GetGridSizeBlockSize(n);
+    grid_size = 4;
+    block_size = 128;
+    std::cout << "here" << std::endl;
+    utility::LogInfo("n={}, grid_size={}, block_size={}", n, grid_size,
+                     block_size);
+    // std::cout << "2here" << std::endl;
 
     ReductionKernelOneOutput<scalar_t>
             <<<grid_size, block_size, block_size * sizeof(scalar_t)>>>(
