@@ -29,7 +29,7 @@
 #include "Open3D/Core/CUDAState.cuh"
 #include "Open3D/Core/CUDAUtils.h"
 #include "Open3D/Core/Dispatch.h"
-#include "Open3D/Core/Kernel/CUDALauncher.cuh"
+#include "Open3D/Core/Kernel/CUDALauncherReduction.cuh"
 #include "Open3D/Core/Tensor.h"
 
 namespace open3d {
