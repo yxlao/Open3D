@@ -63,8 +63,6 @@ void ReductionCUDA(const Tensor& src,
                 utility::LogError("Unsupported op code.");
                 break;
         }
-        std::cout << __FILE__ << ":" << __LINE__ << ": "
-                  << (dst.GetBlob() == nullptr) << std::endl;
         dst.Fill(identity);
     });
 
