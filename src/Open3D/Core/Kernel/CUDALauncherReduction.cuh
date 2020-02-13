@@ -192,9 +192,18 @@ __global__ void ReduceKernelInit(Indexer indexer,
         }
         // Reduce final warp using shuffle
         for (int offset = tile32.size() / 2; offset > 0; offset /= 2) {
-            // local_result += tile32.shfl_down(local_result, offset);
+            if (blockDim.x < offset * 2) {
+                continue;
+            }
+            scalar_t original = local_result;
             local_temp = tile32.shfl_down(local_result, offset);
             element_kernel(&local_temp, &local_result);
+            printf("Hello from rank %d, offset %d, original %f, local_temp %f, "
+                   "local_result "
+                   "%f\n",
+                   cta.thread_rank(), offset, static_cast<float>(original),
+                   static_cast<float>(local_temp),
+                   static_cast<float>(local_result));
         }
     }
 
