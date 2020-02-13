@@ -77,7 +77,7 @@ struct SharedMemory<double> {
 // - blockDim.x <= 32: allocate 64 * sizeof(scalar_t) bytes.
 // - blockDim.x > 32 : allocate blockDim.x * sizeof(scalar_t) bytes.
 template <typename scalar_t>
-int64_t SMSize(int64_t grid_size, int64_t block_size) {
+int64_t GetSMSize(int64_t grid_size, int64_t block_size) {
     return (block_size <= 32) ? 2 * block_size * sizeof(scalar_t)
                               : block_size * sizeof(scalar_t);
 }
@@ -155,8 +155,8 @@ void LaunchReductionKernelOneOutput(const Indexer& indexer,
 
     ReductionKernelOneOutput<scalar_t>
             <<<grid_size, block_size,
-               SMSize<scalar_t>(grid_size, block_size)>>>(indexer,
-                                                          element_kernel);
+               GetSMSize<scalar_t>(grid_size, block_size)>>>(indexer,
+                                                             element_kernel);
 }
 
 }  // namespace cuda_launcher
