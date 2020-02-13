@@ -35,12 +35,6 @@
 #include "Open3D/Core/SizeVector.h"
 #include "Open3D/Core/Tensor.h"
 
-// CUDA kernel launcher's goal is to separate scheduling (looping through each
-// valid element) and computation (operations performed on each element).
-//
-// The kernel launch mechanism is inspired by PyTorch's launch Loops.cuh.
-// See: https://tinyurl.com/y4lak257
-
 static constexpr int64_t default_block_size = 128;
 static constexpr int64_t default_thread_size = 4;
 
