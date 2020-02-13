@@ -106,6 +106,7 @@ std::pair<int64_t, int64_t> GetGridSizeBlockSize(int64_t n) {
 
 template <typename scalar_t, typename func_t>
 __global__ void ReductionKernelOneOutput(Indexer indexer,
+                                         scalar_t identity,
                                          func_t element_kernel) {
     scalar_t* sdata = SharedMemory<scalar_t>();
     int64_t n = indexer.NumWorkloads();
@@ -156,7 +157,7 @@ void LaunchReductionKernelOneOutput(const Indexer& indexer,
 
     ReductionKernelOneOutput<scalar_t>
             <<<grid_size, block_size,
-               GetSMSize<scalar_t>(grid_size, block_size)>>>(indexer,
+               GetSMSize<scalar_t>(grid_size, block_size)>>>(indexer, identity,
                                                              element_kernel);
 }
 
