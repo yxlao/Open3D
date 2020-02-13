@@ -183,6 +183,7 @@ __global__ void ReduceKernelInit(Indexer indexer,
 
     // Single warp reduction with shuffle: 64, 32, 16, 8, 4, 2, 1
     cg::thread_block_tile<32> tile32 = cg::tiled_partition<32>(cta);
+    scalar_t local_temp = identity;
     if (cta.thread_rank() < 32) {
         // Fetch final intermediate result from 2nd warp
         if (blockDim.x >= 64) {
@@ -192,8 +193,8 @@ __global__ void ReduceKernelInit(Indexer indexer,
         // Reduce final warp using shuffle
         for (int offset = tile32.size() / 2; offset > 0; offset /= 2) {
             // local_result += tile32.shfl_down(local_result, offset);
-            scalar_t temp = tile32.shfl_down(local_result, offset);
-            element_kernel(&temp, &local_result);
+            local_temp = tile32.shfl_down(local_result, offset);
+            element_kernel(&local_temp, &local_result);
         }
     }
 

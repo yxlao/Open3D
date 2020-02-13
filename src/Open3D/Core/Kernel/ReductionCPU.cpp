@@ -39,6 +39,11 @@ static void CPUSumReductionKernel(const void* src, void* dst) {
     *static_cast<scalar_t*>(dst) += *static_cast<const scalar_t*>(src);
 }
 
+template <typename scalar_t>
+static void CPUProdReductionKernel(const void* src, void* dst) {
+    *static_cast<scalar_t*>(dst) *= *static_cast<const scalar_t*>(src);
+}
+
 void ReductionCPU(const Tensor& src,
                   Tensor& dst,
                   const SizeVector& dims,
@@ -55,6 +60,10 @@ void ReductionCPU(const Tensor& src,
             case ReductionOpCode::Sum:
                 identity = static_cast<scalar_t>(0);
                 element_kernel = CPUSumReductionKernel<scalar_t>;
+                break;
+            case ReductionOpCode::Prod:
+                identity = static_cast<scalar_t>(1);
+                element_kernel = CPUProdReductionKernel<scalar_t>;
                 break;
             default:
                 utility::LogError("Unsupported op code.");

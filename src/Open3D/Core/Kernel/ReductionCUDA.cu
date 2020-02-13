@@ -41,6 +41,12 @@ static OPEN3D_HOST_DEVICE void CUDASumReductionKernel(const void* src,
     *static_cast<scalar_t*>(dst) += *static_cast<const scalar_t*>(src);
 }
 
+template <typename scalar_t>
+static OPEN3D_HOST_DEVICE void CUDAProdReductionKernel(const void* src,
+                                                       void* dst) {
+    *static_cast<scalar_t*>(dst) *= *static_cast<const scalar_t*>(src);
+}
+
 void ReductionCUDA(const Tensor& src,
                    Tensor& dst,
                    const SizeVector& dims,
@@ -51,26 +57,25 @@ void ReductionCUDA(const Tensor& src,
 
     CUDADeviceSwitcher switcher(src.GetDevice());
     DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
-        // Optain identity and element kernel based on op_code.
-        scalar_t identity;
-        std::function<void(void*, void*)> element_kernel;
         switch (op_code) {
             case ReductionOpCode::Sum:
-                identity = static_cast<scalar_t>(0);
-                element_kernel = CUDASumReductionKernel<scalar_t>;
+                cuda_launcher::LaunchReductionKernelOneOutput<scalar_t>(
+                        indexer, 0,
+                        [] OPEN3D_HOST_DEVICE(const void* src, void* dst) {
+                            CUDASumReductionKernel<scalar_t>(src, dst);
+                        });
+                break;
+            case ReductionOpCode::Prod:
+                cuda_launcher::LaunchReductionKernelOneOutput<scalar_t>(
+                        indexer, 1,
+                        [] OPEN3D_HOST_DEVICE(const void* src, void* dst) {
+                            CUDAProdReductionKernel<scalar_t>(src, dst);
+                        });
                 break;
             default:
                 utility::LogError("Unsupported op code.");
                 break;
         }
-        dst.Fill(identity);
-
-        cuda_launcher::LaunchReductionKernelOneOutput<scalar_t>(
-                indexer, identity,
-                // Need to wrap as extended CUDA lamba function
-                [] OPEN3D_HOST_DEVICE(const void* src, void* dst) {
-                    CUDASumReductionKernel<scalar_t>(src, dst);
-                });
     });
 
     if (dims.size() != src.NumDims()) {

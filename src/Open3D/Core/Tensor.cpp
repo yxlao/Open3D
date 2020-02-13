@@ -508,6 +508,14 @@ Tensor Tensor::Sum(const SizeVector& dims, bool keep_dim) const {
     return dst;
 }
 
+Tensor Tensor::Prod(const SizeVector& dims, bool keep_dim) const {
+    Tensor dst(shape_util::ReductionShape(shape_, dims, keep_dim), dtype_,
+               GetDevice());
+    kernel::Reduction(*this, dst, dims, keep_dim,
+                      kernel::ReductionOpCode::Prod);
+    return dst;
+}
+
 Device Tensor::GetDevice() const {
     if (blob_ == nullptr) {
         utility::LogError("Blob is null, cannot get device");
