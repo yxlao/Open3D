@@ -72,7 +72,7 @@ struct SharedMemory<double> {
     }
 };
 
-std::pair<int, int> GetGridSizeBlockSize(int n) {
+std::pair<int64_t, int64_t> GetGridSizeBlockSize(int64_t n) {
     static auto NextPow2 = [](int64_t x) -> int64_t {
         --x;
         x |= x >> 1;
