@@ -72,6 +72,16 @@ struct SharedMemory<double> {
     }
 };
 
+// The kernel needs a minimum of 64 * sizeof(scalar_t) bytes of shared
+// memory.
+// - blockDim.x <= 32: allocate 64 * sizeof(scalar_t) bytes.
+// - blockDim.x > 32 : allocate blockDim.x * sizeof(scalar_t) bytes.
+template <typename scalar_t>
+int64_t SMSize(int64_t grid_size, int64_t block_size) {
+    return (block_size <= 32) ? 2 * block_size * sizeof(scalar_t)
+                              : block_size * sizeof(scalar_t);
+}
+
 std::pair<int64_t, int64_t> GetGridSizeBlockSize(int64_t n) {
     static auto NextPow2 = [](int64_t x) -> int64_t {
         --x;
@@ -131,16 +141,22 @@ void LaunchReductionKernelOneOutput(const Indexer& indexer,
     int64_t grid_size = 0;
     int64_t block_size = 0;
     std::tie(grid_size, block_size) = GetGridSizeBlockSize(n);
-    grid_size = 4;
-    block_size = 128;
-    std::cout << "here" << std::endl;
     utility::LogInfo("n={}, grid_size={}, block_size={}", n, grid_size,
                      block_size);
-    // std::cout << "2here" << std::endl;
+
+    // Allocate device temporary memory. d_odata and d_tdata are double buffers
+    // for recursive reductions.
+    scalar_t* d_odata = nullptr;  // Device output, grid_size elements
+    scalar_t* d_tdata = nullptr;  // Device temp output, grid_size elements
+    OPEN3D_CUDA_CHECK(
+            cudaMalloc((void**)&d_odata, grid_size * sizeof(scalar_t)));
+    OPEN3D_CUDA_CHECK(
+            cudaMalloc((void**)&d_tdata, grid_size * sizeof(scalar_t)));
 
     ReductionKernelOneOutput<scalar_t>
-            <<<grid_size, block_size, block_size * sizeof(scalar_t)>>>(
-                    indexer, element_kernel);
+            <<<grid_size, block_size,
+               SMSize<scalar_t>(grid_size, block_size)>>>(indexer,
+                                                          element_kernel);
 }
 
 }  // namespace cuda_launcher
