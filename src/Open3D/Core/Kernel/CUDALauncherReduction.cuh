@@ -36,8 +36,10 @@
 #include "Open3D/Core/SizeVector.h"
 #include "Open3D/Core/Tensor.h"
 
-static constexpr int64_t default_block_size = 128;
-static constexpr int64_t default_thread_size = 4;
+static constexpr int64_t default_grid_size = 64;
+static constexpr int64_t default_block_size = 256;
+
+namespace cg = cooperative_groups;
 
 namespace open3d {
 namespace kernel {
@@ -69,6 +71,28 @@ struct SharedMemory<double> {
         return (double*)__smem_d;
     }
 };
+
+std::pair<int, int> GetGridSizeBlockSize(int n) {
+    static auto NextPow2 = [](int64_t x) -> int64_t {
+        --x;
+        x |= x >> 1;
+        x |= x >> 2;
+        x |= x >> 4;
+        x |= x >> 8;
+        x |= x >> 16;
+        return ++x;
+    };
+
+    // block_size = NextPow2(ceil(n / 2))
+    int64_t block_size = NextPow2((n + 1) / 2);
+    block_size = std::min(block_size, default_block_size);
+
+    // grid_size = ceil(n / (block_size * 2))
+    int64_t grid_size = (n + (block_size * 2 - 1)) / (block_size * 2);
+    grid_size = std::min(grid_size, default_grid_size);
+
+    return std::make_pair(grid_size, block_size);
+}
 
 template <typename scalar_t, typename func_t>
 __global__ void ReductionKernelOneOutput(Indexer indexer,
