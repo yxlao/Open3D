@@ -115,6 +115,7 @@ __global__ void ReduceKernelInit(Indexer indexer,
     unsigned int tid = threadIdx.x;
     unsigned int i = blockIdx.x * blockDim.x * 2 + threadIdx.x;
     unsigned int grid_stride = blockDim.x * 2 * gridDim.x;
+    // unsigned int output_idx = blockIdx.y;
 
     // Reduce multiple elements per thread. Larger gridDim.x results in larger
     // grid_stride and fewer elements per thread.
