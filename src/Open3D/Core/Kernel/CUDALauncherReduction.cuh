@@ -115,18 +115,20 @@ __global__ void ReduceKernelInit(Indexer indexer,
     unsigned int tid = threadIdx.x;
     unsigned int i = blockIdx.x * blockDim.x * 2 + threadIdx.x;
     unsigned int grid_stride = blockDim.x * 2 * gridDim.x;
-    // unsigned int output_idx = blockIdx.y;
+    unsigned int output_idx = blockIdx.y;
 
     // Reduce multiple elements per thread. Larger gridDim.x results in larger
     // grid_stride and fewer elements per thread.
     scalar_t local_result = identity;
     while (i < n) {
         // local_result += g_idata[i];
-        element_kernel(indexer.GetReductionInputPtr(0, i), &local_result);
+        element_kernel(indexer.GetReductionInputPtr(output_idx, i),
+                       &local_result);
         if (i + blockDim.x < n) {
             // local_result += g_idata[i + blockDim.x];
-            element_kernel(indexer.GetReductionInputPtr(0, i + blockDim.x),
-                           &local_result);
+            element_kernel(
+                    indexer.GetReductionInputPtr(output_idx, i + blockDim.x),
+                    &local_result);
         }
         i += grid_stride;
     }
@@ -173,7 +175,9 @@ __global__ void ReduceKernelInit(Indexer indexer,
 
     // Write result for this block to global mem.
     if (cta.thread_rank() == 0) {
-        g_odata[blockIdx.x] = local_result;
+        printf("output_idx %d, local_result %d\n", output_idx,
+               static_cast<int>(local_result));
+        g_odata[blockIdx.y * gridDim.x + blockIdx.x] = local_result;
     }
 }
 
@@ -332,8 +336,9 @@ void LaunchReductionKernelGeneric(const Indexer& indexer,
             cudaMalloc((void**)&d_tdata, total_grid_size * sizeof(scalar_t)));
 
     // First pass reduction, read from Tensor.
-    utility::LogInfo("ipo={}, grid_size_x={}, block_size={}", ipo, grid_size_x,
-                     block_size);
+    utility::LogInfo(
+            "ipo={}, grid_dim.x=grid_dim.x={}, grid_dim.y={}, block_size={}",
+            ipo, grid_dim.x, grid_dim.y, block_size);
     ReduceKernelInit<scalar_t>
             <<<grid_dim, block_dim,
                GetSMSize<scalar_t>(grid_size_x, block_size)>>>(
@@ -346,8 +351,10 @@ void LaunchReductionKernelGeneric(const Indexer& indexer,
         std::tie(grid_size_x, block_size) = GetGridSizeBlockSize(ipo);
         grid_dim = dim3(grid_size_x, num_outputs, 1);
         block_dim = dim3(block_size, 1, 1);
-        utility::LogInfo("ipo={}, grid_size_x={}, block_size={}", ipo,
-                         grid_size_x, block_size);
+        utility::LogInfo(
+                "ipo={}, grid_dim.x=grid_dim.x={}, grid_dim.y={}, "
+                "block_size={}",
+                ipo, grid_dim.x, grid_dim.y, block_size);
         // Input: d_tdata, output: d_odata
         OPEN3D_CUDA_CHECK(cudaMemcpy(d_tdata, d_odata,
                                      ipo * grid_size_y * sizeof(scalar_t),
