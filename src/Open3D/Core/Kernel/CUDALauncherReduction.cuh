@@ -305,9 +305,9 @@ void LaunchReductionKernelOneOutput(const Indexer& indexer,
 }
 
 template <typename scalar_t, typename func_t>
-void LaunchReductionKernelGeneric(const Indexer& indexer,
-                                  scalar_t identity,
-                                  func_t element_kernel) {
+void LaunchReductionKernel(const Indexer& indexer,
+                           scalar_t identity,
+                           func_t element_kernel) {
     OPEN3D_ASSERT_HOST_DEVICE_LAMBDA(func_t);
 
     int64_t num_inputs = indexer.NumWorkloads();
