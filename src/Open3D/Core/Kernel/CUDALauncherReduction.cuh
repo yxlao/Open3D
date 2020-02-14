@@ -331,6 +331,8 @@ void LaunchReductionKernelGeneric(const Indexer& indexer,
             cudaMalloc((void**)&d_tdata, total_grid_size * sizeof(scalar_t)));
 
     // First pass reduction, read from Tensor.
+    utility::LogInfo("ipo={}, grid_size_x={}, block_size={}", ipo, grid_size_x,
+                     block_size);
     ReduceKernelInit<scalar_t>
             <<<grid_dim, block_dim,
                GetSMSize<scalar_t>(grid_size_x, block_size)>>>(
@@ -343,7 +345,6 @@ void LaunchReductionKernelGeneric(const Indexer& indexer,
         std::tie(grid_size_x, block_size) = GetGridSizeBlockSize(ipo);
         grid_dim = dim3(grid_size_x, num_outputs, 1);
         block_dim = dim3(block_size, 1, 1);
-
         utility::LogInfo("ipo={}, grid_size_x={}, block_size={}", ipo,
                          grid_size_x, block_size);
         // Input: d_tdata, output: d_odata
