@@ -301,6 +301,72 @@ void LaunchReductionKernelOneOutput(const Indexer& indexer,
     OPEN3D_CUDA_CHECK(cudaFree(d_tdata));
 }
 
+template <typename scalar_t, typename func_t>
+void LaunchReductionKernelGeneric(const Indexer& indexer,
+                                  scalar_t identity,
+                                  func_t element_kernel) {
+    OPEN3D_ASSERT_HOST_DEVICE_LAMBDA(func_t);
+
+    int64_t num_inputs = indexer.NumWorkloads();
+    int64_t num_outputs = indexer.NumOutputElements();
+    int64_t ipo = num_inputs / num_outputs;  // Inputs per output
+
+    int64_t grid_size_x = 0;
+    int64_t grid_size_y = num_outputs;
+    int64_t block_size = 0;
+    std::tie(grid_size_x, block_size) = GetGridSizeBlockSize(ipo);
+
+    dim3 grid_dim(grid_size_x, num_outputs, 1);
+    dim3 block_dim(block_size, 1, 1);
+
+    int64_t total_grid_size = grid_size_x * grid_size_y;
+
+    // Allocate device temporary memory. d_odata and d_tdata are double buffers
+    // for recursive reductions.
+    scalar_t* d_odata = nullptr;  // Device output, grid_size elements
+    scalar_t* d_tdata = nullptr;  // Device temp output, grid_size elements
+    OPEN3D_CUDA_CHECK(
+            cudaMalloc((void**)&d_odata, total_grid_size * sizeof(scalar_t)));
+    OPEN3D_CUDA_CHECK(
+            cudaMalloc((void**)&d_tdata, total_grid_size * sizeof(scalar_t)));
+
+    // First pass reduction, read from Tensor.
+    ReduceKernelInit<scalar_t>
+            <<<grid_dim, block_dim,
+               GetSMSize<scalar_t>(grid_size_x, block_size)>>>(
+                    indexer, identity, element_kernel, d_odata, ipo);
+    OPEN3D_GET_LAST_CUDA_ERROR("Kernel execution failed.");
+
+    // Reduce the partial results from blocks. No need to read from Tensor.
+    ipo = grid_size_x;
+    while (ipo > 1) {
+        std::tie(grid_size_x, block_size) = GetGridSizeBlockSize(ipo);
+        grid_dim = dim3(grid_size_x, num_outputs, 1);
+        block_dim = dim3(block_size, 1, 1);
+
+        utility::LogInfo("ipo={}, grid_size_x={}, block_size={}", ipo,
+                         grid_size_x, block_size);
+        // Input: d_tdata, output: d_odata
+        OPEN3D_CUDA_CHECK(cudaMemcpy(d_tdata, d_odata,
+                                     ipo * grid_size_y * sizeof(scalar_t),
+                                     cudaMemcpyDeviceToDevice));
+        ReduceKernelBlock<scalar_t>
+                <<<grid_dim, block_dim,
+                   GetSMSize<scalar_t>(grid_size_x, block_size)>>>(
+                        identity, element_kernel, d_tdata, d_odata, ipo);
+        OPEN3D_GET_LAST_CUDA_ERROR("Kernel execution failed.");
+        ipo = (ipo + (block_size * 2 - 1)) / (block_size * 2);
+    }
+
+    OPEN3D_CUDA_CHECK(cudaMemcpy(indexer.GetOutputPtr(0), d_odata,
+                                 grid_size_y * sizeof(scalar_t),
+                                 cudaMemcpyDeviceToHost));
+
+    // Clean up
+    OPEN3D_CUDA_CHECK(cudaFree(d_odata));
+    OPEN3D_CUDA_CHECK(cudaFree(d_tdata));
+}
+
 }  // namespace cuda_launcher
 }  // namespace kernel
 }  // namespace open3d
