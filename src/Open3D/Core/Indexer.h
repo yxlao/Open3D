@@ -327,7 +327,7 @@ public:
     ///        value from [0, IPO)
     OPEN3D_HOST_DEVICE char* GetReductionInputPtr(int64_t output_element_idx,
                                                   int64_t ipo_idx) const {
-        int64_t original_ipo_idx = ipo_idx;
+        // int64_t original_ipo_idx = ipo_idx;
         int64_t ipo = NumWorkloads() / NumOutputElements();
         if (ipo_idx < 0 || ipo_idx >= ipo) {
             return nullptr;
@@ -371,15 +371,15 @@ public:
             input_workload_idx += input_indices[i] * master_strides_[i];
         }
 
-        printf("input_reduced_strides: %ld, %ld, %ld; output_indices: %ld, "
-               "%ld, %ld; input_indices: %ld, %ld, "
-               "%ld; output_element_idx %ld; input_workload_idx %ld; "
-               "original_ipo_idx %ld\n",
-               input_reduced_strides[0], input_reduced_strides[1],
-               input_reduced_strides[2], output_indices[0], output_indices[1],
-               output_indices[2], input_indices[0], input_indices[1],
-               input_indices[2], output_element_idx, input_workload_idx,
-               original_ipo_idx);
+        // printf("input_reduced_strides: %ld, %ld, %ld; output_indices: %ld, "
+        //        "%ld, %ld; input_indices: %ld, %ld, "
+        //        "%ld; output_element_idx %ld; input_workload_idx %ld; "
+        //        "original_ipo_idx %ld\n",
+        //        input_reduced_strides[0], input_reduced_strides[1],
+        //        input_reduced_strides[2], output_indices[0],
+        //        output_indices[1], output_indices[2], input_indices[0],
+        //        input_indices[1], input_indices[2], output_element_idx,
+        //        input_workload_idx, original_ipo_idx);
         return GetInputPtr(0, input_workload_idx);
     }
 
