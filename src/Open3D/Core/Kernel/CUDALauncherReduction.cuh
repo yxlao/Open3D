@@ -190,16 +190,18 @@ __global__ void ReduceKernelBlock(scalar_t identity,
     unsigned int tid = threadIdx.x;
     unsigned int i = blockIdx.x * blockDim.x * 2 + threadIdx.x;
     unsigned int grid_stride = blockDim.x * 2 * gridDim.x;
+    unsigned int output_idx = blockIdx.y;
 
     // Reduce multiple elements per thread. Larger gridDim.x results in larger
     // grid_stride and fewer elements per thread.
     scalar_t local_result = identity;
     while (i < n) {
         // local_result += g_idata[i];
-        element_kernel(&g_idata[i], &local_result);
+        element_kernel(&g_idata[blockIdx.y * gridDim.x + i], &local_result);
         if (i + blockDim.x < n) {
             // local_result += g_idata[i + blockDim.x];
-            element_kernel(&g_idata[i + blockDim.x], &local_result);
+            element_kernel(&g_idata[blockIdx.y * gridDim.x + i + blockDim.x],
+                           &local_result);
         }
         i += grid_stride;
     }
@@ -246,62 +248,8 @@ __global__ void ReduceKernelBlock(scalar_t identity,
 
     // Write result for this block to global mem.
     if (cta.thread_rank() == 0) {
-        g_odata[blockIdx.x] = local_result;
+        g_odata[blockIdx.y * gridDim.x + blockIdx.x] = local_result;
     }
-}
-
-template <typename scalar_t, typename func_t>
-void LaunchReductionKernelOneOutput(const Indexer& indexer,
-                                    scalar_t identity,
-                                    func_t element_kernel) {
-    OPEN3D_ASSERT_HOST_DEVICE_LAMBDA(func_t);
-
-    int64_t n = indexer.NumWorkloads();
-
-    int64_t grid_size = 0;
-    int64_t block_size = 0;
-    std::tie(grid_size, block_size) = GetGridSizeBlockSize(n);
-    utility::LogInfo("n={}, grid_size={}, block_size={}", n, grid_size,
-                     block_size);
-
-    // Allocate device temporary memory. d_odata and d_tdata are double buffers
-    // for recursive reductions.
-    scalar_t* d_odata = nullptr;  // Device output, grid_size elements
-    scalar_t* d_tdata = nullptr;  // Device temp output, grid_size elements
-    OPEN3D_CUDA_CHECK(
-            cudaMalloc((void**)&d_odata, grid_size * sizeof(scalar_t)));
-    OPEN3D_CUDA_CHECK(
-            cudaMalloc((void**)&d_tdata, grid_size * sizeof(scalar_t)));
-
-    // First pass reduction, read from Tensor.
-    ReduceKernelInit<scalar_t><<<grid_size, block_size,
-                                 GetSMSize<scalar_t>(grid_size, block_size)>>>(
-            indexer, identity, element_kernel, d_odata, n);
-    OPEN3D_GET_LAST_CUDA_ERROR("Kernel execution failed.");
-
-    // Reduce the partial results from blocks. No need to read from Tensor.
-    n = grid_size;
-    while (n > 1) {
-        std::tie(grid_size, block_size) = GetGridSizeBlockSize(n);
-        utility::LogInfo("n={}, grid_size={}, block_size={}", n, grid_size,
-                         block_size);
-        // Input: d_tdata, output: d_odata
-        OPEN3D_CUDA_CHECK(cudaMemcpy(d_tdata, d_odata, n * sizeof(scalar_t),
-                                     cudaMemcpyDeviceToDevice));
-        ReduceKernelBlock<scalar_t>
-                <<<grid_size, block_size,
-                   GetSMSize<scalar_t>(grid_size, block_size)>>>(
-                        identity, element_kernel, d_tdata, d_odata, n);
-        OPEN3D_GET_LAST_CUDA_ERROR("Kernel execution failed.");
-        n = (n + (block_size * 2 - 1)) / (block_size * 2);
-    }
-
-    OPEN3D_CUDA_CHECK(cudaMemcpy(indexer.GetOutputPtr(0), d_odata,
-                                 sizeof(scalar_t), cudaMemcpyDeviceToHost));
-
-    // Clean up
-    OPEN3D_CUDA_CHECK(cudaFree(d_odata));
-    OPEN3D_CUDA_CHECK(cudaFree(d_tdata));
 }
 
 template <typename scalar_t, typename func_t>
