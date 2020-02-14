@@ -1059,3 +1059,15 @@ TEST_P(TensorPermuteDevices, ProdSumCUDA2) {
     EXPECT_EQ(dst.GetShape(), SizeVector({1, 1}));
     EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({40320}));
 }
+
+TEST_P(TensorPermuteDevices, ProdSumCUDA3) {
+    Device device = GetParam();
+
+    Tensor src(std::vector<float>({1, 2, 3, 4, 5, 6, 7, 8, 9, 10}), {2, 5},
+               Dtype::Float32, device);
+    Tensor dst;
+
+    dst = src.Prod({0, 1}, true);
+    EXPECT_EQ(dst.GetShape(), SizeVector({1, 1}));
+    EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({3628800}));
+}
