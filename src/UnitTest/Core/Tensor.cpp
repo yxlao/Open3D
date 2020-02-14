@@ -1115,13 +1115,36 @@ TEST_P(TensorPermuteDevicesAndTensorSizes, SumSingleOutput) {
     std::vector<int> vals(tensor_size);
     std::transform(vals.begin(), vals.end(), vals.begin(),
                    [](int x) -> int { return utility::UniformRandInt(0, 3); });
-    int ref_sum =
+    int ref_result =
             std::accumulate(vals.begin(), vals.end(), 0, std::plus<int>());
-    (void)ref_sum;
+    (void)ref_result;
 
     Tensor src(vals, {tensor_size}, Dtype::Int32, device);
     Tensor dst = src.Sum({0}, false);
 
     EXPECT_EQ(dst.GetShape(), SizeVector({}));
-    EXPECT_EQ(dst.ToFlatVector<int>(), std::vector<int>({ref_sum}));
+    EXPECT_EQ(dst.ToFlatVector<int>(), std::vector<int>({ref_result}));
+}
+
+TEST_P(TensorPermuteDevicesAndTensorSizes, ProdSingleOutput) {
+    Device device;
+    int64_t tensor_size;
+    std::tie(device, tensor_size) = GetParam();
+
+    std::vector<double> vals(tensor_size);
+    std::transform(
+            vals.begin(), vals.end(), vals.begin(), [](double x) -> double {
+                return utility::UniformRandFloatBinaryFriendly<double>() +
+                       0.125;
+            });
+    double ref_result = std::accumulate(vals.begin(), vals.end(), 1.,
+                                        std::multiplies<double>());
+    (void)ref_result;
+
+    Tensor src(vals, {tensor_size}, Dtype::Float64, device);
+    Tensor dst = src.Prod({0}, false);
+
+    EXPECT_EQ(dst.GetShape(), SizeVector({}));
+    unit_test::ExpectEQ(dst.ToFlatVector<double>(),
+                        std::vector<double>({ref_result}));
 }

@@ -258,8 +258,8 @@ void LaunchReductionKernelOneOutput(const Indexer& indexer,
     int64_t grid_size = 0;
     int64_t block_size = 0;
     std::tie(grid_size, block_size) = GetGridSizeBlockSize(n);
-    utility::LogInfo("n={}, grid_size={}, block_size={}", n, grid_size,
-                     block_size);
+    // utility::LogInfo("n={}, grid_size={}, block_size={}", n, grid_size,
+    //                  block_size);
 
     // Allocate device temporary memory. d_odata and d_tdata are double buffers
     // for recursive reductions.
@@ -280,8 +280,8 @@ void LaunchReductionKernelOneOutput(const Indexer& indexer,
     n = grid_size;
     while (n > 1) {
         std::tie(grid_size, block_size) = GetGridSizeBlockSize(n);
-        utility::LogInfo("n={}, grid_size={}, block_size={}", n, grid_size,
-                         block_size);
+        // utility::LogInfo("n={}, grid_size={}, block_size={}", n, grid_size,
+        //                  block_size);
         // Input: d_tdata, output: d_odata
         OPEN3D_CUDA_CHECK(cudaMemcpy(d_tdata, d_odata, n * sizeof(scalar_t),
                                      cudaMemcpyDeviceToDevice));
