@@ -153,7 +153,6 @@ __global__ void ReduceKernelInit(Indexer indexer,
     cg::sync(cta);
 
     // Last 2nd warp
-    cg::thread_block_tile<32> tile32 = cg::tiled_partition<32>(cta);
     scalar_t local_temp;
     if (blockDim.x >= 64 && tid < 32) {
         local_temp = sdata[tid + 32];
@@ -166,7 +165,8 @@ __global__ void ReduceKernelInit(Indexer indexer,
     }
 
     // Last warp
-    if (blockDim.x >= 32 && tid < 16) {
+    cg::thread_block_tile<32> tile32 = cg::tiled_partition<32>(cta);
+    if (blockDim.x >= 32) {
         local_temp = tile32.shfl_down(local_result, 16);
         element_kernel(&local_temp, &local_result);
         sdata[tid] = local_result;
@@ -179,7 +179,7 @@ __global__ void ReduceKernelInit(Indexer indexer,
                static_cast<float>(local_result));
     }
 
-    if (blockDim.x >= 16 && tid < 16) {
+    if (blockDim.x >= 16) {
         local_temp = tile32.shfl_down(local_result, 8);
         element_kernel(&local_temp, &local_result);
         sdata[tid] = local_result;
@@ -192,7 +192,7 @@ __global__ void ReduceKernelInit(Indexer indexer,
                static_cast<float>(local_result));
     }
 
-    if (blockDim.x >= 8 && tid < 8) {
+    if (blockDim.x >= 8) {
         local_temp = tile32.shfl_down(local_result, 4);
         element_kernel(&local_temp, &local_result);
         sdata[tid] = local_result;
@@ -205,7 +205,7 @@ __global__ void ReduceKernelInit(Indexer indexer,
                static_cast<float>(local_result));
     }
 
-    if (blockDim.x >= 4 && tid < 4) {
+    if (blockDim.x >= 4) {
         local_temp = tile32.shfl_down(local_result, 2);
         element_kernel(&local_temp, &local_result);
         sdata[tid] = local_result;
@@ -218,7 +218,7 @@ __global__ void ReduceKernelInit(Indexer indexer,
                static_cast<float>(local_result));
     }
 
-    if (blockDim.x >= 2 && tid < 2) {
+    if (blockDim.x >= 2) {
         local_temp = tile32.shfl_down(local_result, 1);
         element_kernel(&local_temp, &local_result);
         sdata[tid] = local_result;
