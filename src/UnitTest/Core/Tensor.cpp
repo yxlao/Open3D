@@ -930,7 +930,7 @@ TEST_P(TensorPermuteDevices, Div_) {
     EXPECT_EQ(a.ToFlatVector<float>(), std::vector<float>({0, 1, 2, 3, 4, 5}));
 }
 
-TEST_P(TensorPermuteDevices, SumKeepDim) {
+TEST_P(TensorPermuteDevices, ReduceSumKeepDim) {
     Device device = GetParam();
     Tensor src(std::vector<float>({0,  1,  2,  3,  4,  5,  6,  7,
                                    8,  9,  10, 11, 12, 13, 14, 15,
@@ -978,7 +978,7 @@ TEST_P(TensorPermuteDevices, SumKeepDim) {
     EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({276}));
 }
 
-TEST_P(TensorPermuteDevices, SumNotKeepDim) {
+TEST_P(TensorPermuteDevices, ReduceSumNotKeepDim) {
     Device device = GetParam();
     Tensor src(std::vector<float>({0,  1,  2,  3,  4,  5,  6,  7,
                                    8,  9,  10, 11, 12, 13, 14, 15,
@@ -1026,88 +1026,21 @@ TEST_P(TensorPermuteDevices, SumNotKeepDim) {
     EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({276}));
 }
 
-/// Test reduction with large arrays and non-power-of-two-sized arrays.
-TEST_P(TensorPermuteDevices, SumSingleOutput) {
+TEST_P(TensorPermuteDevices, ReduceSumDebug) {
     Device device = GetParam();
 
-    std::vector<int> tensor_sizes{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10,
-                                  11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
-                                  22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
-    std::vector<int> large_sizes{
-            (1 << 6) - 1,
-            (1 << 6),
-            (1 << 6) + 1,
-    };
-    tensor_sizes.insert(tensor_sizes.end(), large_sizes.begin(),
-                        large_sizes.end());
-
-    Tensor src(std::vector<float>({0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10,
-                                   11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
-                                   22, 23, 24, 25, 26, 27, 28, 29, 30, 31}),
-               {2, 4, 4}, Dtype::Float32, device);
+    Tensor src(std::vector<float>({0,  1,  2,  3,  4,  5,  6,  7,
+                                   8,  9,  10, 11, 12, 13, 14, 15,
+                                   16, 17, 18, 19, 20, 21, 22, 23}),
+               {2, 3, 4}, Dtype::Float32, device);
     Tensor dst;
 
-    dst = src.Sum({0, 1, 2}, true);
-    EXPECT_EQ(dst.GetShape(), SizeVector({1, 1, 1}));
-    EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({496}));
+    dst = src.Sum({0, 2}, true);
+    EXPECT_EQ(dst.GetShape(), SizeVector({1, 3, 1}));
+    EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({60, 92, 124}));
 }
 
-TEST_P(TensorPermuteDevices, SumCUDA) {
-    Device device = GetParam();
-    if (device != Device("CUDA:0")) {
-        return;
-    }
-
-    Tensor src(std::vector<float>({0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10,
-                                   11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
-                                   22, 23, 24, 25, 26, 27, 28, 29, 30, 31}),
-               {2, 4, 4}, Dtype::Float32, device);
-    Tensor dst;
-
-    dst = src.Sum({0, 1, 2}, true);
-    EXPECT_EQ(dst.GetShape(), SizeVector({1, 1, 1}));
-    EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({496}));
-}
-
-TEST_P(TensorPermuteDevices, ProdSumCUDA) {
-    Device device = GetParam();
-
-    Tensor src(std::vector<float>({1, 1, 2, 3, 3, 2, 1, 1, 1, 1, 2,
-                                   3, 3, 2, 1, 1, 1, 1, 2, 3, 3, 2,
-                                   1, 1, 3, 2, 1, 1, 1, 1, 2, 3}),
-               {2, 4, 4}, Dtype::Float32, device);
-    Tensor dst;
-
-    dst = src.Prod({0, 1, 2}, true);
-    EXPECT_EQ(dst.GetShape(), SizeVector({1, 1, 1}));
-    EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({1679616}));
-}
-
-TEST_P(TensorPermuteDevices, ProdSumCUDA2) {
-    Device device = GetParam();
-
-    Tensor src(std::vector<float>({1, 2, 3, 4, 5, 6, 7, 8}), {2, 4},
-               Dtype::Float32, device);
-    Tensor dst;
-
-    dst = src.Prod({0, 1}, true);
-    EXPECT_EQ(dst.GetShape(), SizeVector({1, 1}));
-    EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({40320}));
-}
-
-TEST_P(TensorPermuteDevices, ProdSumCUDA3) {
-    Device device = GetParam();
-
-    Tensor src(std::vector<float>({1, 2, 3, 4, 5, 6, 7, 8, 9, 10}), {2, 5},
-               Dtype::Float32, device);
-    Tensor dst;
-
-    dst = src.Prod({0, 1}, true);
-    EXPECT_EQ(dst.GetShape(), SizeVector({1, 1}));
-    EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({3628800}));
-}
-
-TEST_P(TensorPermuteDevicesAndTensorSizes, SumSingleOutput) {
+TEST_P(TensorPermuteDevicesAndTensorSizes, ReduceSumLargeArray) {
     Device device;
     int64_t tensor_size;
     std::tie(device, tensor_size) = GetParam();
@@ -1126,7 +1059,7 @@ TEST_P(TensorPermuteDevicesAndTensorSizes, SumSingleOutput) {
     EXPECT_EQ(dst.ToFlatVector<int>(), std::vector<int>({ref_result}));
 }
 
-TEST_P(TensorPermuteDevicesAndTensorSizes, ProdSingleOutput) {
+TEST_P(TensorPermuteDevicesAndTensorSizes, ReduceProdLargeArray) {
     Device device;
     int64_t tensor_size;
     std::tie(device, tensor_size) = GetParam();
