@@ -30,6 +30,7 @@
 #include "Open3D/Core/Kernel/Kernel.h"
 #include "Open3D/Core/MemoryManager.h"
 #include "Open3D/Core/SizeVector.h"
+#include "Open3D/Utility/Helper.h"
 
 #include "Core/ContainerTest.h"
 #include "TestUtility/UnitTest.h"
@@ -41,6 +42,14 @@ class TensorPermuteDevices : public PermuteDevices {};
 INSTANTIATE_TEST_SUITE_P(Tensor,
                          TensorPermuteDevices,
                          testing::ValuesIn(PermuteDevices::TestCases()));
+
+class TensorPermuteDevicesAndTensorSizes
+    : public testing::TestWithParam<std::tuple<Device, int64_t>> {};
+INSTANTIATE_TEST_SUITE_P(
+        Tensor,
+        TensorPermuteDevicesAndTensorSizes,
+        testing::Combine(testing::ValuesIn(PermuteDevices::TestCases()),
+                         testing::ValuesIn(TensorSizes::TestCases())));
 
 class TensorPermuteDevicePairs : public PermuteDevicePairs {};
 INSTANTIATE_TEST_SUITE_P(
@@ -1017,6 +1026,32 @@ TEST_P(TensorPermuteDevices, SumNotKeepDim) {
     EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({276}));
 }
 
+/// Test reduction with large arrays and non-power-of-two-sized arrays.
+TEST_P(TensorPermuteDevices, SumSingleOutput) {
+    Device device = GetParam();
+
+    std::vector<int> tensor_sizes{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10,
+                                  11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+                                  22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
+    std::vector<int> large_sizes{
+            (1 << 6) - 1,
+            (1 << 6),
+            (1 << 6) + 1,
+    };
+    tensor_sizes.insert(tensor_sizes.end(), large_sizes.begin(),
+                        large_sizes.end());
+
+    Tensor src(std::vector<float>({0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10,
+                                   11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+                                   22, 23, 24, 25, 26, 27, 28, 29, 30, 31}),
+               {2, 4, 4}, Dtype::Float32, device);
+    Tensor dst;
+
+    dst = src.Sum({0, 1, 2}, true);
+    EXPECT_EQ(dst.GetShape(), SizeVector({1, 1, 1}));
+    EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({496}));
+}
+
 TEST_P(TensorPermuteDevices, SumCUDA) {
     Device device = GetParam();
     if (device != Device("CUDA:0")) {
@@ -1070,4 +1105,23 @@ TEST_P(TensorPermuteDevices, ProdSumCUDA3) {
     dst = src.Prod({0, 1}, true);
     EXPECT_EQ(dst.GetShape(), SizeVector({1, 1}));
     EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({3628800}));
+}
+
+TEST_P(TensorPermuteDevicesAndTensorSizes, SumSingleOutput) {
+    Device device;
+    int64_t tensor_size;
+    std::tie(device, tensor_size) = GetParam();
+
+    std::vector<int> vals(tensor_size);
+    std::transform(vals.begin(), vals.end(), vals.begin(),
+                   [](int x) -> int { return utility::UniformRandInt(0, 3); });
+    int ref_sum =
+            std::accumulate(vals.begin(), vals.end(), 0, std::plus<int>());
+    (void)ref_sum;
+
+    Tensor src(vals, {tensor_size}, Dtype::Int32, device);
+    Tensor dst = src.Sum({0}, false);
+
+    EXPECT_EQ(dst.GetShape(), SizeVector({}));
+    EXPECT_EQ(dst.ToFlatVector<int>(), std::vector<int>({ref_sum}));
 }
