@@ -28,7 +28,7 @@
 #include "Open3D/Core/Device.h"
 #include "Open3D/Core/SizeVector.h"
 
-#include "Core/ContainerTest.h"
+#include "Core/CoreTest.h"
 #include "TestUtility/UnitTest.h"
 
 using namespace std;

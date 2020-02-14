@@ -141,7 +141,6 @@ public:
         // clang-format on
         tensor_sizes.insert(tensor_sizes.end(), large_sizes.begin(),
                             large_sizes.end());
-        tensor_sizes = std::vector<int64_t>({0});
         return tensor_sizes;
     }
 };
