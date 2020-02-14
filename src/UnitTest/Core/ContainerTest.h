@@ -124,8 +124,8 @@ class TensorSizes : public testing::TestWithParam<int64_t> {
 public:
     static std::vector<int64_t> TestCases() {
         std::vector<int64_t> tensor_sizes{
-                0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15,
-                16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
+                1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16,
+                17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
         // clang-format off
         std::vector<int64_t> large_sizes{
                 (1 << 6 ) - 1, (1 << 6 ), (1 << 6 ) + 1,
@@ -141,7 +141,7 @@ public:
         // clang-format on
         tensor_sizes.insert(tensor_sizes.end(), large_sizes.begin(),
                             large_sizes.end());
-        tensor_sizes = std::vector<int64_t>({1, 2, 3, 1 << 25});
+        // tensor_sizes = std::vector<int64_t>({1, 2, 3, 1 << 25});
         return tensor_sizes;
     }
 };
