@@ -1044,38 +1044,36 @@ TEST_P(TensorPermuteDevices, ReduceMultiSumLargeArray) {
     EXPECT_EQ(dst.GetShape(), SizeVector({3, 7, 8234719}));
     EXPECT_EQ(dst.ToFlatVector<int>(), std::vector<int>(3 * 7 * 8234719, 1));
 
-    // dst = src.Sum({0}, false);
-    // EXPECT_EQ(dst.GetShape(), SizeVector({3, 4}));
-    // EXPECT_EQ(dst.ToFlatVector<float>(),
-    //           std::vector<float>(
-    //                   {12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34}));
+    dst = src.Sum({0}, false);
+    EXPECT_EQ(dst.GetShape(), SizeVector({7, 8234719}));
+    EXPECT_EQ(dst.ToFlatVector<int>(), std::vector<int>(7 * 8234719, 3));
 
     // dst = src.Sum({1}, false);
     // EXPECT_EQ(dst.GetShape(), SizeVector({2, 4}));
-    // EXPECT_EQ(dst.ToFlatVector<float>(),
-    //           std::vector<float>({12, 15, 18, 21, 48, 51, 54, 57}));
+    // EXPECT_EQ(dst.ToFlatVector<int>(),
+    //           std::vector<int>({12, 15, 18, 21, 48, 51, 54, 57}));
 
     // dst = src.Sum({2}, false);
     // EXPECT_EQ(dst.GetShape(), SizeVector({2, 3}));
-    // EXPECT_EQ(dst.ToFlatVector<float>(),
-    //           std::vector<float>({6, 22, 38, 54, 70, 86}));
+    // EXPECT_EQ(dst.ToFlatVector<int>(),
+    //           std::vector<int>({6, 22, 38, 54, 70, 86}));
 
     // dst = src.Sum({0, 1}, false);
     // EXPECT_EQ(dst.GetShape(), SizeVector({4}));
-    // EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({60, 66, 72,
+    // EXPECT_EQ(dst.ToFlatVector<int>(), std::vector<int>({60, 66, 72,
     // 78}));
 
     // dst = src.Sum({0, 2}, false);
     // EXPECT_EQ(dst.GetShape(), SizeVector({3}));
-    // EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({60, 92, 124}));
+    // EXPECT_EQ(dst.ToFlatVector<int>(), std::vector<int>({60, 92, 124}));
 
     // dst = src.Sum({1, 2}, false);
     // EXPECT_EQ(dst.GetShape(), SizeVector({2}));
-    // EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({66, 210}));
+    // EXPECT_EQ(dst.ToFlatVector<int>(), std::vector<int>({66, 210}));
 
     // dst = src.Sum({0, 1, 2}, false);
     // EXPECT_EQ(dst.GetShape(), SizeVector({}));
-    // EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({276}));
+    // EXPECT_EQ(dst.ToFlatVector<int>(), std::vector<int>({276}));
 }
 
 TEST_P(TensorPermuteDevices, ReduceSumLargeArray) {
