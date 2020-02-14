@@ -319,8 +319,6 @@ public:
     /// \param workload_idx The index of the compute workload, similar to
     /// thread_id, if a thread only processes one workload.
     OPEN3D_HOST_DEVICE char* GetOutputPtr(int64_t workload_idx) const {
-        printf("GetOutputPtr %ld = %p\n", workload_idx,
-               GetWorkloadDataPtr(output_, workload_idx));
         return GetWorkloadDataPtr(output_, workload_idx);
     }
 
