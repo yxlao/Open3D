@@ -1035,22 +1035,17 @@ TEST_P(TensorPermuteDevices, ReduceSumDebug) {
 TEST_P(TensorPermuteDevices, ReduceSumLargeArray) {
     Device device = GetParam();
 
-    std::vector<int64_t> tensor_sizes = TensorSizes::TestCases();
-    int64_t max_tensor_size =
-            *std::max_element(tensor_sizes.begin(), tensor_sizes.end());
-    std::vector<int> vals(max_tensor_size);
+    std::vector<int64_t> sizes = TensorSizes::TestCases();
+    int64_t max_size = *std::max_element(sizes.begin(), sizes.end());
+    std::vector<int> vals(max_size);
     std::transform(vals.begin(), vals.end(), vals.begin(),
                    [](int x) -> int { return utility::UniformRandInt(0, 3); });
-    utility::LogInfo("max_tensor_size: {}", max_tensor_size);
 
-    for (int64_t tensor_size : tensor_sizes) {
-        int ref_result = std::accumulate(
-                vals.begin(), vals.begin() + tensor_size, 0, std::plus<int>());
-        utility::LogInfo("tensor_size: {}, ref_result: {}", tensor_size,
-                         ref_result);
-
-        Tensor src(std::vector<int>(vals.begin(), vals.begin() + tensor_size),
-                   {tensor_size}, Dtype::Int32, device);
+    for (int64_t size : sizes) {
+        int ref_result = std::accumulate(vals.begin(), vals.begin() + size, 0,
+                                         std::plus<int>());
+        Tensor src(std::vector<int>(vals.begin(), vals.begin() + size), {size},
+                   Dtype::Int32, device);
         Tensor dst = src.Sum({0}, false);
 
         EXPECT_EQ(dst.GetShape(), SizeVector({}));
@@ -1061,8 +1056,8 @@ TEST_P(TensorPermuteDevices, ReduceSumLargeArray) {
 TEST_P(TensorPermuteDevices, ReduceProdLargeArray) {
     Device device = GetParam();
 
-    for (int64_t tensor_size : TensorSizes::TestCases()) {
-        std::vector<double> vals(tensor_size);
+    for (int64_t size : TensorSizes::TestCases()) {
+        std::vector<double> vals(size);
         std::transform(
                 vals.begin(), vals.end(), vals.begin(), [](double x) -> double {
                     return utility::UniformRandFloatBinaryFriendly<double>() +
@@ -1070,7 +1065,7 @@ TEST_P(TensorPermuteDevices, ReduceProdLargeArray) {
                 });
         double ref_result = std::accumulate(vals.begin(), vals.end(), 1.,
                                             std::multiplies<double>());
-        Tensor src(vals, {tensor_size}, Dtype::Float64, device);
+        Tensor src(vals, {size}, Dtype::Float64, device);
         Tensor dst = src.Prod({0}, false);
 
         EXPECT_EQ(dst.GetShape(), SizeVector({}));
