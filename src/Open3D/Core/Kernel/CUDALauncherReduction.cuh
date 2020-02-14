@@ -105,35 +105,6 @@ std::pair<int64_t, int64_t> GetGridSizeBlockSize(int64_t n) {
 }
 
 template <typename scalar_t, typename func_t>
-__global__ void ReductionKernelOneOutput(Indexer indexer,
-                                         scalar_t identity,
-                                         func_t element_kernel) {
-    scalar_t* sdata = SharedMemory<scalar_t>();
-    int64_t n = indexer.NumWorkloads();
-    int64_t tid = threadIdx.x;
-    int64_t i = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (i < n) {
-        sdata[tid] = *reinterpret_cast<scalar_t*>(indexer.GetInputPtr(0, i));
-    } else {
-        sdata[tid] = 0;
-    }
-    __syncthreads();
-
-    for (int64_t s = blockDim.x / 2; s > 0; s >>= 1) {
-        if (tid < s && tid + s < n) {
-            // element_kernel(src, dst) -> dst = dst + src
-            element_kernel(&sdata[tid + s], &sdata[tid]);
-        }
-        __syncthreads();
-    }
-
-    if (i < n && tid == 0) {
-        *reinterpret_cast<scalar_t*>(indexer.GetOutputPtr(i)) = sdata[tid];
-    }
-}
-
-template <typename scalar_t, typename func_t>
 __global__ void ReduceKernelInit(Indexer indexer,
                                  scalar_t identity,
                                  func_t element_kernel,
@@ -181,31 +152,111 @@ __global__ void ReduceKernelInit(Indexer indexer,
     }
     cg::sync(cta);
 
-    // Single warp reduction with shuffle: 64, 32, 16, 8, 4, 2, 1
+    // Last 2nd warp
     cg::thread_block_tile<32> tile32 = cg::tiled_partition<32>(cta);
-    scalar_t local_temp = identity;
-    if (cta.thread_rank() < 32) {
-        // Fetch final intermediate result from 2nd warp
-        if (blockDim.x >= 64) {
-            // local_result += sdata[tid + 32];
-            element_kernel(indexer.GetInputPtr(0, tid + 32), &local_result);
-        }
-        // Reduce final warp using shuffle
-        for (int offset = tile32.size() / 2; offset > 0; offset /= 2) {
-            if (blockDim.x < offset * 2) {
-                continue;
-            }
-            scalar_t original = local_result;
-            local_temp = tile32.shfl_down(local_result, offset);
-            element_kernel(&local_temp, &local_result);
-            printf("Hello from rank %d, offset %d, original %f, local_temp %f, "
-                   "local_result "
-                   "%f\n",
-                   cta.thread_rank(), offset, static_cast<float>(original),
-                   static_cast<float>(local_temp),
-                   static_cast<float>(local_result));
-        }
+    scalar_t local_temp;
+    if (blockDim.x >= 64 && tid < 32) {
+        local_temp = sdata[tid + 32];
+        element_kernel(&local_temp, &local_result);
+        sdata[tid] = local_result;
     }
+    if (tid < 32) {
+        printf("After offset %d, sdata[%d]=%f\n", 32, tid,
+               static_cast<float>(sdata[tid]));
+    }
+
+    // Last warp
+    if (blockDim.x >= 32 && tid < 16) {
+        local_temp = tile32.shfl_down(local_result, 16);
+        element_kernel(&local_temp, &local_result);
+        sdata[tid] = local_result;
+    }
+    if (tid < 16) {
+        printf("After offset %d, sdata[%d]=%f, local_temp=%f, "
+               "local_result=%f\n",
+               16, tid, static_cast<float>(sdata[tid]),
+               static_cast<float>(local_temp),
+               static_cast<float>(local_result));
+    }
+
+    if (blockDim.x >= 16 && tid < 16) {
+        local_temp = tile32.shfl_down(local_result, 8);
+        element_kernel(&local_temp, &local_result);
+        sdata[tid] = local_result;
+    }
+    if (tid < 8) {
+        printf("After offset %d, sdata[%d]=%f, local_temp=%f, "
+               "local_result=%f\n",
+               8, tid, static_cast<float>(sdata[tid]),
+               static_cast<float>(local_temp),
+               static_cast<float>(local_result));
+    }
+
+    if (blockDim.x >= 8 && tid < 8) {
+        local_temp = tile32.shfl_down(local_result, 4);
+        element_kernel(&local_temp, &local_result);
+        sdata[tid] = local_result;
+    }
+    if (tid < 4) {
+        printf("After offset %d, sdata[%d]=%f, local_temp=%f, "
+               "local_result=%f\n",
+               4, tid, static_cast<float>(sdata[tid]),
+               static_cast<float>(local_temp),
+               static_cast<float>(local_result));
+    }
+
+    if (blockDim.x >= 4 && tid < 4) {
+        local_temp = tile32.shfl_down(local_result, 2);
+        element_kernel(&local_temp, &local_result);
+        sdata[tid] = local_result;
+    }
+    if (tid < 2) {
+        printf("After offset %d, sdata[%d]=%f, local_temp=%f, "
+               "local_result=%f\n",
+               2, tid, static_cast<float>(sdata[tid]),
+               static_cast<float>(local_temp),
+               static_cast<float>(local_result));
+    }
+
+    if (blockDim.x >= 2 && tid < 2) {
+        local_temp = tile32.shfl_down(local_result, 1);
+        element_kernel(&local_temp, &local_result);
+        sdata[tid] = local_result;
+    }
+    if (tid < 1) {
+        printf("After offset %d, sdata[%d]=%f, local_temp=%f, "
+               "local_result=%f\n",
+               1, tid, static_cast<float>(sdata[tid]),
+               static_cast<float>(local_temp),
+               static_cast<float>(local_result));
+    }
+
+    // // Single warp reduction with shuffle: 64, 32, 16, 8, 4, 2, 1
+    // cg::thread_block_tile<32> tile32 = cg::tiled_partition<32>(cta);
+    // scalar_t local_temp = identity;
+    // if (cta.thread_rank() < 32) {
+    //     // Fetch final intermediate result from 2nd warp
+    //     if (blockDim.x >= 64) {
+    //         // local_result += sdata[tid + 32];
+    //         element_kernel(indexer.GetInputPtr(0, tid + 32), &local_result);
+    //     }
+    //     // Reduce final warp using shuffle
+    //     for (int offset = tile32.size() / 2; offset > 0; offset /= 2) {
+    //         if (blockDim.x < offset * 2) {
+    //             continue;
+    //         }
+    //         scalar_t original = local_result;
+    //         local_temp = tile32.shfl_down(local_result, offset);
+    //         element_kernel(&local_temp, &local_result);
+    //         printf("Hello from rank %d, offset %d, original %f, local_temp
+    //         %f, "
+    //                "local_result "
+    //                "%f\n",
+    //                cta.thread_rank(), offset, static_cast<float>(original),
+    //                static_cast<float>(local_temp),
+    //                static_cast<float>(local_result));
+    //     }
+    // }
 
     // Write result for this block to global mem.
     if (cta.thread_rank() == 0) {
