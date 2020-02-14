@@ -316,7 +316,7 @@ void LaunchReductionKernelGeneric(const Indexer& indexer,
     int64_t block_size = 0;
     std::tie(grid_size_x, block_size) = GetGridSizeBlockSize(ipo);
 
-    dim3 grid_dim(grid_size_x, num_outputs, 1);
+    dim3 grid_dim(grid_size_x, grid_size_y, 1);
     dim3 block_dim(block_size, 1, 1);
 
     int64_t total_grid_size = grid_size_x * grid_size_y;
