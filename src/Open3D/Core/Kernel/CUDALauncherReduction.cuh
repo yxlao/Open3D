@@ -254,6 +254,7 @@ void LaunchReductionKernelOneOutput(const Indexer& indexer,
     OPEN3D_ASSERT_HOST_DEVICE_LAMBDA(func_t);
 
     int64_t n = indexer.NumWorkloads();
+
     int64_t grid_size = 0;
     int64_t block_size = 0;
     std::tie(grid_size, block_size) = GetGridSizeBlockSize(n);

@@ -59,18 +59,26 @@ void ReductionCUDA(const Tensor& src,
     DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
         switch (op_code) {
             case ReductionOpCode::Sum:
-                cuda_launcher::LaunchReductionKernelOneOutput<scalar_t>(
-                        indexer, 0,
-                        [] OPEN3D_HOST_DEVICE(const void* src, void* dst) {
-                            CUDASumReductionKernel<scalar_t>(src, dst);
-                        });
+                if (indexer.NumWorkloads() == 0) {
+                    dst.Fill(0);
+                } else {
+                    cuda_launcher::LaunchReductionKernelOneOutput<scalar_t>(
+                            indexer, 0,
+                            [] OPEN3D_HOST_DEVICE(const void* src, void* dst) {
+                                CUDASumReductionKernel<scalar_t>(src, dst);
+                            });
+                }
                 break;
             case ReductionOpCode::Prod:
-                cuda_launcher::LaunchReductionKernelOneOutput<scalar_t>(
-                        indexer, 1,
-                        [] OPEN3D_HOST_DEVICE(const void* src, void* dst) {
-                            CUDAProdReductionKernel<scalar_t>(src, dst);
-                        });
+                if (indexer.NumWorkloads() == 0) {
+                    dst.Fill(1);
+                } else {
+                    cuda_launcher::LaunchReductionKernelOneOutput<scalar_t>(
+                            indexer, 1,
+                            [] OPEN3D_HOST_DEVICE(const void* src, void* dst) {
+                                CUDAProdReductionKernel<scalar_t>(src, dst);
+                            });
+                }
                 break;
             default:
                 utility::LogError("Unsupported op code.");
