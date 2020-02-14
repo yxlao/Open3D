@@ -1027,9 +1027,9 @@ TEST_P(TensorPermuteDevices, ReduceSumDebug) {
                {2, 3, 4}, Dtype::Float32, device);
     Tensor dst;
 
-    dst = src.Sum({0, 2}, true);
-    EXPECT_EQ(dst.GetShape(), SizeVector({1, 3, 1}));
-    EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({60, 92, 124}));
+    dst = src.Sum({0, 1, 2}, false);
+    EXPECT_EQ(dst.GetShape(), SizeVector({}));
+    EXPECT_EQ(dst.ToFlatVector<float>(), std::vector<float>({276}));
 }
 
 TEST_P(TensorPermuteDevices, ReduceSumLargeArray) {

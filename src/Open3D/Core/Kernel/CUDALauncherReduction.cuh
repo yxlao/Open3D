@@ -122,10 +122,10 @@ __global__ void ReduceKernelInit(Indexer indexer,
     scalar_t local_result = identity;
     while (i < n) {
         // local_result += g_idata[i];
-        element_kernel(indexer.GetInputPtr(0, i), &local_result);
+        element_kernel(indexer.GetReductionInputPtr(0, i), &local_result);
         if (i + blockDim.x < n) {
             // local_result += g_idata[i + blockDim.x];
-            element_kernel(indexer.GetInputPtr(0, i + blockDim.x),
+            element_kernel(indexer.GetReductionInputPtr(0, i + blockDim.x),
                            &local_result);
         }
         i += grid_stride;

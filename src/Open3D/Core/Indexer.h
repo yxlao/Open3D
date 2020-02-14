@@ -327,21 +327,25 @@ public:
     ///        value from [0, IPO)
     OPEN3D_HOST_DEVICE char* GetReductionInputPtr(int64_t output_element_idx,
                                                   int64_t ipo_idx) const {
+        int64_t original_ipo_idx = ipo_idx;
         int64_t ipo = NumWorkloads() / NumOutputElements();
         if (ipo_idx < 0 || ipo_idx >= ipo) {
             return nullptr;
         }
+
         int64_t output_default_strides[MAX_OPERANDS];
         Indexer::SetDefaultStrides(output_.shape_, output_default_strides,
                                    ndims_);
+
         int64_t input_reduced_shape[MAX_OPERANDS];
         for (int64_t i = 0; i < ndims_; ++i) {
             if (IsReductionDim(i)) {
-                input_reduced_shape[i] = 1;
-            } else {
                 input_reduced_shape[i] = inputs_[0].shape_[i];
+            } else {
+                input_reduced_shape[i] = 1;
             }
         }
+
         int64_t input_reduced_strides[MAX_OPERANDS];
         Indexer::SetDefaultStrides(input_reduced_shape, input_reduced_strides,
                                    ndims_);
@@ -351,19 +355,31 @@ public:
             output_indices[i] = output_element_idx / output_default_strides[i];
             output_element_idx = output_element_idx % output_default_strides[i];
         }
+
         int64_t input_indices[MAX_OPERANDS];
         for (int64_t i = 0; i < ndims_; ++i) {
             if (!IsReductionDim(i)) {
                 input_indices[i] = output_indices[i];
             } else {
                 input_indices[i] = ipo_idx / input_reduced_strides[i];
-                ipo_idx = ipo_idx & input_reduced_strides[i];
+                ipo_idx = ipo_idx % input_reduced_strides[i];
             }
         }
+
         int64_t input_workload_idx = 0;
         for (int64_t i = 0; i < ndims_; ++i) {
-            input_workload_idx += input_indices[i] * inputs_[0].shape_[i];
+            input_workload_idx += input_indices[i] * master_strides_[i];
         }
+
+        printf("input_reduced_strides: %ld, %ld, %ld; output_indices: %ld, "
+               "%ld, %ld; input_indices: %ld, %ld, "
+               "%ld; output_element_idx %ld; input_workload_idx %ld; "
+               "original_ipo_idx %ld\n",
+               input_reduced_strides[0], input_reduced_strides[1],
+               input_reduced_strides[2], output_indices[0], output_indices[1],
+               output_indices[2], input_indices[0], input_indices[1],
+               input_indices[2], output_element_idx, input_workload_idx,
+               original_ipo_idx);
         return GetInputPtr(0, input_workload_idx);
     }
 
@@ -436,7 +452,7 @@ protected:
         for (int64_t i = ndims - 1; i >= 0; --i) {
             strides[i] = stride;
             // Handles 0-sized dimensions
-            stride = shape[i] > 1 ? stride * strides[i] : stride;
+            stride = shape[i] > 1 ? stride * shape[i] : stride;
         }
     }
 
