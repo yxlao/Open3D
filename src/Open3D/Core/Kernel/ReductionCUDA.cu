@@ -85,12 +85,6 @@ void ReductionCUDA(const Tensor& src,
                 break;
         }
     });
-
-    if (dims.size() != src.NumDims()) {
-        utility::LogError("Unimplemented case for ReductionCUDA.");
-    }
-
-    // utility::LogError("Unimplemented ReductionCUDA.");
 }
 
 }  // namespace kernel
