@@ -319,6 +319,8 @@ public:
     /// \param workload_idx The index of the compute workload, similar to
     /// thread_id, if a thread only processes one workload.
     OPEN3D_HOST_DEVICE char* GetOutputPtr(int64_t workload_idx) const {
+        printf("GetOutputPtr %ld = %p\n", workload_idx,
+               GetWorkloadDataPtr(output_, workload_idx));
         return GetWorkloadDataPtr(output_, workload_idx);
     }
 
@@ -381,7 +383,9 @@ protected:
     /// together.
     OPEN3D_HOST_DEVICE char* GetWorkloadDataPtr(const TensorRef& tr,
                                                 int64_t workload_idx) const {
-        if (workload_idx < 0 || workload_idx >= NumWorkloads()) {
+        // For 0-sized input reduction op, the output Tensor
+        // workload_idx == 1 > NumWorkloads() == 0.
+        if (workload_idx < 0) {
             return nullptr;
         }
         int64_t offset = 0;
