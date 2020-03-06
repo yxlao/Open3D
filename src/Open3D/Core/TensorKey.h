@@ -30,6 +30,10 @@
 
 namespace open3d {
 
+class NoneType {};
+
+extern NoneType None;
+
 /// A class to represent one of:
 /// 1) tensor index
 /// e.g. t[0], t[2]
@@ -51,15 +55,33 @@ public:
         TensorKey t = Slice(start, stop, step, false, false, false);
         return t;
     }
-
-    static TensorKey Slice(int64_t start,
-                           int64_t stop,
-                           int64_t step,
-                           bool start_is_none,
-                           bool stop_is_none,
-                           bool step_is_none) {
-        return TensorKey(TensorKeyMode::Slice, 0, start, stop, step,
-                         start_is_none, stop_is_none, step_is_none);
+    static TensorKey Slice(int64_t start, int64_t stop, NoneType step) {
+        TensorKey t = Slice(start, stop, 0, false, false, true);
+        return t;
+    }
+    static TensorKey Slice(int64_t start, NoneType stop, int64_t step) {
+        TensorKey t = Slice(start, 0, step, false, true, false);
+        return t;
+    }
+    static TensorKey Slice(int64_t start, NoneType stop, NoneType step) {
+        TensorKey t = Slice(start, 0, 0, false, true, true);
+        return t;
+    }
+    static TensorKey Slice(NoneType start, int64_t stop, int64_t step) {
+        TensorKey t = Slice(0, stop, step, true, false, false);
+        return t;
+    }
+    static TensorKey Slice(NoneType start, int64_t stop, NoneType step) {
+        TensorKey t = Slice(0, stop, 0, true, false, true);
+        return t;
+    }
+    static TensorKey Slice(NoneType start, NoneType stop, int64_t step) {
+        TensorKey t = Slice(0, 0, step, true, true, false);
+        return t;
+    }
+    static TensorKey Slice(NoneType start, NoneType stop, NoneType step) {
+        TensorKey t = Slice(0, 0, 0, true, true, true);
+        return t;
     }
 
     /// Getters will check the TensorKeyMode
@@ -110,6 +132,17 @@ public:
     }
 
 protected:
+    /// The fully specifiec slice factory shall not be called directly.
+    static TensorKey Slice(int64_t start,
+                           int64_t stop,
+                           int64_t step,
+                           bool start_is_none,
+                           bool stop_is_none,
+                           bool step_is_none) {
+        return TensorKey(TensorKeyMode::Slice, 0, start, stop, step,
+                         start_is_none, stop_is_none, step_is_none);
+    }
+
     /// The fully specified constructor shall not be called directly. Use the
     /// factory functions instead.
     TensorKey(TensorKeyMode mode,
