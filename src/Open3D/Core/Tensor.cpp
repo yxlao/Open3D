@@ -80,7 +80,7 @@ Tensor Tensor::GetItem(const TensorKey& tk) const {
     } catch (std::bad_cast& bc) {
         try {
             const TensorSlice& ts = dynamic_cast<const TensorSlice&>(tk);
-            TensorSlice ts_new = ts.ProcessSliceAll(shape_[0]);
+            TensorSlice ts_new = ts.UpdateWithDimSize(shape_[0]);
             return Slice(0, ts_new.start_, ts_new.stop_, ts_new.step_);
         } catch (std::bad_cast& bs) {
             utility::LogError("Internal error: wrong TensorKey type.");
@@ -98,7 +98,7 @@ Tensor Tensor::GetItem(const std::vector<TensorKey>& tks) const {
         } catch (std::bad_cast& bc) {
             try {
                 const TensorSlice& ts = dynamic_cast<const TensorSlice&>(tk);
-                TensorSlice ts_new = ts.ProcessSliceAll(shape_[0]);
+                TensorSlice ts_new = ts.UpdateWithDimSize(shape_[slice_dim]);
                 t = t.Slice(slice_dim, ts_new.start_, ts_new.stop_,
                             ts_new.step_);
                 slice_dim++;

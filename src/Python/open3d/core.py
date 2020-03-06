@@ -50,6 +50,14 @@ def cast_to_py_tensor(func):
     return wrapped_func
 
 
+def _slice_to_o3d_slice(s):
+    return o3d.open3d_pybind.TensorSlice(0 if s.start == None else s.start,
+                                         0 if s.stop == None else s.stop,
+                                         0 if s.step == None else s.step,
+                                         s.start == None, s.stop == None,
+                                         s.step == None)
+
+
 class Tensor(open3d_pybind.Tensor):
     """
     Open3D Tensor class. A Tensor is a view of data blob with shape, strides
@@ -86,8 +94,7 @@ class Tensor(open3d_pybind.Tensor):
         elif isinstance(key, int):
             t = super(Tensor, self)._getitem(o3d.open3d_pybind.TensorIndex(key))
         elif isinstance(key, slice):
-            # Only need to apply at the 0-th dim, e.g. a[0:10:2].
-            t = super(Tensor, self)._getitem_slice(0, key)
+            t = super(Tensor, self)._getitem(_slice_to_o3d_slice(key))
         else:
             raise TypeError(f"Invalid type {type(key)} for getitem.")
         return t

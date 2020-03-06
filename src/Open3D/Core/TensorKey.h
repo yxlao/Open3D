@@ -45,31 +45,43 @@ public:
 class TensorSlice : public TensorKey {
 public:
     TensorSlice(int64_t start, int64_t stop, int64_t step)
-        : TensorSlice(start, stop, step, false) {}
+        : TensorSlice(start, stop, step, false, false, false) {}
 
-protected:
-    TensorSlice(int64_t start, int64_t stop, int64_t step, bool slice_all)
-        : start_(start), stop_(stop), step_(step), slice_all_(slice_all) {}
+    TensorSlice(int64_t start,
+                int64_t stop,
+                int64_t step,
+                bool start_is_none,
+                bool stop_is_none,
+                bool step_is_none)
+        : start_(start),
+          stop_(stop),
+          step_(step),
+          start_is_none_(start_is_none),
+          stop_is_none_(stop_is_none),
+          step_is_none_(step_is_none) {}
 
 public:
-    /// Slice all in a dimension, i.e. t[:].
+    /// Slice non (i.e. keep all) in a dimension, i.e. t[:].
     /// Usage in C++: t.GetItem(TensorSlice.All());
-    static TensorSlice All() { return TensorSlice(0, 0, 0, true); }
+    static TensorSlice None() { return TensorSlice(0, 0, 0, true, true, true); }
 
-    /// When the tensor dimension is know, convert "slice all" to start, stop,
-    /// step indices. E.g. if t.shape == (5,), t[:] is converted to t[0:5:1].
-    TensorSlice ProcessSliceAll(int64_t dim_size) const {
-        if (slice_all_) {
-            return TensorSlice(0, dim_size, 1, false);
-        } else {
-            return *this;
-        }
+    /// When dim_size is know, convert the slice object such that
+    /// start_is_none_ == stop_is_none_ == step_is_none_ == false
+    /// E.g. if t.shape == (5,), t[:4]:
+    ///      before compute: Slice(None, 4, None)
+    ///      after compute : Slice(   0, 4,    1)
+    TensorSlice UpdateWithDimSize(int64_t dim_size) const {
+        return TensorSlice(start_is_none_ ? 0 : start_,
+                           stop_is_none_ ? dim_size : stop_,
+                           step_is_none_ ? 1 : step_);
     }
 
     int64_t start_ = 0;
     int64_t stop_ = 0;
     int64_t step_ = 0;
-    bool slice_all_ = false;
+    bool start_is_none_ = false;
+    bool stop_is_none_ = false;
+    bool step_is_none_ = false;
 };
 
 };  // namespace open3d
