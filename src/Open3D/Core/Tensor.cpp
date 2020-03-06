@@ -36,6 +36,7 @@
 #include "Open3D/Core/Dtype.h"
 #include "Open3D/Core/Kernel/Kernel.h"
 #include "Open3D/Core/SizeVector.h"
+#include "Open3D/Core/TensorKey.h"
 #include "Open3D/Utility/Console.h"
 
 namespace open3d {
@@ -70,6 +71,25 @@ Tensor& Tensor::operator=(const Tensor& other) && {
 Tensor& Tensor::operator=(Tensor&& other) && {
     kernel::Copy(other, *this);
     return *this;
+}
+
+Tensor Tensor::GetItem(const TensorKey& tk) {
+    try {
+        const TensorIndex& ti = dynamic_cast<const TensorIndex&>(tk);
+        return operator[](ti.index_);
+    } catch (std::bad_cast& bc) {
+        try {
+            const TensorSlice& ts = dynamic_cast<const TensorSlice&>(tk);
+            TensorSlice ts_new = ts.ProcessSliceAll(shape_[0]);
+            return Slice(0, ts_new.start_, ts_new.stop_, ts_new.step_);
+        } catch (std::bad_cast& bs) {
+            utility::LogError("Internal error: wrong TensorKey type.");
+        }
+    }
+}
+
+Tensor Tensor::GetItem(const std::vector<TensorKey>& tks) {
+    utility::LogError("not implemented");
 }
 
 /// Assign (copy) values from another Tensor, shape, dtype, device may change.

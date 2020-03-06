@@ -92,9 +92,6 @@ class Tensor(open3d_pybind.Tensor):
             raise TypeError(f"Invalid type {type(value)} for getitem.")
         return t
 
-    def __setitem__(self, index, value):
-        pass
-
     @cast_to_py_tensor
     def cuda(self, device_id=0):
         """
