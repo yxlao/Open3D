@@ -31,7 +31,7 @@
 namespace open3d {
 
 class TensorKey {
-protected:
+public:
     TensorKey(){};
     virtual ~TensorKey() {}
 };
