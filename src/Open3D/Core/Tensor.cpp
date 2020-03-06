@@ -76,7 +76,7 @@ Tensor& Tensor::operator=(Tensor&& other) && {
 Tensor Tensor::GetItem(const TensorKey& tk) {
     try {
         const TensorIndex& ti = dynamic_cast<const TensorIndex&>(tk);
-        return operator[](ti.index_);
+        return IndexExtract(0, ti.index_);
     } catch (std::bad_cast& bc) {
         try {
             const TensorSlice& ts = dynamic_cast<const TensorSlice&>(tk);
@@ -89,7 +89,25 @@ Tensor Tensor::GetItem(const TensorKey& tk) {
 }
 
 Tensor Tensor::GetItem(const std::vector<TensorKey>& tks) {
-    utility::LogError("not implemented");
+    Tensor t = *this;
+    int64_t slice_dim = 0;
+    for (const TensorKey& tk : tks) {
+        try {
+            const TensorIndex& ti = dynamic_cast<const TensorIndex&>(tk);
+            t = t.IndexExtract(slice_dim, ti.index_);
+        } catch (std::bad_cast& bc) {
+            try {
+                const TensorSlice& ts = dynamic_cast<const TensorSlice&>(tk);
+                TensorSlice ts_new = ts.ProcessSliceAll(shape_[0]);
+                t = t.Slice(slice_dim, ts_new.start_, ts_new.stop_,
+                            ts_new.step_);
+                slice_dim++;
+            } catch (std::bad_cast& bs) {
+                utility::LogError("Internal error: wrong TensorKey type.");
+            }
+        }
+    }
+    return t;
 }
 
 /// Assign (copy) values from another Tensor, shape, dtype, device may change.
