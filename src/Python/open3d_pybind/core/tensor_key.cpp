@@ -67,5 +67,6 @@ void pybind_core_tensor_key(py::module &m) {
     tensor_slice.def(py::init([](int64_t start, int64_t stop, int64_t end) {
         return new TensorSlice(start, stop, end);
     }));
+
     tensor_slice.def_static("all", &TensorSlice::All);
 }

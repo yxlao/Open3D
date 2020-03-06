@@ -84,7 +84,7 @@ class Tensor(open3d_pybind.Tensor):
                 else:
                     raise TypeError(f"Invalid type {type(v)} for getitem.")
         elif isinstance(key, int):
-            t = super(Tensor, self)._getitem_index(0, key)
+            t = super(Tensor, self)._getitem(o3d.open3d_pybind.TensorIndex(key))
         elif isinstance(key, slice):
             # Only need to apply at the 0-th dim, e.g. a[0:10:2].
             t = super(Tensor, self)._getitem_slice(0, key)
