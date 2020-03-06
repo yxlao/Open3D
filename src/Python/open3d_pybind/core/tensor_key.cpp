@@ -36,15 +36,19 @@ using namespace open3d;
 template <class TensorKeyBase = TensorKey>
 class PyTensorKey : public TensorKeyBase {
 public:
-    // Inherit constructors
     using TensorKeyBase::TensorKeyBase;
 };
 
 template <class TensorIndexBase = TensorIndex>
 class PyTensorIndex : public TensorIndex {
 public:
-    // Inherit constructors
     using TensorIndexBase::TensorIndexBase;
+};
+
+template <class TensorSliceBase = TensorSlice>
+class PyTensorSlice : public TensorSlice {
+public:
+    using TensorSliceBase::TensorSliceBase;
 };
 
 void pybind_core_tensor_key(py::module &m) {
@@ -55,30 +59,7 @@ void pybind_core_tensor_key(py::module &m) {
                std::shared_ptr<TensorIndex>>
             tensor_index(m, "TensorIndex");
 
-    // py::class_<TensorKey> size_vector(m, "SizeVector",
-    //                                   "SizeVector is a vector of int64_t for
-    //                                   " "specifying shape, strides and
-    //                                   etc.");
-
-    // size_vector.def(py::init(
-    //         [](py::array_t<int64_t, py::array::c_style |
-    //         py::array::forcecast>
-    //                    np_array) {
-    //             py::buffer_info info = np_array.request();
-    //             if (info.ndim != 1) {
-    //                 utility::LogError("SizeVector must be 1-D array.");
-    //             }
-    //             // The buffer is copied to avoid corruption.
-    //             int64_t *start = static_cast<int64_t *>(info.ptr);
-    //             return new SizeVector(start, start + info.shape[0]);
-    //         }));
-    // size_vector.def("to_string", &SizeVector::ToString);
-    // size_vector.def("__repr__", [](const SizeVector &size_vector) {
-    //     return size_vector.ToString();
-    // });
-    // size_vector.def("__eq__",
-    //                 [](const SizeVector &src, const SizeVector &dst) -> bool
-    //                 {
-    //                     return src == dst;
-    //                 });
+    py::class_<TensorSlice, PyTensorSlice<>, TensorKey,
+               std::shared_ptr<TensorSlice>>
+            tensor_slice(m, "TensorSlice");
 }
