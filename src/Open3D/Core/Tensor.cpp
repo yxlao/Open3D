@@ -73,7 +73,7 @@ Tensor& Tensor::operator=(Tensor&& other) && {
     return *this;
 }
 
-Tensor Tensor::GetItem(const TensorKey& tk) {
+Tensor Tensor::GetItem(const TensorKey& tk) const {
     try {
         const TensorIndex& ti = dynamic_cast<const TensorIndex&>(tk);
         return IndexExtract(0, ti.index_);
@@ -88,7 +88,7 @@ Tensor Tensor::GetItem(const TensorKey& tk) {
     }
 }
 
-Tensor Tensor::GetItem(const std::vector<TensorKey>& tks) {
+Tensor Tensor::GetItem(const std::vector<TensorKey>& tks) const {
     Tensor t = *this;
     int64_t slice_dim = 0;
     for (const TensorKey& tk : tks) {

@@ -152,7 +152,7 @@ public:
     /// Tensor t1 = t.GetItem(TensorIndex(2)); // t[2] in Python
     /// Tensor t2 = t.GetItem(TensorSlice(0, 4, 2)) // t[0:4:2] in Python
     /// ```
-    Tensor GetItem(const TensorKey& tk);
+    Tensor GetItem(const TensorKey& tk) const;
 
     /// Pythonic __getitem__ for tensor, returning a new view.
     ///
@@ -162,7 +162,7 @@ public:
     /// // Same as t[2, 0:4:2] in Python.
     /// Tensor t1 = t.GetItem({TensorIndex(2), TensorSlice(0, 4, 2)});
     /// ```
-    Tensor GetItem(const std::vector<TensorKey>& tks);
+    Tensor GetItem(const std::vector<TensorKey>& tks) const;
 
     DLManagedTensor* ToDLPack() const { return dlpack::ToDLPack(*this); }
 
