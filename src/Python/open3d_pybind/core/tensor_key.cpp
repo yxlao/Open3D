@@ -58,8 +58,14 @@ void pybind_core_tensor_key(py::module &m) {
     py::class_<TensorIndex, PyTensorIndex<>, TensorKey,
                std::shared_ptr<TensorIndex>>
             tensor_index(m, "TensorIndex");
+    tensor_index.def(
+            py::init([](int64_t index) { return new TensorIndex(index); }));
 
     py::class_<TensorSlice, PyTensorSlice<>, TensorKey,
                std::shared_ptr<TensorSlice>>
             tensor_slice(m, "TensorSlice");
+    tensor_slice.def(py::init([](int64_t start, int64_t stop, int64_t end) {
+        return new TensorSlice(start, stop, end);
+    }));
+    tensor_slice.def_static("all", &TensorSlice::All);
 }
