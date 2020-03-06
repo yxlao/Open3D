@@ -237,7 +237,6 @@ void pybind_core_tensor(py::module& m) {
                    return tensor.Slice(dim, start, stop, step);
                });
 
-    // After `_getitem_index`, the number of dimensions will be reduced by 1.
     tensor.def("_getitem", [](const Tensor& tensor, const TensorKey& tk) {
         return tensor.GetItem(tk);
     });
