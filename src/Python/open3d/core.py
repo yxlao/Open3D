@@ -68,11 +68,11 @@ class Tensor(open3d_pybind.Tensor):
         super(Tensor, self).__init__(data, dtype, device)
 
     @cast_to_py_tensor
-    def __getitem__(self, value):
+    def __getitem__(self, key):
         t = self
-        if isinstance(value, tuple):
+        if isinstance(key, tuple):
             slice_dim = 0
-            for v in value:
+            for v in key:
                 if isinstance(v, int):
                     # _getitem_index removes the 0-th dim
                     t = t._getitem_index(slice_dim, v)
@@ -83,13 +83,13 @@ class Tensor(open3d_pybind.Tensor):
                     slice_dim += 1
                 else:
                     raise TypeError(f"Invalid type {type(v)} for getitem.")
-        elif isinstance(value, int):
-            t = super(Tensor, self)._getitem_index(0, value)
-        elif isinstance(value, slice):
+        elif isinstance(key, int):
+            t = super(Tensor, self)._getitem_index(0, key)
+        elif isinstance(key, slice):
             # Only need to apply at the 0-th dim, e.g. a[0:10:2].
-            t = super(Tensor, self)._getitem_slice(0, value)
+            t = super(Tensor, self)._getitem_slice(0, key)
         else:
-            raise TypeError(f"Invalid type {type(value)} for getitem.")
+            raise TypeError(f"Invalid type {type(key)} for getitem.")
         return t
 
     @cast_to_py_tensor
