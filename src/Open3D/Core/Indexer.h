@@ -404,7 +404,6 @@ public:
     /// \param size The size to iterate in dimension \p dim.
     OPEN3D_HOST_DEVICE void Shink(int64_t dim, int64_t start, int64_t size) {
         assert(dim >= 0 && dim < ndims_ && size > 0);
-        int64_t original_size = master_shape_[dim];
         master_shape_[dim] = size;
         UpdateMasterStrides();
 
