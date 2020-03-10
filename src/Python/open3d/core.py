@@ -1,6 +1,7 @@
 import open3d as o3d
 import open3d.open3d_pybind as open3d_pybind
 import numpy as np
+import numbers
 
 
 def _numpy_dtype_to_dtype(numpy_dtype):
@@ -70,7 +71,8 @@ class Tensor(open3d_pybind.Tensor):
     """
 
     def __init__(self, data, dtype=None, device=None):
-        if isinstance(data, tuple) or isinstance(data, list):
+        if isinstance(data, tuple) or isinstance(data, list) or isinstance(
+                data, numbers.Number):
             data = np.array(data)
         if not isinstance(data, np.ndarray):
             raise ValueError("data must be a list, tuple, or Numpy array.")
@@ -95,6 +97,8 @@ class Tensor(open3d_pybind.Tensor):
     @cast_to_py_tensor
     def __setitem__(self, key, value):
         t = self.__getitem__(key)
+        if not isinstance(value, Tensor):
+            value = Tensor(value, dtype=self.dtype, device=self.device)
         super(Tensor, t)._setitem(value)
         return self
 
