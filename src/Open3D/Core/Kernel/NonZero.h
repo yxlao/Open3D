@@ -26,7 +26,19 @@
 
 #pragma once
 
-#include "Open3D/Core/Kernel/BinaryEW.h"
-#include "Open3D/Core/Kernel/IndexGetSet.h"
-#include "Open3D/Core/Kernel/NonZero.h"
-#include "Open3D/Core/Kernel/UnaryEW.h"
+#include "Open3D/Core/Tensor.h"
+#include "Open3D/Utility/Console.h"
+
+namespace open3d {
+namespace kernel {
+
+std::vector<Tensor> NonZeroNumpy(const Tensor& src);
+
+std::vector<Tensor> NonZeroNumpyCPU(const Tensor& src);
+
+#ifdef BUILD_CUDA_MODULE
+std::vector<Tensor> NonZeroNumpyCUDA(const Tensor& src);
+#endif
+
+}  // namespace kernel
+}  // namespace open3d
