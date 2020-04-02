@@ -34,3 +34,6 @@
 [submodule "3rdparty/cutlass"]
 	path = 3rdparty/cutlass
 	url = https://github.com/NVIDIA/cutlass
+[submodule "3rdparty/thrust"]
+	path = 3rdparty/thrust
+	url = https://github.com/thrust/thrust.git

@@ -295,6 +295,8 @@ INSTALL_HEADERS(fmt)
 # PoissonRecon
 set(poisson_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/)
 
+# Thrust
+set(thrust_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/thrust" )
 
 list(APPEND 3RDPARTY_INCLUDE_DIRS
      # ${dirent_INCLUDE_DIRS} # fails on Linux, seems to require Windows headers
@@ -319,6 +321,10 @@ list(APPEND 3RDPARTY_INCLUDE_DIRS
      ${poisson_INCLUDE_DIRS}
 )
 
+if (BUILD_CUDA_MODULE)
+    list(APPEND 3RDPARTY_INCLUDE_DIRS ${thrust_INCLUDE_DIRS})
+endif()
+
 # set 3RDPARTY_INCLUDE_DIRS_AT_INSTALL
 # Open3D's header only dependes on Eigen and GL headers
 # The future plan is to minimize such dependencies
@@ -328,6 +334,10 @@ list(APPEND 3RDPARTY_INCLUDE_DIRS_AT_INSTALL
      ${GLFW_INCLUDE_DIRS}
      ${fmt_INCLUDE_DIRS}
 )
+
+if (BUILD_CUDA_MODULE)
+    list(APPEND 3RDPARTY_INCLUDE_DIRS_AT_INSTALL ${thrust_INCLUDE_DIRS})
+endif()
 
 # set 3RDPARTY_LIBRARY_DIRS
 list(APPEND 3RDPARTY_LIBRARY_DIRS
