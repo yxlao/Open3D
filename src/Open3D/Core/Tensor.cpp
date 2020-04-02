@@ -845,4 +845,8 @@ Tensor Tensor::Ne_(const Tensor& value) {
     return *this;
 }
 
+std::vector<Tensor> Tensor::NonZeroNumpy() const {
+    utility::LogError("Nonzero not implemented");
+}
+
 }  // namespace open3d

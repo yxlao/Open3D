@@ -1469,3 +1469,27 @@ TEST_P(TensorPermuteDevices, Ne) {
     a.Ne_(b);
     EXPECT_EQ(a.ToFlatVector<float>(), std::vector<float>({0, 1, 1, 1}));
 }
+
+TEST_P(TensorPermuteDevices, BooleanIndex) {
+    Device device = GetParam();
+
+    // a[a < 0] = 0
+    Tensor a(std::vector<float>({1, -1, -2, 3}), {4}, Dtype::Float32, device);
+    Tensor b(std::vector<float>({0}), {1}, Dtype::Float32, device);
+    a.SetItem(TensorKey::IndexTensor(a.Le(b)), b);
+    EXPECT_EQ(a.ToFlatVector<float>(), std::vector<float>({1, 0, 0, 3}));
+}
+
+TEST_P(TensorPermuteDevices, NonZeroNumpy) {
+    Device device = GetParam();
+
+    Tensor a(std::vector<float>({0, 1, 1, 0, 1, 0}), {3, 2}, Dtype::Float32,
+             device);
+    std::vector<Tensor> results = a.NonZeroNumpy();
+    EXPECT_EQ(results[0].ToFlatVector<int64_t>(),
+              std::vector<int64_t>({0, 1, 2}));
+    EXPECT_EQ(results[1].ToFlatVector<int64_t>(),
+              std::vector<int64_t>({1, 0, 0}));
+    EXPECT_EQ(results[0].GetShape(), SizeVector{3});
+    EXPECT_EQ(results[1].GetShape(), SizeVector{3});
+}
