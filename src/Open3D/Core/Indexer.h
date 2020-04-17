@@ -252,6 +252,7 @@ struct TensorRef {
 };
 
 enum class DtypePolicy {
+<<<<<<< HEAD
     NONE,         // Do not check. Expects the kernel to handle the conversion.
                   // E.g. in Copy kernel with type casting.
     ASSERT_SAME,  // Assert same Dtypes for inputs and output
@@ -261,6 +262,17 @@ enum class DtypePolicy {
                          // int64   + int32   = int64   (valid)
                          // float32 + float32 = int32   (invalid)
                          // float64 + float64 = float32 (valid)
+=======
+    NONE,  // Do not check. Expects the kernel to handle the conversion.
+           // E.g. in Copy kernel with type casting.
+    ASSERT_SAME_OR_BOOL_OUT,  // Assert same Dtypes for inputs and output, with
+                              // the exception that the output can be bool.
+    CAST,                     // Cast to common dtype.
+                              // E.g. Tensor::Add:
+                              // int64   + int32   = int64   (valid)
+                              // float32 + float32 = int32   (invalid)
+                              // float64 + float64 = float32 (valid)
+>>>>>>> gpu
     CAST_INPUTS  // Cast inputs to common dtypes (e.g. comparison ops have
                  // boolean output).
 };
