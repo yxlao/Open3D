@@ -153,6 +153,13 @@ def test_tensor_constructor():
     o3_t = o3d.Tensor(np_t, dtype, device)
     np.testing.assert_equal(np_t, o3_t.numpy())
 
+    # Boolean
+    np_t = np.array([True, False, True], dtype=np.bool)
+    o3_t = o3d.Tensor([True, False, True], o3d.Dtype.Bool, device)
+    np.testing.assert_equal(np_t, o3_t.numpy())
+    o3_t = o3d.Tensor(np_t, o3d.Dtype.Bool, device)
+    np.testing.assert_equal(np_t, o3_t.numpy())
+
 
 def test_tensor_from_to_numpy():
     # a->b copy; b, c share memory
@@ -550,6 +557,53 @@ def test_reduction_max(dim, keepdim):
     np.testing.assert_allclose(o3_dst.numpy(), np_dst)
 
 
+def test_advanced_index_get_mixed():
+    np_src = np.array(range(24)).reshape((2, 3, 4))
+    o3_src = o3d.Tensor(np_src)
+
+    np_dst = np_src[1, 0:2, [1, 2]]
+    o3_dst = o3_src[1, 0:2, [1, 2]]
+    np.testing.assert_equal(o3_dst.numpy(), np_dst)
+
+    # Subtle differences between slice and list
+    np_src = np.array([0, 100, 200, 300, 400, 500, 600, 700, 800]).reshape(3, 3)
+    o3_src = o3d.Tensor(np_src)
+    np.testing.assert_equal(o3_src[1, 2].numpy(), np_src[1, 2])
+    np.testing.assert_equal(o3_src[[1, 2]].numpy(), np_src[[1, 2]])
+    np.testing.assert_equal(o3_src[(1, 2)].numpy(), np_src[(1, 2)])
+    np.testing.assert_equal(o3_src[(1, 2), [1, 2]].numpy(),
+                            np_src[(1, 2), [1, 2]])
+
+    # Complex case: interleaving slice and advanced indexing
+    np_src = np.array(range(120)).reshape((2, 3, 4, 5))
+    o3_src = o3d.Tensor(np_src)
+    o3_dst = o3_src[1, [[1, 2], [2, 1]], 0:4:2, [3, 4]]
+    np_dst = np_src[1, [[1, 2], [2, 1]], 0:4:2, [3, 4]]
+    np.testing.assert_equal(o3_dst.numpy(), np_dst)
+
+
+def test_advanced_index_set_mixed():
+    np_src = np.array(range(24)).reshape((2, 3, 4))
+    o3_src = o3d.Tensor(np_src)
+
+    np_fill = np.array(([[100, 200], [300, 400]]))
+    o3_fill = o3d.Tensor(np_fill)
+
+    np_src[1, 0:2, [1, 2]] = np_fill
+    o3_src[1, 0:2, [1, 2]] = o3_fill
+    np.testing.assert_equal(o3_src.numpy(), np_src)
+
+    # Complex case: interleaving slice and advanced indexing
+    np_src = np.array(range(120)).reshape((2, 3, 4, 5))
+    o3_src = o3d.Tensor(np_src)
+    fill_shape = np_src[1, [[1, 2], [2, 1]], 0:4:2, [3, 4]].shape
+    np_fill_val = np.random.randint(5000, size=fill_shape).astype(np_src.dtype)
+    o3_fill_val = o3d.Tensor(np_fill_val)
+    o3_src[1, [[1, 2], [2, 1]], 0:4:2, [3, 4]] = o3_fill_val
+    np_src[1, [[1, 2], [2, 1]], 0:4:2, [3, 4]] = np_fill_val
+    np.testing.assert_equal(o3_src.numpy(), np_src)
+
+
 def test_tensorlist_indexing():
     # 5 x (3, 4)
     dtype = o3d.Dtype.Float32
@@ -622,3 +676,36 @@ def test_unary_elementwise(np_func_name, o3_func_name):
     o3_func_name_inplace = o3_func_name + "_"
     getattr(o3_t, o3_func_name_inplace)()
     np.testing.assert_allclose(o3_t.numpy(), getattr(np, np_func_name)(np_t))
+
+
+def test_logical_ops():
+    np_a = np.array([True, False, True, False])
+    np_b = np.array([True, True, False, False])
+    o3_a = o3d.Tensor(np_a)
+    o3_b = o3d.Tensor(np_b)
+
+    o3_r = o3_a.logical_and(o3_b)
+    np_r = np.logical_and(np_a, np_b)
+    np.testing.assert_equal(o3_r.numpy(), np_r)
+
+    o3_r = o3_a.logical_or(o3_b)
+    np_r = np.logical_or(np_a, np_b)
+    np.testing.assert_equal(o3_r.numpy(), np_r)
+
+    o3_r = o3_a.logical_xor(o3_b)
+    np_r = np.logical_xor(np_a, np_b)
+    np.testing.assert_equal(o3_r.numpy(), np_r)
+
+
+def test_comparision_ops():
+    np_a = np.array([0, 1, -1])
+    np_b = np.array([0, 0, 0])
+    o3_a = o3d.Tensor(np_a)
+    o3_b = o3d.Tensor(np_b)
+
+    np.testing.assert_equal((o3_a > o3_b).numpy(), np_a > np_b)
+    np.testing.assert_equal((o3_a >= o3_b).numpy(), np_a >= np_b)
+    np.testing.assert_equal((o3_a < o3_b).numpy(), np_a < np_b)
+    np.testing.assert_equal((o3_a <= o3_b).numpy(), np_a <= np_b)
+    np.testing.assert_equal((o3_a == o3_b).numpy(), np_a == np_b)
+    np.testing.assert_equal((o3_a != o3_b).numpy(), np_a != np_b)

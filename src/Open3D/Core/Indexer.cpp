@@ -49,6 +49,23 @@ Indexer::Indexer(const std::vector<Tensor>& input_tensors,
                                   DtypeUtil::ToString(ref_dtype));
             }
         }
+    } else if (dtype_policy == DtypePolicy::ASSERT_SAME_OR_BOOL_OUT) {
+        Dtype ref_dtype = input_tensors[0].GetDtype();
+
+        Dtype output_dtype = output_tensor.GetDtype();
+        if (output_dtype != Dtype::Bool && output_dtype != ref_dtype) {
+            utility::LogError("Dype mismatch {} != {}.",
+                              DtypeUtil::ToString(output_dtype),
+                              DtypeUtil::ToString(ref_dtype));
+        }
+
+        for (const auto& input_tensor : input_tensors) {
+            if (input_tensor.GetDtype() != ref_dtype) {
+                utility::LogError("Dype mismatch {} != {}.",
+                                  DtypeUtil::ToString(input_tensor.GetDtype()),
+                                  DtypeUtil::ToString(ref_dtype));
+            }
+        }
     } else if (dtype_policy == DtypePolicy::ASSERT_SAME_INPUTS) {
         Dtype ref_dtype = input_tensors[0].GetDtype();
         for (const auto& input_tensor : input_tensors) {
