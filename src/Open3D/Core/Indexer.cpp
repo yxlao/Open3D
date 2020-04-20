@@ -269,6 +269,22 @@ int64_t Indexer::NumOutputElements() const {
     return num_output_elements;
 }
 
+int64_t Indexer::GetWorkloadIpoIndex(int64_t workload_idx) const {
+    // For 0-sized input reduction op, the output Tensor
+    // workload_idx == 1 > NumWorkloads() == 0.
+    if (workload_idx < 0) {
+        return -1;
+    }
+    int64_t ipo_index = 0;
+    for (int64_t i = 0; i < ndims_; ++i) {
+        if (IsReductionDim(i)) {
+            ipo_index += workload_idx / master_strides_[i];
+        }
+        workload_idx = workload_idx % master_strides_[i];
+    }
+    return ipo_index;
+}
+
 void Indexer::CoalesceDimensions() {
     if (ndims_ <= 1) {
         return;

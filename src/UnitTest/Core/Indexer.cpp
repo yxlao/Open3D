@@ -28,6 +28,8 @@
 #include "Open3D/Core/Device.h"
 #include "Open3D/Core/SizeVector.h"
 
+#include <unordered_map>
+
 #include "Core/CoreTest.h"
 #include "TestUtility/UnitTest.h"
 
@@ -180,4 +182,28 @@ TEST_P(IndexerPermuteDevices, GetPointers) {
     EXPECT_EQ(indexer.GetOutputPtr(3), output_base_ptr + 3 * dtype_byte_size);
     EXPECT_EQ(indexer.GetOutputPtr(4), output_base_ptr + 4 * dtype_byte_size);
     EXPECT_EQ(indexer.GetOutputPtr(5), output_base_ptr + 5 * dtype_byte_size);
+}
+
+TEST_P(IndexerPermuteDevices, GetWorkloadIpoIndex) {
+    Device device = GetParam();
+
+    Tensor input({3, 4}, Dtype::Float32, device);
+    Tensor output({3, 1}, Dtype::Float32, device);  // keepdim == true
+    Indexer indexer({input}, output, DtypePolicy::ASSERT_SAME_INPUTS, {1});
+
+    // Indexer may shuffle the original input dimensions. Thus the workload
+    // index may not be the same as the input flattened index. We need to test
+    // the correspondence of the input flattened index with the ipo index.
+    const char* base_ptr = static_cast<const char*>(input.GetDataPtr());
+    int64_t byte_size = DtypeUtil::ByteSize(input.GetDtype());
+    std::unordered_map<int64_t, int64_t> map_input_idx_to_ipo_idx;
+    for (int64_t i = 0; i < indexer.NumWorkloads(); ++i) {
+        int64_t input_id = (indexer.GetInputPtr(0, i) - base_ptr) / byte_size;
+        map_input_idx_to_ipo_idx[input_id] = indexer.GetWorkloadIpoIndex(i);
+    }
+    std::unordered_map<int64_t, int64_t> ref_map_input_idx_to_ipo_idx{
+            {0, 0}, {1, 1}, {2, 2}, {3, 3}, {4, 0},  {5, 1},
+            {6, 2}, {7, 3}, {8, 0}, {9, 1}, {10, 2}, {11, 3},
+    };
+    EXPECT_EQ(map_input_idx_to_ipo_idx, ref_map_input_idx_to_ipo_idx);
 }

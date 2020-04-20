@@ -376,6 +376,12 @@ public:
         return GetWorkloadDataPtr(output_, workload_idx);
     }
 
+    /// For reduciton ops, returns the input-per-output index for a given
+    /// workload index. In a reduction op, each output elemnt correspoinds to
+    /// IPO (inputs per output) inputs. The ipo_index can take value from [0,
+    /// IPO). This funciton is useful for argmin and argmax.
+    int64_t GetWorkloadIpoIndex(int64_t workload_idx) const;
+
 protected:
     /// Merge adjacent dimensions if either dim is 1 or if:
     /// shape[n] * stride[n] == shape[n + 1]
