@@ -557,6 +557,22 @@ def test_reduction_max(dim, keepdim):
     np.testing.assert_allclose(o3_dst.numpy(), np_dst)
 
 
+@pytest.mark.parametrize("dim", [0, 1, 2, None])
+def test_reduction_argmin_argmax(dim):
+    np_src = np.array(range(24))
+    np.random.shuffle(np_src)
+    np_src = np_src.reshape((2, 3, 4))
+    o3_src = o3d.Tensor(np_src)
+
+    np_dst = np_src.argmin(axis=dim)
+    o3_dst = o3_src.argmin(dim=dim)
+    np.testing.assert_allclose(o3_dst.numpy(), np_dst)
+
+    np_dst = np_src.argmax(axis=dim)
+    o3_dst = o3_src.argmax(dim=dim)
+    np.testing.assert_allclose(o3_dst.numpy(), np_dst)
+
+
 def test_advanced_index_get_mixed():
     np_src = np.array(range(24)).reshape((2, 3, 4))
     o3_src = o3d.Tensor(np_src)

@@ -304,6 +304,8 @@ void pybind_core_tensor(py::module& m) {
     tensor.def("prod", &Tensor::Prod);
     tensor.def("min", &Tensor::Min);
     tensor.def("max", &Tensor::Max);
+    tensor.def("argmin_", &Tensor::ArgMin);
+    tensor.def("argmax_", &Tensor::ArgMax);
 
     tensor.def("__repr__",
                [](const Tensor& tensor) { return tensor.ToString(); });

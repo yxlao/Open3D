@@ -57,6 +57,26 @@ static inline scalar_t CPUMaxReductionKernel(scalar_t src, scalar_t dst) {
     return std::max(src, dst);
 }
 
+template <typename scalar_t>
+static inline std::pair<int64_t, scalar_t> CPUArgMinReductionKernel(
+        int64_t a_idx, scalar_t a, int64_t b_idx, scalar_t b) {
+    if (a < b) {
+        return {a_idx, a};
+    } else {
+        return {b_idx, b};
+    }
+}
+
+template <typename scalar_t>
+static inline std::pair<int64_t, scalar_t> CPUArgMaxReductionKernel(
+        int64_t a_idx, scalar_t a, int64_t b_idx, scalar_t b) {
+    if (a > b) {
+        return {a_idx, a};
+    } else {
+        return {b_idx, b};
+    }
+}
+
 class CPUReductionEngine {
 public:
     CPUReductionEngine(const CPUReductionEngine&) = delete;
@@ -171,77 +191,138 @@ private:
     Indexer indexer_;
 };
 
+class CPUArgReductionEngine {
+public:
+    CPUArgReductionEngine(const CPUArgReductionEngine&) = delete;
+    CPUArgReductionEngine& operator=(const CPUArgReductionEngine&) = delete;
+    CPUArgReductionEngine(const Indexer& indexer) : indexer_(indexer) {}
+
+    template <typename func_t, typename scalar_t>
+    void Run(const func_t& reduce_func, scalar_t identity) {
+        // Arg-reduction needs to iterate each output element separatly in
+        // sub-iterations. Each output elemnent corresponds to multiple input
+        // elements. We need to keep track of the indices within each
+        // sub-iteration.
+        int64_t num_input_elements = indexer_.NumWorkloads();
+        int64_t num_output_elements = indexer_.NumOutputElements();
+        int64_t ipo =
+                num_input_elements / num_output_elements;  // Inputs per output
+
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+        for (int64_t output_idx = 0; output_idx < num_output_elements;
+             output_idx++) {
+            // sub_indexer.NumWorkloads() == ipo.
+            // sub_indexer's workload_idx is indexer_'s ipo_idx.
+            Indexer sub_indexer = indexer_.GetPerOutputIndexer(output_idx);
+            scalar_t dst_val = identity;
+            for (int64_t workload_idx = 0;
+                 workload_idx < sub_indexer.NumWorkloads(); workload_idx++) {
+                int64_t src_idx = workload_idx;
+                scalar_t* src_val = reinterpret_cast<scalar_t*>(
+                        sub_indexer.GetInputPtr(0, workload_idx));
+                int64_t* dst_idx = reinterpret_cast<int64_t*>(
+                        sub_indexer.GetOutputPtr(0, workload_idx));
+                std::tie(*dst_idx, dst_val) =
+                        reduce_func(src_idx, *src_val, *dst_idx, dst_val);
+            }
+        }
+    }
+
+private:
+    Indexer indexer_;
+};
+
 void ReductionCPU(const Tensor& src,
                   Tensor& dst,
                   const SizeVector& dims,
                   bool keepdim,
                   ReductionOpCode op_code) {
-    DtypePolicy dtype_policy;
     if (regular_reduce_ops.find(op_code) != regular_reduce_ops.end()) {
-        dtype_policy = DtypePolicy::ASSERT_SAME;
-    } else if (arg_reduce_ops.find(op_code) != regular_reduce_ops.end()) {
-        dtype_policy = DtypePolicy::ASSERT_SAME_INPUTS;
+        DtypePolicy dtype_policy = DtypePolicy::ASSERT_SAME;
+        Indexer indexer({src}, dst, dtype_policy, dims);
+        CPUReductionEngine re(indexer);
+        DISPATCH_DTYPE_TO_TEMPLATE(src.GetDtype(), [&]() {
+            scalar_t identity;
+            switch (op_code) {
+                case ReductionOpCode::Sum:
+                    identity = 0;
+                    dst.Fill(identity);
+                    re.Run(CPUSumReductionKernel<scalar_t>, identity);
+                    break;
+                case ReductionOpCode::Prod:
+                    identity = 1;
+                    dst.Fill(identity);
+                    re.Run(CPUProdReductionKernel<scalar_t>, identity);
+                    break;
+                case ReductionOpCode::Min:
+                    if (indexer.NumWorkloads() == 0) {
+                        utility::LogError(
+                                "Zero-size Tensor does not suport Min.");
+                    } else {
+                        identity = std::numeric_limits<scalar_t>::max();
+                        dst.Fill(identity);
+                        re.Run(CPUMinReductionKernel<scalar_t>, identity);
+                    }
+                    break;
+                case ReductionOpCode::Max:
+                    if (indexer.NumWorkloads() == 0) {
+                        utility::LogError(
+                                "Zero-size Tensor does not suport Max.");
+                    } else {
+                        identity = std::numeric_limits<scalar_t>::min();
+                        dst.Fill(identity);
+                        re.Run(CPUMaxReductionKernel<scalar_t>, identity);
+                    }
+                    break;
+                default:
+                    utility::LogError("Unsupported op code.");
+                    break;
+            }
+        });
+    } else if (arg_reduce_ops.find(op_code) != arg_reduce_ops.end()) {
+        if (dst.GetDtype() != Dtype::Int64) {
+            utility::LogError("Arg-reduction must have int64 output dtype.");
+        }
+        DtypePolicy dtype_policy = DtypePolicy::ASSERT_SAME_INPUTS;
+
+        // Accumulation buffer to store temporary min/max values.
+        Tensor dst_acc(dst.GetShape(), src.GetDtype(), src.GetDevice());
+
+        Indexer indexer({src}, {dst, dst_acc}, dtype_policy, dims);
+        CPUArgReductionEngine re(indexer);
+        DISPATCH_DTYPE_TO_TEMPLATE(src.GetDtype(), [&]() {
+            scalar_t identity;
+            switch (op_code) {
+                case ReductionOpCode::ArgMin:
+                    if (indexer.NumWorkloads() == 0) {
+                        utility::LogError(
+                                "Zero-size Tensor does not suport ArgMin.");
+                    } else {
+                        identity = std::numeric_limits<scalar_t>::max();
+                        dst_acc.Fill(identity);
+                        re.Run(CPUArgMinReductionKernel<scalar_t>, identity);
+                    }
+                    break;
+                case ReductionOpCode::ArgMax:
+                    if (indexer.NumWorkloads() == 0) {
+                        utility::LogError(
+                                "Zero-size Tensor does not suport ArgMax.");
+                    } else {
+                        identity = std::numeric_limits<scalar_t>::min();
+                        dst_acc.Fill(identity);
+                        re.Run(CPUArgMaxReductionKernel<scalar_t>, identity);
+                    }
+                    break;
+                default:
+                    utility::LogError("Unsupported op code.");
+                    break;
+            }
+        });
     } else {
         utility::LogError("Unsupported op code.");
     }
-
-    Indexer indexer({src}, dst, dtype_policy, dims);
-    CPUReductionEngine re(indexer);
-
-    Dtype dtype = src.GetDtype();
-    DISPATCH_DTYPE_TO_TEMPLATE(dtype, [&]() {
-        scalar_t identity;
-        std::function<scalar_t(scalar_t, scalar_t)> element_kernel;
-        switch (op_code) {
-            case ReductionOpCode::Sum:
-                identity = 0;
-                dst.Fill(identity);
-                re.Run(CPUSumReductionKernel<scalar_t>, identity);
-                break;
-            case ReductionOpCode::Prod:
-                identity = 1;
-                dst.Fill(identity);
-                re.Run(CPUSumReductionKernel<scalar_t>, identity);
-                break;
-            case ReductionOpCode::Min:
-                if (indexer.NumWorkloads() == 0) {
-                    utility::LogError("Zero-size Tensor does not suport Min.");
-                } else {
-                    identity = std::numeric_limits<scalar_t>::max();
-                    dst.Fill(identity);
-                    re.Run(CPUMinReductionKernel<scalar_t>, identity);
-                }
-                break;
-            case ReductionOpCode::Max:
-                if (indexer.NumWorkloads() == 0) {
-                    utility::LogError("Zero-size Tensor does not suport Max.");
-                } else {
-                    identity = std::numeric_limits<scalar_t>::min();
-                    dst.Fill(identity);
-                    re.Run(CPUMaxReductionKernel<scalar_t>, identity);
-                }
-                break;
-            case ReductionOpCode::ArgMin:
-                if (indexer.NumWorkloads() == 0) {
-                    utility::LogError(
-                            "Zero-size Tensor does not suport ArgMin.");
-                } else {
-                    utility::LogError("TODO: ArgMin CPU is not implemented.");
-                }
-                break;
-            case ReductionOpCode::ArgMax:
-                if (indexer.NumWorkloads() == 0) {
-                    utility::LogError(
-                            "Zero-size Tensor does not suport ArgMax.");
-                } else {
-                    utility::LogError("TODO: ArgMax CPU is not implemented.");
-                }
-                break;
-            default:
-                utility::LogError("Unsupported op code.");
-                break;
-        }
-    });
 }
 
 }  // namespace kernel

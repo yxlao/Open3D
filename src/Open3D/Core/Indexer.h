@@ -156,12 +156,16 @@ struct OffsetCalculator {
     OPEN3D_HOST_DEVICE SmallArray<index_t, NARGS> get(
             index_t linear_idx) const {
         SmallArray<index_t, NARGS> offsets;
+#if defined(__CUDA_ARCH__)
 #pragma unroll
+#endif
         for (int arg = 0; arg < NARGS; arg++) {
             offsets[arg] = 0;
         }
 
+#if defined(__CUDA_ARCH__)
 #pragma unroll
+#endif
         for (int dim = 0; dim < MAX_DIMS; ++dim) {
             if (dim == dims_) {
                 break;
@@ -169,7 +173,9 @@ struct OffsetCalculator {
             auto div_mod_pair = sizes_[dim].DivMod(linear_idx);
             linear_idx = div_mod_pair.div_;
 
+#if defined(__CUDA_ARCH__)
 #pragma unroll
+#endif
             for (int arg = 0; arg < NARGS; arg++) {
                 offsets[arg] += div_mod_pair.mod_ * strides_[dim][arg];
             }
@@ -288,6 +294,11 @@ public:
             DtypePolicy dtype_policy = DtypePolicy::ASSERT_SAME,
             const SizeVector& reduction_dims = {});
 
+    Indexer(const std::vector<Tensor>& input_tensors,
+            const std::vector<Tensor>& output_tensors,
+            DtypePolicy dtype_policy = DtypePolicy::ASSERT_SAME,
+            const SizeVector& reduction_dims = {});
+
     /// Returns true iff the maximum_offsets in bytes are smaller than 2^31 - 1.
     bool CanUse32BitIndexing() const;
 
@@ -298,6 +309,10 @@ public:
     /// halves. The returned new indexer iterates the first half while the
     /// current indexer iterates the second half.
     std::unique_ptr<Indexer> SplitLargestDim();
+
+    /// Get a sub-indexer that loops through all inputs corresponding to a
+    /// single output.
+    Indexer GetPerOutputIndexer(int64_t output_idx) const;
 
     bool ShouldAccumulate() const { return accumulate_; }
 
@@ -319,6 +334,7 @@ public:
     /// Returns Indexer's master shape, one can iterate the Indexer with this
     /// shape.
     const int64_t* GetMasterShape() const { return master_shape_; }
+    int64_t* GetMasterShape() { return master_shape_; }
 
     /// Returns Indexer's master strides, one can iterate the Indexer with this
     /// strides. It is always set to be the default strides from master_shape_.
@@ -343,16 +359,57 @@ public:
     int64_t NumInputs() const { return num_inputs_; }
 
     /// Returns input TensorRef.
-    TensorRef& GetInput(int64_t i) { return inputs_[i]; }
-    const TensorRef& GetInput(int64_t i) const { return inputs_[i]; }
+    TensorRef& GetInput(int64_t i) {
+        if (i >= num_inputs_ || i < 0) {
+            utility::LogError("0 <= i < {} required, however, i = {}.",
+                              num_inputs_, i);
+        }
+        return inputs_[i];
+    }
+    const TensorRef& GetInput(int64_t i) const {
+        if (i >= num_inputs_ || i < 0) {
+            utility::LogError("0 <= i < {} required, however, i = {}.",
+                              num_inputs_, i);
+        }
+        return inputs_[i];
+    }
 
-    /// Returns output TensorRef.
-    TensorRef& GetOutput() { return output_; }
-    const TensorRef& GetOutput() const { return output_; }
+    /// Returns output TensorRef, if there's only one output.
+    TensorRef& GetOutput(int64_t i) {
+        if (i >= num_outputs_ || i < 0) {
+            utility::LogError("0 <= i < {} required, however, i = {}.",
+                              num_outputs_, i);
+        }
+        return outputs_[i];
+    }
+    const TensorRef& GetOutput(int64_t i) const {
+        if (i >= num_outputs_ || i < 0) {
+            utility::LogError("0 <= i < {} required, however, i = {}.",
+                              num_outputs_, i);
+        }
+        return outputs_[i];
+    }
+    TensorRef& GetOutput() {
+        if (num_outputs_ > 1) {
+            utility::LogError("num_outputs_ == {} > 0, use GetOutput(i)",
+                              num_outputs_);
+        }
+        return GetOutput(0);
+    }
+    const TensorRef& GetOutput() const {
+        if (num_outputs_ > 1) {
+            utility::LogError("num_outputs_ == {} > 0, use GetOutput(i)",
+                              num_outputs_);
+        }
+        return GetOutput(0);
+    }
 
     /// Returns true if the \p dim -th dimension is reduced.
     bool IsReductionDim(int64_t dim) const {
-        return output_.byte_strides_[dim] == 0 && master_shape_[dim] > 1;
+        // All outputs have the same shape and reduction dims. Even if they
+        // don't have the same initial strides, the reduced strides are always
+        // set to 0. Thus it is okay to use outputs_[0].
+        return outputs_[0].byte_strides_[dim] == 0 && master_shape_[dim] > 1;
     }
 
     /// Get input Tensor data pointer based on \p workload_idx.
@@ -373,7 +430,11 @@ public:
     /// \param workload_idx The index of the compute workload, similar to
     /// thread_id, if a thread only processes one workload.
     OPEN3D_HOST_DEVICE char* GetOutputPtr(int64_t workload_idx) const {
-        return GetWorkloadDataPtr(output_, workload_idx);
+        return GetWorkloadDataPtr(outputs_[0], workload_idx);
+    }
+    OPEN3D_HOST_DEVICE char* GetOutputPtr(int64_t output_idx,
+                                          int64_t workload_idx) const {
+        return GetWorkloadDataPtr(outputs_[output_idx], workload_idx);
     }
 
     /// For reduciton ops, returns the input-per-output index for a given
@@ -449,14 +510,15 @@ protected:
         return static_cast<char*>(tr.data_ptr_) + offset;
     }
 
-    /// Number of input Tensors.
+    /// Number of input and output Tensors.
     int64_t num_inputs_ = 0;
+    int64_t num_outputs_ = 0;
 
     /// Array of input TensorRefs.
     TensorRef inputs_[MAX_OPERANDS];
 
     /// Output TensorRef.
-    TensorRef output_;
+    TensorRef outputs_[MAX_OPERANDS];
 
     /// Indexer's global shape. The shape's number of elements is the
     /// same as GetNumWorkloads() for the Indexer.

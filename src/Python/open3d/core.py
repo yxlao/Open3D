@@ -498,6 +498,42 @@ class Tensor(open3d_pybind.Tensor):
         dim = self._reduction_dim_to_size_vector(dim)
         return super(Tensor, self).max(dim, keepdim)
 
+    @cast_to_py_tensor
+    def argmin(self, dim=None):
+        """
+        Returns minimum index of the tensor long the specified dimension. The
+        returned tensor has dtype int64_t, and has the same shape as original
+        tensor except that the reduced dimension is removed.
+
+        Only one reduction dimension can be specified. If the specified
+        dimension is None, the index is into the flattend tensor.
+        """
+        if dim is None:
+            dim = self._reduction_dim_to_size_vector(list(range(self.ndim)))
+        elif isinstance(dim, int):
+            dim = self._reduction_dim_to_size_vector([dim])
+        else:
+            raise TypeError(f"dim must be int or None, but got {dim}")
+        return super(Tensor, self).argmin_(dim)
+
+    @cast_to_py_tensor
+    def argmax(self, dim=None):
+        """
+        Returns maximum index of the tensor long the specified dimension. The
+        returned tensor has dtype int64_t, and has the same shape as original
+        tensor except that the reduced dimension is removed.
+
+        Only one reduction dimension can be specified. If the specified
+        dimension is None, the index is into the flattend tensor.
+        """
+        if dim is None:
+            dim = self._reduction_dim_to_size_vector(list(range(self.ndim)))
+        elif isinstance(dim, int):
+            dim = self._reduction_dim_to_size_vector([dim])
+        else:
+            raise TypeError(f"dim must be int or None, but got {dim}")
+        return super(Tensor, self).argmax_(dim)
+
     def __lt__(self, value):
         return self.lt(value)
 

@@ -1486,10 +1486,6 @@ TEST_P(TensorPermuteDevices, ReduceMax) {
 
 TEST_P(TensorPermuteDevices, ReduceArgMin) {
     Device device = GetParam();
-    if (device == Device("CPU:0")) {
-        // Skips CPU test for now.
-        return;
-    }
     Tensor src(
             std::vector<float>({22, 23, 20, 9, 6, 14, 18, 13, 15, 3, 17, 0,
                                 7,  21, 11, 1, 4, 2,  10, 19, 5,  8, 16, 12}),
@@ -1518,10 +1514,6 @@ TEST_P(TensorPermuteDevices, ReduceArgMin) {
 
 TEST_P(TensorPermuteDevices, ReduceArgMax) {
     Device device = GetParam();
-    if (device == Device("CPU:0")) {
-        // Skips CPU test for now.
-        return;
-    }
     Tensor src(
             std::vector<float>({22, 23, 20, 9, 6, 14, 18, 13, 15, 3, 17, 0,
                                 7,  21, 11, 1, 4, 2,  10, 19, 5,  8, 16, 12}),
