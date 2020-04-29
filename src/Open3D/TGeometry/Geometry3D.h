@@ -27,35 +27,33 @@
 #pragma once
 
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 
-#include "Open3D/Core/Tensor.h"
-#include "Open3D/Core/TensorList.h"
-#include "Open3D/TGeometry/Geometry3D.h"
+#include "Open3D/TGeometry/Geometry.h"
+#include "Open3D/Utility/Eigen.h"
 
 namespace open3d {
 namespace tgeometry {
 
-/// \class PointCloud
+/// \class Geometry3D
 ///
-/// \brief A PointCloud contains point coordinates, and optionally point colors
-/// and point normals.
-class PointCloud : public Geometry3D {
+/// \brief The base geometry class for 3D geometries.
+///
+/// Main class for 3D geometries.
+class Geometry3D : public Geometry {
 public:
-    PointCloud() : Geometry3D(Geometry::GeometryType::PointCloud) {}
-    ~PointCloud() override {}
+    ~Geometry3D() override {}
+
+protected:
+    Geometry3D(GeometryType type) : Geometry(type, 3) {}
 
 public:
-    PointCloud &Clear() override;
-    bool IsEmpty() const override;
-    Eigen::Vector3d GetMinBound() const override;
+    Geometry3D& Clear() override = 0;
 
-public:
-    bool HasPoints() const;
-    bool HasColors() const;
-    bool HasNormals() const;
+    bool IsEmpty() const override = 0;
 
-public:
-    TensorList points_ = TensorList({3}, Dtype::Float32, Device("CPU:0"));
+    /// Returns min bounds for geometry coordinates.
+    virtual Eigen::Vector3d GetMinBound() const = 0;
 };
 
 }  // namespace tgeometry

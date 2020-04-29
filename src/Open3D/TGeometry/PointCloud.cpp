@@ -26,6 +26,26 @@
 
 #include "Open3D/TGeometry/PointCloud.h"
 
+#include <Eigen/Core>
+
+#include "Open3D/Core/Tensor.h"
+#include "Open3D/Core/TensorList.h"
+
 namespace open3d {
-namespace tgeometry {}  // namespace tgeometry
+namespace tgeometry {
+
+PointCloud &PointCloud::Clear() {
+    points_.Clear();
+    return *this;
+}
+
+bool PointCloud::IsEmpty() const { return !HasPoints(); }
+
+Eigen::Vector3d PointCloud::GetMinBound() const {
+    return Eigen::Vector3d{0, 0, 0};
+}
+
+bool PointCloud::HasPoints() const { return points_.GetSize() > 0; }
+
+}  // namespace tgeometry
 }  // namespace open3d

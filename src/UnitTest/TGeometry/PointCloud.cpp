@@ -24,39 +24,24 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#pragma once
-
-#include <Eigen/Core>
-
-#include "Open3D/Core/Tensor.h"
+#include "Open3D/TGeometry/PointCloud.h"
 #include "Open3D/Core/TensorList.h"
-#include "Open3D/TGeometry/Geometry3D.h"
+#include "TestUtility/UnitTest.h"
 
 namespace open3d {
 namespace tgeometry {
 
-/// \class PointCloud
-///
-/// \brief A PointCloud contains point coordinates, and optionally point colors
-/// and point normals.
-class PointCloud : public Geometry3D {
-public:
-    PointCloud() : Geometry3D(Geometry::GeometryType::PointCloud) {}
-    ~PointCloud() override {}
+TEST(TPointCloud, DefaultConstructor) {
+    tgeometry::PointCloud pc;
 
-public:
-    PointCloud &Clear() override;
-    bool IsEmpty() const override;
-    Eigen::Vector3d GetMinBound() const override;
+    // Inherited from Geometry3D.
+    EXPECT_EQ(pc.GetGeometryType(), Geometry::GeometryType::PointCloud);
+    EXPECT_EQ(pc.Dimension(), 3);
 
-public:
-    bool HasPoints() const;
-    bool HasColors() const;
-    bool HasNormals() const;
-
-public:
-    TensorList points_ = TensorList({3}, Dtype::Float32, Device("CPU:0"));
-};
+    // Public members.
+    EXPECT_TRUE(pc.IsEmpty());
+    EXPECT_FALSE(pc.HasPoints());
+}
 
 }  // namespace tgeometry
 }  // namespace open3d
