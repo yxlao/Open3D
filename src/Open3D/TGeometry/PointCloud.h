@@ -27,6 +27,8 @@
 #pragma once
 
 #include <Eigen/Core>
+#include <string>
+#include <unordered_map>
 
 #include "Open3D/Core/Tensor.h"
 #include "Open3D/Core/TensorList.h"
@@ -36,26 +38,47 @@ namespace open3d {
 namespace tgeometry {
 
 /// \class PointCloud
-///
 /// \brief A PointCloud contains point coordinates, and optionally point colors
 /// and point normals.
 class PointCloud : public Geometry3D {
 public:
-    PointCloud() : Geometry3D(Geometry::GeometryType::PointCloud) {}
+    PointCloud(Dtype dtype = Dtype::Float32, Device device = Device("CPU:0"))
+        : Geometry3D(Geometry::GeometryType::PointCloud),
+          dtype_(dtype),
+          device_(device) {
+        point_dict_["points"] = TensorList({3}, dtype_, device_);
+    }
+
     ~PointCloud() override {}
 
-public:
     PointCloud &Clear() override;
+
     bool IsEmpty() const override;
-    Eigen::Vector3d GetMinBound() const override;
+
+    Tensor GetMinBound() const override;
 
 public:
-    bool HasPoints() const;
-    bool HasColors() const;
-    bool HasNormals() const;
+    bool HasPoints() const {
+        return point_dict_.find("points") != point_dict_.end() &&
+               point_dict_.at("points").GetSize() > 0;
+    }
+
+    bool HasColors() const {
+        return point_dict_.find("colors") != point_dict_.end() &&
+               point_dict_.at("colors").GetSize() > 0;
+    }
+
+    bool HasNormals() const {
+        return point_dict_.find("normals") != point_dict_.end() &&
+               point_dict_.at("normals").GetSize() > 0;
+    }
 
 public:
-    TensorList points_ = TensorList({3}, Dtype::Float32, Device("CPU:0"));
+    std::unordered_map<std::string, TensorList> point_dict_;
+
+protected:
+    Dtype dtype_ = Dtype::Float32;
+    Device device_ = Device("CPU:0");
 };
 
 }  // namespace tgeometry

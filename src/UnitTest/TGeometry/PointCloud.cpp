@@ -43,5 +43,18 @@ TEST(TPointCloud, DefaultConstructor) {
     EXPECT_FALSE(pc.HasPoints());
 }
 
+TEST(TPointCloud, GetMinBound) {
+    tgeometry::PointCloud pc(Dtype::Float32, Device("CPU:0"));
+
+    TensorList& points = pc.point_dict_["points"];
+    points.PushBack(Tensor(std::vector<float>{1, 2, 3}, {3}, Dtype::Float32));
+    points.PushBack(Tensor(std::vector<float>{4, 5, 6}, {3}, Dtype::Float32));
+
+    EXPECT_FALSE(pc.IsEmpty());
+    EXPECT_TRUE(pc.HasPoints());
+    EXPECT_EQ(pc.GetMinBound().ToFlatVector<float>(),
+              std::vector<float>({1, 2, 3}));
+}
+
 }  // namespace tgeometry
 }  // namespace open3d

@@ -24,44 +24,22 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#pragma once
-
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
+#include "Open3D/Core/Tensor.h"
 #include "Open3D/Core/TensorList.h"
-#include "Open3D/TGeometry/Geometry.h"
-#include "Open3D/Utility/Eigen.h"
+#include "Open3D/TGeometry/Geometry3D.h"
 
 namespace open3d {
 namespace tgeometry {
 
-/// \class Geometry3D
-///
-/// \brief The base geometry class for 3D geometries.
-///
-/// Main class for 3D geometries.
-class Geometry3D : public Geometry {
-public:
-    ~Geometry3D() override {}
-
-protected:
-    Geometry3D(GeometryType type) : Geometry(type, 3) {}
-
-public:
-    Geometry3D& Clear() override = 0;
-
-    bool IsEmpty() const override = 0;
-
-    /// Returns min bounds for geometry coordinates.
-    virtual Tensor GetMinBound() const = 0;
-
-protected:
-    /// Compute min bound of a list points.
-    /// \param points TensorList of shape (*, 3).
-    /// \return Tensor of shape (3,).
-    static Tensor ComputeMinBound(const TensorList& points);
-};
+Tensor Geometry3D::ComputeMinBound(const TensorList& points) {
+    if (points.GetShape() != SizeVector({3})) {
+        utility::LogError("TensorList must have shape (*, 3)");
+    }
+    return points.AsTensor().Min({0});
+}
 
 }  // namespace tgeometry
 }  // namespace open3d
