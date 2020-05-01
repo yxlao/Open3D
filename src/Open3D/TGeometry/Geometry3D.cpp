@@ -41,5 +41,19 @@ Tensor Geometry3D::ComputeMinBound(const TensorList& points) {
     return points.AsTensor().Min({0});
 }
 
+Tensor Geometry3D::ComputeMaxBound(const TensorList& points) {
+    if (points.GetShape() != SizeVector({3})) {
+        utility::LogError("TensorList must have shape (*, 3)");
+    }
+    return points.AsTensor().Max({0});
+}
+
+Tensor Geometry3D::ComputeCenter(const TensorList& points) {
+    if (points.GetShape() != SizeVector({3})) {
+        utility::LogError("TensorList must have shape (*, 3)");
+    }
+    return points.AsTensor().Mean({0});
+}
+
 }  // namespace tgeometry
 }  // namespace open3d

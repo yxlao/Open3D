@@ -93,6 +93,7 @@ public:
 private:
     /// Type of geometry from GeometryType.
     GeometryType geometry_type_ = GeometryType::Unspecified;
+
     /// Number of dimensions of the geometry.
     int dimension_ = 3;
 };

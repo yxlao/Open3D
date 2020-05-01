@@ -26,12 +26,8 @@
 
 #pragma once
 
-#include <Eigen/Core>
-#include <Eigen/Geometry>
-
 #include "Open3D/Core/TensorList.h"
 #include "Open3D/TGeometry/Geometry.h"
-#include "Open3D/Utility/Eigen.h"
 
 namespace open3d {
 namespace tgeometry {
@@ -56,11 +52,29 @@ public:
     /// Returns min bounds for geometry coordinates.
     virtual Tensor GetMinBound() const = 0;
 
+    /// Returns max bounds for geometry coordinates.
+    virtual Eigen::Vector3d GetMaxBound() const = 0;
+
+    /// Returns the center of the geometry coordinates.
+    virtual Eigen::Vector3d GetCenter() const = 0;
+
 protected:
     /// Compute min bound of a list points.
     /// \param points TensorList of shape (*, 3).
     /// \return Tensor of shape (3,).
     static Tensor ComputeMinBound(const TensorList& points);
+
+    /// Compute max bound of a list points.
+    /// \param points TensorList of shape (*, 3).
+    /// \return Tensor of shape (3,).
+    static Tensor ComputeMaxBound(
+            const std::vector<Eigen::Vector3d>& points) const;
+
+    /// Computer center of a list of points.
+    /// \param points TensorList of shape (*, 3).
+    /// \return Tensor of shape (3,).
+    static Tensor ComputeCenter(
+            const std::vector<Eigen::Vector3d>& points) const;
 };
 
 }  // namespace tgeometry
